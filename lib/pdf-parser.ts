@@ -4,25 +4,13 @@
  * 등기부등본/계약서 PDF에서 텍스트를 추출하는 서버사이드 모듈입니다.
  * AI에 의존하지 않는 순수 TypeScript 기반 자체 OCR 파싱 기술입니다.
  *
- * pdfjs-dist (Mozilla PDF.js) 를 서버사이드에서 워커 없이 직접 사용합니다.
+ * unpdf (서버사이드 전용 PDF.js 래퍼) 를 사용하여
+ * Node.js 환경에서 안정적으로 PDF 텍스트를 추출합니다.
  *
  * @module lib/pdf-parser
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { join } from "path";
-
-// pdfjs-dist를 동적으로 로드하여 워커 경로 문제를 해결
-async function getPdfjs() {
-  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  // 서버사이드에서 workerSrc를 실제 파일 경로로 설정
-  const workerPath = join(
-    process.cwd(),
-    "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"
-  );
-  (pdfjs as any).GlobalWorkerOptions.workerSrc = workerPath;
-  return pdfjs;
-}
+import { extractText } from "unpdf";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -150,43 +138,6 @@ function assessTextQuality(text: string, pageCount: number): number {
 }
 
 // ---------------------------------------------------------------------------
-// pdfjs-dist로 직접 텍스트 추출 (워커 없이 서버사이드)
-// ---------------------------------------------------------------------------
-
-async function extractTextWithPdfjs(
-  data: Uint8Array
-): Promise<{ text: string; pageCount: number }> {
-  const pdfjs = await getPdfjs();
-  const loadingTask = pdfjs.getDocument({
-    data,
-    useWorkerFetch: false,
-    isEvalSupported: false,
-    useSystemFonts: true,
-  });
-
-  const doc = await loadingTask.promise;
-  const pageCount = doc.numPages;
-  const textParts: string[] = [];
-
-  for (let i = 1; i <= Math.min(pageCount, 50); i++) {
-    const page = await doc.getPage(i);
-    const content = await page.getTextContent();
-    const pageText = content.items
-      .filter((item: any) => "str" in item)
-      .map((item: any) => item.str)
-      .join(" ");
-    textParts.push(pageText);
-  }
-
-  await doc.destroy();
-
-  return {
-    text: textParts.join("\n\n"),
-    pageCount,
-  };
-}
-
-// ---------------------------------------------------------------------------
 // 메인 함수: PDF → 텍스트 추출
 // ---------------------------------------------------------------------------
 
@@ -194,10 +145,13 @@ export async function extractTextFromPDF(
   buffer: Buffer,
   fileName: string = "document.pdf"
 ): Promise<PDFExtractResult> {
-  // pdfjs-dist로 직접 텍스트 추출
-  const { text: rawText, pageCount } = await extractTextWithPdfjs(
-    new Uint8Array(buffer)
+  // unpdf로 텍스트 추출 (서버사이드 전용, DOMMatrix 등 브라우저 API 불필요)
+  const { totalPages, text: rawText } = await extractText(
+    new Uint8Array(buffer),
+    { mergePages: true }
   );
+
+  const pageCount = totalPages || 0;
 
   // 텍스트 품질 평가
   const quality = assessTextQuality(rawText, pageCount);
