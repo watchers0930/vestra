@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOpenAIClient } from "@/lib/openai";
 import { RIGHTS_ANALYSIS_PROMPT } from "@/lib/prompts";
+import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { sanitizeField } from "@/lib/sanitize";
 
 export async function POST(req: NextRequest) {
   try {
-    const { address } = await req.json();
+    // Rate limiting (보호 API: 30 req/min)
+    const ip = req.headers.get("x-forwarded-for") || "anonymous";
+    const rl = rateLimit(`analyze-rights:${ip}`, 30);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "요청 한도 초과. 잠시 후 다시 시도해주세요." },
+        { status: 429, headers: rateLimitHeaders(rl) }
+      );
+    }
+
+    const { address: rawAddress } = await req.json();
+    const address = sanitizeField(rawAddress || "", 200);
 
     if (!address) {
       return NextResponse.json({ error: "주소를 입력해주세요." }, { status: 400 });

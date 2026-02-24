@@ -15,8 +15,12 @@ import {
   ChevronRight,
   Menu,
   X,
+  LogIn,
+  LogOut,
+  User,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
@@ -33,6 +37,7 @@ const menuItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -50,6 +55,8 @@ export default function Sidebar() {
     }
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
+
+  const showLabel = !collapsed || mobileOpen;
 
   return (
     <>
@@ -87,7 +94,7 @@ export default function Sidebar() {
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-bold text-sm">
               V
             </div>
-            {(!collapsed || mobileOpen) && (
+            {showLabel && (
               <div>
                 <h1 className="text-lg font-bold tracking-tight">VESTRA</h1>
                 <p className="text-[10px] text-muted -mt-1">AI 자산관리 플랫폼</p>
@@ -109,7 +116,6 @@ export default function Sidebar() {
           <div className="space-y-1">
             {menuItems.map((item) => {
               const isActive = pathname === item.href;
-              const showLabel = !collapsed || mobileOpen;
               return (
                 <Link
                   key={item.href}
@@ -136,6 +142,63 @@ export default function Sidebar() {
             })}
           </div>
         </nav>
+
+        {/* Auth Section */}
+        <div className="border-t border-white/10 px-3 py-3">
+          {status === "loading" ? (
+            <div className="flex items-center gap-3 px-2 py-2">
+              <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse" />
+              {showLabel && (
+                <div className="flex-1">
+                  <div className="h-3 w-20 bg-white/10 rounded animate-pulse" />
+                  <div className="h-2 w-16 bg-white/10 rounded animate-pulse mt-1" />
+                </div>
+              )}
+            </div>
+          ) : session?.user ? (
+            <div className="flex items-center gap-3 px-2 py-2">
+              {session.user.image ? (
+                <img
+                  src={session.user.image}
+                  alt=""
+                  className="w-8 h-8 rounded-full flex-shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary/30 flex items-center justify-center flex-shrink-0">
+                  <User size={16} />
+                </div>
+              )}
+              {showLabel && (
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">
+                    {session.user.name || "사용자"}
+                  </div>
+                  <div className="text-[10px] text-gray-400 truncate">
+                    {session.user.email}
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={() => signOut()}
+                className="flex-shrink-0 p-1.5 rounded-lg hover:bg-sidebar-hover transition-colors"
+                title="로그아웃"
+              >
+                <LogOut size={16} className="text-gray-400" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => signIn()}
+              className={cn(
+                "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm transition-all",
+                "text-gray-300 hover:bg-sidebar-hover hover:text-white"
+              )}
+            >
+              <LogIn size={20} className="flex-shrink-0" />
+              {showLabel && <span>로그인</span>}
+            </button>
+          )}
+        </div>
 
         {/* Collapse toggle (데스크톱 전용) */}
         <button

@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   fetchRealTransactions,
   fetchRecentPrices,
-  extractLawdCode,
 } from "@/lib/molit-api";
+import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   try {
+    // Rate limiting (공개 API: 10 req/min)
+    const ip = req.headers.get("x-forwarded-for") || "anonymous";
+    const rl = rateLimit(`real-price:${ip}`, 10);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "요청 한도 초과. 잠시 후 다시 시도해주세요." },
+        { status: 429, headers: rateLimitHeaders(rl) }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const address = searchParams.get("address");
     const lawdCd = searchParams.get("lawdCd");

@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractTextFromPDF } from "@/lib/pdf-parser";
+import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 
 /** 최대 파일 크기: 10MB */
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting (공개 API: 10 req/min)
+    const ip = req.headers.get("x-forwarded-for") || "anonymous";
+    const rl = rateLimit(`extract-pdf:${ip}`, 10);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "요청 한도 초과. 잠시 후 다시 시도해주세요." },
+        { status: 429, headers: rateLimitHeaders(rl) }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get("file");
 

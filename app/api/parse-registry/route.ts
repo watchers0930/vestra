@@ -4,10 +4,25 @@ import { REGISTRY_ANALYSIS_PROMPT } from "@/lib/prompts";
 import { parseRegistry } from "@/lib/registry-parser";
 import { calculateRiskScore } from "@/lib/risk-scoring";
 import { validateParsedRegistry } from "@/lib/validation-engine";
+import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { stripHtml, truncateInput } from "@/lib/sanitize";
 
 export async function POST(req: NextRequest) {
   try {
-    const { rawText, estimatedPrice } = await req.json();
+    // Rate limiting (공개 API: 10 req/min)
+    const ip = req.headers.get("x-forwarded-for") || "anonymous";
+    const rl = rateLimit(`parse-registry:${ip}`, 10);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "요청 한도 초과. 잠시 후 다시 시도해주세요." },
+        { status: 429, headers: rateLimitHeaders(rl) }
+      );
+    }
+
+    const { rawText: rawInput, estimatedPrice } = await req.json();
+
+    // Input sanitization
+    const rawText = truncateInput(stripHtml(rawInput || ""), 50000);
 
     if (!rawText || rawText.trim().length < 20) {
       return NextResponse.json(

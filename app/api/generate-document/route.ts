@@ -1,11 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOpenAIClient } from "@/lib/openai";
 import { JEONSE_ANALYSIS_PROMPT, DOCUMENT_GENERATION_PROMPT } from "@/lib/prompts";
+import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { sanitizeField } from "@/lib/sanitize";
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting (보호 API: 30 req/min)
+    const ip = req.headers.get("x-forwarded-for") || "anonymous";
+    const rl = rateLimit(`generate-document:${ip}`, 30);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "요청 한도 초과. 잠시 후 다시 시도해주세요." },
+        { status: 429, headers: rateLimitHeaders(rl) }
+      );
+    }
+
     const body = await req.json();
-    const { type, landlordName, tenantName, propertyAddress, deposit, monthlyRent, startDate, endDate, propertyType } = body;
+    const {
+      type,
+      landlordName: rawLandlord,
+      tenantName: rawTenant,
+      propertyAddress: rawAddress,
+      deposit,
+      monthlyRent,
+      startDate: rawStartDate,
+      endDate: rawEndDate,
+      propertyType: rawPropertyType,
+    } = body;
+
+    // Input sanitization
+    const landlordName = sanitizeField(rawLandlord || "", 100);
+    const tenantName = sanitizeField(rawTenant || "", 100);
+    const propertyAddress = sanitizeField(rawAddress || "", 300);
+    const startDate = sanitizeField(rawStartDate || "", 20);
+    const endDate = sanitizeField(rawEndDate || "", 20);
+    const propertyType = sanitizeField(rawPropertyType || "", 50);
 
     const openai = getOpenAIClient();
 
