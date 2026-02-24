@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
   FileSearch,
   Loader2,
@@ -15,6 +15,9 @@ import {
   Database as DatabaseIcon,
   XCircle,
   Info,
+  Upload,
+  FileText,
+  ClipboardPaste,
 } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
 import { addAnalysis } from "@/lib/store";
@@ -23,7 +26,8 @@ import type { ParsedRegistry } from "@/lib/registry-parser";
 import type { RiskScore } from "@/lib/risk-scoring";
 import type { ValidationResult } from "@/lib/validation-engine";
 
-type AnalysisStep = "idle" | "parsing" | "validating" | "scoring" | "ai" | "done";
+type InputMode = "text" | "file";
+type AnalysisStep = "idle" | "extracting" | "parsing" | "validating" | "scoring" | "ai" | "done";
 
 interface AnalysisResult {
   parsed: ParsedRegistry;
@@ -103,13 +107,17 @@ const VALIDATION_CATEGORY_LABELS: Record<string, string> = {
   crosscheck: "크로스체크",
 };
 
-function StepIndicator({ step }: { step: AnalysisStep }) {
-  const steps = [
+function StepIndicator({ step, showExtract }: { step: AnalysisStep; showExtract?: boolean }) {
+  const baseSteps = [
     { key: "parsing", icon: DatabaseIcon, label: "자체 파싱 엔진", sublabel: "정규식 패턴 매칭" },
     { key: "validating", icon: ShieldCheck, label: "검증 엔진", sublabel: "4단계 데이터 검증" },
     { key: "scoring", icon: Zap, label: "스코어링 알고리즘", sublabel: "가중치 정량 분석" },
     { key: "ai", icon: Brain, label: "AI 종합 의견", sublabel: "GPT-4o 해석" },
   ];
+
+  const steps = showExtract
+    ? [{ key: "extracting", icon: FileText, label: "PDF 텍스트 추출", sublabel: "자체 OCR 파싱" }, ...baseSteps]
+    : baseSteps;
 
   const currentIdx = steps.findIndex((s) => s.key === step);
 
@@ -157,6 +165,7 @@ function StepIndicator({ step }: { step: AnalysisStep }) {
 }
 
 export default function RegistryPage() {
+  const [inputMode, setInputMode] = useState<InputMode>("file");
   const [rawText, setRawText] = useState("");
   const [estimatedPrice, setEstimatedPrice] = useState(850000000);
   const [step, setStep] = useState<AnalysisStep>("idle");
@@ -166,14 +175,106 @@ export default function RegistryPage() {
   const [showEulgu, setShowEulgu] = useState(true);
   const [analyzedAt, setAnalyzedAt] = useState<Date | null>(null);
 
+  // PDF 업로드 관련 state
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [pdfInfo, setPdfInfo] = useState<{ pageCount: number; charCount: number; confidence: number } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const loadSample = () => {
     setRawText(SAMPLE_REGISTRY_TEXT);
+    setFileName(null);
+    setPdfInfo(null);
+    setInputMode("text");
   };
+
+  // ---- PDF 파일 처리 ----
+  const handlePdfUpload = useCallback(async (file: File) => {
+    if (!file) return;
+
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (ext !== "pdf" && file.type !== "application/pdf") {
+      setError("PDF 파일만 업로드할 수 있습니다.");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError("파일 크기가 10MB를 초과합니다.");
+      return;
+    }
+
+    setError(null);
+    setFileName(file.name);
+    setIsExtracting(true);
+    setPdfInfo(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/extract-pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      setRawText(data.text);
+      setPdfInfo({
+        pageCount: data.pageCount,
+        charCount: data.charCount,
+        confidence: data.confidence,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "PDF 텍스트 추출에 실패했습니다.");
+      setFileName(null);
+    } finally {
+      setIsExtracting(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const file = e.dataTransfer.files[0];
+      if (file) handlePdfUpload(file);
+    },
+    [handlePdfUpload]
+  );
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) handlePdfUpload(file);
+    },
+    [handlePdfUpload]
+  );
+
+  // ---- 분석 실행 ----
+  const usedPdf = inputMode === "file" && fileName;
 
   const handleAnalyze = async () => {
     if (!rawText.trim()) return;
     setResult(null);
     setError(null);
+
+    // PDF 모드면 추출 단계 표시
+    if (usedPdf) {
+      setStep("extracting");
+      await new Promise((r) => setTimeout(r, 500));
+    }
 
     // 1단계: 파싱
     setStep("parsing");
@@ -208,7 +309,7 @@ export default function RegistryPage() {
       addAnalysis({
         type: "registry",
         typeLabel: "등기분석",
-        address: data.parsed.title.address || "직접 입력",
+        address: data.parsed.title.address || (fileName || "직접 입력"),
         summary: `${data.riskScore.grade}등급 (${data.riskScore.gradeLabel}, ${data.riskScore.totalScore}점)`,
         data: data as unknown as Record<string, unknown>,
       });
@@ -225,9 +326,9 @@ export default function RegistryPage() {
           <FileSearch className="text-primary" size={28} />
           등기분석
         </h1>
-        <p className="text-secondary mt-1">등기부등본 자동 파싱 + 4단계 검증 + 리스크 스코어링</p>
+        <p className="text-secondary mt-1">PDF 업로드 → 자체 텍스트 추출 → 4단계 검증 + 리스크 스코어링</p>
         <div className="flex flex-wrap gap-2 mt-2">
-          <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded">자체 파싱 엔진</span>
+          <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded">PDF 자체 파싱</span>
           <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded">4단계 검증 엔진</span>
           <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded">독자 스코어링 알고리즘</span>
           <span className="px-2 py-0.5 bg-gray-100 text-secondary text-[10px] font-medium rounded">AI 미사용 핵심분석</span>
@@ -238,8 +339,33 @@ export default function RegistryPage() {
         {/* 입력 영역 */}
         <div className="space-y-4">
           <div className="bg-card rounded-xl border border-border p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-sm">등기부등본 원문 입력</h3>
+            {/* 입력 모드 탭 */}
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                onClick={() => setInputMode("file")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                  inputMode === "file"
+                    ? "bg-primary text-white shadow-sm"
+                    : "bg-gray-100 text-secondary hover:bg-gray-200"
+                )}
+              >
+                <Upload size={14} />
+                PDF 업로드
+              </button>
+              <button
+                onClick={() => setInputMode("text")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                  inputMode === "text"
+                    ? "bg-primary text-white shadow-sm"
+                    : "bg-gray-100 text-secondary hover:bg-gray-200"
+                )}
+              >
+                <ClipboardPaste size={14} />
+                텍스트 입력
+              </button>
+              <div className="flex-1" />
               <button
                 onClick={loadSample}
                 className="px-3 py-1 text-xs text-primary border border-primary/30 rounded-lg hover:bg-primary/5 transition-colors"
@@ -247,16 +373,104 @@ export default function RegistryPage() {
                 샘플 데이터
               </button>
             </div>
-            <textarea
-              value={rawText}
-              onChange={(e) => setRawText(e.target.value)}
-              placeholder={"등기부등본 텍스트를 붙여넣으세요...\n\n【 표 제 부 】 (건물의 표시)\n...\n【 갑 구 】 (소유권에 관한 사항)\n...\n【 을 구 】 (소유권 이외의 권리에 관한 사항)\n..."}
-              className="w-full h-64 px-3 py-2 rounded-lg border border-border text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
-              disabled={step !== "idle" && step !== "done"}
-            />
-            <div className="text-right text-[10px] text-muted mt-1">
-              {rawText.length.toLocaleString()}자 입력됨
-            </div>
+
+            {/* PDF 업로드 모드 */}
+            {inputMode === "file" && (
+              <>
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={cn(
+                    "flex min-h-[250px] cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed transition-colors",
+                    isExtracting
+                      ? "border-primary bg-primary/5 pointer-events-none"
+                      : isDragging
+                        ? "border-primary bg-primary/5"
+                        : fileName && rawText
+                          ? "border-emerald-400 bg-emerald-50"
+                          : "border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100"
+                  )}
+                >
+                  {isExtracting ? (
+                    <>
+                      <Loader2 size={40} className="text-primary animate-spin" />
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-primary">PDF 텍스트 추출 중...</p>
+                        <p className="mt-1 text-xs text-secondary">{fileName}</p>
+                      </div>
+                    </>
+                  ) : fileName && rawText ? (
+                    <>
+                      <FileText size={40} className="text-emerald-600" />
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-emerald-700">{fileName}</p>
+                        {pdfInfo && (
+                          <div className="flex items-center gap-3 mt-1.5 justify-center">
+                            <span className="text-[10px] px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">
+                              {pdfInfo.pageCount}페이지
+                            </span>
+                            <span className="text-[10px] px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">
+                              {pdfInfo.charCount.toLocaleString()}자 추출
+                            </span>
+                            <span className="text-[10px] px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">
+                              신뢰도 {pdfInfo.confidence}%
+                            </span>
+                          </div>
+                        )}
+                        <p className="mt-2 text-[10px] text-secondary">
+                          다른 파일을 업로드하려면 클릭하세요
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Upload
+                        size={40}
+                        className={cn("transition-colors", isDragging ? "text-primary" : "text-gray-400")}
+                      />
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-gray-600">
+                          등기부등본 PDF를 드래그하거나 클릭하여 업로드
+                        </p>
+                        <p className="mt-1 text-xs text-gray-400">
+                          인터넷등기소(iros.go.kr) PDF 지원 · 최대 10MB
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                {rawText && (
+                  <div className="mt-2 text-right text-[10px] text-muted">
+                    {rawText.length.toLocaleString()}자 추출됨
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* 텍스트 입력 모드 */}
+            {inputMode === "text" && (
+              <>
+                <textarea
+                  value={rawText}
+                  onChange={(e) => { setRawText(e.target.value); setFileName(null); setPdfInfo(null); }}
+                  placeholder={"등기부등본 텍스트를 붙여넣으세요...\n\n【 표 제 부 】 (건물의 표시)\n...\n【 갑 구 】 (소유권에 관한 사항)\n...\n【 을 구 】 (소유권 이외의 권리에 관한 사항)\n..."}
+                  className="w-full h-64 px-3 py-2 rounded-lg border border-border text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
+                  disabled={step !== "idle" && step !== "done"}
+                />
+                <div className="text-right text-[10px] text-muted mt-1">
+                  {rawText.length.toLocaleString()}자 입력됨
+                </div>
+              </>
+            )}
           </div>
 
           <div className="bg-card rounded-xl border border-border p-5">
@@ -280,7 +494,7 @@ export default function RegistryPage() {
 
           <button
             onClick={handleAnalyze}
-            disabled={(step !== "idle" && step !== "done") || !rawText.trim()}
+            disabled={(step !== "idle" && step !== "done") || !rawText.trim() || isExtracting}
             className="w-full py-3 bg-primary text-white rounded-lg font-medium text-sm hover:bg-primary-dark disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
           >
             {step !== "idle" && step !== "done" ? (
@@ -288,7 +502,7 @@ export default function RegistryPage() {
             ) : (
               <Shield size={18} />
             )}
-            등기부등본 분석 실행
+            {usedPdf ? "PDF 등기부등본 분석 실행" : "등기부등본 분석 실행"}
           </button>
         </div>
 
@@ -297,7 +511,7 @@ export default function RegistryPage() {
           {/* 분석 단계 표시 */}
           {step !== "idle" && step !== "done" && (
             <div className="bg-card rounded-xl border border-border p-4">
-              <StepIndicator step={step} />
+              <StepIndicator step={step} showExtract={!!usedPdf} />
             </div>
           )}
 
@@ -649,14 +863,14 @@ export default function RegistryPage() {
               </div>
               <h3 className="text-lg font-semibold mb-2">등기부등본 분석</h3>
               <p className="text-secondary text-sm mb-4 max-w-sm mx-auto">
-                등기부등본 원문을 붙여넣으면 자체 파싱 엔진과
+                등기부등본 PDF를 업로드하면 자체 텍스트 추출 엔진과
                 리스크 스코어링 알고리즘으로 즉시 분석합니다.
               </p>
               <div className="flex flex-col sm:flex-row gap-2 justify-center text-xs text-muted">
+                <span className="flex items-center gap-1"><Upload size={12} /> PDF 자체 추출</span>
                 <span className="flex items-center gap-1"><DatabaseIcon size={12} /> 자체 파싱 엔진</span>
                 <span className="flex items-center gap-1"><ShieldCheck size={12} /> 4단계 검증</span>
                 <span className="flex items-center gap-1"><Zap size={12} /> 독자 스코어링</span>
-                <span className="flex items-center gap-1"><Brain size={12} /> AI 의견</span>
               </div>
             </div>
           )}

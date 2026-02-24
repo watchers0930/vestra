@@ -223,7 +223,7 @@ export default function ContractReviewPage() {
 
   // ---- File handling ----
 
-  const readFile = useCallback((file: File) => {
+  const readFile = useCallback(async (file: File) => {
     if (!file) return;
 
     const allowedTypes = [
@@ -238,9 +238,28 @@ export default function ContractReviewPage() {
     }
 
     if (ext === "pdf" || file.type === "application/pdf") {
-      // For PDF, we just note the filename. Real PDF parsing would require a library.
+      // PDF 파일 → 서버사이드 텍스트 추출
       setFileName(file.name);
-      setError("현재 PDF 파일은 텍스트 추출이 지원되지 않습니다. 텍스트 입력 모드를 이용해주세요.");
+      setError(null);
+
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch("/api/extract-pdf", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        setContractText(data.text);
+        setError(null);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "PDF 텍스트 추출에 실패했습니다.");
+        setFileName(null);
+      }
       return;
     }
 
