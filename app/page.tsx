@@ -16,10 +16,11 @@ import {
   Home,
   Search,
   BarChart3,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatKRW } from "@/lib/utils";
-import { getAssets, getAnalyses, type StoredAsset, type AnalysisRecord } from "@/lib/store";
+import { getAssets, getAnalyses, removeAnalysis, type StoredAsset, type AnalysisRecord } from "@/lib/store";
 
 const typeIcons: Record<string, typeof FileText> = {
   rights: Shield,
@@ -55,6 +56,11 @@ export default function DashboardPage() {
   const avgRisk = assets.length > 0
     ? Math.round(assets.reduce((sum, a) => sum + a.riskScore, 0) / assets.length)
     : 0;
+
+  const handleDeleteAnalysis = (id: string) => {
+    removeAnalysis(id);
+    setAnalyses(getAnalyses());
+  };
 
   const isEmpty = totalAssets === 0 && analyses.length === 0;
 
@@ -263,6 +269,7 @@ export default function DashboardPage() {
                   <th className="pb-3 text-right text-xs font-semibold uppercase tracking-wider text-muted">
                     날짜
                   </th>
+                  <th className="pb-3 w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -299,6 +306,15 @@ export default function DashboardPage() {
                         <span className="text-xs text-muted">
                           {new Date(item.date).toLocaleDateString("ko-KR")}
                         </span>
+                      </td>
+                      <td className="py-3.5 text-right">
+                        <button
+                          onClick={() => handleDeleteAnalysis(item.id)}
+                          className="p-1.5 rounded-lg text-gray-300 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 transition-all"
+                          title="삭제"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </td>
                     </tr>
                   );

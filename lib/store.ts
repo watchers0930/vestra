@@ -86,6 +86,11 @@ export function addOrUpdateAsset(asset: Omit<StoredAsset, "id" | "lastAnalyzedDa
   return newAsset;
 }
 
+export function removeAnalysis(id: string): void {
+  const analyses = getAnalyses().filter((a) => a.id !== id);
+  localStorage.setItem(ANALYSIS_KEY, JSON.stringify(analyses));
+}
+
 export function removeAsset(id: string): void {
   const assets = getAssets().filter((a) => a.id !== id);
   localStorage.setItem(ASSETS_KEY, JSON.stringify(assets));
