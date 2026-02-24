@@ -146,15 +146,13 @@ export default function Sidebar() {
         {/* Auth Section */}
         <div className="border-t border-white/10 px-3 py-3">
           {status === "loading" ? (
-            <div className="flex items-center gap-3 px-2 py-2">
-              <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse" />
-              {showLabel && (
-                <div className="flex-1">
-                  <div className="h-3 w-20 bg-white/10 rounded animate-pulse" />
-                  <div className="h-2 w-16 bg-white/10 rounded animate-pulse mt-1" />
-                </div>
-              )}
-            </div>
+            <button
+              onClick={() => signIn()}
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm transition-all bg-primary/20 text-white hover:bg-primary/30 border border-primary/30"
+            >
+              <LogIn size={20} className="flex-shrink-0 text-primary" />
+              {showLabel && <span className="font-medium">로그인</span>}
+            </button>
           ) : session?.user ? (
             <div className="flex items-center gap-3 px-2 py-2">
               {session.user.image ? (
@@ -189,13 +187,10 @@ export default function Sidebar() {
           ) : (
             <button
               onClick={() => signIn()}
-              className={cn(
-                "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm transition-all",
-                "text-gray-300 hover:bg-sidebar-hover hover:text-white"
-              )}
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm transition-all bg-primary/20 text-white hover:bg-primary/30 border border-primary/30"
             >
-              <LogIn size={20} className="flex-shrink-0" />
-              {showLabel && <span>로그인</span>}
+              <LogIn size={20} className="flex-shrink-0 text-primary" />
+              {showLabel && <span className="font-medium">로그인</span>}
             </button>
           )}
         </div>
