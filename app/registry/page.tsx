@@ -7,22 +7,27 @@ import {
   AlertTriangle,
   CheckCircle,
   Shield,
+  ShieldCheck,
   ChevronDown,
   ChevronUp,
   Zap,
   Brain,
   Database as DatabaseIcon,
+  XCircle,
+  Info,
 } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
 import { addAnalysis } from "@/lib/store";
 import { SAMPLE_REGISTRY_TEXT } from "@/lib/registry-parser";
 import type { ParsedRegistry } from "@/lib/registry-parser";
 import type { RiskScore } from "@/lib/risk-scoring";
+import type { ValidationResult } from "@/lib/validation-engine";
 
-type AnalysisStep = "idle" | "parsing" | "scoring" | "ai" | "done";
+type AnalysisStep = "idle" | "parsing" | "validating" | "scoring" | "ai" | "done";
 
 interface AnalysisResult {
   parsed: ParsedRegistry;
+  validation: ValidationResult;
   riskScore: RiskScore;
   aiOpinion: string;
 }
@@ -85,9 +90,23 @@ function ScoreGauge({ score, grade, label }: { score: number; grade: string; lab
   );
 }
 
+const VALIDATION_SEVERITY_STYLES = {
+  error: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200", icon: XCircle, label: "오류" },
+  warning: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", icon: AlertTriangle, label: "경고" },
+  info: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", icon: Info, label: "정보" },
+};
+
+const VALIDATION_CATEGORY_LABELS: Record<string, string> = {
+  format: "포맷·타입",
+  arithmetic: "합계·산술",
+  context: "문맥·규칙",
+  crosscheck: "크로스체크",
+};
+
 function StepIndicator({ step }: { step: AnalysisStep }) {
   const steps = [
     { key: "parsing", icon: DatabaseIcon, label: "자체 파싱 엔진", sublabel: "정규식 패턴 매칭" },
+    { key: "validating", icon: ShieldCheck, label: "검증 엔진", sublabel: "4단계 데이터 검증" },
     { key: "scoring", icon: Zap, label: "스코어링 알고리즘", sublabel: "가중치 정량 분석" },
     { key: "ai", icon: Brain, label: "AI 종합 의견", sublabel: "GPT-4o 해석" },
   ];
@@ -160,11 +179,15 @@ export default function RegistryPage() {
     setStep("parsing");
     await new Promise((r) => setTimeout(r, 800));
 
-    // 2단계: 스코어링
-    setStep("scoring");
+    // 2단계: 검증
+    setStep("validating");
     await new Promise((r) => setTimeout(r, 600));
 
-    // 3단계: AI 의견
+    // 3단계: 스코어링
+    setStep("scoring");
+    await new Promise((r) => setTimeout(r, 500));
+
+    // 4단계: AI 의견
     setStep("ai");
 
     try {
@@ -202,9 +225,10 @@ export default function RegistryPage() {
           <FileSearch className="text-primary" size={28} />
           등기분석
         </h1>
-        <p className="text-secondary mt-1">등기부등본 자동 파싱 + 리스크 스코어링</p>
+        <p className="text-secondary mt-1">등기부등본 자동 파싱 + 4단계 검증 + 리스크 스코어링</p>
         <div className="flex flex-wrap gap-2 mt-2">
           <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded">자체 파싱 엔진</span>
+          <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded">4단계 검증 엔진</span>
           <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded">독자 스코어링 알고리즘</span>
           <span className="px-2 py-0.5 bg-gray-100 text-secondary text-[10px] font-medium rounded">AI 미사용 핵심분석</span>
         </div>
@@ -334,6 +358,87 @@ export default function RegistryPage() {
                   </div>
                 </div>
               </div>
+
+              {/* 검증 결과 */}
+              {result.validation && (
+                <div className="bg-card rounded-xl border border-border p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-semibold flex items-center gap-2 text-sm">
+                      <ShieldCheck size={18} className="text-primary" />
+                      데이터 검증 결과
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        "px-2 py-0.5 rounded-full text-[10px] font-semibold",
+                        result.validation.isValid
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-red-100 text-red-700"
+                      )}>
+                        {result.validation.isValid ? "검증 통과" : "검증 이슈 발견"}
+                      </span>
+                      <span className="text-xs font-semibold text-primary">
+                        {result.validation.score}점
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 검증 통계 */}
+                  <div className="grid grid-cols-4 gap-2 mb-3">
+                    <div className="text-center p-2 bg-gray-50 rounded-lg">
+                      <div className="text-sm font-bold text-primary">{result.validation.summary.totalChecks}</div>
+                      <div className="text-[9px] text-muted">총 검사</div>
+                    </div>
+                    <div className="text-center p-2 bg-emerald-50 rounded-lg">
+                      <div className="text-sm font-bold text-emerald-600">{result.validation.summary.passed}</div>
+                      <div className="text-[9px] text-muted">통과</div>
+                    </div>
+                    <div className="text-center p-2 bg-amber-50 rounded-lg">
+                      <div className="text-sm font-bold text-amber-600">{result.validation.summary.warnings}</div>
+                      <div className="text-[9px] text-muted">경고</div>
+                    </div>
+                    <div className="text-center p-2 bg-red-50 rounded-lg">
+                      <div className="text-sm font-bold text-red-600">{result.validation.summary.errors}</div>
+                      <div className="text-[9px] text-muted">오류</div>
+                    </div>
+                  </div>
+
+                  {/* 검증 이슈 목록 */}
+                  {result.validation.issues.length > 0 && (
+                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                      {result.validation.issues
+                        .sort((a, b) => {
+                          const order = { error: 0, warning: 1, info: 2 };
+                          return order[a.severity] - order[b.severity];
+                        })
+                        .map((issue, idx) => {
+                          const style = VALIDATION_SEVERITY_STYLES[issue.severity];
+                          const Icon = style.icon;
+                          return (
+                            <div key={idx} className={cn("flex items-start gap-2 px-2.5 py-1.5 rounded-lg text-xs", style.bg)}>
+                              <Icon size={13} className={cn("flex-shrink-0 mt-0.5", style.text)} />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className={cn("font-medium", style.text)}>{style.label}</span>
+                                  <span className="text-[9px] px-1 py-0.5 bg-white/50 rounded text-secondary">
+                                    {VALIDATION_CATEGORY_LABELS[issue.category] || issue.category}
+                                  </span>
+                                </div>
+                                <p className="text-secondary leading-snug mt-0.5 break-words">{issue.message}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
+
+                  {result.validation.issues.length === 0 && (
+                    <div className="text-center py-3 text-emerald-600 text-xs">
+                      <CheckCircle size={16} className="inline mr-1" />
+                      모든 검증 항목을 통과했습니다.
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* 리스크 요인 */}
               {result.riskScore.factors.length > 0 && (
@@ -549,8 +654,9 @@ export default function RegistryPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-2 justify-center text-xs text-muted">
                 <span className="flex items-center gap-1"><DatabaseIcon size={12} /> 자체 파싱 엔진</span>
+                <span className="flex items-center gap-1"><ShieldCheck size={12} /> 4단계 검증</span>
                 <span className="flex items-center gap-1"><Zap size={12} /> 독자 스코어링</span>
-                <span className="flex items-center gap-1"><Brain size={12} /> AI 의견 (선택)</span>
+                <span className="flex items-center gap-1"><Brain size={12} /> AI 의견</span>
               </div>
             </div>
           )}

@@ -3,6 +3,7 @@ import { getOpenAIClient } from "@/lib/openai";
 import { REGISTRY_ANALYSIS_PROMPT } from "@/lib/prompts";
 import { parseRegistry } from "@/lib/registry-parser";
 import { calculateRiskScore } from "@/lib/risk-scoring";
+import { validateParsedRegistry } from "@/lib/validation-engine";
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,10 +19,13 @@ export async function POST(req: NextRequest) {
     // 1단계: 자체 파싱 엔진 (AI 미사용)
     const parsed = parseRegistry(rawText);
 
-    // 2단계: 자체 리스크 스코어링 (AI 미사용)
+    // 2단계: 데이터 검증 엔진 (AI 미사용)
+    const preValidation = validateParsedRegistry(parsed, estimatedPrice || 0);
+
+    // 3단계: 자체 리스크 스코어링 (AI 미사용)
     const riskScore = calculateRiskScore(parsed, estimatedPrice || 0);
 
-    // 3단계: AI 종합 의견 (OpenAI)
+    // 4단계: AI 종합 의견 (OpenAI)
     let aiOpinion = "";
     try {
       const openai = getOpenAIClient();
@@ -62,8 +66,17 @@ export async function POST(req: NextRequest) {
       aiOpinion = "AI 의견을 생성할 수 없습니다. API 키를 확인해주세요.";
     }
 
+    // 최종 검증 (AI의견 포함 크로스체크)
+    const validation = validateParsedRegistry(
+      parsed,
+      estimatedPrice || 0,
+      riskScore,
+      aiOpinion
+    );
+
     return NextResponse.json({
       parsed,
+      validation,
       riskScore,
       aiOpinion,
     });

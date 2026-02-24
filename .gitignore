@@ -46,3 +46,7 @@ report.html
 
 # claude
 .claude/
+
+# prisma sqlite
+*.db
+*.db-journal
