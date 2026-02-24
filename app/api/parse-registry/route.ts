@@ -1,0 +1,78 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getOpenAIClient } from "@/lib/openai";
+import { REGISTRY_ANALYSIS_PROMPT } from "@/lib/prompts";
+import { parseRegistry } from "@/lib/registry-parser";
+import { calculateRiskScore } from "@/lib/risk-scoring";
+
+export async function POST(req: NextRequest) {
+  try {
+    const { rawText, estimatedPrice } = await req.json();
+
+    if (!rawText || rawText.trim().length < 20) {
+      return NextResponse.json(
+        { error: "등기부등본 텍스트를 입력해주세요." },
+        { status: 400 }
+      );
+    }
+
+    // 1단계: 자체 파싱 엔진 (AI 미사용)
+    const parsed = parseRegistry(rawText);
+
+    // 2단계: 자체 리스크 스코어링 (AI 미사용)
+    const riskScore = calculateRiskScore(parsed, estimatedPrice || 0);
+
+    // 3단계: AI 종합 의견 (OpenAI)
+    let aiOpinion = "";
+    try {
+      const openai = getOpenAIClient();
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: REGISTRY_ANALYSIS_PROMPT },
+          {
+            role: "user",
+            content: JSON.stringify({
+              parsedTitle: parsed.title,
+              gapguCount: parsed.gapgu.length,
+              activeGapgu: parsed.gapgu.filter((e) => !e.isCancelled),
+              eulguCount: parsed.eulgu.length,
+              activeEulgu: parsed.eulgu.filter((e) => !e.isCancelled),
+              summary: parsed.summary,
+              riskScore: {
+                totalScore: riskScore.totalScore,
+                grade: riskScore.grade,
+                gradeLabel: riskScore.gradeLabel,
+                factors: riskScore.factors,
+                mortgageRatio: riskScore.mortgageRatio,
+              },
+              estimatedPrice: estimatedPrice || 0,
+            }),
+          },
+        ],
+        temperature: 0.3,
+        response_format: { type: "json_object" },
+      });
+
+      const content = completion.choices[0]?.message?.content;
+      if (content) {
+        const parsed = JSON.parse(content);
+        aiOpinion = parsed.opinion || parsed.aiOpinion || "";
+      }
+    } catch {
+      aiOpinion = "AI 의견을 생성할 수 없습니다. API 키를 확인해주세요.";
+    }
+
+    return NextResponse.json({
+      parsed,
+      riskScore,
+      aiOpinion,
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "알 수 없는 오류";
+    console.error("Registry parse error:", message);
+    return NextResponse.json(
+      { error: `등기부등본 분석 중 오류: ${message}` },
+      { status: 500 }
+    );
+  }
+}

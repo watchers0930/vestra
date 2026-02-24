@@ -1,0 +1,603 @@
+"use client";
+
+import { useState } from "react";
+import {
+  Search,
+  Shield,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  MapPin,
+} from "lucide-react";
+import { formatKRW, cn } from "@/lib/utils";
+import { addAnalysis, addOrUpdateAsset } from "@/lib/store";
+
+interface PropertyInfo {
+  address: string;
+  type: string;
+  area: string;
+  buildYear: string;
+  estimatedPrice: number;
+  jeonsePrice: number;
+  recentTransaction: string;
+}
+
+interface GapguEntry {
+  order: number;
+  date: string;
+  type: string;
+  detail: string;
+  risk: "danger" | "warning" | "safe";
+}
+
+interface EulguEntry {
+  order: number;
+  date: string;
+  type: string;
+  detail: string;
+  amount: number;
+  risk: "danger" | "warning" | "safe";
+}
+
+interface RiskItem {
+  level: "danger" | "warning" | "safe";
+  title: string;
+  description: string;
+}
+
+interface RiskAnalysis {
+  jeonseRatio: number;
+  mortgageRatio: number;
+  safetyScore: number;
+  riskScore: number;
+  risks: RiskItem[];
+}
+
+interface AnalysisResult {
+  propertyInfo: PropertyInfo;
+  gapgu: GapguEntry[];
+  eulgu: EulguEntry[];
+  riskAnalysis: RiskAnalysis;
+  aiOpinion: string;
+}
+
+const LOADING_STEPS = [
+  "인터넷등기소 API 조회 중...",
+  "국토교통부 실거래 API 조회 중...",
+  "국토정보플랫폼 용도지역 확인 중...",
+  "법제처 법령 검증 중...",
+  "AI 종합 분석 중...",
+];
+
+const QUICK_SEARCH = ["역삼 래미안", "잠실엘스", "반포자이", "송도 더샵"];
+
+function SafetyGauge({ score }: { score: number }) {
+  const radius = 70;
+  const strokeWidth = 14;
+  const circumference = 2 * Math.PI * radius;
+  const progress = (score / 100) * circumference;
+  const offset = circumference - progress;
+
+  const getColor = (s: number) => {
+    if (s >= 70) return { stroke: "#10b981", text: "text-emerald-600", label: "안전" };
+    if (s >= 40) return { stroke: "#f59e0b", text: "text-amber-600", label: "주의" };
+    return { stroke: "#ef4444", text: "text-red-600", label: "위험" };
+  };
+
+  const color = getColor(score);
+
+  return (
+    <div className="flex flex-col items-center">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        {/* Background circle */}
+        <circle
+          cx="90"
+          cy="90"
+          r={radius}
+          fill="none"
+          stroke="#e5e7eb"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+        />
+        {/* Progress circle */}
+        <circle
+          cx="90"
+          cy="90"
+          r={radius}
+          fill="none"
+          stroke={color.stroke}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          transform="rotate(-90 90 90)"
+          className="transition-all duration-1000 ease-out"
+        />
+        {/* Score text */}
+        <text
+          x="90"
+          y="82"
+          textAnchor="middle"
+          className="fill-gray-900 text-3xl font-bold"
+          style={{ fontSize: "36px", fontWeight: 700 }}
+        >
+          {score}
+        </text>
+        <text
+          x="90"
+          y="108"
+          textAnchor="middle"
+          className="fill-gray-400"
+          style={{ fontSize: "14px" }}
+        >
+          / 100
+        </text>
+      </svg>
+      <span
+        className={cn("mt-2 text-lg font-semibold", color.text)}
+      >
+        {color.label}
+      </span>
+    </div>
+  );
+}
+
+function RiskBadge({ level }: { level: "danger" | "warning" | "safe" }) {
+  const config = {
+    danger: {
+      bg: "bg-red-50 text-red-700 border-red-200",
+      icon: XCircle,
+      label: "위험",
+    },
+    warning: {
+      bg: "bg-amber-50 text-amber-700 border-amber-200",
+      icon: AlertTriangle,
+      label: "주의",
+    },
+    safe: {
+      bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      icon: CheckCircle,
+      label: "안전",
+    },
+  };
+
+  const c = config[level];
+  const Icon = c.icon;
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium",
+        c.bg
+      )}
+    >
+      <Icon size={12} />
+      {c.label}
+    </span>
+  );
+}
+
+export default function RightsAnalysisPage() {
+  const [address, setAddress] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSearch = async (query?: string) => {
+    const searchAddress = query || address;
+    if (!searchAddress.trim()) return;
+
+    setLoading(true);
+    setLoadingStep(0);
+    setResult(null);
+    setError(null);
+
+    // Simulate step-by-step loading progress
+    const stepInterval = setInterval(() => {
+      setLoadingStep((prev) => {
+        if (prev < LOADING_STEPS.length - 1) return prev + 1;
+        return prev;
+      });
+    }, 800);
+
+    try {
+      const response = await fetch("/api/analyze-rights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: searchAddress }),
+      });
+
+      if (!response.ok) {
+        throw new Error("분석 요청에 실패했습니다. 다시 시도해주세요.");
+      }
+
+      const data: AnalysisResult = await response.json();
+      setResult(data);
+
+      // localStorage에 분석 결과 저장
+      addAnalysis({
+        type: "rights",
+        typeLabel: "권리분석",
+        address: data.propertyInfo?.address || searchAddress,
+        summary: `안전지수 ${data.riskAnalysis?.safetyScore || 0}점, 리스크 ${data.riskAnalysis?.riskScore || 0}점`,
+        data: data as unknown as Record<string, unknown>,
+      });
+      addOrUpdateAsset({
+        address: data.propertyInfo?.address || searchAddress,
+        type: data.propertyInfo?.type || "부동산",
+        estimatedPrice: data.propertyInfo?.estimatedPrice || 0,
+        jeonsePrice: data.propertyInfo?.jeonsePrice || 0,
+        safetyScore: data.riskAnalysis?.safetyScore || 0,
+        riskScore: data.riskAnalysis?.riskScore || 0,
+      });
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "알 수 없는 오류가 발생했습니다."
+      );
+    } finally {
+      clearInterval(stepInterval);
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50/50">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-1">
+          <Shield className="text-blue-600" size={28} />
+          <h1 className="text-2xl font-bold text-gray-900">권리분석</h1>
+        </div>
+        <p className="text-sm text-gray-500 ml-[40px]">
+          등기부등본 기반 AI 권리분석
+        </p>
+      </div>
+
+      {/* Search Section */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <MapPin
+              size={18}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              placeholder="분석할 부동산 주소를 입력하세요"
+              className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors"
+            />
+          </div>
+          <button
+            onClick={() => handleSearch()}
+            disabled={loading || !address.trim()}
+            className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Search size={16} />
+            분석하기
+          </button>
+        </div>
+
+        {/* Quick Search */}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-gray-400">빠른 검색</span>
+          {QUICK_SEARCH.map((q) => (
+            <button
+              key={q}
+              onClick={() => {
+                setAddress(q);
+                handleSearch(q);
+              }}
+              disabled={loading}
+              className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs text-gray-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-50"
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-white rounded-xl border border-gray-200 p-8 mb-6 shadow-sm">
+          <div className="flex flex-col items-center">
+            <Loader2 size={40} className="animate-spin text-blue-600 mb-6" />
+            <p className="text-sm font-medium text-gray-700 mb-6">
+              등기부등본 분석을 진행하고 있습니다
+            </p>
+            <div className="w-full max-w-md space-y-3">
+              {LOADING_STEPS.map((step, i) => (
+                <div
+                  key={step}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm transition-all duration-300",
+                    i < loadingStep
+                      ? "bg-emerald-50 text-emerald-700"
+                      : i === loadingStep
+                        ? "bg-blue-50 text-blue-700 font-medium"
+                        : "bg-gray-50 text-gray-400"
+                  )}
+                >
+                  {i < loadingStep ? (
+                    <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
+                  ) : i === loadingStep ? (
+                    <Loader2 size={16} className="animate-spin text-blue-500 flex-shrink-0" />
+                  ) : (
+                    <div className="h-4 w-4 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                  )}
+                  {step}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
+          <div className="flex items-center gap-3">
+            <XCircle size={20} className="text-red-500" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Results */}
+      {result && (
+        <div className="space-y-6">
+          {/* Property Info Card */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <MapPin size={20} className="text-blue-600" />
+              부동산 기본정보
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs text-gray-400 mb-1">주소</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {result.propertyInfo.address}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 mb-1">건물유형</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {result.propertyInfo.type}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 mb-1">전용면적</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {result.propertyInfo.area}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 mb-1">건축년도</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {result.propertyInfo.buildYear}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 mb-1">추정 시세</p>
+                <p className="text-sm font-bold text-blue-600">
+                  {formatKRW(result.propertyInfo.estimatedPrice)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 mb-1">전세 시세</p>
+                <p className="text-sm font-bold text-emerald-600">
+                  {formatKRW(result.propertyInfo.jeonsePrice)}
+                </p>
+              </div>
+            </div>
+            {result.propertyInfo.recentTransaction && (
+              <div className="mt-4 rounded-lg bg-gray-50 px-4 py-2.5">
+                <p className="text-xs text-gray-400 mb-0.5">최근 거래</p>
+                <p className="text-sm text-gray-700">
+                  {result.propertyInfo.recentTransaction}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* 갑구 (소유권) */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              갑구 (소유권)
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      순번
+                    </th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      접수일자
+                    </th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      등기유형
+                    </th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      상세내용
+                    </th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      위험도
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {result.gapgu.map((entry) => (
+                    <tr key={entry.order} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-3 py-3 text-gray-600">{entry.order}</td>
+                      <td className="px-3 py-3 text-gray-600">{entry.date}</td>
+                      <td className="px-3 py-3 font-medium text-gray-900">
+                        {entry.type}
+                      </td>
+                      <td className="px-3 py-3 text-gray-700">{entry.detail}</td>
+                      <td className="px-3 py-3">
+                        <RiskBadge level={entry.risk} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 을구 (권리관계) */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              을구 (권리관계)
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      순번
+                    </th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      접수일자
+                    </th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      등기유형
+                    </th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      상세내용
+                    </th>
+                    <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      채권금액
+                    </th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      위험도
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {result.eulgu.map((entry) => (
+                    <tr key={entry.order} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-3 py-3 text-gray-600">{entry.order}</td>
+                      <td className="px-3 py-3 text-gray-600">{entry.date}</td>
+                      <td className="px-3 py-3 font-medium text-gray-900">
+                        {entry.type}
+                      </td>
+                      <td className="px-3 py-3 text-gray-700">{entry.detail}</td>
+                      <td className="px-3 py-3 text-right font-medium text-gray-900">
+                        {formatKRW(entry.amount)}
+                      </td>
+                      <td className="px-3 py-3">
+                        <RiskBadge level={entry.risk} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Risk Analysis Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Safety Gauge */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm flex flex-col items-center justify-center">
+              <h3 className="text-sm font-medium text-gray-500 mb-4">
+                안전도 점수
+              </h3>
+              <SafetyGauge score={result.riskAnalysis.safetyScore} />
+              <div className="mt-6 grid grid-cols-2 gap-4 w-full text-center">
+                <div>
+                  <p className="text-xs text-gray-400">전세가율</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {result.riskAnalysis.jeonseRatio}%
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">근저당비율</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {result.riskAnalysis.mortgageRatio}%
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Risk Items */}
+            <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+              <h3 className="text-sm font-medium text-gray-500 mb-4">
+                위험 분석 항목
+              </h3>
+              <div className="space-y-3">
+                {result.riskAnalysis.risks.map((risk, i) => {
+                  const config = {
+                    danger: {
+                      bg: "bg-red-50 border-red-200",
+                      text: "text-red-700",
+                      descText: "text-red-600",
+                      icon: XCircle,
+                      iconColor: "text-red-500",
+                    },
+                    warning: {
+                      bg: "bg-amber-50 border-amber-200",
+                      text: "text-amber-700",
+                      descText: "text-amber-600",
+                      icon: AlertTriangle,
+                      iconColor: "text-amber-500",
+                    },
+                    safe: {
+                      bg: "bg-emerald-50 border-emerald-200",
+                      text: "text-emerald-700",
+                      descText: "text-emerald-600",
+                      icon: CheckCircle,
+                      iconColor: "text-emerald-500",
+                    },
+                  };
+
+                  const c = config[risk.level];
+                  const Icon = c.icon;
+
+                  return (
+                    <div
+                      key={i}
+                      className={cn(
+                        "flex items-start gap-3 rounded-lg border p-4",
+                        c.bg
+                      )}
+                    >
+                      <Icon size={18} className={cn("mt-0.5 flex-shrink-0", c.iconColor)} />
+                      <div>
+                        <p className={cn("text-sm font-medium", c.text)}>
+                          {risk.title}
+                        </p>
+                        <p className={cn("text-xs mt-1", c.descText)}>
+                          {risk.description}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* AI Opinion */}
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <Shield size={20} className="text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900">
+                AI 종합 의견
+              </h3>
+            </div>
+            <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
+              {result.aiOpinion}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
