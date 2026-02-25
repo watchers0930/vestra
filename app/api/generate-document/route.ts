@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     if (type === "analyze") {
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4.1-mini",
         messages: [
           { role: "system", content: JEONSE_ANALYSIS_PROMPT },
           {
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
 
     if (type === "jeonse") {
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4.1-mini",
         messages: [
           { role: "system", content: DOCUMENT_GENERATION_PROMPT },
           {
@@ -103,7 +103,7 @@ JSON 형식으로 응답하세요: { "title": "전세권설정등기 신청서",
 
     if (type === "lease") {
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4.1-mini",
         messages: [
           { role: "system", content: DOCUMENT_GENERATION_PROMPT },
           {
