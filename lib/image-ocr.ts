@@ -121,6 +121,61 @@ async function extractWithVision(
 }
 
 // ---------------------------------------------------------------------------
+// 스캔 PDF → GPT-4o 직접 처리 (canvas 의존성 없이 PDF OCR)
+// ---------------------------------------------------------------------------
+
+export async function extractTextFromScannedPDF(
+  buffer: Buffer,
+  fileName: string
+): Promise<PDFExtractResult> {
+  const openai = getOpenAIClient();
+  const base64 = buffer.toString("base64");
+
+  console.log(`[PDF OCR] GPT-4o Responses API로 스캔 PDF 직접 처리: ${fileName}`);
+
+  const response = await openai.responses.create({
+    model: "gpt-4o",
+    instructions: IMAGE_OCR_PROMPT,
+    input: [
+      {
+        role: "user",
+        content: [
+          { type: "input_text", text: "이 등기부등본 PDF에서 모든 텍스트를 추출해주세요." },
+          {
+            type: "input_file",
+            filename: fileName,
+            file_data: `data:application/pdf;base64,${base64}`,
+          },
+        ],
+      },
+    ],
+    max_output_tokens: 16384,
+    temperature: 0,
+  });
+
+  const extractedText = response.output_text || "";
+
+  if (!extractedText || extractedText.length < 20) {
+    throw new Error(
+      "PDF에서 텍스트를 추출할 수 없습니다. 선명한 등기부등본을 업로드해주세요."
+    );
+  }
+
+  // 후처리
+  const normalizedText = normalizeRegistryText(extractedText);
+  const { isRegistry, confidence } = detectRegistryConfidence(normalizedText);
+
+  return {
+    text: normalizedText,
+    pageCount: 1,
+    fileName: `${fileName} (스캔 PDF → AI OCR)`,
+    charCount: normalizedText.length,
+    isRegistry,
+    confidence,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // 메인 함수: 이미지 → 텍스트 추출 (Tesseract 우선, 폴백 GPT-4o)
 // ---------------------------------------------------------------------------
 

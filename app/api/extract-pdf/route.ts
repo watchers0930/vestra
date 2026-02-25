@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractTextFromPDF } from "@/lib/pdf-parser";
-import { extractTextFromImages, isImageFile } from "@/lib/image-ocr";
+import { extractTextFromImages, extractTextFromScannedPDF, isImageFile } from "@/lib/image-ocr";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { checkOpenAICostGuard } from "@/lib/openai";
 
@@ -57,8 +57,8 @@ export async function POST(req: NextRequest) {
         const result = await extractTextFromPDF(buffer, firstFile.name);
         return NextResponse.json(result);
       } catch {
-        // 2차: 스캔 PDF → 페이지별 이미지 변환 → OCR 폴백
-        console.log("[PDF] 텍스트 추출 실패. 이미지 변환 후 OCR 시도.");
+        // 2차: 스캔 PDF → GPT-4o Responses API로 직접 OCR
+        console.log("[PDF] 텍스트 추출 실패. GPT-4o로 스캔 PDF 직접 OCR 시도.");
 
         const costGuard = checkOpenAICostGuard(ip);
         if (!costGuard.allowed) {
@@ -68,23 +68,7 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        const { renderPageAsImage, getDocumentProxy } = await import("unpdf");
-        const doc = await getDocumentProxy(new Uint8Array(buffer));
-        const pageCount = Math.min(doc.numPages, 5); // 최대 5페이지
-        const images: { buffer: Buffer; mimeType: string }[] = [];
-
-        for (let i = 1; i <= pageCount; i++) {
-          const imgResult = await renderPageAsImage(doc, i, { scale: 2 });
-          images.push({
-            buffer: Buffer.from(imgResult),
-            mimeType: "image/png",
-          });
-        }
-
-        const result = await extractTextFromImages(
-          images,
-          `${firstFile.name} (스캔 PDF → OCR)`
-        );
+        const result = await extractTextFromScannedPDF(buffer, firstFile.name);
         return NextResponse.json(result);
       }
     }
