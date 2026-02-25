@@ -56,7 +56,7 @@ const REGISTRY_KEYWORDS = [
 // 텍스트 후처리 (등기부등본 특화)
 // ---------------------------------------------------------------------------
 
-function normalizeRegistryText(raw: string): string {
+export function normalizeRegistryText(raw: string): string {
   let text = raw;
 
   // 1. CRLF → LF 통일
@@ -88,7 +88,7 @@ function normalizeRegistryText(raw: string): string {
 // 등기부등본 감지 및 신뢰도 계산
 // ---------------------------------------------------------------------------
 
-function detectRegistryConfidence(text: string): {
+export function detectRegistryConfidence(text: string): {
   isRegistry: boolean;
   confidence: number;
 } {
