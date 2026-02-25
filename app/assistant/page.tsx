@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MessageSquare, Send, Loader2, Bot, User, Sparkles } from "lucide-react";
+import { MessageSquare, Send, Bot, User, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PageHeader, Card, Button } from "@/components/common";
+import { LoadingSpinner } from "@/components/loading";
 
 interface Message {
   role: "user" | "assistant";
@@ -56,7 +58,6 @@ export default function AssistantPage() {
       });
 
       const data = await res.json();
-
       if (data.error) throw new Error(data.error);
 
       const assistantMessage: Message = {
@@ -80,17 +81,10 @@ export default function AssistantPage() {
 
   return (
     <div className="max-w-4xl mx-auto h-[calc(100vh-5rem)] lg:h-[calc(100vh-3rem)] flex flex-col">
-      {/* Header */}
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <MessageSquare className="text-primary" size={28} />
-          AI 어시스턴트
-        </h1>
-        <p className="text-secondary mt-1">부동산 전문 AI에게 무엇이든 물어보세요</p>
-      </div>
+      <PageHeader icon={MessageSquare} title="AI 어시스턴트" description="부동산 전문 AI에게 무엇이든 물어보세요" />
 
       {/* Chat Area */}
-      <div className="flex-1 bg-card rounded-xl border border-border flex flex-col overflow-hidden">
+      <Card className="flex-1 flex flex-col overflow-hidden">
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && (
@@ -138,19 +132,9 @@ export default function AssistantPage() {
                     : "bg-gray-50 border border-border text-foreground"
                 )}
               >
-                <div className="whitespace-pre-wrap leading-relaxed prose">
-                  {msg.content}
-                </div>
-                <div
-                  className={cn(
-                    "text-[10px] mt-2",
-                    msg.role === "user" ? "text-blue-200" : "text-muted"
-                  )}
-                >
-                  {msg.timestamp.toLocaleTimeString("ko-KR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                <div className="whitespace-pre-wrap leading-relaxed prose">{msg.content}</div>
+                <div className={cn("text-[10px] mt-2", msg.role === "user" ? "text-blue-200" : "text-muted")}>
+                  {msg.timestamp.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
                 </div>
               </div>
               {msg.role === "user" && (
@@ -168,7 +152,7 @@ export default function AssistantPage() {
               </div>
               <div className="bg-gray-50 border border-border rounded-xl px-4 py-3">
                 <div className="flex items-center gap-2 text-sm text-secondary">
-                  <Loader2 size={16} className="animate-spin" />
+                  <LoadingSpinner size="sm" variant="inline" />
                   답변을 생성하고 있습니다...
                 </div>
               </div>
@@ -195,16 +179,15 @@ export default function AssistantPage() {
               className="flex-1 px-4 py-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm"
               disabled={loading}
             />
-            <button
+            <Button
+              icon={Send}
               onClick={() => sendMessage()}
               disabled={loading || !input.trim()}
-              className="px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 transition-colors"
-            >
-              <Send size={18} />
-            </button>
+              size="lg"
+            />
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

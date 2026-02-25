@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Home, Shield, FileText, CheckCircle, Loader2, Copy, AlertTriangle, Download } from "lucide-react";
+import { Home, Shield, FileText, CheckCircle, Copy, AlertTriangle, Download } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
 import { addAnalysis } from "@/lib/store";
+import { PageHeader, Card, Alert, Button } from "@/components/common";
+import { FormInput, SliderInput, TabButtons } from "@/components/forms";
+import { LoadingSpinner } from "@/components/loading";
 
 interface JeonseAnalysis {
   needsRegistration: "required" | "recommended" | "optional";
@@ -18,6 +21,13 @@ interface GeneratedDocument {
   title: string;
   content: string;
 }
+
+const propertyTypes = [
+  { value: "아파트", label: "아파트" },
+  { value: "빌라/다세대", label: "빌라/다세대" },
+  { value: "오피스텔", label: "오피스텔" },
+  { value: "단독주택", label: "단독주택" },
+];
 
 export default function JeonsePage() {
   const [formData, setFormData] = useState({
@@ -52,7 +62,6 @@ export default function JeonsePage() {
       if (data.error) throw new Error(data.error);
       setAnalysis(data);
 
-      // localStorage에 분석 결과 저장
       addAnalysis({
         type: "jeonse",
         typeLabel: "전세보호",
@@ -107,148 +116,102 @@ export default function JeonsePage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Home className="text-primary" size={28} />
-          전세보호
-        </h1>
-        <p className="text-secondary mt-1">전세권 설정 및 임차권등기명령 지원</p>
-      </div>
+      <PageHeader icon={Home} title="전세보호" description="전세권 설정 및 임차권등기명령 지원" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Input Form */}
-        <div className="bg-card rounded-xl border border-border p-6">
+        <Card className="p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <FileText size={20} className="text-primary" />
             계약 정보 입력
           </h3>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1.5">임대인 (집주인)</label>
-                <input
-                  type="text"
-                  value={formData.landlordName}
-                  onChange={(e) => setFormData({ ...formData, landlordName: e.target.value })}
-                  placeholder="홍길동"
-                  className="w-full px-3 py-2 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1.5">임차인 (세입자)</label>
-                <input
-                  type="text"
-                  value={formData.tenantName}
-                  onChange={(e) => setFormData({ ...formData, tenantName: e.target.value })}
-                  placeholder="김철수"
-                  className="w-full px-3 py-2 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1.5">부동산 주소</label>
-              <input
-                type="text"
-                value={formData.propertyAddress}
-                onChange={(e) => setFormData({ ...formData, propertyAddress: e.target.value })}
-                placeholder="서울 강남구 역삼동 123-45 래미안 101동 1502호"
-                className="w-full px-3 py-2 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              <FormInput
+                label="임대인 (집주인)"
+                value={formData.landlordName}
+                onChange={(e) => setFormData({ ...formData, landlordName: e.target.value })}
+                placeholder="홍길동"
+              />
+              <FormInput
+                label="임차인 (세입자)"
+                value={formData.tenantName}
+                onChange={(e) => setFormData({ ...formData, tenantName: e.target.value })}
+                placeholder="김철수"
               />
             </div>
+
+            <FormInput
+              label="부동산 주소"
+              value={formData.propertyAddress}
+              onChange={(e) => setFormData({ ...formData, propertyAddress: e.target.value })}
+              placeholder="서울 강남구 역삼동 123-45 래미안 101동 1502호"
+            />
 
             <div>
               <label className="block text-sm font-medium mb-1.5">부동산 유형</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {["아파트", "빌라/다세대", "오피스텔", "단독주택"].map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setFormData({ ...formData, propertyType: type })}
-                    className={cn(
-                      "py-2 rounded-lg text-xs font-medium border transition-all",
-                      formData.propertyType === type
-                        ? "bg-primary text-white border-primary"
-                        : "bg-white text-secondary border-border hover:bg-gray-50"
-                    )}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1.5">보증금</label>
-              <input
-                type="range"
-                min={10000000}
-                max={2000000000}
-                step={10000000}
-                value={formData.deposit}
-                onChange={(e) => setFormData({ ...formData, deposit: Number(e.target.value) })}
-                className="w-full accent-primary"
-              />
-              <div className="text-right text-sm font-semibold text-primary">
-                {formatKRW(formData.deposit)}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1.5">월세 (없으면 0)</label>
-              <input
-                type="number"
-                value={formData.monthlyRent}
-                onChange={(e) => setFormData({ ...formData, monthlyRent: Number(e.target.value) })}
-                placeholder="0"
-                className="w-full px-3 py-2 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              <TabButtons
+                options={propertyTypes}
+                value={formData.propertyType}
+                onChange={(v) => setFormData({ ...formData, propertyType: v })}
               />
             </div>
+
+            <SliderInput
+              label="보증금"
+              value={formData.deposit}
+              onChange={(v) => setFormData({ ...formData, deposit: v })}
+              min={10000000}
+              max={2000000000}
+              step={10000000}
+            />
+
+            <FormInput
+              label="월세 (없으면 0)"
+              type="number"
+              value={formData.monthlyRent}
+              onChange={(e) => setFormData({ ...formData, monthlyRent: Number(e.target.value) })}
+              placeholder="0"
+            />
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1.5">계약 시작일</label>
-                <input
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1.5">계약 종료일</label>
-                <input
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
+              <FormInput
+                label="계약 시작일"
+                type="date"
+                value={formData.startDate}
+                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+              />
+              <FormInput
+                label="계약 종료일"
+                type="date"
+                value={formData.endDate}
+                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+              />
             </div>
 
-            <button
+            <Button
+              icon={Shield}
+              loading={loading}
+              disabled={!formData.propertyAddress}
+              fullWidth
+              size="lg"
               onClick={handleAnalyze}
-              disabled={loading || !formData.propertyAddress}
-              className="w-full py-3 bg-primary text-white rounded-lg font-medium text-sm hover:bg-primary-dark disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
             >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <Shield size={18} />}
               전세 안전 분석
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
 
         {/* Analysis Result */}
         <div className="space-y-4">
           {loading && (
-            <div className="bg-card rounded-xl border border-border p-12 text-center">
-              <Loader2 size={40} className="animate-spin text-primary mx-auto mb-4" />
-              <p className="text-secondary">전세 안전 분석 중...</p>
-            </div>
+            <LoadingSpinner message="전세 안전 분석 중..." />
           )}
 
           {analysis && !loading && (
             <>
               {/* Registration Need */}
-              <div className="bg-card rounded-xl border border-border p-5">
+              <Card className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-semibold">전세권 설정 판단</h4>
                   <span className={cn("px-3 py-1 rounded-full text-xs font-medium", needsLabel[analysis.needsRegistration].bg, needsLabel[analysis.needsRegistration].color)}>
@@ -261,10 +224,10 @@ export default function JeonsePage() {
                   </span>
                 </div>
                 <p className="text-sm text-secondary">{analysis.reason}</p>
-              </div>
+              </Card>
 
               {/* Recommendations */}
-              <div className="bg-card rounded-xl border border-border p-5">
+              <Card className="p-5">
                 <h4 className="font-semibold mb-3 flex items-center gap-2">
                   <AlertTriangle size={18} className="text-amber-500" />
                   권고사항
@@ -277,10 +240,10 @@ export default function JeonsePage() {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </Card>
 
               {/* Required Documents Checklist */}
-              <div className="bg-card rounded-xl border border-border p-5">
+              <Card className="p-5">
                 <h4 className="font-semibold mb-3 flex items-center gap-2">
                   <FileText size={18} className="text-primary" />
                   필요 서류 체크리스트
@@ -302,42 +265,37 @@ export default function JeonsePage() {
                     </label>
                   ))}
                 </div>
-              </div>
+              </Card>
 
               {/* AI Opinion */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
-                <h4 className="font-semibold text-blue-800 mb-2">AI 종합 의견</h4>
-                <p className="text-sm text-blue-900 leading-relaxed">{analysis.aiOpinion}</p>
-              </div>
+              <Alert variant="info">
+                <h4 className="font-semibold mb-1">AI 종합 의견</h4>
+                <p className="leading-relaxed">{analysis.aiOpinion}</p>
+              </Alert>
 
               {/* Document Generation */}
-              <div className="bg-card rounded-xl border border-border p-5">
+              <Card className="p-5">
                 <h4 className="font-semibold mb-3">문서 자동 생성</h4>
                 <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                  <button
+                  <Button
+                    icon={FileText}
+                    loading={docLoading && activeDocType === "jeonse"}
+                    disabled={docLoading}
                     onClick={() => handleGenerateDoc("jeonse")}
-                    disabled={docLoading}
-                    className="flex-1 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                    className="flex-1"
                   >
-                    {docLoading && activeDocType === "jeonse" ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <FileText size={16} />
-                    )}
                     전세권설정등기 신청서
-                  </button>
-                  <button
-                    onClick={() => handleGenerateDoc("lease")}
+                  </Button>
+                  <Button
+                    variant="amber"
+                    icon={FileText}
+                    loading={docLoading && activeDocType === "lease"}
                     disabled={docLoading}
-                    className="flex-1 py-2.5 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                    onClick={() => handleGenerateDoc("lease")}
+                    className="flex-1"
                   >
-                    {docLoading && activeDocType === "lease" ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <FileText size={16} />
-                    )}
                     임차권등기명령 신청서
-                  </button>
+                  </Button>
                 </div>
 
                 {generatedDoc && (
@@ -374,7 +332,7 @@ export default function JeonsePage() {
                     </pre>
                   </div>
                 )}
-              </div>
+              </Card>
             </>
           )}
         </div>

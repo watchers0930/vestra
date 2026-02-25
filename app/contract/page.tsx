@@ -8,11 +8,13 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  Loader2,
   ClipboardPaste,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { addAnalysis } from "@/lib/store";
+import { Card, Button, Badge, Alert } from "@/components/common";
+import { ScoreGauge } from "@/components/results";
+import { LoadingSpinner } from "@/components/loading";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -91,117 +93,29 @@ const SAMPLE_CONTRACT = `부동산 임대차계약서
 임차인: 김철수 (인)`;
 
 // ---------------------------------------------------------------------------
-// Sub-components
+// Risk badge mapping
 // ---------------------------------------------------------------------------
 
-function RiskBadge({ level }: { level: "high" | "warning" | "safe" }) {
-  const config = {
-    high: {
-      label: "위험",
-      icon: XCircle,
-      className: "bg-red-50 text-red-700 border-red-200",
-    },
-    warning: {
-      label: "주의",
-      icon: AlertTriangle,
-      className: "bg-amber-50 text-amber-700 border-amber-200",
-    },
-    safe: {
-      label: "안전",
-      icon: CheckCircle,
-      className: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    },
-  } as const;
+const riskBadgeVariant: Record<string, "danger" | "warning" | "success"> = {
+  high: "danger",
+  warning: "warning",
+  safe: "success",
+};
+const riskBadgeLabel: Record<string, string> = {
+  high: "위험",
+  warning: "주의",
+  safe: "안전",
+};
+const riskBadgeIcon: Record<string, typeof XCircle> = {
+  high: XCircle,
+  warning: AlertTriangle,
+  safe: CheckCircle,
+};
 
-  const c = config[level];
-  const Icon = c.icon;
-
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium",
-        c.className
-      )}
-    >
-      <Icon size={12} />
-      {c.label}
-    </span>
-  );
-}
-
-function ImportanceBadge({ importance }: { importance: "high" | "medium" }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium",
-        importance === "high"
-          ? "bg-red-50 text-red-700 border-red-200"
-          : "bg-amber-50 text-amber-700 border-amber-200"
-      )}
-    >
-      {importance === "high" ? "필수" : "권장"}
-    </span>
-  );
-}
-
-function SafetyScoreCircle({ score }: { score: number }) {
-  const radius = 54;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
-
-  let color: string;
-  let label: string;
-  if (score >= 80) {
-    color = "#10b981";
-    label = "안전";
-  } else if (score >= 50) {
-    color = "#f59e0b";
-    label = "주의";
-  } else {
-    color = "#ef4444";
-    label = "위험";
-  }
-
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative h-36 w-36">
-        <svg className="h-full w-full -rotate-90" viewBox="0 0 128 128">
-          <circle
-            cx="64"
-            cy="64"
-            r={radius}
-            fill="none"
-            stroke="#e5e7eb"
-            strokeWidth="10"
-          />
-          <circle
-            cx="64"
-            cy="64"
-            r={radius}
-            fill="none"
-            stroke={color}
-            strokeWidth="10"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-            className="transition-all duration-1000 ease-out"
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold" style={{ color }}>
-            {score}
-          </span>
-          <span className="text-xs text-gray-500">/ 100</span>
-        </div>
-      </div>
-      <span
-        className="rounded-full px-3 py-1 text-sm font-semibold text-white"
-        style={{ backgroundColor: color }}
-      >
-        {label}
-      </span>
-    </div>
-  );
+function getScoreLabel(score: number) {
+  if (score >= 80) return "안전";
+  if (score >= 50) return "주의";
+  return "위험";
 }
 
 // ---------------------------------------------------------------------------
@@ -238,7 +152,6 @@ export default function ContractReviewPage() {
     }
 
     if (ext === "pdf" || file.type === "application/pdf") {
-      // PDF 파일 → 서버사이드 텍스트 추출
       setFileName(file.name);
       setError(null);
 
@@ -330,7 +243,6 @@ export default function ContractReviewPage() {
       const data: AnalysisResult = await res.json();
       setResult(data);
 
-      // localStorage에 분석 결과 저장
       addAnalysis({
         type: "contract",
         typeLabel: "계약검토",
@@ -352,7 +264,6 @@ export default function ContractReviewPage() {
     setInputMode("text");
   };
 
-  // ---- Border color for clause risk ----
   const borderForRisk = (level: "high" | "warning" | "safe") => {
     switch (level) {
       case "high":
@@ -376,50 +287,41 @@ export default function ContractReviewPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">계약검토</h1>
-            <p className="text-sm text-gray-500">
-              AI 기반 부동산 계약서 자동 분석
-            </p>
+            <p className="text-sm text-gray-500">AI 기반 부동산 계약서 자동 분석</p>
           </div>
         </div>
       </div>
 
       {/* Input Card */}
-      <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+      <Card className="p-6">
         {/* Tabs */}
         <div className="mb-5 flex flex-wrap items-center gap-2">
-          <button
+          <Button
+            icon={ClipboardPaste}
+            variant={inputMode === "text" ? "primary" : "secondary"}
+            size="sm"
             onClick={() => setInputMode("text")}
-            className={cn(
-              "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-              inputMode === "text"
-                ? "bg-blue-600 text-white shadow-sm"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            )}
           >
-            <ClipboardPaste size={16} />
             텍스트 입력
-          </button>
-          <button
+          </Button>
+          <Button
+            icon={Upload}
+            variant={inputMode === "file" ? "primary" : "secondary"}
+            size="sm"
             onClick={() => setInputMode("file")}
-            className={cn(
-              "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-              inputMode === "file"
-                ? "bg-blue-600 text-white shadow-sm"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            )}
           >
-            <Upload size={16} />
             파일 업로드
-          </button>
+          </Button>
 
           <div className="hidden sm:block flex-1" />
 
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={fillSample}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50"
           >
             샘플 계약서 불러오기
-          </button>
+          </Button>
         </div>
 
         {/* Text Input Mode */}
@@ -454,9 +356,7 @@ export default function ContractReviewPage() {
                 <>
                   <FileText size={48} className="text-blue-500" />
                   <div className="text-center">
-                    <p className="text-sm font-medium text-gray-700">
-                      {fileName}
-                    </p>
+                    <p className="text-sm font-medium text-gray-700">{fileName}</p>
                     <p className="mt-1 text-xs text-gray-500">
                       파일이 선택되었습니다. 다른 파일을 선택하려면 클릭하세요.
                     </p>
@@ -466,18 +366,13 @@ export default function ContractReviewPage() {
                 <>
                   <Upload
                     size={48}
-                    className={cn(
-                      "transition-colors",
-                      isDragging ? "text-blue-500" : "text-gray-400"
-                    )}
+                    className={cn("transition-colors", isDragging ? "text-blue-500" : "text-gray-400")}
                   />
                   <div className="text-center">
                     <p className="text-sm font-medium text-gray-600">
                       파일을 여기로 드래그하거나 클릭하여 업로드
                     </p>
-                    <p className="mt-1 text-xs text-gray-400">
-                      .txt, .pdf 파일 지원
-                    </p>
+                    <p className="mt-1 text-xs text-gray-400">.txt, .pdf 파일 지원</p>
                   </div>
                 </>
               )}
@@ -501,36 +396,24 @@ export default function ContractReviewPage() {
 
         {/* Error */}
         {error && (
-          <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-            <AlertTriangle size={16} className="flex-shrink-0" />
-            {error}
+          <div className="mt-4">
+            <Alert variant="error">{error}</Alert>
           </div>
         )}
 
         {/* Analyze Button */}
-        <button
+        <Button
+          icon={isLoading ? undefined : FileSearch}
+          loading={isLoading}
+          disabled={!contractText.trim()}
+          fullWidth
+          size="lg"
+          className="mt-5"
           onClick={handleAnalyze}
-          disabled={isLoading || !contractText.trim()}
-          className={cn(
-            "mt-5 flex w-full items-center justify-center gap-2 rounded-lg py-3 text-sm font-semibold transition-colors",
-            isLoading || !contractText.trim()
-              ? "cursor-not-allowed bg-gray-200 text-gray-400"
-              : "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"
-          )}
         >
-          {isLoading ? (
-            <>
-              <Loader2 size={18} className="animate-spin" />
-              분석 중...
-            </>
-          ) : (
-            <>
-              <FileSearch size={18} />
-              계약서 분석하기
-            </>
-          )}
-        </button>
-      </div>
+          계약서 분석하기
+        </Button>
+      </Card>
 
       {/* ------------------------------------------------------------------ */}
       {/* Results                                                            */}
@@ -540,15 +423,16 @@ export default function ContractReviewPage() {
           {/* Safety Score + AI Opinion row */}
           <div className="grid gap-6 md:grid-cols-[auto_1fr]">
             {/* Safety Score Card */}
-            <div className="flex flex-col items-center justify-center rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
-              <h2 className="mb-4 text-sm font-semibold text-gray-500">
-                계약 안전점수
-              </h2>
-              <SafetyScoreCircle score={result.safetyScore} />
-            </div>
+            <Card className="flex flex-col items-center justify-center p-6">
+              <h2 className="mb-4 text-sm font-semibold text-gray-500">계약 안전점수</h2>
+              <ScoreGauge
+                score={result.safetyScore}
+                grade={getScoreLabel(result.safetyScore)}
+              />
+            </Card>
 
             {/* AI Opinion Card */}
-            <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+            <Card className="p-6">
               <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-500">
                 <FileSearch size={16} className="text-blue-500" />
                 AI 종합 의견
@@ -556,14 +440,12 @@ export default function ContractReviewPage() {
               <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
                 {result.aiOpinion}
               </p>
-            </div>
+            </Card>
           </div>
 
           {/* Clauses Analysis */}
-          <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
-            <h2 className="mb-4 text-base font-semibold text-gray-800">
-              조항별 분석 결과
-            </h2>
+          <Card className="p-6">
+            <h2 className="mb-4 text-base font-semibold text-gray-800">조항별 분석 결과</h2>
             <div className="space-y-4">
               {result.clauses.map((clause, idx) => (
                 <div
@@ -574,19 +456,17 @@ export default function ContractReviewPage() {
                   )}
                 >
                   <div className="mb-2 flex items-center gap-3">
-                    <h3 className="text-sm font-semibold text-gray-800">
-                      {clause.title}
-                    </h3>
-                    <RiskBadge level={clause.riskLevel} />
+                    <h3 className="text-sm font-semibold text-gray-800">{clause.title}</h3>
+                    <Badge variant={riskBadgeVariant[clause.riskLevel]} icon={riskBadgeIcon[clause.riskLevel]} size="md">
+                      {riskBadgeLabel[clause.riskLevel]}
+                    </Badge>
                   </div>
                   {clause.content && (
                     <p className="mb-2 rounded bg-white px-3 py-2 text-xs leading-relaxed text-gray-500 ring-1 ring-gray-100">
                       {clause.content}
                     </p>
                   )}
-                  <p className="text-sm leading-relaxed text-gray-700">
-                    {clause.analysis}
-                  </p>
+                  <p className="text-sm leading-relaxed text-gray-700">{clause.analysis}</p>
                   {clause.relatedLaw && (
                     <p className="mt-2 text-xs text-gray-400">
                       <span className="font-medium text-gray-500">관련 법규:</span>{" "}
@@ -596,11 +476,11 @@ export default function ContractReviewPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
 
           {/* Missing Clauses */}
           {result.missingClauses.length > 0 && (
-            <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+            <Card className="p-6">
               <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-gray-800">
                 <AlertTriangle size={18} className="text-amber-500" />
                 누락된 중요 조항
@@ -617,18 +497,16 @@ export default function ContractReviewPage() {
                     )}
                   >
                     <div className="mb-2 flex items-center gap-2">
-                      <h3 className="text-sm font-semibold text-gray-800">
-                        {mc.title}
-                      </h3>
-                      <ImportanceBadge importance={mc.importance} />
+                      <h3 className="text-sm font-semibold text-gray-800">{mc.title}</h3>
+                      <Badge variant={mc.importance === "high" ? "danger" : "warning"} size="md">
+                        {mc.importance === "high" ? "필수" : "권장"}
+                      </Badge>
                     </div>
-                    <p className="text-xs leading-relaxed text-gray-600">
-                      {mc.description}
-                    </p>
+                    <p className="text-xs leading-relaxed text-gray-600">{mc.description}</p>
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
           )}
         </div>
       )}

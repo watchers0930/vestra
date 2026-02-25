@@ -4,12 +4,13 @@ import { LogIn } from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Card } from "@/components/common";
+import { LoadingSpinner } from "@/components/loading";
 
 export default function LoginPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // 이미 로그인된 경우 대시보드로 리다이렉트
   useEffect(() => {
     if (status === "authenticated") {
       router.replace("/");
@@ -19,7 +20,7 @@ export default function LoginPage() {
   if (status === "loading") {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
-        <div className="animate-pulse text-secondary">로딩 중...</div>
+        <LoadingSpinner message="로딩 중..." variant="inline" />
       </div>
     );
   }
@@ -30,7 +31,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
-      <div className="bg-card rounded-2xl border border-border p-8 max-w-sm w-full text-center">
+      <Card className="rounded-2xl p-8 max-w-sm w-full text-center">
         <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
           <LogIn size={32} className="text-primary" />
         </div>
@@ -71,7 +72,7 @@ export default function LoginPage() {
         <a href="/" className="inline-block mt-3 text-xs text-primary hover:underline">
           ← 로그인 없이 계속
         </a>
-      </div>
+      </Card>
     </div>
   );
 }

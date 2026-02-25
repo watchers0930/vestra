@@ -25,6 +25,9 @@ import { SAMPLE_REGISTRY_TEXT } from "@/lib/registry-parser";
 import type { ParsedRegistry } from "@/lib/registry-parser";
 import type { RiskScore } from "@/lib/risk-scoring";
 import type { ValidationResult } from "@/lib/validation-engine";
+import { PageHeader, Card, Button, Alert } from "@/components/common";
+import { ScoreGauge, InfoRow } from "@/components/results";
+import { SliderInput } from "@/components/forms";
 
 type InputMode = "text" | "file";
 type AnalysisStep = "idle" | "extracting" | "parsing" | "validating" | "scoring" | "ai" | "done";
@@ -58,42 +61,6 @@ const RISK_TYPE_STYLES = {
   info: { bg: "bg-gray-100", text: "text-gray-500" },
 };
 
-function ScoreGauge({ score, grade, label }: { score: number; grade: string; label: string }) {
-  const circumference = 2 * Math.PI * 54;
-  const offset = circumference - (score / 100) * circumference;
-  const style = GRADE_STYLES[grade] || GRADE_STYLES.C;
-
-  return (
-    <div className="flex flex-col items-center">
-      <div className="relative w-32 h-32">
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="54" fill="none" stroke="#e5e7eb" strokeWidth="8" />
-          <circle
-            cx="60"
-            cy="60"
-            r="54"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            className={style.text}
-            style={{ transition: "stroke-dashoffset 1s ease-out" }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={cn("text-3xl font-bold", style.text)}>{score}</span>
-          <span className="text-xs text-secondary">/ 100</span>
-        </div>
-      </div>
-      <div className={cn("mt-2 px-4 py-1 rounded-full text-sm font-semibold", style.bg, style.text)}>
-        {grade}등급 · {label}
-      </div>
-    </div>
-  );
-}
-
 const VALIDATION_SEVERITY_STYLES = {
   error: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200", icon: XCircle, label: "오류" },
   warning: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", icon: AlertTriangle, label: "경고" },
@@ -107,7 +74,7 @@ const VALIDATION_CATEGORY_LABELS: Record<string, string> = {
   crosscheck: "크로스체크",
 };
 
-function StepIndicator({ step, showExtract }: { step: AnalysisStep; showExtract?: boolean }) {
+function RegistryStepIndicator({ step, showExtract }: { step: AnalysisStep; showExtract?: boolean }) {
   const baseSteps = [
     { key: "parsing", icon: DatabaseIcon, label: "자체 파싱 엔진", sublabel: "정규식 패턴 매칭" },
     { key: "validating", icon: ShieldCheck, label: "검증 엔진", sublabel: "4단계 데이터 검증" },
@@ -175,7 +142,6 @@ export default function RegistryPage() {
   const [showEulgu, setShowEulgu] = useState(true);
   const [analyzedAt, setAnalyzedAt] = useState<Date | null>(null);
 
-  // PDF 업로드 관련 state
   const [fileName, setFileName] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
@@ -189,7 +155,6 @@ export default function RegistryPage() {
     setInputMode("text");
   };
 
-  // ---- PDF 파일 처리 ----
   const handlePdfUpload = useCallback(async (file: File) => {
     if (!file) return;
 
@@ -262,7 +227,6 @@ export default function RegistryPage() {
     [handlePdfUpload]
   );
 
-  // ---- 분석 실행 ----
   const usedPdf = inputMode === "file" && fileName;
 
   const handleAnalyze = async () => {
@@ -270,25 +234,20 @@ export default function RegistryPage() {
     setResult(null);
     setError(null);
 
-    // PDF 모드면 추출 단계 표시
     if (usedPdf) {
       setStep("extracting");
       await new Promise((r) => setTimeout(r, 500));
     }
 
-    // 1단계: 파싱
     setStep("parsing");
     await new Promise((r) => setTimeout(r, 800));
 
-    // 2단계: 검증
     setStep("validating");
     await new Promise((r) => setTimeout(r, 600));
 
-    // 3단계: 스코어링
     setStep("scoring");
     await new Promise((r) => setTimeout(r, 500));
 
-    // 4단계: AI 의견
     setStep("ai");
 
     try {
@@ -305,7 +264,6 @@ export default function RegistryPage() {
       setAnalyzedAt(new Date());
       setStep("done");
 
-      // localStorage 저장
       addAnalysis({
         type: "registry",
         typeLabel: "등기분석",
@@ -321,50 +279,36 @@ export default function RegistryPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <FileSearch className="text-primary" size={28} />
-          등기분석
-        </h1>
-        <p className="text-secondary mt-1">PDF 업로드 → 자체 텍스트 추출 → 4단계 검증 + 리스크 스코어링</p>
-        <div className="flex flex-wrap gap-2 mt-2">
-          <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded">PDF 자체 파싱</span>
-          <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded">4단계 검증 엔진</span>
-          <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded">독자 스코어링 알고리즘</span>
-          <span className="px-2 py-0.5 bg-gray-100 text-secondary text-[10px] font-medium rounded">AI 미사용 핵심분석</span>
-        </div>
+      <PageHeader icon={FileSearch} title="등기분석" description="PDF 업로드 → 자체 텍스트 추출 → 4단계 검증 + 리스크 스코어링" />
+      <div className="flex flex-wrap gap-2 -mt-4 mb-6">
+        <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded">PDF 자체 파싱</span>
+        <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded">4단계 검증 엔진</span>
+        <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded">독자 스코어링 알고리즘</span>
+        <span className="px-2 py-0.5 bg-gray-100 text-secondary text-[10px] font-medium rounded">AI 미사용 핵심분석</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 입력 영역 */}
         <div className="space-y-4">
-          <div className="bg-card rounded-xl border border-border p-5">
+          <Card className="p-5">
             {/* 입력 모드 탭 */}
             <div className="flex items-center gap-2 mb-4">
-              <button
+              <Button
+                icon={Upload}
+                variant={inputMode === "file" ? "primary" : "secondary"}
+                size="sm"
                 onClick={() => setInputMode("file")}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                  inputMode === "file"
-                    ? "bg-primary text-white shadow-sm"
-                    : "bg-gray-100 text-secondary hover:bg-gray-200"
-                )}
               >
-                <Upload size={14} />
                 PDF 업로드
-              </button>
-              <button
+              </Button>
+              <Button
+                icon={ClipboardPaste}
+                variant={inputMode === "text" ? "primary" : "secondary"}
+                size="sm"
                 onClick={() => setInputMode("text")}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                  inputMode === "text"
-                    ? "bg-primary text-white shadow-sm"
-                    : "bg-gray-100 text-secondary hover:bg-gray-200"
-                )}
               >
-                <ClipboardPaste size={14} />
                 텍스트 입력
-              </button>
+              </Button>
               <div className="flex-1" />
               <button
                 onClick={loadSample}
@@ -419,9 +363,7 @@ export default function RegistryPage() {
                             </span>
                           </div>
                         )}
-                        <p className="mt-2 text-[10px] text-secondary">
-                          다른 파일을 업로드하려면 클릭하세요
-                        </p>
+                        <p className="mt-2 text-[10px] text-secondary">다른 파일을 업로드하려면 클릭하세요</p>
                       </div>
                     </>
                   ) : (
@@ -431,12 +373,8 @@ export default function RegistryPage() {
                         className={cn("transition-colors", isDragging ? "text-primary" : "text-gray-400")}
                       />
                       <div className="text-center">
-                        <p className="text-sm font-medium text-gray-600">
-                          등기부등본 PDF를 드래그하거나 클릭하여 업로드
-                        </p>
-                        <p className="mt-1 text-xs text-gray-400">
-                          인터넷등기소(iros.go.kr) PDF 지원 · 최대 10MB
-                        </p>
+                        <p className="text-sm font-medium text-gray-600">등기부등본 PDF를 드래그하거나 클릭하여 업로드</p>
+                        <p className="mt-1 text-xs text-gray-400">인터넷등기소(iros.go.kr) PDF 지원 · 최대 10MB</p>
                       </div>
                     </>
                   )}
@@ -471,61 +409,49 @@ export default function RegistryPage() {
                 </div>
               </>
             )}
-          </div>
+          </Card>
 
-          <div className="bg-card rounded-xl border border-border p-5">
-            <h3 className="font-semibold text-sm mb-3">추정 시세 (선택)</h3>
-            <input
-              type="range"
+          <Card className="p-5">
+            <SliderInput
+              label="추정 시세 (선택)"
+              value={estimatedPrice}
+              onChange={setEstimatedPrice}
               min={50000000}
               max={3000000000}
               step={10000000}
-              value={estimatedPrice}
-              onChange={(e) => setEstimatedPrice(Number(e.target.value))}
-              className="w-full accent-primary"
             />
-            <div className="text-right text-sm font-semibold text-primary">
-              {formatKRW(estimatedPrice)}
-            </div>
             <p className="text-[10px] text-muted mt-1">
               시세를 입력하면 근저당 비율 기반 리스크를 더 정확히 산출합니다
             </p>
-          </div>
+          </Card>
 
-          <button
+          <Button
+            icon={step !== "idle" && step !== "done" ? undefined : Shield}
+            loading={step !== "idle" && step !== "done"}
+            disabled={!rawText.trim() || isExtracting}
+            fullWidth
+            size="lg"
             onClick={handleAnalyze}
-            disabled={(step !== "idle" && step !== "done") || !rawText.trim() || isExtracting}
-            className="w-full py-3 bg-primary text-white rounded-lg font-medium text-sm hover:bg-primary-dark disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
           >
-            {step !== "idle" && step !== "done" ? (
-              <Loader2 size={18} className="animate-spin" />
-            ) : (
-              <Shield size={18} />
-            )}
             {usedPdf ? "PDF 등기부등본 분석 실행" : "등기부등본 분석 실행"}
-          </button>
+          </Button>
         </div>
 
         {/* 결과 영역 */}
         <div className="space-y-4">
           {/* 분석 단계 표시 */}
           {step !== "idle" && step !== "done" && (
-            <div className="bg-card rounded-xl border border-border p-4">
-              <StepIndicator step={step} showExtract={!!usedPdf} />
-            </div>
+            <Card className="p-4">
+              <RegistryStepIndicator step={step} showExtract={!!usedPdf} />
+            </Card>
           )}
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-2">
-              <AlertTriangle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          )}
+          {error && <Alert variant="error">{error}</Alert>}
 
           {result && (
             <>
               {/* 리스크 스코어 */}
-              <div className="bg-card rounded-xl border border-border p-5">
+              <Card className="p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-semibold flex items-center gap-2 text-sm">
                     <Shield size={18} className="text-primary" />
@@ -541,41 +467,26 @@ export default function RegistryPage() {
                 <div className="flex flex-col sm:flex-row items-center gap-6">
                   <ScoreGauge
                     score={result.riskScore.totalScore}
-                    grade={result.riskScore.grade}
+                    grade={`${result.riskScore.grade}등급`}
                     label={result.riskScore.gradeLabel}
                   />
                   <div className="flex-1 space-y-2 w-full">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-secondary">감점 합계</span>
-                      <span className="font-semibold text-red-600">-{result.riskScore.totalDeduction}점</span>
-                    </div>
+                    <InfoRow label="감점 합계" value={<span className="text-red-600">-{result.riskScore.totalDeduction}점</span>} />
                     {result.riskScore.mortgageRatio > 0 && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-secondary">근저당 비율</span>
-                        <span className="font-semibold">{result.riskScore.mortgageRatio.toFixed(1)}%</span>
-                      </div>
+                      <InfoRow label="근저당 비율" value={`${result.riskScore.mortgageRatio.toFixed(1)}%`} />
                     )}
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-secondary">현행 갑구</span>
-                      <span className="font-semibold">{result.parsed.summary.activeGapguEntries}건</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-secondary">현행 을구</span>
-                      <span className="font-semibold">{result.parsed.summary.activeEulguEntries}건</span>
-                    </div>
+                    <InfoRow label="현행 갑구" value={`${result.parsed.summary.activeGapguEntries}건`} />
+                    <InfoRow label="현행 을구" value={`${result.parsed.summary.activeEulguEntries}건`} />
                     {result.parsed.summary.totalMortgageAmount > 0 && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-secondary">근저당 총액</span>
-                        <span className="font-semibold">{formatKRW(result.parsed.summary.totalMortgageAmount)}</span>
-                      </div>
+                      <InfoRow label="근저당 총액" value={formatKRW(result.parsed.summary.totalMortgageAmount)} />
                     )}
                   </div>
                 </div>
-              </div>
+              </Card>
 
               {/* 검증 결과 */}
               {result.validation && (
-                <div className="bg-card rounded-xl border border-border p-5">
+                <Card className="p-5">
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="font-semibold flex items-center gap-2 text-sm">
                       <ShieldCheck size={18} className="text-primary" />
@@ -596,7 +507,6 @@ export default function RegistryPage() {
                     </div>
                   </div>
 
-                  {/* 검증 통계 */}
                   <div className="grid grid-cols-4 gap-2 mb-3">
                     <div className="text-center p-2 bg-gray-50 rounded-lg">
                       <div className="text-sm font-bold text-primary">{result.validation.summary.totalChecks}</div>
@@ -616,7 +526,6 @@ export default function RegistryPage() {
                     </div>
                   </div>
 
-                  {/* 검증 이슈 목록 */}
                   {result.validation.issues.length > 0 && (
                     <div className="space-y-1.5 max-h-48 overflow-y-auto">
                       {result.validation.issues
@@ -651,12 +560,12 @@ export default function RegistryPage() {
                       모든 검증 항목을 통과했습니다.
                     </div>
                   )}
-                </div>
+                </Card>
               )}
 
               {/* 리스크 요인 */}
               {result.riskScore.factors.length > 0 && (
-                <div className="bg-card rounded-xl border border-border p-5">
+                <Card className="p-5">
                   <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
                     <AlertTriangle size={18} className="text-amber-500" />
                     감점 요인 ({result.riskScore.factors.length}건)
@@ -680,12 +589,12 @@ export default function RegistryPage() {
                       );
                     })}
                   </div>
-                </div>
+                </Card>
               )}
 
               {/* 표제부 */}
               {result.parsed.title.address && (
-                <div className="bg-card rounded-xl border border-border p-5">
+                <Card className="p-5">
                   <h4 className="font-semibold mb-3 text-sm">표제부 (건물의 표시)</h4>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     {result.parsed.title.address && (
@@ -719,19 +628,17 @@ export default function RegistryPage() {
                       </div>
                     )}
                   </div>
-                </div>
+                </Card>
               )}
 
               {/* 갑구 */}
               {result.parsed.gapgu.length > 0 && (
-                <div className="bg-card rounded-xl border border-border p-5">
+                <Card className="p-5">
                   <button
                     onClick={() => setShowGapgu(!showGapgu)}
                     className="w-full flex items-center justify-between"
                   >
-                    <h4 className="font-semibold text-sm">
-                      갑구 (소유권) — {result.parsed.gapgu.length}건
-                    </h4>
+                    <h4 className="font-semibold text-sm">갑구 (소유권) — {result.parsed.gapgu.length}건</h4>
                     {showGapgu ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </button>
                   {showGapgu && (
@@ -756,27 +663,23 @@ export default function RegistryPage() {
                               )}
                               {entry.date && <span className="text-muted ml-auto">{entry.date}</span>}
                             </div>
-                            {entry.holder && (
-                              <div className="text-secondary">{entry.holder}</div>
-                            )}
+                            {entry.holder && <div className="text-secondary">{entry.holder}</div>}
                           </div>
                         );
                       })}
                     </div>
                   )}
-                </div>
+                </Card>
               )}
 
               {/* 을구 */}
               {result.parsed.eulgu.length > 0 && (
-                <div className="bg-card rounded-xl border border-border p-5">
+                <Card className="p-5">
                   <button
                     onClick={() => setShowEulgu(!showEulgu)}
                     className="w-full flex items-center justify-between"
                   >
-                    <h4 className="font-semibold text-sm">
-                      을구 (권리관계) — {result.parsed.eulgu.length}건
-                    </h4>
+                    <h4 className="font-semibold text-sm">을구 (권리관계) — {result.parsed.eulgu.length}건</h4>
                     {showEulgu ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </button>
                   {showEulgu && (
@@ -802,9 +705,7 @@ export default function RegistryPage() {
                               {entry.date && <span className="text-muted ml-auto">{entry.date}</span>}
                             </div>
                             <div className="flex items-center justify-between">
-                              {entry.holder && (
-                                <span className="text-secondary">{entry.holder}</span>
-                              )}
+                              {entry.holder && <span className="text-secondary">{entry.holder}</span>}
                               {entry.amount > 0 && (
                                 <span className="font-semibold text-primary">{formatKRW(entry.amount)}</span>
                               )}
@@ -814,20 +715,18 @@ export default function RegistryPage() {
                       })}
                     </div>
                   )}
-                </div>
+                </Card>
               )}
 
               {/* AI 종합 의견 */}
               {result.aiOpinion && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
-                  <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2 text-sm">
+                <Alert variant="info">
+                  <h4 className="font-semibold mb-2 flex items-center gap-2 text-sm">
                     <Brain size={18} />
                     AI 종합 의견
                   </h4>
-                  <p className="text-sm text-blue-900 leading-relaxed whitespace-pre-wrap">
-                    {result.aiOpinion}
-                  </p>
-                </div>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{result.aiOpinion}</p>
+                </Alert>
               )}
 
               {/* 파싱 통계 */}
@@ -857,7 +756,7 @@ export default function RegistryPage() {
 
           {/* 초기 상태 */}
           {step === "idle" && !result && (
-            <div className="bg-card rounded-xl border border-border p-12 text-center">
+            <Card className="p-12 text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <FileSearch size={32} className="text-primary" />
               </div>
@@ -872,7 +771,7 @@ export default function RegistryPage() {
                 <span className="flex items-center gap-1"><ShieldCheck size={12} /> 4단계 검증</span>
                 <span className="flex items-center gap-1"><Zap size={12} /> 독자 스코어링</span>
               </div>
-            </div>
+            </Card>
           )}
         </div>
       </div>

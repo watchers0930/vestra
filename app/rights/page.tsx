@@ -7,11 +7,13 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  Loader2,
   MapPin,
 } from "lucide-react";
 import { formatKRW, cn } from "@/lib/utils";
 import { addAnalysis, addOrUpdateAsset } from "@/lib/store";
+import { PageHeader, Card, Button, Badge, Alert } from "@/components/common";
+import { ScoreGauge } from "@/components/results";
+import { LoadingSpinner, StepIndicator } from "@/components/loading";
 
 interface PropertyInfo {
   address: string;
@@ -72,110 +74,26 @@ const LOADING_STEPS = [
 
 const QUICK_SEARCH = ["역삼 래미안", "잠실엘스", "반포자이", "송도 더샵"];
 
-function SafetyGauge({ score }: { score: number }) {
-  const radius = 70;
-  const strokeWidth = 14;
-  const circumference = 2 * Math.PI * radius;
-  const progress = (score / 100) * circumference;
-  const offset = circumference - progress;
+const riskBadgeVariant: Record<string, "danger" | "warning" | "success"> = {
+  danger: "danger",
+  warning: "warning",
+  safe: "success",
+};
+const riskBadgeLabel: Record<string, string> = {
+  danger: "위험",
+  warning: "주의",
+  safe: "안전",
+};
+const riskBadgeIcon: Record<string, typeof XCircle> = {
+  danger: XCircle,
+  warning: AlertTriangle,
+  safe: CheckCircle,
+};
 
-  const getColor = (s: number) => {
-    if (s >= 70) return { stroke: "#10b981", text: "text-emerald-600", label: "안전" };
-    if (s >= 40) return { stroke: "#f59e0b", text: "text-amber-600", label: "주의" };
-    return { stroke: "#ef4444", text: "text-red-600", label: "위험" };
-  };
-
-  const color = getColor(score);
-
-  return (
-    <div className="flex flex-col items-center">
-      <svg width="180" height="180" viewBox="0 0 180 180">
-        {/* Background circle */}
-        <circle
-          cx="90"
-          cy="90"
-          r={radius}
-          fill="none"
-          stroke="#e5e7eb"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-        />
-        {/* Progress circle */}
-        <circle
-          cx="90"
-          cy="90"
-          r={radius}
-          fill="none"
-          stroke={color.stroke}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          transform="rotate(-90 90 90)"
-          className="transition-all duration-1000 ease-out"
-        />
-        {/* Score text */}
-        <text
-          x="90"
-          y="82"
-          textAnchor="middle"
-          className="fill-gray-900 text-3xl font-bold"
-          style={{ fontSize: "36px", fontWeight: 700 }}
-        >
-          {score}
-        </text>
-        <text
-          x="90"
-          y="108"
-          textAnchor="middle"
-          className="fill-gray-400"
-          style={{ fontSize: "14px" }}
-        >
-          / 100
-        </text>
-      </svg>
-      <span
-        className={cn("mt-2 text-lg font-semibold", color.text)}
-      >
-        {color.label}
-      </span>
-    </div>
-  );
-}
-
-function RiskBadge({ level }: { level: "danger" | "warning" | "safe" }) {
-  const config = {
-    danger: {
-      bg: "bg-red-50 text-red-700 border-red-200",
-      icon: XCircle,
-      label: "위험",
-    },
-    warning: {
-      bg: "bg-amber-50 text-amber-700 border-amber-200",
-      icon: AlertTriangle,
-      label: "주의",
-    },
-    safe: {
-      bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      icon: CheckCircle,
-      label: "안전",
-    },
-  };
-
-  const c = config[level];
-  const Icon = c.icon;
-
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium",
-        c.bg
-      )}
-    >
-      <Icon size={12} />
-      {c.label}
-    </span>
-  );
+function getScoreLabel(score: number) {
+  if (score >= 70) return "안전";
+  if (score >= 40) return "주의";
+  return "위험";
 }
 
 export default function RightsAnalysisPage() {
@@ -194,7 +112,6 @@ export default function RightsAnalysisPage() {
     setResult(null);
     setError(null);
 
-    // Simulate step-by-step loading progress
     const stepInterval = setInterval(() => {
       setLoadingStep((prev) => {
         if (prev < LOADING_STEPS.length - 1) return prev + 1;
@@ -216,7 +133,6 @@ export default function RightsAnalysisPage() {
       const data: AnalysisResult = await response.json();
       setResult(data);
 
-      // localStorage에 분석 결과 저장
       addAnalysis({
         type: "rights",
         typeLabel: "권리분석",
@@ -246,19 +162,10 @@ export default function RightsAnalysisPage() {
 
   return (
     <div className="min-h-screen bg-gray-50/50">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-1">
-          <Shield className="text-blue-600" size={28} />
-          <h1 className="text-2xl font-bold text-gray-900">권리분석</h1>
-        </div>
-        <p className="text-sm text-gray-500 ml-[40px]">
-          등기부등본 기반 AI 권리분석
-        </p>
-      </div>
+      <PageHeader icon={Shield} title="권리분석" description="등기부등본 기반 AI 권리분석" />
 
       {/* Search Section */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm">
+      <Card className="p-6 mb-6">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <MapPin
@@ -274,14 +181,14 @@ export default function RightsAnalysisPage() {
               className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors"
             />
           </div>
-          <button
+          <Button
+            icon={Search}
             onClick={() => handleSearch()}
             disabled={loading || !address.trim()}
-            className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            size="lg"
           >
-            <Search size={16} />
             분석하기
-          </button>
+          </Button>
         </div>
 
         {/* Quick Search */}
@@ -301,51 +208,27 @@ export default function RightsAnalysisPage() {
             </button>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Loading State */}
       {loading && (
-        <div className="bg-white rounded-xl border border-gray-200 p-8 mb-6 shadow-sm">
+        <Card className="p-8 mb-6">
           <div className="flex flex-col items-center">
-            <Loader2 size={40} className="animate-spin text-blue-600 mb-6" />
+            <LoadingSpinner size="lg" variant="inline" className="mb-6" />
             <p className="text-sm font-medium text-gray-700 mb-6">
               등기부등본 분석을 진행하고 있습니다
             </p>
-            <div className="w-full max-w-md space-y-3">
-              {LOADING_STEPS.map((step, i) => (
-                <div
-                  key={step}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm transition-all duration-300",
-                    i < loadingStep
-                      ? "bg-emerald-50 text-emerald-700"
-                      : i === loadingStep
-                        ? "bg-blue-50 text-blue-700 font-medium"
-                        : "bg-gray-50 text-gray-400"
-                  )}
-                >
-                  {i < loadingStep ? (
-                    <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
-                  ) : i === loadingStep ? (
-                    <Loader2 size={16} className="animate-spin text-blue-500 flex-shrink-0" />
-                  ) : (
-                    <div className="h-4 w-4 rounded-full border-2 border-gray-300 flex-shrink-0" />
-                  )}
-                  {step}
-                </div>
-              ))}
+            <div className="w-full max-w-md">
+              <StepIndicator steps={LOADING_STEPS} currentStep={loadingStep} />
             </div>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
-          <div className="flex items-center gap-3">
-            <XCircle size={20} className="text-red-500" />
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
+        <div className="mb-6">
+          <Alert variant="error">{error}</Alert>
         </div>
       )}
 
@@ -353,7 +236,7 @@ export default function RightsAnalysisPage() {
       {result && (
         <div className="space-y-6">
           {/* Property Info Card */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <Card className="p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <MapPin size={20} className="text-blue-600" />
               부동산 기본정보
@@ -404,10 +287,10 @@ export default function RightsAnalysisPage() {
                 </p>
               </div>
             )}
-          </div>
+          </Card>
 
           {/* 갑구 (소유권) */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <Card className="p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
               갑구 (소유권)
             </h2>
@@ -415,21 +298,11 @@ export default function RightsAnalysisPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      순번
-                    </th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      접수일자
-                    </th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      등기유형
-                    </th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      상세내용
-                    </th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      위험도
-                    </th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">순번</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">접수일자</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">등기유형</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">상세내용</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">위험도</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -437,22 +310,22 @@ export default function RightsAnalysisPage() {
                     <tr key={entry.order} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-3 py-3 text-gray-600">{entry.order}</td>
                       <td className="px-3 py-3 text-gray-600">{entry.date}</td>
-                      <td className="px-3 py-3 font-medium text-gray-900">
-                        {entry.type}
-                      </td>
+                      <td className="px-3 py-3 font-medium text-gray-900">{entry.type}</td>
                       <td className="px-3 py-3 text-gray-700">{entry.detail}</td>
                       <td className="px-3 py-3">
-                        <RiskBadge level={entry.risk} />
+                        <Badge variant={riskBadgeVariant[entry.risk]} icon={riskBadgeIcon[entry.risk]} size="md">
+                          {riskBadgeLabel[entry.risk]}
+                        </Badge>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
+          </Card>
 
           {/* 을구 (권리관계) */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <Card className="p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
               을구 (권리관계)
             </h2>
@@ -460,24 +333,12 @@ export default function RightsAnalysisPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      순번
-                    </th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      접수일자
-                    </th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      등기유형
-                    </th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      상세내용
-                    </th>
-                    <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      채권금액
-                    </th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      위험도
-                    </th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">순번</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">접수일자</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">등기유형</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">상세내용</th>
+                    <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">채권금액</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">위험도</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -485,31 +346,32 @@ export default function RightsAnalysisPage() {
                     <tr key={entry.order} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-3 py-3 text-gray-600">{entry.order}</td>
                       <td className="px-3 py-3 text-gray-600">{entry.date}</td>
-                      <td className="px-3 py-3 font-medium text-gray-900">
-                        {entry.type}
-                      </td>
+                      <td className="px-3 py-3 font-medium text-gray-900">{entry.type}</td>
                       <td className="px-3 py-3 text-gray-700">{entry.detail}</td>
-                      <td className="px-3 py-3 text-right font-medium text-gray-900">
-                        {formatKRW(entry.amount)}
-                      </td>
+                      <td className="px-3 py-3 text-right font-medium text-gray-900">{formatKRW(entry.amount)}</td>
                       <td className="px-3 py-3">
-                        <RiskBadge level={entry.risk} />
+                        <Badge variant={riskBadgeVariant[entry.risk]} icon={riskBadgeIcon[entry.risk]} size="md">
+                          {riskBadgeLabel[entry.risk]}
+                        </Badge>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
+          </Card>
 
           {/* Risk Analysis Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Safety Gauge */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm flex flex-col items-center justify-center">
-              <h3 className="text-sm font-medium text-gray-500 mb-4">
-                안전도 점수
-              </h3>
-              <SafetyGauge score={result.riskAnalysis.safetyScore} />
+            <Card className="p-6 flex flex-col items-center justify-center">
+              <h3 className="text-sm font-medium text-gray-500 mb-4">안전도 점수</h3>
+              <ScoreGauge
+                score={result.riskAnalysis.safetyScore}
+                size="lg"
+                grade={getScoreLabel(result.riskAnalysis.safetyScore)}
+                showLabel={false}
+              />
               <div className="mt-6 grid grid-cols-2 gap-4 w-full text-center">
                 <div>
                   <p className="text-xs text-gray-400">전세가율</p>
@@ -524,13 +386,11 @@ export default function RightsAnalysisPage() {
                   </p>
                 </div>
               </div>
-            </div>
+            </Card>
 
             {/* Risk Items */}
-            <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-              <h3 className="text-sm font-medium text-gray-500 mb-4">
-                위험 분석 항목
-              </h3>
+            <Card className="lg:col-span-2 p-6">
+              <h3 className="text-sm font-medium text-gray-500 mb-4">위험 분석 항목</h3>
               <div className="space-y-3">
                 {result.riskAnalysis.risks.map((risk, i) => {
                   const config = {
@@ -570,27 +430,21 @@ export default function RightsAnalysisPage() {
                     >
                       <Icon size={18} className={cn("mt-0.5 flex-shrink-0", c.iconColor)} />
                       <div>
-                        <p className={cn("text-sm font-medium", c.text)}>
-                          {risk.title}
-                        </p>
-                        <p className={cn("text-xs mt-1", c.descText)}>
-                          {risk.description}
-                        </p>
+                        <p className={cn("text-sm font-medium", c.text)}>{risk.title}</p>
+                        <p className={cn("text-xs mt-1", c.descText)}>{risk.description}</p>
                       </div>
                     </div>
                   );
                 })}
               </div>
-            </div>
+            </Card>
           </div>
 
           {/* AI Opinion */}
           <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
               <Shield size={20} className="text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">
-                AI 종합 의견
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900">AI 종합 의견</h3>
             </div>
             <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
               {result.aiOpinion}

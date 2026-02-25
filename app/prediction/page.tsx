@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { TrendingUp, Search, Loader2, BarChart3, Target, Zap } from "lucide-react";
+import { TrendingUp, Search, BarChart3, Target, Zap } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
 import { addAnalysis, addOrUpdateAsset } from "@/lib/store";
 import {
@@ -14,6 +14,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { PageHeader, Card, Button } from "@/components/common";
+import { LoadingSpinner } from "@/components/loading";
 
 interface PredictionResult {
   currentPrice: number;
@@ -49,7 +51,6 @@ export default function PredictionPage() {
       if (data.error) throw new Error(data.error);
       setResult(data);
 
-      // localStorage에 분석 결과 저장
       addAnalysis({
         type: "prediction",
         typeLabel: "가치예측",
@@ -83,28 +84,21 @@ export default function PredictionPage() {
 
   const getChartData = () => {
     if (!result) return [];
-    const years = [
+    return [
       { year: "현재", base: result.currentPrice, rateUp: result.currentPrice, rateDown: result.currentPrice, policyEase: result.currentPrice },
       { year: "1년 후", base: result.predictions.base["1y"], rateUp: result.predictions.rateUp["1y"], rateDown: result.predictions.rateDown["1y"], policyEase: result.predictions.policyEase["1y"] },
       { year: "3년 후", base: result.predictions.base["3y"], rateUp: result.predictions.rateUp["3y"], rateDown: result.predictions.rateDown["3y"], policyEase: result.predictions.policyEase["3y"] },
       { year: "5년 후", base: result.predictions.base["5y"], rateUp: result.predictions.rateUp["5y"], rateDown: result.predictions.rateDown["5y"], policyEase: result.predictions.policyEase["5y"] },
       { year: "10년 후", base: result.predictions.base["10y"], rateUp: result.predictions.rateUp["10y"], rateDown: result.predictions.rateDown["10y"], policyEase: result.predictions.policyEase["10y"] },
     ];
-    return years;
   };
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <TrendingUp className="text-primary" size={28} />
-          가치예측
-        </h1>
-        <p className="text-secondary mt-1">AI 기반 부동산 가치 예측 및 시나리오 분석</p>
-      </div>
+      <PageHeader icon={TrendingUp} title="가치예측" description="AI 기반 부동산 가치 예측 및 시나리오 분석" />
 
       {/* Search */}
-      <div className="bg-card rounded-xl border border-border p-6 mb-6">
+      <Card className="p-6 mb-6">
         <div className="flex flex-col sm:flex-row gap-3">
           <input
             type="text"
@@ -114,35 +108,32 @@ export default function PredictionPage() {
             placeholder="예측할 부동산 주소를 입력하세요"
             className="flex-1 px-4 py-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm"
           />
-          <button
+          <Button
+            icon={Search}
+            loading={loading}
+            disabled={!address.trim()}
+            size="lg"
             onClick={handleAnalyze}
-            disabled={loading || !address.trim()}
-            className="px-6 py-3 bg-primary text-white rounded-lg font-medium text-sm hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
           >
-            {loading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
             예측 분석
-          </button>
+          </Button>
         </div>
         <div className="flex gap-2 mt-3 flex-wrap">
           {quickSearches.map((q) => (
             <button
               key={q}
-              onClick={() => { setAddress(q); }}
+              onClick={() => setAddress(q)}
               className="px-3 py-1.5 text-xs bg-gray-100 text-secondary rounded-full hover:bg-gray-200 transition-colors"
             >
               {q}
             </button>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Loading */}
       {loading && (
-        <div className="bg-card rounded-xl border border-border p-12 text-center">
-          <Loader2 size={40} className="animate-spin text-primary mx-auto mb-4" />
-          <p className="text-secondary">AI가 부동산 가치를 예측하고 있습니다...</p>
-          <p className="text-xs text-muted mt-2">실거래가, 경제지표, 정책 변수를 분석 중</p>
-        </div>
+        <LoadingSpinner message="AI가 부동산 가치를 예측하고 있습니다..." />
       )}
 
       {/* Results */}
@@ -150,45 +141,38 @@ export default function PredictionPage() {
         <div className="space-y-6">
           {/* Current Price & Confidence */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-card rounded-xl border border-border p-5">
+            <Card className="p-5">
               <div className="flex items-center gap-2 text-sm text-secondary mb-2">
                 <BarChart3 size={16} />
                 현재 추정 시세
               </div>
-              <div className="text-2xl font-bold text-primary">
-                {formatKRW(result.currentPrice)}
-              </div>
-            </div>
-            <div className="bg-card rounded-xl border border-border p-5">
+              <div className="text-2xl font-bold text-primary">{formatKRW(result.currentPrice)}</div>
+            </Card>
+            <Card className="p-5">
               <div className="flex items-center gap-2 text-sm text-secondary mb-2">
                 <Target size={16} />
                 예측 신뢰도
               </div>
               <div className="text-2xl font-bold text-emerald-600">{result.confidence}%</div>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                <div
-                  className="bg-emerald-500 h-2 rounded-full transition-all"
-                  style={{ width: `${result.confidence}%` }}
-                />
+                <div className="bg-emerald-500 h-2 rounded-full transition-all" style={{ width: `${result.confidence}%` }} />
               </div>
-            </div>
-            <div className="bg-card rounded-xl border border-border p-5">
+            </Card>
+            <Card className="p-5">
               <div className="flex items-center gap-2 text-sm text-secondary mb-2">
                 <Zap size={16} />
                 반영 변수
               </div>
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {result.variables.map((v, i) => (
-                  <span key={i} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-full">
-                    {v}
-                  </span>
+                  <span key={i} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-full">{v}</span>
                 ))}
               </div>
-            </div>
+            </Card>
           </div>
 
-          {/* Scenario Tabs */}
-          <div className="bg-card rounded-xl border border-border p-6">
+          {/* Scenario Chart */}
+          <Card className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <h3 className="font-semibold">시나리오별 가격 예측</h3>
               <div className="flex flex-wrap gap-1.5">
@@ -231,10 +215,10 @@ export default function PredictionPage() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </Card>
 
           {/* Prediction Table */}
-          <div className="bg-card rounded-xl border border-border p-6">
+          <Card className="p-6">
             <h3 className="font-semibold mb-4">시나리오별 예측 상세</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -265,7 +249,7 @@ export default function PredictionPage() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </Card>
 
           {/* AI Opinion */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
@@ -273,9 +257,7 @@ export default function PredictionPage() {
               <TrendingUp size={20} />
               AI 분석 의견
             </h3>
-            <p className="text-blue-900 text-sm leading-relaxed whitespace-pre-line">
-              {result.aiOpinion}
-            </p>
+            <p className="text-blue-900 text-sm leading-relaxed whitespace-pre-line">{result.aiOpinion}</p>
           </div>
         </div>
       )}
