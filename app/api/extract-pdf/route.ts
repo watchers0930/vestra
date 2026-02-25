@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       firstFile.name.toLowerCase().endsWith(".pdf");
 
     // -----------------------------------------------------------------------
-    // PDF 처리 (기존 로직)
+    // PDF 처리 (텍스트 추출 → 실패 시 이미지 변환 후 OCR 폴백)
     // -----------------------------------------------------------------------
     if (isPDF) {
       if (firstFile.size > MAX_FILE_SIZE) {
@@ -51,9 +51,42 @@ export async function POST(req: NextRequest) {
 
       const arrayBuffer = await firstFile.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-      const result = await extractTextFromPDF(buffer, firstFile.name);
 
-      return NextResponse.json(result);
+      try {
+        // 1차: 텍스트 기반 PDF 추출 시도
+        const result = await extractTextFromPDF(buffer, firstFile.name);
+        return NextResponse.json(result);
+      } catch {
+        // 2차: 스캔 PDF → 페이지별 이미지 변환 → OCR 폴백
+        console.log("[PDF] 텍스트 추출 실패. 이미지 변환 후 OCR 시도.");
+
+        const costGuard = checkOpenAICostGuard(ip);
+        if (!costGuard.allowed) {
+          return NextResponse.json(
+            { error: "일일 AI 분석 한도에 도달했습니다. 내일 다시 시도해주세요." },
+            { status: 429 }
+          );
+        }
+
+        const { renderPageAsImage, getDocumentProxy } = await import("unpdf");
+        const doc = await getDocumentProxy(new Uint8Array(buffer));
+        const pageCount = Math.min(doc.numPages, 5); // 최대 5페이지
+        const images: { buffer: Buffer; mimeType: string }[] = [];
+
+        for (let i = 1; i <= pageCount; i++) {
+          const imgResult = await renderPageAsImage(doc, i, { scale: 2 });
+          images.push({
+            buffer: Buffer.from(imgResult),
+            mimeType: "image/png",
+          });
+        }
+
+        const result = await extractTextFromImages(
+          images,
+          `${firstFile.name} (스캔 PDF → OCR)`
+        );
+        return NextResponse.json(result);
+      }
     }
 
     // -----------------------------------------------------------------------
