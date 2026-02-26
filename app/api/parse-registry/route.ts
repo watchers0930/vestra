@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   try {
     // Rate limiting (공개 API: 10 req/min)
     const ip = req.headers.get("x-forwarded-for") || "anonymous";
-    const rl = rateLimit(`parse-registry:${ip}`, 10);
+    const rl = await rateLimit(`parse-registry:${ip}`, 10);
     if (!rl.success) {
       return NextResponse.json(
         { error: "요청 한도 초과. 잠시 후 다시 시도해주세요." },

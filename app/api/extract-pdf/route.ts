@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   try {
     // Rate limiting (공개 API: 10 req/min)
     const ip = req.headers.get("x-forwarded-for") || "anonymous";
-    const rl = rateLimit(`extract-pdf:${ip}`, 10);
+    const rl = await rateLimit(`extract-pdf:${ip}`, 10);
     if (!rl.success) {
       return NextResponse.json(
         { error: "요청 한도 초과. 잠시 후 다시 시도해주세요." },
@@ -57,10 +57,10 @@ export async function POST(req: NextRequest) {
         const result = await extractTextFromPDF(buffer, firstFile.name);
         return NextResponse.json(result);
       } catch {
-        // 2차: 스캔 PDF → GPT-4o Responses API로 직접 OCR
-        console.log("[PDF] 텍스트 추출 실패. GPT-4o로 스캔 PDF 직접 OCR 시도.");
+        // 2차: 스캔 PDF → chat.completions Vision OCR
+        console.log("[PDF] 텍스트 추출 실패. Vision API로 스캔 PDF OCR 시도.");
 
-        const costGuard = checkOpenAICostGuard(ip);
+        const costGuard = await checkOpenAICostGuard(ip);
         if (!costGuard.allowed) {
           return NextResponse.json(
             { error: "일일 AI 분석 한도에 도달했습니다. 내일 다시 시도해주세요." },
@@ -112,8 +112,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 비용 가드 (GPT-4o 폴백 가능성 대비)
-    const costGuard = checkOpenAICostGuard(ip);
+    // 비용 가드
+    const costGuard = await checkOpenAICostGuard(ip);
     if (!costGuard.allowed) {
       return NextResponse.json(
         { error: "일일 AI 분석 한도에 도달했습니다. 내일 다시 시도해주세요." },

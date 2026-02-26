@@ -69,7 +69,7 @@ async function extractWithVision(
 }
 
 // ---------------------------------------------------------------------------
-// 스캔 PDF → GPT Vision 직접 처리
+// 스캔 PDF → chat.completions (PDF를 이미지로 취급하여 OCR)
 // ---------------------------------------------------------------------------
 
 export async function extractTextFromScannedPDF(
@@ -79,29 +79,31 @@ export async function extractTextFromScannedPDF(
   const openai = getOpenAIClient();
   const base64 = buffer.toString("base64");
 
-  console.log(`[PDF OCR] GPT Vision으로 스캔 PDF 직접 처리: ${fileName}`);
+  console.log(`[PDF OCR] chat.completions Vision으로 스캔 PDF 처리: ${fileName}`);
 
-  const response = await openai.responses.create({
+  const completion = await openai.chat.completions.create({
     model: "gpt-4.1-mini",
-    instructions: IMAGE_OCR_PROMPT,
-    input: [
+    messages: [
+      { role: "system", content: IMAGE_OCR_PROMPT },
       {
         role: "user",
         content: [
-          { type: "input_text", text: "이 등기부등본 PDF에서 모든 텍스트를 추출해주세요." },
+          { type: "text", text: "이 등기부등본 PDF에서 모든 텍스트를 추출해주세요." },
           {
-            type: "input_file",
-            filename: fileName,
-            file_data: `data:application/pdf;base64,${base64}`,
+            type: "image_url",
+            image_url: {
+              url: `data:application/pdf;base64,${base64}`,
+              detail: "high",
+            },
           },
         ],
       },
     ],
-    max_output_tokens: 16384,
+    max_tokens: 16384,
     temperature: 0,
   });
 
-  const extractedText = response.output_text || "";
+  const extractedText = completion.choices[0]?.message?.content?.trim() || "";
 
   if (!extractedText || extractedText.length < 20) {
     throw new Error(

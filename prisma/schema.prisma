@@ -85,3 +85,20 @@ model Asset {
 
   @@unique([userId, address])
 }
+
+model RateLimit {
+  id         String   @id
+  count      Int      @default(1)
+  resetTime  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([resetTime])
+}
+
+model DailyUsage {
+  id    String @id
+  date  String
+  count Int    @default(1)
+
+  @@index([date])
+}

@@ -50,3 +50,4 @@ report.html
 # prisma sqlite
 *.db
 *.db-journal
+.env*.local
