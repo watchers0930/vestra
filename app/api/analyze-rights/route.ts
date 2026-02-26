@@ -3,7 +3,7 @@ import { getOpenAIClient } from "@/lib/openai";
 import { RIGHTS_ANALYSIS_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
-import { fetchRecentPrices } from "@/lib/molit-api";
+import { fetchComprehensivePrices } from "@/lib/molit-api";
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,25 +24,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "주소를 입력해주세요." }, { status: 400 });
     }
 
-    // 실거래 데이터 조회 (MOLIT API 키가 없어도 진행)
-    let priceData = null;
+    // 종합 시세 데이터 조회 (매매 + 전월세)
+    let comprehensive = null;
     try {
-      priceData = await fetchRecentPrices(address, 6);
+      comprehensive = await fetchComprehensivePrices(address, 12);
     } catch (e) {
-      console.warn("MOLIT API 조회 실패, 실거래 데이터 없이 진행:", e);
+      console.warn("MOLIT API 종합 조회 실패:", e);
     }
 
     // 실거래 데이터 요약 텍스트 생성
     let realDataContext = "";
-    if (priceData && priceData.transactionCount > 0) {
-      realDataContext = `\n\n## 실거래 데이터 (최근 6개월)
-- 평균 거래가: ${priceData.avgPrice.toLocaleString()}원
-- 최저 거래가: ${priceData.minPrice.toLocaleString()}원
-- 최고 거래가: ${priceData.maxPrice.toLocaleString()}원
-- 거래 건수: ${priceData.transactionCount}건
 
-최근 거래 내역 (최대 10건):
-${priceData.transactions
+    // 매매 데이터
+    if (comprehensive?.sale && comprehensive.sale.transactionCount > 0) {
+      const s = comprehensive.sale;
+      realDataContext += `\n\n## 매매 실거래 데이터 (최근 12개월)
+- 평균 거래가: ${s.avgPrice.toLocaleString()}원
+- 최저 거래가: ${s.minPrice.toLocaleString()}원
+- 최고 거래가: ${s.maxPrice.toLocaleString()}원
+- 거래 건수: ${s.transactionCount}건
+
+최근 매매 거래 내역 (최대 10건):
+${s.transactions
   .slice(0, 10)
   .map(
     (t) =>
@@ -50,7 +53,35 @@ ${priceData.transactions
   )
   .join("\n")}
 
-위 실거래 데이터를 기반으로 시세(estimatedPrice)와 전세가(jeonsePrice)를 산정하고, 최근 거래 정보(recentTransaction)에 반영하세요.`;
+위 매매 실거래 데이터를 기반으로 시세(estimatedPrice)를 산정하세요.`;
+    }
+
+    // 전월세 데이터
+    if (comprehensive?.rent && (comprehensive.rent.jeonseCount > 0 || comprehensive.rent.wolseCount > 0)) {
+      const r = comprehensive.rent;
+      realDataContext += `\n\n## 전월세 실거래 데이터 (최근 12개월)
+- 전세 평균 보증금: ${r.avgDeposit.toLocaleString()}원
+- 전세 최저 보증금: ${r.minDeposit.toLocaleString()}원
+- 전세 최고 보증금: ${r.maxDeposit.toLocaleString()}원
+- 전세 거래 건수: ${r.jeonseCount}건
+- 월세 거래 건수: ${r.wolseCount}건
+
+최근 전월세 내역 (최대 10건):
+${r.transactions
+  .slice(0, 10)
+  .map(
+    (t) =>
+      `- ${t.aptName} ${t.area}㎡ ${t.floor}층: ${t.rentType} 보증금 ${t.deposit.toLocaleString()}원${t.monthlyRent > 0 ? ` / 월세 ${t.monthlyRent.toLocaleString()}원` : ""} (${t.dealYear}.${t.dealMonth}.${t.dealDay})`
+  )
+  .join("\n")}
+
+위 전월세 실거래 데이터를 기반으로 전세가(jeonsePrice)를 산정하세요.`;
+    }
+
+    // 실데이터 기반 전세가율
+    if (comprehensive?.jeonseRatio !== null && comprehensive?.jeonseRatio !== undefined) {
+      realDataContext += `\n\n## 실데이터 기반 전세가율: ${comprehensive.jeonseRatio}%
+이 전세가율은 실제 매매가 평균과 전세 보증금 평균으로 계산된 값입니다. jeonseRatio에 이 값을 사용하세요.`;
     }
 
     const openai = getOpenAIClient();
@@ -64,7 +95,7 @@ ${priceData.transactions
           content: `다음 부동산의 권리분석을 수행해주세요: ${address}${realDataContext}\n\n실제 시세와 권리관계를 가능한 정확하게 추정하여 분석해주세요. JSON 형식으로만 응답하세요.`,
         },
       ],
-      temperature: 0.3,
+      temperature: 0.2,
       response_format: { type: "json_object" },
     });
 

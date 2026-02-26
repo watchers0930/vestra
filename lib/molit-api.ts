@@ -28,6 +28,36 @@ export interface PriceResult {
   period: string;
 }
 
+export interface RentTransaction {
+  deposit: number;       // 보증금 (원 단위)
+  monthlyRent: number;   // 월세 (원 단위, 전세면 0)
+  rentType: string;      // 전세/월세
+  buildYear: number;
+  dealYear: number;
+  dealMonth: number;
+  dealDay: number;
+  aptName: string;
+  area: number;
+  floor: number;
+  dong: string;
+}
+
+export interface RentPriceResult {
+  avgDeposit: number;
+  minDeposit: number;
+  maxDeposit: number;
+  jeonseCount: number;   // 전세 건수
+  wolseCount: number;    // 월세 건수
+  transactions: RentTransaction[];
+  period: string;
+}
+
+export interface ComprehensivePriceResult {
+  sale: PriceResult | null;
+  rent: RentPriceResult | null;
+  jeonseRatio: number | null;  // 실데이터 기반 전세가율 (%)
+}
+
 // ─── 법정동 코드 매핑 (전국) ───
 // 키 규칙:
 //   - 고유한 구/시/군 이름은 그대로 사용 (예: "강남구", "해운대구")
@@ -250,7 +280,7 @@ export async function fetchRealTransactions(
     LAWD_CD: lawdCd,
     DEAL_YMD: dealYmd,
     pageNo: "1",
-    numOfRows: "100",
+    numOfRows: "500",
   });
 
   try {
@@ -280,7 +310,7 @@ export async function fetchRealTransactions(
  */
 export async function fetchRecentPrices(
   address: string,
-  months: number = 6
+  months: number = 12
 ): Promise<PriceResult | null> {
   const lawdCd = extractLawdCode(address);
   if (!lawdCd) return null;
@@ -324,4 +354,248 @@ export async function fetchRecentPrices(
     ),
     period: `최근 ${months}개월`,
   };
+}
+
+// ─── 전월세 실거래 ───
+
+/** 전월세 XML 파싱 */
+function parseRentTransactions(xml: string): RentTransaction[] {
+  const items: RentTransaction[] = [];
+  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+  let match;
+
+  while ((match = itemRegex.exec(xml)) !== null) {
+    const item = match[1];
+    const depositRaw = extractXmlValue(item, "보증금액").replace(/,/g, "").trim();
+    const deposit = parseInt(depositRaw, 10) * 10000;
+
+    if (isNaN(deposit) || deposit <= 0) continue;
+
+    const monthlyRentRaw = extractXmlValue(item, "월세금액").replace(/,/g, "").trim();
+    const monthlyRent = (parseInt(monthlyRentRaw, 10) || 0) * 10000;
+
+    items.push({
+      deposit,
+      monthlyRent,
+      rentType: monthlyRent === 0 ? "전세" : "월세",
+      buildYear: parseInt(extractXmlValue(item, "건축년도"), 10) || 0,
+      dealYear: parseInt(extractXmlValue(item, "년"), 10) || 0,
+      dealMonth: parseInt(extractXmlValue(item, "월"), 10) || 0,
+      dealDay: parseInt(extractXmlValue(item, "일"), 10) || 0,
+      aptName: extractXmlValue(item, "아파트") || extractXmlValue(item, "단지명"),
+      area: parseFloat(extractXmlValue(item, "전용면적")) || 0,
+      floor: parseInt(extractXmlValue(item, "층"), 10) || 0,
+      dong: extractXmlValue(item, "법정동"),
+    });
+  }
+
+  return items;
+}
+
+/** 아파트 전월세 실거래 API 호출 */
+export async function fetchAptRentTransactions(
+  lawdCd: string,
+  dealYmd: string
+): Promise<RentTransaction[]> {
+  const serviceKey = process.env.MOLIT_API_KEY;
+  if (!serviceKey) return [];
+
+  const baseUrl =
+    "http://openapi.molit.go.kr:8081/OpenAPI_ToolInstall498/service/rest/RTMSOBJSvc/getRTMSDataSvcAptRent";
+
+  const params = new URLSearchParams({
+    serviceKey,
+    LAWD_CD: lawdCd,
+    DEAL_YMD: dealYmd,
+    pageNo: "1",
+    numOfRows: "500",
+  });
+
+  try {
+    const res = await fetch(`${baseUrl}?${params.toString()}`, {
+      headers: { Accept: "application/xml" },
+    });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    return parseRentTransactions(xml);
+  } catch (error) {
+    console.error("MOLIT Rent API error:", error);
+    return [];
+  }
+}
+
+/** 최근 전월세 실거래 조회 */
+export async function fetchRecentRentPrices(
+  address: string,
+  months: number = 12
+): Promise<RentPriceResult | null> {
+  const lawdCd = extractLawdCode(address);
+  if (!lawdCd) return null;
+
+  const now = new Date();
+  const promises = Array.from({ length: months }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const dealYmd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`;
+    return fetchAptRentTransactions(lawdCd, dealYmd);
+  });
+  const results = await Promise.all(promises);
+  const allTransactions = results.flat();
+
+  // 전세만 필터링
+  const jeonseOnly = allTransactions.filter((t) => t.rentType === "전세");
+  const wolseOnly = allTransactions.filter((t) => t.rentType === "월세");
+
+  if (jeonseOnly.length === 0 && wolseOnly.length === 0) {
+    return {
+      avgDeposit: 0, minDeposit: 0, maxDeposit: 0,
+      jeonseCount: 0, wolseCount: 0,
+      transactions: [], period: `최근 ${months}개월`,
+    };
+  }
+
+  const deposits = jeonseOnly.map((t) => t.deposit);
+  const avgDeposit = deposits.length > 0
+    ? Math.round(deposits.reduce((a, b) => a + b, 0) / deposits.length)
+    : 0;
+
+  return {
+    avgDeposit,
+    minDeposit: deposits.length > 0 ? Math.min(...deposits) : 0,
+    maxDeposit: deposits.length > 0 ? Math.max(...deposits) : 0,
+    jeonseCount: jeonseOnly.length,
+    wolseCount: wolseOnly.length,
+    transactions: allTransactions.sort(
+      (a, b) =>
+        b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay -
+        (a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay)
+    ),
+    period: `최근 ${months}개월`,
+  };
+}
+
+// ─── 연립다세대/단독다가구/오피스텔 매매 ───
+
+/** 범용 매매 실거래 API 호출 (엔드포인트 지정) */
+async function fetchGenericSaleTransactions(
+  endpoint: string,
+  nameTag: string,
+  lawdCd: string,
+  dealYmd: string
+): Promise<RealTransaction[]> {
+  const serviceKey = process.env.MOLIT_API_KEY;
+  if (!serviceKey) return [];
+
+  const params = new URLSearchParams({
+    serviceKey,
+    LAWD_CD: lawdCd,
+    DEAL_YMD: dealYmd,
+    pageNo: "1",
+    numOfRows: "500",
+  });
+
+  try {
+    const res = await fetch(`${endpoint}?${params.toString()}`, {
+      headers: { Accept: "application/xml" },
+    });
+    if (!res.ok) return [];
+    const xml = await res.text();
+
+    // 범용 파싱 (아파트/연립다세대/단독다가구/오피스텔)
+    const items: RealTransaction[] = [];
+    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+    let match;
+    while ((match = itemRegex.exec(xml)) !== null) {
+      const item = match[1];
+      const amtRaw = extractXmlValue(item, "거래금액").replace(/,/g, "");
+      const amt = parseInt(amtRaw, 10) * 10000;
+      if (isNaN(amt) || amt <= 0) continue;
+      items.push({
+        dealAmount: amt,
+        buildYear: parseInt(extractXmlValue(item, "건축년도"), 10) || 0,
+        dealYear: parseInt(extractXmlValue(item, "년"), 10) || 0,
+        dealMonth: parseInt(extractXmlValue(item, "월"), 10) || 0,
+        dealDay: parseInt(extractXmlValue(item, "일"), 10) || 0,
+        aptName: extractXmlValue(item, nameTag) || extractXmlValue(item, "아파트") || extractXmlValue(item, "단지명") || "",
+        area: parseFloat(extractXmlValue(item, "전용면적")) || parseFloat(extractXmlValue(item, "연면적")) || 0,
+        floor: parseInt(extractXmlValue(item, "층"), 10) || 0,
+        dong: extractXmlValue(item, "법정동"),
+      });
+    }
+    return items;
+  } catch {
+    return [];
+  }
+}
+
+const MOLIT_ENDPOINTS = {
+  aptTrade:
+    "http://openapi.molit.go.kr/OpenAPI_ToolInstall498/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev",
+  rowHouseTrade:
+    "http://openapi.molit.go.kr:8081/OpenAPI_ToolInstall498/service/rest/RTMSOBJSvc/getRTMSDataSvcRHTrade",
+  singleHouseTrade:
+    "http://openapi.molit.go.kr:8081/OpenAPI_ToolInstall498/service/rest/RTMSOBJSvc/getRTMSDataSvcSHTrade",
+  officeTelTrade:
+    "http://openapi.molit.go.kr:8081/OpenAPI_ToolInstall498/service/rest/RTMSOBJSvc/getRTMSDataSvcOffiTrade",
+};
+
+/**
+ * 종합 시세 조회 (매매 + 전월세, 아파트 + 연립 + 단독 + 오피스텔)
+ *
+ * 아파트 매매를 기본으로 하고, 데이터가 부족하면 연립/단독/오피스텔까지 확장 조회.
+ * 전월세 데이터로 실데이터 기반 전세가율 산출.
+ */
+export async function fetchComprehensivePrices(
+  address: string,
+  months: number = 12
+): Promise<ComprehensivePriceResult> {
+  const lawdCd = extractLawdCode(address);
+  if (!lawdCd) return { sale: null, rent: null, jeonseRatio: null };
+
+  const now = new Date();
+  const dealYmds = Array.from({ length: months }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
+
+  // 아파트 매매 + 전월세 병렬 조회
+  const [saleResult, rentResult] = await Promise.all([
+    fetchRecentPrices(address, months),
+    fetchRecentRentPrices(address, months),
+  ]);
+
+  // 아파트 매매 데이터가 부족하면 연립/단독/오피스텔 추가 조회
+  let sale = saleResult;
+  if (!sale || sale.transactionCount < 3) {
+    const extraPromises = dealYmds.slice(0, 6).flatMap((ymd) => [
+      fetchGenericSaleTransactions(MOLIT_ENDPOINTS.rowHouseTrade, "연립다세대", lawdCd, ymd),
+      fetchGenericSaleTransactions(MOLIT_ENDPOINTS.officeTelTrade, "단지명", lawdCd, ymd),
+    ]);
+    const extraResults = (await Promise.all(extraPromises)).flat();
+
+    if (extraResults.length > 0) {
+      const existing = sale?.transactions ?? [];
+      const all = [...existing, ...extraResults];
+      const prices = all.map((t) => t.dealAmount);
+      sale = {
+        avgPrice: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length),
+        minPrice: Math.min(...prices),
+        maxPrice: Math.max(...prices),
+        transactionCount: all.length,
+        transactions: all.sort(
+          (a, b) =>
+            b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay -
+            (a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay)
+        ),
+        period: `최근 ${months}개월 (종합)`,
+      };
+    }
+  }
+
+  // 실데이터 기반 전세가율 계산
+  let jeonseRatio: number | null = null;
+  if (sale && sale.avgPrice > 0 && rentResult && rentResult.avgDeposit > 0) {
+    jeonseRatio = Math.round((rentResult.avgDeposit / sale.avgPrice) * 1000) / 10;
+  }
+
+  return { sale, rent: rentResult, jeonseRatio };
 }

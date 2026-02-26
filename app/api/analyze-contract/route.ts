@@ -3,6 +3,7 @@ import { getOpenAIClient } from "@/lib/openai";
 import { CONTRACT_ANALYSIS_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { stripHtml, truncateInput } from "@/lib/sanitize";
+import { searchCourtCases } from "@/lib/court-api";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,6 +24,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "계약서 내용을 입력해주세요." }, { status: 400 });
     }
 
+    // 계약서에서 키워드 추출 후 관련 판례 검색
+    let courtContext = "";
+    try {
+      const keywords = extractContractKeywords(contractText);
+      if (keywords.length > 0) {
+        const cases = await searchCourtCases(keywords[0], 3);
+        if (cases.length > 0) {
+          courtContext = `\n\n## 관련 판례 참고\n${cases
+            .map(
+              (c) =>
+                `- [${c.caseNumber}] ${c.caseName} (${c.courtName}, ${c.judgmentDate})\n  판시사항: ${c.summary}`
+            )
+            .join("\n")}
+\n위 판례를 참고하여 계약서 분석 시 관련 법률 근거를 보강하세요.`;
+        }
+      }
+    } catch (e) {
+      console.warn("판례 검색 실패:", e);
+    }
+
     const openai = getOpenAIClient();
 
     const completion = await openai.chat.completions.create({
@@ -31,7 +52,7 @@ export async function POST(req: NextRequest) {
         { role: "system", content: CONTRACT_ANALYSIS_PROMPT },
         {
           role: "user",
-          content: `다음 부동산 계약서를 분석해주세요:\n\n${contractText}\n\nJSON 형식으로만 응답하세요.`,
+          content: `다음 부동산 계약서를 분석해주세요:\n\n${contractText}${courtContext}\n\nJSON 형식으로만 응답하세요.`,
         },
       ],
       temperature: 0.3,
@@ -58,4 +79,19 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: `분석 중 오류: ${message}` }, { status: 500 });
   }
+}
+
+/** 계약서 텍스트에서 핵심 키워드 추출 */
+function extractContractKeywords(text: string): string[] {
+  const keywordPatterns = [
+    "전세보증금", "보증금 반환", "임대차", "근저당", "계약해지",
+    "위약금", "손해배상", "특약사항", "원상회복", "권리금",
+    "전세권", "임차권", "대항력", "우선변제",
+  ];
+
+  const found = keywordPatterns.filter((kw) => text.includes(kw));
+
+  // 가장 관련성 높은 검색어 조합
+  if (found.length === 0) return ["부동산 계약 분쟁"];
+  return [found.slice(0, 2).join(" ")];
 }
