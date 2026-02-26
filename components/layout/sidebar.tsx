@@ -15,12 +15,8 @@ import {
   ChevronRight,
   Menu,
   X,
-  LogIn,
-  LogOut,
-  User,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
@@ -37,7 +33,6 @@ const menuItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -145,58 +140,6 @@ export default function Sidebar() {
             })}
           </div>
         </nav>
-
-        {/* Auth Section */}
-        <div className="border-t border-white/10 px-3 py-3">
-          {status === "loading" ? (
-            <button
-              onClick={() => signIn()}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm transition-all bg-primary/20 text-white hover:bg-primary/30 border border-primary/30"
-            >
-              <LogIn size={20} className="flex-shrink-0 text-primary" />
-              {showLabel && <span className="font-medium">로그인</span>}
-            </button>
-          ) : session?.user ? (
-            <div className="flex items-center gap-3 px-2 py-2">
-              {session.user.image ? (
-                <img
-                  src={session.user.image}
-                  alt=""
-                  className="w-8 h-8 rounded-full flex-shrink-0"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-primary/30 flex items-center justify-center flex-shrink-0">
-                  <User size={16} />
-                </div>
-              )}
-              {showLabel && (
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">
-                    {session.user.name || "사용자"}
-                  </div>
-                  <div className="text-[10px] text-gray-400 truncate">
-                    {session.user.email}
-                  </div>
-                </div>
-              )}
-              <button
-                onClick={() => signOut()}
-                className="flex-shrink-0 p-1.5 rounded-lg hover:bg-sidebar-hover transition-colors"
-                title="로그아웃"
-              >
-                <LogOut size={16} className="text-gray-400" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => signIn()}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm transition-all bg-primary/20 text-white hover:bg-primary/30 border border-primary/30"
-            >
-              <LogIn size={20} className="flex-shrink-0 text-primary" />
-              {showLabel && <span className="font-medium">로그인</span>}
-            </button>
-          )}
-        </div>
 
         {/* Collapse toggle (데스크톱 전용) */}
         <button
