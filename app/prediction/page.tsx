@@ -213,6 +213,17 @@ export default function PredictionPage() {
         </div>
       </Card>
 
+      {/* Map - 주소 입력 시 바로 표시 */}
+      {address.trim() && (
+        <Card className="p-4 mb-6">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <MapPin size={16} />
+            위치
+          </h3>
+          <KakaoMap address={address} />
+        </Card>
+      )}
+
       {/* Loading */}
       {loading && (
         <LoadingSpinner message="실거래 데이터 수집 및 AI 가치 예측 분석 중입니다..." />
@@ -275,52 +286,43 @@ export default function PredictionPage() {
             </Card>
           </div>
 
-          {/* Map + Historical Chart */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div>
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <MapPin size={16} />
-                위치
-              </h3>
-              <KakaoMap address={address} />
-            </div>
-            <div>
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <BarChart3 size={16} />
-                실거래가 추이
-              </h3>
-              {getHistoricalData().length > 0 ? (
-                <Card className="p-4 h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={getHistoricalData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                      <YAxis
-                        tickFormatter={(v) => `${(v / 100000000).toFixed(1)}억`}
-                        tick={{ fontSize: 11 }}
-                      />
-                      <Tooltip
-                        formatter={(value) => [formatKRW(Number(value)), "거래가"]}
-                        labelFormatter={(label) => `거래시점: ${label}`}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="price"
-                        stroke="#2563eb"
-                        fill="#2563eb"
-                        fillOpacity={0.1}
-                        strokeWidth={2}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </Card>
-              ) : (
-                <Card className="flex items-center justify-center h-[300px] text-secondary text-sm">
-                  실거래 데이터가 없습니다
-                </Card>
-              )}
-            </div>
-          </div>
+          {/* Historical Chart */}
+          <Card className="p-6">
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <BarChart3 size={16} />
+              실거래가 추이
+            </h3>
+            {getHistoricalData().length > 0 ? (
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={getHistoricalData()}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                    <YAxis
+                      tickFormatter={(v) => `${(v / 100000000).toFixed(1)}억`}
+                      tick={{ fontSize: 11 }}
+                    />
+                    <Tooltip
+                      formatter={(value) => [formatKRW(Number(value)), "거래가"]}
+                      labelFormatter={(label) => `거래시점: ${label}`}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="price"
+                      stroke="#2563eb"
+                      fill="#2563eb"
+                      fillOpacity={0.1}
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-secondary text-sm">
+                실거래 데이터가 없습니다
+              </div>
+            )}
+          </Card>
 
           {/* Scenario Prediction Chart */}
           <Card className="p-6">
