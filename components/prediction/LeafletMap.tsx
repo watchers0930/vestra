@@ -54,10 +54,15 @@ function getCoordsFromAddress(address: string): [number, number] {
 export function LeafletMap({ address }: LeafletMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
+    if (!mapRef.current) return;
+
+    // 이전 인스턴스 정리
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+    }
 
     const coords = getCoordsFromAddress(address);
 
@@ -72,7 +77,6 @@ export function LeafletMap({ address }: LeafletMapProps) {
       maxZoom: 19,
     }).addTo(map);
 
-    // 기본 마커 아이콘 수정 (Leaflet CSS 이슈 해결)
     const icon = L.icon({
       iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
       iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -88,7 +92,9 @@ export function LeafletMap({ address }: LeafletMapProps) {
       .openPopup();
 
     mapInstanceRef.current = map;
-    setReady(true);
+
+    // 컨테이너 크기 재계산 (렌더링 타이밍 이슈 해결)
+    setTimeout(() => map.invalidateSize(), 100);
 
     return () => {
       map.remove();
@@ -98,13 +104,9 @@ export function LeafletMap({ address }: LeafletMapProps) {
 
   return (
     <Card className="overflow-hidden">
-      {!ready && (
-        <div className="h-[300px] animate-pulse bg-gray-100 rounded-xl" />
-      )}
       <div
         ref={mapRef}
         className="h-[300px] w-full"
-        style={{ display: ready ? "block" : "none" }}
       />
     </Card>
   );

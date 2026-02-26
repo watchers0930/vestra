@@ -213,16 +213,20 @@ export default function PredictionPage() {
         </div>
       </Card>
 
-      {/* Map - 주소 입력 시 바로 표시 */}
-      {address.trim() && (
-        <Card className="p-4 mb-6">
-          <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <MapPin size={16} />
-            위치
-          </h3>
+      {/* Map */}
+      <Card className="p-4 mb-6">
+        <h3 className="font-semibold mb-3 flex items-center gap-2">
+          <MapPin size={16} />
+          위치
+        </h3>
+        {address.trim() ? (
           <KakaoMap address={address} />
-        </Card>
-      )}
+        ) : (
+          <div className="h-[300px] rounded-xl bg-gray-100 flex items-center justify-center text-secondary text-sm">
+            지역을 선택해 주세요
+          </div>
+        )}
+      </Card>
 
       {/* Loading */}
       {loading && (
