@@ -14,8 +14,10 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@prisma/client": "^6.19.2",
+    "@types/leaflet": "^1.9.21",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.575.0",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
@@ -24,6 +26,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-kakao-maps-sdk": "^1.2.1",
+    "react-leaflet": "^5.0.0",
     "recharts": "^3.7.0",
     "tailwind-merge": "^3.5.0",
     "unpdf": "^1.4.0"

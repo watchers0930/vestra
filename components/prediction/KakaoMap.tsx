@@ -1,8 +1,14 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import dynamic from "next/dynamic";
 import { Card } from "@/components/common";
-import { MapPin } from "lucide-react";
+
+// Leaflet은 SSR에서 window 접근 문제가 있으므로 dynamic import
+const LeafletMap = dynamic(
+  () => import("./LeafletMap").then((mod) => mod.LeafletMap),
+  { ssr: false, loading: () => <div className="h-[300px] animate-pulse bg-gray-100 rounded-xl" /> }
+);
 
 interface KakaoMapProps {
   address: string;
@@ -35,10 +41,10 @@ declare global {
 export function KakaoMap({ address }: KakaoMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "no-key" | "error">("loading");
+  const [useKakao] = useState(() => !!process.env.NEXT_PUBLIC_KAKAO_MAP_KEY);
 
   useEffect(() => {
-    const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
-    if (!kakaoKey) {
+    if (!useKakao) {
       setStatus("no-key");
       return;
     }
@@ -61,7 +67,6 @@ export function KakaoMap({ address }: KakaoMapProps) {
             new window.kakao.maps.Marker({ map, position: coords });
             setStatus("ready");
           } else {
-            // 주소를 찾을 수 없는 경우 기본 좌표 (강남)
             const defaultCoords = new window.kakao.maps.LatLng(37.4979, 127.0276);
             new window.kakao.maps.Map(mapRef.current!, {
               center: defaultCoords,
@@ -73,7 +78,6 @@ export function KakaoMap({ address }: KakaoMapProps) {
       });
     };
 
-    // SDK 로드 확인 (layout.tsx에서 로드)
     if (window.kakao?.maps) {
       initMap();
     } else {
@@ -92,25 +96,11 @@ export function KakaoMap({ address }: KakaoMapProps) {
         clearTimeout(timeout);
       };
     }
-  }, [address]);
+  }, [address, useKakao]);
 
-  if (status === "no-key") {
-    return (
-      <Card className="flex flex-col items-center justify-center h-[300px] text-secondary">
-        <MapPin size={32} className="text-muted mb-2" />
-        <p className="text-sm">카카오맵 API 키를 설정하면</p>
-        <p className="text-sm">지도에서 위치를 확인할 수 있습니다</p>
-        <p className="text-xs text-muted mt-2">NEXT_PUBLIC_KAKAO_MAP_KEY</p>
-      </Card>
-    );
-  }
-
-  if (status === "error") {
-    return (
-      <Card className="flex items-center justify-center h-[300px] text-secondary text-sm">
-        지도를 불러올 수 없습니다
-      </Card>
-    );
+  // 카카오맵 키가 없거나 에러 시 OpenStreetMap(Leaflet) 사용
+  if (status === "no-key" || status === "error") {
+    return <LeafletMap address={address} />;
   }
 
   return (
