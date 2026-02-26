@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Card } from "@/components/common";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -9,7 +9,7 @@ interface LeafletMapProps {
   address: string;
 }
 
-// 주요 지역 좌표 매핑
+// 주요 지역 좌표 매핑 (Geocoding 실패 시 폴백)
 const AREA_COORDS: Record<string, [number, number]> = {
   "강남구": [37.5172, 127.0473],
   "서초구": [37.4837, 127.0324],
@@ -44,11 +44,30 @@ const AREA_COORDS: Record<string, [number, number]> = {
   "화성시": [37.1997, 126.8313],
 };
 
-function getCoordsFromAddress(address: string): [number, number] {
+function getFallbackCoords(address: string): [number, number] {
   for (const [area, coords] of Object.entries(AREA_COORDS)) {
     if (address.includes(area)) return coords;
   }
   return [37.5665, 126.9780]; // 서울시청 기본값
+}
+
+/** Nominatim Geocoding API로 주소 → 좌표 변환 */
+async function geocodeAddress(address: string): Promise<[number, number] | null> {
+  try {
+    const query = encodeURIComponent(address);
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${query}&countrycodes=kr&limit=1`,
+      { headers: { "Accept-Language": "ko" } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.length > 0) {
+      return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export function LeafletMap({ address }: LeafletMapProps) {
@@ -57,25 +76,13 @@ export function LeafletMap({ address }: LeafletMapProps) {
 
   useEffect(() => {
     if (!mapRef.current) return;
+    let cancelled = false;
 
     // 이전 인스턴스 정리
     if (mapInstanceRef.current) {
       mapInstanceRef.current.remove();
       mapInstanceRef.current = null;
     }
-
-    const coords = getCoordsFromAddress(address);
-
-    const map = L.map(mapRef.current, {
-      center: coords,
-      zoom: 15,
-      zoomControl: true,
-    });
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
-    }).addTo(map);
 
     const icon = L.icon({
       iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -86,19 +93,43 @@ export function LeafletMap({ address }: LeafletMapProps) {
       popupAnchor: [1, -34],
     });
 
-    L.marker(coords, { icon })
-      .addTo(map)
-      .bindPopup(`<b>${address}</b>`)
-      .openPopup();
+    function createMap(coords: [number, number], zoom: number) {
+      if (cancelled || !mapRef.current) return;
+      const map = L.map(mapRef.current, {
+        center: coords,
+        zoom,
+        zoomControl: true,
+      });
 
-    mapInstanceRef.current = map;
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
 
-    // 컨테이너 크기 재계산 (렌더링 타이밍 이슈 해결)
-    setTimeout(() => map.invalidateSize(), 100);
+      L.marker(coords, { icon })
+        .addTo(map)
+        .bindPopup(`<b>${address}</b>`)
+        .openPopup();
+
+      mapInstanceRef.current = map;
+      setTimeout(() => map.invalidateSize(), 100);
+    }
+
+    // Geocoding 시도 → 실패 시 폴백 좌표 사용
+    geocodeAddress(address).then((coords) => {
+      if (coords) {
+        createMap(coords, 16);
+      } else {
+        createMap(getFallbackCoords(address), 15);
+      }
+    });
 
     return () => {
-      map.remove();
-      mapInstanceRef.current = null;
+      cancelled = true;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
     };
   }, [address]);
 
