@@ -25,23 +25,6 @@ interface PropertyInfo {
   recentTransaction: string;
 }
 
-interface GapguEntry {
-  order: number;
-  date: string;
-  type: string;
-  detail: string;
-  risk: "danger" | "warning" | "safe";
-}
-
-interface EulguEntry {
-  order: number;
-  date: string;
-  type: string;
-  detail: string;
-  amount: number;
-  risk: "danger" | "warning" | "safe";
-}
-
 interface RiskItem {
   level: "danger" | "warning" | "safe";
   title: string;
@@ -58,8 +41,6 @@ interface RiskAnalysis {
 
 interface AnalysisResult {
   propertyInfo: PropertyInfo;
-  gapgu: GapguEntry[];
-  eulgu: EulguEntry[];
   riskAnalysis: RiskAnalysis;
   aiOpinion: string;
 }
@@ -287,78 +268,6 @@ export default function RightsAnalysisPage() {
                 </p>
               </div>
             )}
-          </Card>
-
-          {/* 갑구 (소유권) */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              갑구 (소유권)
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">순번</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">접수일자</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">등기유형</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">상세내용</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">위험도</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {result.gapgu.map((entry) => (
-                    <tr key={entry.order} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-3 py-3 text-gray-600">{entry.order}</td>
-                      <td className="px-3 py-3 text-gray-600">{entry.date}</td>
-                      <td className="px-3 py-3 font-medium text-gray-900">{entry.type}</td>
-                      <td className="px-3 py-3 text-gray-700">{entry.detail}</td>
-                      <td className="px-3 py-3">
-                        <Badge variant={riskBadgeVariant[entry.risk]} icon={riskBadgeIcon[entry.risk]} size="md">
-                          {riskBadgeLabel[entry.risk]}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-
-          {/* 을구 (권리관계) */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              을구 (권리관계)
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">순번</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">접수일자</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">등기유형</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">상세내용</th>
-                    <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">채권금액</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">위험도</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {result.eulgu.map((entry) => (
-                    <tr key={entry.order} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-3 py-3 text-gray-600">{entry.order}</td>
-                      <td className="px-3 py-3 text-gray-600">{entry.date}</td>
-                      <td className="px-3 py-3 font-medium text-gray-900">{entry.type}</td>
-                      <td className="px-3 py-3 text-gray-700">{entry.detail}</td>
-                      <td className="px-3 py-3 text-right font-medium text-gray-900">{formatKRW(entry.amount)}</td>
-                      <td className="px-3 py-3">
-                        <Badge variant={riskBadgeVariant[entry.risk]} icon={riskBadgeIcon[entry.risk]} size="md">
-                          {riskBadgeLabel[entry.risk]}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </Card>
 
           {/* Risk Analysis Section */}
