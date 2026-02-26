@@ -123,7 +123,7 @@ export default function Sidebar() {
               <div>
                 <h1 className="text-lg font-bold tracking-tight">
                   VESTRA
-                  <span className="ml-1.5 text-[9px] font-normal text-gray-500 align-middle">v0.3.1</span>
+                  <span className="ml-1.5 text-[9px] font-normal text-white/70 align-middle">v0.4.0</span>
                 </h1>
                 <p className="text-[10px] text-muted -mt-1">AI 자산관리 플랫폼</p>
               </div>

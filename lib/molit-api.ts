@@ -163,16 +163,16 @@ export async function fetchRecentPrices(
   const lawdCd = extractLawdCode(address);
   if (!lawdCd) return null;
 
-  const allTransactions: RealTransaction[] = [];
   const now = new Date();
 
-  // 최근 N개월 조회
-  for (let i = 0; i < months; i++) {
+  // 최근 N개월 병렬 조회
+  const promises = Array.from({ length: months }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const dealYmd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const txns = await fetchRealTransactions(lawdCd, dealYmd);
-    allTransactions.push(...txns);
-  }
+    return fetchRealTransactions(lawdCd, dealYmd);
+  });
+  const results = await Promise.all(promises);
+  const allTransactions = results.flat();
 
   if (allTransactions.length === 0) {
     return {
