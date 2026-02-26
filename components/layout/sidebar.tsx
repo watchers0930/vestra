@@ -35,7 +35,7 @@ const menuItems: MenuItem[] = [
   { href: "/registry", icon: FileSearch, label: "등기분석", description: "등기부등본 파싱" },
   { href: "/contract", icon: FileSearch, label: "계약검토", description: "계약서 AI 분석" },
   { href: "/tax", icon: Calculator, label: "세무 시뮬레이션", description: "세금 계산" },
-  { href: "/prediction", icon: TrendingUp, label: "가치예측", description: "시세 예측" },
+  { href: "/prediction", icon: TrendingUp, label: "시세전망", description: "시세 분석·전망" },
   {
     href: "/jeonse", icon: Home, label: "전세보호", description: "권리 실행",
     children: [

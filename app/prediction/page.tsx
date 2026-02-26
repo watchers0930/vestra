@@ -92,7 +92,7 @@ export default function PredictionPage() {
 
       addAnalysis({
         type: "prediction",
-        typeLabel: "가치예측",
+        typeLabel: "시세전망",
         address: address.trim(),
         summary: `현재 ${formatKRW(data.currentPrice)}, 신뢰도 ${data.confidence}%`,
         data: data as Record<string, unknown>,
@@ -175,9 +175,17 @@ export default function PredictionPage() {
     <div className="max-w-6xl mx-auto">
       <PageHeader
         icon={TrendingUp}
-        title="가치예측"
-        description="실거래 데이터 + AI 기반 부동산 가치 예측 및 시나리오 분석"
+        title="시세전망"
+        description="실거래 데이터 + AI 기반 부동산 시세 분석 및 미래 가격 전망"
       />
+
+      {/* 메뉴명 안내 */}
+      <div className="mb-6 px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg">
+        <p className="text-xs text-blue-700 leading-relaxed">
+          💡 <span className="font-medium">왜 &apos;시세전망&apos;인가요?</span> — 단순한 미래 가격 예측이 아닌, 국토교통부 실거래 데이터를 기반으로 현재 시세를 정밀 분석한 뒤 시장 변수를 반영하여 전망하기 때문입니다.
+          실데이터에 근거한 분석이라는 점에서 &apos;가치예측&apos;보다 &apos;시세전망&apos;이 본 서비스의 성격을 더 정확히 나타냅니다.
+        </p>
+      </div>
 
       {/* Search */}
       <Card className="p-6 mb-6">
