@@ -75,12 +75,14 @@ export default function PredictionPage() {
   const [result, setResult] = useState<PredictionResult | null>(null);
   const [activeScenario, setActiveScenario] = useState<string>("all");
   const [selectedArea, setSelectedArea] = useState<number | null>(null);
+  const [selectedApt, setSelectedApt] = useState<string | null>(null);
 
   const handleAnalyze = async () => {
     if (!address.trim()) return;
     setLoading(true);
     setResult(null);
     setSelectedArea(null);
+    setSelectedApt(null);
 
     try {
       const res = await fetch("/api/predict-value", {
@@ -91,6 +93,14 @@ export default function PredictionPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResult(data);
+
+      // 주소에서 아파트명 자동 매칭
+      if (data.realTransactions?.length) {
+        const aptNames = [...new Set(data.realTransactions.map((t: RealTransaction) => t.aptName))] as string[];
+        const query = address.trim().replace(/\s/g, "");
+        const matched = aptNames.find((name) => query.includes(name.replace(/\s/g, "")));
+        if (matched) setSelectedApt(matched);
+      }
 
       addAnalysis({
         type: "prediction",
@@ -157,14 +167,24 @@ export default function PredictionPage() {
     ];
   };
 
-  // 면적 필터링된 거래 데이터
-  const filteredTransactions = result?.realTransactions?.filter(
-    (t) => selectedArea === null || Math.round(t.area) === selectedArea
+  // 고유 아파트명 목록
+  const availableApts = result?.realTransactions
+    ? [...new Set(result.realTransactions.map((t) => t.aptName))].sort()
+    : [];
+
+  // 아파트명 필터링된 거래
+  const aptFilteredTransactions = result?.realTransactions?.filter(
+    (t) => selectedApt === null || t.aptName === selectedApt
   ) ?? [];
 
-  // 고유 면적 목록 (정수, 오름차순)
-  const availableAreas = result?.realTransactions
-    ? [...new Set(result.realTransactions.map((t) => Math.round(t.area)))].sort((a, b) => a - b)
+  // 면적 필터링된 거래 데이터 (아파트 → 면적 순서)
+  const filteredTransactions = aptFilteredTransactions.filter(
+    (t) => selectedArea === null || Math.round(t.area) === selectedArea
+  );
+
+  // 선택된 아파트 기준 면적 목록 (정수, 오름차순)
+  const availableAreas = aptFilteredTransactions.length > 0
+    ? [...new Set(aptFilteredTransactions.map((t) => Math.round(t.area)))].sort((a, b) => a - b)
     : [];
 
   // 필터링된 통계
@@ -265,23 +285,42 @@ export default function PredictionPage() {
       {/* Results */}
       {result && !loading && (
         <div className="space-y-6">
-          {/* 면적 선택 필터 */}
-          {availableAreas.length > 1 && (
-            <Card className="p-4">
+          {/* 아파트 + 면적 선택 필터 */}
+          {availableApts.length > 1 && (
+            <Card className="p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-secondary whitespace-nowrap">아파트</span>
+                <select
+                  value={selectedApt ?? ""}
+                  onChange={(e) => {
+                    setSelectedApt(e.target.value || null);
+                    setSelectedArea(null);
+                  }}
+                  className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 max-w-xs"
+                >
+                  <option value="">전체 ({availableApts.length}개 단지)</option>
+                  {availableApts.map((apt) => (
+                    <option key={apt} value={apt}>{apt}</option>
+                  ))}
+                </select>
+              </div>
+              {availableAreas.length > 0 && (
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-secondary whitespace-nowrap">전용면적</span>
                 <div className="flex flex-wrap gap-1.5">
-                  <button
-                    onClick={() => setSelectedArea(null)}
-                    className={cn(
-                      "px-3 py-1 text-xs rounded-full border transition-all",
-                      selectedArea === null
-                        ? "bg-gray-900 text-white border-gray-900"
-                        : "bg-white text-secondary border-border hover:bg-gray-50"
-                    )}
-                  >
-                    전체
-                  </button>
+                  {availableAreas.length > 1 && (
+                    <button
+                      onClick={() => setSelectedArea(null)}
+                      className={cn(
+                        "px-3 py-1 text-xs rounded-full border transition-all",
+                        selectedArea === null
+                          ? "bg-gray-900 text-white border-gray-900"
+                          : "bg-white text-secondary border-border hover:bg-gray-50"
+                      )}
+                    >
+                      전체
+                    </button>
+                  )}
                   {availableAreas.map((area) => (
                     <button
                       key={area}
@@ -298,6 +337,7 @@ export default function PredictionPage() {
                   ))}
                 </div>
               </div>
+              )}
             </Card>
           )}
 

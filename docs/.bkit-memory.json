@@ -1,0 +1,23 @@
+{
+  "sessionCount": 2,
+  "lastSession": {
+    "startedAt": "2026-02-27T01:25:54.138Z",
+    "platform": "claude",
+    "level": "Dynamic"
+  },
+  "project": {
+    "name": "vestra",
+    "level": "Dynamic",
+    "description": "AI 부동산 자산관리 플랫폼",
+    "techStack": {
+      "framework": "Next.js 16 (App Router)",
+      "language": "TypeScript",
+      "styling": "Tailwind CSS v4",
+      "database": "PostgreSQL (Neon) + Prisma",
+      "auth": "NextAuth v5",
+      "ai": "OpenAI API",
+      "deployment": "Vercel"
+    },
+    "initializedAt": "2026-02-27T01:25:54.138Z"
+  }
+}
