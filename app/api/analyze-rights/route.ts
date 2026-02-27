@@ -5,6 +5,17 @@ import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
 import { fetchComprehensivePrices } from "@/lib/molit-api";
 
+/** 원 단위 숫자를 "X억 Y만원" 형태로 변환 */
+function formatKoreanPrice(won: number): string {
+  if (won <= 0) return "없음";
+  const eok = Math.floor(won / 100000000);
+  const man = Math.round((won % 100000000) / 10000);
+  if (eok > 0 && man > 0) return `${eok}억 ${man.toLocaleString()}만원`;
+  if (eok > 0) return `${eok}억원`;
+  if (man > 0) return `${man.toLocaleString()}만원`;
+  return `${won.toLocaleString()}원`;
+}
+
 export async function POST(req: NextRequest) {
   try {
     // Rate limiting (보호 API: 30 req/min)
@@ -48,9 +59,9 @@ export async function POST(req: NextRequest) {
     if (comprehensive?.sale && comprehensive.sale.transactionCount > 0) {
       const s = comprehensive.sale;
       realDataContext += `\n\n## 매매 실거래 데이터 (최근 12개월)
-- 평균 거래가: ${s.avgPrice.toLocaleString()}원
-- 최저 거래가: ${s.minPrice.toLocaleString()}원
-- 최고 거래가: ${s.maxPrice.toLocaleString()}원
+- 평균 거래가: ${formatKoreanPrice(s.avgPrice)} (${s.avgPrice.toLocaleString()}원)
+- 최저 거래가: ${formatKoreanPrice(s.minPrice)} (${s.minPrice.toLocaleString()}원)
+- 최고 거래가: ${formatKoreanPrice(s.maxPrice)} (${s.maxPrice.toLocaleString()}원)
 - 거래 건수: ${s.transactionCount}건
 
 최근 매매 거래 내역 (최대 10건):
@@ -58,7 +69,7 @@ ${s.transactions
   .slice(0, 10)
   .map(
     (t) =>
-      `- ${t.aptName} ${t.area}㎡ ${t.floor}층: ${t.dealAmount.toLocaleString()}원 (${t.dealYear}.${t.dealMonth}.${t.dealDay})`
+      `- ${t.aptName} ${t.area}㎡ ${t.floor}층: ${formatKoreanPrice(t.dealAmount)} (${t.dealYear}.${t.dealMonth}.${t.dealDay})`
   )
   .join("\n")}
 
@@ -69,9 +80,9 @@ ${s.transactions
     if (comprehensive?.rent && (comprehensive.rent.jeonseCount > 0 || comprehensive.rent.wolseCount > 0)) {
       const r = comprehensive.rent;
       realDataContext += `\n\n## 전월세 실거래 데이터 (최근 12개월)
-- 전세 평균 보증금: ${r.avgDeposit.toLocaleString()}원
-- 전세 최저 보증금: ${r.minDeposit.toLocaleString()}원
-- 전세 최고 보증금: ${r.maxDeposit.toLocaleString()}원
+- 전세 평균 보증금: ${formatKoreanPrice(r.avgDeposit)} (${r.avgDeposit.toLocaleString()}원)
+- 전세 최저 보증금: ${formatKoreanPrice(r.minDeposit)} (${r.minDeposit.toLocaleString()}원)
+- 전세 최고 보증금: ${formatKoreanPrice(r.maxDeposit)} (${r.maxDeposit.toLocaleString()}원)
 - 전세 거래 건수: ${r.jeonseCount}건
 - 월세 거래 건수: ${r.wolseCount}건
 
@@ -80,7 +91,7 @@ ${r.transactions
   .slice(0, 10)
   .map(
     (t) =>
-      `- ${t.aptName} ${t.area}㎡ ${t.floor}층: ${t.rentType} 보증금 ${t.deposit.toLocaleString()}원${t.monthlyRent > 0 ? ` / 월세 ${t.monthlyRent.toLocaleString()}원` : ""} (${t.dealYear}.${t.dealMonth}.${t.dealDay})`
+      `- ${t.aptName} ${t.area}㎡ ${t.floor}층: ${t.rentType} 보증금 ${formatKoreanPrice(t.deposit)}${t.monthlyRent > 0 ? ` / 월세 ${formatKoreanPrice(t.monthlyRent)}` : ""} (${t.dealYear}.${t.dealMonth}.${t.dealDay})`
   )
   .join("\n")}
 
