@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Shield,
   AlertTriangle,
@@ -28,8 +28,18 @@ import type { ValidationResult } from "@/lib/validation-engine";
 import { PageHeader, Card, Alert } from "@/components/common";
 import { ScoreGauge } from "@/components/results";
 import { SliderInput } from "@/components/forms";
+import type { KakaoGeocoderResult } from "@/components/prediction/KakaoMap";
 
 // ─── 타입 ───
+
+type AddressTab = "admin" | "jibun" | "road";
+
+interface AddressInfo {
+  admin: string;  // 행정동 주소
+  jibun: string;  // 지번 주소
+  road: string;   // 도로명 주소
+  zipCode: string; // 우편번호
+}
 
 interface RiskItem {
   level: "danger" | "warning" | "safe";
@@ -152,6 +162,10 @@ export default function RightsAnalysisPage() {
   const [isExtracting, setIsExtracting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 주소 탭 메뉴
+  const [addressTab, setAddressTab] = useState<AddressTab>("admin");
+  const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null);
+
   // 접기 상태
   const [showGapgu, setShowGapgu] = useState(false);
   const [showEulgu, setShowEulgu] = useState(false);
@@ -163,6 +177,65 @@ export default function RightsAnalysisPage() {
     setFileType(null);
     setInputMode("text");
   };
+
+  // 결과에서 주소가 나오면 카카오 Geocoder로 주소 형식 변환
+  useEffect(() => {
+    if (!result?.propertyInfo?.address) {
+      setAddressInfo(null);
+      return;
+    }
+
+    const address = result.propertyInfo.address;
+
+    const geocode = () => {
+      if (!window.kakao?.maps) return;
+
+      window.kakao.maps.load(() => {
+        const geocoder = new window.kakao.maps.services.Geocoder();
+        geocoder.addressSearch(address, (results: KakaoGeocoderResult[], status: string) => {
+          if (status === window.kakao.maps.services.Status.OK && results[0]) {
+            const r = results[0];
+            setAddressInfo({
+              admin: r.address
+                ? `${r.address.region_1depth_name} ${r.address.region_2depth_name} ${r.address.region_3depth_h_name}`
+                : address,
+              jibun: r.address?.address_name || address,
+              road: r.road_address?.address_name || "-",
+              zipCode: r.road_address?.zone_no || "-",
+            });
+          } else {
+            // Geocoder 실패 시 파싱된 주소로 폴백
+            setAddressInfo({
+              admin: address,
+              jibun: address,
+              road: "-",
+              zipCode: "-",
+            });
+          }
+        });
+      });
+    };
+
+    if (window.kakao?.maps) {
+      geocode();
+    } else {
+      const interval = setInterval(() => {
+        if (window.kakao?.maps) {
+          clearInterval(interval);
+          geocode();
+        }
+      }, 200);
+      const timeout = setTimeout(() => {
+        clearInterval(interval);
+        // SDK 로드 실패 시 폴백
+        setAddressInfo({ admin: address, jibun: address, road: "-", zipCode: "-" });
+      }, 5000);
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
+    }
+  }, [result]);
 
   const handleFileUpload = useCallback(async (files: File[]) => {
     if (!files.length) return;
@@ -231,6 +304,8 @@ export default function RightsAnalysisPage() {
     if (!rawText.trim()) return;
     setResult(null);
     setError(null);
+    setAddressInfo(null);
+    setAddressTab("admin");
 
     if (usedFile) { setStep("extracting"); await new Promise((r) => setTimeout(r, 400)); }
     setStep("parsing"); await new Promise((r) => setTimeout(r, 600));
@@ -437,15 +512,52 @@ export default function RightsAnalysisPage() {
               <MapPin size={18} className="text-blue-600" />
               부동산 기본정보
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div><p className="text-xs text-gray-400 mb-1">주소</p><p className="text-sm font-medium text-gray-900">{result.propertyInfo.address || "-"}</p></div>
-              <div><p className="text-xs text-gray-400 mb-1">건물유형</p><p className="text-sm font-medium text-gray-900">{result.propertyInfo.type || "-"}</p></div>
-              <div><p className="text-xs text-gray-400 mb-1">전용면적</p><p className="text-sm font-medium text-gray-900">{result.propertyInfo.area || "-"}</p></div>
-              <div><p className="text-xs text-gray-400 mb-1">추정 시세</p><p className="text-sm font-bold text-blue-600">{result.propertyInfo.estimatedPrice ? formatKRW(result.propertyInfo.estimatedPrice) : "-"}</p></div>
-              <div><p className="text-xs text-gray-400 mb-1">전세 시세</p><p className="text-sm font-bold text-emerald-600">{result.propertyInfo.jeonsePrice ? formatKRW(result.propertyInfo.jeonsePrice) : "-"}</p></div>
-              {result.propertyInfo.recentTransaction && (
-                <div><p className="text-xs text-gray-400 mb-1">최근 거래</p><p className="text-sm font-medium text-gray-900">{result.propertyInfo.recentTransaction}</p></div>
-              )}
+            <div className="space-y-4">
+              {/* 주소 (탭 메뉴) */}
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-xs text-gray-400">주소</p>
+                  {addressInfo && (
+                    <div className="flex gap-1">
+                      {([
+                        { key: "admin" as AddressTab, label: "행정동" },
+                        { key: "jibun" as AddressTab, label: "지번" },
+                        { key: "road" as AddressTab, label: "도로명" },
+                      ]).map((tab) => (
+                        <button
+                          key={tab.key}
+                          onClick={() => setAddressTab(tab.key)}
+                          className={cn(
+                            "px-2 py-0.5 text-[10px] rounded-md border transition-all",
+                            addressTab === tab.key
+                              ? "bg-gray-900 text-white border-gray-900"
+                              : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                          )}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm font-medium text-gray-900">
+                  {addressInfo ? addressInfo[addressTab] : (result.propertyInfo.address || "-")}
+                </p>
+                {addressInfo?.zipCode && addressInfo.zipCode !== "-" && (
+                  <p className="text-[11px] text-gray-400 mt-1">우편번호: {addressInfo.zipCode}</p>
+                )}
+              </div>
+
+              {/* 기본 정보 그리드 */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div><p className="text-xs text-gray-400 mb-1">건물유형</p><p className="text-sm font-medium text-gray-900">{result.propertyInfo.type || "-"}</p></div>
+                <div><p className="text-xs text-gray-400 mb-1">전용면적</p><p className="text-sm font-medium text-gray-900">{result.propertyInfo.area || "-"}</p></div>
+                <div><p className="text-xs text-gray-400 mb-1">추정 시세</p><p className="text-sm font-bold text-blue-600">{result.propertyInfo.estimatedPrice ? formatKRW(result.propertyInfo.estimatedPrice) : "-"}</p></div>
+                <div><p className="text-xs text-gray-400 mb-1">전세 시세</p><p className="text-sm font-bold text-emerald-600">{result.propertyInfo.jeonsePrice ? formatKRW(result.propertyInfo.jeonsePrice) : "-"}</p></div>
+                {result.propertyInfo.recentTransaction && (
+                  <div><p className="text-xs text-gray-400 mb-1">최근 거래</p><p className="text-sm font-medium text-gray-900">{result.propertyInfo.recentTransaction}</p></div>
+                )}
+              </div>
             </div>
           </Card>
 

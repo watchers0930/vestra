@@ -14,6 +14,33 @@ interface KakaoMapProps {
   address: string;
 }
 
+// 카카오 Geocoder 결과 타입 (주소 변환용)
+export interface KakaoGeocoderResult {
+  address_name: string;
+  x: string;
+  y: string;
+  address: {
+    address_name: string;
+    region_1depth_name: string;
+    region_2depth_name: string;
+    region_3depth_name: string;
+    region_3depth_h_name: string;
+  } | null;
+  road_address: {
+    address_name: string;
+    zone_no: string;
+  } | null;
+}
+
+// 카카오 Places 키워드 검색 결과 타입
+export interface KakaoPlaceResult {
+  address_name: string;
+  road_address_name: string;
+  place_name: string;
+  x: string;
+  y: string;
+}
+
 declare global {
   interface Window {
     kakao: {
@@ -28,7 +55,13 @@ declare global {
           Geocoder: new () => {
             addressSearch: (
               address: string,
-              callback: (result: { x: string; y: string }[], status: string) => void
+              callback: (result: KakaoGeocoderResult[], status: string) => void
+            ) => void;
+          };
+          Places: new () => {
+            keywordSearch: (
+              keyword: string,
+              callback: (result: KakaoPlaceResult[], status: string) => void
             ) => void;
           };
           Status: { OK: string };

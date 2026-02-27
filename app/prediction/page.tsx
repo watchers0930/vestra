@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
 import { addAnalysis, addOrUpdateAsset } from "@/lib/store";
+import { getSidoList, getSigunguList, getEupmyeondongList } from "@/lib/korea-address";
 import {
   LineChart,
   Line,
@@ -29,6 +30,7 @@ import {
 import { PageHeader, Card, Button, Alert } from "@/components/common";
 import { LoadingSpinner } from "@/components/loading";
 import { KakaoMap } from "@/components/prediction/KakaoMap";
+import type { KakaoGeocoderResult, KakaoPlaceResult } from "@/components/prediction/KakaoMap";
 
 interface RealTransaction {
   dealAmount: number;
@@ -69,26 +71,126 @@ interface PredictionResult {
   } | null;
 }
 
+type AddressTab = "admin" | "jibun" | "road";
+type InputMode = "dong" | "jibun" | "road";
+
+interface AddressInfo {
+  admin: string;
+  jibun: string;
+  road: string;
+  zipCode: string;
+}
+
+// 다음 우편번호 API 타입
+interface DaumPostcodeData {
+  zonecode: string;
+  address: string;
+  addressEnglish: string;
+  addressType: string;
+  userSelectedType: string;
+  jibunAddress: string;
+  roadAddress: string;
+  bname: string;
+  buildingName: string;
+  apartment: string;
+  sido: string;
+  sigungu: string;
+  bname1: string;
+  bname2: string;
+  roadname: string;
+}
+
+declare global {
+  interface Window {
+    daum?: {
+      Postcode: new (config: {
+        oncomplete: (data: DaumPostcodeData) => void;
+        width?: string;
+        height?: string;
+      }) => { open: () => void; embed: (el: HTMLElement) => void };
+    };
+  }
+}
+
 export default function PredictionPage() {
+  // 입력 모드 (읍면동 / 지번 / 도로명)
+  const [inputMode, setInputMode] = useState<InputMode>("dong");
+
+  // 읍면동 드롭다운 상태
+  const [selectedSido, setSelectedSido] = useState("");
+  const [selectedSigungu, setSelectedSigungu] = useState("");
+  const [selectedDong, setSelectedDong] = useState("");
+  const [detailAddr, setDetailAddr] = useState("");
+
+  // 지번 직접 입력
+  const [jibunInput, setJibunInput] = useState("");
+
+  // 도로명 (다음 주소 API 결과)
+  const [roadResult, setRoadResult] = useState("");
+
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PredictionResult | null>(null);
   const [activeScenario, setActiveScenario] = useState<string>("all");
   const [selectedArea, setSelectedArea] = useState<number | null>(null);
   const [selectedApt, setSelectedApt] = useState<string | null>(null);
+  const [addressTab, setAddressTab] = useState<AddressTab>("admin");
+  const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null);
+
+  const sidoList = getSidoList();
+  const sigunguList = selectedSido ? getSigunguList(selectedSido) : [];
+  const dongList = selectedSido && selectedSigungu ? getEupmyeondongList(selectedSido, selectedSigungu) : [];
+
+  // 다음 우편번호 스크립트 로드
+  useEffect(() => {
+    if (document.getElementById("daum-postcode-script")) return;
+    const script = document.createElement("script");
+    script.id = "daum-postcode-script";
+    script.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+    script.async = true;
+    document.head.appendChild(script);
+  }, []);
+
+  const openDaumPostcode = useCallback(() => {
+    if (!window.daum?.Postcode) {
+      alert("주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+    new window.daum.Postcode({
+      oncomplete: (data: DaumPostcodeData) => {
+        const addr = data.userSelectedType === "R" ? data.roadAddress : data.jibunAddress;
+        setRoadResult(addr);
+      },
+    }).open();
+  }, []);
+
+  const buildAddress = () => {
+    if (inputMode === "jibun") return jibunInput.trim();
+    if (inputMode === "road") return roadResult.trim();
+    return [selectedSido, selectedSigungu, selectedDong, detailAddr.trim()].filter(Boolean).join(" ");
+  };
+
+  const canSearch =
+    inputMode === "dong" ? !!(selectedSido && selectedSigungu) :
+    inputMode === "jibun" ? !!jibunInput.trim() :
+    !!roadResult.trim();
 
   const handleAnalyze = async () => {
-    if (!address.trim()) return;
+    const builtAddress = buildAddress();
+    if (!builtAddress) return;
+    setAddress(builtAddress);
     setLoading(true);
     setResult(null);
     setSelectedArea(null);
     setSelectedApt(null);
+    setAddressInfo(null);
+    setAddressTab("admin");
 
     try {
       const res = await fetch("/api/predict-value", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: address.trim() }),
+        body: JSON.stringify({ address: builtAddress }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -123,12 +225,90 @@ export default function PredictionPage() {
     }
   };
 
-  const quickSearches = [
-    "서울 강남구 역삼동 래미안",
-    "서울 송파구 잠실엘스 84㎡",
-    "서울 서초구 반포자이",
-    "서울 마포구 래미안푸르지오",
-  ];
+  // 결과가 나오면 카카오 Geocoder로 주소 형식 변환
+  // addressSearch 실패 시 → keywordSearch로 좌표 획득 → addressSearch 재시도
+  useEffect(() => {
+    if (!result || !address.trim()) {
+      setAddressInfo(null);
+      return;
+    }
+
+    const addr = address.trim();
+
+    const applyGeocoderResult = (r: KakaoGeocoderResult) => {
+      setAddressInfo({
+        admin: r.address
+          ? `${r.address.region_1depth_name} ${r.address.region_2depth_name} ${r.address.region_3depth_h_name}`
+          : addr,
+        jibun: r.address?.address_name || addr,
+        road: r.road_address?.address_name || "-",
+        zipCode: r.road_address?.zone_no || "-",
+      });
+    };
+
+    const geocode = () => {
+      if (!window.kakao?.maps) return;
+
+      window.kakao.maps.load(() => {
+        const geocoder = new window.kakao.maps.services.Geocoder();
+        const OK = window.kakao.maps.services.Status.OK;
+
+        // 1차: addressSearch (정식 주소일 때 바로 성공)
+        geocoder.addressSearch(addr, (results: KakaoGeocoderResult[], status: string) => {
+          if (status === OK && results[0]) {
+            applyGeocoderResult(results[0]);
+            return;
+          }
+
+          // 2차: keywordSearch (아파트명 등 검색어 → 좌표+지번 획득)
+          const places = new window.kakao.maps.services.Places();
+          places.keywordSearch(addr, (placeResults: KakaoPlaceResult[], placeStatus: string) => {
+            if (placeStatus === OK && placeResults[0]) {
+              const p = placeResults[0];
+
+              // 키워드 결과의 지번주소로 addressSearch 재시도 (행정동+우편번호 획득)
+              geocoder.addressSearch(p.address_name, (geoResults: KakaoGeocoderResult[], geoStatus: string) => {
+                if (geoStatus === OK && geoResults[0]) {
+                  applyGeocoderResult(geoResults[0]);
+                } else {
+                  // 3차 실패: keywordSearch 결과로 최소한의 정보 구성
+                  setAddressInfo({
+                    admin: p.address_name.replace(/\s*\d+(-\d+)?$/, ""),
+                    jibun: p.address_name,
+                    road: p.road_address_name || "-",
+                    zipCode: "-",
+                  });
+                }
+              });
+            } else {
+              // keywordSearch도 실패: 원본 입력으로 폴백
+              setAddressInfo({ admin: addr, jibun: addr, road: "-", zipCode: "-" });
+            }
+          });
+        });
+      });
+    };
+
+    if (window.kakao?.maps) {
+      geocode();
+    } else {
+      const interval = setInterval(() => {
+        if (window.kakao?.maps) {
+          clearInterval(interval);
+          geocode();
+        }
+      }, 200);
+      const timeout = setTimeout(() => {
+        clearInterval(interval);
+        setAddressInfo({ admin: addr, jibun: addr, road: "-", zipCode: "-" });
+      }, 5000);
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
+    }
+  }, [result, address]);
+
 
   const scenarios = [
     { id: "all", label: "전체 비교", color: "#000" },
@@ -229,46 +409,198 @@ export default function PredictionPage() {
       </div>
 
       {/* Search */}
-      <Card className="p-6 mb-6">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
-            placeholder="예측할 부동산 주소를 입력하세요"
-            className="flex-1 px-4 py-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm"
-          />
-          <Button
-            icon={Search}
-            loading={loading}
-            disabled={!address.trim()}
-            size="lg"
-            onClick={handleAnalyze}
-          >
-            예측 분석
-          </Button>
-        </div>
-        <div className="flex gap-2 mt-3 flex-wrap">
-          {quickSearches.map((q) => (
+      <Card className="p-4 sm:p-6 mb-6">
+        {/* 입력 모드 탭 */}
+        <div className="flex gap-1 sm:gap-1.5 mb-3 sm:mb-4">
+          {([
+            { key: "dong" as InputMode, label: "읍면동" },
+            { key: "jibun" as InputMode, label: "지번" },
+            { key: "road" as InputMode, label: "도로명" },
+          ]).map((tab) => (
             <button
-              key={q}
-              onClick={() => setAddress(q)}
-              className="px-3 py-1.5 text-xs bg-gray-100 text-secondary rounded-full hover:bg-gray-200 transition-colors"
+              key={tab.key}
+              onClick={() => setInputMode(tab.key)}
+              className={cn(
+                "px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border transition-all font-medium",
+                inputMode === tab.key
+                  ? "bg-gray-900 text-white border-gray-900"
+                  : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+              )}
             >
-              {q}
+              {tab.label}
             </button>
           ))}
         </div>
+
+        {/* 읍면동 모드 */}
+        {inputMode === "dong" && (
+          <>
+            <p className="text-xs text-gray-400 mb-3 sm:mb-4 sm:text-center">
+              시도 &gt; 시군구 &gt; 읍면동 순서로 선택하세요. 번지는 선택사항입니다.
+            </p>
+            <div className="grid grid-cols-2 sm:flex sm:flex-row sm:items-center gap-2">
+              <select
+                value={selectedSido}
+                onChange={(e) => {
+                  setSelectedSido(e.target.value);
+                  setSelectedSigungu("");
+                  setSelectedDong("");
+                }}
+                className="col-span-1 min-w-0 px-2.5 sm:px-3 py-2.5 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary sm:flex-1"
+              >
+                <option value="">시도 선택</option>
+                {sidoList.map((sido) => (
+                  <option key={sido} value={sido}>{sido}</option>
+                ))}
+              </select>
+              <select
+                value={selectedSigungu}
+                onChange={(e) => {
+                  setSelectedSigungu(e.target.value);
+                  setSelectedDong("");
+                }}
+                disabled={!selectedSido}
+                className="col-span-1 min-w-0 px-2.5 sm:px-3 py-2.5 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:bg-gray-100 disabled:text-gray-400 sm:flex-1"
+              >
+                <option value="">시군구</option>
+                {sigunguList.map((sg) => (
+                  <option key={sg} value={sg}>{sg}</option>
+                ))}
+              </select>
+              <select
+                value={selectedDong}
+                onChange={(e) => setSelectedDong(e.target.value)}
+                disabled={!selectedSigungu}
+                className="col-span-1 min-w-0 px-2.5 sm:px-3 py-2.5 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:bg-gray-100 disabled:text-gray-400 sm:flex-1"
+              >
+                <option value="">읍면동</option>
+                {dongList.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+              <input
+                type="text"
+                value={detailAddr}
+                onChange={(e) => setDetailAddr(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && canSearch && handleAnalyze()}
+                placeholder="번지"
+                className="col-span-1 min-w-0 px-2.5 sm:px-3 py-2.5 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary sm:w-28 sm:flex-none"
+              />
+              <Button icon={Search} loading={loading} disabled={!canSearch} size="lg" onClick={handleAnalyze} className="col-span-2 sm:col-span-1">
+                검색
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* 지번 모드 */}
+        {inputMode === "jibun" && (
+          <>
+            <p className="text-xs text-gray-400 mb-3 sm:mb-4 sm:text-center">
+              예: 서울 강남구 역삼동 677, 경기 성남시 분당구 정자동 178-1
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <input
+                type="text"
+                value={jibunInput}
+                onChange={(e) => setJibunInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && canSearch && handleAnalyze()}
+                placeholder="지번 주소를 입력하세요"
+                className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm"
+              />
+              <Button icon={Search} loading={loading} disabled={!canSearch} size="lg" onClick={handleAnalyze}>
+                검색
+              </Button>
+            </div>
+            <div className="flex gap-1.5 sm:gap-2 mt-2.5 sm:mt-3 flex-wrap">
+              {["서울 강남구 역삼동 래미안", "서울 송파구 잠실동 40", "서울 서초구 반포동 18-1", "경기 성남시 분당구 정자동"].map((q) => (
+                <button
+                  key={q}
+                  onClick={() => setJibunInput(q)}
+                  className="px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs bg-gray-100 text-secondary rounded-full hover:bg-gray-200 transition-colors"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* 도로명주소 모드 */}
+        {inputMode === "road" && (
+          <>
+            <p className="text-xs text-gray-400 mb-3 sm:mb-4 sm:text-center">
+              검색 버튼을 눌러 도로명주소를 선택하세요.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <div
+                onClick={openDaumPostcode}
+                className={cn(
+                  "flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border text-sm cursor-pointer transition-colors",
+                  roadResult
+                    ? "border-border bg-white text-gray-900"
+                    : "border-dashed border-gray-300 bg-gray-50 text-gray-400 hover:bg-gray-100"
+                )}
+              >
+                {roadResult || "클릭하여 도로명주소 검색"}
+              </div>
+              {roadResult ? (
+                <Button icon={Search} loading={loading} disabled={!canSearch} size="lg" onClick={handleAnalyze}>
+                  검색
+                </Button>
+              ) : (
+                <Button icon={Search} size="lg" onClick={openDaumPostcode}>
+                  주소 검색
+                </Button>
+              )}
+            </div>
+          </>
+        )}
       </Card>
 
-      {/* Map */}
+      {/* Map + 주소 정보 */}
       <Card className="p-4 mb-6">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
           <MapPin size={16} />
           위치
         </h3>
-        {address.trim() ? (
+
+        {/* 주소 탭 메뉴 (검색 결과가 있을 때) */}
+        {addressInfo && result && (
+          <div className="p-3 mb-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-xs text-gray-400">주소</p>
+              <div className="flex gap-1">
+                {([
+                  { key: "admin" as AddressTab, label: "행정동" },
+                  { key: "jibun" as AddressTab, label: "지번" },
+                  { key: "road" as AddressTab, label: "도로명" },
+                ]).map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setAddressTab(tab.key)}
+                    className={cn(
+                      "px-2 py-0.5 text-[10px] rounded-md border transition-all",
+                      addressTab === tab.key
+                        ? "bg-gray-900 text-white border-gray-900"
+                        : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="text-sm font-medium text-gray-900">
+              {addressInfo[addressTab]}
+            </p>
+            {addressInfo.zipCode && addressInfo.zipCode !== "-" && (
+              <p className="text-[11px] text-gray-400 mt-1">우편번호: {addressInfo.zipCode}</p>
+            )}
+          </div>
+        )}
+
+        {address ? (
           <KakaoMap address={address} />
         ) : (
           <div className="h-[300px] rounded-xl bg-gray-100 flex items-center justify-center text-secondary text-sm">
