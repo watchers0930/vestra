@@ -96,35 +96,31 @@ export async function extractTextFromScannedPDF(
   const openai = getOpenAIClient();
   const base64 = buffer.toString("base64");
 
-  console.log(`[PDF OCR] chat.completions Vision으로 스캔 PDF 처리: ${fileName}`);
+  console.log(`[PDF OCR] Responses API input_file로 스캔 PDF 처리: ${fileName}`);
 
   let extractedText = "";
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const completion = await openai.chat.completions.create({
+      const response = await openai.responses.create({
         model: "gpt-4.1-mini",
-        messages: [
+        input: [
           { role: "system", content: IMAGE_OCR_PROMPT },
           {
             role: "user",
             content: [
-              { type: "text", text: "이 등기부등본 PDF에서 모든 텍스트를 추출해주세요." },
+              { type: "input_text", text: "이 등기부등본 PDF에서 모든 텍스트를 추출해주세요." },
               {
-                type: "image_url",
-                image_url: {
-                  url: `data:application/pdf;base64,${base64}`,
-                  detail: "high",
-                },
+                type: "input_file",
+                filename: fileName,
+                file_data: `data:application/pdf;base64,${base64}`,
               },
             ],
           },
         ],
-        max_tokens: 16384,
-        temperature: 0,
       });
 
-      extractedText = completion.choices[0]?.message?.content?.trim() || "";
+      extractedText = response.output_text?.trim() || "";
       if (extractedText.length >= 20) break;
 
       console.warn(`[PDF OCR] 시도 ${attempt}/${MAX_RETRIES}: 추출 텍스트 부족 (${extractedText.length}자)`);
