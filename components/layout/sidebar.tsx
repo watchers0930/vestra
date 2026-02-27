@@ -32,8 +32,7 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { href: "/", icon: LayoutDashboard, label: "대시보드", description: "자산 현황" },
-  { href: "/rights", icon: Shield, label: "권리분석", description: "등기부 분석" },
-  { href: "/registry", icon: FileSearch, label: "등기분석", description: "등기부등본 파싱" },
+  { href: "/rights", icon: Shield, label: "권리분석", description: "등기부등본 종합분석" },
   { href: "/contract", icon: FileSearch, label: "계약검토", description: "계약서 AI 분석" },
   { href: "/tax", icon: Calculator, label: "세무 시뮬레이션", description: "세금 계산" },
   { href: "/prediction", icon: TrendingUp, label: "시세전망", description: "시세 분석·전망" },
