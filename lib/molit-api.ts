@@ -225,7 +225,29 @@ function extractXmlValue(xml: string, tag: string): string {
   return match ? match[1].trim() : "";
 }
 
-/** XML 응답에서 거래 목록 파싱 */
+/** 영문/한글 태그 모두 시도 */
+function extractVal(xml: string, eng: string, kor: string): string {
+  return extractXmlValue(xml, eng) || extractXmlValue(xml, kor);
+}
+
+/** MOLIT API 공통 fetch (타임아웃 + User-Agent 포함) */
+async function molitFetch(url: string): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(url, {
+      headers: { Accept: "application/xml", "User-Agent": "VESTRA/1.0" },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return null;
+    return await res.text();
+  } catch {
+    return null;
+  }
+}
+
+/** XML 응답에서 거래 목록 파싱 (영문/한글 태그 호환) */
 function parseTransactions(xml: string): RealTransaction[] {
   const items: RealTransaction[] = [];
   const itemRegex = /<item>([\s\S]*?)<\/item>/g;
@@ -233,21 +255,21 @@ function parseTransactions(xml: string): RealTransaction[] {
 
   while ((match = itemRegex.exec(xml)) !== null) {
     const item = match[1];
-    const dealAmountRaw = extractXmlValue(item, "거래금액").replace(/,/g, "");
-    const dealAmount = parseInt(dealAmountRaw, 10) * 10000; // 만원 → 원
+    const dealAmountRaw = extractVal(item, "dealAmount", "거래금액").replace(/,/g, "");
+    const dealAmount = parseInt(dealAmountRaw, 10) * 10000;
 
     if (isNaN(dealAmount) || dealAmount <= 0) continue;
 
     items.push({
       dealAmount,
-      buildYear: parseInt(extractXmlValue(item, "건축년도"), 10) || 0,
-      dealYear: parseInt(extractXmlValue(item, "년"), 10) || 0,
-      dealMonth: parseInt(extractXmlValue(item, "월"), 10) || 0,
-      dealDay: parseInt(extractXmlValue(item, "일"), 10) || 0,
-      aptName: extractXmlValue(item, "아파트") || extractXmlValue(item, "단지명"),
-      area: parseFloat(extractXmlValue(item, "전용면적")) || 0,
-      floor: parseInt(extractXmlValue(item, "층"), 10) || 0,
-      dong: extractXmlValue(item, "법정동"),
+      buildYear: parseInt(extractVal(item, "buildYear", "건축년도"), 10) || 0,
+      dealYear: parseInt(extractVal(item, "dealYear", "년"), 10) || 0,
+      dealMonth: parseInt(extractVal(item, "dealMonth", "월"), 10) || 0,
+      dealDay: parseInt(extractVal(item, "dealDay", "일"), 10) || 0,
+      aptName: extractVal(item, "aptNm", "아파트") || extractVal(item, "aptNm", "단지명"),
+      area: parseFloat(extractVal(item, "excluUseAr", "전용면적")) || 0,
+      floor: parseInt(extractVal(item, "floor", "층"), 10) || 0,
+      dong: extractVal(item, "umdNm", "법정동"),
     });
   }
 
@@ -273,7 +295,7 @@ export async function fetchRealTransactions(
   }
 
   const baseUrl =
-    "http://openapi.molit.go.kr/OpenAPI_ToolInstall498/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev";
+    "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev";
 
   const params = new URLSearchParams({
     serviceKey,
@@ -283,26 +305,9 @@ export async function fetchRealTransactions(
     numOfRows: "1000",
   });
 
-  try {
-    const res = await fetch(`${baseUrl}?${params.toString()}`, {
-      headers: { Accept: "application/xml" },
-    });
-
-    if (!res.ok) {
-      console.error(`MOLIT API error: ${res.status}`);
-      return [];
-    }
-
-    const xml = await res.text();
-    const totalCountMatch = xml.match(/<totalCount>(\d+)<\/totalCount>/);
-    if (totalCountMatch && parseInt(totalCountMatch[1]) > 1000) {
-      console.warn(`[MOLIT] 총 ${totalCountMatch[1]}건 중 1000건만 조회됨 (${lawdCd}/${dealYmd})`);
-    }
-    return parseTransactions(xml);
-  } catch (error) {
-    console.error("MOLIT API fetch error:", error);
-    return [];
-  }
+  const xml = await molitFetch(`${baseUrl}?${params.toString()}`);
+  if (!xml) return [];
+  return parseTransactions(xml);
 }
 
 /**
@@ -362,7 +367,7 @@ export async function fetchRecentPrices(
 
 // ─── 전월세 실거래 ───
 
-/** 전월세 XML 파싱 */
+/** 전월세 XML 파싱 (영문/한글 태그 호환) */
 function parseRentTransactions(xml: string): RentTransaction[] {
   const items: RentTransaction[] = [];
   const itemRegex = /<item>([\s\S]*?)<\/item>/g;
@@ -370,26 +375,26 @@ function parseRentTransactions(xml: string): RentTransaction[] {
 
   while ((match = itemRegex.exec(xml)) !== null) {
     const item = match[1];
-    const depositRaw = extractXmlValue(item, "보증금액").replace(/,/g, "").trim();
+    const depositRaw = extractVal(item, "deposit", "보증금액").replace(/,/g, "").trim();
     const deposit = parseInt(depositRaw, 10) * 10000;
 
     if (isNaN(deposit) || deposit <= 0) continue;
 
-    const monthlyRentRaw = extractXmlValue(item, "월세금액").replace(/,/g, "").trim();
+    const monthlyRentRaw = extractVal(item, "monthlyRent", "월세금액").replace(/,/g, "").trim();
     const monthlyRent = (parseInt(monthlyRentRaw, 10) || 0) * 10000;
 
     items.push({
       deposit,
       monthlyRent,
       rentType: monthlyRent === 0 ? "전세" : "월세",
-      buildYear: parseInt(extractXmlValue(item, "건축년도"), 10) || 0,
-      dealYear: parseInt(extractXmlValue(item, "년"), 10) || 0,
-      dealMonth: parseInt(extractXmlValue(item, "월"), 10) || 0,
-      dealDay: parseInt(extractXmlValue(item, "일"), 10) || 0,
-      aptName: extractXmlValue(item, "아파트") || extractXmlValue(item, "단지명"),
-      area: parseFloat(extractXmlValue(item, "전용면적")) || 0,
-      floor: parseInt(extractXmlValue(item, "층"), 10) || 0,
-      dong: extractXmlValue(item, "법정동"),
+      buildYear: parseInt(extractVal(item, "buildYear", "건축년도"), 10) || 0,
+      dealYear: parseInt(extractVal(item, "dealYear", "년"), 10) || 0,
+      dealMonth: parseInt(extractVal(item, "dealMonth", "월"), 10) || 0,
+      dealDay: parseInt(extractVal(item, "dealDay", "일"), 10) || 0,
+      aptName: extractVal(item, "aptNm", "아파트") || extractVal(item, "aptNm", "단지명"),
+      area: parseFloat(extractVal(item, "excluUseAr", "전용면적")) || 0,
+      floor: parseInt(extractVal(item, "floor", "층"), 10) || 0,
+      dong: extractVal(item, "umdNm", "법정동"),
     });
   }
 
@@ -405,7 +410,7 @@ export async function fetchAptRentTransactions(
   if (!serviceKey) return [];
 
   const baseUrl =
-    "http://openapi.molit.go.kr:8081/OpenAPI_ToolInstall498/service/rest/RTMSOBJSvc/getRTMSDataSvcAptRent";
+    "https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent";
 
   const params = new URLSearchParams({
     serviceKey,
@@ -415,17 +420,9 @@ export async function fetchAptRentTransactions(
     numOfRows: "1000",
   });
 
-  try {
-    const res = await fetch(`${baseUrl}?${params.toString()}`, {
-      headers: { Accept: "application/xml" },
-    });
-    if (!res.ok) return [];
-    const xml = await res.text();
-    return parseRentTransactions(xml);
-  } catch (error) {
-    console.error("MOLIT Rent API error:", error);
-    return [];
-  }
+  const xml = await molitFetch(`${baseUrl}?${params.toString()}`);
+  if (!xml) return [];
+  return parseRentTransactions(xml);
 }
 
 /** 최근 전월세 실거래 조회 */
@@ -479,7 +476,7 @@ export async function fetchRecentRentPrices(
 
 // ─── 연립다세대/단독다가구/오피스텔 매매 ───
 
-/** 범용 매매 실거래 API 호출 (엔드포인트 지정) */
+/** 범용 매매 실거래 API 호출 (엔드포인트 지정, 영문/한글 태그 호환) */
 async function fetchGenericSaleTransactions(
   endpoint: string,
   nameTag: string,
@@ -497,49 +494,41 @@ async function fetchGenericSaleTransactions(
     numOfRows: "1000",
   });
 
-  try {
-    const res = await fetch(`${endpoint}?${params.toString()}`, {
-      headers: { Accept: "application/xml" },
-    });
-    if (!res.ok) return [];
-    const xml = await res.text();
+  const xml = await molitFetch(`${endpoint}?${params.toString()}`);
+  if (!xml) return [];
 
-    // 범용 파싱 (아파트/연립다세대/단독다가구/오피스텔)
-    const items: RealTransaction[] = [];
-    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-    let match;
-    while ((match = itemRegex.exec(xml)) !== null) {
-      const item = match[1];
-      const amtRaw = extractXmlValue(item, "거래금액").replace(/,/g, "");
-      const amt = parseInt(amtRaw, 10) * 10000;
-      if (isNaN(amt) || amt <= 0) continue;
-      items.push({
-        dealAmount: amt,
-        buildYear: parseInt(extractXmlValue(item, "건축년도"), 10) || 0,
-        dealYear: parseInt(extractXmlValue(item, "년"), 10) || 0,
-        dealMonth: parseInt(extractXmlValue(item, "월"), 10) || 0,
-        dealDay: parseInt(extractXmlValue(item, "일"), 10) || 0,
-        aptName: extractXmlValue(item, nameTag) || extractXmlValue(item, "아파트") || extractXmlValue(item, "단지명") || "",
-        area: parseFloat(extractXmlValue(item, "전용면적")) || parseFloat(extractXmlValue(item, "연면적")) || 0,
-        floor: parseInt(extractXmlValue(item, "층"), 10) || 0,
-        dong: extractXmlValue(item, "법정동"),
-      });
-    }
-    return items;
-  } catch {
-    return [];
+  const items: RealTransaction[] = [];
+  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+  let match;
+  while ((match = itemRegex.exec(xml)) !== null) {
+    const item = match[1];
+    const amtRaw = extractVal(item, "dealAmount", "거래금액").replace(/,/g, "");
+    const amt = parseInt(amtRaw, 10) * 10000;
+    if (isNaN(amt) || amt <= 0) continue;
+    items.push({
+      dealAmount: amt,
+      buildYear: parseInt(extractVal(item, "buildYear", "건축년도"), 10) || 0,
+      dealYear: parseInt(extractVal(item, "dealYear", "년"), 10) || 0,
+      dealMonth: parseInt(extractVal(item, "dealMonth", "월"), 10) || 0,
+      dealDay: parseInt(extractVal(item, "dealDay", "일"), 10) || 0,
+      aptName: extractXmlValue(item, nameTag) || extractVal(item, "aptNm", "아파트") || extractXmlValue(item, "단지명") || "",
+      area: parseFloat(extractVal(item, "excluUseAr", "전용면적")) || parseFloat(extractXmlValue(item, "연면적")) || 0,
+      floor: parseInt(extractVal(item, "floor", "층"), 10) || 0,
+      dong: extractVal(item, "umdNm", "법정동"),
+    });
   }
+  return items;
 }
 
 const MOLIT_ENDPOINTS = {
   aptTrade:
-    "http://openapi.molit.go.kr/OpenAPI_ToolInstall498/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev",
+    "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev",
   rowHouseTrade:
-    "http://openapi.molit.go.kr:8081/OpenAPI_ToolInstall498/service/rest/RTMSOBJSvc/getRTMSDataSvcRHTrade",
+    "https://apis.data.go.kr/1613000/RTMSDataSvcRHTrade/getRTMSDataSvcRHTrade",
   singleHouseTrade:
-    "http://openapi.molit.go.kr:8081/OpenAPI_ToolInstall498/service/rest/RTMSOBJSvc/getRTMSDataSvcSHTrade",
+    "https://apis.data.go.kr/1613000/RTMSDataSvcSHTrade/getRTMSDataSvcSHTrade",
   officeTelTrade:
-    "http://openapi.molit.go.kr:8081/OpenAPI_ToolInstall498/service/rest/RTMSOBJSvc/getRTMSDataSvcOffiTrade",
+    "https://apis.data.go.kr/1613000/RTMSDataSvcOffiTrade/getRTMSDataSvcOffiTrade",
 };
 
 /**
@@ -570,7 +559,7 @@ export async function fetchComprehensivePrices(
   // 아파트 매매 데이터가 부족하면 연립/단독/오피스텔 추가 조회
   let sale = saleResult;
   if (!sale || sale.transactionCount < 3) {
-    const extraPromises = dealYmds.slice(0, 6).flatMap((ymd) => [
+    const extraPromises = dealYmds.slice(0, 3).flatMap((ymd) => [
       fetchGenericSaleTransactions(MOLIT_ENDPOINTS.rowHouseTrade, "연립다세대", lawdCd, ymd),
       fetchGenericSaleTransactions(MOLIT_ENDPOINTS.officeTelTrade, "단지명", lawdCd, ymd),
     ]);
