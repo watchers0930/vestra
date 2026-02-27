@@ -74,11 +74,13 @@ export default function PredictionPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PredictionResult | null>(null);
   const [activeScenario, setActiveScenario] = useState<string>("all");
+  const [selectedArea, setSelectedArea] = useState<number | null>(null);
 
   const handleAnalyze = async () => {
     if (!address.trim()) return;
     setLoading(true);
     setResult(null);
+    setSelectedArea(null);
 
     try {
       const res = await fetch("/api/predict-value", {
@@ -155,9 +157,29 @@ export default function PredictionPage() {
     ];
   };
 
+  // 면적 필터링된 거래 데이터
+  const filteredTransactions = result?.realTransactions?.filter(
+    (t) => selectedArea === null || Math.round(t.area) === selectedArea
+  ) ?? [];
+
+  // 고유 면적 목록 (정수, 오름차순)
+  const availableAreas = result?.realTransactions
+    ? [...new Set(result.realTransactions.map((t) => Math.round(t.area)))].sort((a, b) => a - b)
+    : [];
+
+  // 필터링된 통계
+  const filteredStats = (() => {
+    if (filteredTransactions.length === 0) return null;
+    const prices = filteredTransactions.map((t) => t.dealAmount);
+    return {
+      avgPrice: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length),
+      count: filteredTransactions.length,
+    };
+  })();
+
   const getHistoricalData = () => {
-    if (!result?.realTransactions?.length) return [];
-    return result.realTransactions
+    if (!filteredTransactions.length) return [];
+    return filteredTransactions
       .slice()
       .sort(
         (a, b) =>
@@ -167,7 +189,7 @@ export default function PredictionPage() {
       .map((t) => ({
         date: `${t.dealYear}.${String(t.dealMonth).padStart(2, "0")}`,
         price: t.dealAmount,
-        label: `${t.aptName} ${t.area}㎡`,
+        label: `${t.aptName} ${Math.round(t.area)}㎡`,
       }));
   };
 
@@ -243,6 +265,42 @@ export default function PredictionPage() {
       {/* Results */}
       {result && !loading && (
         <div className="space-y-6">
+          {/* 면적 선택 필터 */}
+          {availableAreas.length > 1 && (
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-secondary whitespace-nowrap">전용면적</span>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    onClick={() => setSelectedArea(null)}
+                    className={cn(
+                      "px-3 py-1 text-xs rounded-full border transition-all",
+                      selectedArea === null
+                        ? "bg-gray-900 text-white border-gray-900"
+                        : "bg-white text-secondary border-border hover:bg-gray-50"
+                    )}
+                  >
+                    전체
+                  </button>
+                  {availableAreas.map((area) => (
+                    <button
+                      key={area}
+                      onClick={() => setSelectedArea(area)}
+                      className={cn(
+                        "px-3 py-1 text-xs rounded-full border transition-all",
+                        selectedArea === area
+                          ? "bg-gray-900 text-white border-gray-900"
+                          : "bg-white text-secondary border-border hover:bg-gray-50"
+                      )}
+                    >
+                      {area}㎡
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="p-5">
@@ -251,11 +309,12 @@ export default function PredictionPage() {
                 현재 추정 시세
               </div>
               <div className="text-2xl font-bold text-primary">
-                {formatKRW(result.currentPrice)}
+                {formatKRW(filteredStats?.avgPrice ?? result.currentPrice)}
               </div>
-              {result.priceStats && (
+              {filteredStats && (
                 <p className="text-xs text-muted mt-1">
-                  실거래 평균 {formatKRW(result.priceStats.avgPrice)}
+                  실거래 평균 {formatKRW(filteredStats.avgPrice)}
+                  {selectedArea !== null && ` (${selectedArea}㎡)`}
                 </p>
               )}
             </Card>
@@ -282,9 +341,12 @@ export default function PredictionPage() {
               {result.priceStats ? (
                 <>
                   <div className="text-2xl font-bold">
-                    {result.priceStats.transactionCount}건
+                    {filteredStats?.count ?? result.priceStats.transactionCount}건
                   </div>
-                  <p className="text-xs text-muted mt-1">{result.priceStats.period}</p>
+                  <p className="text-xs text-muted mt-1">
+                    {result.priceStats.period}
+                    {selectedArea !== null && ` / ${selectedArea}㎡`}
+                  </p>
                 </>
               ) : (
                 <>
@@ -525,15 +587,14 @@ export default function PredictionPage() {
           </Card>
 
           {/* Real Transaction History */}
-          {result.realTransactions && result.realTransactions.length > 0 && (
+          {filteredTransactions.length > 0 && (
             <Card className="p-6">
               <h3 className="font-semibold mb-4">
                 실거래 내역
-                {result.priceStats && (
-                  <span className="text-sm font-normal text-secondary ml-2">
-                    ({result.priceStats.period} / {result.priceStats.transactionCount}건)
-                  </span>
-                )}
+                <span className="text-sm font-normal text-secondary ml-2">
+                  ({result.priceStats?.period ?? ""} / {filteredTransactions.length}건
+                  {selectedArea !== null && ` / ${selectedArea}㎡`})
+                </span>
               </h3>
               <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
                 <table className="w-full text-sm">
@@ -557,7 +618,7 @@ export default function PredictionPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {result.realTransactions.slice(0, 20).map((t, i) => (
+                    {filteredTransactions.slice(0, 30).map((t, i) => (
                       <tr
                         key={i}
                         className="border-b border-border/50 hover:bg-gray-50"
@@ -566,7 +627,7 @@ export default function PredictionPage() {
                         <td className="text-right py-3 px-4 font-medium">
                           {formatKRW(t.dealAmount)}
                         </td>
-                        <td className="text-right py-3 px-4">{t.area}㎡</td>
+                        <td className="text-right py-3 px-4">{Math.round(t.area)}㎡</td>
                         <td className="text-right py-3 px-4">{t.floor}층</td>
                         <td className="text-right py-3 px-4 text-secondary">
                           {t.dealYear}.{String(t.dealMonth).padStart(2, "0")}.

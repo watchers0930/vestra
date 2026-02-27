@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     // 종합 시세 데이터 조회 (매매 + 전월세 + 연립/오피스텔)
     let comprehensive = null;
     try {
-      comprehensive = await fetchComprehensivePrices(address, 12);
+      comprehensive = await fetchComprehensivePrices(address, 6);
     } catch (e) {
       console.warn("MOLIT API 종합 조회 실패:", e);
     }
@@ -57,7 +57,7 @@ ${s.transactions
   .slice(0, 15)
   .map(
     (t) =>
-      `- ${t.aptName} ${t.area}㎡ ${t.floor}층: ${t.dealAmount.toLocaleString()}원 (${t.dealYear}.${t.dealMonth}.${t.dealDay})`
+      `- ${t.aptName} ${Math.round(t.area)}㎡ ${t.floor}층: ${t.dealAmount.toLocaleString()}원 (${t.dealYear}.${t.dealMonth}.${t.dealDay})`
   )
   .join("\n")}
 `;
