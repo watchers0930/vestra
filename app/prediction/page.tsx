@@ -286,29 +286,30 @@ export default function PredictionPage() {
       {result && !loading && (
         <div className="space-y-6">
           {/* 아파트 + 면적 선택 필터 */}
-          {availableApts.length > 1 && (
+          {(availableApts.length > 0 || availableAreas.length > 0) && (
             <Card className="p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-secondary whitespace-nowrap">아파트</span>
-                <select
-                  value={selectedApt ?? ""}
-                  onChange={(e) => {
-                    setSelectedApt(e.target.value || null);
-                    setSelectedArea(null);
-                  }}
-                  className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 max-w-xs"
-                >
-                  <option value="">전체 ({availableApts.length}개 단지)</option>
-                  {availableApts.map((apt) => (
-                    <option key={apt} value={apt}>{apt}</option>
-                  ))}
-                </select>
-              </div>
+              {availableApts.length > 1 && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-secondary whitespace-nowrap">아파트</span>
+                  <select
+                    value={selectedApt ?? ""}
+                    onChange={(e) => {
+                      setSelectedApt(e.target.value || null);
+                      setSelectedArea(null);
+                    }}
+                    className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 max-w-xs"
+                  >
+                    <option value="">전체 ({availableApts.length}개 단지)</option>
+                    {availableApts.map((apt) => (
+                      <option key={apt} value={apt}>{apt}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               {availableAreas.length > 0 && (
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-secondary whitespace-nowrap">전용면적</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {availableAreas.length > 1 && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-secondary whitespace-nowrap">전용면적</span>
+                  <div className="flex flex-wrap gap-1.5">
                     <button
                       onClick={() => setSelectedArea(null)}
                       className={cn(
@@ -318,25 +319,24 @@ export default function PredictionPage() {
                           : "bg-white text-secondary border-border hover:bg-gray-50"
                       )}
                     >
-                      전체
+                      전체평수
                     </button>
-                  )}
-                  {availableAreas.map((area) => (
-                    <button
-                      key={area}
-                      onClick={() => setSelectedArea(area)}
-                      className={cn(
-                        "px-3 py-1 text-xs rounded-full border transition-all",
-                        selectedArea === area
-                          ? "bg-gray-900 text-white border-gray-900"
-                          : "bg-white text-secondary border-border hover:bg-gray-50"
-                      )}
-                    >
-                      {area}㎡
-                    </button>
-                  ))}
+                    {availableAreas.map((area) => (
+                      <button
+                        key={area}
+                        onClick={() => setSelectedArea(area)}
+                        className={cn(
+                          "px-3 py-1 text-xs rounded-full border transition-all",
+                          selectedArea === area
+                            ? "bg-gray-900 text-white border-gray-900"
+                            : "bg-white text-secondary border-border hover:bg-gray-50"
+                        )}
+                      >
+                        {area}㎡
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
               )}
             </Card>
           )}
