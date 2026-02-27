@@ -182,13 +182,20 @@ function extractArea(text: string): string {
 
 /** 권리자/소유자 이름 추출 */
 function extractHolder(text: string): string {
-  // 한글 이름 패턴 (2~4글자)
-  const m = text.match(/([가-힣]{2,4})\s*(?:\d{6}|[（(]|$)/);
-  if (m) return m[1];
+  // 법인/기관명 (개인보다 먼저 체크 — 법인명이 더 긴 패턴)
+  const corpPatterns = [
+    /((?:주식회사|㈜)\s*[가-힣A-Za-z0-9\s]{1,30})/,
+    /([가-힣]+(?:은행|보험|저축은행|캐피탈|신용협동조합|신탁|증권|자산관리|공사|조합|재단|학교법인|종교법인|사단법인|재단법인|유한회사|합자회사|합명회사)[가-힣\s]*)/,
+    /((?:사\)|사\(|법인)[가-힣\s]{2,20})/,
+  ];
+  for (const pattern of corpPatterns) {
+    const m = text.match(pattern);
+    if (m) return m[1].trim();
+  }
 
-  // 법인/기관명
-  const m2 = text.match(/((?:주식회사|㈜|[가-힣]+은행|[가-힣]+보험|[가-힣]+저축은행|[가-힣]+캐피탈|[가-힣]+신용협동조합)[가-힣\s]*)/);
-  if (m2) return m2[1].trim();
+  // 한글 이름 패턴 (2~5글자 — 복성/긴 이름 지원)
+  const m = text.match(/([가-힣]{2,5})\s*(?:\d{6}|[（(]|$)/);
+  if (m) return m[1];
 
   return "";
 }

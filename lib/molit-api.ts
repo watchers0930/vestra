@@ -280,7 +280,7 @@ export async function fetchRealTransactions(
     LAWD_CD: lawdCd,
     DEAL_YMD: dealYmd,
     pageNo: "1",
-    numOfRows: "500",
+    numOfRows: "1000",
   });
 
   try {
@@ -294,6 +294,10 @@ export async function fetchRealTransactions(
     }
 
     const xml = await res.text();
+    const totalCountMatch = xml.match(/<totalCount>(\d+)<\/totalCount>/);
+    if (totalCountMatch && parseInt(totalCountMatch[1]) > 1000) {
+      console.warn(`[MOLIT] 총 ${totalCountMatch[1]}건 중 1000건만 조회됨 (${lawdCd}/${dealYmd})`);
+    }
     return parseTransactions(xml);
   } catch (error) {
     console.error("MOLIT API fetch error:", error);
@@ -408,7 +412,7 @@ export async function fetchAptRentTransactions(
     LAWD_CD: lawdCd,
     DEAL_YMD: dealYmd,
     pageNo: "1",
-    numOfRows: "500",
+    numOfRows: "1000",
   });
 
   try {
@@ -490,7 +494,7 @@ async function fetchGenericSaleTransactions(
     LAWD_CD: lawdCd,
     DEAL_YMD: dealYmd,
     pageNo: "1",
-    numOfRows: "500",
+    numOfRows: "1000",
   });
 
   try {

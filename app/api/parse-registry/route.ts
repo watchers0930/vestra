@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOpenAIClient } from "@/lib/openai";
+import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
 import { REGISTRY_ANALYSIS_PROMPT } from "@/lib/prompts";
 import { parseRegistry } from "@/lib/registry-parser";
 import { calculateRiskScore } from "@/lib/risk-scoring";
@@ -43,6 +43,11 @@ export async function POST(req: NextRequest) {
     // 4단계: AI 종합 의견 (OpenAI)
     let aiOpinion = "";
     try {
+      // Cost Guard (일일 OpenAI 호출 제한)
+      const costGuard = await checkOpenAICostGuard(ip);
+      if (!costGuard.allowed) {
+        aiOpinion = "일일 AI 사용 한도를 초과했습니다. 자체 분석 결과만 제공됩니다.";
+      } else {
       const openai = getOpenAIClient();
       const completion = await openai.chat.completions.create({
         model: "gpt-4.1-mini",
@@ -76,6 +81,7 @@ export async function POST(req: NextRequest) {
       if (content) {
         const parsed = JSON.parse(content);
         aiOpinion = parsed.opinion || parsed.aiOpinion || "";
+      }
       }
     } catch {
       aiOpinion = "AI 의견을 생성할 수 없습니다. API 키를 확인해주세요.";

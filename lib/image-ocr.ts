@@ -21,6 +21,8 @@ import {
 
 const SUPPORTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png"]);
 const SUPPORTED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png"]);
+const MAX_RETRIES = 3;
+const RETRY_BASE_DELAY_MS = 1000;
 
 // ---------------------------------------------------------------------------
 // 유틸
@@ -49,23 +51,38 @@ async function extractWithVision(
     },
   }));
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4.1-mini",
-    messages: [
-      { role: "system", content: IMAGE_OCR_PROMPT },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: "이 등기부등본 이미지에서 모든 텍스트를 추출해주세요." },
-          ...imageContents,
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: IMAGE_OCR_PROMPT },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "이 등기부등본 이미지에서 모든 텍스트를 추출해주세요." },
+              ...imageContents,
+            ],
+          },
         ],
-      },
-    ],
-    max_tokens: 16384,
-    temperature: 0,
-  });
+        max_tokens: 16384,
+        temperature: 0,
+      });
 
-  return completion.choices[0]?.message?.content?.trim() || "";
+      const text = completion.choices[0]?.message?.content?.trim() || "";
+      if (text.length >= 20) return text;
+
+      console.warn(`[Vision OCR] 시도 ${attempt}/${MAX_RETRIES}: 추출 텍스트 부족 (${text.length}자)`);
+    } catch (error) {
+      console.warn(`[Vision OCR] 시도 ${attempt}/${MAX_RETRIES} 실패:`, error);
+      if (attempt === MAX_RETRIES) throw error;
+    }
+
+    // 지수 백오프 대기
+    await new Promise((r) => setTimeout(r, RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1)));
+  }
+
+  return "";
 }
 
 // ---------------------------------------------------------------------------
@@ -81,29 +98,43 @@ export async function extractTextFromScannedPDF(
 
   console.log(`[PDF OCR] chat.completions Vision으로 스캔 PDF 처리: ${fileName}`);
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4.1-mini",
-    messages: [
-      { role: "system", content: IMAGE_OCR_PROMPT },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: "이 등기부등본 PDF에서 모든 텍스트를 추출해주세요." },
+  let extractedText = "";
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: IMAGE_OCR_PROMPT },
           {
-            type: "image_url",
-            image_url: {
-              url: `data:application/pdf;base64,${base64}`,
-              detail: "high",
-            },
+            role: "user",
+            content: [
+              { type: "text", text: "이 등기부등본 PDF에서 모든 텍스트를 추출해주세요." },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:application/pdf;base64,${base64}`,
+                  detail: "high",
+                },
+              },
+            ],
           },
         ],
-      },
-    ],
-    max_tokens: 16384,
-    temperature: 0,
-  });
+        max_tokens: 16384,
+        temperature: 0,
+      });
 
-  const extractedText = completion.choices[0]?.message?.content?.trim() || "";
+      extractedText = completion.choices[0]?.message?.content?.trim() || "";
+      if (extractedText.length >= 20) break;
+
+      console.warn(`[PDF OCR] 시도 ${attempt}/${MAX_RETRIES}: 추출 텍스트 부족 (${extractedText.length}자)`);
+    } catch (error) {
+      console.warn(`[PDF OCR] 시도 ${attempt}/${MAX_RETRIES} 실패:`, error);
+      if (attempt === MAX_RETRIES) throw error;
+    }
+
+    await new Promise((r) => setTimeout(r, RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1)));
+  }
 
   if (!extractedText || extractedText.length < 20) {
     throw new Error(

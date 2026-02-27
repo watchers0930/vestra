@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOpenAIClient } from "@/lib/openai";
+import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
 import { JEONSE_ANALYSIS_PROMPT, DOCUMENT_GENERATION_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
@@ -36,6 +36,15 @@ export async function POST(req: NextRequest) {
     const startDate = sanitizeField(rawStartDate || "", 20);
     const endDate = sanitizeField(rawEndDate || "", 20);
     const propertyType = sanitizeField(rawPropertyType || "", 50);
+
+    // Cost Guard (일일 OpenAI 호출 제한)
+    const costGuard = await checkOpenAICostGuard(ip);
+    if (!costGuard.allowed) {
+      return NextResponse.json(
+        { error: "일일 사용 한도를 초과했습니다. 내일 다시 시도해주세요." },
+        { status: 429 }
+      );
+    }
 
     const openai = getOpenAIClient();
 

@@ -31,35 +31,33 @@ export async function rateLimit(
   const resetTime = new Date(now.getTime() + windowMs);
 
   try {
-    const entry = await prisma.rateLimit.findUnique({
+    // 만료된 윈도우는 먼저 리셋 (atomic upsert)
+    await prisma.rateLimit.upsert({
       where: { id: identifier },
+      update: {},  // 존재하면 아무것도 안 함 (아래에서 처리)
+      create: { id: identifier, count: 0, resetTime },
     });
 
-    // 윈도우 만료 또는 새 엔트리
-    if (!entry || entry.resetTime < now) {
-      await prisma.rateLimit.upsert({
-        where: { id: identifier },
-        update: { count: 1, resetTime },
-        create: { id: identifier, count: 1, resetTime },
-      });
-      return { success: true, remaining: limit - 1, reset: resetTime.getTime() };
-    }
-
-    // 한도 초과 확인
-    if (entry.count >= limit) {
-      return { success: false, remaining: 0, reset: entry.resetTime.getTime() };
-    }
-
-    // 카운트 증가
-    await prisma.rateLimit.update({
-      where: { id: identifier },
-      data: { count: entry.count + 1 },
+    // 윈도우 만료 시 atomic 리셋
+    await prisma.rateLimit.updateMany({
+      where: { id: identifier, resetTime: { lt: now } },
+      data: { count: 0, resetTime },
     });
+
+    // Atomic increment + 현재 값 반환
+    const updated = await prisma.rateLimit.update({
+      where: { id: identifier },
+      data: { count: { increment: 1 } },
+    });
+
+    if (updated.count > limit) {
+      return { success: false, remaining: 0, reset: updated.resetTime.getTime() };
+    }
 
     return {
       success: true,
-      remaining: limit - (entry.count + 1),
-      reset: entry.resetTime.getTime(),
+      remaining: limit - updated.count,
+      reset: updated.resetTime.getTime(),
     };
   } catch {
     // DB 오류 시 요청 허용 (가용성 우선)
