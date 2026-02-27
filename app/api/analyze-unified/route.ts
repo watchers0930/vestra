@@ -4,7 +4,7 @@ import { UNIFIED_ANALYSIS_PROMPT } from "@/lib/prompts";
 import { parseRegistry } from "@/lib/registry-parser";
 import { calculateRiskScore } from "@/lib/risk-scoring";
 import { validateParsedRegistry } from "@/lib/validation-engine";
-import { fetchComprehensivePrices } from "@/lib/molit-api";
+import { fetchComprehensivePrices, type PriceResult, type RentPriceResult } from "@/lib/molit-api";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { stripHtml, truncateInput } from "@/lib/sanitize";
 
@@ -17,6 +17,26 @@ function formatKoreanPrice(won: number): string {
   if (eok > 0) return `${eok}억원`;
   if (man > 0) return `${man.toLocaleString()}만원`;
   return `${won.toLocaleString()}원`;
+}
+
+/** 주소에서 건물/단지명 키워드 추출 */
+function extractBuildingKeywords(address: string): string[] {
+  if (!address) return [];
+  let cleaned = address
+    .replace(/\d+의?\d*[-\d]*/g, " ")
+    .replace(/(특별자치시|특별자치도|특별시|광역시)/g, " ")
+    .replace(/\b(시|도|구|군|읍|면|동|리|로|길|가|층|호|실)\b/g, " ")
+    .replace(/제\s*\d+/g, " ")
+    .replace(/\[.*?\]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned.split(" ").filter((w) => w.length >= 2);
+}
+
+/** 면적 문자열에서 숫자 추출 */
+function parseAreaValue(areaStr: string): number {
+  const m = areaStr.match(/([\d.]+)\s*㎡/);
+  return m ? parseFloat(m[1]) : 0;
 }
 
 export async function POST(req: NextRequest) {
@@ -50,7 +70,14 @@ export async function POST(req: NextRequest) {
     const address = parsed.title.address || userAddress || "";
 
     // 2단계: MOLIT 실거래 데이터 조회 (선택적)
-    let marketData = null;
+    let marketData: {
+      sale: PriceResult | null;
+      rent: RentPriceResult | null;
+      jeonseRatio: number | null;
+      districtSale?: PriceResult | null;
+    } | null = null;
+    let marketDataFiltered = false;
+
     if (address) {
       try {
         const comprehensive = await fetchComprehensivePrices(address, 12);
@@ -66,7 +93,64 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 추정가 결정: 사용자 입력 > MOLIT 평균가 > 0
+    // 2-1단계: MOLIT 데이터 필터링 (구 단위 → 건물 단위)
+    if (marketData?.sale && marketData.sale.transactionCount > 0) {
+      const keywords = extractBuildingKeywords(address);
+      const allTxns = marketData.sale.transactions;
+      let matched = allTxns;
+
+      // 1차: 건물명 키워드 매칭
+      if (keywords.length > 0) {
+        const nameMatched = allTxns.filter((t) =>
+          keywords.some(
+            (kw) =>
+              (t.aptName && t.aptName.includes(kw)) ||
+              (t.aptName && kw.includes(t.aptName) && t.aptName.length >= 2)
+          )
+        );
+        if (nameMatched.length > 0) {
+          matched = nameMatched;
+          marketDataFiltered = true;
+        }
+      }
+
+      // 2차: 면적 유사성 필터 (±50%, 건물명 매칭 안된 경우만)
+      if (!marketDataFiltered) {
+        const regArea = parseAreaValue(parsed.title.area || "");
+        if (regArea > 0 && regArea < 300) {
+          const areaMatched = allTxns.filter(
+            (t) => t.area > 0 && Math.abs(t.area - regArea) / regArea < 0.5
+          );
+          if (areaMatched.length > 0 && areaMatched.length < allTxns.length) {
+            matched = areaMatched;
+            marketDataFiltered = true;
+          }
+        }
+      }
+
+      if (marketDataFiltered && matched.length > 0) {
+        const districtSale = marketData.sale; // 구 전체 원본 보존
+        const prices = matched.map((t) => t.dealAmount);
+        marketData = {
+          ...marketData,
+          districtSale,
+          sale: {
+            avgPrice: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length),
+            minPrice: Math.min(...prices),
+            maxPrice: Math.max(...prices),
+            transactionCount: matched.length,
+            transactions: matched.sort(
+              (a, b) =>
+                b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay -
+                (a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay)
+            ),
+            period: districtSale.period,
+          },
+        };
+      }
+    }
+
+    // 추정가 결정: 사용자 입력 > (필터링된) MOLIT 평균가 > 0
     const estimatedPrice =
       userPrice || marketData?.sale?.avgPrice || 0;
 
@@ -125,7 +209,11 @@ export async function POST(req: NextRequest) {
         let marketContext = "";
         if (marketData?.sale && marketData.sale.transactionCount > 0) {
           const s = marketData.sale;
-          marketContext += `\n매매 실거래: 평균 ${(s.avgPrice / 100000000).toFixed(1)}억, ${s.transactionCount}건`;
+          const scope = marketDataFiltered ? "해당 건물" : "해당 구/군 전체";
+          marketContext += `\n${scope} 매매 실거래: 평균 ${formatKoreanPrice(s.avgPrice)}, ${s.transactionCount}건`;
+          if (marketDataFiltered && marketData.districtSale) {
+            marketContext += `\n(참고: 구/군 전체 평균 ${formatKoreanPrice(marketData.districtSale.avgPrice)}, ${marketData.districtSale.transactionCount}건 — 다른 건물 포함)`;
+          }
         }
         if (marketData?.rent && marketData.rent.jeonseCount > 0) {
           const r = marketData.rent;
@@ -194,6 +282,7 @@ export async function POST(req: NextRequest) {
       dataSource: {
         registryParsed: true,
         molitAvailable: !!marketData,
+        molitFiltered: marketDataFiltered,
         estimatedPriceSource: userPrice ? "user" : marketData?.sale?.avgPrice ? "molit" : "none",
       },
     });
