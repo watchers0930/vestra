@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { version } from "../../package.json";
 
 interface MenuItem {
   href: string;
@@ -123,7 +124,7 @@ export default function Sidebar() {
               <div>
                 <h1 className="text-lg font-bold tracking-tight">
                   VESTRA
-                  <span className="ml-1.5 text-[9px] font-normal text-white/70 align-middle">v0.5.0</span>
+                  <span className="ml-1.5 text-[9px] font-normal text-white/70 align-middle">v{version}</span>
                 </h1>
                 <p className="text-[10px] text-muted -mt-1">AI 자산관리 플랫폼</p>
               </div>
