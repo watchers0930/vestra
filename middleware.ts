@@ -1,18 +1,27 @@
 /**
  * Next.js Middleware (경량 버전)
  *
- * JWT 토큰을 직접 디코딩하여 경로 보호
+ * NextAuth v5 JWE 토큰을 직접 복호화하여 경로 보호
  * - auth() 전체를 import하지 않아 Edge Function 크기 최소화
- * - 공개 경로: /, /login, /api/auth/*, 정적 파일
- * - 관리자 경로: /admin/* → ADMIN만
- * - 프로필 경로: /profile → 로그인 필수
+ * - HKDF 키 파생 + jwtDecrypt로 암호화된 JWT 복호화
  *
  * @module middleware
  */
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
+import { jwtDecrypt } from "jose";
+import { hkdf } from "@panva/hkdf";
+
+async function getDerivedEncryptionKey(secret: string, salt: string) {
+  return await hkdf(
+    "sha256",
+    secret,
+    salt,
+    `Auth.js Generated Encryption Key (${salt})`,
+    64 // A256CBC-HS512
+  );
+}
 
 async function getToken(req: NextRequest) {
   const cookieName =
@@ -27,19 +36,13 @@ async function getToken(req: NextRequest) {
   if (!secret) return null;
 
   try {
-    const key = new TextEncoder().encode(secret);
-    const { payload } = await jwtVerify(token, key, { algorithms: ["HS256"] });
+    const encryptionKey = await getDerivedEncryptionKey(secret, cookieName);
+    const { payload } = await jwtDecrypt(token, encryptionKey, {
+      clockTolerance: 15,
+    });
     return payload as { role?: string; id?: string };
   } catch {
-    // 서명 방식이 다를 수 있으므로 salt 포함하여 재시도
-    try {
-      const saltedSecret = `authjs.session-token${secret}`;
-      const key = new TextEncoder().encode(saltedSecret);
-      const { payload } = await jwtVerify(token, key, { algorithms: ["HS256"] });
-      return payload as { role?: string; id?: string };
-    } catch {
-      return null;
-    }
+    return null;
   }
 }
 
@@ -67,7 +70,6 @@ export default async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // NextAuth, 정적 파일, 파비콘 제외
     "/((?!api/auth|_next/static|_next/image|favicon.ico).*)",
   ],
 };
