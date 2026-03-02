@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -28,6 +28,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { PageHeader, Card, Button, Alert } from "@/components/common";
+import AiDisclaimer from "@/components/common/ai-disclaimer";
+import PdfDownloadButton from "@/components/common/pdf-download-button";
 import { LoadingSpinner } from "@/components/loading";
 import { KakaoMap } from "@/components/prediction/KakaoMap";
 import type { KakaoGeocoderResult, KakaoPlaceResult } from "@/components/prediction/KakaoMap";
@@ -128,6 +130,7 @@ export default function PredictionPage() {
   // 도로명 (다음 주소 API 결과)
   const [roadResult, setRoadResult] = useState("");
 
+  const resultRef = useRef<HTMLDivElement>(null);
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PredictionResult | null>(null);
@@ -616,7 +619,12 @@ export default function PredictionPage() {
 
       {/* Results */}
       {result && !loading && (
-        <div className="space-y-6">
+        <div ref={resultRef} className="space-y-6">
+          {/* 결과 상단 액션 */}
+          <div className="flex items-center justify-between">
+            <AiDisclaimer compact />
+            <PdfDownloadButton targetRef={resultRef} filename="vestra-prediction.pdf" title="VESTRA 시세전망 리포트" />
+          </div>
           {/* 아파트 + 면적 선택 필터 */}
           {(availableApts.length > 0 || availableAreas.length > 0) && (
             <Card className="p-4 space-y-3">

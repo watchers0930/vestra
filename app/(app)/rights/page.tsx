@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, type RefObject } from "react";
 import {
   Shield,
   AlertTriangle,
@@ -26,6 +26,8 @@ import type { ParsedRegistry } from "@/lib/registry-parser";
 import type { RiskScore, RiskFactor } from "@/lib/risk-scoring";
 import type { ValidationResult } from "@/lib/validation-engine";
 import { PageHeader, Card, Alert } from "@/components/common";
+import AiDisclaimer from "@/components/common/ai-disclaimer";
+import PdfDownloadButton from "@/components/common/pdf-download-button";
 import { ScoreGauge } from "@/components/results";
 import { SliderInput } from "@/components/forms";
 import type { KakaoGeocoderResult } from "@/components/prediction/KakaoMap";
@@ -161,6 +163,7 @@ export default function RightsAnalysisPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   // 주소 탭 메뉴
   const [addressTab, setAddressTab] = useState<AddressTab>("admin");
@@ -450,7 +453,12 @@ export default function RightsAnalysisPage() {
 
       {/* 결과 */}
       {result && step === "done" && (
-        <div className="space-y-6">
+        <div ref={resultRef} className="space-y-6">
+          {/* 결과 상단 액션 */}
+          <div className="flex items-center justify-between">
+            <AiDisclaimer compact />
+            <PdfDownloadButton targetRef={resultRef} filename="vestra-rights-analysis.pdf" title="VESTRA 권리분석 리포트" />
+          </div>
           {/* 안전도 점수 + 핵심 지표 */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="p-6 flex flex-col items-center justify-center">

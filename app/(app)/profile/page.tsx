@@ -284,6 +284,21 @@ export default function ProfilePage() {
               ))}
             </div>
 
+            {subscription.plan !== "FREE" && subscription.status === "active" && (
+              <button
+                onClick={async () => {
+                  if (!confirm("구독을 해지하시겠습니까? 무료 플랜으로 전환됩니다.")) return;
+                  const res = await fetch("/api/subscription/cancel", { method: "POST" });
+                  if (res.ok) {
+                    setSubscription({ plan: "FREE", price: 0, status: "active" });
+                  }
+                }}
+                className="w-full py-2 rounded-lg border border-red-200 text-red-500 text-xs hover:bg-red-50 transition-colors"
+              >
+                구독 해지
+              </button>
+            )}
+
             <p className="text-xs text-center text-gray-400">
               결제 시스템 준비 중입니다. 곧 서비스될 예정입니다.
             </p>

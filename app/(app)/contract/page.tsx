@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, type RefObject } from "react";
 import {
   FileSearch,
   Upload,
@@ -13,6 +13,8 @@ import {
 import { cn } from "@/lib/utils";
 import { addAnalysis } from "@/lib/store";
 import { Card, Button, Badge, Alert } from "@/components/common";
+import AiDisclaimer from "@/components/common/ai-disclaimer";
+import PdfDownloadButton from "@/components/common/pdf-download-button";
 import { ScoreGauge } from "@/components/results";
 import { LoadingSpinner } from "@/components/loading";
 
@@ -134,6 +136,7 @@ export default function ContractReviewPage() {
   const [isDragging, setIsDragging] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   // ---- File handling ----
 
@@ -419,7 +422,12 @@ export default function ContractReviewPage() {
       {/* Results                                                            */}
       {/* ------------------------------------------------------------------ */}
       {result && (
-        <div className="space-y-6">
+        <div ref={resultRef} className="space-y-6">
+          {/* 결과 상단 액션 */}
+          <div className="flex items-center justify-between">
+            <AiDisclaimer compact />
+            <PdfDownloadButton targetRef={resultRef} filename="vestra-contract-review.pdf" title="VESTRA 계약검토 리포트" />
+          </div>
           {/* Safety Score + AI Opinion row */}
           <div className="grid gap-6 md:grid-cols-[auto_1fr]">
             {/* Safety Score Card */}

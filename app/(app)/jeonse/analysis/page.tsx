@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { Home, Shield, FileText, CheckCircle, Copy, AlertTriangle, Download, ChevronRight } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
 import { addAnalysis } from "@/lib/store";
 import { PageHeader, Card, Alert, Button } from "@/components/common";
+import AiDisclaimer from "@/components/common/ai-disclaimer";
+import PdfDownloadButton from "@/components/common/pdf-download-button";
 import { FormInput, SliderInput, TabButtons } from "@/components/forms";
 import { LoadingSpinner } from "@/components/loading";
 
@@ -48,6 +50,7 @@ export default function JeonsePage() {
   const [generatedDoc, setGeneratedDoc] = useState<GeneratedDocument | null>(null);
   const [activeDocType, setActiveDocType] = useState<"jeonse" | "lease">("jeonse");
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const handleAnalyze = async () => {
     setLoading(true);
@@ -215,7 +218,12 @@ export default function JeonsePage() {
           )}
 
           {analysis && !loading && (
-            <>
+            <div ref={resultRef}>
+              {/* 결과 상단 액션 */}
+              <div className="flex items-center justify-between mb-4">
+                <AiDisclaimer compact />
+                <PdfDownloadButton targetRef={resultRef} filename="vestra-jeonse-analysis.pdf" title="VESTRA 전세분석 리포트" />
+              </div>
               {/* Registration Need */}
               <Card className="p-5">
                 <div className="flex items-center justify-between mb-3">
@@ -339,7 +347,7 @@ export default function JeonsePage() {
                   </div>
                 )}
               </Card>
-            </>
+            </div>
           )}
           {/* 면책 조항 */}
           <Alert variant="warning" className="mt-6">
