@@ -20,6 +20,13 @@ export default function Footer() {
           {/* Links */}
           <div className="flex items-center gap-4 text-xs">
             <a
+              href="/legal"
+              className="text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              법적고지
+            </a>
+            <span className="text-gray-300">|</span>
+            <a
               href="/terms"
               className="text-gray-500 hover:text-gray-900 transition-colors"
             >

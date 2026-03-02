@@ -508,6 +508,13 @@ export default function ContractReviewPage() {
               </div>
             </Card>
           )}
+          {/* 면책 조항 */}
+          <Alert variant="warning">
+            <strong>면책 조항</strong><br />
+            본 분석은 AI 및 자체 분석 엔진에 의한 참고용 정보이며, 법률적 조언이 아닙니다.
+            계약서의 법적 효력 및 유불리 판단은 반드시 변호사, 법무사 등 법률 전문가와 상담하시기 바랍니다.
+            VESTRA는 본 분석 결과에 따른 계약 체결 및 손해에 대해 책임을 지지 않습니다.
+          </Alert>
         </div>
       )}
     </div>

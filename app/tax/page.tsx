@@ -342,6 +342,13 @@ export default function TaxPage() {
           </Card>
         </div>
       )}
+      {/* 면책 조항 */}
+      <Alert variant="warning" className="mt-8">
+        <strong>면책 조항</strong><br />
+        본 세금 계산은 2026년 기준 세법에 따른 참고용 추정치이며, 세무 상담을 대체하지 않습니다.
+        개인의 보유 현황, 감면 요건, 지자체 조례 등에 따라 실제 세액과 차이가 있을 수 있습니다.
+        정확한 세금 산출은 반드시 세무사와 상담하시기 바랍니다.
+      </Alert>
     </div>
   );
 }

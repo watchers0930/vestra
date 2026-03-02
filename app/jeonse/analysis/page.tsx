@@ -341,6 +341,13 @@ export default function JeonsePage() {
               </Card>
             </>
           )}
+          {/* 면책 조항 */}
+          <Alert variant="warning" className="mt-6">
+            <strong>면책 조항</strong><br />
+            본 분석은 공개 데이터 기반의 참고용 정보이며, 법률적 조언이 아닙니다.
+            임대인의 재정 상태, 근저당 설정 등 비공개 정보는 반영되지 않을 수 있습니다.
+            전세 계약 체결 시 반드시 법무사, 공인중개사 등 전문가와 상담하세요.
+          </Alert>
         </div>
       </div>
     </div>
