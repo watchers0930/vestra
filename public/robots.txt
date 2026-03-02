@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /profile
+
+Sitemap: https://vestra-plum.vercel.app/sitemap.xml

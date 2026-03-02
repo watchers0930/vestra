@@ -76,6 +76,10 @@ model User {
   analyses       Analysis[]
   assets         Asset[]
 
+  // 구독 & 알림
+  subscription        Subscription?
+  notificationSetting NotificationSetting?
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }
@@ -130,6 +134,59 @@ model DailyUsage {
 
   @@index([date])
 }
+
+// ---------------------------------------------------------------------------
+// 구독 & 결제
+// ---------------------------------------------------------------------------
+
+model Subscription {
+  id         String    @id @default(cuid())
+  userId     String    @unique
+  plan       String    @default("FREE") // FREE | PRO | BUSINESS
+  price      Int       @default(0)      // 월 요금 (원)
+  status     String    @default("active") // active | canceled | expired
+  startDate  DateTime  @default(now())
+  endDate    DateTime?
+  canceledAt DateTime?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments   Payment[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Payment {
+  id             String       @id @default(cuid())
+  subscriptionId String
+  amount         Int
+  method         String?      // card | transfer | kakaopay
+  status         String       @default("pending") // pending | completed | failed | refunded
+  orderId        String?      @unique
+  receiptUrl     String?
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  createdAt      DateTime     @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// 알림 설정
+// ---------------------------------------------------------------------------
+
+model NotificationSetting {
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  emailEnabled   Boolean @default(true)
+  kakaoEnabled   Boolean @default(false)
+  priceAlert     Boolean @default(true)
+  analysisReport Boolean @default(true)
+  systemNotice   Boolean @default(true)
+  marketingEmail Boolean @default(false)
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// 공지사항
+// ---------------------------------------------------------------------------
 
 model Announcement {
   id        String   @id @default(cuid())

@@ -43,7 +43,7 @@ interface MenuItem {
 // 일반 사용자 메뉴
 // ---------------------------------------------------------------------------
 const userMenuItems: MenuItem[] = [
-  { href: "/", icon: LayoutDashboard, label: "대시보드", description: "자산 현황" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "대시보드", description: "자산 현황" },
   { href: "/rights", icon: Shield, label: "권리분석", description: "등기부등본 종합분석" },
   { href: "/contract", icon: FileSearch, label: "계약검토", description: "계약서 AI 분석" },
   { href: "/tax", icon: Calculator, label: "세무 시뮬레이션", description: "세금 계산" },
@@ -227,8 +227,8 @@ export default function Sidebar() {
             ) : (
               /* 일반 사용자 메뉴 렌더링 */
               activeMenuItems.map((item) => {
-                const isActive = item.href === "/"
-                  ? pathname === "/"
+                const isActive = item.href === "/dashboard"
+                  ? pathname === "/dashboard"
                   : pathname === item.href || pathname.startsWith(item.href + "/");
                 const isOpen = openAccordion === item.href;
 
@@ -328,7 +328,7 @@ export default function Sidebar() {
             <div className="mt-4 pt-4 border-t border-white/10">
               {isAdminPage ? (
                 <Link
-                  href="/"
+                  href="/dashboard"
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-sidebar-hover hover:text-white transition-all"
                   title={!showLabel ? "사용자 사이트" : undefined}
                 >

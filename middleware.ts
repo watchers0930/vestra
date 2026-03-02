@@ -49,6 +49,18 @@ async function getToken(req: NextRequest) {
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // 루트("/") 접근 시: 로그인 사용자 → /dashboard 리다이렉트
+  if (pathname === "/") {
+    const token = await getToken(req);
+    if (token) {
+      if (token.role === "ADMIN") {
+        return NextResponse.redirect(new URL("/admin", req.url));
+      }
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+    // 비로그인 → 랜딩 페이지 (그대로 진행)
+  }
+
   // 관리자 경로 보호
   if (pathname.startsWith("/admin")) {
     const token = await getToken(req);
@@ -57,8 +69,8 @@ export default async function middleware(req: NextRequest) {
     }
   }
 
-  // 프로필 페이지 보호 (로그인 필수)
-  if (pathname.startsWith("/profile")) {
+  // 프로필, 대시보드 보호 (로그인 필수)
+  if (pathname.startsWith("/profile") || pathname.startsWith("/dashboard")) {
     const token = await getToken(req);
     if (!token) {
       return NextResponse.redirect(new URL("/login", req.url));

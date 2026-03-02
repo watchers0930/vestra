@@ -15,6 +15,14 @@ import {
   Crown,
   Building2,
   Home,
+  CreditCard,
+  Bell,
+  Mail,
+  MessageSquare,
+  TrendingUp,
+  FileText,
+  Megaphone,
+  Gift,
 } from "lucide-react";
 
 const ROLE_INFO: Record<string, { label: string; color: string; limit: number; icon: typeof Crown; features: string[] }> = {
@@ -40,12 +48,18 @@ export default function ProfilePage() {
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [upgradeMessage, setUpgradeMessage] = useState("");
 
+  // 구독 상태
+  const [subscription, setSubscription] = useState<{ plan: string; price: number; status: string } | null>(null);
+
+  // 알림 설정
+  const [notifications, setNotifications] = useState<Record<string, boolean> | null>(null);
+  const [notifLoading, setNotifLoading] = useState(false);
+
   useEffect(() => {
     if (session?.user?.id) {
-      fetch("/api/user/usage")
-        .then((r) => r.json())
-        .then(setUsage)
-        .catch(() => {});
+      fetch("/api/user/usage").then((r) => r.json()).then(setUsage).catch(() => {});
+      fetch("/api/subscription").then((r) => r.json()).then(setSubscription).catch(() => {});
+      fetch("/api/user/notifications").then((r) => r.json()).then(setNotifications).catch(() => {});
     }
   }, [session?.user?.id]);
 
@@ -220,6 +234,122 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* 구독 관리 */}
+      <div className="bg-card rounded-2xl border border-border p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <CreditCard size={20} className="text-primary" />
+          <h3 className="font-semibold">구독 관리</h3>
+        </div>
+        {subscription ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-sm text-muted">현재 플랜</span>
+                <p className="text-lg font-bold">
+                  {subscription.plan === "FREE" ? "무료" : subscription.plan === "PRO" ? "프로" : "비즈니스"}
+                  {subscription.plan !== "FREE" && (
+                    <span className="ml-2 text-sm font-normal text-muted">
+                      {subscription.price.toLocaleString()}원/월
+                    </span>
+                  )}
+                </p>
+              </div>
+              <span className={`text-xs px-2 py-1 rounded-full ${
+                subscription.status === "active" ? "bg-emerald-50 text-emerald-600" :
+                subscription.status === "canceled" ? "bg-red-50 text-red-600" : "bg-gray-100 text-gray-500"
+              }`}>
+                {subscription.status === "active" ? "활성" : subscription.status === "canceled" ? "해지됨" : "만료"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { plan: "FREE", label: "무료", price: "0원" },
+                { plan: "PRO", label: "프로", price: "50,000원" },
+                { plan: "BUSINESS", label: "비즈니스", price: "100,000원" },
+              ].map((p) => (
+                <button
+                  key={p.plan}
+                  disabled={subscription.plan === p.plan}
+                  className={`py-2.5 rounded-lg text-xs font-medium border transition-colors ${
+                    subscription.plan === p.plan
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border text-muted hover:bg-gray-50"
+                  } disabled:cursor-default`}
+                >
+                  <div>{p.label}</div>
+                  <div className="text-[10px] mt-0.5 opacity-70">{p.price}/월</div>
+                </button>
+              ))}
+            </div>
+
+            <p className="text-xs text-center text-gray-400">
+              결제 시스템 준비 중입니다. 곧 서비스될 예정입니다.
+            </p>
+          </div>
+        ) : (
+          <div className="h-16 bg-gray-100 rounded-lg animate-pulse" />
+        )}
+      </div>
+
+      {/* 알림 설정 */}
+      <div className="bg-card rounded-2xl border border-border p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Bell size={20} className="text-primary" />
+          <h3 className="font-semibold">알림 설정</h3>
+        </div>
+        {notifications ? (
+          <div className="space-y-3">
+            {[
+              { key: "emailEnabled", label: "이메일 알림", desc: "분석 결과 및 중요 알림을 이메일로 받기", icon: Mail },
+              { key: "kakaoEnabled", label: "카카오 알림톡", desc: "카카오톡으로 알림 받기 (준비 중)", icon: MessageSquare },
+              { key: "priceAlert", label: "시세 변동 알림", desc: "등록 자산의 가격 변동 시 알림", icon: TrendingUp },
+              { key: "analysisReport", label: "주간 분석 리포트", desc: "매주 자산 현황 요약 리포트", icon: FileText },
+              { key: "systemNotice", label: "공지사항 알림", desc: "서비스 공지 및 업데이트", icon: Megaphone },
+              { key: "marketingEmail", label: "마케팅 수신", desc: "이벤트 및 프로모션 정보", icon: Gift },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.key} className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-3">
+                    <Icon size={16} className="text-gray-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{item.label}</p>
+                      <p className="text-xs text-gray-400">{item.desc}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      setNotifLoading(true);
+                      const updated = { ...notifications, [item.key]: !notifications[item.key] };
+                      setNotifications(updated);
+                      await fetch("/api/user/notifications", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ [item.key]: updated[item.key] }),
+                      });
+                      setNotifLoading(false);
+                    }}
+                    disabled={notifLoading}
+                    className={`relative w-10 h-5.5 rounded-full transition-colors ${
+                      notifications[item.key] ? "bg-primary" : "bg-gray-200"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-4.5 h-4.5 rounded-full bg-white shadow transition-transform ${
+                        notifications[item.key] ? "translate-x-[18px]" : ""
+                      }`}
+                    />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="h-32 bg-gray-100 rounded-lg animate-pulse" />
+        )}
+      </div>
 
       {/* 로그아웃 */}
       <button

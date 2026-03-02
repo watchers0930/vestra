@@ -1,0 +1,15 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F46E5"/>
+      <stop offset="100%" style="stop-color:#6366F1"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="80" y="180" width="80" height="80" rx="20" fill="rgba(255,255,255,0.2)"/>
+  <text x="120" y="242" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle">V</text>
+  <text x="190" y="240" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="white">VESTRA</text>
+  <text x="80" y="320" font-family="Arial, sans-serif" font-size="56" font-weight="bold" fill="white">AI가 분석하는</text>
+  <text x="80" y="390" font-family="Arial, sans-serif" font-size="56" font-weight="bold" fill="white">부동산 자산관리</text>
+  <text x="80" y="460" font-family="Arial, sans-serif" font-size="22" fill="rgba(255,255,255,0.8)">등기부등본 분석 · 계약서 검토 · 세무 시뮬레이션 · 시세 전망</text>
+</svg>
