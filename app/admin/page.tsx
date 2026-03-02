@@ -12,6 +12,7 @@ import {
   Home,
   Crown,
   User,
+  KeyRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, Button, Badge, PageHeader } from "@/components/common";
@@ -21,7 +22,7 @@ import { KpiCard } from "@/components/results";
 // Types
 // ---------------------------------------------------------------------------
 
-type Tab = "overview" | "users" | "verifications";
+type Tab = "overview" | "users" | "verifications" | "account";
 
 interface Stats {
   totalUsers: number;
@@ -83,6 +84,13 @@ export default function AdminPage() {
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [loading, setLoading] = useState(true);
 
+  // 계정 설정 상태
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [pwMsg, setPwMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [pwLoading, setPwLoading] = useState(false);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -118,10 +126,40 @@ export default function AdminPage() {
     ? users
     : users.filter((u) => u.role === roleFilter);
 
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwMsg(null);
+    if (newPw !== confirmPw) {
+      setPwMsg({ type: "error", text: "새 비밀번호가 일치하지 않습니다" });
+      return;
+    }
+    if (newPw.length < 4) {
+      setPwMsg({ type: "error", text: "비밀번호는 4자 이상이어야 합니다" });
+      return;
+    }
+    setPwLoading(true);
+    const res = await fetch("/api/admin/account", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
+    });
+    const data = await res.json();
+    setPwLoading(false);
+    if (res.ok) {
+      setPwMsg({ type: "success", text: "비밀번호가 변경되었습니다" });
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
+    } else {
+      setPwMsg({ type: "error", text: data.error || "변경에 실패했습니다" });
+    }
+  };
+
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: "개요" },
     { key: "users", label: "회원 관리" },
     { key: "verifications", label: `인증 관리${pending.length > 0 ? ` (${pending.length})` : ""}` },
+    { key: "account", label: "계정 설정" },
   ];
 
   return (
@@ -383,6 +421,71 @@ export default function AdminPage() {
                   </Card>
                 ))
               )}
+            </div>
+          )}
+
+          {/* ============================================================= */}
+          {/* 계정 설정 탭                                                    */}
+          {/* ============================================================= */}
+          {tab === "account" && (
+            <div className="max-w-md">
+              <Card className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <KeyRound size={20} className="text-gray-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-800">비밀번호 변경</h3>
+                    <p className="text-xs text-gray-500">관리자 계정 비밀번호를 변경합니다</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handlePasswordChange} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">현재 비밀번호</label>
+                    <input
+                      type="password"
+                      value={currentPw}
+                      onChange={(e) => setCurrentPw(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">새 비밀번호</label>
+                    <input
+                      type="password"
+                      value={newPw}
+                      onChange={(e) => setNewPw(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">비밀번호 확인</label>
+                    <input
+                      type="password"
+                      value={confirmPw}
+                      onChange={(e) => setConfirmPw(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      required
+                    />
+                  </div>
+
+                  {pwMsg && (
+                    <p className={cn(
+                      "text-xs font-medium",
+                      pwMsg.type === "success" ? "text-emerald-600" : "text-red-500"
+                    )}>
+                      {pwMsg.text}
+                    </p>
+                  )}
+
+                  <Button type="submit" variant="primary" size="md" disabled={pwLoading}>
+                    {pwLoading ? "변경 중..." : "비밀번호 변경"}
+                  </Button>
+                </form>
+              </Card>
             </div>
           )}
         </>

@@ -59,6 +59,9 @@ model User {
   emailVerified  DateTime?
   image          String?
 
+  // 관리자 계정용
+  password       String?
+
   // 회원 등급
   role           String    @default("PERSONAL") // GUEST | PERSONAL | BUSINESS | REALESTATE | ADMIN
   businessNumber String?                        // 사업자등록번호 (기업/부동산)
