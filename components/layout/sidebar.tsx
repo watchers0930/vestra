@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Shield,
+  ShieldCheck,
   FileSearch,
   Calculator,
   TrendingUp,
@@ -19,6 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { version } from "../../package.json";
 import UserMenu from "@/components/auth/user-menu";
@@ -55,6 +57,8 @@ const menuItems: MenuItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "ADMIN";
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
@@ -240,6 +244,32 @@ export default function Sidebar() {
               );
             })}
           </div>
+
+          {/* 관리자 메뉴 (ADMIN만 표시) */}
+          {isAdmin && (
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <Link
+                href="/admin"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all",
+                  pathname.startsWith("/admin")
+                    ? "bg-sidebar-active text-white font-medium"
+                    : "text-gray-300 hover:bg-sidebar-hover hover:text-white"
+                )}
+                title={!showLabel ? "관리자" : undefined}
+              >
+                <ShieldCheck size={20} className="flex-shrink-0" />
+                {showLabel && (
+                  <div>
+                    <div>관리자</div>
+                    {!pathname.startsWith("/admin") && (
+                      <div className="text-[10px] text-gray-500">대시보드 관리</div>
+                    )}
+                  </div>
+                )}
+              </Link>
+            </div>
+          )}
         </nav>
 
         {/* User Menu */}
