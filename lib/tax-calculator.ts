@@ -1,4 +1,65 @@
-// 2024-2025 기준 한국 부동산 세금 계산기
+/**
+ * VESTRA 부동산 세금 계산기
+ * ─────────────────────────
+ * 2024~2026년 한국 부동산 세금 계산.
+ * TaxConfig를 통해 연도별/시나리오별 세율 적용 가능.
+ */
+
+// ─── 세금 설정 ───
+
+export interface TaxConfig {
+  taxYear: number;
+  /** 다주택 취득세 중과 활성 여부 (유예 만료 시 true) */
+  multiHomeHeavyTaxEnabled: boolean;
+  /** 생애최초 취득세 감면 활성 여부 */
+  firstHomeBenefitEnabled: boolean;
+  /** 종합부동산세 공정시장가액비율 (0.6 ~ 0.8) */
+  fairMarketValueRatio: number;
+  /** 다주택 양도세 중과 활성 여부 */
+  multiHomeTransferSurchargeEnabled: boolean;
+  /** 1세대1주택 양도세 비과세 기준금액 */
+  oneHouseExemptionThreshold: number;
+}
+
+/** 2024-2025: 다주택 중과 유예 기간 */
+export const TAX_CONFIG_2024_2025: TaxConfig = {
+  taxYear: 2025,
+  multiHomeHeavyTaxEnabled: false,
+  firstHomeBenefitEnabled: true,
+  fairMarketValueRatio: 0.60,
+  multiHomeTransferSurchargeEnabled: false,
+  oneHouseExemptionThreshold: 1_200_000_000,
+};
+
+/** 2026 (유예 연장 시나리오 - 기본값) */
+export const TAX_CONFIG_2026: TaxConfig = {
+  taxYear: 2026,
+  multiHomeHeavyTaxEnabled: false,   // 유예 연장 가정
+  firstHomeBenefitEnabled: true,     // 감면 연장 가정
+  fairMarketValueRatio: 0.60,       // 현행 유지
+  multiHomeTransferSurchargeEnabled: false,
+  oneHouseExemptionThreshold: 1_200_000_000,
+};
+
+/** 2026 (중과 복원 시나리오) */
+export const TAX_CONFIG_2026_RESTORED: TaxConfig = {
+  taxYear: 2026,
+  multiHomeHeavyTaxEnabled: true,    // 2025.05 유예 만료 → 중과 복원
+  firstHomeBenefitEnabled: false,    // 2025년 말 감면 종료
+  fairMarketValueRatio: 0.65,       // 60% → 65% 인상
+  multiHomeTransferSurchargeEnabled: true,
+  oneHouseExemptionThreshold: 1_200_000_000,
+};
+
+/** 연도별 기본 TaxConfig 반환 */
+export function getTaxConfig(year: number = 2026): TaxConfig {
+  if (year <= 2025) return TAX_CONFIG_2024_2025;
+  return TAX_CONFIG_2026; // 기본은 보수적(유예 연장) 시나리오
+}
+
+const DEFAULT_CONFIG = TAX_CONFIG_2026;
+
+// ─── 인터페이스 ───
 
 interface AcquisitionTaxInput {
   price: number;        // 매매가
@@ -22,14 +83,16 @@ interface TransferTaxInput {
   isAdjusted: boolean;
 }
 
-export function calculateAcquisitionTax(input: AcquisitionTaxInput) {
+// ─── 취득세 ───
+
+export function calculateAcquisitionTax(input: AcquisitionTaxInput, config: TaxConfig = DEFAULT_CONFIG) {
   const { price, houseCount, isAdjusted, isFirstHome } = input;
 
   let rate: number;
   let label: string;
 
-  // 생애최초 주택 200만원 감면 (6억 이하 면제, 12억 이하 감면)
-  if (isFirstHome && houseCount === 1 && price <= 1200000000) {
+  // 생애최초 주택 200만원 감면 (설정에 따라 활성/비활성)
+  if (config.firstHomeBenefitEnabled && isFirstHome && houseCount === 1 && price <= 1200000000) {
     if (price <= 600000000) {
       return { tax: 0, rate: 0, label: "생애최초 면제", details: "6억원 이하 생애최초 주택 취득세 면제" };
     }
@@ -40,7 +103,7 @@ export function calculateAcquisitionTax(input: AcquisitionTaxInput) {
   }
 
   if (houseCount === 1) {
-    // 1주택자
+    // 1주택자 (중과 여부 무관, 동일)
     if (price <= 600000000) {
       rate = 0.01;
       label = "1주택 (6억 이하, 1%)";
@@ -52,19 +115,34 @@ export function calculateAcquisitionTax(input: AcquisitionTaxInput) {
       label = "1주택 (9억 초과, 3%)";
     }
   } else if (houseCount === 2) {
-    rate = isAdjusted ? 0.08 : 0.01;
-    label = isAdjusted ? "2주택 조정지역 (8%)" : "2주택 비조정 (1~3%)";
-    if (!isAdjusted) {
+    if (config.multiHomeHeavyTaxEnabled) {
+      // 중과 복원: 조정지역 8%, 비조정 1~3%
+      rate = isAdjusted ? 0.08 : 0.01;
+      label = isAdjusted ? "2주택 조정지역 중과 (8%)" : "2주택 비조정 (1~3%)";
+      if (!isAdjusted) {
+        if (price <= 600000000) rate = 0.01;
+        else if (price <= 900000000) rate = 0.02;
+        else rate = 0.03;
+      }
+    } else {
+      // 유예 기간: 일반 세율 적용
       if (price <= 600000000) rate = 0.01;
       else if (price <= 900000000) rate = 0.02;
       else rate = 0.03;
+      label = `2주택 (유예 적용, ${(rate * 100).toFixed(0)}%)`;
     }
   } else if (houseCount === 3) {
-    rate = isAdjusted ? 0.12 : 0.08;
-    label = isAdjusted ? "3주택 조정지역 (12%)" : "3주택 비조정 (8%)";
+    if (config.multiHomeHeavyTaxEnabled) {
+      rate = isAdjusted ? 0.12 : 0.08;
+      label = isAdjusted ? "3주택 조정지역 중과 (12%)" : "3주택 비조정 (8%)";
+    } else {
+      rate = isAdjusted ? 0.08 : 0.04;
+      label = isAdjusted ? `3주택 조정 (유예, 8%)` : `3주택 비조정 (유예, 4%)`;
+    }
   } else {
-    rate = 0.12;
-    label = "4주택 이상 (12%)";
+    // 4주택 이상
+    rate = config.multiHomeHeavyTaxEnabled ? 0.12 : 0.04;
+    label = config.multiHomeHeavyTaxEnabled ? "4주택 이상 중과 (12%)" : "4주택 이상 (유예, 4%)";
   }
 
   const tax = Math.round(price * rate);
@@ -78,14 +156,16 @@ export function calculateAcquisitionTax(input: AcquisitionTaxInput) {
     totalTax: tax + localEduTax + specialTax,
     rate,
     label,
-    details: `취득세 ${(rate * 100).toFixed(1)}% + 지방교육세 + 농어촌특별세`
+    details: `취득세 ${(rate * 100).toFixed(1)}% + 지방교육세 + 농어촌특별세`,
   };
 }
 
-export function calculateHoldingTax(input: HoldingTaxInput) {
+// ─── 보유세 (재산세 + 종합부동산세) ───
+
+export function calculateHoldingTax(input: HoldingTaxInput, config: TaxConfig = DEFAULT_CONFIG) {
   const { assessedValue, houseCount } = input;
 
-  // 재산세 계산 (주택)
+  // 재산세 계산 (주택) - 공시가격 기준
   let propertyTax: number;
   if (assessedValue <= 60000000) {
     propertyTax = assessedValue * 0.001;
@@ -98,9 +178,10 @@ export function calculateHoldingTax(input: HoldingTaxInput) {
   }
   propertyTax = Math.round(propertyTax);
 
-  // 종합부동산세 (공시가격 기준 공제 후)
+  // 종합부동산세: 공정시장가액비율 적용 후 공제
+  const taxableBase = Math.round(assessedValue * config.fairMarketValueRatio);
   const deduction = houseCount === 1 ? 1200000000 : 900000000; // 1세대1주택 12억, 그 외 9억
-  const taxableValue = Math.max(0, assessedValue - deduction);
+  const taxableValue = Math.max(0, taxableBase - deduction);
 
   let comprehensiveTax = 0;
   if (taxableValue > 0) {
@@ -127,13 +208,16 @@ export function calculateHoldingTax(input: HoldingTaxInput) {
     totalTax: propertyTax + comprehensiveTax,
     details: {
       propertyTaxRate: "0.1~0.4%",
-      deduction: deduction,
+      deduction,
       taxableValue,
-    }
+      fairMarketValueRatio: config.fairMarketValueRatio,
+    },
   };
 }
 
-export function calculateTransferTax(input: TransferTaxInput) {
+// ─── 양도세 ───
+
+export function calculateTransferTax(input: TransferTaxInput, config: TaxConfig = DEFAULT_CONFIG) {
   const { acquisitionPrice, transferPrice, holdingYears, livingYears, houseCount, isAdjusted } = input;
 
   const gain = transferPrice - acquisitionPrice;
@@ -145,21 +229,21 @@ export function calculateTransferTax(input: TransferTaxInput) {
   const expenses = Math.round(acquisitionPrice * 0.03);
   const taxableGain = Math.max(0, gain - expenses);
 
-  // 1세대 1주택 비과세 (2년 이상 보유, 조정지역은 2년 거주, 12억 이하)
+  // 1세대 1주택 비과세 (2년 이상 보유, 조정지역은 2년 거주)
   if (houseCount === 1 && holdingYears >= 2) {
     if (!isAdjusted || livingYears >= 2) {
-      if (transferPrice <= 1200000000) {
-        return { tax: 0, gain, taxableGain: 0, details: "1세대 1주택 비과세 (12억 이하, 2년 보유)" };
+      if (transferPrice <= config.oneHouseExemptionThreshold) {
+        return { tax: 0, gain, taxableGain: 0, details: `1세대 1주택 비과세 (${(config.oneHouseExemptionThreshold / 100000000).toFixed(0)}억 이하, 2년 보유)` };
       }
-      // 12억 초과분만 과세
-      const taxableRatio = (transferPrice - 1200000000) / transferPrice;
+      // 비과세 기준 초과분만 과세
+      const taxableRatio = (transferPrice - config.oneHouseExemptionThreshold) / transferPrice;
       const adjustedGain = Math.round(taxableGain * taxableRatio);
 
-      // 장기보유특별공제
+      // 장기보유특별공제 (1주택: 연 4% 보유 + 연 4% 거주, 최대 80%)
       let deductionRate = 0;
       if (holdingYears >= 3) {
-        const holdingDeduction = Math.min(holdingYears * 0.04, 0.40); // 연 4%, 최대 40%
-        const livingDeduction = Math.min(livingYears * 0.04, 0.40);  // 연 4%, 최대 40%
+        const holdingDeduction = Math.min(holdingYears * 0.04, 0.40);
+        const livingDeduction = Math.min(livingYears * 0.04, 0.40);
         deductionRate = Math.min(holdingDeduction + livingDeduction, 0.80);
       }
 
@@ -171,14 +255,14 @@ export function calculateTransferTax(input: TransferTaxInput) {
         gain,
         taxableGain: deductedGain,
         deductionRate,
-        details: `12억 초과분 과세, 장기보유특별공제 ${(deductionRate * 100).toFixed(0)}%`
+        details: `${(config.oneHouseExemptionThreshold / 100000000).toFixed(0)}억 초과분 과세, 장기보유특별공제 ${(deductionRate * 100).toFixed(0)}%`,
       };
     }
   }
 
-  // 다주택자 중과
+  // 다주택자 중과 (설정에 따라 활성/비활성)
   let additionalRate = 0;
-  if (isAdjusted) {
+  if (config.multiHomeTransferSurchargeEnabled && isAdjusted) {
     if (houseCount === 2) additionalRate = 0.20; // 2주택 +20%p
     else if (houseCount >= 3) additionalRate = 0.30; // 3주택 +30%p
   }
@@ -210,9 +294,11 @@ export function calculateTransferTax(input: TransferTaxInput) {
     additionalRate,
     details: additionalRate > 0
       ? `다주택 중과 +${(additionalRate * 100).toFixed(0)}%p`
-      : `장기보유특별공제 ${(deductionRate * 100).toFixed(0)}%`
+      : `장기보유특별공제 ${(deductionRate * 100).toFixed(0)}%`,
   };
 }
+
+// ─── 누진세율 ───
 
 function getProgressiveRate(taxableIncome: number): number {
   if (taxableIncome <= 14000000) return 0.06;

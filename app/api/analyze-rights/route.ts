@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
-import { RIGHTS_ANALYSIS_PROMPT } from "@/lib/prompts";
+import { RIGHTS_ANALYSIS_OPINION_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
 import { fetchComprehensivePrices } from "@/lib/molit-api";
+import { estimatePrice, type PriceEstimationResult } from "@/lib/price-estimation";
 
 /** 원 단위 숫자를 "X억 Y만원" 형태로 변환 */
 function formatKoreanPrice(won: number): string {
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "주소를 입력해주세요." }, { status: 400 });
     }
 
-    // 종합 시세 데이터 조회 (매매 + 전월세)
+    // 1단계: 종합 시세 데이터 조회 (매매 + 전월세)
     let comprehensive = null;
     try {
       comprehensive = await fetchComprehensivePrices(address, 12);
@@ -52,80 +53,109 @@ export async function POST(req: NextRequest) {
       console.warn("MOLIT API 종합 조회 실패:", e);
     }
 
-    // 실거래 데이터 요약 텍스트 생성
-    let realDataContext = "";
+    // 2단계: 자체 엔진으로 매매가/전세가 추정
+    const priceResult: PriceEstimationResult = estimatePrice(
+      { address, aptName: address },
+      comprehensive?.sale ?? null,
+      comprehensive?.rent ?? null,
+    );
 
-    // 매매 데이터
-    if (comprehensive?.sale && comprehensive.sale.transactionCount > 0) {
-      const s = comprehensive.sale;
-      realDataContext += `\n\n## 매매 실거래 데이터 (최근 12개월)
-- 평균 거래가: ${formatKoreanPrice(s.avgPrice)} (${s.avgPrice.toLocaleString()}원)
-- 최저 거래가: ${formatKoreanPrice(s.minPrice)} (${s.minPrice.toLocaleString()}원)
-- 최고 거래가: ${formatKoreanPrice(s.maxPrice)} (${s.maxPrice.toLocaleString()}원)
-- 거래 건수: ${s.transactionCount}건
+    // 3단계: 리스크 분석 (MOLIT 데이터 기반)
+    const jeonseRatio = priceResult.jeonseRatio;
+    const risks: { level: "danger" | "warning" | "safe"; title: string; description: string }[] = [];
 
-최근 매매 거래 내역 (최대 10건):
-${s.transactions
-  .slice(0, 10)
-  .map(
-    (t) =>
-      `- ${t.aptName} ${t.area}㎡ ${t.floor}층: ${formatKoreanPrice(t.dealAmount)} (${t.dealYear}.${t.dealMonth}.${t.dealDay})`
-  )
-  .join("\n")}
-
-위 매매 실거래 데이터를 기반으로 시세(estimatedPrice)를 산정하세요.`;
+    // 전세가율 리스크
+    if (jeonseRatio >= 80) {
+      risks.push({ level: "danger", title: "전세가율 위험", description: `전세가율 ${jeonseRatio}%로 깡통전세 위험이 높습니다` });
+    } else if (jeonseRatio >= 70) {
+      risks.push({ level: "warning", title: "전세가율 주의", description: `전세가율 ${jeonseRatio}%로 주의가 필요합니다` });
+    } else if (jeonseRatio > 0) {
+      risks.push({ level: "safe", title: "전세가율 안전", description: `전세가율 ${jeonseRatio}%로 안전 범위입니다` });
     }
 
-    // 전월세 데이터
-    if (comprehensive?.rent && (comprehensive.rent.jeonseCount > 0 || comprehensive.rent.wolseCount > 0)) {
-      const r = comprehensive.rent;
-      realDataContext += `\n\n## 전월세 실거래 데이터 (최근 12개월)
-- 전세 평균 보증금: ${formatKoreanPrice(r.avgDeposit)} (${r.avgDeposit.toLocaleString()}원)
-- 전세 최저 보증금: ${formatKoreanPrice(r.minDeposit)} (${r.minDeposit.toLocaleString()}원)
-- 전세 최고 보증금: ${formatKoreanPrice(r.maxDeposit)} (${r.maxDeposit.toLocaleString()}원)
-- 전세 거래 건수: ${r.jeonseCount}건
-- 월세 거래 건수: ${r.wolseCount}건
-
-최근 전월세 내역 (최대 10건):
-${r.transactions
-  .slice(0, 10)
-  .map(
-    (t) =>
-      `- ${t.aptName} ${t.area}㎡ ${t.floor}층: ${t.rentType} 보증금 ${formatKoreanPrice(t.deposit)}${t.monthlyRent > 0 ? ` / 월세 ${formatKoreanPrice(t.monthlyRent)}` : ""} (${t.dealYear}.${t.dealMonth}.${t.dealDay})`
-  )
-  .join("\n")}
-
-위 전월세 실거래 데이터를 기반으로 전세가(jeonsePrice)를 산정하세요.`;
+    // 데이터 신뢰도 리스크
+    if (priceResult.confidence < 30) {
+      risks.push({ level: "warning", title: "데이터 부족", description: "실거래 데이터가 부족하여 추정치의 정확도가 낮을 수 있습니다" });
     }
 
-    // 실데이터 기반 전세가율
-    if (comprehensive?.jeonseRatio !== null && comprehensive?.jeonseRatio !== undefined) {
-      realDataContext += `\n\n## 실데이터 기반 전세가율: ${comprehensive.jeonseRatio}%
-이 전세가율은 실제 매매가 평균과 전세 보증금 평균으로 계산된 값입니다. jeonseRatio에 이 값을 사용하세요.`;
+    // 가격 변동성 리스크
+    if (priceResult.priceRange.stdDev > 0 && priceResult.estimatedPrice > 0) {
+      const cv = priceResult.priceRange.stdDev / priceResult.estimatedPrice;
+      if (cv > 0.3) {
+        risks.push({ level: "warning", title: "가격 변동성 높음", description: "해당 지역 거래가 편차가 커 정확한 시세 판단이 어렵습니다" });
+      }
     }
 
-    const openai = getOpenAIClient();
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
-      messages: [
-        { role: "system", content: RIGHTS_ANALYSIS_PROMPT },
-        {
-          role: "user",
-          content: `다음 부동산의 권리분석을 수행해주세요: ${address}${realDataContext}\n\n실제 시세와 권리관계를 가능한 정확하게 추정하여 분석해주세요. JSON 형식으로만 응답하세요.`,
-        },
-      ],
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-    });
-
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      return NextResponse.json({ error: "AI 응답이 없습니다." }, { status: 500 });
+    if (risks.length === 0) {
+      risks.push({ level: "safe", title: "특이사항 없음", description: "주소 기반 분석에서 특별한 위험 요소가 발견되지 않았습니다" });
     }
 
-    const result = JSON.parse(content);
-    return NextResponse.json(result);
+    const safetyScore = Math.max(0, Math.min(100,
+      100
+      - risks.filter((r) => r.level === "danger").length * 25
+      - risks.filter((r) => r.level === "warning").length * 10
+    ));
+
+    // 4단계: 구조화된 결과 생성
+    const propertyInfo = {
+      address,
+      type: "아파트",
+      area: "",
+      buildYear: "",
+      estimatedPrice: priceResult.estimatedPrice,
+      jeonsePrice: priceResult.estimatedJeonsePrice,
+      recentTransaction: comprehensive?.sale?.transactions?.[0]
+        ? `${comprehensive.sale.transactions[0].dealYear}.${String(comprehensive.sale.transactions[0].dealMonth).padStart(2, "0")} / ${formatKoreanPrice(comprehensive.sale.transactions[0].dealAmount)}`
+        : "",
+    };
+
+    const riskAnalysis = {
+      jeonseRatio,
+      mortgageRatio: 0,
+      safetyScore,
+      riskScore: 100 - safetyScore,
+      risks,
+    };
+
+    // 5단계: LLM으로 종합 의견만 생성
+    let aiOpinion = "";
+    try {
+      const openai = getOpenAIClient();
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: RIGHTS_ANALYSIS_OPINION_PROMPT },
+          {
+            role: "user",
+            content: JSON.stringify({
+              address,
+              estimatedPrice: priceResult.estimatedPrice,
+              estimatedPriceFormatted: formatKoreanPrice(priceResult.estimatedPrice),
+              jeonsePriceFormatted: formatKoreanPrice(priceResult.estimatedJeonsePrice),
+              jeonseRatio,
+              safetyScore,
+              risks,
+              confidence: priceResult.confidence,
+              comparableCount: priceResult.comparableCount,
+              method: priceResult.method,
+              recentTransaction: propertyInfo.recentTransaction,
+            }),
+          },
+        ],
+        temperature: 0.3,
+        response_format: { type: "json_object" },
+      });
+
+      const content = completion.choices[0]?.message?.content;
+      if (content) {
+        const parsed = JSON.parse(content);
+        aiOpinion = parsed.aiOpinion || parsed.opinion || "";
+      }
+    } catch {
+      aiOpinion = "AI 의견 생성에 실패했습니다. 자체 분석 결과를 참고해주세요.";
+    }
+
+    return NextResponse.json({ propertyInfo, riskAnalysis, aiOpinion });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "알 수 없는 오류";
     console.error("Rights analysis error:", message);

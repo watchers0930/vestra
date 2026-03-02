@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
-import { CONTRACT_ANALYSIS_PROMPT } from "@/lib/prompts";
+import { CONTRACT_ANALYSIS_OPINION_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { stripHtml, truncateInput } from "@/lib/sanitize";
 import { searchCourtCases } from "@/lib/court-api";
+import { analyzeContract } from "@/lib/contract-analyzer";
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,48 +34,67 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "계약서 내용을 입력해주세요." }, { status: 400 });
     }
 
-    // 계약서에서 키워드 추출 후 관련 판례 검색
+    // 1단계: 자체 엔진으로 계약서 분석
+    const engineResult = analyzeContract(contractText);
+
+    // 2단계: 판례 검색 (LLM 의견 보강용)
     let courtContext = "";
     try {
       const keywords = extractContractKeywords(contractText);
       if (keywords.length > 0) {
         const cases = await searchCourtCases(keywords[0], 3);
         if (cases.length > 0) {
-          courtContext = `\n\n## 관련 판례 참고\n${cases
+          courtContext = `\n\n관련 판례:\n${cases
             .map(
               (c) =>
                 `- [${c.caseNumber}] ${c.caseName} (${c.courtName}, ${c.judgmentDate})\n  판시사항: ${c.summary}`
             )
-            .join("\n")}
-\n위 판례를 참고하여 계약서 분석 시 관련 법률 근거를 보강하세요.`;
+            .join("\n")}`;
         }
       }
     } catch (e) {
       console.warn("판례 검색 실패:", e);
     }
 
-    const openai = getOpenAIClient();
+    // 3단계: LLM으로 종합 의견만 생성
+    let aiOpinion = "";
+    try {
+      const openai = getOpenAIClient();
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: CONTRACT_ANALYSIS_OPINION_PROMPT },
+          {
+            role: "user",
+            content: JSON.stringify({
+              clauses: engineResult.clauses,
+              missingClauses: engineResult.missingClauses,
+              safetyScore: engineResult.safetyScore,
+              highRiskCount: engineResult.clauses.filter((c) => c.riskLevel === "high").length,
+              warningCount: engineResult.clauses.filter((c) => c.riskLevel === "warning").length,
+              courtContext: courtContext || "관련 판례 없음",
+            }),
+          },
+        ],
+        temperature: 0.3,
+        response_format: { type: "json_object" },
+      });
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
-      messages: [
-        { role: "system", content: CONTRACT_ANALYSIS_PROMPT },
-        {
-          role: "user",
-          content: `다음 부동산 계약서를 분석해주세요:\n\n${contractText}${courtContext}\n\nJSON 형식으로만 응답하세요.`,
-        },
-      ],
-      temperature: 0.3,
-      response_format: { type: "json_object" },
-    });
-
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      return NextResponse.json({ error: "AI 응답이 없습니다." }, { status: 500 });
+      const content = completion.choices[0]?.message?.content;
+      if (content) {
+        const parsed = JSON.parse(content);
+        aiOpinion = parsed.aiOpinion || parsed.opinion || "";
+      }
+    } catch {
+      aiOpinion = "AI 의견 생성에 실패했습니다. 자체 분석 결과를 참고해주세요.";
     }
 
-    const result = JSON.parse(content);
-    return NextResponse.json(result);
+    return NextResponse.json({
+      clauses: engineResult.clauses,
+      missingClauses: engineResult.missingClauses,
+      safetyScore: engineResult.safetyScore,
+      aiOpinion,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "알 수 없는 오류";
     console.error("Contract analysis error:", message);
@@ -99,8 +119,6 @@ function extractContractKeywords(text: string): string[] {
   ];
 
   const found = keywordPatterns.filter((kw) => text.includes(kw));
-
-  // 가장 관련성 높은 검색어 조합
   if (found.length === 0) return ["부동산 계약 분쟁"];
   return [found.slice(0, 2).join(" ")];
 }

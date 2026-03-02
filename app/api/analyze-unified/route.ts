@@ -5,6 +5,7 @@ import { parseRegistry } from "@/lib/registry-parser";
 import { calculateRiskScore } from "@/lib/risk-scoring";
 import { validateParsedRegistry } from "@/lib/validation-engine";
 import { fetchComprehensivePrices, type PriceResult, type RentPriceResult } from "@/lib/molit-api";
+import { estimatePrice } from "@/lib/price-estimation";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { stripHtml, truncateInput } from "@/lib/sanitize";
 
@@ -17,20 +18,6 @@ function formatKoreanPrice(won: number): string {
   if (eok > 0) return `${eok}억원`;
   if (man > 0) return `${man.toLocaleString()}만원`;
   return `${won.toLocaleString()}원`;
-}
-
-/** 주소에서 건물/단지명 키워드 추출 */
-function extractBuildingKeywords(address: string): string[] {
-  if (!address) return [];
-  let cleaned = address
-    .replace(/\d+의?\d*[-\d]*/g, " ")
-    .replace(/(특별자치시|특별자치도|특별시|광역시)/g, " ")
-    .replace(/\b(시|도|구|군|읍|면|동|리|로|길|가|층|호|실)\b/g, " ")
-    .replace(/제\s*\d+/g, " ")
-    .replace(/\[.*?\]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  return cleaned.split(" ").filter((w) => w.length >= 2);
 }
 
 /** 면적 문자열에서 숫자 추출 */
@@ -93,66 +80,38 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2-1단계: MOLIT 데이터 필터링 (구 단위 → 건물 단위)
-    if (marketData?.sale && marketData.sale.transactionCount > 0) {
-      const keywords = extractBuildingKeywords(address);
-      const allTxns = marketData.sale.transactions;
-      let matched = allTxns;
+    // 2-1단계: 매매가 추정 엔진으로 비교매물 분석
+    const regArea = parseAreaValue(parsed.title.area || "");
+    const priceEstimation = estimatePrice(
+      { address, aptName: address, area: regArea > 0 ? regArea : undefined },
+      marketData?.sale ?? null,
+      marketData?.rent ?? null,
+    );
+    marketDataFiltered = priceEstimation.method === "building_match" || priceEstimation.method === "area_match";
 
-      // 1차: 건물명 키워드 매칭
-      if (keywords.length > 0) {
-        const nameMatched = allTxns.filter((t) =>
-          keywords.some(
-            (kw) =>
-              (t.aptName && t.aptName.includes(kw)) ||
-              (t.aptName && kw.includes(t.aptName) && t.aptName.length >= 2)
-          )
-        );
-        if (nameMatched.length > 0) {
-          matched = nameMatched;
-          marketDataFiltered = true;
-        }
-      }
-
-      // 2차: 면적 유사성 필터 (±50%, 건물명 매칭 안된 경우만)
-      if (!marketDataFiltered) {
-        const regArea = parseAreaValue(parsed.title.area || "");
-        if (regArea > 0 && regArea < 300) {
-          const areaMatched = allTxns.filter(
-            (t) => t.area > 0 && Math.abs(t.area - regArea) / regArea < 0.5
-          );
-          if (areaMatched.length > 0 && areaMatched.length < allTxns.length) {
-            matched = areaMatched;
-            marketDataFiltered = true;
-          }
-        }
-      }
-
-      if (marketDataFiltered && matched.length > 0) {
-        const districtSale = marketData.sale; // 구 전체 원본 보존
-        const prices = matched.map((t) => t.dealAmount);
-        marketData = {
-          ...marketData,
-          districtSale,
-          sale: {
-            avgPrice: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length),
-            minPrice: Math.min(...prices),
-            maxPrice: Math.max(...prices),
-            transactionCount: matched.length,
-            transactions: matched.sort(
-              (a, b) =>
-                b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay -
-                (a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay)
-            ),
-            period: districtSale.period,
-          },
-        };
-      }
+    // 필터링된 비교매물로 marketData 갱신
+    if (marketDataFiltered && priceEstimation.comparables.length > 0 && marketData?.sale) {
+      const districtSale = marketData.sale;
+      marketData = {
+        ...marketData,
+        districtSale,
+        sale: {
+          avgPrice: priceEstimation.estimatedPrice,
+          minPrice: priceEstimation.priceRange.min,
+          maxPrice: priceEstimation.priceRange.max,
+          transactionCount: priceEstimation.comparableCount,
+          transactions: priceEstimation.comparables.sort(
+            (a, b) =>
+              b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay -
+              (a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay)
+          ),
+          period: districtSale.period,
+        },
+      };
     }
 
-    // 추정가 결정: 사용자 입력 > (필터링된) MOLIT 평균가 > 0
-    const estimatedPrice =
-      userPrice || marketData?.sale?.avgPrice || 0;
+    // 추정가 결정: 사용자 입력 > 엔진 추정가 > 0
+    const estimatedPrice = userPrice || priceEstimation.estimatedPrice;
 
     // 3단계: 데이터 검증 엔진 (AI 미사용)
     const preValidation = validateParsedRegistry(parsed, estimatedPrice);
