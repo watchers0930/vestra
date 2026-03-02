@@ -1,5 +1,3 @@
-import { FileText } from "lucide-react";
-
 export const metadata = {
   title: "이용약관 | VESTRA",
   description: "VESTRA AI 자산관리 플랫폼 이용약관",
@@ -8,10 +6,7 @@ export const metadata = {
 export default function TermsPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-12">
-      <div className="flex items-center gap-3 mb-8">
-        <FileText size={28} className="text-primary" />
-        <h1 className="text-2xl font-bold text-gray-900">이용약관</h1>
-      </div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-8">이용약관</h1>
 
       <p className="text-sm text-gray-500 mb-10">시행일: 2026년 3월 1일</p>
 

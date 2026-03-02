@@ -1,5 +1,3 @@
-import { ShieldCheck } from "lucide-react";
-
 export const metadata = {
   title: "개인정보처리방침 | VESTRA",
   description: "VESTRA AI 자산관리 플랫폼 개인정보처리방침",
@@ -8,10 +6,7 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-12">
-      <div className="flex items-center gap-3 mb-8">
-        <ShieldCheck size={28} className="text-primary" />
-        <h1 className="text-2xl font-bold text-gray-900">개인정보처리방침</h1>
-      </div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-8">개인정보처리방침</h1>
 
       <p className="text-sm text-gray-500 mb-10">시행일: 2026년 3월 1일</p>
 

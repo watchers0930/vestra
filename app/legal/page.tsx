@@ -1,5 +1,3 @@
-import { Scale, Database, AlertTriangle, Building2, Phone, Mail } from "lucide-react";
-
 export const metadata = {
   title: "법적고지 | VESTRA",
   description: "VESTRA AI 자산관리 플랫폼 법적고지 및 면책사항",
@@ -8,20 +6,14 @@ export const metadata = {
 export default function LegalPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-12">
-      <div className="flex items-center gap-3 mb-8">
-        <Scale size={28} className="text-primary" />
-        <h1 className="text-2xl font-bold text-gray-900">법적고지</h1>
-      </div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-8">법적고지</h1>
 
       <p className="text-sm text-gray-500 mb-10">시행일: 2026년 3월 1일</p>
 
       <div className="space-y-10">
         {/* 1. 서비스 성격 */}
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <AlertTriangle size={18} className="text-amber-500" />
-            제1조 (서비스의 성격 및 면책)
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">제1조 (서비스의 성격 및 면책)</h2>
           <div className="text-sm text-gray-700 leading-relaxed space-y-3">
             <p>
               VESTRA(이하 &ldquo;본 서비스&rdquo;)가 제공하는 부동산 분석 결과는 인공지능(AI) 및 자체 분석 엔진에
@@ -42,10 +34,7 @@ export default function LegalPage() {
 
         {/* 2. 데이터 출처 */}
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <Database size={18} className="text-blue-500" />
-            제2조 (데이터 출처 및 정확성)
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">제2조 (데이터 출처 및 정확성)</h2>
           <div className="text-sm text-gray-700 leading-relaxed space-y-3">
             <p>본 서비스는 다음의 공공데이터 및 외부 서비스를 활용하여 분석을 수행합니다:</p>
             <ul className="list-disc pl-5 space-y-1.5">
@@ -121,17 +110,14 @@ export default function LegalPage() {
 
         {/* 회사 정보 */}
         <section className="mt-12 pt-8 border-t border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Building2 size={18} className="text-gray-500" />
-            회사 정보
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">회사 정보</h2>
           <div className="text-sm text-gray-600 leading-relaxed space-y-1.5">
             <p><strong>상호:</strong> BMI C&S</p>
             <p><strong>대표이사:</strong> 김동의</p>
             <p><strong>사업자등록번호:</strong> 263-87-03481</p>
             <p><strong>주소:</strong> 서울시 강남구 테헤란로 322 한신인터밸리24 1712, 13호</p>
-            <p className="flex items-center gap-1.5"><Phone size={14} /> 010-8490-9271</p>
-            <p className="flex items-center gap-1.5"><Mail size={14} /> support@vestra.kr</p>
+            <p><strong>전화:</strong> 010-8490-9271</p>
+            <p><strong>이메일:</strong> support@vestra.kr</p>
           </div>
         </section>
       </div>
