@@ -30,12 +30,13 @@ export default function UserMenu({ collapsed }: { collapsed: boolean }) {
         <Link
           href="/login"
           className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-sidebar-hover hover:text-white transition-all",
+            "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 transition-all",
+            collapsed && "justify-center",
           )}
           title={collapsed ? "로그인" : undefined}
         >
-          <LogIn size={20} className="flex-shrink-0" />
-          {!collapsed && <span>로그인</span>}
+          <LogIn size={18} className="flex-shrink-0" />
+          {!collapsed && <span>로그인 / 회원가입</span>}
         </Link>
       </div>
     );
