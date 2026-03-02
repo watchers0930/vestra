@@ -13,7 +13,24 @@ import {
   Crown,
   User,
   KeyRound,
+  Trash2,
+  Edit3,
+  Save,
+  X,
+  FileText,
+  Megaphone,
+  Plus,
+  TrendingUp,
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { cn } from "@/lib/utils";
 import { Card, Button, Badge, PageHeader } from "@/components/common";
 import { KpiCard } from "@/components/results";
@@ -22,7 +39,7 @@ import { KpiCard } from "@/components/results";
 // Types
 // ---------------------------------------------------------------------------
 
-type Tab = "overview" | "users" | "verifications" | "account";
+type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "account";
 
 interface Stats {
   totalUsers: number;
@@ -31,6 +48,7 @@ interface Stats {
   todayAnalyses: number;
   totalAnalyses: number;
   totalAssets: number;
+  dailyTrend: { date: string; count: number }[];
 }
 
 interface UserItem {
@@ -43,6 +61,24 @@ interface UserItem {
   dailyLimit: number;
   businessNumber: string | null;
   createdAt: string;
+}
+
+interface AnalysisItem {
+  id: string;
+  type: string;
+  typeLabel: string;
+  address: string;
+  summary: string;
+  createdAt: string;
+  user: { name: string | null; email: string };
+}
+
+interface AnnouncementItem {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -72,6 +108,15 @@ const VERIFY_LABELS: Record<string, string> = {
   rejected: "거부",
 };
 
+const ANALYSIS_TYPE_LABELS: Record<string, string> = {
+  rights: "권리분석",
+  contract: "계약서 분석",
+  prediction: "시세전망",
+  jeonse: "전세분석",
+  registry: "등기부등본",
+  unified: "통합분석",
+};
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -91,12 +136,36 @@ export default function AdminPage() {
   const [pwMsg, setPwMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [pwLoading, setPwLoading] = useState(false);
 
+  // 분석 이력 상태
+  const [analyses, setAnalyses] = useState<AnalysisItem[]>([]);
+  const [analysisTypeFilter, setAnalysisTypeFilter] = useState<string>("ALL");
+
+  // 공지사항 상태
+  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
+  const [announcementForm, setAnnouncementForm] = useState({ title: "", content: "" });
+  const [editingAnnouncementId, setEditingAnnouncementId] = useState<string | null>(null);
+  const [announcementLoading, setAnnouncementLoading] = useState(false);
+
+  // 사용자 인라인 편집 상태
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editRole, setEditRole] = useState<string>("");
+  const [editLimit, setEditLimit] = useState<number>(0);
+
+  // 사용자 삭제 확인 상태
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // ---------------------------------------------------------------------------
+  // Data Fetching
+  // ---------------------------------------------------------------------------
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes] = await Promise.all([
+      const [statsRes, usersRes, analysesRes, announcementsRes] = await Promise.all([
         fetch("/api/admin/stats"),
         fetch("/api/admin/users"),
+        fetch("/api/admin/analyses"),
+        fetch("/api/admin/announcements"),
       ]);
       if (statsRes.ok) setStats(await statsRes.json());
       if (usersRes.ok) {
@@ -104,6 +173,8 @@ export default function AdminPage() {
         setUsers(list);
         setPending(list.filter((u) => u.verifyStatus === "pending"));
       }
+      if (analysesRes.ok) setAnalyses(await analysesRes.json());
+      if (announcementsRes.ok) setAnnouncements(await announcementsRes.json());
     } catch (e) {
       console.error("Admin data fetch error:", e);
     } finally {
@@ -112,6 +183,10 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // ---------------------------------------------------------------------------
+  // Handlers
+  // ---------------------------------------------------------------------------
 
   const handleVerify = async (userId: string, action: "approve" | "reject", role?: string) => {
     const res = await fetch("/api/admin/verify", {
@@ -122,10 +197,35 @@ export default function AdminPage() {
     if (res.ok) fetchData();
   };
 
-  const filteredUsers = roleFilter === "ALL"
-    ? users
-    : users.filter((u) => u.role === roleFilter);
+  // 사용자 역할/한도 인라인 편집
+  const startEditing = (user: UserItem) => {
+    setEditingUserId(user.id);
+    setEditRole(user.role);
+    setEditLimit(user.dailyLimit);
+  };
 
+  const handleUserEdit = async (userId: string) => {
+    const res = await fetch(`/api/admin/users/${userId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: editRole, dailyLimit: editLimit }),
+    });
+    if (res.ok) {
+      setEditingUserId(null);
+      fetchData();
+    }
+  };
+
+  // 사용자 삭제
+  const handleDeleteUser = async (userId: string) => {
+    const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
+    if (res.ok) {
+      setDeleteConfirmId(null);
+      fetchData();
+    }
+  };
+
+  // 비밀번호 변경
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwMsg(null);
@@ -155,10 +255,56 @@ export default function AdminPage() {
     }
   };
 
+  // 공지사항 CRUD
+  const handleSaveAnnouncement = async () => {
+    setAnnouncementLoading(true);
+    const url = editingAnnouncementId
+      ? `/api/admin/announcements/${editingAnnouncementId}`
+      : "/api/admin/announcements";
+    const method = editingAnnouncementId ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(announcementForm),
+    });
+
+    if (res.ok) {
+      setAnnouncementForm({ title: "", content: "" });
+      setEditingAnnouncementId(null);
+      fetchData();
+    }
+    setAnnouncementLoading(false);
+  };
+
+  const handleDeleteAnnouncement = async (id: string) => {
+    const res = await fetch(`/api/admin/announcements/${id}`, { method: "DELETE" });
+    if (res.ok) fetchData();
+  };
+
+  const startEditAnnouncement = (item: AnnouncementItem) => {
+    setEditingAnnouncementId(item.id);
+    setAnnouncementForm({ title: item.title, content: item.content });
+  };
+
+  // ---------------------------------------------------------------------------
+  // Derived state
+  // ---------------------------------------------------------------------------
+
+  const filteredUsers = roleFilter === "ALL"
+    ? users
+    : users.filter((u) => u.role === roleFilter);
+
+  const filteredAnalyses = analysisTypeFilter === "ALL"
+    ? analyses
+    : analyses.filter((a) => a.type === analysisTypeFilter);
+
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: "개요" },
     { key: "users", label: "회원 관리" },
     { key: "verifications", label: `인증 관리${pending.length > 0 ? ` (${pending.length})` : ""}` },
+    { key: "analyses", label: "분석 이력" },
+    { key: "announcements", label: "공지사항" },
     { key: "account", label: "계정 설정" },
   ];
 
@@ -166,18 +312,18 @@ export default function AdminPage() {
     <div>
       <PageHeader
         title="관리자 대시보드"
-        description="회원, 인증, 사용량 관리"
+        description="회원, 인증, 분석, 공지사항 관리"
         icon={ShieldCheck}
       />
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-border">
+      <div className="flex gap-1 mb-6 border-b border-border overflow-x-auto">
         {tabs.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={cn(
-              "px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px",
+              "px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap",
               tab === t.key
                 ? "border-primary text-primary"
                 : "border-transparent text-gray-500 hover:text-gray-700"
@@ -234,6 +380,34 @@ export default function AdminPage() {
                   iconColor="text-purple-600"
                 />
               </div>
+
+              {/* 일일 분석 추이 차트 */}
+              {stats.dailyTrend && stats.dailyTrend.length > 0 && (
+                <Card className="p-6">
+                  <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <TrendingUp size={16} />
+                    일일 분석 추이 (최근 7일)
+                  </h3>
+                  <div className="h-[250px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.dailyTrend}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="date"
+                          tick={{ fontSize: 11 }}
+                          tickFormatter={(v: string) => v.slice(5)}
+                        />
+                        <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                        <Tooltip
+                          formatter={(value) => [`${value}회`, "분석 횟수"]}
+                          labelFormatter={(label) => `날짜: ${label}`}
+                        />
+                        <Bar dataKey="count" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </Card>
+              )}
 
               {/* Role Distribution */}
               <Card className="p-6">
@@ -304,6 +478,7 @@ export default function AdminPage() {
                         <th className="text-left px-4 py-3 font-medium text-gray-600">인증</th>
                         <th className="text-left px-4 py-3 font-medium text-gray-600">일일한도</th>
                         <th className="text-left px-4 py-3 font-medium text-gray-600">가입일</th>
+                        <th className="text-left px-4 py-3 font-medium text-gray-600">관리</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -325,9 +500,21 @@ export default function AdminPage() {
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <Badge variant={ROLE_COLORS[user.role] as "info" | "primary" | "success" | "danger" | "neutral"} size="md">
-                              {ROLE_LABELS[user.role] || user.role}
-                            </Badge>
+                            {editingUserId === user.id ? (
+                              <select
+                                value={editRole}
+                                onChange={(e) => setEditRole(e.target.value)}
+                                className="px-2 py-1 rounded border border-border text-xs"
+                              >
+                                {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                                  <option key={value} value={value}>{label}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <Badge variant={ROLE_COLORS[user.role] as "info" | "primary" | "success" | "danger" | "neutral"} size="md">
+                                {ROLE_LABELS[user.role] || user.role}
+                              </Badge>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             <span className={cn(
@@ -340,9 +527,83 @@ export default function AdminPage() {
                               {VERIFY_LABELS[user.verifyStatus] || user.verifyStatus}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-gray-600">{user.dailyLimit}회/일</td>
+                          <td className="px-4 py-3">
+                            {editingUserId === user.id ? (
+                              <input
+                                type="number"
+                                value={editLimit}
+                                onChange={(e) => setEditLimit(Number(e.target.value))}
+                                className="w-20 px-2 py-1 rounded border border-border text-xs"
+                                min={1}
+                              />
+                            ) : (
+                              <span className="text-gray-600">{user.dailyLimit}회/일</span>
+                            )}
+                          </td>
                           <td className="px-4 py-3 text-gray-500 text-xs">
                             {new Date(user.createdAt).toLocaleDateString("ko-KR")}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1">
+                              {editingUserId === user.id ? (
+                                <>
+                                  <button
+                                    onClick={() => handleUserEdit(user.id)}
+                                    className="p-1.5 rounded hover:bg-blue-50 text-blue-600 transition-colors"
+                                    title="저장"
+                                  >
+                                    <Save size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingUserId(null)}
+                                    className="p-1.5 rounded hover:bg-gray-100 text-gray-500 transition-colors"
+                                    title="취소"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => startEditing(user)}
+                                    className="p-1.5 rounded hover:bg-gray-100 text-gray-500 transition-colors"
+                                    title="편집"
+                                  >
+                                    <Edit3 size={14} />
+                                  </button>
+                                  {deleteConfirmId === user.id ? (
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => handleDeleteUser(user.id)}
+                                        className="px-2 py-1 rounded bg-red-500 text-white text-xs hover:bg-red-600 transition-colors"
+                                      >
+                                        확인
+                                      </button>
+                                      <button
+                                        onClick={() => setDeleteConfirmId(null)}
+                                        className="px-2 py-1 rounded bg-gray-200 text-gray-600 text-xs hover:bg-gray-300 transition-colors"
+                                      >
+                                        취소
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => setDeleteConfirmId(user.id)}
+                                      disabled={user.role === "ADMIN"}
+                                      className={cn(
+                                        "p-1.5 rounded transition-colors",
+                                        user.role === "ADMIN"
+                                          ? "text-gray-300 cursor-not-allowed"
+                                          : "hover:bg-red-50 text-red-400"
+                                      )}
+                                      title={user.role === "ADMIN" ? "관리자 삭제 불가" : "삭제"}
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -421,6 +682,171 @@ export default function AdminPage() {
                   </Card>
                 ))
               )}
+            </div>
+          )}
+
+          {/* ============================================================= */}
+          {/* 분석 이력 탭                                                    */}
+          {/* ============================================================= */}
+          {tab === "analyses" && (
+            <div className="space-y-4">
+              {/* Type filter */}
+              <div className="flex gap-2 flex-wrap">
+                {["ALL", ...Object.keys(ANALYSIS_TYPE_LABELS)].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setAnalysisTypeFilter(t)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                      analysisTypeFilter === t
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    )}
+                  >
+                    {t === "ALL" ? "전체" : ANALYSIS_TYPE_LABELS[t]}
+                    {" "}({t === "ALL" ? analyses.length : analyses.filter((a) => a.type === t).length})
+                  </button>
+                ))}
+              </div>
+
+              {/* Analyses table */}
+              <Card className="overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b border-border">
+                      <tr>
+                        <th className="text-left px-4 py-3 font-medium text-gray-600">사용자</th>
+                        <th className="text-left px-4 py-3 font-medium text-gray-600">유형</th>
+                        <th className="text-left px-4 py-3 font-medium text-gray-600">주소</th>
+                        <th className="text-left px-4 py-3 font-medium text-gray-600">요약</th>
+                        <th className="text-left px-4 py-3 font-medium text-gray-600">날짜</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {filteredAnalyses.map((item) => (
+                        <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3">
+                            <p className="font-medium text-gray-900">{item.user.name || "이름 없음"}</p>
+                            <p className="text-xs text-gray-500">{item.user.email}</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge variant="info" size="md">
+                              {item.typeLabel || ANALYSIS_TYPE_LABELS[item.type] || item.type}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate">
+                            {item.address}
+                          </td>
+                          <td className="px-4 py-3 text-gray-500 text-xs max-w-[300px] truncate">
+                            {item.summary}
+                          </td>
+                          <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                            {new Date(item.createdAt).toLocaleDateString("ko-KR")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {filteredAnalyses.length === 0 && (
+                  <div className="py-12 text-center text-sm text-gray-400">
+                    <FileText size={40} className="mx-auto text-gray-300 mb-3" />
+                    분석 이력이 없습니다
+                  </div>
+                )}
+              </Card>
+            </div>
+          )}
+
+          {/* ============================================================= */}
+          {/* 공지사항 탭                                                     */}
+          {/* ============================================================= */}
+          {tab === "announcements" && (
+            <div className="space-y-6">
+              {/* Create/Edit form */}
+              <Card className="p-6">
+                <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <Megaphone size={16} />
+                  {editingAnnouncementId ? "공지사항 수정" : "새 공지사항"}
+                </h3>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="제목"
+                    value={announcementForm.title}
+                    onChange={(e) => setAnnouncementForm((f) => ({ ...f, title: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                  <textarea
+                    placeholder="내용"
+                    value={announcementForm.content}
+                    onChange={(e) => setAnnouncementForm((f) => ({ ...f, content: e.target.value }))}
+                    rows={4}
+                    className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      variant="primary"
+                      size="md"
+                      onClick={handleSaveAnnouncement}
+                      disabled={announcementLoading || !announcementForm.title.trim() || !announcementForm.content.trim()}
+                    >
+                      <Plus size={14} className="mr-1" />
+                      {editingAnnouncementId ? "수정" : "등록"}
+                    </Button>
+                    {editingAnnouncementId && (
+                      <Button
+                        variant="ghost"
+                        size="md"
+                        onClick={() => { setEditingAnnouncementId(null); setAnnouncementForm({ title: "", content: "" }); }}
+                      >
+                        취소
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </Card>
+
+              {/* Announcements list */}
+              <div className="space-y-3">
+                {announcements.length === 0 ? (
+                  <Card className="p-12 text-center">
+                    <Megaphone size={40} className="mx-auto text-gray-300 mb-3" />
+                    <p className="text-sm text-gray-500">등록된 공지사항이 없습니다</p>
+                  </Card>
+                ) : (
+                  announcements.map((item) => (
+                    <Card key={item.id} className="p-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900">{item.title}</h4>
+                          <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap line-clamp-3">{item.content}</p>
+                          <p className="text-xs text-gray-400 mt-2">
+                            {new Date(item.createdAt).toLocaleDateString("ko-KR")}
+                            {item.updatedAt !== item.createdAt && " (수정됨)"}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <button
+                            onClick={() => startEditAnnouncement(item)}
+                            className="p-1.5 rounded hover:bg-gray-100 text-gray-500 transition-colors"
+                            title="수정"
+                          >
+                            <Edit3 size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteAnnouncement(item.id)}
+                            className="p-1.5 rounded hover:bg-red-50 text-red-400 transition-colors"
+                            title="삭제"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                )}
+              </div>
             </div>
           )}
 

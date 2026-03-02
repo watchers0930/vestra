@@ -1,12 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [showAdmin, setShowAdmin] = useState(false);
+
+  // 이미 로그인된 상태: ADMIN → /admin, 일반 → /
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      if (session.user.role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/");
+      }
+    }
+  }, [session, status, router]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -48,7 +60,7 @@ export default function LoginPage() {
           <div className="space-y-3">
             {/* Google */}
             <button
-              onClick={() => signIn("google", { redirectTo: "/" })}
+              onClick={() => signIn("google", { redirectTo: "/login" })}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-border bg-white hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -62,7 +74,7 @@ export default function LoginPage() {
 
             {/* 카카오 */}
             <button
-              onClick={() => signIn("kakao", { redirectTo: "/" })}
+              onClick={() => signIn("kakao", { redirectTo: "/login" })}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-[#FEE500] hover:bg-[#FDD800] transition-colors text-sm font-medium text-[#191919]"
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -73,7 +85,7 @@ export default function LoginPage() {
 
             {/* 네이버 */}
             <button
-              onClick={() => signIn("naver", { redirectTo: "/" })}
+              onClick={() => signIn("naver", { redirectTo: "/login" })}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-[#03C75A] hover:bg-[#02B550] transition-colors text-sm font-medium text-white"
             >
               <svg width="18" height="18" viewBox="0 0 24 24">

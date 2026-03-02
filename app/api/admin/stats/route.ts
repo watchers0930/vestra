@@ -38,6 +38,31 @@ export async function GET() {
     roles[r.role] = r._count.role;
   }
 
+  // --- 일일 분석 추이 (최근 7일) ---
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+
+  const usageRecords = await prisma.dailyUsage.findMany({
+    where: {
+      id: { startsWith: "daily:" },
+      date: { gte: sevenDaysAgo.toISOString().slice(0, 10) },
+    },
+  });
+
+  const trendMap: Record<string, number> = {};
+  for (let i = 0; i < 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    trendMap[d.toISOString().slice(0, 10)] = 0;
+  }
+  for (const r of usageRecords) {
+    if (trendMap[r.date] !== undefined) {
+      trendMap[r.date] += r.count;
+    }
+  }
+  const dailyTrend = Object.entries(trendMap).map(([date, count]) => ({ date, count }));
+
   return NextResponse.json({
     totalUsers,
     roles,
@@ -45,5 +70,6 @@ export async function GET() {
     todayAnalyses,
     totalAnalyses,
     totalAssets,
+    dailyTrend,
   });
 }

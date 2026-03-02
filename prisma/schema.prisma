@@ -130,3 +130,11 @@ model DailyUsage {
 
   @@index([date])
 }
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
