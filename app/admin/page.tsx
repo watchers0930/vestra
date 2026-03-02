@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Users,
   ShieldCheck,
@@ -122,7 +123,37 @@ const ANALYSIS_TYPE_LABELS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<Tab>("overview");
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    }>
+      <AdminContent />
+    </Suspense>
+  );
+}
+
+function AdminContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // URL ?tab= 파라미터에서 현재 탭 읽기
+  const urlTab = searchParams.get("tab") as Tab | null;
+  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "account"].includes(urlTab)
+    ? urlTab
+    : "overview";
+
+  // 탭 변경 시 URL 업데이트
+  const setTab = (newTab: Tab) => {
+    if (newTab === "overview") {
+      router.push("/admin");
+    } else {
+      router.push(`/admin?tab=${newTab}`);
+    }
+  };
+
+  const tab = currentTab;
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<UserItem[]>([]);
   const [pending, setPending] = useState<UserItem[]>([]);

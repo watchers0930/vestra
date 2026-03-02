@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -38,7 +39,7 @@ export default function RootLayout({
               strategy="afterInteractive"
             />
           )}
-          <Sidebar />
+          <Suspense><Sidebar /></Suspense>
           <div className="min-h-screen lg:ml-[240px] transition-all duration-300">
             <main className="p-4 pt-16 lg:pt-6 lg:p-6">
               {children}
