@@ -2,6 +2,7 @@
  * DB 기반 Rate Limiter
  *
  * Neon Postgres를 사용하여 서버리스 인스턴스 간에도 정확하게 동작합니다.
+ * 역할 기반 일일 사용량 제한 + 분당 rate limit 지원.
  *
  * @module lib/rate-limit
  */
@@ -12,14 +13,14 @@ import { prisma } from "./prisma";
 // Types
 // ---------------------------------------------------------------------------
 
-interface RateLimitResult {
+export interface RateLimitResult {
   success: boolean;
   remaining: number;
   reset: number; // Unix timestamp (ms)
 }
 
 // ---------------------------------------------------------------------------
-// Main: Rate Limit 체크 (DB 기반)
+// Main: Rate Limit 체크 (분당 제한, DB 기반)
 // ---------------------------------------------------------------------------
 
 export async function rateLimit(
@@ -62,6 +63,54 @@ export async function rateLimit(
   } catch {
     // DB 오류 시 요청 허용 (가용성 우선)
     return { success: true, remaining: limit, reset: resetTime.getTime() };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 일일 사용량 체크 (역할 기반)
+// ---------------------------------------------------------------------------
+
+export async function checkDailyUsage(
+  userId: string,
+  dailyLimit: number
+): Promise<RateLimitResult> {
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const id = `daily:${userId}:${today}`;
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+
+  try {
+    const usage = await prisma.dailyUsage.upsert({
+      where: { id },
+      update: { count: { increment: 1 } },
+      create: { id, date: today, count: 1 },
+    });
+
+    if (usage.count > dailyLimit) {
+      return { success: false, remaining: 0, reset: tomorrow.getTime() };
+    }
+
+    return {
+      success: true,
+      remaining: dailyLimit - usage.count,
+      reset: tomorrow.getTime(),
+    };
+  } catch {
+    return { success: true, remaining: dailyLimit, reset: tomorrow.getTime() };
+  }
+}
+
+/** 일일 사용 현황 조회 (카운트만, increment 없음) */
+export async function getDailyUsageCount(userId: string): Promise<number> {
+  const today = new Date().toISOString().slice(0, 10);
+  const id = `daily:${userId}:${today}`;
+
+  try {
+    const usage = await prisma.dailyUsage.findUnique({ where: { id } });
+    return usage?.count || 0;
+  } catch {
+    return 0;
   }
 }
 

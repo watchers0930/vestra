@@ -1,0 +1,72 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth, ROLE_LIMITS } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+/** 관리자: 대기 중인 사업자 인증 목록 조회 */
+export async function GET() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
+  }
+
+  const pendingUsers = await prisma.user.findMany({
+    where: { verifyStatus: "pending" },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      businessNumber: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return NextResponse.json(pendingUsers);
+}
+
+/** 관리자: 인증 승인/거부 */
+export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
+  }
+
+  const { userId, action, role } = await req.json();
+
+  if (!userId || !["approve", "reject"].includes(action)) {
+    return NextResponse.json({ error: "유효하지 않은 요청" }, { status: 400 });
+  }
+
+  const targetUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { verifyStatus: true },
+  });
+
+  if (!targetUser || targetUser.verifyStatus !== "pending") {
+    return NextResponse.json({ error: "대기 중인 인증 신청이 없습니다" }, { status: 404 });
+  }
+
+  if (action === "approve") {
+    const approvedRole = role || "BUSINESS";
+    const dailyLimit = ROLE_LIMITS[approvedRole] || ROLE_LIMITS.BUSINESS;
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        role: approvedRole,
+        verifyStatus: "verified",
+        dailyLimit,
+      },
+    });
+
+    return NextResponse.json({ message: "승인 완료", role: approvedRole, dailyLimit });
+  }
+
+  // 거부
+  await prisma.user.update({
+    where: { id: userId },
+    data: { verifyStatus: "rejected" },
+  });
+
+  return NextResponse.json({ message: "인증이 거부되었습니다" });
+}

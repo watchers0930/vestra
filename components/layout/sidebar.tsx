@@ -21,6 +21,7 @@ import {
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { version } from "../../package.json";
+import UserMenu from "@/components/auth/user-menu";
 
 interface MenuItem {
   href: string;
@@ -240,6 +241,9 @@ export default function Sidebar() {
             })}
           </div>
         </nav>
+
+        {/* User Menu */}
+        <UserMenu collapsed={collapsed && !mobileOpen} />
 
         {/* Collapse toggle (데스크톱 전용) */}
         <button

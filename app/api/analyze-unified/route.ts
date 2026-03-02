@@ -6,8 +6,9 @@ import { calculateRiskScore } from "@/lib/risk-scoring";
 import { validateParsedRegistry } from "@/lib/validation-engine";
 import { fetchComprehensivePrices, type PriceResult, type RentPriceResult } from "@/lib/molit-api";
 import { estimatePrice } from "@/lib/price-estimation";
-import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { stripHtml, truncateInput } from "@/lib/sanitize";
+import { auth, ROLE_LIMITS } from "@/lib/auth";
 
 /** 원 단위 숫자를 "X억 Y만원" 형태로 변환 */
 function formatKoreanPrice(won: number): string {
@@ -28,13 +29,27 @@ function parseAreaValue(areaStr: string): number {
 
 export async function POST(req: NextRequest) {
   try {
-    // Rate limiting (10 req/min)
+    // 인증 + 역할 기반 제한
+    const session = await auth();
     const ip = req.headers.get("x-forwarded-for") || "anonymous";
-    const rl = await rateLimit(`analyze-unified:${ip}`, 10);
+    const userId = session?.user?.id;
+    const dailyLimit = session?.user?.dailyLimit || ROLE_LIMITS.GUEST;
+
+    // 분당 rate limit
+    const rl = await rateLimit(`analyze-unified:${userId || ip}`, 10);
     if (!rl.success) {
       return NextResponse.json(
         { error: "요청 한도 초과. 잠시 후 다시 시도해주세요." },
         { status: 429, headers: rateLimitHeaders(rl) }
+      );
+    }
+
+    // 일일 사용량 체크
+    const daily = await checkDailyUsage(userId || `guest:${ip}`, dailyLimit);
+    if (!daily.success) {
+      return NextResponse.json(
+        { error: "일일 사용 한도를 초과했습니다. 로그인하여 더 많이 분석하세요." },
+        { status: 429, headers: rateLimitHeaders(daily) }
       );
     }
 

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
 import { VALUE_PREDICTION_OPINION_PROMPT } from "@/lib/prompts";
-import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
 import { fetchComprehensivePrices } from "@/lib/molit-api";
 import { estimatePrice } from "@/lib/price-estimation";
 import { predictValue } from "@/lib/prediction-engine";
+import { auth, ROLE_LIMITS } from "@/lib/auth";
 
 /** 원 단위 숫자를 "X억 Y만원" 형태로 변환 */
 function formatKoreanPrice(won: number): string {
@@ -20,13 +21,25 @@ function formatKoreanPrice(won: number): string {
 
 export async function POST(req: NextRequest) {
   try {
-    // Rate limiting (보호 API: 30 req/min)
+    // 인증 + 역할 기반 제한
+    const session = await auth();
     const ip = req.headers.get("x-forwarded-for") || "anonymous";
-    const rl = await rateLimit(`predict-value:${ip}`, 30);
+    const userId = session?.user?.id;
+    const dailyLimit = session?.user?.dailyLimit || ROLE_LIMITS.GUEST;
+
+    const rl = await rateLimit(`predict-value:${userId || ip}`, 30);
     if (!rl.success) {
       return NextResponse.json(
         { error: "요청 한도 초과. 잠시 후 다시 시도해주세요." },
         { status: 429, headers: rateLimitHeaders(rl) }
+      );
+    }
+
+    const daily = await checkDailyUsage(userId || `guest:${ip}`, dailyLimit);
+    if (!daily.success) {
+      return NextResponse.json(
+        { error: "일일 사용 한도를 초과했습니다. 로그인하여 더 많이 분석하세요." },
+        { status: 429, headers: rateLimitHeaders(daily) }
       );
     }
 

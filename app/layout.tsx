@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import Sidebar from "@/components/layout/sidebar";
 import Footer from "@/components/layout/footer";
+import SessionProvider from "@/components/auth/session-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,19 +31,21 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {process.env.NEXT_PUBLIC_KAKAO_MAP_KEY && (
-          <Script
-            src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_KEY}&libraries=services&autoload=false`}
-            strategy="afterInteractive"
-          />
-        )}
-        <Sidebar />
-        <div className="min-h-screen lg:ml-[240px] transition-all duration-300">
-          <main className="p-4 pt-16 lg:pt-6 lg:p-6">
-            {children}
-          </main>
-          <Footer />
-        </div>
+        <SessionProvider>
+          {process.env.NEXT_PUBLIC_KAKAO_MAP_KEY && (
+            <Script
+              src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_KEY}&libraries=services&autoload=false`}
+              strategy="afterInteractive"
+            />
+          )}
+          <Sidebar />
+          <div className="min-h-screen lg:ml-[240px] transition-all duration-300">
+            <main className="p-4 pt-16 lg:pt-6 lg:p-6">
+              {children}
+            </main>
+            <Footer />
+          </div>
+        </SessionProvider>
       </body>
     </html>
   );
