@@ -104,7 +104,7 @@ export default function LoginPage() {
 
           {/* 게스트 체험 */}
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/rights")}
             className="w-full px-4 py-3 rounded-xl border border-border text-sm text-muted hover:text-foreground hover:bg-gray-50 transition-colors"
           >
             게스트로 체험하기 (일 2회 제한)

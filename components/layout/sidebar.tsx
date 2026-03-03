@@ -39,6 +39,11 @@ interface MenuItem {
   children?: { href: string; label: string }[];
 }
 
+interface MenuGroup {
+  label: string;
+  items: MenuItem[];
+}
+
 // ---------------------------------------------------------------------------
 // 일반 사용자 메뉴
 // ---------------------------------------------------------------------------
@@ -62,6 +67,24 @@ const userMenuItems: MenuItem[] = [
   },
   { href: "/assistant", icon: MessageSquare, label: "AI 어시스턴트", description: "AI 상담" },
   { href: "/api-hub", icon: Database, label: "API 데이터 허브", description: "데이터 현황" },
+];
+
+// ---------------------------------------------------------------------------
+// 사용자 메뉴 그룹
+// ---------------------------------------------------------------------------
+const userMenuGroups: MenuGroup[] = [
+  {
+    label: "분석 도구",
+    items: [userMenuItems[0], userMenuItems[1], userMenuItems[2]],
+  },
+  {
+    label: "시세·보호",
+    items: [userMenuItems[3], userMenuItems[4], userMenuItems[5]],
+  },
+  {
+    label: "도구",
+    items: [userMenuItems[6], userMenuItems[7]],
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -122,8 +145,111 @@ export default function Sidebar() {
     return currentTab === itemTab;
   };
 
-  // 현재 표시할 메뉴 (관리자면 관리자 메뉴, 아니면 일반 메뉴)
-  const activeMenuItems = isAdmin && isAdminPage ? adminMenuItems : userMenuItems;
+  // 사용자 메뉴 활성 상태 체크
+  const isUserItemActive = (item: MenuItem) => {
+    if (item.href === "/dashboard") return pathname === "/dashboard";
+    return pathname === item.href || pathname.startsWith(item.href + "/");
+  };
+
+  // ---------------------------------------------------------------------------
+  // 메뉴 아이템 렌더링 (공통)
+  // ---------------------------------------------------------------------------
+  const renderMenuItem = (item: MenuItem, isActive: boolean) => {
+    if (item.children) {
+      const isOpen = openAccordion === item.href;
+      return (
+        <div key={item.href}>
+          <button
+            onClick={() => setOpenAccordion(isOpen ? null : item.href)}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm w-full text-left",
+              "transition-[background-color,color,opacity] duration-200 ease-out",
+              isActive
+                ? "sidebar-active-accent text-white font-medium"
+                : "text-gray-400 hover:bg-white/[0.04] hover:text-gray-100"
+            )}
+            title={!showLabel ? item.label : undefined}
+          >
+            <item.icon size={20} className="flex-shrink-0" />
+            {showLabel && (
+              <>
+                <div className="flex-1">
+                  <div>{item.label}</div>
+                  {!isActive && (
+                    <div className="text-[10px] text-gray-500/70">{item.description}</div>
+                  )}
+                </div>
+                <ChevronDown
+                  size={14}
+                  className={cn(
+                    "flex-shrink-0 transition-transform duration-200",
+                    isOpen && "rotate-180"
+                  )}
+                />
+              </>
+            )}
+          </button>
+          {showLabel && (
+            <div
+              className={cn(
+                "overflow-hidden transition-all duration-200",
+                isOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"
+              )}
+            >
+              <div className="mt-1 space-y-0.5">
+                {item.children.map((child) => {
+                  const isChildActive = pathname === child.href;
+                  return (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      className={cn(
+                        "flex items-center gap-2 pl-11 pr-3 py-1.5 rounded-lg text-xs",
+                        "transition-[background-color,color] duration-200 ease-out",
+                        isChildActive
+                          ? "text-white font-medium"
+                          : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
+                      )}
+                    >
+                      {isChildActive && (
+                        <div className="w-1 h-1 rounded-full bg-sidebar-accent flex-shrink-0" />
+                      )}
+                      <span>{child.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2 rounded-lg text-sm",
+          "transition-[background-color,color,opacity] duration-200 ease-out",
+          isActive
+            ? "sidebar-active-accent text-white font-medium"
+            : "text-gray-400 hover:bg-white/[0.04] hover:text-gray-100"
+        )}
+        title={!showLabel ? item.label : undefined}
+      >
+        <item.icon size={20} className="flex-shrink-0" />
+        {showLabel && (
+          <div>
+            <div>{item.label}</div>
+            {!isActive && (
+              <div className="text-[10px] text-gray-500/70">{item.description}</div>
+            )}
+          </div>
+        )}
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -154,19 +280,21 @@ export default function Sidebar() {
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-white/10">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-white/5">
           <div className="flex items-center gap-2">
             <div className={cn(
               "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm",
-              isAdmin && isAdminPage ? "bg-red-500" : "bg-primary"
+              isAdmin && isAdminPage
+                ? "bg-gradient-to-br from-red-500 to-red-600 logo-glow-admin"
+                : "bg-gradient-to-br from-blue-500 to-blue-600 logo-glow"
             )}>
               V
             </div>
             {showLabel && (
               <div>
-                <h1 className="text-lg font-bold tracking-tight">
+                <h1 className="text-lg font-bold tracking-wide">
                   VESTRA
-                  <span className="ml-1.5 text-[9px] font-normal text-white/70 align-middle">v{version}</span>
+                  <span className="ml-1.5 text-[9px] font-normal text-white/40 align-middle">v{version}</span>
                 </h1>
                 <p className="text-[10px] text-muted -mt-1">
                   {isAdmin && isAdminPage ? "관리자 모드" : "AI 자산관리 플랫폼"}
@@ -176,7 +304,7 @@ export default function Sidebar() {
           </div>
           <button
             onClick={() => setMobileOpen(false)}
-            className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg hover:bg-sidebar-hover transition-colors"
+            className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/[0.04] transition-colors duration-200"
             aria-label="메뉴 닫기"
           >
             <X size={18} />
@@ -184,159 +312,66 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-4 px-2 overflow-y-auto">
+        <nav className="flex-1 py-3 px-2.5 overflow-y-auto sidebar-scroll">
           {/* 관리자 모드 배지 */}
           {isAdmin && isAdminPage && showLabel && (
-            <div className="mx-1 mb-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+            <div className="mx-0.5 mb-4 px-3 py-2.5 rounded-xl frosted-glass">
               <div className="flex items-center gap-2">
-                <ShieldCheck size={14} className="text-red-400" />
-                <span className="text-xs font-medium text-red-300">관리자 모드</span>
+                <div className="w-5 h-5 rounded-md bg-red-500/15 flex items-center justify-center">
+                  <ShieldCheck size={12} className="text-red-400" />
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-red-300">관리자 모드</span>
+                  <span className="block text-[9px] text-red-400/60">Admin Mode Active</span>
+                </div>
               </div>
             </div>
           )}
 
-          <div className="space-y-1">
-            {/* 관리자 메뉴 렌더링 */}
-            {isAdmin && isAdminPage ? (
-              adminMenuItems.map((item) => {
-                const active = isAdminItemActive(item);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all",
-                      active
-                        ? "bg-sidebar-active text-white font-medium"
-                        : "text-gray-300 hover:bg-sidebar-hover hover:text-white"
-                    )}
-                    title={!showLabel ? item.label : undefined}
-                  >
-                    <item.icon size={20} className="flex-shrink-0" />
-                    {showLabel && (
-                      <div>
-                        <div>{item.label}</div>
-                        {!active && (
-                          <div className="text-[10px] text-gray-500">{item.description}</div>
-                        )}
-                      </div>
-                    )}
-                  </Link>
-                );
-              })
-            ) : (
-              /* 일반 사용자 메뉴 렌더링 */
-              activeMenuItems.map((item) => {
-                const isActive = item.href === "/dashboard"
-                  ? pathname === "/dashboard"
-                  : pathname === item.href || pathname.startsWith(item.href + "/");
-                const isOpen = openAccordion === item.href;
+          {/* 관리자 메뉴 렌더링 (그룹 없이) */}
+          {isAdmin && isAdminPage ? (
+            <div className="space-y-0.5">
+              {adminMenuItems.map((item) => renderMenuItem(item, isAdminItemActive(item)))}
+            </div>
+          ) : (
+            /* 사용자 메뉴 그룹별 렌더링 */
+            userMenuGroups.map((group, groupIndex) => (
+              <div key={group.label}>
+                {/* 그룹 헤더 */}
+                {showLabel ? (
+                  <div className={cn(
+                    "px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-sidebar-group",
+                    groupIndex === 0 ? "pt-1" : "pt-4"
+                  )}>
+                    {group.label}
+                  </div>
+                ) : (
+                  groupIndex > 0 && (
+                    <div className="mx-3 my-2 border-t border-white/5" />
+                  )
+                )}
 
-                if (item.children) {
-                  return (
-                    <div key={item.href}>
-                      <button
-                        onClick={() => setOpenAccordion(isOpen ? null : item.href)}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all w-full text-left",
-                          isActive
-                            ? "bg-sidebar-active text-white font-medium"
-                            : "text-gray-300 hover:bg-sidebar-hover hover:text-white"
-                        )}
-                        title={!showLabel ? item.label : undefined}
-                      >
-                        <item.icon size={20} className="flex-shrink-0" />
-                        {showLabel && (
-                          <>
-                            <div className="flex-1">
-                              <div>{item.label}</div>
-                              {!isActive && (
-                                <div className="text-[10px] text-gray-500">{item.description}</div>
-                              )}
-                            </div>
-                            <ChevronDown
-                              size={14}
-                              className={cn(
-                                "flex-shrink-0 transition-transform duration-200",
-                                isOpen && "rotate-180"
-                              )}
-                            />
-                          </>
-                        )}
-                      </button>
-                      {showLabel && (
-                        <div
-                          className={cn(
-                            "overflow-hidden transition-all duration-200",
-                            isOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"
-                          )}
-                        >
-                          <div className="mt-1 space-y-0.5">
-                            {item.children.map((child) => {
-                              const isChildActive = pathname === child.href;
-                              return (
-                                <Link
-                                  key={child.href}
-                                  href={child.href}
-                                  className={cn(
-                                    "block pl-10 pr-3 py-1.5 rounded-lg text-xs transition-all",
-                                    isChildActive
-                                      ? "text-white font-medium"
-                                      : "text-gray-400 hover:text-white hover:bg-sidebar-hover"
-                                  )}
-                                >
-                                  {child.label}
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all",
-                      isActive
-                        ? "bg-sidebar-active text-white font-medium"
-                        : "text-gray-300 hover:bg-sidebar-hover hover:text-white"
-                    )}
-                    title={!showLabel ? item.label : undefined}
-                  >
-                    <item.icon size={20} className="flex-shrink-0" />
-                    {showLabel && (
-                      <div>
-                        <div>{item.label}</div>
-                        {!isActive && (
-                          <div className="text-[10px] text-gray-500">{item.description}</div>
-                        )}
-                      </div>
-                    )}
-                  </Link>
-                );
-              })
-            )}
-          </div>
+                <div className="space-y-0.5">
+                  {group.items.map((item) => renderMenuItem(item, isUserItemActive(item)))}
+                </div>
+              </div>
+            ))
+          )}
 
           {/* 관리자: 사용자 사이트 바로가기 / 일반: 관리자 메뉴 */}
           {isAdmin && (
-            <div className="mt-4 pt-4 border-t border-white/10">
+            <div className="mt-4 pt-4 border-t border-white/5">
               {isAdminPage ? (
                 <Link
                   href="/dashboard"
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-sidebar-hover hover:text-white transition-all"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/[0.04] hover:text-gray-100 transition-[background-color,color] duration-200 ease-out"
                   title={!showLabel ? "사용자 사이트" : undefined}
                 >
                   <ExternalLink size={20} className="flex-shrink-0" />
                   {showLabel && (
                     <div>
                       <div>사용자 사이트</div>
-                      <div className="text-[10px] text-gray-500">메인 사이트 보기</div>
+                      <div className="text-[10px] text-gray-500/70">메인 사이트 보기</div>
                     </div>
                   )}
                 </Link>
@@ -344,10 +379,11 @@ export default function Sidebar() {
                 <Link
                   href="/admin"
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all",
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm",
+                    "transition-[background-color,color] duration-200 ease-out",
                     pathname.startsWith("/admin")
-                      ? "bg-sidebar-active text-white font-medium"
-                      : "text-gray-300 hover:bg-sidebar-hover hover:text-white"
+                      ? "sidebar-active-accent text-white font-medium"
+                      : "text-gray-400 hover:bg-white/[0.04] hover:text-gray-100"
                   )}
                   title={!showLabel ? "관리자" : undefined}
                 >
@@ -355,7 +391,7 @@ export default function Sidebar() {
                   {showLabel && (
                     <div>
                       <div>관리자</div>
-                      <div className="text-[10px] text-gray-500">대시보드 관리</div>
+                      <div className="text-[10px] text-gray-500/70">대시보드 관리</div>
                     </div>
                   )}
                 </Link>
@@ -370,9 +406,11 @@ export default function Sidebar() {
         {/* Collapse toggle (데스크톱 전용) */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden lg:flex items-center justify-center h-12 border-t border-white/10 hover:bg-sidebar-hover transition-colors"
+          className="hidden lg:flex items-center justify-center h-10 border-t border-white/5 hover:bg-white/[0.04] transition-colors duration-200 group"
         >
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          <div className="w-6 h-6 rounded-md flex items-center justify-center bg-white/[0.04] group-hover:bg-white/[0.08] transition-colors duration-200">
+            {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          </div>
         </button>
       </aside>
     </>
