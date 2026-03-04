@@ -40,7 +40,7 @@ import { KpiCard } from "@/components/results";
 // Types
 // ---------------------------------------------------------------------------
 
-type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "account";
+type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "account" | "social";
 
 interface Stats {
   totalUsers: number;
@@ -140,7 +140,7 @@ function AdminContent() {
 
   // URL ?tab= 파라미터에서 현재 탭 읽기
   const urlTab = searchParams.get("tab") as Tab | null;
-  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "account"].includes(urlTab)
+  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "account", "social"].includes(urlTab)
     ? urlTab
     : "overview";
 
@@ -185,6 +185,21 @@ function AdminContent() {
   // 사용자 삭제 확인 상태
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  // 소셜 로그인 설정 상태
+  interface SocialProvider {
+    label: string;
+    clientId: string;
+    clientSecret: string;
+    configured: boolean;
+    source: "db" | "env" | "none";
+    devConsoleUrl: string;
+    callbackPath: string;
+  }
+  const [socialProviders, setSocialProviders] = useState<Record<string, SocialProvider>>({});
+  const [socialForms, setSocialForms] = useState<Record<string, { clientId: string; clientSecret: string }>>({});
+  const [socialLoading, setSocialLoading] = useState<string | null>(null);
+  const [socialMsg, setSocialMsg] = useState<{ provider: string; type: "success" | "error"; text: string } | null>(null);
+
   // ---------------------------------------------------------------------------
   // Data Fetching
   // ---------------------------------------------------------------------------
@@ -192,11 +207,12 @@ function AdminContent() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes, analysesRes, announcementsRes] = await Promise.all([
+      const [statsRes, usersRes, analysesRes, announcementsRes, settingsRes] = await Promise.all([
         fetch("/api/admin/stats"),
         fetch("/api/admin/users"),
         fetch("/api/admin/analyses"),
         fetch("/api/admin/announcements"),
+        fetch("/api/admin/settings"),
       ]);
       if (statsRes.ok) setStats(await statsRes.json());
       if (usersRes.ok) {
@@ -206,6 +222,10 @@ function AdminContent() {
       }
       if (analysesRes.ok) setAnalyses(await analysesRes.json());
       if (announcementsRes.ok) setAnnouncements(await announcementsRes.json());
+      if (settingsRes.ok) {
+        const data = await settingsRes.json();
+        setSocialProviders(data.providers || {});
+      }
     } catch (e) {
       console.error("Admin data fetch error:", e);
     } finally {
@@ -257,6 +277,63 @@ function AdminContent() {
   };
 
   // 비밀번호 변경
+  // 소셜 로그인 설정 저장
+  const handleSocialSave = async (provider: string) => {
+    setSocialMsg(null);
+    const form = socialForms[provider];
+    if (!form?.clientId || !form?.clientSecret) {
+      setSocialMsg({ provider, type: "error", text: "Client ID와 Client Secret을 모두 입력해주세요." });
+      return;
+    }
+    setSocialLoading(provider);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, clientId: form.clientId, clientSecret: form.clientSecret }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSocialMsg({ provider, type: "success", text: data.message });
+        setSocialForms((prev) => ({ ...prev, [provider]: { clientId: "", clientSecret: "" } }));
+        // 설정 새로고침
+        const settingsRes = await fetch("/api/admin/settings");
+        if (settingsRes.ok) {
+          const updated = await settingsRes.json();
+          setSocialProviders(updated.providers || {});
+        }
+      } else {
+        setSocialMsg({ provider, type: "error", text: data.error || "저장에 실패했습니다." });
+      }
+    } catch {
+      setSocialMsg({ provider, type: "error", text: "네트워크 오류가 발생했습니다." });
+    }
+    setSocialLoading(null);
+  };
+
+  // 소셜 로그인 설정 초기화
+  const handleSocialReset = async (provider: string) => {
+    setSocialLoading(provider);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, clientId: "", clientSecret: "" }),
+      });
+      if (res.ok) {
+        setSocialMsg({ provider, type: "success", text: "설정이 초기화되었습니다." });
+        const settingsRes = await fetch("/api/admin/settings");
+        if (settingsRes.ok) {
+          const updated = await settingsRes.json();
+          setSocialProviders(updated.providers || {});
+        }
+      }
+    } catch {
+      setSocialMsg({ provider, type: "error", text: "네트워크 오류가 발생했습니다." });
+    }
+    setSocialLoading(null);
+  };
+
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwMsg(null);
@@ -336,6 +413,7 @@ function AdminContent() {
     { key: "verifications", label: `인증 관리${pending.length > 0 ? ` (${pending.length})` : ""}` },
     { key: "analyses", label: "분석 이력" },
     { key: "announcements", label: "공지사항" },
+    { key: "social", label: "소셜 로그인" },
     { key: "account", label: "계정 설정" },
   ];
 
@@ -878,6 +956,130 @@ function AdminContent() {
                   ))
                 )}
               </div>
+            </div>
+          )}
+
+          {/* ============================================================= */}
+          {/* 소셜 로그인 설정 탭                                              */}
+          {/* ============================================================= */}
+          {tab === "social" && (
+            <div className="max-w-2xl space-y-6">
+              <div className="mb-4">
+                <p className="text-sm text-gray-500">
+                  소셜 로그인 API 키를 등록하면 해당 플랫폼으로 로그인할 수 있습니다.
+                  Callback URL은 각 플랫폼 개발자 콘솔에 등록해야 합니다.
+                </p>
+              </div>
+
+              {Object.entries(socialProviders).map(([key, prov]) => (
+                <Card key={key} className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold",
+                        key === "google" ? "bg-blue-500" : key === "kakao" ? "bg-[#FEE500] text-gray-900" : "bg-[#03C75A]"
+                      )}>
+                        {prov.label.charAt(0)}
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-800">{prov.label}</h3>
+                        <a href={prov.devConsoleUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                          개발자 콘솔 열기 &rarr;
+                        </a>
+                      </div>
+                    </div>
+                    <Badge variant={prov.configured ? "success" : "neutral"}>
+                      {prov.configured ? (prov.source === "db" ? "DB 설정됨" : "환경변수") : "미설정"}
+                    </Badge>
+                  </div>
+
+                  {/* Callback URL */}
+                  <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-500 mb-1">Callback URL (개발자 콘솔에 등록)</p>
+                    <code className="text-xs text-gray-700 break-all">
+                      {typeof window !== "undefined" ? window.location.origin : "https://your-domain.com"}{prov.callbackPath}
+                    </code>
+                  </div>
+
+                  {/* 현재 설정된 값 */}
+                  {prov.configured && (
+                    <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                      <p className="text-xs text-gray-500 mb-1">현재 Client ID</p>
+                      <p className="text-sm font-mono text-gray-700">{prov.clientId}</p>
+                    </div>
+                  )}
+
+                  {/* 입력 폼 */}
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                        {prov.configured ? "새 " : ""}Client ID
+                      </label>
+                      <input
+                        type="text"
+                        value={socialForms[key]?.clientId || ""}
+                        onChange={(e) => setSocialForms((prev) => ({
+                          ...prev,
+                          [key]: { ...prev[key], clientId: e.target.value, clientSecret: prev[key]?.clientSecret || "" },
+                        }))}
+                        placeholder={prov.configured ? "변경 시에만 입력" : "Client ID를 입력하세요"}
+                        className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                        {prov.configured ? "새 " : ""}Client Secret
+                      </label>
+                      <input
+                        type="password"
+                        value={socialForms[key]?.clientSecret || ""}
+                        onChange={(e) => setSocialForms((prev) => ({
+                          ...prev,
+                          [key]: { clientId: prev[key]?.clientId || "", clientSecret: e.target.value },
+                        }))}
+                        placeholder={prov.configured ? "변경 시에만 입력" : "Client Secret을 입력하세요"}
+                        className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {socialMsg?.provider === key && (
+                    <p className={cn(
+                      "text-xs font-medium mt-3",
+                      socialMsg.type === "success" ? "text-emerald-600" : "text-red-500"
+                    )}>
+                      {socialMsg.text}
+                    </p>
+                  )}
+
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      variant="primary"
+                      size="md"
+                      disabled={socialLoading === key}
+                      onClick={() => handleSocialSave(key)}
+                    >
+                      {socialLoading === key ? "저장 중..." : "저장"}
+                    </Button>
+                    {prov.configured && prov.source === "db" && (
+                      <Button
+                        variant="ghost"
+                        size="md"
+                        disabled={socialLoading === key}
+                        onClick={() => handleSocialReset(key)}
+                      >
+                        초기화
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              ))}
+
+              {Object.keys(socialProviders).length === 0 && (
+                <Card className="p-8 text-center text-gray-500 text-sm">
+                  소셜 로그인 설정을 불러오는 중...
+                </Card>
+              )}
             </div>
           )}
 

@@ -5,6 +5,8 @@
  * LLM 없이 법령 DB + 패턴 매칭으로 위험 요소 감지.
  */
 
+import type { ClauseInteractionRule, ClauseInteractionResult } from "./patent-types";
+
 // ─── 타입 정의 ───
 
 export interface AnalyzedClause {
@@ -25,6 +27,7 @@ export interface ContractAnalysisResult {
   clauses: AnalyzedClause[];
   missingClauses: MissingClause[];
   safetyScore: number;
+  clauseInteractions?: ClauseInteractionResult;
 }
 
 interface ParsedSection {
@@ -307,6 +310,128 @@ const REQUIRED_CLAUSES: RequiredClauseCheck[] = [
   },
 ];
 
+// ─── F. 조항 상호작용 규칙 (특허 청구항: 교차 위험 분석) ───
+
+const CLAUSE_INTERACTION_RULES: ClauseInteractionRule[] = [
+  {
+    id: "missing_jeonse_high_deposit",
+    clauseIds: ["jeonse_registration", "deposit"],
+    interactionType: "compound_warning",
+    impactMultiplier: 1.5,
+    description: "전세권설정 조항 누락 + 고액보증금(3억원 이상): 보증금 미보호 상태에서 고액 계약은 극히 위험",
+  },
+  {
+    id: "unilateral_termination_penalty",
+    clauseIds: ["termination", "special_terms"],
+    interactionType: "imbalanced",
+    impactMultiplier: 2.0,
+    description: "일방적 해지 조항 + 과도한 위약금: 임차인 계약 자유 심각하게 제한",
+  },
+  {
+    id: "no_renewal_short_period",
+    clauseIds: ["renewal_right", "period"],
+    interactionType: "compound_warning",
+    impactMultiplier: 1.3,
+    description: "갱신권 미명시 + 단기 계약(2년 이하): 주거 안정성 위협",
+  },
+  {
+    id: "full_restoration_no_repair",
+    clauseIds: ["restoration", "repair_responsibility"],
+    interactionType: "imbalanced",
+    impactMultiplier: 1.4,
+    description: "과도한 원상회복 의무 + 수리비 기준 미명시: 퇴거 시 과도한 비용 부담 위험",
+  },
+];
+
+/**
+ * 조항 간 상호작용 분석 (특허 핵심: 개별 조항이 아닌 조항 조합의 교차 위험 탐지)
+ *
+ * 개별 조항 분석에서는 발견되지 않는 복합 위험을 식별:
+ * - 누락 조항과 위험 조항의 결합 효과
+ * - 조항 간 불균형(임대인 유리 편향)
+ */
+function analyzeClauseInteractions(
+  clauses: AnalyzedClause[],
+  missingClauses: MissingClause[],
+  fullText: string,
+): ClauseInteractionResult {
+  const interactions: ClauseInteractionResult["interactions"] = [];
+
+  const missingIds = new Set(
+    REQUIRED_CLAUSES
+      .filter((rc) => missingClauses.some((mc) => mc.title === rc.title))
+      .map((rc) => rc.id),
+  );
+
+  const clauseRiskMap = new Map<string, AnalyzedClause["riskLevel"]>();
+  for (const clause of clauses) {
+    for (const rule of CLAUSE_RULES) {
+      if (rule.detectPatterns.some((p) => p.test(clause.title) || p.test(clause.content))) {
+        clauseRiskMap.set(rule.id, clause.riskLevel);
+      }
+    }
+  }
+
+  for (const rule of CLAUSE_INTERACTION_RULES) {
+    let matched = false;
+    const matchedClauses: string[] = [];
+
+    if (rule.id === "missing_jeonse_high_deposit") {
+      const jeonseNotSet = missingIds.has("jeonse_registration");
+      // 보증금 3억원 이상 판정
+      const highDeposit = /[3-9]\s*억|[1-9]\d\s*억|\d{3,}\s*백만/.test(fullText)
+        || /보증금.*[3-9]억|보증금.*[1-9]\d억/.test(fullText);
+      if (jeonseNotSet && highDeposit) {
+        matched = true;
+        matchedClauses.push("전세권설정 누락", "고액보증금");
+      }
+    }
+
+    if (rule.id === "unilateral_termination_penalty") {
+      const hasUnilateral = clauseRiskMap.get("termination") === "high";
+      const hasExcessivePenalty = /위약금.*[2-9]배|위약금.*200%|과도.*위약/.test(fullText);
+      if (hasUnilateral && hasExcessivePenalty) {
+        matched = true;
+        matchedClauses.push("일방적 해지", "과도한 위약금");
+      }
+    }
+
+    if (rule.id === "no_renewal_short_period") {
+      const noRenewal = missingIds.has("renewal_right");
+      const shortPeriod = clauseRiskMap.get("period") === "warning";
+      if (noRenewal && shortPeriod) {
+        matched = true;
+        matchedClauses.push("갱신권 미명시", "단기계약");
+      }
+    }
+
+    if (rule.id === "full_restoration_no_repair") {
+      const excessiveRestoration = clauseRiskMap.get("restoration") === "high";
+      const noRepairStandard = missingIds.has("repair_responsibility");
+      if (excessiveRestoration && noRepairStandard) {
+        matched = true;
+        matchedClauses.push("과도한 원상회복", "수리비 기준 없음");
+      }
+    }
+
+    if (matched) {
+      interactions.push({
+        ruleId: rule.id,
+        matchedClauses,
+        impactScore: rule.impactMultiplier,
+        description: rule.description,
+      });
+    }
+  }
+
+  const totalInteractionImpact = interactions.reduce(
+    (sum, i) => sum + (i.impactScore - 1) * 10,
+    0,
+  );
+
+  return { interactions, totalInteractionImpact };
+}
+
 // ─── 분석 로직 ───
 
 /** 파싱된 조항에 리스크 규칙 적용 */
@@ -355,8 +480,12 @@ function checkMissingClauses(fullText: string): MissingClause[] {
   return missing;
 }
 
-/** 안전점수 계산 */
-function calculateSafetyScore(clauses: AnalyzedClause[], missingClauses: MissingClause[]): number {
+/** 안전점수 계산 (조항 상호작용 감점 포함) */
+function calculateSafetyScore(
+  clauses: AnalyzedClause[],
+  missingClauses: MissingClause[],
+  interactionImpact: number = 0,
+): number {
   let score = 100;
 
   for (const clause of clauses) {
@@ -368,6 +497,9 @@ function calculateSafetyScore(clauses: AnalyzedClause[], missingClauses: Missing
     if (mc.importance === "high") score -= 10;
     else score -= 3;
   }
+
+  // 조항 상호작용에 의한 비선형 추가 감점
+  score -= interactionImpact;
 
   return Math.max(0, Math.min(100, score));
 }
@@ -408,8 +540,11 @@ export function analyzeContract(contractText: string): ContractAnalysisResult {
   // 누락 조항 검사
   const missingClauses = checkMissingClauses(contractText);
 
-  // 안전점수 계산
-  const safetyScore = calculateSafetyScore(clauses, missingClauses);
+  // 조항 상호작용 분석 (특허: 교차 위험 탐지)
+  const clauseInteractions = analyzeClauseInteractions(clauses, missingClauses, contractText);
 
-  return { clauses, missingClauses, safetyScore };
+  // 안전점수 계산 (상호작용 감점 포함)
+  const safetyScore = calculateSafetyScore(clauses, missingClauses, clauseInteractions.totalInteractionImpact);
+
+  return { clauses, missingClauses, safetyScore, clauseInteractions };
 }

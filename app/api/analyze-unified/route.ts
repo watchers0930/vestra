@@ -9,6 +9,9 @@ import { estimatePrice } from "@/lib/price-estimation";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { stripHtml, truncateInput } from "@/lib/sanitize";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
+import { simulateRedemption } from "@/lib/redemption-simulator";
+import { propagateConfidence } from "@/lib/confidence-engine";
+import { selfVerify } from "@/lib/self-verification";
 
 /** 원 단위 숫자를 "X억 Y만원" 형태로 변환 */
 function formatKoreanPrice(won: number): string {
@@ -245,6 +248,32 @@ export async function POST(req: NextRequest) {
       aiOpinion
     );
 
+    // 8단계: 경매 배당 시뮬레이션 (특허 B: 권리순위 기반 배당 예측)
+    const redemptionSimulation = simulateRedemption(
+      parsed,
+      estimatedPrice,
+      propertyInfo.jeonsePrice || undefined,
+      address,
+    );
+
+    // 9단계: 신뢰도 전파 (특허 C: 가중 기하평균 복합 신뢰도)
+    const confidencePropagation = propagateConfidence(
+      parsed,
+      riskScore,
+      estimatedPrice,
+      priceEstimation.confidence,
+      validation,
+    );
+
+    // 10단계: 자기검증 루프 (특허 H: AI ↔ 결정론적 교차검증)
+    const selfVerification = selfVerify(
+      aiOpinion,
+      riskScore,
+      estimatedPrice,
+      validation,
+      confidencePropagation.compositeReliability,
+    );
+
     return NextResponse.json({
       propertyInfo,
       riskAnalysis,
@@ -253,6 +282,10 @@ export async function POST(req: NextRequest) {
       riskScore,
       marketData,
       aiOpinion,
+      // 특허 강화 필드 (optional, 하위호환)
+      redemptionSimulation,
+      confidencePropagation,
+      selfVerification,
       dataSource: {
         registryParsed: true,
         molitAvailable: !!marketData,

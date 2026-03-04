@@ -6,6 +6,7 @@
  */
 
 import type { RealTransaction, RentPriceResult } from "./molit-api";
+import type { ModelResult, EnsemblePredictionResult } from "./patent-types";
 
 // ─── 타입 정의 ───
 
@@ -31,6 +32,7 @@ export interface PredictionResult {
   variables: string[];
   factors: PredictionFactor[];
   confidence: number;
+  ensemble?: EnsemblePredictionResult;
 }
 
 interface TrendResult {
@@ -112,6 +114,141 @@ export function calculateTrend(transactions: RealTransaction[]): TrendResult {
     slope,
     intercept,
     dataPoints: n,
+  };
+}
+
+// ─── 평균회귀 모델 ───
+
+function meanReversionModel(
+  currentPrice: number,
+  transactions: RealTransaction[],
+): { prediction: ScenarioPredictions; r2: number } {
+  if (transactions.length < 2 || currentPrice <= 0) {
+    return {
+      prediction: { "1y": currentPrice, "5y": currentPrice, "10y": currentPrice },
+      r2: 0,
+    };
+  }
+
+  const avgPrice = transactions.reduce((sum, tx) => sum + tx.dealAmount, 0) / transactions.length;
+  const deviation = (currentPrice - avgPrice) / avgPrice;
+
+  // 평균회귀율: 가격이 평균에서 벗어난 만큼 반대 방향으로 회귀
+  const reversionRate = -0.3 * deviation;
+  const inflation = ECONOMIC_DEFAULTS.inflationRate;
+
+  const predict = (years: number) =>
+    Math.round(currentPrice * Math.pow(1 + reversionRate, years) * Math.pow(1 + inflation, years));
+
+  // R² 근사: 편차가 작을수록 평균회귀 모델 적합도 높음
+  const r2 = Math.max(0, Math.min(1, 1 - Math.abs(deviation)));
+
+  return {
+    prediction: { "1y": predict(1), "5y": predict(5), "10y": predict(10) },
+    r2,
+  };
+}
+
+// ─── 모멘텀 모델 ───
+
+function momentumModel(
+  currentPrice: number,
+  transactions: RealTransaction[],
+  trend: TrendResult,
+): { prediction: ScenarioPredictions; r2: number } {
+  if (transactions.length < 3 || currentPrice <= 0) {
+    return {
+      prediction: { "1y": currentPrice, "5y": currentPrice, "10y": currentPrice },
+      r2: 0,
+    };
+  }
+
+  // 최근 6개월 거래만으로 단기 추세 계산
+  const now = new Date();
+  const recentTxs = transactions.filter((tx) => {
+    const txDate = new Date(tx.dealYear, tx.dealMonth - 1, tx.dealDay);
+    const monthsAgo = (now.getTime() - txDate.getTime()) / (30.44 * 24 * 60 * 60 * 1000);
+    return monthsAgo <= 6;
+  });
+
+  const recentGrowth = recentTxs.length >= 2
+    ? calculateTrend(recentTxs).annualGrowthRate
+    : trend.annualGrowthRate;
+
+  // 모멘텀 감쇠: 시간이 지날수록 현재 추세의 영향력 감소
+  const predict = (years: number) => {
+    const decayFactor = Math.exp(-0.15 * years);
+    const rate = recentGrowth * decayFactor;
+    return Math.round(currentPrice * Math.pow(1 + rate, years));
+  };
+
+  // R²: 추세 일관성 × 최근 데이터 보너스
+  const recencyBonus = recentTxs.length >= 3 ? 1.0 : recentTxs.length >= 2 ? 0.7 : 0.3;
+  const r2 = Math.max(0, Math.min(1, trend.r2 * recencyBonus));
+
+  return {
+    prediction: { "1y": predict(1), "5y": predict(5), "10y": predict(10) },
+    r2,
+  };
+}
+
+// ─── 앙상블 결합 ───
+
+function buildEnsemble(
+  currentPrice: number,
+  transactions: RealTransaction[],
+  trend: TrendResult,
+): EnsemblePredictionResult {
+  // 3개 모델 실행
+  const linearPred: ScenarioPredictions = {
+    "1y": compoundGrowth(currentPrice, trend.annualGrowthRate, 1),
+    "5y": compoundGrowth(currentPrice, trend.annualGrowthRate * 0.85, 5),
+    "10y": compoundGrowth(currentPrice, trend.annualGrowthRate * 0.7 + ECONOMIC_DEFAULTS.inflationRate * 0.3, 10),
+  };
+
+  const meanRev = meanReversionModel(currentPrice, transactions);
+  const momentum = momentumModel(currentPrice, transactions, trend);
+
+  const models: ModelResult[] = [
+    { modelName: "linear", prediction: linearPred, r2: trend.r2, weight: 0 },
+    { modelName: "meanReversion", prediction: meanRev.prediction, r2: meanRev.r2, weight: 0 },
+    { modelName: "momentum", prediction: momentum.prediction, r2: momentum.r2, weight: 0 },
+  ];
+
+  // R² 기반 동적 가중치 (최소 가중치 0.1 보장)
+  const minWeight = 0.1;
+  const totalR2 = models.reduce((sum, m) => sum + Math.max(minWeight, m.r2), 0);
+  for (const model of models) {
+    model.weight = Math.max(minWeight, model.r2) / totalR2;
+  }
+
+  // 앙상블 예측 (가중 평균)
+  const ensemble: ScenarioPredictions = {
+    "1y": Math.round(models.reduce((sum, m) => sum + m.prediction["1y"] * m.weight, 0)),
+    "5y": Math.round(models.reduce((sum, m) => sum + m.prediction["5y"] * m.weight, 0)),
+    "10y": Math.round(models.reduce((sum, m) => sum + m.prediction["10y"] * m.weight, 0)),
+  };
+
+  // 지배적 모델
+  const dominant = models.reduce((max, m) => m.weight > max.weight ? m : max);
+
+  // 모델 합의도: 1 - 변동계수 (예측값 분산이 작을수록 합의도 높음)
+  const periods: Array<"1y" | "5y" | "10y"> = ["1y", "5y", "10y"];
+  const cvValues = periods.map((p) => {
+    const preds = models.map((m) => m.prediction[p]);
+    const mean = preds.reduce((a, b) => a + b, 0) / preds.length;
+    if (mean === 0) return 0;
+    const variance = preds.reduce((sum, v) => sum + (v - mean) ** 2, 0) / preds.length;
+    return Math.sqrt(variance) / Math.abs(mean);
+  });
+  const avgCv = cvValues.reduce((a, b) => a + b, 0) / cvValues.length;
+  const modelAgreement = Math.max(0, Math.min(1, 1 - avgCv));
+
+  return {
+    models,
+    ensemble,
+    dominantModel: dominant.modelName,
+    modelAgreement,
   };
 }
 
@@ -324,11 +461,15 @@ export function predictValue(
   // 신뢰도
   const confidence = calculatePredictionConfidence(transactions.length, trend.r2, transactions);
 
+  // 앙상블 예측
+  const ensemble = buildEnsemble(currentPrice, transactions, trend);
+
   return {
     currentPrice,
     predictions,
     variables,
     factors,
     confidence,
+    ensemble,
   };
 }

@@ -195,3 +195,14 @@ model Announcement {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ---------------------------------------------------------------------------
+// 시스템 설정 (관리자 대시보드에서 관리)
+// ---------------------------------------------------------------------------
+
+model SystemSetting {
+  key       String   @id              // e.g. "AUTH_GOOGLE_ID"
+  value     String   @db.Text         // AES-256-GCM 암호화된 값
+  category  String   @default("oauth")
+  updatedAt DateTime @updatedAt
+}

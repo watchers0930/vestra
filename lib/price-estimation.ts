@@ -6,6 +6,7 @@
  */
 
 import type { RealTransaction, PriceResult, RentPriceResult } from "./molit-api";
+import type { HedonicComponent, HedonicDecompositionResult } from "./patent-types";
 
 // ─── 타입 정의 ───
 
@@ -35,6 +36,7 @@ export interface PriceEstimationResult {
   };
   method: "building_match" | "area_match" | "district_avg" | "fallback";
   comparables: ComparableTransaction[];
+  hedonicDecomposition?: HedonicDecompositionResult;
 }
 
 // ─── 유틸리티 ───
@@ -198,6 +200,108 @@ function calculateConfidence(
   return Math.min(score, 95);
 }
 
+// ─── 헤도닉 가격 분해 ───
+
+function decomposeHedonicPrice(
+  estimatedPrice: number,
+  target: TargetProperty,
+  comparables: ComparableTransaction[],
+  method: PriceEstimationResult["method"],
+  allTransactions: RealTransaction[],
+): HedonicDecompositionResult {
+  if (estimatedPrice <= 0 || comparables.length === 0) {
+    return {
+      components: [
+        { component: "residual", value: estimatedPrice, percentage: 100, adjustmentFormula: "데이터 부족으로 분해 불가" },
+      ],
+      reconstructedPrice: estimatedPrice,
+      decompositionConfidence: 0,
+      locationPremiumIndex: 1.0,
+    };
+  }
+
+  const components: HedonicComponent[] = [];
+  const currentYear = new Date().getFullYear();
+
+  // 1. 입지 프리미엄: 건물매칭 vs 지역전체 가격 차이
+  let locationValue = 0;
+  let locationIndex = 1.0;
+  if (method === "building_match" && allTransactions.length > comparables.length) {
+    const districtAvg = allTransactions.reduce((sum, tx) => sum + tx.dealAmount, 0) / allTransactions.length;
+    const buildingAvg = comparables.reduce((sum, c) => sum + c.adjustedPrice, 0) / comparables.length;
+    locationIndex = districtAvg > 0 ? buildingAvg / districtAvg : 1.0;
+    locationValue = Math.round(estimatedPrice * (1 - 1 / locationIndex));
+  }
+  components.push({
+    component: "location",
+    value: locationValue,
+    percentage: estimatedPrice > 0 ? Math.round((locationValue / estimatedPrice) * 1000) / 10 : 0,
+    adjustmentFormula: `(건물평균 / 지역평균 - 1) × 추정가 = ${locationIndex.toFixed(2)} index`,
+  });
+
+  // 2. 경과연수 감가: 연 0.5% 감가 (건물 연도 추정)
+  // 거래 데이터에서 가장 오래된 거래 연도를 건축연도 근사치로 사용
+  const oldestTx = allTransactions.reduce((old, tx) =>
+    tx.dealYear < old.dealYear ? tx : old, allTransactions[0]);
+  const approxBuildYear = oldestTx ? Math.max(1980, oldestTx.dealYear - 5) : currentYear;
+  const age = currentYear - approxBuildYear;
+  const ageValue = Math.round(-0.005 * Math.max(0, age) * estimatedPrice);
+  components.push({
+    component: "age",
+    value: ageValue,
+    percentage: estimatedPrice > 0 ? Math.round((ageValue / estimatedPrice) * 1000) / 10 : 0,
+    adjustmentFormula: `-0.5% × ${age}년 × 추정가`,
+  });
+
+  // 3. 층수 프리미엄: 중위층 대비 층당 0.5%
+  const floors = comparables.map((c) => c.floor).sort((a, b) => a - b);
+  const medianFloor = floors.length > 0 ? floors[Math.floor(floors.length / 2)] : 10;
+  const targetFloor = target.floor || medianFloor;
+  const floorDiff = targetFloor - medianFloor;
+  const floorValue = Math.round(0.005 * floorDiff * estimatedPrice);
+  components.push({
+    component: "floor",
+    value: floorValue,
+    percentage: estimatedPrice > 0 ? Math.round((floorValue / estimatedPrice) * 1000) / 10 : 0,
+    adjustmentFormula: `0.5% × (${targetFloor}층 - 중위${medianFloor}층) × 추정가`,
+  });
+
+  // 4. 면적 프리미엄: 지역 평균 면적 대비 차이의 30% 반영
+  const avgArea = allTransactions.length > 0
+    ? allTransactions.reduce((sum, tx) => sum + tx.area, 0) / allTransactions.length
+    : target.area || 84;
+  const targetArea = target.area || avgArea;
+  const areaDiff = avgArea > 0 ? (targetArea - avgArea) / avgArea : 0;
+  const areaValue = Math.round(areaDiff * 0.3 * estimatedPrice);
+  components.push({
+    component: "area",
+    value: areaValue,
+    percentage: estimatedPrice > 0 ? Math.round((areaValue / estimatedPrice) * 1000) / 10 : 0,
+    adjustmentFormula: `(${targetArea.toFixed(1)}㎡ - 평균${avgArea.toFixed(1)}㎡) / 평균 × 30% × 추정가`,
+  });
+
+  // 5. 잔여분 (설명되지 않는 가치)
+  const explainedSum = locationValue + ageValue + floorValue + areaValue;
+  const residualValue = estimatedPrice - explainedSum;
+  components.push({
+    component: "residual",
+    value: residualValue,
+    percentage: estimatedPrice > 0 ? Math.round((residualValue / estimatedPrice) * 1000) / 10 : 0,
+    adjustmentFormula: "추정가 - (입지 + 경과연수 + 층수 + 면적)",
+  });
+
+  // 분해 신뢰도: 잔여분 비율이 작을수록 높음
+  const residualRatio = Math.abs(residualValue) / estimatedPrice;
+  const decompositionConfidence = Math.max(0, Math.min(1, 1 - residualRatio * 0.5));
+
+  return {
+    components,
+    reconstructedPrice: explainedSum + residualValue,
+    decompositionConfidence,
+    locationPremiumIndex: locationIndex,
+  };
+}
+
 // ─── 메인 추정 함수 ───
 
 export function estimatePrice(
@@ -270,6 +374,15 @@ export function estimatePrice(
     .sort((a, b) => b.weight - a.weight)
     .slice(0, 10);
 
+  // 헤도닉 가격 분해
+  const hedonicDecomposition = decomposeHedonicPrice(
+    estimatedPrice,
+    target,
+    comparables,
+    method,
+    transactions,
+  );
+
   return {
     estimatedPrice,
     estimatedJeonsePrice,
@@ -279,5 +392,6 @@ export function estimatePrice(
     priceRange,
     method,
     comparables: topComparables,
+    hedonicDecomposition,
   };
 }

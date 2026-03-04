@@ -10,6 +10,12 @@
  */
 
 import type { ParsedRegistry } from "./registry-parser";
+import type {
+  RiskInteractionRule,
+  RiskInteractionResult,
+  TemporalPattern,
+  TemporalRiskResult,
+} from "./patent-types";
 
 // ─── 타입 정의 ───
 
@@ -33,6 +39,8 @@ export interface RiskScore {
   mortgageRatio: number;
   totalDeduction: number;
   summary: string;
+  interactionPenalties?: RiskInteractionResult;
+  temporalPatterns?: TemporalRiskResult;
 }
 
 // ─── 등급 체계 ───
@@ -389,6 +397,260 @@ function evaluateMultipleMortgages(parsed: ParsedRegistry): RiskFactor[] {
   return factors;
 }
 
+// ─── 위험요소 상호작용 매트릭스 ───
+
+const INTERACTION_RULES: RiskInteractionRule[] = [
+  {
+    id: "seizure_auction",
+    factors: ["seizure", "auction"],
+    amplifier: 1.5,
+    description: "압류 + 경매개시: 진행 중인 강제처분 절차",
+    rationale: "압류와 경매가 동시 진행 시 소유권 상실이 거의 확정적이며, 보증금 회수 가능성이 급격히 하락합니다.",
+  },
+  {
+    id: "multi_mortgage_high_ratio",
+    factors: ["multi_mortgage", "mortgage_high"],
+    amplifier: 1.3,
+    description: "다수 근저당 + 높은 근저당비율: 과도한 채무부담",
+    rationale: "복수 채권자에게 과도한 담보가 설정된 상태로, 채무불이행 시 연쇄적 권리행사가 발생합니다.",
+  },
+  {
+    id: "trust_mortgage",
+    factors: ["trust", "multi_mortgage"],
+    amplifier: 1.4,
+    description: "신탁 + 다수 근저당: 복잡한 권리관계",
+    rationale: "신탁 부동산에 다수 근저당이 설정된 경우, 수탁자·위탁자·채권자 간 이해관계가 극히 복잡합니다.",
+  },
+  {
+    id: "seizure_lease",
+    factors: ["seizure", "lease_registration"],
+    amplifier: 1.6,
+    description: "압류 + 임차권등기: 임차인 최악 시나리오",
+    rationale: "기존 임차인의 보증금 미반환(임차권등기)에 더해 압류까지 진행 중이면, 후순위 임차인의 보증금 회수가 극히 어렵습니다.",
+  },
+  {
+    id: "auction_extreme_mortgage",
+    factors: ["auction", "mortgage_extreme"],
+    amplifier: 1.7,
+    description: "경매 + 초과채권: 회수 불가능 상태",
+    rationale: "경매가 진행 중이며 채권이 시세를 초과하여 배당으로도 보증금 회수가 불가능합니다.",
+  },
+  {
+    id: "seizure_disposition",
+    factors: ["seizure", "disposition"],
+    amplifier: 1.3,
+    description: "압류 + 가처분: 복합 법적 분쟁",
+    rationale: "재산 압류와 처분 금지가 동시에 걸린 상태로, 복수의 법적 분쟁이 진행 중입니다.",
+  },
+];
+
+function evaluateInteractions(factors: RiskFactor[]): RiskInteractionResult {
+  const factorIds = new Set(factors.map((f) => f.id));
+  const appliedRules: RiskInteractionResult["appliedRules"] = [];
+  let totalPenalty = 0;
+
+  for (const rule of INTERACTION_RULES) {
+    // mortgage_high 패턴: mortgage_로 시작하는 모든 팩터 매칭
+    const matched = rule.factors.every((ruleFactorId) => {
+      if (ruleFactorId.includes("*")) {
+        const prefix = ruleFactorId.replace("*", "");
+        return factors.some((f) => f.id.startsWith(prefix));
+      }
+      return factorIds.has(ruleFactorId);
+    });
+
+    if (!matched) continue;
+
+    // 매칭된 팩터들의 감점 합산
+    const matchedFactors = rule.factors.map((rf) => {
+      if (rf.includes("*")) {
+        const prefix = rf.replace("*", "");
+        return factors.find((f) => f.id.startsWith(prefix));
+      }
+      return factors.find((f) => f.id === rf);
+    }).filter(Boolean) as RiskFactor[];
+
+    const baseDeduction = matchedFactors.reduce((sum, f) => sum + f.deduction, 0);
+    const amplifiedDeduction = Math.round(baseDeduction * rule.amplifier);
+    const additional = amplifiedDeduction - baseDeduction;
+
+    appliedRules.push({
+      ruleId: rule.id,
+      matchedFactors: matchedFactors.map((f) => f.id),
+      baseDeduction,
+      amplifiedDeduction,
+      additionalDeduction: additional,
+      description: rule.description,
+    });
+
+    totalPenalty += additional;
+  }
+
+  return { appliedRules, totalInteractionPenalty: totalPenalty };
+}
+
+// ─── 시계열 이상 패턴 탐지 ───
+
+function dateToMonths(dateStr: string): number {
+  const parts = dateStr.split(".");
+  if (parts.length < 3) return 0;
+  return parseInt(parts[0], 10) * 12 + parseInt(parts[1], 10);
+}
+
+function monthsBetween(d1: string, d2: string): number {
+  return Math.abs(dateToMonths(d1) - dateToMonths(d2));
+}
+
+function detectTemporalPatterns(parsed: ParsedRegistry): TemporalRiskResult {
+  const patterns: TemporalPattern[] = [];
+
+  // 1. 급속 소유권이전: 5년(60개월) 내 3회 이상 이전
+  const ownershipTransfers = parsed.gapgu
+    .filter((e) => e.purpose === "소유권이전" && !e.isCancelled && e.date)
+    .sort((a, b) => dateToMonths(a.date) - dateToMonths(b.date));
+
+  if (ownershipTransfers.length >= 3) {
+    for (let i = 0; i <= ownershipTransfers.length - 3; i++) {
+      const span = monthsBetween(ownershipTransfers[i].date, ownershipTransfers[i + 2].date);
+      if (span <= 60) {
+        const transfersInWindow = ownershipTransfers.filter((t) => {
+          const m = dateToMonths(t.date);
+          return m >= dateToMonths(ownershipTransfers[i].date) &&
+                 m <= dateToMonths(ownershipTransfers[i].date) + 60;
+        });
+        patterns.push({
+          id: `rapid_transfer_${i}`,
+          patternType: "rapid_transfer",
+          severity: transfersInWindow.length >= 4 ? "critical" : "high",
+          confidence: Math.min(1, transfersInWindow.length / 5),
+          description: `${span}개월 내 소유권이 ${transfersInWindow.length}회 이전되었습니다. 투기성 거래 또는 하자 물건 의심.`,
+          evidence: transfersInWindow.map((t) => ({ date: t.date, event: `소유권이전 → ${t.holder}` })),
+          timespan: {
+            startDate: ownershipTransfers[i].date,
+            endDate: transfersInWindow[transfersInWindow.length - 1].date,
+            durationMonths: span,
+          },
+        });
+        break; // 첫 번째 패턴만 감지
+      }
+    }
+  }
+
+  // 2. 압류 전 근저당 설정: 압류 6개월 이내에 근저당 추가
+  const seizures = parsed.gapgu
+    .filter((e) => (e.purpose === "압류" || e.purpose === "가압류") && !e.isCancelled && e.date);
+  const mortgages = parsed.eulgu
+    .filter((e) => /근저당|저당/.test(e.purpose) && !e.isCancelled && e.date);
+
+  for (const seizure of seizures) {
+    const preMortgages = mortgages.filter((m) => {
+      const gap = monthsBetween(m.date, seizure.date);
+      return gap <= 6 && dateToMonths(m.date) <= dateToMonths(seizure.date);
+    });
+
+    if (preMortgages.length > 0) {
+      patterns.push({
+        id: `pre_seizure_mortgage_${seizure.date}`,
+        patternType: "pre_seizure_mortgage",
+        severity: "critical",
+        confidence: 0.9,
+        description: `압류(${seizure.date}) 6개월 이내에 근저당 ${preMortgages.length}건이 설정되었습니다. 재산은닉 또는 채무가중 패턴.`,
+        evidence: [
+          ...preMortgages.map((m) => ({ date: m.date, event: `근저당 설정 (${m.holder})` })),
+          { date: seizure.date, event: `${seizure.purpose} (${seizure.holder})` },
+        ],
+        timespan: {
+          startDate: preMortgages[0].date,
+          endDate: seizure.date,
+          durationMonths: monthsBetween(preMortgages[0].date, seizure.date),
+        },
+      });
+    }
+  }
+
+  // 3. 채권 가속: 12개월 내 2건 이상 압류/가압류
+  if (seizures.length >= 2) {
+    const sortedSeizures = [...seizures].sort((a, b) => dateToMonths(a.date) - dateToMonths(b.date));
+    for (let i = 0; i < sortedSeizures.length - 1; i++) {
+      const span = monthsBetween(sortedSeizures[i].date, sortedSeizures[i + 1].date);
+      if (span <= 12) {
+        const clusterCount = sortedSeizures.filter((s) => {
+          const m = dateToMonths(s.date);
+          return m >= dateToMonths(sortedSeizures[i].date) &&
+                 m <= dateToMonths(sortedSeizures[i].date) + 12;
+        }).length;
+
+        patterns.push({
+          id: `claim_acceleration_${i}`,
+          patternType: "claim_acceleration",
+          severity: clusterCount >= 3 ? "critical" : "high",
+          confidence: Math.min(1, clusterCount / 3),
+          description: `12개월 내 ${clusterCount}건의 압류/가압류가 집중 발생. 채무자의 재정위기 상태.`,
+          evidence: sortedSeizures.slice(i, i + clusterCount).map((s) => ({
+            date: s.date,
+            event: `${s.purpose} (${s.holder})`,
+          })),
+          timespan: {
+            startDate: sortedSeizures[i].date,
+            endDate: sortedSeizures[Math.min(i + clusterCount - 1, sortedSeizures.length - 1)].date,
+            durationMonths: span,
+          },
+        });
+        break;
+      }
+    }
+  }
+
+  // 4. 근저당 누적: 3개월 이내 연속 근저당 설정
+  if (mortgages.length >= 2) {
+    const sortedMortgages = [...mortgages].sort((a, b) => dateToMonths(a.date) - dateToMonths(b.date));
+    for (let i = 0; i < sortedMortgages.length - 1; i++) {
+      const gap = monthsBetween(sortedMortgages[i].date, sortedMortgages[i + 1].date);
+      if (gap <= 3) {
+        const cluster = sortedMortgages.filter((m) => {
+          const mMonth = dateToMonths(m.date);
+          return mMonth >= dateToMonths(sortedMortgages[i].date) &&
+                 mMonth <= dateToMonths(sortedMortgages[i].date) + 3;
+        });
+
+        if (cluster.length >= 2) {
+          patterns.push({
+            id: `mortgage_stacking_${i}`,
+            patternType: "mortgage_stacking",
+            severity: "high",
+            confidence: 0.8,
+            description: `3개월 이내 근저당 ${cluster.length}건이 연속 설정. 과잉 레버리지 패턴.`,
+            evidence: cluster.map((m) => ({
+              date: m.date,
+              event: `근저당 설정 (${m.holder}, ${(m.amount / 100_000_000).toFixed(1)}억원)`,
+            })),
+            timespan: {
+              startDate: cluster[0].date,
+              endDate: cluster[cluster.length - 1].date,
+              durationMonths: monthsBetween(cluster[0].date, cluster[cluster.length - 1].date),
+            },
+          });
+          break;
+        }
+      }
+    }
+  }
+
+  // 전체 시계열 위험도
+  const severityWeight: Record<string, number> = { critical: 30, high: 15, medium: 5 };
+  const overallTemporalRisk = Math.min(100,
+    patterns.reduce((sum, p) => sum + (severityWeight[p.severity] || 0) * p.confidence, 0)
+  );
+
+  // 이상치 점수: 패턴 수 × 평균 신뢰도
+  const avgConfidence = patterns.length > 0
+    ? patterns.reduce((sum, p) => sum + p.confidence, 0) / patterns.length
+    : 0;
+  const timelineAnomalyScore = Math.min(100, patterns.length * avgConfidence * 25);
+
+  return { patterns, overallTemporalRisk, timelineAnomalyScore };
+}
+
 // ─── 메인 스코어링 함수 ───
 
 export function calculateRiskScore(
@@ -458,6 +720,16 @@ export function calculateRiskScore(
   allFactors.push(...redemptionFactors);
   totalDeduction += redemptionFactors.reduce((s, f) => s + f.deduction, 0);
 
+  // 13. 위험요소 상호작용 평가 (비선형 증폭)
+  const interactionPenalties = evaluateInteractions(allFactors);
+  totalDeduction += interactionPenalties.totalInteractionPenalty;
+
+  // 14. 시계열 이상 패턴 탐지
+  const temporalPatterns = detectTemporalPatterns(parsed);
+  // 시계열 위험도를 감점에 반영 (최대 20점 추가 감점)
+  const temporalDeduction = Math.min(20, Math.round(temporalPatterns.overallTemporalRisk * 0.2));
+  totalDeduction += temporalDeduction;
+
   // 최종 점수 계산 (최소 0점)
   const totalScore = Math.max(0, 100 - totalDeduction);
   const grade = getGrade(totalScore);
@@ -475,6 +747,8 @@ export function calculateRiskScore(
     mortgageRatio: mortgageEval.ratio,
     totalDeduction,
     summary,
+    interactionPenalties,
+    temporalPatterns,
   };
 }
 
