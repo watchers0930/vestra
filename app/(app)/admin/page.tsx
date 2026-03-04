@@ -215,6 +215,9 @@ function AdminContent() {
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [socialMsg, setSocialMsg] = useState<{ provider: string; type: "success" | "error"; text: string } | null>(null);
 
+  // API KEY 서브탭
+  const [apiSubTab, setApiSubTab] = useState<"social" | "pg">("social");
+
   // ---------------------------------------------------------------------------
   // Data Fetching
   // ---------------------------------------------------------------------------
@@ -1035,17 +1038,36 @@ function AdminContent() {
           {/* API KEY 탭 (소셜 로그인 + PG사)                                 */}
           {/* ============================================================= */}
           {tab === "apikey" && (
-            <div className="max-w-2xl space-y-8">
+            <div className="max-w-2xl">
+              {/* 서브 탭 */}
+              <div className="flex gap-2 mb-6">
+                {([
+                  { key: "social" as const, label: "간편로그인설정" },
+                  { key: "pg" as const, label: "PG설정" },
+                ] as const).map((st) => (
+                  <button
+                    key={st.key}
+                    onClick={() => setApiSubTab(st.key)}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                      apiSubTab === st.key
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    )}
+                  >
+                    {st.label}
+                  </button>
+                ))}
+              </div>
 
-              {/* ── 소셜 로그인 섹션 ── */}
-              <div>
-                <h2 className="text-base font-bold text-gray-900 mb-1">소셜 로그인</h2>
-                <p className="text-sm text-gray-500 mb-4">
-                  소셜 로그인 API 키를 등록하면 해당 플랫폼으로 로그인할 수 있습니다.
-                  Callback URL은 각 플랫폼 개발자 콘솔에 등록해야 합니다.
-                </p>
-
+              {/* ── 간편로그인설정 ── */}
+              {apiSubTab === "social" && (
                 <div className="space-y-4">
+                  <p className="text-sm text-gray-500">
+                    소셜 로그인 API 키를 등록하면 해당 플랫폼으로 로그인할 수 있습니다.
+                    Callback URL은 각 플랫폼 개발자 콘솔에 등록해야 합니다.
+                  </p>
+
                   {Object.entries(socialProviders).map(([key, prov]) => (
                     <Card key={key} className="p-6">
                       <div className="flex items-center justify-between mb-4">
@@ -1147,19 +1169,15 @@ function AdminContent() {
                     </Card>
                   ))}
                 </div>
-              </div>
+              )}
 
-              {/* ── 구분선 ── */}
-              <div className="border-t border-border" />
-
-              {/* ── PG사 (결제) 섹션 ── */}
-              <div>
-                <h2 className="text-base font-bold text-gray-900 mb-1">PG사 (결제)</h2>
-                <p className="text-sm text-gray-500 mb-4">
-                  결제 서비스 API 키를 등록하면 구독/결제 기능을 활성화할 수 있습니다.
-                </p>
-
+              {/* ── PG설정 ── */}
+              {apiSubTab === "pg" && (
                 <div className="space-y-4">
+                  <p className="text-sm text-gray-500">
+                    결제 서비스 API 키를 등록하면 구독/결제 기능을 활성화할 수 있습니다.
+                  </p>
+
                   {Object.entries(pgProviders).map(([key, prov]) => (
                     <Card key={key} className="p-6">
                       <div className="flex items-center justify-between mb-4">
@@ -1261,7 +1279,7 @@ function AdminContent() {
                     </Card>
                   )}
                 </div>
-              </div>
+              )}
             </div>
           )}
 
