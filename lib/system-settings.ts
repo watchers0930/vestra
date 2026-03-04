@@ -154,3 +154,82 @@ export const OAUTH_PROVIDERS: OAuthProviderConfig[] = [
     callbackPath: "/api/auth/callback/naver",
   },
 ];
+
+// ─── PG 프로바이더 설정 구조 ───
+
+export interface PGProviderConfig {
+  provider: string;
+  label: string;
+  clientKeyName: string;
+  secretKeyName: string;
+  devConsoleUrl: string;
+  description: string;
+}
+
+export const PG_PROVIDERS: PGProviderConfig[] = [
+  {
+    provider: "tosspayments",
+    label: "토스페이먼츠",
+    clientKeyName: "TOSS_CLIENT_KEY",
+    secretKeyName: "TOSS_SECRET_KEY",
+    devConsoleUrl: "https://developers.tosspayments.com",
+    description: "카드, 계좌이체, 가상계좌, 간편결제 지원",
+  },
+  {
+    provider: "inicis",
+    label: "KG이니시스",
+    clientKeyName: "INICIS_MID",
+    secretKeyName: "INICIS_API_KEY",
+    devConsoleUrl: "https://manual.inicis.com",
+    description: "국내 1위 PG사, 다양한 결제수단 지원",
+  },
+  {
+    provider: "kcp",
+    label: "NHN KCP",
+    clientKeyName: "KCP_SITE_CD",
+    secretKeyName: "KCP_SITE_KEY",
+    devConsoleUrl: "https://admin8.kcp.co.kr",
+    description: "간편결제, 정기결제, 해외결제 지원",
+  },
+];
+
+/**
+ * DB에서 PG 카테고리 설정을 읽고 복호화하여 반환.
+ */
+export async function getPGSettings(): Promise<Record<string, string>> {
+  try {
+    const rows = await prisma.systemSetting.findMany({
+      where: { category: "pg" },
+    });
+    const settings: Record<string, string> = {};
+    for (const row of rows) {
+      try {
+        settings[row.key] = decrypt(row.value);
+      } catch {
+        // 복호화 실패 시 무시
+      }
+    }
+    return settings;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * PG 설정 값을 암호화하여 DB에 저장.
+ */
+export async function setPGSetting(key: string, value: string): Promise<void> {
+  const encrypted = encrypt(value);
+  await prisma.systemSetting.upsert({
+    where: { key },
+    update: { value: encrypted, category: "pg" },
+    create: { key, value: encrypted, category: "pg" },
+  });
+}
+
+/**
+ * PG 설정 삭제.
+ */
+export async function deletePGSetting(key: string): Promise<void> {
+  await prisma.systemSetting.deleteMany({ where: { key } });
+}

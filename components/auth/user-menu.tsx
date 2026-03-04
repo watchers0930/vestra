@@ -26,7 +26,7 @@ export default function UserMenu({ collapsed }: { collapsed: boolean }) {
 
   if (!session?.user) {
     return (
-      <div className="px-2.5 py-3 border-t border-white/5">
+      <div className="px-2.5 py-3 border-t border-white/5 space-y-1.5">
         <Link
           href="/login"
           className={cn(
@@ -39,7 +39,20 @@ export default function UserMenu({ collapsed }: { collapsed: boolean }) {
           title={collapsed ? "로그인" : undefined}
         >
           <LogIn size={18} className="flex-shrink-0" />
-          {!collapsed && <span>로그인 / 회원가입</span>}
+          {!collapsed && <span>로그인</span>}
+        </Link>
+        <Link
+          href="/signup"
+          className={cn(
+            "flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium",
+            "border border-white/10 text-gray-300",
+            "hover:bg-white/[0.06] hover:text-white transition-all duration-200",
+            collapsed && "justify-center",
+          )}
+          title={collapsed ? "회원가입" : undefined}
+        >
+          <User size={18} className="flex-shrink-0" />
+          {!collapsed && <span>회원가입</span>}
         </Link>
       </div>
     );

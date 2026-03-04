@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [showAdmin, setShowAdmin] = useState(false);
 
-  // 이미 로그인된 상태: ADMIN → /admin, 일반 → /
+  // 이미 로그인된 상태: ADMIN → /admin, 일반 → /dashboard
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
       if (session.user.role === "ADMIN") {
@@ -53,7 +54,7 @@ export default function LoginPage() {
           <p className="text-muted text-sm mt-1">AI 자산관리 플랫폼</p>
         </div>
 
-        {/* 소셜 로그인 */}
+        {/* 로그인 카드 */}
         <div className="bg-card rounded-2xl border border-border p-8 shadow-sm">
           <h2 className="text-lg font-semibold text-center mb-6">로그인</h2>
 
@@ -69,7 +70,7 @@ export default function LoginPage() {
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
               </svg>
-              Google로 계속하기
+              Google로 로그인
             </button>
 
             {/* 카카오 */}
@@ -80,7 +81,7 @@ export default function LoginPage() {
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path d="M12 3C6.48 3 2 6.36 2 10.44c0 2.62 1.75 4.93 4.38 6.24l-1.12 4.12a.36.36 0 00.54.38l4.66-3.1c.5.06 1.01.1 1.54.1 5.52 0 10-3.36 10-7.5S17.52 3 12 3z" fill="#191919" />
               </svg>
-              카카오로 계속하기
+              카카오로 로그인
             </button>
 
             {/* 네이버 */}
@@ -91,7 +92,7 @@ export default function LoginPage() {
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path d="M16.27 3H7.73A4.73 4.73 0 003 7.73v8.54A4.73 4.73 0 007.73 21h8.54A4.73 4.73 0 0021 16.27V7.73A4.73 4.73 0 0016.27 3zm-2.15 12.38l-2.6-3.71v3.71H9.06V8.62h2.46l2.6 3.71V8.62h2.46v6.76h-2.46z" fill="white" />
               </svg>
-              네이버로 계속하기
+              네이버로 로그인
             </button>
           </div>
 
@@ -152,9 +153,12 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* 안내 */}
-        <p className="text-center text-xs text-muted mt-4">
-          기업/부동산 등급은 로그인 후 프로필에서 업그레이드할 수 있습니다
+        {/* 회원가입 안내 */}
+        <p className="text-center text-sm text-muted mt-6">
+          아직 계정이 없으신가요?{" "}
+          <Link href="/signup" className="text-primary font-medium hover:underline">
+            회원가입
+          </Link>
         </p>
       </div>
     </div>

@@ -40,7 +40,7 @@ import { KpiCard } from "@/components/results";
 // Types
 // ---------------------------------------------------------------------------
 
-type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "account" | "social";
+type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "account" | "apikey";
 
 interface Stats {
   totalUsers: number;
@@ -140,7 +140,7 @@ function AdminContent() {
 
   // URL ?tab= 파라미터에서 현재 탭 읽기
   const urlTab = searchParams.get("tab") as Tab | null;
-  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "account", "social"].includes(urlTab)
+  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "account", "apikey"].includes(urlTab)
     ? urlTab
     : "overview";
 
@@ -197,6 +197,21 @@ function AdminContent() {
   }
   const [socialProviders, setSocialProviders] = useState<Record<string, SocialProvider>>({});
   const [socialForms, setSocialForms] = useState<Record<string, { clientId: string; clientSecret: string }>>({});
+
+  // PG사 설정 상태
+  interface PGProvider {
+    label: string;
+    clientKey: string;
+    secretKey: string;
+    configured: boolean;
+    source: "db" | "env" | "none";
+    devConsoleUrl: string;
+    description: string;
+  }
+  const [pgProviders, setPgProviders] = useState<Record<string, PGProvider>>({});
+  const [pgForms, setPgForms] = useState<Record<string, { clientKey: string; secretKey: string }>>({});
+  const [pgLoading, setPgLoading] = useState<string | null>(null);
+  const [pgMsg, setPgMsg] = useState<{ provider: string; type: "success" | "error"; text: string } | null>(null);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [socialMsg, setSocialMsg] = useState<{ provider: string; type: "success" | "error"; text: string } | null>(null);
 
@@ -225,6 +240,7 @@ function AdminContent() {
       if (settingsRes.ok) {
         const data = await settingsRes.json();
         setSocialProviders(data.providers || {});
+        setPgProviders(data.pgProviders || {});
       }
     } catch (e) {
       console.error("Admin data fetch error:", e);
@@ -334,6 +350,62 @@ function AdminContent() {
     setSocialLoading(null);
   };
 
+  // PG사 설정 저장
+  const handlePGSave = async (provider: string) => {
+    setPgMsg(null);
+    const form = pgForms[provider];
+    if (!form?.clientKey || !form?.secretKey) {
+      setPgMsg({ provider, type: "error", text: "Client Key와 Secret Key를 모두 입력해주세요." });
+      return;
+    }
+    setPgLoading(provider);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: "pg", provider, clientKey: form.clientKey, secretKey: form.secretKey }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPgMsg({ provider, type: "success", text: data.message });
+        setPgForms((prev) => ({ ...prev, [provider]: { clientKey: "", secretKey: "" } }));
+        const settingsRes = await fetch("/api/admin/settings");
+        if (settingsRes.ok) {
+          const updated = await settingsRes.json();
+          setPgProviders(updated.pgProviders || {});
+        }
+      } else {
+        setPgMsg({ provider, type: "error", text: data.error || "저장에 실패했습니다." });
+      }
+    } catch {
+      setPgMsg({ provider, type: "error", text: "네트워크 오류가 발생했습니다." });
+    }
+    setPgLoading(null);
+  };
+
+  // PG사 설정 초기화
+  const handlePGReset = async (provider: string) => {
+    setPgLoading(provider);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: "pg", provider, clientKey: "", secretKey: "" }),
+      });
+      if (res.ok) {
+        setPgMsg({ provider, type: "success", text: "설정이 초기화되었습니다." });
+        const settingsRes = await fetch("/api/admin/settings");
+        if (settingsRes.ok) {
+          const updated = await settingsRes.json();
+          setPgProviders(updated.pgProviders || {});
+        }
+      }
+    } catch {
+      setPgMsg({ provider, type: "error", text: "네트워크 오류가 발생했습니다." });
+    }
+    setPgLoading(null);
+  };
+
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwMsg(null);
@@ -413,7 +485,7 @@ function AdminContent() {
     { key: "verifications", label: `인증 관리${pending.length > 0 ? ` (${pending.length})` : ""}` },
     { key: "analyses", label: "분석 이력" },
     { key: "announcements", label: "공지사항" },
-    { key: "social", label: "소셜 로그인" },
+    { key: "apikey", label: "API KEY" },
     { key: "account", label: "계정 설정" },
   ];
 
@@ -960,126 +1032,236 @@ function AdminContent() {
           )}
 
           {/* ============================================================= */}
-          {/* 소셜 로그인 설정 탭                                              */}
+          {/* API KEY 탭 (소셜 로그인 + PG사)                                 */}
           {/* ============================================================= */}
-          {tab === "social" && (
-            <div className="max-w-2xl space-y-6">
-              <div className="mb-4">
-                <p className="text-sm text-gray-500">
+          {tab === "apikey" && (
+            <div className="max-w-2xl space-y-8">
+
+              {/* ── 소셜 로그인 섹션 ── */}
+              <div>
+                <h2 className="text-base font-bold text-gray-900 mb-1">소셜 로그인</h2>
+                <p className="text-sm text-gray-500 mb-4">
                   소셜 로그인 API 키를 등록하면 해당 플랫폼으로 로그인할 수 있습니다.
                   Callback URL은 각 플랫폼 개발자 콘솔에 등록해야 합니다.
                 </p>
+
+                <div className="space-y-4">
+                  {Object.entries(socialProviders).map(([key, prov]) => (
+                    <Card key={key} className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold",
+                            key === "google" ? "bg-blue-500" : key === "kakao" ? "bg-[#FEE500] text-gray-900" : "bg-[#03C75A]"
+                          )}>
+                            {prov.label.charAt(0)}
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-800">{prov.label}</h3>
+                            <a href={prov.devConsoleUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                              개발자 콘솔 열기 &rarr;
+                            </a>
+                          </div>
+                        </div>
+                        <Badge variant={prov.configured ? "success" : "neutral"}>
+                          {prov.configured ? (prov.source === "db" ? "DB 설정됨" : "환경변수") : "미설정"}
+                        </Badge>
+                      </div>
+
+                      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Callback URL (개발자 콘솔에 등록)</p>
+                        <code className="text-xs text-gray-700 break-all">
+                          {typeof window !== "undefined" ? window.location.origin : "https://your-domain.com"}{prov.callbackPath}
+                        </code>
+                      </div>
+
+                      {prov.configured && (
+                        <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">현재 Client ID</p>
+                          <p className="text-sm font-mono text-gray-700">{prov.clientId}</p>
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                            {prov.configured ? "새 " : ""}Client ID
+                          </label>
+                          <input
+                            type="text"
+                            value={socialForms[key]?.clientId || ""}
+                            onChange={(e) => setSocialForms((prev) => ({
+                              ...prev,
+                              [key]: { ...prev[key], clientId: e.target.value, clientSecret: prev[key]?.clientSecret || "" },
+                            }))}
+                            placeholder={prov.configured ? "변경 시에만 입력" : "Client ID를 입력하세요"}
+                            className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                            {prov.configured ? "새 " : ""}Client Secret
+                          </label>
+                          <input
+                            type="password"
+                            value={socialForms[key]?.clientSecret || ""}
+                            onChange={(e) => setSocialForms((prev) => ({
+                              ...prev,
+                              [key]: { clientId: prev[key]?.clientId || "", clientSecret: e.target.value },
+                            }))}
+                            placeholder={prov.configured ? "변경 시에만 입력" : "Client Secret을 입력하세요"}
+                            className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      {socialMsg?.provider === key && (
+                        <p className={cn(
+                          "text-xs font-medium mt-3",
+                          socialMsg.type === "success" ? "text-emerald-600" : "text-red-500"
+                        )}>
+                          {socialMsg.text}
+                        </p>
+                      )}
+
+                      <div className="flex gap-2 mt-4">
+                        <Button
+                          variant="primary"
+                          size="md"
+                          disabled={socialLoading === key}
+                          onClick={() => handleSocialSave(key)}
+                        >
+                          {socialLoading === key ? "저장 중..." : "저장"}
+                        </Button>
+                        {prov.configured && prov.source === "db" && (
+                          <Button
+                            variant="ghost"
+                            size="md"
+                            disabled={socialLoading === key}
+                            onClick={() => handleSocialReset(key)}
+                          >
+                            초기화
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
               </div>
 
-              {Object.entries(socialProviders).map(([key, prov]) => (
-                <Card key={key} className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold",
-                        key === "google" ? "bg-blue-500" : key === "kakao" ? "bg-[#FEE500] text-gray-900" : "bg-[#03C75A]"
-                      )}>
-                        {prov.label.charAt(0)}
+              {/* ── 구분선 ── */}
+              <div className="border-t border-border" />
+
+              {/* ── PG사 (결제) 섹션 ── */}
+              <div>
+                <h2 className="text-base font-bold text-gray-900 mb-1">PG사 (결제)</h2>
+                <p className="text-sm text-gray-500 mb-4">
+                  결제 서비스 API 키를 등록하면 구독/결제 기능을 활성화할 수 있습니다.
+                </p>
+
+                <div className="space-y-4">
+                  {Object.entries(pgProviders).map(([key, prov]) => (
+                    <Card key={key} className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold",
+                            key === "tosspayments" ? "bg-[#0064FF]" : key === "inicis" ? "bg-[#E31837]" : "bg-[#003DA5]"
+                          )}>
+                            {prov.label.charAt(0)}
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-800">{prov.label}</h3>
+                            <p className="text-xs text-gray-400">{prov.description}</p>
+                            <a href={prov.devConsoleUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                              개발자 콘솔 열기 &rarr;
+                            </a>
+                          </div>
+                        </div>
+                        <Badge variant={prov.configured ? "success" : "neutral"}>
+                          {prov.configured ? (prov.source === "db" ? "DB 설정됨" : "환경변수") : "미설정"}
+                        </Badge>
                       </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-800">{prov.label}</h3>
-                        <a href={prov.devConsoleUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
-                          개발자 콘솔 열기 &rarr;
-                        </a>
+
+                      {prov.configured && (
+                        <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">현재 Client Key</p>
+                          <p className="text-sm font-mono text-gray-700">{prov.clientKey}</p>
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                            {prov.configured ? "새 " : ""}Client Key
+                          </label>
+                          <input
+                            type="text"
+                            value={pgForms[key]?.clientKey || ""}
+                            onChange={(e) => setPgForms((prev) => ({
+                              ...prev,
+                              [key]: { ...prev[key], clientKey: e.target.value, secretKey: prev[key]?.secretKey || "" },
+                            }))}
+                            placeholder={prov.configured ? "변경 시에만 입력" : "Client Key를 입력하세요"}
+                            className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                            {prov.configured ? "새 " : ""}Secret Key
+                          </label>
+                          <input
+                            type="password"
+                            value={pgForms[key]?.secretKey || ""}
+                            onChange={(e) => setPgForms((prev) => ({
+                              ...prev,
+                              [key]: { clientKey: prev[key]?.clientKey || "", secretKey: e.target.value },
+                            }))}
+                            placeholder={prov.configured ? "변경 시에만 입력" : "Secret Key를 입력하세요"}
+                            className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <Badge variant={prov.configured ? "success" : "neutral"}>
-                      {prov.configured ? (prov.source === "db" ? "DB 설정됨" : "환경변수") : "미설정"}
-                    </Badge>
-                  </div>
 
-                  {/* Callback URL */}
-                  <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                    <p className="text-xs text-gray-500 mb-1">Callback URL (개발자 콘솔에 등록)</p>
-                    <code className="text-xs text-gray-700 break-all">
-                      {typeof window !== "undefined" ? window.location.origin : "https://your-domain.com"}{prov.callbackPath}
-                    </code>
-                  </div>
+                      {pgMsg?.provider === key && (
+                        <p className={cn(
+                          "text-xs font-medium mt-3",
+                          pgMsg.type === "success" ? "text-emerald-600" : "text-red-500"
+                        )}>
+                          {pgMsg.text}
+                        </p>
+                      )}
 
-                  {/* 현재 설정된 값 */}
-                  {prov.configured && (
-                    <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                      <p className="text-xs text-gray-500 mb-1">현재 Client ID</p>
-                      <p className="text-sm font-mono text-gray-700">{prov.clientId}</p>
-                    </div>
+                      <div className="flex gap-2 mt-4">
+                        <Button
+                          variant="primary"
+                          size="md"
+                          disabled={pgLoading === key}
+                          onClick={() => handlePGSave(key)}
+                        >
+                          {pgLoading === key ? "저장 중..." : "저장"}
+                        </Button>
+                        {prov.configured && prov.source === "db" && (
+                          <Button
+                            variant="ghost"
+                            size="md"
+                            disabled={pgLoading === key}
+                            onClick={() => handlePGReset(key)}
+                          >
+                            초기화
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+
+                  {Object.keys(pgProviders).length === 0 && (
+                    <Card className="p-8 text-center text-gray-500 text-sm">
+                      PG사 설정을 불러오는 중...
+                    </Card>
                   )}
-
-                  {/* 입력 폼 */}
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                        {prov.configured ? "새 " : ""}Client ID
-                      </label>
-                      <input
-                        type="text"
-                        value={socialForms[key]?.clientId || ""}
-                        onChange={(e) => setSocialForms((prev) => ({
-                          ...prev,
-                          [key]: { ...prev[key], clientId: e.target.value, clientSecret: prev[key]?.clientSecret || "" },
-                        }))}
-                        placeholder={prov.configured ? "변경 시에만 입력" : "Client ID를 입력하세요"}
-                        className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                        {prov.configured ? "새 " : ""}Client Secret
-                      </label>
-                      <input
-                        type="password"
-                        value={socialForms[key]?.clientSecret || ""}
-                        onChange={(e) => setSocialForms((prev) => ({
-                          ...prev,
-                          [key]: { clientId: prev[key]?.clientId || "", clientSecret: e.target.value },
-                        }))}
-                        placeholder={prov.configured ? "변경 시에만 입력" : "Client Secret을 입력하세요"}
-                        className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
-                      />
-                    </div>
-                  </div>
-
-                  {socialMsg?.provider === key && (
-                    <p className={cn(
-                      "text-xs font-medium mt-3",
-                      socialMsg.type === "success" ? "text-emerald-600" : "text-red-500"
-                    )}>
-                      {socialMsg.text}
-                    </p>
-                  )}
-
-                  <div className="flex gap-2 mt-4">
-                    <Button
-                      variant="primary"
-                      size="md"
-                      disabled={socialLoading === key}
-                      onClick={() => handleSocialSave(key)}
-                    >
-                      {socialLoading === key ? "저장 중..." : "저장"}
-                    </Button>
-                    {prov.configured && prov.source === "db" && (
-                      <Button
-                        variant="ghost"
-                        size="md"
-                        disabled={socialLoading === key}
-                        onClick={() => handleSocialReset(key)}
-                      >
-                        초기화
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              ))}
-
-              {Object.keys(socialProviders).length === 0 && (
-                <Card className="p-8 text-center text-gray-500 text-sm">
-                  소셜 로그인 설정을 불러오는 중...
-                </Card>
-              )}
+                </div>
+              </div>
             </div>
           )}
 
