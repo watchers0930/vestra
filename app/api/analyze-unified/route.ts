@@ -12,6 +12,7 @@ import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { simulateRedemption } from "@/lib/redemption-simulator";
 import { propagateConfidence } from "@/lib/confidence-engine";
 import { selfVerify } from "@/lib/self-verification";
+import { calculateVScore } from "@/lib/v-score";
 
 /** 원 단위 숫자를 "X억 Y만원" 형태로 변환 */
 function formatKoreanPrice(won: number): string {
@@ -274,6 +275,14 @@ export async function POST(req: NextRequest) {
       confidencePropagation.compositeReliability,
     );
 
+    // 11단계: V-Score 통합 위험도 산출 (특허 H-1: 이질적 데이터 통합 점수화)
+    const vScore = calculateVScore({
+      riskScore,
+      jeonseRatio: jeonseRatio || undefined,
+      priceConfidence: priceEstimation.confidence,
+      compositeReliability: confidencePropagation.compositeReliability,
+    });
+
     return NextResponse.json({
       propertyInfo,
       riskAnalysis,
@@ -286,6 +295,7 @@ export async function POST(req: NextRequest) {
       redemptionSimulation,
       confidencePropagation,
       selfVerification,
+      vScore,
       dataSource: {
         registryParsed: true,
         molitAvailable: !!marketData,

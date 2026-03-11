@@ -167,6 +167,164 @@ export interface HedonicDecompositionResult {
   locationPremiumIndex: number;
 }
 
+// ─── H-1. V-Score 통합 위험도 점수화 ───
+
+export interface VScoreSource {
+  id: string;
+  name: string;
+  score: number;        // 0-100 (개별 소스 점수)
+  weight: number;       // 가중치 (합산 = 1.0)
+  weightedScore: number; // score × weight
+  contribution: number; // 전체 V-Score에 대한 기여도 %
+  dataAvailable: boolean;
+  details: string;
+}
+
+export interface VScoreInteraction {
+  sourceA: string;
+  sourceB: string;
+  interactionType: "amplify" | "mitigate" | "compound";
+  adjustment: number; // +/- 점수 보정
+  description: string;
+}
+
+export interface VScoreExplanation {
+  ruleBasedSummary: string;
+  naturalLanguage: string;
+  topRiskFactors: Array<{
+    factor: string;
+    impact: number;
+    source: string;
+  }>;
+}
+
+export interface VScoreResult {
+  score: number;         // 0-100
+  grade: "A" | "B" | "C" | "D" | "F";
+  gradeLabel: string;
+  sources: VScoreSource[];
+  interactions: VScoreInteraction[];
+  explanation: VScoreExplanation;
+  metadata: {
+    version: string;
+    calculatedAt: string;
+    confidenceLevel: number;
+    algorithmId: string;
+  };
+}
+
+// ─── H-2. 전세사기 예방 위험 평가 ───
+
+export interface FraudFeatureContribution {
+  featureName: string;
+  featureGroup: "권리관계" | "시세가격" | "임대인" | "건물지역" | "계약조건";
+  featureValue: number;
+  contribution: number;     // 양수 = 위험↑, 음수 = 안전↑
+  percentageImpact: number;
+  explanation: string;
+}
+
+export interface FraudRiskResult {
+  fraudScore: number;        // 0-100 (높을수록 사기 위험)
+  riskLevel: "safe" | "caution" | "warning" | "danger" | "critical";
+  riskLabel: string;
+  contributions: FraudFeatureContribution[];
+  topRiskFactors: FraudFeatureContribution[]; // 상위 5개
+  similarCases: Array<{
+    address: string;
+    caseType: string;
+    amount: number;
+    distance: number;  // km
+    similarity: number; // 0-1
+  }>;
+  recommendation: string;
+  metadata: {
+    modelVersion: string;
+    featureCount: number;
+    calculatedAt: string;
+  };
+}
+
+// ─── H-3. 크로스 기능 연계 시스템 ───
+
+export type AnalysisEventType =
+  | "REGISTRY_ANALYZED"
+  | "CONTRACT_ANALYZED"
+  | "PRICE_PREDICTED"
+  | "TAX_CALCULATED"
+  | "VSCORE_UPDATED"
+  | "FRAUD_ASSESSED"
+  | "MONITORING_ALERT";
+
+export interface AnalysisEvent {
+  type: AnalysisEventType;
+  timestamp: string;
+  data: Record<string, unknown>;
+  sourceModule: string;
+}
+
+export interface CrossAnalysisLink {
+  id: string;
+  from: string;
+  to: string;
+  dataFlow: string;
+  triggerCondition: string;
+  description: string;
+}
+
+export interface CrossAnalysisResult {
+  links: Array<{
+    linkId: string;
+    from: string;
+    to: string;
+    triggered: boolean;
+    result?: string;
+    impact?: string;
+  }>;
+  cascadeUpdates: number;
+  totalLinksEvaluated: number;
+}
+
+// ─── H-4. 부동산 NLP 특화 모델 인터페이스 ───
+
+export type RealEstateEntityType =
+  | "소유자"
+  | "근저당권자"
+  | "임차인"
+  | "압류권자"
+  | "채권최고액"
+  | "설정일"
+  | "말소일"
+  | "권리종류"
+  | "위험요소"
+  | "주소"
+  | "면적"
+  | "용도"
+  | "건축년도"
+  | "거래금액"
+  | "전세금";
+
+export interface NEREntity {
+  text: string;
+  type: RealEstateEntityType;
+  startOffset: number;
+  endOffset: number;
+  confidence: number;
+}
+
+export interface RelationExtraction {
+  subject: NEREntity;
+  predicate: string;
+  object: NEREntity;
+  confidence: number;
+}
+
+export interface DocumentClassification {
+  documentType: "등기부등본" | "매매계약서" | "임대차계약서" | "건축물대장" | "감정평가서" | "기타";
+  confidence: number;
+  subType?: string;
+}
+
 // ─── H. 자기검증 루프 ───
 
 export interface VerificationCheck {

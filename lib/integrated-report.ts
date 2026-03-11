@@ -7,6 +7,8 @@
 
 import type { RiskScore, RiskGrade } from "./risk-scoring";
 import { generateChecklist, type ChecklistItem } from "./checklist-generator";
+import type { VScoreResult } from "./patent-types";
+import { calculateVScore, type VScoreInput } from "./v-score";
 
 // ─── 타입 정의 ───
 
@@ -51,6 +53,9 @@ export interface IntegratedReportData {
 
   /** 동적 체크리스트 */
   checklist: ChecklistItem[];
+
+  /** V-Score 통합 위험도 */
+  vScore?: VScoreResult;
 
   /** 종합 등급 */
   overallGrade: RiskGrade;
@@ -257,8 +262,34 @@ export function aggregateReport(
     ? generateChecklist(report.registryRisk.score)
     : [];
 
-  // 종합 등급 계산
-  const { grade, score } = calculateOverallGrade(report);
+  // V-Score 통합 위험도 산출
+  const vScoreInput: VScoreInput = {
+    riskScore: report.registryRisk?.score,
+    jeonseRatio: report.propertyInfo?.jeonseRatio,
+  };
+
+  // 계약분석 결과가 있으면 V-Score에 반영
+  if (report.contractRisk) {
+    // ContractAnalysisResult 형태로 변환
+    vScoreInput.contractResult = {
+      clauses: [],
+      missingClauses: [],
+      safetyScore: report.contractRisk.overallRisk === "low" ? 90
+        : report.contractRisk.overallRisk === "medium" ? 60 : 30,
+    };
+  }
+
+  // 시세분석 결과가 있으면 V-Score에 반영
+  if (report.priceAnalysis) {
+    vScoreInput.priceConfidence = report.priceAnalysis.confidence;
+  }
+
+  const vScore = calculateVScore(vScoreInput);
+  report.vScore = vScore;
+
+  // 종합 등급: V-Score 기반 (V-Score 없으면 기존 로직 폴백)
+  const grade = vScore.grade;
+  const score = vScore.score;
   report.overallGrade = grade;
   report.overallScore = score;
 

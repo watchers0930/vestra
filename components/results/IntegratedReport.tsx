@@ -13,6 +13,7 @@ import {
 import { Card, CardHeader, CardContent, Badge, RiskBadge, PdfDownloadButton } from "@/components/common";
 import { ScoreGauge } from "@/components/results";
 import DocumentChecklist from "@/components/jeonse/DocumentChecklist";
+import VScoreRadar from "@/components/results/VScoreRadar";
 import type { IntegratedReportData } from "@/lib/integrated-report";
 
 // ─── 등급 컬러/라벨 ───
@@ -98,6 +99,91 @@ export default function IntegratedReport({ data }: IntegratedReportProps) {
             </div>
           </div>
         </Card>
+
+        {/* ─── 1.5. V-Score 상세 ─── */}
+        {data.vScore && (
+          <Card>
+            <CardHeader title="V-Score 통합 위험도 분석" />
+            <CardContent>
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                {/* 레이더 차트 */}
+                <VScoreRadar sources={data.vScore.sources} size={260} />
+
+                {/* 소스별 기여도 */}
+                <div className="flex-1 space-y-3">
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <span className="text-3xl font-bold">{data.vScore.score}</span>
+                    <span className="text-sm text-muted">/ 100</span>
+                    <Badge variant={GRADE_CONFIG[data.vScore.grade]?.variant || "neutral"} size="sm">
+                      {data.vScore.grade}등급 ({data.vScore.gradeLabel})
+                    </Badge>
+                  </div>
+
+                  {/* 소스별 바 */}
+                  {data.vScore.sources.map((source) => (
+                    <div key={source.id} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium">
+                          {source.name}
+                          {!source.dataAvailable && (
+                            <span className="ml-1 text-muted">(추정)</span>
+                          )}
+                        </span>
+                        <span className="text-muted">
+                          {source.score}점 (가중치 {(source.weight * 100).toFixed(0)}%)
+                        </span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-gray-100">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            source.score >= 70
+                              ? "bg-emerald-500"
+                              : source.score >= 50
+                                ? "bg-amber-500"
+                                : "bg-red-500"
+                          }`}
+                          style={{ width: `${source.score}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* 상호작용 보정 */}
+                  {data.vScore.interactions.length > 0 && (
+                    <div className="mt-3 space-y-1">
+                      <p className="text-xs font-medium text-muted">복합 위험 보정</p>
+                      {data.vScore.interactions.map((interaction, i) => (
+                        <div
+                          key={i}
+                          className={`text-xs px-2 py-1 rounded ${
+                            interaction.adjustment < 0
+                              ? "bg-red-50 text-red-700"
+                              : "bg-green-50 text-green-700"
+                          }`}
+                        >
+                          {interaction.description} ({interaction.adjustment > 0 ? "+" : ""}
+                          {interaction.adjustment}점)
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 규칙 기반 설명 */}
+              {data.vScore.explanation.ruleBasedSummary && (
+                <div className="mt-4 rounded-lg bg-blue-50/50 p-3 text-sm text-secondary">
+                  <Shield size={14} className="inline mr-1 text-blue-500" />
+                  {data.vScore.explanation.ruleBasedSummary}
+                </div>
+              )}
+
+              <div className="mt-2 text-[10px] text-muted">
+                알고리즘: {data.vScore.metadata.algorithmId} | 신뢰도: {(data.vScore.metadata.confidenceLevel * 100).toFixed(0)}%
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* ─── 2. 권리분석 ─── */}
         {data.registryRisk && (
