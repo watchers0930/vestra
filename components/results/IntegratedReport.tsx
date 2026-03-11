@@ -14,6 +14,8 @@ import { Card, CardHeader, CardContent, Badge, RiskBadge, PdfDownloadButton } fr
 import { ScoreGauge } from "@/components/results";
 import DocumentChecklist from "@/components/jeonse/DocumentChecklist";
 import VScoreRadar from "@/components/results/VScoreRadar";
+import FraudRiskCard from "@/components/results/FraudRiskCard";
+import CrossAnalysisCard from "@/components/results/CrossAnalysisCard";
 import type { IntegratedReportData } from "@/lib/integrated-report";
 
 // ─── 등급 컬러/라벨 ───
@@ -183,6 +185,16 @@ export default function IntegratedReport({ data }: IntegratedReportProps) {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* ─── 1.6. 전세사기 위험 평가 ─── */}
+        {data.fraudRisk && (
+          <FraudRiskCard result={data.fraudRisk} />
+        )}
+
+        {/* ─── 1.7. 크로스 기능 교차 분석 ─── */}
+        {data.crossAnalysis && (
+          <CrossAnalysisCard result={data.crossAnalysis} />
         )}
 
         {/* ─── 2. 권리분석 ─── */}

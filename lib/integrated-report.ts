@@ -7,7 +7,7 @@
 
 import type { RiskScore, RiskGrade } from "./risk-scoring";
 import { generateChecklist, type ChecklistItem } from "./checklist-generator";
-import type { VScoreResult } from "./patent-types";
+import type { VScoreResult, FraudRiskResult, CrossAnalysisResult } from "./patent-types";
 import { calculateVScore, type VScoreInput } from "./v-score";
 
 // ─── 타입 정의 ───
@@ -56,6 +56,12 @@ export interface IntegratedReportData {
 
   /** V-Score 통합 위험도 */
   vScore?: VScoreResult;
+
+  /** 전세사기 위험 평가 */
+  fraudRisk?: FraudRiskResult;
+
+  /** 크로스 기능 교차 분석 */
+  crossAnalysis?: CrossAnalysisResult;
 
   /** 종합 등급 */
   overallGrade: RiskGrade;

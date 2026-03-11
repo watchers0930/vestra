@@ -11,6 +11,8 @@ import AiDisclaimer from "@/components/common/ai-disclaimer";
 import PdfDownloadButton from "@/components/common/pdf-download-button";
 import { FormInput, SliderInput, TabButtons } from "@/components/forms";
 import { LoadingSpinner } from "@/components/loading";
+import FraudRiskCard from "@/components/results/FraudRiskCard";
+import type { FraudRiskResult } from "@/lib/patent-types";
 
 interface JeonseAnalysis {
   needsRegistration: "required" | "recommended" | "optional";
@@ -47,6 +49,8 @@ export default function JeonsePage() {
 
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<JeonseAnalysis | null>(null);
+  const [fraudRisk, setFraudRisk] = useState<FraudRiskResult | null>(null);
+  const [fraudLoading, setFraudLoading] = useState(false);
   const [docLoading, setDocLoading] = useState(false);
   const [generatedDoc, setGeneratedDoc] = useState<GeneratedDocument | null>(null);
   const [activeDocType, setActiveDocType] = useState<"jeonse" | "lease">("jeonse");
@@ -56,6 +60,7 @@ export default function JeonsePage() {
   const handleAnalyze = async () => {
     setLoading(true);
     setAnalysis(null);
+    setFraudRisk(null);
 
     try {
       const res = await fetch("/api/generate-document", {
@@ -66,6 +71,23 @@ export default function JeonsePage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setAnalysis(data);
+
+      // 전세사기 위험도 자동 예측 (병렬)
+      setFraudLoading(true);
+      fetch("/api/fraud-risk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          // 전세가율 추정: 보증금 / 추정 시세 (보증금 기준 80% 추정)
+          jeonseRatio: Math.min(100, (formData.deposit / (formData.deposit * 1.25)) * 100),
+          isBrokerRegistered: true, // 기본값 (미입력)
+          hasDepositInsurance: false,
+        }),
+      })
+        .then((r) => r.json())
+        .then((fr) => { if (!fr.error) setFraudRisk(fr); })
+        .catch(() => {})
+        .finally(() => setFraudLoading(false));
 
       addAnalysis({
         type: "jeonse",
@@ -287,6 +309,14 @@ export default function JeonsePage() {
                 <h4 className="font-semibold mb-1">AI 종합 의견</h4>
                 <p className="leading-relaxed">{analysis.aiOpinion}</p>
               </Alert>
+
+              {/* 전세사기 위험도 */}
+              {fraudLoading && (
+                <LoadingSpinner message="전세사기 위험도 분석 중..." />
+              )}
+              {fraudRisk && !fraudLoading && (
+                <FraudRiskCard result={fraudRisk} />
+              )}
 
               {/* Document Generation */}
               <Card className="p-5">

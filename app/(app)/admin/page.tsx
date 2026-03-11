@@ -696,6 +696,44 @@ function AdminContent() {
                   </div>
                 </div>
               </Card>
+
+              {/* ─── 고유 알고리즘 현황 ─── */}
+              <Card className="p-6">
+                <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <ShieldCheck size={16} className="text-blue-600" />
+                  고유 알고리즘 현황 (v2.3.0)
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[
+                    { label: "V-Score 엔진", desc: "5대 소스 가중 복합 점수화", status: "운영중", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+                    { label: "전세사기 예측", desc: "15피처 SHAP 기여도 분석", status: "운영중", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+                    { label: "크로스 연계", desc: "6규칙 DAG 피드백 루프", status: "운영중", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+                    { label: "NLP 인터페이스", desc: "15 엔티티 Provider 패턴", status: "준비중", color: "bg-amber-50 text-amber-700 border-amber-200" },
+                  ].map((algo) => (
+                    <div key={algo.label} className={`rounded-lg border p-3 ${algo.color}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-semibold">{algo.label}</span>
+                        <span className="text-[10px] font-medium opacity-80">{algo.status}</span>
+                      </div>
+                      <p className="text-[11px] opacity-70">{algo.desc}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
+                  <div className="flex justify-between py-2 border-b border-border">
+                    <span className="text-muted">알고리즘 버전</span>
+                    <span className="font-medium text-blue-600">v2.3.0</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border">
+                    <span className="text-muted">파이프라인 단계</span>
+                    <span className="font-medium">13단계</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-border">
+                    <span className="text-muted">Gap 분석</span>
+                    <span className="font-medium text-emerald-600">100%</span>
+                  </div>
+                </div>
+              </Card>
             </div>
           )}
 
