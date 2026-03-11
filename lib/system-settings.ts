@@ -233,3 +233,78 @@ export async function setPGSetting(key: string, value: string): Promise<void> {
 export async function deletePGSetting(key: string): Promise<void> {
   await prisma.systemSetting.deleteMany({ where: { key } });
 }
+
+// ─── Scholar(학술논문) 프로바이더 설정 구조 ───
+
+export interface ScholarProviderConfig {
+  provider: string;
+  label: string;
+  apiKeyName: string;
+  baseUrl: string;
+  description: string;
+}
+
+export const SCHOLAR_PROVIDERS: ScholarProviderConfig[] = [
+  {
+    provider: "semantic_scholar",
+    label: "Semantic Scholar",
+    apiKeyName: "SEMANTIC_SCHOLAR_API_KEY",
+    baseUrl: "https://api.semanticscholar.org",
+    description: "영문 학술논문 검색 (무료, 100req/5min)",
+  },
+  {
+    provider: "riss",
+    label: "RISS (학술연구정보서비스)",
+    apiKeyName: "RISS_API_KEY",
+    baseUrl: "http://openapi.riss.kr",
+    description: "국내 학술논문 검색 (무료, 기관신청)",
+  },
+  {
+    provider: "kci",
+    label: "KCI (한국학술지인용색인)",
+    apiKeyName: "KCI_API_KEY",
+    baseUrl: "https://open.kci.go.kr",
+    description: "한국연구재단 논문 검색 (무료, 신청발급)",
+  },
+];
+
+/**
+ * DB에서 Scholar 카테고리 설정을 읽고 복호화하여 반환.
+ */
+export async function getScholarSettings(): Promise<Record<string, string>> {
+  try {
+    const rows = await prisma.systemSetting.findMany({
+      where: { category: "scholar" },
+    });
+    const settings: Record<string, string> = {};
+    for (const row of rows) {
+      try {
+        settings[row.key] = decrypt(row.value);
+      } catch {
+        // 복호화 실패 시 무시
+      }
+    }
+    return settings;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Scholar 설정 값을 암호화하여 DB에 저장.
+ */
+export async function setScholarSetting(key: string, value: string): Promise<void> {
+  const encrypted = encrypt(value);
+  await prisma.systemSetting.upsert({
+    where: { key },
+    update: { value: encrypted, category: "scholar" },
+    create: { key, value: encrypted, category: "scholar" },
+  });
+}
+
+/**
+ * Scholar 설정 삭제.
+ */
+export async function deleteScholarSetting(key: string): Promise<void> {
+  await prisma.systemSetting.deleteMany({ where: { key } });
+}

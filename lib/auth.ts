@@ -20,6 +20,15 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { getOAuthSettings } from "./system-settings";
+import { logAudit } from "./audit-log";
+
+// AUTH_SECRET 필수 검증 (런타임 요청 시 fail-fast)
+if (typeof window === "undefined" && !process.env.AUTH_SECRET && !process.env.NEXT_PHASE) {
+  throw new Error(
+    "AUTH_SECRET 환경변수가 설정되지 않았습니다. " +
+    "`openssl rand -base64 32`로 생성 후 .env에 추가하세요."
+  );
+}
 
 /** 역할별 기본 일일 제한 */
 export const ROLE_LIMITS: Record<string, number> = {
@@ -28,6 +37,33 @@ export const ROLE_LIMITS: Record<string, number> = {
   BUSINESS: 50,
   REALESTATE: 100,
   ADMIN: 9999,
+};
+
+// ─── 공통 이벤트 (감사 로그) ───
+
+const authEvents: NextAuthConfig["events"] = {
+  async signIn({ user, account }) {
+    logAudit({
+      userId: user.id,
+      action: "LOGIN",
+      detail: { provider: account?.provider || "credentials", email: user.email },
+    });
+  },
+  async signOut(message) {
+    // NextAuth v5: signOut receives { session } or { token } depending on strategy
+    const token = "token" in message ? message.token : null;
+    logAudit({
+      userId: (token as Record<string, unknown> | null)?.id as string | undefined,
+      action: "LOGOUT",
+    });
+  },
+  async createUser({ user }) {
+    logAudit({
+      userId: user.id,
+      action: "SIGNUP",
+      detail: { email: user.email },
+    });
+  },
 };
 
 // ─── 공통 콜백 + 페이지 설정 ───
@@ -75,13 +111,26 @@ const credentialsProvider = Credentials({
       where: { email: credentials.email as string },
     });
 
-    if (!user?.password || user.role !== "ADMIN") return null;
+    if (!user?.password || user.role !== "ADMIN") {
+      logAudit({
+        action: "LOGIN_FAILED",
+        detail: { email: credentials.email, reason: "invalid_user_or_role" },
+      });
+      return null;
+    }
 
     const isValid = await bcrypt.compare(
       credentials.password as string,
       user.password
     );
-    if (!isValid) return null;
+    if (!isValid) {
+      logAudit({
+        userId: user.id,
+        action: "LOGIN_FAILED",
+        detail: { email: credentials.email, reason: "invalid_password" },
+      });
+      return null;
+    }
 
     return {
       id: user.id,
@@ -133,6 +182,7 @@ export async function createDynamicAuth() {
     providers: buildProviders(settings),
     pages: { signIn: "/login" },
     callbacks: authCallbacks,
+    events: authEvents,
   });
 }
 
@@ -144,6 +194,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: buildProviders({}),
   pages: { signIn: "/login" },
   callbacks: authCallbacks,
+  events: authEvents,
 });
 
 // ---------------------------------------------------------------------------

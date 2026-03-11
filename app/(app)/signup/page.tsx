@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { clearAll } from "@/lib/store";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const [showAdmin, setShowAdmin] = useState(false);
 
   // 이미 로그인된 상태: localStorage 초기화 후 역할별 리다이렉트
   useEffect(() => {
@@ -22,27 +21,6 @@ export default function LoginPage() {
       }
     }
   }, [session, status, router]);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-    setLoading(false);
-    if (res?.error) {
-      setError("이메일 또는 비밀번호가 올바르지 않습니다");
-    } else {
-      router.push("/admin");
-    }
-  };
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
@@ -56,9 +34,12 @@ export default function LoginPage() {
           <p className="text-muted text-sm mt-1">AI 자산관리 플랫폼</p>
         </div>
 
-        {/* 로그인 카드 */}
+        {/* 회원가입 카드 */}
         <div className="bg-card rounded-2xl border border-border p-8 shadow-sm">
-          <h2 className="text-lg font-semibold text-center mb-6">로그인</h2>
+          <h2 className="text-lg font-semibold text-center mb-2">회원가입</h2>
+          <p className="text-center text-sm text-muted mb-6">
+            소셜 계정으로 간편하게 시작하세요
+          </p>
 
           <div className="space-y-3">
             {/* Google */}
@@ -72,7 +53,7 @@ export default function LoginPage() {
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
               </svg>
-              Google로 로그인
+              Google로 시작하기
             </button>
 
             {/* 카카오 */}
@@ -83,7 +64,7 @@ export default function LoginPage() {
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path d="M12 3C6.48 3 2 6.36 2 10.44c0 2.62 1.75 4.93 4.38 6.24l-1.12 4.12a.36.36 0 00.54.38l4.66-3.1c.5.06 1.01.1 1.54.1 5.52 0 10-3.36 10-7.5S17.52 3 12 3z" fill="#191919" />
               </svg>
-              카카오로 로그인
+              카카오로 시작하기
             </button>
 
             {/* 네이버 */}
@@ -94,7 +75,7 @@ export default function LoginPage() {
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path d="M16.27 3H7.73A4.73 4.73 0 003 7.73v8.54A4.73 4.73 0 007.73 21h8.54A4.73 4.73 0 0021 16.27V7.73A4.73 4.73 0 0016.27 3zm-2.15 12.38l-2.6-3.71v3.71H9.06V8.62h2.46l2.6 3.71V8.62h2.46v6.76h-2.46z" fill="white" />
               </svg>
-              네이버로 로그인
+              네이버로 시작하기
             </button>
           </div>
 
@@ -110,57 +91,21 @@ export default function LoginPage() {
             onClick={() => router.push("/rights")}
             className="w-full px-4 py-3 rounded-xl border border-border text-sm text-muted hover:text-foreground hover:bg-gray-50 transition-colors"
           >
-            게스트로 체험하기 (일 2회 제한)
+            가입 없이 체험하기 (일 2회 제한)
           </button>
-
-          {/* 관리자 로그인 */}
-          <div className="mt-6">
-            <button
-              onClick={() => setShowAdmin(!showAdmin)}
-              className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              {showAdmin ? "관리자 로그인 닫기" : "관리자 로그인"}
-            </button>
-
-            {showAdmin && (
-              <form onSubmit={handleAdminLogin} className="mt-3 space-y-3">
-                <input
-                  type="email"
-                  placeholder="관리자 이메일"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  required
-                />
-                <input
-                  type="password"
-                  placeholder="비밀번호"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  required
-                />
-                {error && (
-                  <p className="text-xs text-red-500">{error}</p>
-                )}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
-                >
-                  {loading ? "로그인 중..." : "관리자 로그인"}
-                </button>
-              </form>
-            )}
-          </div>
         </div>
 
-        {/* 회원가입 안내 */}
+        {/* 로그인 안내 */}
         <p className="text-center text-sm text-muted mt-6">
-          아직 계정이 없으신가요?{" "}
-          <Link href="/signup" className="text-primary font-medium hover:underline">
-            회원가입
+          이미 계정이 있으신가요?{" "}
+          <Link href="/login" className="text-primary font-medium hover:underline">
+            로그인
           </Link>
+        </p>
+
+        {/* 등급 안내 */}
+        <p className="text-center text-xs text-muted mt-2">
+          기업/부동산 등급은 가입 후 프로필에서 업그레이드할 수 있습니다
         </p>
       </div>
     </div>

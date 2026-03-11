@@ -215,8 +215,22 @@ function AdminContent() {
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [socialMsg, setSocialMsg] = useState<{ provider: string; type: "success" | "error"; text: string } | null>(null);
 
+  // Scholar(논문검색) 설정 상태
+  interface ScholarProvider {
+    label: string;
+    apiKey: string;
+    configured: boolean;
+    source: "db" | "env" | "none";
+    baseUrl: string;
+    description: string;
+  }
+  const [scholarProviders, setScholarProviders] = useState<Record<string, ScholarProvider>>({});
+  const [scholarForms, setScholarForms] = useState<Record<string, string>>({});
+  const [scholarLoading, setScholarLoading] = useState<string | null>(null);
+  const [scholarMsg, setScholarMsg] = useState<{ provider: string; type: "success" | "error"; text: string } | null>(null);
+
   // API KEY 서브탭
-  const [apiSubTab, setApiSubTab] = useState<"social" | "pg">("social");
+  const [apiSubTab, setApiSubTab] = useState<"social" | "pg" | "scholar">("social");
 
   // ---------------------------------------------------------------------------
   // Data Fetching
@@ -244,6 +258,7 @@ function AdminContent() {
         const data = await settingsRes.json();
         setSocialProviders(data.providers || {});
         setPgProviders(data.pgProviders || {});
+        setScholarProviders(data.scholarProviders || {});
       }
     } catch (e) {
       console.error("Admin data fetch error:", e);
@@ -407,6 +422,62 @@ function AdminContent() {
       setPgMsg({ provider, type: "error", text: "네트워크 오류가 발생했습니다." });
     }
     setPgLoading(null);
+  };
+
+  // Scholar(논문검색) 설정 저장
+  const handleScholarSave = async (provider: string) => {
+    setScholarMsg(null);
+    const apiKey = scholarForms[provider];
+    if (!apiKey) {
+      setScholarMsg({ provider, type: "error", text: "API Key를 입력해주세요." });
+      return;
+    }
+    setScholarLoading(provider);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: "scholar", provider, apiKey }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setScholarMsg({ provider, type: "success", text: data.message });
+        setScholarForms((prev) => ({ ...prev, [provider]: "" }));
+        const settingsRes = await fetch("/api/admin/settings");
+        if (settingsRes.ok) {
+          const updated = await settingsRes.json();
+          setScholarProviders(updated.scholarProviders || {});
+        }
+      } else {
+        setScholarMsg({ provider, type: "error", text: data.error || "저장에 실패했습니다." });
+      }
+    } catch {
+      setScholarMsg({ provider, type: "error", text: "네트워크 오류가 발생했습니다." });
+    }
+    setScholarLoading(null);
+  };
+
+  // Scholar(논문검색) 설정 초기화
+  const handleScholarReset = async (provider: string) => {
+    setScholarLoading(provider);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: "scholar", provider, apiKey: "" }),
+      });
+      if (res.ok) {
+        setScholarMsg({ provider, type: "success", text: "설정이 초기화되었습니다." });
+        const settingsRes = await fetch("/api/admin/settings");
+        if (settingsRes.ok) {
+          const updated = await settingsRes.json();
+          setScholarProviders(updated.scholarProviders || {});
+        }
+      }
+    } catch {
+      setScholarMsg({ provider, type: "error", text: "네트워크 오류가 발생했습니다." });
+    }
+    setScholarLoading(null);
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -1044,6 +1115,7 @@ function AdminContent() {
                 {([
                   { key: "social" as const, label: "간편로그인설정" },
                   { key: "pg" as const, label: "PG설정" },
+                  { key: "scholar" as const, label: "논문검색설정" },
                 ] as const).map((st) => (
                   <button
                     key={st.key}
@@ -1276,6 +1348,93 @@ function AdminContent() {
                   {Object.keys(pgProviders).length === 0 && (
                     <Card className="p-8 text-center text-gray-500 text-sm">
                       PG사 설정을 불러오는 중...
+                    </Card>
+                  )}
+                </div>
+              )}
+
+              {/* ── 논문검색설정 ── */}
+              {apiSubTab === "scholar" && (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-500">
+                    학술논문 검색 API 키를 등록하면 분석 결과에 관련 논문이 함께 표시됩니다.
+                  </p>
+
+                  {Object.entries(scholarProviders).map(([key, prov]) => (
+                    <Card key={key} className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold",
+                            key === "semantic_scholar" ? "bg-[#1857B6]" : key === "riss" ? "bg-[#004EA2]" : "bg-[#8B0029]"
+                          )}>
+                            {key === "semantic_scholar" ? "S" : key === "riss" ? "R" : "K"}
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-800">{prov.label}</h3>
+                            <p className="text-xs text-gray-400">{prov.description}</p>
+                          </div>
+                        </div>
+                        <Badge variant={prov.configured ? "success" : "neutral"}>
+                          {prov.configured ? (prov.source === "db" ? "DB 설정됨" : "환경변수") : "미설정"}
+                        </Badge>
+                      </div>
+
+                      {prov.configured && (
+                        <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">현재 API Key</p>
+                          <p className="text-sm font-mono text-gray-700">{prov.apiKey}</p>
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                          {prov.configured ? "새 " : ""}API Key
+                        </label>
+                        <input
+                          type="password"
+                          value={scholarForms[key] || ""}
+                          onChange={(e) => setScholarForms((prev) => ({ ...prev, [key]: e.target.value }))}
+                          placeholder={prov.configured ? "변경 시에만 입력" : "API Key를 입력하세요"}
+                          className="w-full px-3 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
+                        />
+                      </div>
+
+                      {scholarMsg?.provider === key && (
+                        <p className={cn(
+                          "text-xs font-medium mt-3",
+                          scholarMsg.type === "success" ? "text-emerald-600" : "text-red-500"
+                        )}>
+                          {scholarMsg.text}
+                        </p>
+                      )}
+
+                      <div className="flex gap-2 mt-4">
+                        <Button
+                          variant="primary"
+                          size="md"
+                          disabled={scholarLoading === key}
+                          onClick={() => handleScholarSave(key)}
+                        >
+                          {scholarLoading === key ? "저장 중..." : "저장"}
+                        </Button>
+                        {prov.configured && prov.source === "db" && (
+                          <Button
+                            variant="ghost"
+                            size="md"
+                            disabled={scholarLoading === key}
+                            onClick={() => handleScholarReset(key)}
+                          >
+                            초기화
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+
+                  {Object.keys(scholarProviders).length === 0 && (
+                    <Card className="p-8 text-center text-gray-500 text-sm">
+                      논문검색 서비스 설정을 불러오는 중...
                     </Card>
                   )}
                 </div>

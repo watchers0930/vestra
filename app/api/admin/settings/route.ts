@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { logAuditWithRequest } from "@/lib/audit-log";
+import { validateOrigin } from "@/lib/csrf";
 import {
   getOAuthSettings,
   setOAuthSetting,
@@ -7,9 +9,13 @@ import {
   getPGSettings,
   setPGSetting,
   deletePGSetting,
+  getScholarSettings,
+  setScholarSetting,
+  deleteScholarSetting,
   maskValue,
   OAUTH_PROVIDERS,
   PG_PROVIDERS,
+  SCHOLAR_PROVIDERS,
 } from "@/lib/system-settings";
 
 /**
@@ -22,7 +28,11 @@ export async function GET() {
     return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
   }
 
-  const [dbOAuth, dbPG] = await Promise.all([getOAuthSettings(), getPGSettings()]);
+  const [dbOAuth, dbPG, dbScholar] = await Promise.all([
+    getOAuthSettings(),
+    getPGSettings(),
+    getScholarSettings(),
+  ]);
 
   // OAuth 프로바이더
   const providers: Record<string, {
@@ -86,7 +96,34 @@ export async function GET() {
     };
   }
 
-  return NextResponse.json({ providers, pgProviders });
+  // Scholar 프로바이더
+  const scholarProviders: Record<string, {
+    label: string;
+    apiKey: string;
+    configured: boolean;
+    source: "db" | "env" | "none";
+    baseUrl: string;
+    description: string;
+  }> = {};
+
+  for (const p of SCHOLAR_PROVIDERS) {
+    const dbKey = dbScholar[p.apiKeyName];
+    const envKey = process.env[p.apiKeyName];
+
+    const hasDb = !!dbKey;
+    const hasEnv = !!envKey;
+
+    scholarProviders[p.provider] = {
+      label: p.label,
+      apiKey: hasDb ? maskValue(dbKey) : hasEnv ? maskValue(envKey) : "",
+      configured: hasDb || hasEnv,
+      source: hasDb ? "db" : hasEnv ? "env" : "none",
+      baseUrl: p.baseUrl,
+      description: p.description,
+    };
+  }
+
+  return NextResponse.json({ providers, pgProviders, scholarProviders });
 }
 
 /**
@@ -95,6 +132,9 @@ export async function GET() {
  * Body: { category: "oauth"|"pg", provider: string, clientId/clientKey: string, clientSecret/secretKey: string }
  */
 export async function PUT(req: NextRequest) {
+  const csrfError = validateOrigin(req);
+  if (csrfError) return csrfError;
+
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
@@ -102,6 +142,23 @@ export async function PUT(req: NextRequest) {
 
   const body = await req.json();
   const { category = "oauth", provider } = body;
+
+  // Scholar 설정
+  if (category === "scholar") {
+    const { apiKey } = body;
+    const config = SCHOLAR_PROVIDERS.find((p) => p.provider === provider);
+    if (!config) {
+      return NextResponse.json({ error: "지원하지 않는 논문검색 서비스" }, { status: 400 });
+    }
+
+    if (!apiKey) {
+      await deleteScholarSetting(config.apiKeyName);
+      return NextResponse.json({ message: `${config.label} 설정이 초기화되었습니다.` });
+    }
+
+    await setScholarSetting(config.apiKeyName, apiKey);
+    return NextResponse.json({ message: `${config.label} API 키가 저장되었습니다.` });
+  }
 
   // PG 설정
   if (category === "pg") {
@@ -151,6 +208,14 @@ export async function PUT(req: NextRequest) {
 
   await setOAuthSetting(config.clientIdKey, clientId);
   await setOAuthSetting(config.clientSecretKey, clientSecret);
+
+  // 감사 로그: 설정 변경
+  await logAuditWithRequest({
+    userId: session.user.id,
+    action: "ADMIN_SETTINGS_CHANGE",
+    target: provider,
+    detail: { category, provider, action: "update" },
+  });
 
   return NextResponse.json({ message: `${config.label} 소셜 로그인이 설정되었습니다.` });
 }

@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAuditWithRequest } from "@/lib/audit-log";
+import { validateOrigin } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
+  const csrfError = validateOrigin(req);
+  if (csrfError) return csrfError;
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "인증 필요" }, { status: 401 });
@@ -39,12 +44,20 @@ export async function POST(req: NextRequest) {
   }
 
   // 인증 신청: pending 상태로 변경 (관리자 승인 대기)
+  // PII 암호화는 Prisma 미들웨어가 자동 처리
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
       businessNumber: businessNumber.trim(),
       verifyStatus: "pending",
     },
+  });
+
+  // 감사 로그: 역할 변경 신청
+  await logAuditWithRequest({
+    userId: session.user.id,
+    action: "ROLE_CHANGE",
+    detail: { requestedRole: role, status: "pending" },
   });
 
   return NextResponse.json({ message: "인증 신청이 접수되었습니다. 관리자 승인 후 반영됩니다." });
