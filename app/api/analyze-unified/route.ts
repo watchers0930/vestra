@@ -13,6 +13,9 @@ import { simulateRedemption } from "@/lib/redemption-simulator";
 import { propagateConfidence } from "@/lib/confidence-engine";
 import { selfVerify } from "@/lib/self-verification";
 import { calculateVScore } from "@/lib/v-score";
+import { evaluateCrossAnalysis } from "@/lib/cross-analysis";
+import { predictFraudRisk, extractFeaturesFromRiskScore, type FraudModelInput } from "@/lib/fraud-risk-model";
+import { createEventBus } from "@/lib/event-bus";
 
 /** 원 단위 숫자를 "X억 Y만원" 형태로 변환 */
 function formatKoreanPrice(won: number): string {
@@ -283,6 +286,36 @@ export async function POST(req: NextRequest) {
       compositeReliability: confidencePropagation.compositeReliability,
     });
 
+    // 12단계: 크로스 기능 교차 분석 (특허 H-3: 피드백 루프)
+    const crossAnalysis = evaluateCrossAnalysis({
+      riskScore,
+      jeonseRatio: jeonseRatio || undefined,
+      estimatedPrice,
+      vScoreChange: undefined, // 첫 분석 시 이전 V-Score 없음
+    });
+
+    // 13단계: 전세사기 위험 예측 (특허 H-2: SHAP 기여도 분석)
+    const fraudFeatures = extractFeaturesFromRiskScore(riskScore);
+    if (jeonseRatio) fraudFeatures.jeonseRatio = jeonseRatio;
+    const fraudRisk = predictFraudRisk(fraudFeatures as FraudModelInput);
+
+    // 이벤트 버스: 분석 완료 이벤트 발행 (서버리스 per-request)
+    const eventBus = createEventBus();
+    eventBus.emit({
+      type: "REGISTRY_ANALYZED",
+      timestamp: new Date().toISOString(),
+      data: { totalScore: riskScore.totalScore, factorCount: riskScore.factors.length } as Record<string, unknown>,
+      sourceModule: "analyze-unified",
+    });
+    if (vScore) {
+      eventBus.emit({
+        type: "VSCORE_UPDATED",
+        timestamp: new Date().toISOString(),
+        data: { score: vScore.score, grade: vScore.grade } as Record<string, unknown>,
+        sourceModule: "analyze-unified",
+      });
+    }
+
     return NextResponse.json({
       propertyInfo,
       riskAnalysis,
@@ -296,6 +329,9 @@ export async function POST(req: NextRequest) {
       confidencePropagation,
       selfVerification,
       vScore,
+      crossAnalysis,
+      fraudRisk,
+      eventLog: eventBus.getHistory(),
       dataSource: {
         registryParsed: true,
         molitAvailable: !!marketData,
