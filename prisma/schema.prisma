@@ -76,6 +76,10 @@ model User {
   analyses       Analysis[]
   assets         Asset[]
 
+  // 모니터링 & 검증
+  monitoredProperties MonitoredProperty[]
+  verificationRequests VerificationRequest[]
+
   // 구독 & 알림
   subscription        Subscription?
   notificationSetting NotificationSetting?
@@ -171,17 +175,18 @@ model Payment {
 // ---------------------------------------------------------------------------
 
 model NotificationSetting {
-  id             String  @id @default(cuid())
-  userId         String  @unique
-  emailEnabled   Boolean @default(true)
-  kakaoEnabled   Boolean @default(false)
-  priceAlert     Boolean @default(true)
-  analysisReport Boolean @default(true)
-  systemNotice   Boolean @default(true)
-  marketingEmail Boolean @default(false)
-  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id               String  @id @default(cuid())
+  userId           String  @unique
+  emailEnabled     Boolean @default(true)
+  kakaoEnabled     Boolean @default(false)
+  kakaoPhoneNumber String? // 카카오 알림톡 수신 전화번호
+  priceAlert       Boolean @default(true)
+  analysisReport   Boolean @default(true)
+  systemNotice     Boolean @default(true)
+  marketingEmail   Boolean @default(false)
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 // ---------------------------------------------------------------------------
@@ -197,6 +202,25 @@ model Announcement {
 }
 
 // ---------------------------------------------------------------------------
+// 감사 로그 (Audit Trail)
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String   // LOGIN | LOGOUT | LOGIN_FAILED | ADMIN_USER_UPDATE | ADMIN_USER_DELETE | ADMIN_SETTINGS_CHANGE | ANALYSIS_REQUEST | RATE_LIMIT_EXCEEDED | SIGNUP | ROLE_CHANGE
+  target    String?  // 대상 리소스 ID (userId, settingKey 등)
+  detail    String?  @db.Text // JSON 형태 상세 정보
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
 // 시스템 설정 (관리자 대시보드에서 관리)
 // ---------------------------------------------------------------------------
 
@@ -205,4 +229,100 @@ model SystemSetting {
   value     String   @db.Text         // AES-256-GCM 암호화된 값
   category  String   @default("oauth")
   updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// 등기변동 모니터링
+// ---------------------------------------------------------------------------
+
+model MonitoredProperty {
+  id            String            @id @default(cuid())
+  userId        String
+  address       String
+  lastCheckedAt DateTime?
+  lastHash      String?           // 등기부 내용 해시 (변동 감지용)
+  status        String            @default("active") // active | paused | expired
+  alerts        MonitoringAlert[]
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([userId, address])
+  @@index([status])
+}
+
+model MonitoringAlert {
+  id                  String            @id @default(cuid())
+  monitoredPropertyId String
+  changeType          String            // mortgage_added | mortgage_removed | seizure_added | ownership_changed | etc.
+  summary             String
+  detail              String?           @db.Text
+  riskLevel           String            @default("medium") // low | medium | high | critical
+  isRead              Boolean           @default(false)
+  monitoredProperty   MonitoredProperty @relation(fields: [monitoredPropertyId], references: [id], onDelete: Cascade)
+  createdAt           DateTime          @default(now())
+
+  @@index([monitoredPropertyId])
+  @@index([isRead])
+}
+
+// ---------------------------------------------------------------------------
+// 상호검증 (임대인/임차인)
+// ---------------------------------------------------------------------------
+
+model VerificationRequest {
+  id              String         @id @default(cuid())
+  requesterId     String
+  targetEmail     String         // 상대방 이메일
+  targetRole      String         // landlord | tenant
+  propertyAddress String
+  status          String         @default("pending") // pending | accepted | rejected | expired
+  message         String?        // 요청 메시지
+  sharedReports   SharedReport[]
+  expiresAt       DateTime
+  requester       User           @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([targetEmail])
+  @@index([requesterId])
+  @@index([status])
+}
+
+model SharedReport {
+  id                    String              @id @default(cuid())
+  verificationRequestId String
+  analysisId            String
+  sharedBy              String              // userId of report owner
+  consentGiven          Boolean             @default(false)
+  consentAt             DateTime?
+  verificationRequest   VerificationRequest @relation(fields: [verificationRequestId], references: [id], onDelete: Cascade)
+  createdAt             DateTime            @default(now())
+
+  @@index([verificationRequestId])
+}
+
+// ---------------------------------------------------------------------------
+// 전세사기 피해사례 데이터
+// ---------------------------------------------------------------------------
+
+model FraudCase {
+  id          String    @id @default(cuid())
+  address     String
+  latitude    Float
+  longitude   Float
+  caseType    String    // jeonse_fraud | deposit_fraud | rental_fraud | other
+  amount      Float?    // 피해금액 (원)
+  victimCount Int?      // 피해 세대수
+  reportDate  DateTime?
+  source      String    // government | news | court | user_report
+  sourceUrl   String?
+  summary     String?   @db.Text
+  verified    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([latitude, longitude])
+  @@index([caseType])
+  @@index([reportDate])
+  @@index([verified])
 }
