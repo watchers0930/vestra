@@ -35,12 +35,13 @@ import {
 import { cn } from "@/lib/utils";
 import { Card, Button, Badge, PageHeader } from "@/components/common";
 import { KpiCard } from "@/components/results";
+import { MlTrainingTab } from "@/components/admin/MlTrainingTab";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "account" | "apikey";
+type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "ml-training" | "account" | "apikey";
 
 interface Stats {
   totalUsers: number;
@@ -140,7 +141,7 @@ function AdminContent() {
 
   // URL ?tab= 파라미터에서 현재 탭 읽기
   const urlTab = searchParams.get("tab") as Tab | null;
-  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "account", "apikey"].includes(urlTab)
+  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "ml-training", "account", "apikey"].includes(urlTab)
     ? urlTab
     : "overview";
 
@@ -559,6 +560,7 @@ function AdminContent() {
     { key: "verifications", label: `인증 관리${pending.length > 0 ? ` (${pending.length})` : ""}` },
     { key: "analyses", label: "분석 이력" },
     { key: "announcements", label: "공지사항" },
+    { key: "ml-training", label: "ML 학습관리" },
     { key: "apikey", label: "API KEY" },
     { key: "account", label: "계정 설정" },
   ];
@@ -1479,6 +1481,11 @@ function AdminContent() {
               )}
             </div>
           )}
+
+          {/* ============================================================= */}
+          {/* ML 학습관리 탭                                                  */}
+          {/* ============================================================= */}
+          {tab === "ml-training" && <MlTrainingTab />}
 
           {/* ============================================================= */}
           {/* 계정 설정 탭                                                    */}

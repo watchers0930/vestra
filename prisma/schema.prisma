@@ -329,3 +329,28 @@ model FraudCase {
   @@index([reportDate])
   @@index([verified])
 }
+
+// ---------------------------------------------------------------------------
+// ML 학습 데이터 (도메인 특화 NLP 모델 학습용)
+// ---------------------------------------------------------------------------
+
+model TrainingData {
+  id               String   @id @default(cuid())
+  rawTextEncrypted String   @db.Text              // AES-256-GCM 암호화된 원문
+  rawTextHash      String                         // 중복 검색용 SHA-256 해시
+  parsedData       Json?                          // ParsedRegistry JSON
+  status           String   @default("pending")   // pending | reviewed | approved | rejected
+  reviewNotes      String?  @db.Text
+  sourceFileName   String
+  sourceType       String                         // pdf | text | image
+  confidence       Int      @default(0)           // 등기부등본 감지 신뢰도 0-100
+  charCount        Int      @default(0)           // 원문 글자 수
+  gapguCount       Int      @default(0)           // 갑구 항목 수
+  eulguCount       Int      @default(0)           // 을구 항목 수
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([rawTextHash])
+  @@index([status])
+  @@index([createdAt])
+}
