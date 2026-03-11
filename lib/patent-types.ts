@@ -110,7 +110,7 @@ export interface EnsemblePredictionResult {
 
 export interface TemporalPattern {
   id: string;
-  patternType: "rapid_transfer" | "pre_seizure_mortgage" | "claim_acceleration" | "mortgage_stacking";
+  patternType: "rapid_transfer" | "pre_seizure_mortgage" | "claim_acceleration" | "mortgage_stacking" | "suspicious_cancellation" | "cancel_before_sale" | "simultaneous_cancellation" | "cancel_without_transfer";
   severity: "critical" | "high" | "medium";
   confidence: number;
   description: string;

@@ -6,6 +6,7 @@ import { Home, Shield, FileText, CheckCircle, Copy, AlertTriangle, Download, Che
 import { cn, formatKRW } from "@/lib/utils";
 import { addAnalysis } from "@/lib/store";
 import { PageHeader, Card, Alert, Button } from "@/components/common";
+import { ScholarPapers } from "@/components/results";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
 import PdfDownloadButton from "@/components/common/pdf-download-button";
 import { FormInput, SliderInput, TabButtons } from "@/components/forms";
@@ -349,6 +350,11 @@ export default function JeonsePage() {
               </Card>
             </div>
           )}
+          {/* 관련 학술논문 */}
+          <div className="mt-6">
+            <ScholarPapers keywords={["전세 보증금", "임차인 보호", formData.propertyAddress?.split(" ").slice(0, 2).join(" ") || "부동산"].filter(Boolean)} />
+          </div>
+
           {/* 면책 조항 */}
           <Alert variant="warning" className="mt-6">
             <strong>면책 조항</strong><br />

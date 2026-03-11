@@ -5,6 +5,8 @@
  * XML 응답을 파싱하여 구조화된 거래 데이터로 변환.
  */
 
+import { apiCache, APICache } from "./api-cache";
+
 // ─── 타입 정의 ───
 
 export interface RealTransaction {
@@ -258,7 +260,8 @@ function parseTransactions(xml: string): RealTransaction[] {
     const dealAmountRaw = extractVal(item, "dealAmount", "거래금액").replace(/,/g, "");
     const dealAmount = parseInt(dealAmountRaw, 10) * 10000;
 
-    if (isNaN(dealAmount) || dealAmount <= 0) continue;
+    // 금액 유효성: 0 이하 또는 100억 초과는 데이터 오류로 판단
+    if (isNaN(dealAmount) || dealAmount <= 0 || dealAmount > 10_000_000_000) continue;
 
     items.push({
       dealAmount,
@@ -287,6 +290,11 @@ export async function fetchRealTransactions(
   lawdCd: string,
   dealYmd: string
 ): Promise<RealTransaction[]> {
+  // 캐시 확인 (실거래 데이터는 30분 캐시)
+  const cacheKey = APICache.makeKey("molit-trade", lawdCd, dealYmd);
+  const cached = apiCache.get<RealTransaction[]>(cacheKey);
+  if (cached) return cached;
+
   const serviceKey = process.env.MOLIT_API_KEY;
 
   if (!serviceKey) {
@@ -307,7 +315,9 @@ export async function fetchRealTransactions(
 
   const xml = await molitFetch(`${baseUrl}?${params.toString()}`);
   if (!xml) return [];
-  return parseTransactions(xml);
+  const result = parseTransactions(xml);
+  apiCache.set(cacheKey, result, 30 * 60 * 1000); // 30분
+  return result;
 }
 
 /**

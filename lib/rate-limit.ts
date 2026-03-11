@@ -28,6 +28,11 @@ export async function rateLimit(
   limit: number = 30,
   windowMs: number = 60 * 1000
 ): Promise<RateLimitResult> {
+  // 명시적으로 RATE_LIMIT_BYPASS=true 설정 시에만 바이패스 (로컬 개발용)
+  if (process.env.RATE_LIMIT_BYPASS === "true") {
+    return { success: true, remaining: limit, reset: Date.now() + windowMs };
+  }
+
   const now = new Date();
   const resetTime = new Date(now.getTime() + windowMs);
 
@@ -74,6 +79,14 @@ export async function checkDailyUsage(
   userId: string,
   dailyLimit: number
 ): Promise<RateLimitResult> {
+  // 명시적으로 RATE_LIMIT_BYPASS=true 설정 시에만 바이패스 (로컬 개발용)
+  if (process.env.RATE_LIMIT_BYPASS === "true") {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    return { success: true, remaining: dailyLimit, reset: tomorrow.getTime() };
+  }
+
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const id = `daily:${userId}:${today}`;
   const tomorrow = new Date();

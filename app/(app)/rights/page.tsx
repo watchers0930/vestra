@@ -18,6 +18,10 @@ import {
   Brain,
   ShieldCheck,
   Database as DatabaseIcon,
+  Info,
+  ShieldAlert,
+  FileCheck,
+  Landmark,
 } from "lucide-react";
 import { formatKRW, cn } from "@/lib/utils";
 import { addAnalysis, addOrUpdateAsset } from "@/lib/store";
@@ -28,7 +32,7 @@ import type { ValidationResult } from "@/lib/validation-engine";
 import { PageHeader, Card, Alert } from "@/components/common";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
 import PdfDownloadButton from "@/components/common/pdf-download-button";
-import { ScoreGauge } from "@/components/results";
+import { ScoreGauge, ScholarPapers } from "@/components/results";
 import { SliderInput } from "@/components/forms";
 import type { KakaoGeocoderResult } from "@/components/prediction/KakaoMap";
 
@@ -661,6 +665,107 @@ export default function RightsAnalysisPage() {
             </div>
             <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-line">{result.aiOpinion}</p>
           </div>
+
+          {/* 공신력 부재 경고 */}
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200 p-5 shadow-sm">
+            <div className="flex items-start gap-3">
+              <ShieldAlert size={20} className="text-amber-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="text-sm font-semibold text-amber-800 mb-2">등기부등본의 한계: 공신력 부재</h3>
+                <p className="text-xs leading-relaxed text-amber-700">
+                  대한민국 등기부등본에는 법적 <strong>&apos;공신력&apos;</strong>이 없습니다.
+                  등기부는 정보를 공개(공시)할 뿐, 그 내용이 실제와 다르더라도 이를 믿고 거래한 사람을 국가가 완벽히 보호하지 않습니다.
+                  서류 위조 등으로 잘못 기재된 등기를 믿고 계약했더라도 진정한 권리자가 나타나면 매수인이 손해를 볼 수 있습니다.
+                </p>
+                <div className="mt-3 flex items-center gap-2 text-xs text-amber-600">
+                  <Info size={12} />
+                  <span>반드시 <strong>&apos;말소 사항 포함&apos;</strong>으로 등기부를 발급받아 과거 이력까지 확인하세요.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 안전 체크리스트 */}
+          <Card className="p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <FileCheck size={18} className="text-blue-600" />
+              거래 전 안전 체크리스트
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* 세금 체납 확인 */}
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-start gap-2.5">
+                  <Landmark size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-red-800">세금 체납 확인</p>
+                    <p className="text-xs text-red-600 mt-1 leading-relaxed">
+                      집주인의 <strong>국세·지방세 완납증명원</strong>을 반드시 요구하세요.
+                      체납 세금(당해세)은 근저당보다 <strong>우선 변제</strong>되어 보증금 회수에 직접 영향을 줍니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 말소 이력 은행 확인 */}
+              <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="flex items-start gap-2.5">
+                  <AlertTriangle size={16} className="text-orange-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-orange-800">말소 이력 직접 확인</p>
+                    <p className="text-xs text-orange-600 mt-1 leading-relaxed">
+                      최근 1년 내 근저당이 말소되었다면, 해당 <strong>은행에 직접 전화</strong>하여
+                      정상 상환 여부를 확인하세요. 말소 서류 위조로 등기부만 깨끗해진 경우가 있습니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 전세보증보험 */}
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-2.5">
+                  <ShieldCheck size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-800">전세보증보험 가입</p>
+                    <p className="text-xs text-blue-600 mt-1 leading-relaxed">
+                      <strong>HUG(주택도시보증공사)</strong> 또는 <strong>SGI(서울보증보험)</strong>의
+                      전세보증금반환보증에 반드시 가입하세요. 임대인 부도 시 보증금을 보장합니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 권원 보험 */}
+              <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+                <div className="flex items-start gap-2.5">
+                  <Shield size={16} className="text-indigo-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-indigo-800">권원보험 (Title Insurance)</p>
+                    <p className="text-xs text-indigo-600 mt-1 leading-relaxed">
+                      소유권 관련 사기·서류 위조·등기 오류로 인한 피해를 보상하는 보험입니다.
+                      매매가 3억 기준 일시불 약 <strong>10~15만원</strong>으로 가입 가능합니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 등기 상태 유지 특약 */}
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg md:col-span-2">
+                <div className="flex items-start gap-2.5">
+                  <FileText size={16} className="text-emerald-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-emerald-800">등기 상태 유지 특약 명시</p>
+                    <p className="text-xs text-emerald-600 mt-1 leading-relaxed">
+                      계약서에 <strong>&quot;잔금일까지 현재의 등기 상태를 유지하며, 위반 시 계약 해제 및 배액 배상한다&quot;</strong>는
+                      취지의 특약을 반드시 기재하세요. 계약 후 잔금일 전에 근저당 추가, 가압류 등이 발생하는 것을 방지합니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* 관련 학술논문 */}
+          <ScholarPapers keywords={["부동산 권리분석", "등기부등본", result.propertyInfo.address?.split(" ").slice(0, 2).join(" ") || "부동산"].filter(Boolean)} />
 
           {/* 면책 조항 */}
           <Alert variant="warning">

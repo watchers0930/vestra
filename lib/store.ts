@@ -1,5 +1,6 @@
 // localStorage 기반 분석 결과 저장소
 // 사용자가 각 모듈에서 분석한 결과를 저장하고, 대시보드에서 불러옴
+// XSS 방어를 위해 Base64 인코딩 적용
 
 export interface AnalysisRecord {
   id: string;
@@ -26,6 +27,25 @@ export interface StoredAsset {
 const ANALYSIS_KEY = "vestra_analyses";
 const ASSETS_KEY = "vestra_assets";
 
+// ─── 인코딩/디코딩 (XSS 시 평문 노출 방지) ───
+
+function encode(data: unknown): string {
+  return btoa(encodeURIComponent(JSON.stringify(data)));
+}
+
+function decode<T>(raw: string): T | null {
+  try {
+    return JSON.parse(decodeURIComponent(atob(raw)));
+  } catch {
+    // 레거시 평문 데이터 호환
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+}
+
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
@@ -35,7 +55,8 @@ export function getAnalyses(): AnalysisRecord[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(ANALYSIS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    return decode<AnalysisRecord[]>(raw) ?? [];
   } catch {
     return [];
   }
@@ -51,7 +72,7 @@ export function addAnalysis(record: Omit<AnalysisRecord, "id" | "date">): Analys
   analyses.unshift(newRecord);
   // 최대 50건
   if (analyses.length > 50) analyses.splice(50);
-  localStorage.setItem(ANALYSIS_KEY, JSON.stringify(analyses));
+  localStorage.setItem(ANALYSIS_KEY, encode(analyses));
   return newRecord;
 }
 
@@ -60,7 +81,8 @@ export function getAssets(): StoredAsset[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(ASSETS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    return decode<StoredAsset[]>(raw) ?? [];
   } catch {
     return [];
   }
@@ -72,7 +94,7 @@ export function addOrUpdateAsset(asset: Omit<StoredAsset, "id" | "lastAnalyzedDa
 
   if (existing) {
     Object.assign(existing, asset, { lastAnalyzedDate: new Date().toISOString() });
-    localStorage.setItem(ASSETS_KEY, JSON.stringify(assets));
+    localStorage.setItem(ASSETS_KEY, encode(assets));
     return existing;
   }
 
@@ -82,18 +104,18 @@ export function addOrUpdateAsset(asset: Omit<StoredAsset, "id" | "lastAnalyzedDa
     lastAnalyzedDate: new Date().toISOString(),
   };
   assets.unshift(newAsset);
-  localStorage.setItem(ASSETS_KEY, JSON.stringify(assets));
+  localStorage.setItem(ASSETS_KEY, encode(assets));
   return newAsset;
 }
 
 export function removeAnalysis(id: string): void {
   const analyses = getAnalyses().filter((a) => a.id !== id);
-  localStorage.setItem(ANALYSIS_KEY, JSON.stringify(analyses));
+  localStorage.setItem(ANALYSIS_KEY, encode(analyses));
 }
 
 export function removeAsset(id: string): void {
   const assets = getAssets().filter((a) => a.id !== id);
-  localStorage.setItem(ASSETS_KEY, JSON.stringify(assets));
+  localStorage.setItem(ASSETS_KEY, encode(assets));
 }
 
 export function clearAll(): void {

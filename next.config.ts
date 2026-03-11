@@ -18,6 +18,21 @@ const nextConfig: NextConfig = {
             key: "Strict-Transport-Security",
             value: "max-age=31536000; includeSubDomains",
           },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' https://t1.daumcdn.net https://dapi.kakao.com",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https://*.daumcdn.net https://*.kakao.com https://lh3.googleusercontent.com",
+              "font-src 'self' data:",
+              "connect-src 'self' https://api.openai.com https://*.neon.tech https://dapi.kakao.com https://api.odcloud.kr https://apis.data.go.kr",
+              "frame-src 'none'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join("; "),
+          },
         ],
       },
     ];

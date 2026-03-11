@@ -20,7 +20,7 @@ import {
 } from "recharts";
 import { PageHeader, Card, Alert } from "@/components/common";
 import { SliderInput } from "@/components/forms";
-import { InfoRow } from "@/components/results";
+import { InfoRow, ScholarPapers } from "@/components/results";
 
 type TaxTab = "acquisition" | "holding" | "transfer";
 
@@ -342,6 +342,14 @@ export default function TaxPage() {
           </Card>
         </div>
       )}
+      {/* 관련 학술논문 */}
+      <div className="mt-8">
+        <ScholarPapers keywords={[
+          "부동산 세금",
+          activeTab === "acquisition" ? "취득세" : activeTab === "holding" ? "재산세 종합부동산세" : "양도소득세",
+        ]} />
+      </div>
+
       {/* 면책 조항 */}
       <Alert variant="warning" className="mt-8">
         <strong>면책 조항</strong><br />

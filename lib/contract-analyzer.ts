@@ -308,6 +308,20 @@ const REQUIRED_CLAUSES: RequiredClauseCheck[] = [
     description: "부동산 중개보수의 부담 주체(통상 쌍방 각 부담)를 명시하면 분쟁을 예방합니다.",
     detectPatterns: [/중개\s*보수/, /중개\s*수수료/, /복비/, /중개.*부담/],
   },
+  {
+    id: "registry_maintenance",
+    title: "등기 상태 유지 특약",
+    importance: "high",
+    description: "잔금일까지 등기부 상태를 현 상태 그대로 유지하고, 위반 시 계약 해제 및 배액 배상을 명시하는 특약이 필요합니다. 계약 후 잔금 지급 전에 근저당 추가 설정, 가압류 등이 발생하면 보증금을 잃을 수 있습니다.",
+    detectPatterns: [/등기.*유지/, /등기.*상태.*유지/, /잔금.*등기/, /등기부.*변동.*금지/, /등기.*현\s*상태/, /권리.*변동.*금지/],
+  },
+  {
+    id: "tax_clearance",
+    title: "세금 체납 확인 조항",
+    importance: "high",
+    description: "임대인(매도인)의 국세·지방세 완납증명원 제출을 요구하는 조항이 필요합니다. 체납 세금(당해세)은 근저당보다 우선 변제되어 보증금 회수에 직접 영향을 줍니다.",
+    detectPatterns: [/완납\s*증명/, /세금\s*체납/, /국세.*완납/, /지방세.*완납/, /납세\s*증명/, /체납.*확인/],
+  },
 ];
 
 // ─── F. 조항 상호작용 규칙 (특허 청구항: 교차 위험 분석) ───
@@ -340,6 +354,20 @@ const CLAUSE_INTERACTION_RULES: ClauseInteractionRule[] = [
     interactionType: "imbalanced",
     impactMultiplier: 1.4,
     description: "과도한 원상회복 의무 + 수리비 기준 미명시: 퇴거 시 과도한 비용 부담 위험",
+  },
+  {
+    id: "no_registry_no_deposit_protection",
+    clauseIds: ["registry_maintenance", "deposit_protection"],
+    interactionType: "compound_warning",
+    impactMultiplier: 1.6,
+    description: "등기 상태 유지 특약 누락 + 보증금보호 미명시: 계약 후 잔금일 전 등기 변동 시 보증금 전액 미보호 상태",
+  },
+  {
+    id: "no_tax_clearance_high_deposit",
+    clauseIds: ["tax_clearance", "deposit"],
+    interactionType: "compound_warning",
+    impactMultiplier: 1.4,
+    description: "세금 체납 확인 누락 + 고액보증금: 체납 세금이 보증금보다 우선 변제되어 전액 미회수 위험",
   },
 ];
 
@@ -411,6 +439,25 @@ function analyzeClauseInteractions(
       if (excessiveRestoration && noRepairStandard) {
         matched = true;
         matchedClauses.push("과도한 원상회복", "수리비 기준 없음");
+      }
+    }
+
+    if (rule.id === "no_registry_no_deposit_protection") {
+      const noRegistry = missingIds.has("registry_maintenance");
+      const noDeposit = missingIds.has("deposit_protection");
+      if (noRegistry && noDeposit) {
+        matched = true;
+        matchedClauses.push("등기 유지 특약 누락", "보증금보호 누락");
+      }
+    }
+
+    if (rule.id === "no_tax_clearance_high_deposit") {
+      const noTax = missingIds.has("tax_clearance");
+      const highDeposit = /[3-9]\s*억|[1-9]\d\s*억|\d{3,}\s*백만/.test(fullText)
+        || /보증금.*[3-9]억|보증금.*[1-9]\d억/.test(fullText);
+      if (noTax && highDeposit) {
+        matched = true;
+        matchedClauses.push("세금 체납 확인 누락", "고액보증금");
       }
     }
 

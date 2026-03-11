@@ -8,6 +8,11 @@
  * 미설정 시 graceful fallback (빈 배열 반환).
  */
 
+import { apiCache, APICache } from "./api-cache";
+
+/** 검색어 최대 길이 */
+const MAX_QUERY_LENGTH = 100;
+
 export interface CourtCase {
   caseNumber: string;     // 사건번호
   caseName: string;       // 사건명
@@ -37,13 +42,26 @@ export async function searchCourtCases(
   const apiKey = process.env.LAW_API_KEY;
   if (!apiKey) return [];
 
+  // 입력 검증: 길이 제한 + 특수문자 제거
+  if (!query || typeof query !== "string") return [];
+  const sanitizedQuery = query
+    .replace(/[<>&"'\\]/g, "")
+    .trim()
+    .slice(0, MAX_QUERY_LENGTH);
+  if (sanitizedQuery.length < 2) return [];
+
+  // 캐시 확인 (판례 검색은 1시간 캐시)
+  const cacheKey = APICache.makeKey("court", sanitizedQuery, maxResults);
+  const cached = apiCache.get<CourtCase[]>(cacheKey);
+  if (cached) return cached;
+
   const baseUrl = "http://www.law.go.kr/DRF/lawSearch.do";
 
   const params = new URLSearchParams({
     OC: apiKey,
     target: "prec",
     type: "XML",
-    query,
+    query: sanitizedQuery,
     display: String(maxResults),
     sort: "ddes",  // 최신순
   });
@@ -58,6 +76,11 @@ export async function searchCourtCases(
     }
 
     const xml = await res.text();
+    // XML 크기 제한 (5MB)
+    if (xml.length > 5 * 1024 * 1024) {
+      console.warn("Court API response too large, truncating");
+      return [];
+    }
     const cases: CourtCase[] = [];
     const itemRegex = /<prec>([\s\S]*?)<\/prec>/g;
     let match;
@@ -76,6 +99,7 @@ export async function searchCourtCases(
       });
     }
 
+    apiCache.set(cacheKey, cases, 60 * 60 * 1000); // 1시간
     return cases;
   } catch (error) {
     console.warn("Court API fetch error:", error);

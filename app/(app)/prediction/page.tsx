@@ -28,6 +28,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { PageHeader, Card, Button, Alert } from "@/components/common";
+import { ScholarPapers } from "@/components/results";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
 import PdfDownloadButton from "@/components/common/pdf-download-button";
 import { LoadingSpinner } from "@/components/loading";
@@ -221,8 +222,11 @@ export default function PredictionPage() {
         safetyScore: data.confidence,
         riskScore: 100 - data.confidence,
       });
-    } catch {
-      alert("분석 중 오류가 발생했습니다. API 키를 확인해주세요.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.";
+      if (confirm(msg + "\n\n회원가입 페이지로 이동하시겠습니까?")) {
+        window.location.href = "/signup";
+      }
     } finally {
       setLoading(false);
     }
@@ -249,6 +253,13 @@ export default function PredictionPage() {
       });
     };
 
+    // 원본 주소에서 시도/시군구 추출 (keywordSearch 결과 검증용)
+    const addrParts = addr.split(/\s+/);
+    const origRegion = addrParts.slice(0, 2).join(" "); // e.g. "경기도 광명시"
+
+    // 번지 제거한 주소 (동까지만, e.g. "경기도 광명시 철산동")
+    const addrWithoutNumber = addr.replace(/\s+\d+(-\d+)?$/, "").trim();
+
     const geocode = () => {
       if (!window.kakao?.maps) return;
 
@@ -256,39 +267,60 @@ export default function PredictionPage() {
         const geocoder = new window.kakao.maps.services.Geocoder();
         const OK = window.kakao.maps.services.Status.OK;
 
-        // 1차: addressSearch (정식 주소일 때 바로 성공)
+        // 1차: addressSearch (전체 주소)
         geocoder.addressSearch(addr, (results: KakaoGeocoderResult[], status: string) => {
           if (status === OK && results[0]) {
             applyGeocoderResult(results[0]);
             return;
           }
 
-          // 2차: keywordSearch (아파트명 등 검색어 → 좌표+지번 획득)
-          const places = new window.kakao.maps.services.Places();
-          places.keywordSearch(addr, (placeResults: KakaoPlaceResult[], placeStatus: string) => {
-            if (placeStatus === OK && placeResults[0]) {
-              const p = placeResults[0];
+          // 2차: 번지 제거 후 addressSearch 재시도 (동 단위까지만)
+          if (addrWithoutNumber !== addr) {
+            geocoder.addressSearch(addrWithoutNumber, (results2: KakaoGeocoderResult[], status2: string) => {
+              if (status2 === OK && results2[0]) {
+                applyGeocoderResult(results2[0]);
+                return;
+              }
+              fallbackKeywordSearch(geocoder, OK);
+            });
+          } else {
+            fallbackKeywordSearch(geocoder, OK);
+          }
+        });
+      });
+    };
 
-              // 키워드 결과의 지번주소로 addressSearch 재시도 (행정동+우편번호 획득)
-              geocoder.addressSearch(p.address_name, (geoResults: KakaoGeocoderResult[], geoStatus: string) => {
-                if (geoStatus === OK && geoResults[0]) {
-                  applyGeocoderResult(geoResults[0]);
-                } else {
-                  // 3차 실패: keywordSearch 결과로 최소한의 정보 구성
-                  setAddressInfo({
-                    admin: p.address_name.replace(/\s*\d+(-\d+)?$/, ""),
-                    jibun: p.address_name,
-                    road: p.road_address_name || "-",
-                    zipCode: "-",
-                  });
-                }
-              });
+    // 3차: keywordSearch 폴백 (결과 지역 검증 포함)
+    const fallbackKeywordSearch = (geocoder: InstanceType<typeof window.kakao.maps.services.Geocoder>, OK: string) => {
+      const places = new window.kakao.maps.services.Places();
+      places.keywordSearch(addr, (placeResults: KakaoPlaceResult[], placeStatus: string) => {
+        if (placeStatus === OK && placeResults[0]) {
+          // 검증: keywordSearch 결과가 원본 주소의 지역과 일치하는지 확인
+          const matched = placeResults.find((p) => p.address_name.includes(addrParts[1] || ""));
+          const p = matched || placeResults[0];
+
+          // 지역 불일치 시 원본 주소로 폴백
+          if (!matched && origRegion && !p.address_name.startsWith(addrParts[0]?.replace(/도|시$/, "") || "")) {
+            setAddressInfo({ admin: addrWithoutNumber || addr, jibun: addr, road: "-", zipCode: "-" });
+            return;
+          }
+
+          geocoder.addressSearch(p.address_name, (geoResults: KakaoGeocoderResult[], geoStatus: string) => {
+            if (geoStatus === OK && geoResults[0]) {
+              applyGeocoderResult(geoResults[0]);
             } else {
-              // keywordSearch도 실패: 원본 입력으로 폴백
-              setAddressInfo({ admin: addr, jibun: addr, road: "-", zipCode: "-" });
+              setAddressInfo({
+                admin: p.address_name.replace(/\s*\d+(-\d+)?$/, ""),
+                jibun: p.address_name,
+                road: p.road_address_name || "-",
+                zipCode: "-",
+              });
             }
           });
-        });
+        } else {
+          // 모든 시도 실패: 원본 입력으로 폴백
+          setAddressInfo({ admin: addrWithoutNumber || addr, jibun: addr, road: "-", zipCode: "-" });
+        }
       });
     };
 
@@ -1051,6 +1083,9 @@ export default function PredictionPage() {
               </div>
             </Card>
           )}
+
+          {/* 관련 학술논문 */}
+          <ScholarPapers keywords={["부동산 가격예측", "실거래가", addressInfo?.admin?.split(" ").slice(0, 2).join(" ") || "부동산"].filter(Boolean)} />
 
           {/* Disclaimer */}
           <Alert variant="warning">

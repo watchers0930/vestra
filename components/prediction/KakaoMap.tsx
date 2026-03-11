@@ -49,6 +49,7 @@ declare global {
         LatLng: new (lat: number, lng: number) => unknown;
         Map: new (container: HTMLElement, options: { center: unknown; level: number }) => {
           setCenter: (latlng: unknown) => void;
+          relayout: () => void;
         };
         Marker: new (options: { map: unknown; position: unknown }) => unknown;
         services: {
@@ -87,25 +88,50 @@ export function KakaoMap({ address }: KakaoMapProps) {
 
       window.kakao.maps.load(() => {
         const geocoder = new window.kakao.maps.services.Geocoder();
-        geocoder.addressSearch(address, (result, statusCode) => {
-          if (statusCode === window.kakao.maps.services.Status.OK && result[0]) {
-            const coords = new window.kakao.maps.LatLng(
-              parseFloat(result[0].y),
-              parseFloat(result[0].x)
+        const OK = window.kakao.maps.services.Status.OK;
+
+        // 번지 제거한 주소 (동 단위까지만)
+        const addrWithoutNumber = address.replace(/\s+\d+(-\d+)?$/, "").trim();
+
+        const createMap = (coords: unknown, level: number) => {
+          const map = new window.kakao.maps.Map(mapRef.current!, { center: coords, level });
+          new window.kakao.maps.Marker({ map, position: coords });
+          setStatus("ready");
+
+          // 타일 로드 실패 감지: 3초 후 타일 이미지 확인
+          setTimeout(() => {
+            const tiles = mapRef.current?.querySelectorAll("img");
+            const hasLoadedTile = tiles && Array.from(tiles).some(
+              (img) => img.naturalWidth > 0 && !img.src.includes("logo")
             );
-            const map = new window.kakao.maps.Map(mapRef.current!, {
-              center: coords,
-              level: 5,
+            if (!hasLoadedTile) setStatus("error");
+          }, 3000);
+        };
+
+        // 1차: 전체 주소로 검색
+        geocoder.addressSearch(address, (result, statusCode) => {
+          if (statusCode === OK && result[0]) {
+            createMap(
+              new window.kakao.maps.LatLng(parseFloat(result[0].y), parseFloat(result[0].x)),
+              5
+            );
+            return;
+          }
+
+          // 2차: 번지 제거 후 재시도
+          if (addrWithoutNumber !== address) {
+            geocoder.addressSearch(addrWithoutNumber, (result2, status2) => {
+              if (status2 === OK && result2[0]) {
+                createMap(
+                  new window.kakao.maps.LatLng(parseFloat(result2[0].y), parseFloat(result2[0].x)),
+                  5
+                );
+              } else {
+                createMap(new window.kakao.maps.LatLng(37.4979, 127.0276), 7);
+              }
             });
-            new window.kakao.maps.Marker({ map, position: coords });
-            setStatus("ready");
           } else {
-            const defaultCoords = new window.kakao.maps.LatLng(37.4979, 127.0276);
-            new window.kakao.maps.Map(mapRef.current!, {
-              center: defaultCoords,
-              level: 7,
-            });
-            setStatus("ready");
+            createMap(new window.kakao.maps.LatLng(37.4979, 127.0276), 7);
           }
         });
       });
@@ -138,14 +164,15 @@ export function KakaoMap({ address }: KakaoMapProps) {
 
   return (
     <Card className="overflow-hidden">
-      {status === "loading" && (
-        <div className="h-[300px] animate-pulse bg-gray-100 rounded-xl" />
-      )}
-      <div
-        ref={mapRef}
-        className="h-[300px] w-full"
-        style={{ display: status === "ready" ? "block" : "none" }}
-      />
+      <div className="relative h-[300px] w-full">
+        {status === "loading" && (
+          <div className="absolute inset-0 z-10 animate-pulse bg-gray-100 rounded-xl" />
+        )}
+        <div
+          ref={mapRef}
+          className="h-full w-full"
+        />
+      </div>
     </Card>
   );
 }

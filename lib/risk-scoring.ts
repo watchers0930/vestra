@@ -397,6 +397,31 @@ function evaluateMultipleMortgages(parsed: ParsedRegistry): RiskFactor[] {
   return factors;
 }
 
+// ─── 용도 불일치 경고 ───
+
+function evaluatePropertyPurpose(parsed: ParsedRegistry): RiskFactor[] {
+  const factors: RiskFactor[] = [];
+  const purpose = parsed.title?.purpose || "";
+
+  if (!purpose) return factors;
+
+  // 비주거용 용도인데 전세/임대차 계약 → 주택임대차보호법 미적용 위험
+  const nonResidential = /근린생활시설|업무시설|제[12]종근린생활시설/.test(purpose);
+
+  if (nonResidential) {
+    factors.push({
+      id: "non_residential_purpose",
+      category: "용도",
+      description: "등기부상 비주거용 건물",
+      deduction: 15,
+      severity: "high",
+      detail: `등기부상 용도가 '${purpose}'입니다. 비주거용 건물은 전세자금 대출이 거부될 수 있으며, 전입신고 및 확정일자가 불가하여 주택임대차보호법에 의한 보호를 받지 못할 수 있습니다. 실제 용도와 등기부 용도가 일치하는지 반드시 확인하세요.`,
+    });
+  }
+
+  return factors;
+}
+
 // ─── 위험요소 상호작용 매트릭스 ───
 
 const INTERACTION_RULES: RiskInteractionRule[] = [
@@ -636,6 +661,129 @@ function detectTemporalPatterns(parsed: ParsedRegistry): TemporalRiskResult {
     }
   }
 
+  // 5. 의심스러운 근저당 말소: 설정 후 6개월 이내 말소 (위조 의심)
+  const cancelledMortgages = parsed.eulgu
+    .filter((e) => /근저당|저당/.test(e.purpose) && e.isCancelled && e.date);
+
+  // 말소된 근저당의 설정일과 말소일을 추정 (같은 순위번호의 설정-말소 쌍)
+  const activeMortgagesAll = parsed.eulgu
+    .filter((e) => /근저당|저당/.test(e.purpose) && e.date);
+
+  // 같은 순위에서 설정과 말소를 매칭
+  for (const cancelled of cancelledMortgages) {
+    // 같은 순위의 원래 설정 항목 찾기 (말소되지 않은 동일 순위 or 동일 holder)
+    const original = activeMortgagesAll.find(
+      (m) => m.order === cancelled.order && !m.isCancelled && m.date
+    );
+    const setupDate = original?.date || cancelled.date;
+    const cancelDate = cancelled.date;
+
+    if (setupDate && cancelDate) {
+      const gap = monthsBetween(setupDate, cancelDate);
+      // 패턴 5a: 설정 후 6개월 이내 말소 → 비정상적으로 빠른 상환
+      if (gap <= 6 && gap > 0 && cancelled.amount > 0) {
+        patterns.push({
+          id: `suspicious_cancel_${cancelled.order}`,
+          patternType: "suspicious_cancellation",
+          severity: "high",
+          confidence: gap <= 3 ? 0.9 : 0.7,
+          description: `근저당(${cancelled.holder}, ${(cancelled.amount / 100_000_000).toFixed(1)}억원)이 설정 후 ${gap}개월 만에 말소되었습니다. 수억원 대출을 단기간에 상환하는 것은 통계적으로 드물며, 말소 서류 위조 가능성을 배제할 수 없습니다. 해당 금융기관에 직접 연락하여 정상 상환 여부를 확인하세요.`,
+          evidence: [
+            { date: setupDate, event: `근저당 설정 (${cancelled.holder}, ${(cancelled.amount / 100_000_000).toFixed(1)}억원)` },
+            { date: cancelDate, event: `근저당 말소 (${gap}개월 만에 해제)` },
+          ],
+          timespan: {
+            startDate: setupDate,
+            endDate: cancelDate,
+            durationMonths: gap,
+          },
+        });
+      }
+    }
+  }
+
+  // 6. 근저당 말소 직후 매매 (1개월 이내): "깨끗한 등기" 조작 의심
+  for (const cancelled of cancelledMortgages) {
+    const cancelDate = cancelled.date;
+    if (!cancelDate) continue;
+
+    const salesAfterCancel = ownershipTransfers.filter((t) => {
+      const gap = monthsBetween(cancelDate, t.date);
+      return gap <= 1 && dateToMonths(t.date) >= dateToMonths(cancelDate);
+    });
+
+    if (salesAfterCancel.length > 0) {
+      patterns.push({
+        id: `cancel_before_sale_${cancelled.order}`,
+        patternType: "cancel_before_sale",
+        severity: "high",
+        confidence: 0.8,
+        description: `근저당 말소(${cancelDate}) 직후 1개월 이내에 소유권이 이전되었습니다. 매매를 위해 등기부를 '깨끗하게' 만든 정황이므로, 해당 금융기관에 정상 상환 여부를 반드시 확인하세요.`,
+        evidence: [
+          { date: cancelDate, event: `근저당 말소 (${cancelled.holder})` },
+          ...salesAfterCancel.map((s) => ({ date: s.date, event: `소유권이전 → ${s.holder}` })),
+        ],
+        timespan: {
+          startDate: cancelDate,
+          endDate: salesAfterCancel[0].date,
+          durationMonths: monthsBetween(cancelDate, salesAfterCancel[0].date),
+        },
+      });
+      break;
+    }
+  }
+
+  // 7. 같은 날 복수 근저당 동시 말소: 여러 은행 대출 동시 상환은 비정상
+  const cancelDates = cancelledMortgages
+    .filter((e) => e.date && e.amount > 0)
+    .map((e) => e.date);
+  const cancelDateCounts: Record<string, number> = {};
+  for (const d of cancelDates) {
+    cancelDateCounts[d] = (cancelDateCounts[d] || 0) + 1;
+  }
+  for (const [date, count] of Object.entries(cancelDateCounts)) {
+    if (count >= 2) {
+      const simultaneous = cancelledMortgages.filter((e) => e.date === date);
+      const totalAmount = simultaneous.reduce((s, e) => s + e.amount, 0);
+      patterns.push({
+        id: `simultaneous_cancel_${date}`,
+        patternType: "simultaneous_cancellation",
+        severity: "high",
+        confidence: 0.75,
+        description: `같은 날(${date}) ${count}건의 근저당(합계 ${(totalAmount / 100_000_000).toFixed(1)}억원)이 동시에 말소되었습니다. 복수 금융기관 대출을 동시에 상환하는 것은 이례적이며, 말소 서류 일괄 위조 가능성이 있습니다.`,
+        evidence: simultaneous.map((e) => ({
+          date: e.date,
+          event: `근저당 말소 (${e.holder}, ${(e.amount / 100_000_000).toFixed(1)}억원)`,
+        })),
+        timespan: { startDate: date, endDate: date, durationMonths: 0 },
+      });
+    }
+  }
+
+  // 8. 고액 근저당 말소인데 소유자 변경 없음: 자금 출처 의문
+  const highValueCancelled = cancelledMortgages.filter((e) => e.amount >= 200_000_000); // 2억 이상
+  for (const cancelled of highValueCancelled) {
+    if (!cancelled.date) continue;
+    // 말소 전후 6개월 내 소유권이전이 없으면 의심
+    const nearbyTransfers = ownershipTransfers.filter((t) => {
+      const gap = monthsBetween(cancelled.date, t.date);
+      return gap <= 6;
+    });
+    if (nearbyTransfers.length === 0) {
+      patterns.push({
+        id: `cancel_no_transfer_${cancelled.order}`,
+        patternType: "cancel_without_transfer",
+        severity: "medium",
+        confidence: 0.6,
+        description: `고액 근저당(${cancelled.holder}, ${(cancelled.amount / 100_000_000).toFixed(1)}억원)이 말소되었으나 전후 6개월 내 매매(소유권이전)가 없습니다. 매매 대금 없이 고액 대출을 상환한 자금 출처를 확인할 필요가 있습니다.`,
+        evidence: [
+          { date: cancelled.date, event: `근저당 말소 (${cancelled.holder}, ${(cancelled.amount / 100_000_000).toFixed(1)}억원)` },
+        ],
+        timespan: { startDate: cancelled.date, endDate: cancelled.date, durationMonths: 0 },
+      });
+    }
+  }
+
   // 전체 시계열 위험도
   const severityWeight: Record<string, number> = { critical: 30, high: 15, medium: 5 };
   const overallTemporalRisk = Math.min(100,
@@ -720,11 +868,16 @@ export function calculateRiskScore(
   allFactors.push(...redemptionFactors);
   totalDeduction += redemptionFactors.reduce((s, f) => s + f.deduction, 0);
 
-  // 13. 위험요소 상호작용 평가 (비선형 증폭)
+  // 13. 용도 불일치 경고
+  const purposeFactors = evaluatePropertyPurpose(parsed);
+  allFactors.push(...purposeFactors);
+  totalDeduction += purposeFactors.reduce((s, f) => s + f.deduction, 0);
+
+  // 14. 위험요소 상호작용 평가 (비선형 증폭)
   const interactionPenalties = evaluateInteractions(allFactors);
   totalDeduction += interactionPenalties.totalInteractionPenalty;
 
-  // 14. 시계열 이상 패턴 탐지
+  // 15. 시계열 이상 패턴 탐지
   const temporalPatterns = detectTemporalPatterns(parsed);
   // 시계열 위험도를 감점에 반영 (최대 20점 추가 감점)
   const temporalDeduction = Math.min(20, Math.round(temporalPatterns.overallTemporalRisk * 0.2));
