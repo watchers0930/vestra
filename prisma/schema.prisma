@@ -354,3 +354,21 @@ model TrainingData {
   @@index([status])
   @@index([createdAt])
 }
+
+// ---------------------------------------------------------------------------
+// 도메인 용어 사전 (KR-BERT 토크나이저 학습용)
+// ---------------------------------------------------------------------------
+
+model DomainVocabulary {
+  id         String   @id @default(cuid())
+  term       String                          // 용어
+  category   String                          // registry_right | legal_action | structure | finance_tax
+  source     String   @default("manual")     // manual | auto_extracted
+  frequency  Int      @default(1)            // 등장 빈도
+  definition String?  @db.Text               // 용어 설명
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([term])
+  @@index([category])
+}

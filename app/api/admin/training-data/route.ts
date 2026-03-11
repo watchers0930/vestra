@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { parseRegistry } from "@/lib/registry-parser";
 import { extractTextFromPDF, normalizeRegistryText, detectRegistryConfidence } from "@/lib/pdf-parser";
 import { encryptPII, hashForSearch } from "@/lib/crypto";
+import { extractVocabularyFromParsed } from "@/lib/domain-vocabulary";
 
 /** GET: 학습 데이터 목록 조회 */
 export async function GET(req: NextRequest) {
@@ -147,6 +148,16 @@ export async function POST(req: NextRequest) {
 
   // 암호화하여 저장
   const encrypted = encryptPII(normalized);
+
+  // 도메인 용어 자동 추출 → DomainVocabulary upsert
+  const extractedTerms = extractVocabularyFromParsed(parsed, normalized);
+  for (const t of extractedTerms) {
+    await prisma.domainVocabulary.upsert({
+      where: { term: t.term },
+      update: { frequency: { increment: 1 } },
+      create: { term: t.term, category: t.category, source: "auto_extracted" },
+    }).catch(() => {/* 무시 */});
+  }
 
   const record = await prisma.trainingData.create({
     data: {
