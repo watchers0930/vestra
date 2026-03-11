@@ -51,3 +51,9 @@ report.html
 *.db
 *.db-journal
 .env*.local
+
+# archives
+*.zip
+
+# other project files
+public/LMS_MVP_*.html

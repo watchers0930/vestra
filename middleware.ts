@@ -41,7 +41,16 @@ async function getToken(req: NextRequest) {
       clockTolerance: 15,
     });
     return payload as { role?: string; id?: string };
-  } catch {
+  } catch (err) {
+    // Edge Runtime에서는 Prisma 사용 불가 → console.warn으로 기록
+    console.warn(
+      "[Middleware] JWT 복호화 실패:",
+      err instanceof Error ? err.message : "unknown",
+      "| IP:",
+      req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
+        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        "unknown"
+    );
     return null;
   }
 }

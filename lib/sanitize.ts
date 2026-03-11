@@ -115,3 +115,71 @@ export function sanitizeMessages(
 export function sanitizeField(input: string, maxLen: number = 500): string {
   return truncateInput(stripHtml(input), maxLen).trim();
 }
+
+// ---------------------------------------------------------------------------
+// JSON 입력 검증 (API 요청 본문 검증용)
+// ---------------------------------------------------------------------------
+
+/**
+ * 객체의 필수 필드 존재 여부 검증
+ * @returns 누락된 필드 목록 (빈 배열이면 모두 통과)
+ */
+export function validateRequiredFields(
+  body: Record<string, unknown>,
+  requiredFields: string[]
+): string[] {
+  return requiredFields.filter(
+    (field) => body[field] === undefined || body[field] === null || body[field] === ""
+  );
+}
+
+/**
+ * 문자열 타입 검증 및 살균
+ * - null/undefined → 빈 문자열
+ * - 문자열이 아니면 String() 변환
+ * - stripHtml + truncate 적용
+ */
+export function sanitizeString(value: unknown, maxLen: number = 500): string {
+  if (value === null || value === undefined) return "";
+  const str = typeof value === "string" ? value : String(value);
+  return sanitizeField(str, maxLen);
+}
+
+// ---------------------------------------------------------------------------
+// 파일 매직바이트 검증 (MIME 스푸핑 방어)
+// ---------------------------------------------------------------------------
+
+/** 알려진 파일 시그니처 (매직바이트) */
+const FILE_SIGNATURES: Record<string, number[][]> = {
+  "application/pdf": [[0x25, 0x50, 0x44, 0x46]], // %PDF
+  "image/jpeg": [[0xff, 0xd8, 0xff]],
+  "image/png": [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]],
+  "image/gif": [
+    [0x47, 0x49, 0x46, 0x38, 0x37, 0x61], // GIF87a
+    [0x47, 0x49, 0x46, 0x38, 0x39, 0x61], // GIF89a
+  ],
+  "image/webp": [[0x52, 0x49, 0x46, 0x46]], // RIFF (WebP starts with RIFF)
+};
+
+/**
+ * 파일의 매직바이트를 확인하여 MIME 타입과 실제 내용이 일치하는지 검증
+ * @param buffer - 파일의 처음 몇 바이트 (최소 8바이트)
+ * @param declaredMime - 클라이언트가 선언한 MIME 타입
+ * @returns true면 매직바이트가 선언된 MIME과 일치
+ */
+export function validateMagicBytes(
+  buffer: ArrayBuffer | Uint8Array,
+  declaredMime: string
+): boolean {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  const signatures = FILE_SIGNATURES[declaredMime];
+
+  if (!signatures) {
+    // 알려지지 않은 MIME: 매직바이트 검증 스킵 (MIME 타입 체크는 별도로)
+    return true;
+  }
+
+  return signatures.some((sig) =>
+    sig.every((byte, i) => bytes[i] === byte)
+  );
+}
