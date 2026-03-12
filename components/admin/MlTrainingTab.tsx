@@ -379,6 +379,30 @@ export function MlTrainingTab() {
     fetchData();
   }, [fetchData]);
 
+  // ─── 일괄 승인 ───
+
+  const [bulkApproving, setBulkApproving] = useState(false);
+
+  const bulkApprove = useCallback(async () => {
+    if (!confirm(`대기/검토 중인 ${stats.pending + stats.reviewed}건을 모두 승인하시겠습니까?`)) return;
+    setBulkApproving(true);
+    try {
+      const res = await fetch("/api/admin/training-data/bulk-approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ minConfidence: 0 }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setUploadSuccess(`${data.approved}건 일괄 승인 완료`);
+      fetchData();
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : "일괄 승인 실패");
+    } finally {
+      setBulkApproving(false);
+    }
+  }, [stats.pending, stats.reviewed, fetchData]);
+
   // ─── JSONL 내보내기 ───
 
   const exportJSONL = useCallback(async () => {
@@ -502,10 +526,21 @@ export function MlTrainingTab() {
               </button>
             ))}
           </div>
-          <Button onClick={exportJSONL} disabled={stats.approved === 0}>
-            <Download size={14} strokeWidth={1.5} className="mr-1" />
-            JSONL 내보내기 ({stats.approved})
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={bulkApprove}
+              loading={bulkApproving}
+              disabled={bulkApproving || (stats.pending + stats.reviewed) === 0}
+              variant="secondary"
+            >
+              <Check size={14} strokeWidth={1.5} className="mr-1" />
+              일괄 승인 ({stats.pending + stats.reviewed})
+            </Button>
+            <Button onClick={exportJSONL} disabled={stats.approved === 0}>
+              <Download size={14} strokeWidth={1.5} className="mr-1" />
+              JSONL 내보내기 ({stats.approved})
+            </Button>
+          </div>
         </div>
 
         {/* 테이블 */}
