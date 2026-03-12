@@ -145,7 +145,7 @@ export default function JeonsePage() {
     <div className="max-w-6xl mx-auto">
       <nav className="flex items-center gap-1 text-sm mb-4">
         <Link href="/jeonse" className="text-primary hover:underline">전세보호</Link>
-        <ChevronRight size={14} className="text-muted" />
+        <ChevronRight size={14} className="text-muted" strokeWidth={1.5} />
         <span className="font-medium">전세 안전 분석</span>
       </nav>
       <PageHeader icon={Shield} title="전세 안전 분석" description="전세권 설정 및 임차권등기명령 AI 분석" />
@@ -154,7 +154,7 @@ export default function JeonsePage() {
         {/* Input Form */}
         <Card className="p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <FileText size={20} className="text-primary" />
+            <FileText size={20} className="text-[#1d1d1f]" strokeWidth={1.5} />
             계약 정보 입력
           </h3>
           <div className="space-y-4">
@@ -266,13 +266,13 @@ export default function JeonsePage() {
               {/* Recommendations */}
               <Card className="p-5">
                 <h4 className="font-semibold mb-3 flex items-center gap-2">
-                  <AlertTriangle size={18} className="text-amber-500" />
+                  <AlertTriangle size={18} className="text-[#1d1d1f]" strokeWidth={1.5} />
                   권고사항
                 </h4>
                 <ul className="space-y-2">
                   {analysis.recommendations.map((rec, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
-                      <CheckCircle size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                      <CheckCircle size={16} className="text-[#1d1d1f] flex-shrink-0 mt-0.5" strokeWidth={1.5} />
                       <span>{rec}</span>
                     </li>
                   ))}
@@ -282,7 +282,7 @@ export default function JeonsePage() {
               {/* Required Documents Checklist */}
               <Card className="p-5">
                 <h4 className="font-semibold mb-3 flex items-center gap-2">
-                  <FileText size={18} className="text-primary" />
+                  <FileText size={18} className="text-[#1d1d1f]" strokeWidth={1.5} />
                   필요 서류 체크리스트
                 </h4>
                 <div className="space-y-2">
@@ -352,7 +352,7 @@ export default function JeonsePage() {
                           onClick={() => copyToClipboard(generatedDoc.content)}
                           className="flex items-center gap-1 px-2 py-1 text-xs text-secondary hover:text-primary transition-colors"
                         >
-                          <Copy size={14} />
+                          <Copy size={14} strokeWidth={1.5} />
                           복사
                         </button>
                         <button
@@ -367,7 +367,7 @@ export default function JeonsePage() {
                           }}
                           className="flex items-center gap-1 px-2 py-1 text-xs text-secondary hover:text-primary transition-colors"
                         >
-                          <Download size={14} />
+                          <Download size={14} strokeWidth={1.5} />
                           다운로드
                         </button>
                       </div>

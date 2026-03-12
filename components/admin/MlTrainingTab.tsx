@@ -403,16 +403,16 @@ export function MlTrainingTab() {
     <div className="space-y-6">
       {/* KPI 통계 */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiCard label="전체 데이터" value={String(stats.total)} description="등록된 학습 데이터" icon={Database} iconBg="bg-blue-50" iconColor="text-blue-600" />
-        <KpiCard label="승인 대기" value={String(stats.pending + stats.reviewed)} description="검수 필요" icon={Clock} iconBg="bg-amber-50" iconColor="text-amber-600" />
-        <KpiCard label="승인 완료" value={String(stats.approved)} description="내보내기 가능" icon={ShieldCheck} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
-        <KpiCard label="평균 신뢰도" value={`${stats.avgConfidence}%`} description="등기부등본 감지율" icon={BarChart3} iconBg="bg-purple-50" iconColor="text-purple-600" />
+        <KpiCard label="전체 데이터" value={String(stats.total)} description="등록된 학습 데이터" icon={Database} iconBg="bg-[#f5f5f7]" iconColor="text-[#1d1d1f]" />
+        <KpiCard label="승인 대기" value={String(stats.pending + stats.reviewed)} description="검수 필요" icon={Clock} iconBg="bg-[#f5f5f7]" iconColor="text-[#1d1d1f]" />
+        <KpiCard label="승인 완료" value={String(stats.approved)} description="내보내기 가능" icon={ShieldCheck} iconBg="bg-[#f5f5f7]" iconColor="text-[#1d1d1f]" />
+        <KpiCard label="평균 신뢰도" value={`${stats.avgConfidence}%`} description="등기부등본 감지율" icon={BarChart3} iconBg="bg-[#f5f5f7]" iconColor="text-[#1d1d1f]" />
       </div>
 
       {/* 업로드 섹션 */}
       <Card className="p-6">
         <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
-          <Brain size={16} className="text-primary" />
+          <Brain size={16} strokeWidth={1.5} className="text-primary" />
           등기부등본 학습 데이터 등록
         </h3>
 
@@ -443,7 +443,7 @@ export function MlTrainingTab() {
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
-                <Upload size={32} className="text-gray-400" />
+                <Upload size={32} strokeWidth={1.5} className="text-gray-400" />
                 <p className="text-sm text-gray-600">PDF/TXT 파일을 드래그하세요</p>
                 <p className="text-xs text-gray-400">최대 10MB, AES-256-GCM 암호화 저장</p>
               </div>
@@ -463,7 +463,7 @@ export function MlTrainingTab() {
               disabled={isUploading || !rawTextInput.trim()}
               className="self-end"
             >
-              <FileText size={14} className="mr-1" />
+              <FileText size={14} strokeWidth={1.5} className="mr-1" />
               분석 및 등록
             </Button>
           </div>
@@ -503,7 +503,7 @@ export function MlTrainingTab() {
             ))}
           </div>
           <Button onClick={exportJSONL} disabled={stats.approved === 0}>
-            <Download size={14} className="mr-1" />
+            <Download size={14} strokeWidth={1.5} className="mr-1" />
             JSONL 내보내기 ({stats.approved})
           </Button>
         </div>
@@ -571,14 +571,14 @@ export function MlTrainingTab() {
                           className="rounded p-1 text-gray-400 hover:bg-blue-50 hover:text-blue-600"
                           title="리뷰"
                         >
-                          <Eye size={14} />
+                          <Eye size={14} strokeWidth={1.5} />
                         </button>
                         <button
                           onClick={() => deleteItem(item.id)}
                           className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
                           title="삭제"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={14} strokeWidth={1.5} />
                         </button>
                       </div>
                     </td>
@@ -597,7 +597,7 @@ export function MlTrainingTab() {
               disabled={page === 1}
               className="rounded p-1 text-gray-400 hover:bg-gray-100 disabled:opacity-30"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={16} strokeWidth={1.5} />
             </button>
             <span className="text-xs text-gray-500">{page} / {totalPages}</span>
             <button
@@ -605,7 +605,7 @@ export function MlTrainingTab() {
               disabled={page === totalPages}
               className="rounded p-1 text-gray-400 hover:bg-gray-100 disabled:opacity-30"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={16} strokeWidth={1.5} />
             </button>
           </div>
         )}
@@ -616,14 +616,14 @@ export function MlTrainingTab() {
         <Card className="p-6">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="flex items-center gap-2 text-sm font-semibold">
-              <Eye size={16} className="text-primary" />
+              <Eye size={16} strokeWidth={1.5} className="text-primary" />
               리뷰: {reviewItem.sourceFileName}
               <Badge variant={STATUS_COLORS[reviewItem.status] as "neutral" | "info" | "success" | "danger"}>
                 {STATUS_LABELS[reviewItem.status]}
               </Badge>
             </h3>
             <button onClick={() => setReviewItem(null)} className="text-gray-400 hover:text-gray-600">
-              <X size={16} />
+              <X size={16} strokeWidth={1.5} />
             </button>
           </div>
 
@@ -665,7 +665,7 @@ export function MlTrainingTab() {
               disabled={reviewLoading}
               className="bg-red-500 hover:bg-red-600"
             >
-              <X size={14} className="mr-1" />
+              <X size={14} strokeWidth={1.5} className="mr-1" />
               거부
             </Button>
             <Button
@@ -673,7 +673,7 @@ export function MlTrainingTab() {
               disabled={reviewLoading}
               className="bg-amber-500 hover:bg-amber-600"
             >
-              <Eye size={14} className="mr-1" />
+              <Eye size={14} strokeWidth={1.5} className="mr-1" />
               검토 완료
             </Button>
             <Button
@@ -681,7 +681,7 @@ export function MlTrainingTab() {
               disabled={reviewLoading}
               className="bg-emerald-500 hover:bg-emerald-600"
             >
-              <Check size={14} className="mr-1" />
+              <Check size={14} strokeWidth={1.5} className="mr-1" />
               승인
             </Button>
           </div>
@@ -692,7 +692,7 @@ export function MlTrainingTab() {
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold flex items-center gap-2">
-            <BookOpen size={20} className="text-primary" />
+            <BookOpen size={20} strokeWidth={1.5} className="text-primary" />
             도메인 용어 사전
           </h3>
           <div className="flex gap-2">
@@ -701,7 +701,7 @@ export function MlTrainingTab() {
               disabled={seedLoading}
               className="text-xs bg-amber-500 hover:bg-amber-600"
             >
-              <Sprout size={14} className="mr-1" />
+              <Sprout size={14} strokeWidth={1.5} className="mr-1" />
               {seedLoading ? "시드 중..." : `초기 시드 (${vocabStats.total === 0 ? "권장" : "추가"})`}
             </Button>
             <Button
@@ -709,7 +709,7 @@ export function MlTrainingTab() {
               disabled={vocabStats.total === 0}
               className="text-xs"
             >
-              <Download size={14} className="mr-1" />
+              <Download size={14} strokeWidth={1.5} className="mr-1" />
               vocab.txt ({vocabStats.total})
             </Button>
           </div>
@@ -774,7 +774,7 @@ export function MlTrainingTab() {
             className="flex-1 min-w-[150px] px-3 py-1.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <Button onClick={handleAddVocab} disabled={!newTerm.trim()} className="text-xs">
-            <Plus size={14} className="mr-1" />
+            <Plus size={14} strokeWidth={1.5} className="mr-1" />
             추가
           </Button>
         </div>
@@ -876,10 +876,10 @@ export function MlTrainingTab() {
                       {editingVocab === v.id ? (
                         <div className="flex justify-end gap-1">
                           <button onClick={() => handleEditVocab(v.id)} className="text-emerald-500 hover:text-emerald-700">
-                            <Check size={14} />
+                            <Check size={14} strokeWidth={1.5} />
                           </button>
                           <button onClick={() => setEditingVocab(null)} className="text-gray-400 hover:text-gray-600">
-                            <X size={14} />
+                            <X size={14} strokeWidth={1.5} />
                           </button>
                         </div>
                       ) : (
@@ -892,10 +892,10 @@ export function MlTrainingTab() {
                             }}
                             className="text-gray-400 hover:text-primary"
                           >
-                            <Pencil size={14} />
+                            <Pencil size={14} strokeWidth={1.5} />
                           </button>
                           <button onClick={() => handleDeleteVocab(v.id)} className="text-gray-400 hover:text-red-500">
-                            <Trash2 size={14} />
+                            <Trash2 size={14} strokeWidth={1.5} />
                           </button>
                         </div>
                       )}

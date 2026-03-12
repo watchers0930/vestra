@@ -26,9 +26,9 @@ export function StepIndicator({ steps, currentStep, className }: StepIndicatorPr
             )}
           >
             {isCompleted ? (
-              <CheckCircle size={18} className="text-emerald-500 flex-shrink-0" />
+              <CheckCircle size={18} strokeWidth={1.5} className="text-emerald-500 flex-shrink-0" />
             ) : isActive ? (
-              <Loader2 size={18} className="animate-spin text-blue-500 flex-shrink-0" />
+              <Loader2 size={18} strokeWidth={1.5} className="animate-spin text-blue-500 flex-shrink-0" />
             ) : (
               <div className="w-[18px] h-[18px] rounded-full border-2 border-gray-300 flex-shrink-0" />
             )}

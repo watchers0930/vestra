@@ -49,7 +49,7 @@ export function ScholarPapers({ keywords }: ScholarPapersProps) {
     return (
       <Card className="p-6">
         <div className="flex items-center gap-2 mb-4">
-          <BookOpen className="w-5 h-5 text-primary" />
+          <BookOpen className="w-5 h-5 text-primary" strokeWidth={1.5} />
           <h3 className="text-base font-semibold text-gray-800">관련 학술논문</h3>
         </div>
         <div className="space-y-3">
@@ -81,11 +81,11 @@ export function ScholarPapers({ keywords }: ScholarPapersProps) {
   const sourceBadgeColor = (s: ScholarPaper["source"]) => {
     switch (s) {
       case "semantic_scholar":
-        return "bg-blue-100 text-blue-700";
+        return "bg-[#f5f5f7] text-[#1d1d1f]";
       case "riss":
-        return "bg-indigo-100 text-indigo-700";
+        return "bg-[#f5f5f7] text-[#1d1d1f]";
       case "kci":
-        return "bg-rose-100 text-rose-700";
+        return "bg-[#f5f5f7] text-[#1d1d1f]";
     }
   };
 
@@ -93,7 +93,7 @@ export function ScholarPapers({ keywords }: ScholarPapersProps) {
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-primary" />
+          <BookOpen className="w-5 h-5 text-primary" strokeWidth={1.5} />
           <h3 className="text-base font-semibold text-gray-800">관련 학술논문</h3>
           <Badge variant="neutral">{papers.length}건</Badge>
         </div>
@@ -134,7 +134,7 @@ export function ScholarPapers({ keywords }: ScholarPapersProps) {
                     className="text-sm font-medium text-gray-800 hover:text-primary hover:underline inline-flex items-center gap-1"
                   >
                     {paper.title}
-                    <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                    <ExternalLink className="w-3 h-3 flex-shrink-0" strokeWidth={1.5} />
                   </a>
                 ) : (
                   <p className="text-sm font-medium text-gray-800">{paper.title}</p>
@@ -161,9 +161,9 @@ export function ScholarPapers({ keywords }: ScholarPapersProps) {
                   className="text-xs text-primary hover:underline flex items-center gap-1"
                 >
                   {expandedIdx === idx ? (
-                    <>초록 접기 <ChevronUp className="w-3 h-3" /></>
+                    <>초록 접기 <ChevronUp className="w-3 h-3" strokeWidth={1.5} /></>
                   ) : (
-                    <>초록 보기 <ChevronDown className="w-3 h-3" /></>
+                    <>초록 보기 <ChevronDown className="w-3 h-3" strokeWidth={1.5} /></>
                   )}
                 </button>
                 {expandedIdx === idx && (

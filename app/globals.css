@@ -1,27 +1,27 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #f8fafc;
-  --color-foreground: #0f172a;
-  --color-primary: #2563eb;
-  --color-primary-dark: #1d4ed8;
-  --color-primary-light: #3b82f6;
-  --color-secondary: #64748b;
-  --color-accent: #f59e0b;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --color-sidebar: #0f172a;
-  --color-sidebar-hover: #1e293b;
-  --color-sidebar-active: #1e40af;
-  --color-sidebar-accent: #3b82f6;
-  --color-sidebar-active-from: #1e3a5f;
-  --color-sidebar-active-to: #0f172a;
-  --color-sidebar-surface: #162032;
-  --color-sidebar-group: #475569;
+  --color-background: #fbfbfd;
+  --color-foreground: #1d1d1f;
+  --color-primary: #0071e3;
+  --color-primary-dark: #0058b0;
+  --color-primary-light: #2997ff;
+  --color-secondary: #86868b;
+  --color-accent: #f5a623;
+  --color-success: #34c759;
+  --color-warning: #ff9f0a;
+  --color-danger: #ff3b30;
+  --color-sidebar: #1d1d1f;
+  --color-sidebar-hover: #2d2d2f;
+  --color-sidebar-active: #0071e3;
+  --color-sidebar-accent: #2997ff;
+  --color-sidebar-active-from: #1a3a5c;
+  --color-sidebar-active-to: #1d1d1f;
+  --color-sidebar-surface: #2d2d2f;
+  --color-sidebar-group: #86868b;
   --color-card: #ffffff;
-  --color-border: #e2e8f0;
-  --color-muted: #94a3b8;
+  --color-border: #d2d2d7;
+  --color-muted: #86868b;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -67,13 +67,13 @@ body {
   animation: pulse-slow 2s ease-in-out infinite;
 }
 
-/* Card hover effect */
+/* Card hover effect — Apple style */
 .card-hover {
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 .card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: scale(1.02);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 }
 
 /* Sidebar dark scrollbar */

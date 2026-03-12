@@ -30,6 +30,7 @@ import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { version } from "../../package.json";
 import UserMenu from "@/components/auth/user-menu";
+import { VestraLogoMark } from "@/components/common/VestraLogo";
 
 interface MenuItem {
   href: string;
@@ -170,7 +171,7 @@ export default function Sidebar() {
             )}
             title={!showLabel ? item.label : undefined}
           >
-            <item.icon size={20} className="flex-shrink-0" />
+            <item.icon size={20} strokeWidth={1.5} className="flex-shrink-0" />
             {showLabel && (
               <>
                 <div className="flex-1">
@@ -238,7 +239,7 @@ export default function Sidebar() {
         )}
         title={!showLabel ? item.label : undefined}
       >
-        <item.icon size={20} className="flex-shrink-0" />
+        <item.icon size={20} strokeWidth={1.5} className="flex-shrink-0" />
         {showLabel && (
           <div>
             <div>{item.label}</div>
@@ -282,17 +283,13 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm",
-              isAdmin && isAdminPage
-                ? "bg-gradient-to-br from-red-500 to-red-600 logo-glow-admin"
-                : "bg-gradient-to-br from-blue-500 to-blue-600 logo-glow"
-            )}>
-              V
-            </div>
+            <VestraLogoMark
+              size={32}
+              variant={isAdmin && isAdminPage ? "admin" : "default"}
+            />
             {showLabel && (
               <div>
-                <h1 className="text-lg font-bold tracking-wide">
+                <h1 className="text-lg font-bold tracking-widest" style={{ fontFamily: 'var(--font-sora)' }}>
                   VESTRA
                   <span className="ml-1.5 text-[9px] font-normal text-white/40 align-middle">v{version}</span>
                 </h1>

@@ -609,32 +609,32 @@ function AdminContent() {
                   value={`${stats.totalUsers}명`}
                   description="가입 회원 수"
                   icon={Users}
-                  iconBg="bg-blue-50"
-                  iconColor="text-blue-600"
+                  iconBg="bg-[#f5f5f7]"
+                  iconColor="text-[#1d1d1f]"
                 />
                 <KpiCard
                   label="대기 인증"
                   value={`${stats.pendingVerifications}건`}
                   description="승인 대기 중"
                   icon={Clock}
-                  iconBg="bg-amber-50"
-                  iconColor="text-amber-600"
+                  iconBg="bg-[#f5f5f7]"
+                  iconColor="text-[#1d1d1f]"
                 />
                 <KpiCard
                   label="오늘 분석"
                   value={`${stats.todayAnalyses}회`}
                   description="금일 분석 횟수"
                   icon={BarChart3}
-                  iconBg="bg-emerald-50"
-                  iconColor="text-emerald-600"
+                  iconBg="bg-[#f5f5f7]"
+                  iconColor="text-[#1d1d1f]"
                 />
                 <KpiCard
                   label="등록 자산"
                   value={`${stats.totalAssets}건`}
                   description="총 등록 부동산"
                   icon={Home}
-                  iconBg="bg-purple-50"
-                  iconColor="text-purple-600"
+                  iconBg="bg-[#f5f5f7]"
+                  iconColor="text-[#1d1d1f]"
                 />
               </div>
 
@@ -642,7 +642,7 @@ function AdminContent() {
               {stats.dailyTrend && stats.dailyTrend.length > 0 && (
                 <Card className="p-6">
                   <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <TrendingUp size={16} />
+                    <TrendingUp size={16} strokeWidth={1.5} />
                     일일 분석 추이 (최근 7일)
                   </h3>
                   <div className="h-[250px]">
@@ -702,7 +702,7 @@ function AdminContent() {
               {/* ─── 고유 알고리즘 현황 ─── */}
               <Card className="p-6">
                 <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <ShieldCheck size={16} className="text-blue-600" />
+                  <ShieldCheck size={16} strokeWidth={1.5} className="text-[#1d1d1f]" />
                   고유 알고리즘 현황 (v2.3.0)
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -724,7 +724,7 @@ function AdminContent() {
                 <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
                   <div className="flex justify-between py-2 border-b border-border">
                     <span className="text-muted">알고리즘 버전</span>
-                    <span className="font-medium text-blue-600">v2.3.0</span>
+                    <span className="font-medium text-[#1d1d1f]">v2.3.0</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-border">
                     <span className="text-muted">파이프라인 단계</span>
@@ -732,7 +732,7 @@ function AdminContent() {
                   </div>
                   <div className="flex justify-between py-2 border-b border-border">
                     <span className="text-muted">Gap 분석</span>
-                    <span className="font-medium text-emerald-600">100%</span>
+                    <span className="font-medium text-[#1d1d1f]">100%</span>
                   </div>
                 </div>
               </Card>
@@ -785,7 +785,7 @@ function AdminContent() {
                                 <img src={user.image} alt="" className="w-8 h-8 rounded-full" />
                               ) : (
                                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                  <User size={14} className="text-gray-500" />
+                                  <User size={14} strokeWidth={1.5} className="text-gray-500" />
                                 </div>
                               )}
                               <div>
@@ -847,14 +847,14 @@ function AdminContent() {
                                     className="p-1.5 rounded hover:bg-blue-50 text-blue-600 transition-colors"
                                     title="저장"
                                   >
-                                    <Save size={14} />
+                                    <Save size={14} strokeWidth={1.5} />
                                   </button>
                                   <button
                                     onClick={() => setEditingUserId(null)}
                                     className="p-1.5 rounded hover:bg-gray-100 text-gray-500 transition-colors"
                                     title="취소"
                                   >
-                                    <X size={14} />
+                                    <X size={14} strokeWidth={1.5} />
                                   </button>
                                 </>
                               ) : (
@@ -864,7 +864,7 @@ function AdminContent() {
                                     className="p-1.5 rounded hover:bg-gray-100 text-gray-500 transition-colors"
                                     title="편집"
                                   >
-                                    <Edit3 size={14} />
+                                    <Edit3 size={14} strokeWidth={1.5} />
                                   </button>
                                   {deleteConfirmId === user.id ? (
                                     <div className="flex items-center gap-1">
@@ -893,7 +893,7 @@ function AdminContent() {
                                       )}
                                       title={user.role === "ADMIN" ? "관리자 삭제 불가" : "삭제"}
                                     >
-                                      <Trash2 size={14} />
+                                      <Trash2 size={14} strokeWidth={1.5} />
                                     </button>
                                   )}
                                 </>
@@ -919,7 +919,7 @@ function AdminContent() {
             <div className="space-y-4">
               {pending.length === 0 ? (
                 <Card className="p-12 text-center">
-                  <CheckCircle size={40} className="mx-auto text-emerald-400 mb-3" />
+                  <CheckCircle size={40} strokeWidth={1.5} className="mx-auto text-[#1d1d1f] mb-3" />
                   <p className="text-sm text-gray-500">대기 중인 인증 신청이 없습니다</p>
                 </Card>
               ) : (
@@ -931,7 +931,7 @@ function AdminContent() {
                           <img src={user.image} alt="" className="w-10 h-10 rounded-full" />
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                            <User size={16} className="text-gray-500" />
+                            <User size={16} strokeWidth={1.5} className="text-gray-500" />
                           </div>
                         )}
                         <div>
@@ -953,7 +953,7 @@ function AdminContent() {
                           size="sm"
                           onClick={() => handleVerify(user.id, "approve", "BUSINESS")}
                         >
-                          <Building2 size={14} className="mr-1" />
+                          <Building2 size={14} strokeWidth={1.5} className="mr-1" />
                           기업 승인
                         </Button>
                         <Button
@@ -961,7 +961,7 @@ function AdminContent() {
                           size="sm"
                           onClick={() => handleVerify(user.id, "approve", "REALESTATE")}
                         >
-                          <Crown size={14} className="mr-1" />
+                          <Crown size={14} strokeWidth={1.5} className="mr-1" />
                           부동산 승인
                         </Button>
                         <Button
@@ -969,7 +969,7 @@ function AdminContent() {
                           size="sm"
                           onClick={() => handleVerify(user.id, "reject")}
                         >
-                          <XCircle size={14} className="mr-1" />
+                          <XCircle size={14} strokeWidth={1.5} className="mr-1" />
                           거부
                         </Button>
                       </div>
@@ -1045,7 +1045,7 @@ function AdminContent() {
                 </div>
                 {filteredAnalyses.length === 0 && (
                   <div className="py-12 text-center text-sm text-gray-400">
-                    <FileText size={40} className="mx-auto text-gray-300 mb-3" />
+                    <FileText size={40} strokeWidth={1.5} className="mx-auto text-gray-300 mb-3" />
                     분석 이력이 없습니다
                   </div>
                 )}
@@ -1061,7 +1061,7 @@ function AdminContent() {
               {/* Create/Edit form */}
               <Card className="p-6">
                 <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <Megaphone size={16} />
+                  <Megaphone size={16} strokeWidth={1.5} />
                   {editingAnnouncementId ? "공지사항 수정" : "새 공지사항"}
                 </h3>
                 <div className="space-y-3">
@@ -1086,7 +1086,7 @@ function AdminContent() {
                       onClick={handleSaveAnnouncement}
                       disabled={announcementLoading || !announcementForm.title.trim() || !announcementForm.content.trim()}
                     >
-                      <Plus size={14} className="mr-1" />
+                      <Plus size={14} strokeWidth={1.5} className="mr-1" />
                       {editingAnnouncementId ? "수정" : "등록"}
                     </Button>
                     {editingAnnouncementId && (
@@ -1106,7 +1106,7 @@ function AdminContent() {
               <div className="space-y-3">
                 {announcements.length === 0 ? (
                   <Card className="p-12 text-center">
-                    <Megaphone size={40} className="mx-auto text-gray-300 mb-3" />
+                    <Megaphone size={40} strokeWidth={1.5} className="mx-auto text-gray-300 mb-3" />
                     <p className="text-sm text-gray-500">등록된 공지사항이 없습니다</p>
                   </Card>
                 ) : (
@@ -1127,14 +1127,14 @@ function AdminContent() {
                             className="p-1.5 rounded hover:bg-gray-100 text-gray-500 transition-colors"
                             title="수정"
                           >
-                            <Edit3 size={14} />
+                            <Edit3 size={14} strokeWidth={1.5} />
                           </button>
                           <button
                             onClick={() => handleDeleteAnnouncement(item.id)}
                             className="p-1.5 rounded hover:bg-red-50 text-red-400 transition-colors"
                             title="삭제"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={14} strokeWidth={1.5} />
                           </button>
                         </div>
                       </div>
@@ -1495,7 +1495,7 @@ function AdminContent() {
               <Card className="p-6">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                    <KeyRound size={20} className="text-gray-600" />
+                    <KeyRound size={20} strokeWidth={1.5} className="text-gray-600" />
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-gray-800">비밀번호 변경</h3>

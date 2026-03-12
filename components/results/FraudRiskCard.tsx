@@ -145,7 +145,7 @@ export default function FraudRiskCard({ result }: FraudRiskCardProps) {
       )}
 
       {/* 권고사항 */}
-      <div className="mx-4 mb-4 rounded bg-blue-50 p-3 text-xs dark:bg-blue-950/30">
+      <div className="mx-4 mb-4 rounded bg-[#f5f5f7] p-3 text-xs dark:bg-gray-800">
         {result.recommendation}
       </div>
     </Card>

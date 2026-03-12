@@ -43,7 +43,7 @@ export function Alert({ variant = "info", children, className }: AlertProps) {
         className
       )}
     >
-      <Icon size={18} className={cn(style.text, "flex-shrink-0 mt-0.5")} />
+      <Icon size={18} strokeWidth={1.5} className={cn(style.text, "flex-shrink-0 mt-0.5")} />
       <div className={cn("text-sm", style.text)}>{children}</div>
     </div>
   );

@@ -14,15 +14,15 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-primary text-white hover:bg-primary-dark border-primary",
+    "bg-primary text-white hover:bg-primary/90 border-transparent",
   secondary:
-    "bg-white text-secondary border-border hover:bg-gray-50",
+    "bg-white text-[#1d1d1f] border-[#d2d2d7] hover:bg-[#f5f5f7]",
   danger:
-    "bg-red-500 text-white hover:bg-red-600 border-red-500",
+    "bg-red-500 text-white hover:bg-red-600 border-transparent",
   ghost:
-    "bg-transparent text-secondary hover:bg-gray-50 border-transparent",
+    "bg-transparent text-[#424245] hover:bg-[#f5f5f7] border-transparent",
   amber:
-    "bg-amber-500 text-white hover:bg-amber-600 border-amber-500",
+    "bg-amber-500 text-white hover:bg-amber-600 border-transparent",
 };
 
 const sizeStyles: Record<string, string> = {
@@ -45,7 +45,7 @@ export function Button({
   return (
     <button
       className={cn(
-        "rounded-lg font-medium border transition-colors flex items-center justify-center gap-2",
+        "rounded-xl font-medium border transition-colors flex items-center justify-center gap-2",
         "disabled:opacity-50 disabled:cursor-not-allowed",
         variantStyles[variant],
         sizeStyles[size],
@@ -58,7 +58,7 @@ export function Button({
       {loading ? (
         <Loader2 size={size === "sm" ? 14 : 18} className="animate-spin" />
       ) : Icon ? (
-        <Icon size={size === "sm" ? 14 : 18} />
+        <Icon size={size === "sm" ? 14 : 18} strokeWidth={1.5} />
       ) : null}
       {children}
     </button>

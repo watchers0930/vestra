@@ -521,7 +521,7 @@ export default function RightsAnalysisPage() {
           {/* 부동산 기본정보 */}
           <Card className="p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <MapPin size={18} className="text-blue-600" />
+              <MapPin size={18} strokeWidth={1.5} className="text-[#1d1d1f]" />
               부동산 기본정보
             </h2>
             <div className="space-y-4">
@@ -658,9 +658,9 @@ export default function RightsAnalysisPage() {
           )}
 
           {/* AI 종합 의견 */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6 shadow-sm">
+          <div className="bg-[#f5f5f7] rounded-xl border border-gray-200 p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
-              <Shield size={20} className="text-blue-600" />
+              <Shield size={20} strokeWidth={1.5} className="text-[#1d1d1f]" />
               <h3 className="text-lg font-semibold text-gray-900">AI 종합 의견</h3>
             </div>
             <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-line">{result.aiOpinion}</p>
@@ -688,7 +688,7 @@ export default function RightsAnalysisPage() {
           {/* 안전 체크리스트 */}
           <Card className="p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <FileCheck size={18} className="text-blue-600" />
+              <FileCheck size={18} strokeWidth={1.5} className="text-[#1d1d1f]" />
               거래 전 안전 체크리스트
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

@@ -32,8 +32,8 @@ export default function ProcedureCard({ href, icon: Icon, title, description, ba
     <Link href={href}>
       <Card className="p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer h-full">
         <div className="flex items-start justify-between mb-3">
-          <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Icon size={22} className="text-primary" />
+          <div className="w-11 h-11 rounded-xl bg-[#f5f5f7] flex items-center justify-center">
+            <Icon size={22} strokeWidth={1.5} className="text-[#1d1d1f]" />
           </div>
           {badge && (
             <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", badgeColors[badge.variant])}>
@@ -48,10 +48,10 @@ export default function ProcedureCard({ href, icon: Icon, title, description, ba
           <span className={difficultyLabel[difficulty].color}>{difficultyLabel[difficulty].text}</span>
           {requiresLandlord && (
             <span className="inline-flex items-center gap-1 text-amber-600">
-              <Users size={10} /> 임대인 동의
+              <Users size={10} strokeWidth={1.5} /> 임대인 동의
             </span>
           )}
-          <ArrowRight size={14} className="ml-auto text-muted" />
+          <ArrowRight size={14} strokeWidth={1.5} className="ml-auto text-muted" />
         </div>
       </Card>
     </Link>

@@ -5,6 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { clearAll } from "@/lib/store";
+import { VestraLogoMark } from "@/components/common/VestraLogo";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -27,10 +28,8 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary text-white text-2xl font-bold mb-4">
-            V
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">VESTRA</h1>
+          <VestraLogoMark size={64} className="mb-4 mx-auto" />
+          <h1 className="text-2xl font-bold text-foreground tracking-widest" style={{ fontFamily: 'var(--font-sora)' }}>VESTRA</h1>
           <p className="text-muted text-sm mt-1">AI 자산관리 플랫폼</p>
         </div>
 

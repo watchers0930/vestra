@@ -36,8 +36,8 @@ export default function CrossAnalysisCard({ result }: CrossAnalysisCardProps) {
 
       {/* 요약 배지 */}
       <div className="mx-4 mb-4 flex items-center gap-3">
-        <div className="flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950/30 dark:text-blue-300">
-          <Zap size={12} />
+        <div className="flex items-center gap-1.5 rounded-full bg-[#f5f5f7] px-3 py-1 text-xs font-medium text-[#1d1d1f] dark:bg-gray-800 dark:text-gray-300">
+          <Zap size={12} strokeWidth={1.5} />
           {result.cascadeUpdates}개 규칙 활성화
         </div>
         <div className="text-xs text-gray-400">
@@ -61,7 +61,7 @@ export default function CrossAnalysisCard({ result }: CrossAnalysisCardProps) {
                 <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
                   {MODULE_LABELS[link.from] ?? link.from}
                 </span>
-                <ArrowRight size={12} className="text-amber-500 shrink-0" />
+                <ArrowRight size={12} strokeWidth={1.5} className="text-amber-500 shrink-0" />
                 <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
                   {MODULE_LABELS[link.to] ?? link.to}
                 </span>
@@ -95,9 +95,9 @@ export default function CrossAnalysisCard({ result }: CrossAnalysisCardProps) {
                 key={link.linkId}
                 className="flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400"
               >
-                <ZapOff size={10} />
+                <ZapOff size={10} strokeWidth={1.5} />
                 {MODULE_LABELS[link.from] ?? link.from}
-                <ArrowRight size={8} className="opacity-50" />
+                <ArrowRight size={8} strokeWidth={1.5} className="opacity-50" />
                 {MODULE_LABELS[link.to] ?? link.to}
               </div>
             ))}

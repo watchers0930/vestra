@@ -28,10 +28,10 @@ const typeIcons: Record<string, typeof FileText> = {
 };
 
 const typeColors: Record<string, string> = {
-  rights: "bg-blue-50 text-blue-600",
-  contract: "bg-purple-50 text-purple-600",
-  prediction: "bg-emerald-50 text-emerald-600",
-  jeonse: "bg-amber-50 text-amber-600",
+  rights: "bg-[#f5f5f7] text-[#1d1d1f]",
+  contract: "bg-[#f5f5f7] text-[#1d1d1f]",
+  prediction: "bg-[#f5f5f7] text-[#1d1d1f]",
+  jeonse: "bg-[#f5f5f7] text-[#1d1d1f]",
 };
 
 export default function DashboardPage() {
@@ -82,23 +82,18 @@ export default function DashboardPage() {
           value={mounted ? (totalValue > 0 ? formatKRW(totalValue) : "-") : "-"}
           description="추정 시세 합계"
           icon={Wallet}
-          iconBg="bg-emerald-50"
-          iconColor="text-success"
         />
         <KpiCard
           label="평균 안전지수"
           value={mounted && totalAssets > 0 ? `${avgSafety}/100` : "-"}
           description="등록 자산 평균"
           icon={ShieldAlert}
-          iconColor="text-primary-light"
         />
         <KpiCard
           label="평균 리스크"
           value={mounted && totalAssets > 0 ? `${avgRisk}/100` : "-"}
           description="낮을수록 안전"
           icon={AlertTriangle}
-          iconBg="bg-amber-50"
-          iconColor="text-warning"
         />
       </div>
 
@@ -136,14 +131,8 @@ export default function DashboardPage() {
                       </p>
                       <p className="text-xs text-muted mt-0.5">{asset.type}</p>
                     </div>
-                    <div className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-lg",
-                      asset.safetyScore >= 70 ? "bg-emerald-50" : asset.safetyScore >= 40 ? "bg-amber-50" : "bg-red-50"
-                    )}>
-                      <BarChart3 className={cn(
-                        "h-4 w-4",
-                        asset.safetyScore >= 70 ? "text-emerald-600" : asset.safetyScore >= 40 ? "text-amber-600" : "text-red-600"
-                      )} />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5f5f7]">
+                      <BarChart3 className="h-4 w-4 text-[#1d1d1f]" strokeWidth={1.5} />
                     </div>
                   </div>
                   <div className="space-y-2">

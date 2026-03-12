@@ -596,7 +596,7 @@ export default function PredictionPage() {
       {/* Map + 주소 정보 */}
       <Card className="p-4 mb-6">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
-          <MapPin size={16} />
+          <MapPin size={16} strokeWidth={1.5} />
           위치
         </h3>
 
@@ -717,7 +717,7 @@ export default function PredictionPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="p-5">
               <div className="flex items-center gap-2 text-sm text-secondary mb-2">
-                <BarChart3 size={16} />
+                <BarChart3 size={16} strokeWidth={1.5} />
                 현재 추정 시세
               </div>
               <div className="text-2xl font-bold text-primary">
@@ -732,7 +732,7 @@ export default function PredictionPage() {
             </Card>
             <Card className="p-5">
               <div className="flex items-center gap-2 text-sm text-secondary mb-2">
-                <Target size={16} />
+                <Target size={16} strokeWidth={1.5} />
                 예측 신뢰도
               </div>
               <div className="text-2xl font-bold text-emerald-600">
@@ -747,7 +747,7 @@ export default function PredictionPage() {
             </Card>
             <Card className="p-5">
               <div className="flex items-center gap-2 text-sm text-secondary mb-2">
-                <Database size={16} />
+                <Database size={16} strokeWidth={1.5} />
                 실거래 데이터
               </div>
               {result.priceStats ? (
@@ -774,7 +774,7 @@ export default function PredictionPage() {
           {/* Historical Chart */}
           <Card className="p-6">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <BarChart3 size={16} />
+              <BarChart3 size={16} strokeWidth={1.5} />
               실거래가 추이
             </h3>
             {getHistoricalData().length > 0 ? (
@@ -889,7 +889,7 @@ export default function PredictionPage() {
           {result.factors && result.factors.length > 0 && (
             <Card className="p-6">
               <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <Zap size={16} />
+                <Zap size={16} strokeWidth={1.5} />
                 가격 영향 요인 분석
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -1054,12 +1054,12 @@ export default function PredictionPage() {
           )}
 
           {/* AI Opinion */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-            <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
-              <TrendingUp size={20} />
+          <div className="bg-[#f5f5f7] border border-gray-200 rounded-xl p-6">
+            <h3 className="font-semibold text-[#1d1d1f] mb-3 flex items-center gap-2">
+              <TrendingUp size={20} strokeWidth={1.5} />
               AI 분석 의견
             </h3>
-            <p className="text-blue-900 text-sm leading-relaxed whitespace-pre-line">
+            <p className="text-[#1d1d1f] text-sm leading-relaxed whitespace-pre-line">
               {result.aiOpinion}
             </p>
           </div>
@@ -1068,14 +1068,14 @@ export default function PredictionPage() {
           {result.variables && result.variables.length > 0 && (
             <Card className="p-5">
               <div className="flex items-center gap-2 text-sm text-secondary mb-3">
-                <Zap size={16} />
+                <Zap size={16} strokeWidth={1.5} />
                 반영 변수
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {result.variables.map((v, i) => (
                   <span
                     key={i}
-                    className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs rounded-full"
+                    className="px-2.5 py-1 bg-[#f5f5f7] text-[#1d1d1f] text-xs rounded-full"
                   >
                     {v}
                   </span>

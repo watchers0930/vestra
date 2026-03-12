@@ -439,8 +439,8 @@ export default function ContractReviewPage() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white">
-            <FileSearch size={22} />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f5f5f7] text-[#1d1d1f]">
+            <FileSearch size={22} strokeWidth={1.5} />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">계약검토</h1>
@@ -612,7 +612,7 @@ export default function ContractReviewPage() {
             {/* AI Opinion Card */}
             <Card className="p-6">
               <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-500">
-                <FileSearch size={16} className="text-blue-500" />
+                <FileSearch size={16} strokeWidth={1.5} className="text-[#1d1d1f]" />
                 AI 종합 의견
               </h2>
               <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">

@@ -30,8 +30,8 @@ export function EmptyState({
         className
       )}
     >
-      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50">
-        <Icon className="h-8 w-8 text-primary" />
+      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#f5f5f7]">
+        <Icon className="h-8 w-8 text-[#1d1d1f]" strokeWidth={1.5} />
       </div>
       <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       <p className="mt-2 text-sm text-muted max-w-md mx-auto">{description}</p>

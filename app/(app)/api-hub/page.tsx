@@ -118,12 +118,12 @@ const APIs = [
 ];
 
 const dataTypes = [
-  { type: "실거래 데이터", color: "bg-blue-100 text-blue-700", count: 1 },
-  { type: "등기부등본", color: "bg-purple-100 text-purple-700", count: 1 },
-  { type: "규제·법령", color: "bg-indigo-100 text-indigo-700", count: 1 },
-  { type: "계약·법률", color: "bg-violet-100 text-violet-700", count: 1 },
-  { type: "인구·상권", color: "bg-teal-100 text-teal-700", count: 1 },
-  { type: "금융·자산", color: "bg-emerald-100 text-emerald-700", count: 3 },
+  { type: "실거래 데이터", color: "bg-[#f5f5f7] text-[#1d1d1f]", count: 1 },
+  { type: "등기부등본", color: "bg-[#f5f5f7] text-[#1d1d1f]", count: 1 },
+  { type: "규제·법령", color: "bg-[#f5f5f7] text-[#1d1d1f]", count: 1 },
+  { type: "계약·법률", color: "bg-[#f5f5f7] text-[#1d1d1f]", count: 1 },
+  { type: "인구·상권", color: "bg-[#f5f5f7] text-[#1d1d1f]", count: 1 },
+  { type: "금융·자산", color: "bg-[#f5f5f7] text-[#1d1d1f]", count: 3 },
 ];
 
 export default function ApiHubPage() {
@@ -138,15 +138,15 @@ export default function ApiHubPage() {
           <div className="text-sm text-secondary">연동 API 수</div>
         </Card>
         <Card className="p-4">
-          <div className="text-2xl font-bold text-emerald-600">10</div>
+          <div className="text-2xl font-bold text-[#1d1d1f]">10</div>
           <div className="text-sm text-secondary">정상 작동</div>
         </Card>
         <Card className="p-4">
-          <div className="text-2xl font-bold text-amber-600">6종</div>
+          <div className="text-2xl font-bold text-[#1d1d1f]">6종</div>
           <div className="text-sm text-secondary">데이터 유형</div>
         </Card>
         <Card className="p-4">
-          <div className="text-2xl font-bold text-purple-600">8개</div>
+          <div className="text-2xl font-bold text-[#1d1d1f]">8개</div>
           <div className="text-sm text-secondary">연동 모듈</div>
         </Card>
       </div>
@@ -169,8 +169,8 @@ export default function ApiHubPage() {
           <Card key={api.name} hover className="p-5">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center text-white", api.color)}>
-                  <Database size={20} />
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-[#f5f5f7] text-[#1d1d1f]">
+                  <Database size={20} strokeWidth={1.5} />
                 </div>
                 <div>
                   <h4 className="font-semibold text-sm">{api.name}</h4>
@@ -178,7 +178,7 @@ export default function ApiHubPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
-                <CheckCircle size={14} className="text-emerald-500" />
+                <CheckCircle size={14} className="text-emerald-500" strokeWidth={1.5} />
                 <span className="text-xs text-emerald-600 font-medium">정상</span>
               </div>
             </div>
@@ -187,11 +187,11 @@ export default function ApiHubPage() {
 
             <div className="flex items-center gap-4 text-xs text-muted mb-3">
               <span className="flex items-center gap-1">
-                <Clock size={12} />
+                <Clock size={12} strokeWidth={1.5} />
                 {api.refreshRate}
               </span>
               <span className="flex items-center gap-1">
-                <Activity size={12} />
+                <Activity size={12} strokeWidth={1.5} />
                 {api.endpoint}
               </span>
             </div>
@@ -211,7 +211,7 @@ export default function ApiHubPage() {
       <div className="mt-6">
         <Alert variant="info">
           <div className="flex items-start gap-2">
-            <RefreshCw size={16} className="flex-shrink-0 mt-0.5" />
+            <RefreshCw size={16} className="flex-shrink-0 mt-0.5" strokeWidth={1.5} />
             <div>
               <p className="font-medium mb-1">데이터 갱신 안내</p>
               <p className="text-xs">

@@ -121,7 +121,7 @@ export default function VerificationFlow({
                 : "text-muted hover:text-foreground"
             }`}
           >
-            <t.icon size={14} />
+            <t.icon size={14} strokeWidth={1.5} />
             {t.label}
           </button>
         ))}
@@ -175,7 +175,7 @@ export default function VerificationFlow({
                 {submitting ? (
                   <Loader2 size={16} className="animate-spin" />
                 ) : (
-                  <Send size={16} />
+                  <Send size={16} strokeWidth={1.5} />
                 )}
                 검증 요청 보내기
               </Button>
@@ -223,7 +223,7 @@ export default function VerificationFlow({
         <div className="space-y-3">
           {loading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="animate-spin text-primary" size={24} />
+              <Loader2 className="animate-spin text-primary" size={24} strokeWidth={1.5} />
             </div>
           ) : receivedRequests.length === 0 ? (
             <Card className="p-8 text-center text-muted text-sm">
@@ -256,7 +256,7 @@ export default function VerificationFlow({
                             disabled={isResponding}
                             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-xs font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50"
                           >
-                            {isResponding ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+                            {isResponding ? <Loader2 size={12} strokeWidth={1.5} className="animate-spin" /> : <CheckCircle2 size={12} strokeWidth={1.5} />}
                             수락
                           </button>
                           <button
@@ -264,7 +264,7 @@ export default function VerificationFlow({
                             disabled={isResponding}
                             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-500 text-white text-xs font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
                           >
-                            <XCircle size={12} />
+                            <XCircle size={12} strokeWidth={1.5} />
                             거절
                           </button>
                         </>

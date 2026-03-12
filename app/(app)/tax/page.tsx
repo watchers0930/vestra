@@ -145,7 +145,7 @@ export default function TaxPage() {
                 : "bg-card text-secondary border border-border hover:bg-gray-50"
             )}
           >
-            <tab.icon size={18} />
+            <tab.icon size={18} strokeWidth={1.5} />
             {tab.label}
           </button>
         ))}
@@ -156,7 +156,7 @@ export default function TaxPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-6">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <Building2 size={20} className="text-primary" />
+              <Building2 size={20} strokeWidth={1.5} className="text-[#1d1d1f]" />
               취득세 계산
             </h3>
             <div className="space-y-5">
@@ -188,9 +188,9 @@ export default function TaxPage() {
           <Card className="p-6">
             <h3 className="font-semibold mb-4">계산 결과</h3>
             <div className="space-y-4">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="text-sm text-blue-600 mb-1">{acqResult.label}</div>
-                <div className="text-3xl font-bold text-blue-700">{formatKRW(acqResult.totalTax || acqResult.tax)}</div>
+              <div className="bg-[#f5f5f7] rounded-lg p-4">
+                <div className="text-sm text-[#1d1d1f] mb-1">{acqResult.label}</div>
+                <div className="text-3xl font-bold text-[#1d1d1f]">{formatKRW(acqResult.totalTax || acqResult.tax)}</div>
               </div>
               <div className="space-y-2 text-sm">
                 <InfoRow label="취득세" value={formatKRW(acqResult.tax)} className="border-b border-border" />
@@ -215,7 +215,7 @@ export default function TaxPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-6">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <Home size={20} className="text-success" />
+              <Home size={20} strokeWidth={1.5} className="text-[#1d1d1f]" />
               보유세 계산
             </h3>
             <div className="space-y-5">
@@ -241,9 +241,9 @@ export default function TaxPage() {
           <Card className="p-6">
             <h3 className="font-semibold mb-4">계산 결과 (연간)</h3>
             <div className="space-y-4">
-              <div className="bg-emerald-50 rounded-lg p-4">
-                <div className="text-sm text-emerald-600 mb-1">연간 보유세 합계</div>
-                <div className="text-3xl font-bold text-emerald-700">{formatKRW(holdResult.totalTax)}</div>
+              <div className="bg-[#f5f5f7] rounded-lg p-4">
+                <div className="text-sm text-[#1d1d1f] mb-1">연간 보유세 합계</div>
+                <div className="text-3xl font-bold text-[#1d1d1f]">{formatKRW(holdResult.totalTax)}</div>
               </div>
               <div className="space-y-2 text-sm">
                 <InfoRow label="재산세" value={formatKRW(holdResult.propertyTax)} className="border-b border-border" />
@@ -266,7 +266,7 @@ export default function TaxPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-6">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <ArrowRightLeft size={20} className="text-amber-500" />
+              <ArrowRightLeft size={20} strokeWidth={1.5} className="text-[#1d1d1f]" />
               양도세 계산
             </h3>
             <div className="space-y-5">
@@ -320,9 +320,9 @@ export default function TaxPage() {
           <Card className="p-6">
             <h3 className="font-semibold mb-4">계산 결과</h3>
             <div className="space-y-4">
-              <div className="bg-amber-50 rounded-lg p-4">
-                <div className="text-sm text-amber-600 mb-1">양도소득세 합계</div>
-                <div className="text-3xl font-bold text-amber-700">{formatKRW(transResult.totalTax || transResult.tax || 0)}</div>
+              <div className="bg-[#f5f5f7] rounded-lg p-4">
+                <div className="text-sm text-[#1d1d1f] mb-1">양도소득세 합계</div>
+                <div className="text-3xl font-bold text-[#1d1d1f]">{formatKRW(transResult.totalTax || transResult.tax || 0)}</div>
               </div>
               <div className="space-y-2 text-sm">
                 <InfoRow label="양도차익" value={formatKRW(transResult.gain || 0)} className="border-b border-border" />

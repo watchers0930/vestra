@@ -5,6 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { clearAll } from "@/lib/store";
+import { VestraLogoMark } from "@/components/common/VestraLogo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -45,26 +46,24 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center">
-      <div className="w-full max-w-md">
+    <div className="min-h-[80vh] flex items-center justify-center bg-[#fbfbfd]">
+      <div className="w-full max-w-[380px]">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary text-white text-2xl font-bold mb-4">
-            V
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">VESTRA</h1>
-          <p className="text-muted text-sm mt-1">AI 자산관리 플랫폼</p>
+          <VestraLogoMark size={56} className="mb-4 mx-auto" />
+          <h1 className="text-[21px] font-bold text-[#1d1d1f] tracking-widest" style={{ fontFamily: 'var(--font-sora)' }}>VESTRA</h1>
+          <p className="text-[#86868b] text-sm mt-1">AI 자산관리 플랫폼</p>
         </div>
 
         {/* 로그인 카드 */}
-        <div className="bg-card rounded-2xl border border-border p-8 shadow-sm">
-          <h2 className="text-lg font-semibold text-center mb-6">로그인</h2>
+        <div className="bg-white rounded-2xl border border-[#d2d2d7] p-8">
+          <h2 className="text-lg font-semibold text-[#1d1d1f] text-center mb-6">로그인</h2>
 
           <div className="space-y-3">
             {/* Google */}
             <button
               onClick={() => signIn("google", { redirectTo: "/login" })}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-border bg-white hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-[#d2d2d7] bg-white hover:bg-[#f5f5f7] transition-colors text-sm font-medium text-[#1d1d1f]"
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -100,15 +99,15 @@ export default function LoginPage() {
 
           {/* 구분선 */}
           <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 border-t border-border" />
-            <span className="text-xs text-muted">또는</span>
-            <div className="flex-1 border-t border-border" />
+            <div className="flex-1 border-t border-[#d2d2d7]" />
+            <span className="text-xs text-[#86868b]">또는</span>
+            <div className="flex-1 border-t border-[#d2d2d7]" />
           </div>
 
           {/* 게스트 체험 */}
           <button
             onClick={() => router.push("/rights")}
-            className="w-full px-4 py-3 rounded-xl border border-border text-sm text-muted hover:text-foreground hover:bg-gray-50 transition-colors"
+            className="w-full px-4 py-3 rounded-xl border border-[#d2d2d7] text-sm text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] transition-colors"
           >
             게스트로 체험하기 (일 2회 제한)
           </button>
@@ -129,7 +128,7 @@ export default function LoginPage() {
                   placeholder="관리자 이메일"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full px-4 py-2.5 rounded-lg border border-[#d2d2d7] text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
                   required
                 />
                 <input
@@ -137,7 +136,7 @@ export default function LoginPage() {
                   placeholder="비밀번호"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full px-4 py-2.5 rounded-lg border border-[#d2d2d7] text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
                   required
                 />
                 {error && (
@@ -156,7 +155,7 @@ export default function LoginPage() {
         </div>
 
         {/* 회원가입 안내 */}
-        <p className="text-center text-sm text-muted mt-6">
+        <p className="text-center text-sm text-[#86868b] mt-6">
           아직 계정이 없으신가요?{" "}
           <Link href="/signup" className="text-primary font-medium hover:underline">
             회원가입

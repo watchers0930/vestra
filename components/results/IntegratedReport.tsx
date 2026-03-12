@@ -174,8 +174,8 @@ export default function IntegratedReport({ data }: IntegratedReportProps) {
 
               {/* 규칙 기반 설명 */}
               {data.vScore.explanation.ruleBasedSummary && (
-                <div className="mt-4 rounded-lg bg-blue-50/50 p-3 text-sm text-secondary">
-                  <Shield size={14} className="inline mr-1 text-blue-500" />
+                <div className="mt-4 rounded-lg bg-[#f5f5f7] p-3 text-sm text-secondary">
+                  <Shield size={14} strokeWidth={1.5} className="inline mr-1 text-[#1d1d1f]" />
                   {data.vScore.explanation.ruleBasedSummary}
                 </div>
               )}
@@ -231,9 +231,9 @@ export default function IntegratedReport({ data }: IntegratedReportProps) {
                       className="flex items-start gap-2 p-2 rounded-lg bg-gray-50 text-sm"
                     >
                       {f.severity === "critical" ? (
-                        <XCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
+                        <XCircle size={16} strokeWidth={1.5} className="text-red-500 mt-0.5 shrink-0" />
                       ) : (
-                        <AlertTriangle size={16} className="text-amber-500 mt-0.5 shrink-0" />
+                        <AlertTriangle size={16} strokeWidth={1.5} className="text-amber-500 mt-0.5 shrink-0" />
                       )}
                       <div>
                         <span className="font-medium">{f.description}</span>
@@ -271,7 +271,7 @@ export default function IntegratedReport({ data }: IntegratedReportProps) {
                   <p className="text-sm font-medium">주요 사항</p>
                   {data.contractRisk.highlights.map((h, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm text-secondary">
-                      <ChevronRight size={14} className="text-muted shrink-0" />
+                      <ChevronRight size={14} strokeWidth={1.5} className="text-muted shrink-0" />
                       {h}
                     </div>
                   ))}
@@ -331,14 +331,14 @@ export default function IntegratedReport({ data }: IntegratedReportProps) {
         {data.recommendations.length > 0 && (
           <Card className="p-5">
             <h4 className="font-semibold flex items-center gap-2 mb-3">
-              <CheckCircle2 size={18} className="text-primary" />
+              <CheckCircle2 size={18} strokeWidth={1.5} className="text-primary" />
               종합 권고사항
             </h4>
             <div className="space-y-2">
               {data.recommendations.map((rec, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-2 p-2.5 rounded-lg bg-blue-50/50 text-sm"
+                  className="flex items-start gap-2 p-2.5 rounded-lg bg-[#f5f5f7] text-sm"
                 >
                   <span className="text-primary font-bold shrink-0">{i + 1}.</span>
                   <span className="text-secondary">{rec}</span>

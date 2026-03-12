@@ -111,8 +111,8 @@ export default function ProfilePage() {
           {user.image ? (
             <img src={user.image} alt="" className="w-16 h-16 rounded-full" />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <User size={28} className="text-primary" />
+            <div className="w-16 h-16 rounded-full bg-[#f5f5f7] flex items-center justify-center">
+              <User size={28} className="text-[#1d1d1f]" strokeWidth={1.5} />
             </div>
           )}
           <div>
@@ -135,7 +135,7 @@ export default function ProfilePage() {
       {/* 사용량 */}
       <div className="bg-card rounded-2xl border border-border p-6">
         <div className="flex items-center gap-2 mb-4">
-          <BarChart3 size={20} className="text-primary" />
+          <BarChart3 size={20} className="text-[#1d1d1f]" strokeWidth={1.5} />
           <h3 className="font-semibold">오늘 사용량</h3>
         </div>
         {usage ? (
@@ -164,13 +164,13 @@ export default function ProfilePage() {
       {/* 등급 혜택 */}
       <div className="bg-card rounded-2xl border border-border p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Shield size={20} className="text-primary" />
+          <Shield size={20} className="text-[#1d1d1f]" strokeWidth={1.5} />
           <h3 className="font-semibold">현재 등급 혜택</h3>
         </div>
         <ul className="space-y-2">
           {roleInfo.features.map((f) => (
             <li key={f} className="flex items-center gap-2 text-sm">
-              <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
+              <CheckCircle2 size={14} className="text-[#1d1d1f] flex-shrink-0" strokeWidth={1.5} />
               {f}
             </li>
           ))}
@@ -181,7 +181,7 @@ export default function ProfilePage() {
       {role === "PERSONAL" && user.verifyStatus !== "pending" && (
         <div className="bg-card rounded-2xl border border-border p-6">
           <div className="flex items-center gap-2 mb-4">
-            <ArrowUpCircle size={20} className="text-primary" />
+            <ArrowUpCircle size={20} className="text-[#1d1d1f]" strokeWidth={1.5} />
             <h3 className="font-semibold">등급 업그레이드</h3>
           </div>
           <p className="text-sm text-muted mb-4">
@@ -238,7 +238,7 @@ export default function ProfilePage() {
       {/* 구독 관리 */}
       <div className="bg-card rounded-2xl border border-border p-6">
         <div className="flex items-center gap-2 mb-4">
-          <CreditCard size={20} className="text-primary" />
+          <CreditCard size={20} className="text-[#1d1d1f]" strokeWidth={1.5} />
           <h3 className="font-semibold">구독 관리</h3>
         </div>
         {subscription ? (
@@ -311,7 +311,7 @@ export default function ProfilePage() {
       {/* 알림 설정 */}
       <div className="bg-card rounded-2xl border border-border p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Bell size={20} className="text-primary" />
+          <Bell size={20} className="text-[#1d1d1f]" strokeWidth={1.5} />
           <h3 className="font-semibold">알림 설정</h3>
         </div>
         {notifications ? (
@@ -328,7 +328,7 @@ export default function ProfilePage() {
               return (
                 <div key={item.key} className="flex items-center justify-between py-2">
                   <div className="flex items-center gap-3">
-                    <Icon size={16} className="text-gray-400 flex-shrink-0" />
+                    <Icon size={16} className="text-gray-400 flex-shrink-0" strokeWidth={1.5} />
                     <div>
                       <p className="text-sm font-medium text-gray-800">{item.label}</p>
                       <p className="text-xs text-gray-400">{item.desc}</p>
@@ -371,7 +371,7 @@ export default function ProfilePage() {
         onClick={() => signOut({ redirectTo: "/" })}
         className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-sm text-muted hover:text-foreground hover:bg-gray-50 transition-colors"
       >
-        <LogOut size={16} />
+        <LogOut size={16} strokeWidth={1.5} />
         로그아웃
       </button>
     </div>

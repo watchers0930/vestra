@@ -116,7 +116,7 @@ export default function DocumentChecklist({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
               >
-                <ExternalLink size={10} /> 온라인 가능
+                <ExternalLink size={10} strokeWidth={1.5} /> 온라인 가능
               </a>
             )}
           </div>
@@ -130,7 +130,7 @@ export default function DocumentChecklist({
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-3">
         <h4 className="font-semibold flex items-center gap-2">
-          <FileText size={18} className="text-primary" />
+          <FileText size={18} strokeWidth={1.5} className="text-[#1d1d1f]" />
           {title}
         </h4>
         <div className="text-xs text-muted">

@@ -15,11 +15,11 @@ export interface FlowStepData {
 }
 
 const colorMap = {
-  blue:    { bg: "bg-blue-100",    text: "text-blue-700",    line: "bg-blue-200" },
-  emerald: { bg: "bg-emerald-100", text: "text-emerald-700", line: "bg-emerald-200" },
-  amber:   { bg: "bg-amber-100",   text: "text-amber-700",   line: "bg-amber-200" },
-  red:     { bg: "bg-red-100",     text: "text-red-700",     line: "bg-red-200" },
-  purple:  { bg: "bg-purple-100",  text: "text-purple-700",  line: "bg-purple-200" },
+  blue:    { bg: "bg-[#f5f5f7]", text: "text-[#1d1d1f]", line: "bg-gray-200" },
+  emerald: { bg: "bg-[#f5f5f7]", text: "text-[#1d1d1f]", line: "bg-gray-200" },
+  amber:   { bg: "bg-[#f5f5f7]", text: "text-[#1d1d1f]", line: "bg-gray-200" },
+  red:     { bg: "bg-[#f5f5f7]", text: "text-[#1d1d1f]", line: "bg-gray-200" },
+  purple:  { bg: "bg-[#f5f5f7]", text: "text-[#1d1d1f]", line: "bg-gray-200" },
 };
 
 export default function FlowChart({ steps, className }: { steps: FlowStepData[]; className?: string }) {
@@ -44,19 +44,19 @@ export default function FlowChart({ steps, className }: { steps: FlowStepData[];
             {/* Right: content */}
             <div className={cn("pt-1.5", isLast ? "pb-2" : "pb-8")}>
               <div className="flex items-center gap-2 mb-1">
-                <step.icon size={16} className={colors.text} />
+                <step.icon size={16} strokeWidth={1.5} className={colors.text} />
                 <h4 className="font-semibold">{step.title}</h4>
               </div>
               <p className="text-sm text-secondary mb-2">{step.description}</p>
               <div className="flex flex-wrap gap-2">
                 {step.duration && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-gray-100 text-secondary">
-                    <Clock size={10} /> {step.duration}
+                    <Clock size={10} strokeWidth={1.5} /> {step.duration}
                   </span>
                 )}
                 {step.location && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-gray-100 text-secondary">
-                    <MapPin size={10} /> {step.location}
+                    <MapPin size={10} strokeWidth={1.5} /> {step.location}
                   </span>
                 )}
               </div>
@@ -64,7 +64,7 @@ export default function FlowChart({ steps, className }: { steps: FlowStepData[];
                 <ul className="mt-2 space-y-1">
                   {step.subSteps.map((sub, j) => (
                     <li key={j} className="flex items-start gap-2 text-xs text-secondary">
-                      <CheckCircle2 size={12} className="text-emerald-500 mt-0.5 shrink-0" />
+                      <CheckCircle2 size={12} strokeWidth={1.5} className="text-[#1d1d1f] mt-0.5 shrink-0" />
                       {sub}
                     </li>
                   ))}

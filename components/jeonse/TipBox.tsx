@@ -13,7 +13,7 @@ export default function TipBox({ variant, title, children }: { variant: "tip" | 
   return (
     <div className={cn("border-l-4 rounded-r-lg p-4", v.border, v.bg)}>
       <div className="flex items-center gap-2 mb-1">
-        <Icon size={16} className={v.iconColor} />
+        <Icon size={16} strokeWidth={1.5} className={v.iconColor} />
         <span className="font-semibold text-sm">{title}</span>
       </div>
       <div className="text-sm text-secondary leading-relaxed">{children}</div>

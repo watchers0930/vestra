@@ -13,15 +13,15 @@ export default function JeonseHubPage() {
         <Card className="p-5 mb-8 bg-gradient-to-r from-primary/5 to-blue-50 border-primary/20 hover:shadow-md transition-all cursor-pointer">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Shield size={22} className="text-primary" />
+              <div className="w-11 h-11 rounded-xl bg-[#f5f5f7] flex items-center justify-center">
+                <Shield size={22} className="text-[#1d1d1f]" strokeWidth={1.5} />
               </div>
               <div>
                 <h3 className="font-semibold">전세 안전 AI 분석</h3>
                 <p className="text-sm text-secondary">계약 정보를 입력하면 전세권 설정 필요성과 위험도를 분석합니다</p>
               </div>
             </div>
-            <ChevronRight size={20} className="text-muted shrink-0" />
+            <ChevronRight size={20} className="text-muted shrink-0" strokeWidth={1.5} />
           </div>
         </Card>
       </Link>
@@ -88,7 +88,7 @@ export default function JeonseHubPage() {
             { label: "전세권설정등기", color: "bg-emerald-100 text-emerald-700" },
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-2">
-              {i > 0 && <ChevronRight size={14} className="text-muted" />}
+              {i > 0 && <ChevronRight size={14} className="text-muted" strokeWidth={1.5} />}
               <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${item.color}`}>
                 {item.label}
               </span>
