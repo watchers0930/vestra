@@ -25,7 +25,7 @@ import {
   ExternalLink,
   type LucideIcon,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { version } from "../../package.json";
@@ -49,13 +49,13 @@ interface MenuGroup {
 // 일반 사용자 메뉴
 // ---------------------------------------------------------------------------
 const userMenuItems: MenuItem[] = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "대시보드", description: "자산 현황" },
-  { href: "/rights", icon: Shield, label: "권리분석", description: "등기부등본 종합분석" },
-  { href: "/contract", icon: FileSearch, label: "계약검토", description: "계약서 AI 분석" },
-  { href: "/tax", icon: Calculator, label: "세무 시뮬레이션", description: "세금 계산" },
-  { href: "/prediction", icon: TrendingUp, label: "시세전망", description: "시세 분석·전망" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "대시보드", description: "보유 자산 현황과 주요 지표를 한눈에 확인합니다" },
+  { href: "/rights", icon: Shield, label: "권리분석", description: "등기부등본을 업로드하면 갑구·을구 권리관계를 AI가 종합 분석합니다" },
+  { href: "/contract", icon: FileSearch, label: "계약검토", description: "매매·임대차 계약서를 AI가 검토하고 위험 조항을 알려드립니다" },
+  { href: "/tax", icon: Calculator, label: "세무 시뮬레이션", description: "취득세·양도세·종부세 등 부동산 세금을 시나리오별로 계산합니다" },
+  { href: "/prediction", icon: TrendingUp, label: "시세전망", description: "실거래가 데이터 기반으로 시세 추이와 향후 전망을 분석합니다" },
   {
-    href: "/jeonse", icon: Home, label: "전세보호", description: "권리 실행",
+    href: "/jeonse", icon: Home, label: "전세보호", description: "전세 안전 진단부터 전입신고·확정일자까지 보호 절차를 안내합니다",
     children: [
       { href: "/jeonse", label: "절차 안내" },
       { href: "/jeonse/analysis", label: "전세 안전 분석" },
@@ -66,8 +66,8 @@ const userMenuItems: MenuItem[] = [
       { href: "/jeonse/lease-report", label: "주택임대차 신고" },
     ],
   },
-  { href: "/assistant", icon: MessageSquare, label: "AI 어시스턴트", description: "AI 상담" },
-  { href: "/api-hub", icon: Database, label: "API 데이터 허브", description: "데이터 현황" },
+  { href: "/assistant", icon: MessageSquare, label: "AI 어시스턴트", description: "부동산 관련 궁금한 점을 AI에게 자유롭게 질문할 수 있습니다" },
+  { href: "/api-hub", icon: Database, label: "API 데이터 허브", description: "국토교통부·법원 등 공공 API 연동 현황과 데이터를 조회합니다" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -92,12 +92,12 @@ const userMenuGroups: MenuGroup[] = [
 // 관리자 메뉴
 // ---------------------------------------------------------------------------
 const adminMenuItems: MenuItem[] = [
-  { href: "/admin", icon: LayoutDashboard, label: "개요", description: "관리자 대시보드" },
-  { href: "/admin?tab=users", icon: Users, label: "회원 관리", description: "역할·한도·삭제" },
-  { href: "/admin?tab=verifications", icon: CheckCircle, label: "인증 관리", description: "승인·거부" },
-  { href: "/admin?tab=analyses", icon: FileText, label: "분석 이력", description: "전체 분석 기록" },
-  { href: "/admin?tab=announcements", icon: Megaphone, label: "공지사항", description: "공지 관리" },
-  { href: "/admin?tab=account", icon: KeyRound, label: "계정 설정", description: "비밀번호 변경" },
+  { href: "/admin", icon: LayoutDashboard, label: "개요", description: "서비스 통계, 사용량, 시스템 상태를 한눈에 확인합니다" },
+  { href: "/admin?tab=users", icon: Users, label: "회원 관리", description: "회원 목록 조회, 역할 변경, 사용 한도를 관리합니다" },
+  { href: "/admin?tab=verifications", icon: CheckCircle, label: "인증 관리", description: "전문가 인증 요청을 검토하고 승인·거부합니다" },
+  { href: "/admin?tab=analyses", icon: FileText, label: "분석 이력", description: "전체 사용자의 분석 요청 기록을 조회합니다" },
+  { href: "/admin?tab=announcements", icon: Megaphone, label: "공지사항", description: "서비스 공지사항을 작성하고 관리합니다" },
+  { href: "/admin?tab=account", icon: KeyRound, label: "계정 설정", description: "관리자 비밀번호 변경 및 계정 설정을 관리합니다" },
 ];
 
 export default function Sidebar() {
@@ -137,6 +137,30 @@ export default function Sidebar() {
 
   const showLabel = !collapsed || mobileOpen;
 
+  // 툴팁 상태
+  const [tooltip, setTooltip] = useState<{ text: string; top: number; left: number } | null>(null);
+  const tooltipTimeout = useRef<ReturnType<typeof setTimeout>>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  const showTooltip = useCallback((e: React.MouseEvent, description: string) => {
+    if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
+    const target = e.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    tooltipTimeout.current = setTimeout(() => {
+      const sidebarWidth = sidebarRef.current?.getBoundingClientRect().width ?? 240;
+      setTooltip({
+        text: description,
+        top: rect.top + rect.height / 2,
+        left: sidebarWidth,
+      });
+    }, 300);
+  }, []);
+
+  const hideTooltip = useCallback(() => {
+    if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
+    setTooltip(null);
+  }, []);
+
   // 관리자 메뉴 활성 상태 체크
   const isAdminItemActive = (item: MenuItem) => {
     if (!isAdminPage) return false;
@@ -162,6 +186,8 @@ export default function Sidebar() {
         <div key={item.href}>
           <button
             onClick={() => setOpenAccordion(isOpen ? null : item.href)}
+            onMouseEnter={(e) => showTooltip(e, item.description)}
+            onMouseLeave={hideTooltip}
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-lg text-sm w-full text-left",
               "transition-[background-color,color,opacity] duration-200 ease-out",
@@ -174,12 +200,7 @@ export default function Sidebar() {
             <item.icon size={20} strokeWidth={1.5} className="flex-shrink-0" />
             {showLabel && (
               <>
-                <div className="flex-1">
-                  <div>{item.label}</div>
-                  {!isActive && (
-                    <div className="text-[10px] text-gray-500/70">{item.description}</div>
-                  )}
-                </div>
+                <span className="flex-1">{item.label}</span>
                 <ChevronDown
                   size={14}
                   className={cn(
@@ -230,6 +251,8 @@ export default function Sidebar() {
       <Link
         key={item.href}
         href={item.href}
+        onMouseEnter={(e) => showTooltip(e, item.description)}
+        onMouseLeave={hideTooltip}
         className={cn(
           "flex items-center gap-3 px-3 py-2 rounded-lg text-sm",
           "transition-[background-color,color,opacity] duration-200 ease-out",
@@ -240,14 +263,7 @@ export default function Sidebar() {
         title={!showLabel ? item.label : undefined}
       >
         <item.icon size={20} strokeWidth={1.5} className="flex-shrink-0" />
-        {showLabel && (
-          <div>
-            <div>{item.label}</div>
-            {!isActive && (
-              <div className="text-[10px] text-gray-500/70">{item.description}</div>
-            )}
-          </div>
-        )}
+        {showLabel && <span>{item.label}</span>}
       </Link>
     );
   };
@@ -272,6 +288,7 @@ export default function Sidebar() {
       )}
 
       <aside
+        ref={sidebarRef}
         className={cn(
           "fixed left-0 top-0 h-screen bg-sidebar text-white flex flex-col z-50 transition-all duration-300",
           "max-lg:translate-x-[-100%]",
@@ -361,20 +378,19 @@ export default function Sidebar() {
               {isAdminPage ? (
                 <Link
                   href="/dashboard"
+                  onMouseEnter={(e) => showTooltip(e, "사용자 화면으로 전환하여 서비스를 확인합니다")}
+                  onMouseLeave={hideTooltip}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/[0.04] hover:text-gray-100 transition-[background-color,color] duration-200 ease-out"
                   title={!showLabel ? "사용자 사이트" : undefined}
                 >
                   <ExternalLink size={20} className="flex-shrink-0" />
-                  {showLabel && (
-                    <div>
-                      <div>사용자 사이트</div>
-                      <div className="text-[10px] text-gray-500/70">메인 사이트 보기</div>
-                    </div>
-                  )}
+                  {showLabel && <span>사용자 사이트</span>}
                 </Link>
               ) : (
                 <Link
                   href="/admin"
+                  onMouseEnter={(e) => showTooltip(e, "서비스 관리, 회원 관리, 분석 이력을 확인합니다")}
+                  onMouseLeave={hideTooltip}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm",
                     "transition-[background-color,color] duration-200 ease-out",
@@ -385,12 +401,7 @@ export default function Sidebar() {
                   title={!showLabel ? "관리자" : undefined}
                 >
                   <ShieldCheck size={20} className="flex-shrink-0" />
-                  {showLabel && (
-                    <div>
-                      <div>관리자</div>
-                      <div className="text-[10px] text-gray-500/70">대시보드 관리</div>
-                    </div>
-                  )}
+                  {showLabel && <span>관리자</span>}
                 </Link>
               )}
             </div>
@@ -409,7 +420,29 @@ export default function Sidebar() {
             {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
           </div>
         </button>
+
       </aside>
+
+      {/* 말풍선 툴팁 - aside 바깥에 fixed로 렌더링 */}
+      {tooltip && (
+        <div
+          className="fixed pointer-events-none z-[60]"
+          style={{
+            left: tooltip.left,
+            top: tooltip.top,
+            transform: "translateY(-50%)",
+          }}
+        >
+          <div className="ml-3 relative">
+            {/* 꼬리 (삼각형) */}
+            <div className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px] border-r-[#1e1e24]" />
+            {/* 말풍선 본체 */}
+            <div className="bg-[#1e1e24] border border-white/10 rounded-xl px-4 py-2.5 shadow-xl w-[220px]">
+              <p className="text-[12px] leading-relaxed text-gray-200">{tooltip.text}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

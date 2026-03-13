@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VESTRA - Dashboard Mockup (Apple Style)</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --black: #1d1d1f;
+    --gray-1: #424245;
+    --gray-2: #6e6e73;
+    --gray-3: #86868b;
+    --gray-4: #d2d2d7;
+    --gray-5: #f5f5f7;
+    --white: #fbfbfd;
+    --blue: #0071e3;
+    --blue-hover: #0077ed;
+    --blue-light: #2997ff;
+    --green: #34c759;
+    --orange: #ff9f0a;
+    --red: #ff3b30;
+    --sidebar-w: 260px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    color: var(--black);
+    background: var(--gray-5);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.47;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ─── Sidebar ─── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--black);
+    color: #fff;
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; bottom: 0;
+    z-index: 50;
+    overflow-y: auto;
+  }
+  .sidebar-header {
+    padding: 20px 20px 16px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .sidebar-logo-text {
+    font-size: 17px; font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .sidebar-group {
+    padding: 16px 12px 8px;
+  }
+  .sidebar-group-label {
+    font-size: 11px; font-weight: 600;
+    color: var(--gray-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0 8px;
+    margin-bottom: 4px;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    font-size: 14px; font-weight: 400;
+    color: rgba(255,255,255,0.65);
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 1px;
+    text-decoration: none;
+  }
+  .sidebar-item:hover {
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.85);
+  }
+  .sidebar-item.active {
+    background: rgba(0,113,227,0.2);
+    color: #fff;
+  }
+  .sidebar-item.active::before {
+    content: '';
+    position: absolute; left: 0;
+    width: 3px; height: 20px;
+    background: var(--blue); border-radius: 0 2px 2px 0;
+  }
+  .sidebar-item svg {
+    width: 18px; height: 18px; flex-shrink: 0;
+    opacity: 0.6;
+  }
+  .sidebar-item.active svg { opacity: 1; }
+  .sidebar-spacer { flex: 1; }
+  .sidebar-profile {
+    padding: 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .profile-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--blue-light));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: #fff;
+  }
+  .profile-name { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.85); }
+  .profile-plan { font-size: 11px; color: var(--gray-3); }
+
+  /* ─── Main ─── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 32px 40px;
+    min-height: 100vh;
+  }
+
+  /* ─── Top bar ─── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .topbar h1 {
+    font-size: 32px; font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .topbar-actions {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .topbar-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px;
+    border-radius: 980px;
+    font-size: 14px; font-weight: 500;
+    border: none; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .topbar-btn.primary {
+    background: var(--blue); color: #fff;
+  }
+  .topbar-btn.primary:hover { background: var(--blue-hover); }
+  .topbar-btn.secondary {
+    background: #fff; color: var(--gray-1);
+    border: 1px solid var(--gray-4);
+  }
+  .topbar-btn.secondary:hover { background: var(--gray-5); }
+
+  /* ─── KPI Cards ─── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .kpi-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    transition: transform 0.3s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.3s;
+  }
+  .kpi-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+  }
+  .kpi-label {
+    font-size: 13px; color: var(--gray-3);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-size: 32px; font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--black);
+  }
+  .kpi-sub {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 13px; margin-top: 6px;
+  }
+  .kpi-sub.up { color: var(--green); }
+  .kpi-sub.down { color: var(--red); }
+  .kpi-sub.neutral { color: var(--gray-3); }
+  .kpi-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .kpi-dot.blue { background: var(--blue); }
+  .kpi-dot.green { background: var(--green); }
+  .kpi-dot.orange { background: var(--orange); }
+  .kpi-dot.red { background: var(--red); }
+
+  /* ─── Content Grid ─── */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 16px;
+  }
+
+  /* ─── Panel ─── */
+  .panel {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+  }
+  .panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .panel-title {
+    font-size: 17px; font-weight: 600;
+    color: var(--black);
+  }
+  .panel-link {
+    font-size: 14px; color: var(--blue);
+    text-decoration: none; font-weight: 500;
+  }
+
+  /* ─── Asset List ─── */
+  .asset-list { display: flex; flex-direction: column; gap: 12px; }
+  .asset-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 16px;
+    background: var(--gray-5);
+    border-radius: 12px;
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .asset-row:hover { background: #eee; }
+  .asset-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .asset-icon.apt { background: rgba(0,113,227,0.1); }
+  .asset-icon.villa { background: rgba(147,51,234,0.1); }
+  .asset-icon.office { background: rgba(255,159,10,0.1); }
+  .asset-info { flex: 1; }
+  .asset-name {
+    font-size: 15px; font-weight: 500; color: var(--black);
+  }
+  .asset-addr {
+    font-size: 12px; color: var(--gray-3); margin-top: 2px;
+  }
+  .asset-score {
+    text-align: right;
+  }
+  .score-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px;
+    border-radius: 980px;
+    font-size: 13px; font-weight: 600;
+  }
+  .score-badge.safe { background: rgba(52,199,89,0.12); color: var(--green); }
+  .score-badge.caution { background: rgba(255,159,10,0.12); color: var(--orange); }
+  .score-badge.danger { background: rgba(255,59,48,0.12); color: var(--red); }
+  .asset-value {
+    font-size: 12px; color: var(--gray-3); margin-top: 2px;
+  }
+
+  /* ─── Recent Activity ─── */
+  .activity-list { display: flex; flex-direction: column; gap: 0; }
+  .activity-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--gray-5);
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-top: 6px; flex-shrink: 0;
+  }
+  .activity-dot.blue { background: var(--blue); }
+  .activity-dot.green { background: var(--green); }
+  .activity-dot.orange { background: var(--orange); }
+  .activity-text {
+    font-size: 14px; color: var(--gray-1); line-height: 1.4;
+  }
+  .activity-text strong { font-weight: 600; color: var(--black); }
+  .activity-time {
+    font-size: 12px; color: var(--gray-3);
+    margin-top: 2px;
+  }
+
+  /* ─── Quick Actions ─── */
+  .quick-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .quick-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px;
+    background: var(--gray-5);
+    border-radius: 12px;
+    border: none; cursor: pointer;
+    font-size: 14px; font-weight: 500;
+    color: var(--gray-1);
+    transition: all 0.15s;
+    text-align: left;
+  }
+  .quick-btn:hover {
+    background: #eee;
+    color: var(--black);
+  }
+  .quick-btn svg {
+    width: 20px; height: 20px;
+    color: var(--blue); flex-shrink: 0;
+  }
+
+  /* ─── Logo SVG ─── */
+  .sidebar-logo-svg {
+    width: 28px; height: 28px; flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════ Sidebar ═══════ -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <svg class="sidebar-logo-svg" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="sShield" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#001466"/><stop offset="100%" stop-color="#000F4D"/>
+        </linearGradient>
+      </defs>
+      <path d="M20 2C12 2 4 4 4 4v18c0 8 7.5 13.5 16 16 8.5-2.5 16-8 16-16V4S28 2 20 2z" fill="url(#sShield)"/>
+      <path d="M12.5 13L18.5 26L20 29L21.5 26L27.5 13" stroke="#fff" stroke-width="3.5" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+      <path d="M14 14.5L20 27L26 14.5" stroke="#fff" stroke-width="1" stroke-opacity="0.25" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+    </svg>
+    <span class="sidebar-logo-text">VESTRA</span>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">분석 도구</div>
+    <a class="sidebar-item active" href="#">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      대시보드
+    </a>
+    <a class="sidebar-item" href="#">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      권리분석
+    </a>
+    <a class="sidebar-item" href="#">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      계약 검토
+    </a>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">시세 &middot; 보호</div>
+    <a class="sidebar-item" href="#">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/></svg>
+      세무 시뮬레이션
+    </a>
+    <a class="sidebar-item" href="#">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      시세 전망
+    </a>
+    <a class="sidebar-item" href="#">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      전세 보호
+    </a>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">도구</div>
+    <a class="sidebar-item" href="#">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      AI 어시스턴트
+    </a>
+    <a class="sidebar-item" href="#">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      API 데이터 허브
+    </a>
+  </div>
+
+  <div class="sidebar-spacer"></div>
+
+  <div class="sidebar-profile">
+    <div class="profile-avatar">김</div>
+    <div>
+      <div class="profile-name">김지현</div>
+      <div class="profile-plan">프로 플랜</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════ Main Content ═══════ -->
+<main class="main">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <h1>대시보드</h1>
+    <div class="topbar-actions">
+      <button class="topbar-btn secondary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        검색
+      </button>
+      <button class="topbar-btn primary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        새 분석
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">관리 자산</div>
+      <div class="kpi-value">5</div>
+      <div class="kpi-sub neutral">
+        <span class="kpi-dot blue"></span>
+        아파트 3 &middot; 빌라 1 &middot; 오피스텔 1
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">총 자산가치</div>
+      <div class="kpi-value">24.8억</div>
+      <div class="kpi-sub up">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+        +3.2% 전월 대비
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">평균 안전지수</div>
+      <div class="kpi-value">87.4</div>
+      <div class="kpi-sub up">
+        <span class="kpi-dot green"></span>
+        안전 등급
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">이번 달 분석</div>
+      <div class="kpi-value">23</div>
+      <div class="kpi-sub neutral">
+        잔여 27회 / 50회
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Grid -->
+  <div class="content-grid">
+
+    <!-- Asset List Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">관리 자산</span>
+        <a href="#" class="panel-link">전체 보기</a>
+      </div>
+      <div class="asset-list">
+        <div class="asset-row">
+          <div class="asset-icon apt">🏢</div>
+          <div class="asset-info">
+            <div class="asset-name">래미안 퍼스티지 102동 1501호</div>
+            <div class="asset-addr">서울 서초구 반포대로 235</div>
+          </div>
+          <div class="asset-score">
+            <div class="score-badge safe">● 92</div>
+            <div class="asset-value">16.5억</div>
+          </div>
+        </div>
+        <div class="asset-row">
+          <div class="asset-icon apt">🏢</div>
+          <div class="asset-info">
+            <div class="asset-name">힐스테이트 청계 204동 803호</div>
+            <div class="asset-addr">서울 중구 청계천로 100</div>
+          </div>
+          <div class="asset-score">
+            <div class="score-badge safe">● 88</div>
+            <div class="asset-value">5.2억</div>
+          </div>
+        </div>
+        <div class="asset-row">
+          <div class="asset-icon villa">🏠</div>
+          <div class="asset-info">
+            <div class="asset-name">연남동 빌라 3층</div>
+            <div class="asset-addr">서울 마포구 연남로 42</div>
+          </div>
+          <div class="asset-score">
+            <div class="score-badge caution">● 68</div>
+            <div class="asset-value">1.8억</div>
+          </div>
+        </div>
+        <div class="asset-row">
+          <div class="asset-icon office">🏬</div>
+          <div class="asset-info">
+            <div class="asset-name">강남 오피스텔 A동 1205호</div>
+            <div class="asset-addr">서울 강남구 테헤란로 152</div>
+          </div>
+          <div class="asset-score">
+            <div class="score-badge safe">● 91</div>
+            <div class="asset-value">3.1억</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- Recent Activity -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">최근 활동</span>
+        </div>
+        <div class="activity-list">
+          <div class="activity-item">
+            <div class="activity-dot blue"></div>
+            <div>
+              <div class="activity-text"><strong>권리분석</strong> 래미안 퍼스티지 102동</div>
+              <div class="activity-time">오늘 14:30</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot green"></div>
+            <div>
+              <div class="activity-text"><strong>계약서 검토</strong> 연남동 빌라 임대차</div>
+              <div class="activity-time">오늘 11:15</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot orange"></div>
+            <div>
+              <div class="activity-text"><strong>세무 시뮬레이션</strong> 양도소득세 계산</div>
+              <div class="activity-time">어제 16:42</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot blue"></div>
+            <div>
+              <div class="activity-text"><strong>전세 안전 분석</strong> 힐스테이트 청계</div>
+              <div class="activity-time">어제 09:20</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">빠른 실행</span>
+        </div>
+        <div class="quick-grid">
+          <button class="quick-btn">
+            <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            권리분석
+          </button>
+          <button class="quick-btn">
+            <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            계약서 검토
+          </button>
+          <button class="quick-btn">
+            <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/></svg>
+            세무 계산
+          </button>
+          <button class="quick-btn">
+            <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            AI 질문
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+</body>
+</html>

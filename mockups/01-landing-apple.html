@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VESTRA - Landing Mockup (Apple Style)</title>
+<style>
+  /* ─── Reset & Base ─── */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --black: #1d1d1f;
+    --gray-1: #424245;
+    --gray-2: #6e6e73;
+    --gray-3: #86868b;
+    --gray-4: #d2d2d7;
+    --gray-5: #f5f5f7;
+    --white: #fbfbfd;
+    --blue: #0071e3;
+    --blue-hover: #0077ed;
+    --blue-light: #2997ff;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    color: var(--black);
+    background: var(--white);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.47;
+  }
+
+  /* ─── Nav ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: 48px;
+    background: rgba(251,251,253,0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-inner {
+    max-width: 1024px; width: 100%;
+    padding: 0 22px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 17px; letter-spacing: -0.02em;
+    color: var(--black); text-decoration: none;
+  }
+  .nav-logo svg { flex-shrink: 0; }
+  .nav-links {
+    display: flex; align-items: center; gap: 28px;
+    list-style: none;
+  }
+  .nav-links a {
+    font-size: 12px; color: var(--gray-1);
+    text-decoration: none; letter-spacing: 0;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--black); }
+  .nav-cta {
+    font-size: 12px; padding: 6px 16px;
+    background: var(--blue); color: #fff !important;
+    border-radius: 980px; transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--blue-hover); }
+
+  /* ─── Hero ─── */
+  .hero {
+    padding: 160px 22px 100px;
+    text-align: center;
+    background: var(--white);
+    overflow: hidden;
+    position: relative;
+  }
+  .hero::after {
+    content: '';
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(0,113,227,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    display: inline-block;
+    font-size: 17px; font-weight: 600;
+    color: var(--blue);
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-size: 64px; font-weight: 700;
+    letter-spacing: -0.03em; line-height: 1.05;
+    color: var(--black);
+    max-width: 680px; margin: 0 auto;
+  }
+  .hero h1 .gradient {
+    background: linear-gradient(135deg, var(--blue), var(--blue-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p {
+    font-size: 21px; line-height: 1.5;
+    color: var(--gray-2);
+    max-width: 520px; margin: 20px auto 0;
+    font-weight: 400;
+  }
+  .hero-actions {
+    display: flex; gap: 16px;
+    justify-content: center;
+    margin-top: 36px;
+  }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 14px 28px;
+    background: var(--blue); color: #fff;
+    border-radius: 980px;
+    font-size: 17px; font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s;
+    border: none; cursor: pointer;
+  }
+  .btn-primary:hover { background: var(--blue-hover); }
+  .btn-primary svg { transition: transform 0.2s; }
+  .btn-primary:hover svg { transform: translateX(3px); }
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 14px 28px;
+    background: transparent; color: var(--blue);
+    border-radius: 980px;
+    font-size: 17px; font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s;
+    border: none; cursor: pointer;
+  }
+  .btn-secondary:hover { background: rgba(0,113,227,0.06); }
+  .hero-note {
+    font-size: 12px; color: var(--gray-3);
+    margin-top: 16px;
+  }
+
+  /* ─── Stats ─── */
+  .stats {
+    padding: 48px 22px;
+    border-top: 1px solid var(--gray-4);
+    border-bottom: 1px solid var(--gray-4);
+    background: #fff;
+  }
+  .stats-inner {
+    max-width: 980px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 32px; text-align: center;
+  }
+  .stat-value {
+    font-size: 40px; font-weight: 700;
+    letter-spacing: -0.02em; color: var(--black);
+  }
+  .stat-label {
+    font-size: 14px; color: var(--gray-3);
+    margin-top: 4px;
+  }
+
+  /* ─── Features (Apple tile layout) ─── */
+  .features {
+    padding: 100px 22px;
+    background: var(--white);
+  }
+  .section-header {
+    text-align: center; margin-bottom: 60px;
+  }
+  .section-header h2 {
+    font-size: 48px; font-weight: 700;
+    letter-spacing: -0.03em; line-height: 1.08;
+    color: var(--black);
+  }
+  .section-header p {
+    font-size: 21px; color: var(--gray-2);
+    margin-top: 12px;
+  }
+  .features-grid {
+    max-width: 980px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .feature-tile {
+    background: var(--gray-5);
+    border-radius: 20px;
+    padding: 40px 32px;
+    transition: transform 0.3s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.3s;
+    cursor: default;
+  }
+  .feature-tile:hover {
+    transform: scale(1.02);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.06);
+  }
+  .feature-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+  }
+  .feature-icon.blue,
+  .feature-icon.purple,
+  .feature-icon.green,
+  .feature-icon.orange,
+  .feature-icon.red,
+  .feature-icon.indigo { background: var(--gray-5); color: var(--black); }
+  .feature-tile h3 {
+    font-size: 21px; font-weight: 600;
+    color: var(--black);
+    margin-bottom: 8px;
+  }
+  .feature-tile p {
+    font-size: 14px; line-height: 1.5;
+    color: var(--gray-2);
+  }
+
+  /* ─── How it works ─── */
+  .steps {
+    padding: 100px 22px;
+    background: var(--gray-5);
+  }
+  .steps-grid {
+    max-width: 860px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 40px; text-align: center;
+    margin-top: 60px;
+  }
+  .step-num {
+    font-size: 56px; font-weight: 700;
+    color: var(--blue); opacity: 0.2;
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+  .step h3 {
+    font-size: 21px; font-weight: 600;
+    color: var(--black); margin-bottom: 8px;
+  }
+  .step p {
+    font-size: 14px; color: var(--gray-2); line-height: 1.5;
+  }
+
+  /* ─── Pricing ─── */
+  .pricing {
+    padding: 100px 22px;
+    background: #fff;
+  }
+  .pricing-grid {
+    max-width: 960px; margin: 60px auto 0;
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .plan {
+    border-radius: 20px;
+    padding: 40px 32px;
+    background: var(--gray-5);
+    position: relative;
+    transition: transform 0.3s;
+  }
+  .plan:hover { transform: scale(1.02); }
+  .plan.highlight {
+    background: #001466;
+    color: #fff;
+  }
+  .plan-badge {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 600;
+    padding: 4px 14px; border-radius: 980px;
+    letter-spacing: 0.02em;
+  }
+  .plan h3 {
+    font-size: 24px; font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .plan .price {
+    font-size: 48px; font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+  .plan .period {
+    font-size: 14px; color: var(--gray-3);
+  }
+  .plan.highlight .period { color: rgba(255,255,255,0.5); }
+  .plan .desc {
+    font-size: 14px; color: var(--gray-2);
+    margin-top: 4px;
+  }
+  .plan.highlight .desc { color: rgba(255,255,255,0.6); }
+  .plan ul {
+    list-style: none; margin-top: 24px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .plan li {
+    font-size: 14px; color: var(--gray-1);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .plan.highlight li { color: rgba(255,255,255,0.8); }
+  .plan li::before {
+    content: '';
+    width: 18px; height: 18px; flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--blue);
+    display: flex; align-items: center; justify-content: center;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: center;
+  }
+  .plan-cta {
+    display: block; width: 100%;
+    margin-top: 28px; padding: 14px;
+    border-radius: 12px; border: none;
+    font-size: 17px; font-weight: 500;
+    cursor: pointer; text-align: center;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .plan .plan-cta {
+    background: #001466; color: #fff;
+  }
+  .plan.highlight .plan-cta {
+    background: var(--blue); color: #fff;
+  }
+
+  /* ─── CTA Banner ─── */
+  .cta-banner {
+    padding: 100px 22px;
+    text-align: center;
+    background: #001466;
+    color: #fff;
+  }
+  .cta-banner h2 {
+    font-size: 48px; font-weight: 700;
+    letter-spacing: -0.03em; line-height: 1.08;
+  }
+  .cta-banner p {
+    font-size: 21px; color: rgba(255,255,255,0.5);
+    margin-top: 12px;
+  }
+  .cta-banner .btn-primary { margin-top: 32px; }
+
+  /* ─── Footer ─── */
+  footer {
+    padding: 40px 22px 24px;
+    background: var(--gray-5);
+    border-top: 1px solid var(--gray-4);
+  }
+  .footer-inner {
+    max-width: 980px; margin: 0 auto;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 32px;
+    margin-bottom: 32px;
+  }
+  .footer-brand { display: flex; flex-direction: column; gap: 8px; }
+  .footer-brand-logo {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 15px; font-weight: 700; color: var(--black);
+    text-decoration: none;
+  }
+  .footer-brand p { font-size: 12px; color: var(--gray-3); line-height: 1.5; max-width: 260px; }
+  .footer-col h4 {
+    font-size: 12px; font-weight: 600; color: var(--black);
+    margin-bottom: 12px; letter-spacing: 0.02em;
+  }
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .footer-col a {
+    font-size: 12px; color: var(--gray-2);
+    text-decoration: none; transition: color 0.15s;
+  }
+  .footer-col a:hover { color: var(--black); }
+  .footer-bottom {
+    padding-top: 20px;
+    border-top: 1px solid var(--gray-4);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: var(--gray-3);
+  }
+  .footer-bottom-links { display: flex; gap: 16px; }
+  .footer-bottom-links a { font-size: 11px; color: var(--gray-3); text-decoration: none; }
+  .footer-bottom-links a:hover { color: var(--gray-1); }
+
+  /* ─── Logo SVG ─── */
+  .vestra-symbol {
+    width: 28px; height: 28px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════ Nav ═══════ -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <svg class="vestra-symbol" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="navShield" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#001466"/><stop offset="100%" stop-color="#000F4D"/>
+          </linearGradient>
+        </defs>
+        <path d="M20 2C12 2 4 4 4 4v18c0 8 7.5 13.5 16 16 8.5-2.5 16-8 16-16V4S28 2 20 2z" fill="url(#navShield)"/>
+        <path d="M12.5 13L18.5 26L20 29L21.5 26L27.5 13" stroke="#fff" stroke-width="3.5" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+        <path d="M14 14.5L20 27L26 14.5" stroke="#fff" stroke-width="1" stroke-opacity="0.25" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+      </svg>
+      VESTRA
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">기능</a></li>
+      <li><a href="#pricing">요금</a></li>
+      <li><a href="#">로그인</a></li>
+      <li><a href="#" class="nav-cta">무료 시작</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ═══════ Hero ═══════ -->
+<section class="hero">
+  <div class="hero-eyebrow">AI 부동산 자산관리</div>
+  <h1>
+    당신의 부동산,<br>
+    <span class="gradient">AI가 지킵니다.</span>
+  </h1>
+  <p>
+    전세사기 예방부터 권리분석, 계약서 검토, 절세 시뮬레이션까지.<br>
+    부동산 의사결정의 새로운 기준.
+  </p>
+  <div class="hero-actions">
+    <a href="#" class="btn-primary">
+      무료로 시작하기
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+    <a href="#features" class="btn-secondary">더 알아보기</a>
+  </div>
+  <p class="hero-note">가입 없이 일 2회 무료 체험</p>
+</section>
+
+<!-- ═══════ Stats ═══════ -->
+<section class="stats">
+  <div class="stats-inner">
+    <div><div class="stat-value">10,000+</div><div class="stat-label">분석 완료</div></div>
+    <div><div class="stat-value">2,500+</div><div class="stat-label">가입 회원</div></div>
+    <div><div class="stat-value">99.2%</div><div class="stat-label">분석 정확도</div></div>
+    <div><div class="stat-value">24/7</div><div class="stat-label">AI 상담</div></div>
+  </div>
+</section>
+
+<!-- ═══════ Features ═══════ -->
+<section class="features" id="features">
+  <div class="section-header">
+    <h2>하나의 플랫폼에서<br>모든 부동산 분석을.</h2>
+    <p>6가지 핵심 기능으로 부동산 의사결정을 돕습니다.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-tile">
+      <div class="feature-icon blue">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h3>권리분석</h3>
+      <p>등기부등본을 AI가 종합 분석하여 권리관계, 위험요소, 안전지수를 한눈에 파악합니다.</p>
+    </div>
+    <div class="feature-tile">
+      <div class="feature-icon purple">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <h3>계약서 AI 검토</h3>
+      <p>부동산 계약서를 업로드하면 불리한 조항, 누락 사항, 위험 요소를 자동 검출합니다.</p>
+    </div>
+    <div class="feature-tile">
+      <div class="feature-icon green">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+      </div>
+      <h3>세무 시뮬레이션</h3>
+      <p>취득세, 양도소득세, 종합부동산세를 실시간으로 계산하고 절세 전략을 제안합니다.</p>
+    </div>
+    <div class="feature-tile">
+      <div class="feature-icon orange">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      </div>
+      <h3>시세 전망</h3>
+      <p>공공데이터와 AI 분석을 결합하여 부동산 시세 추이와 향후 전망을 제공합니다.</p>
+    </div>
+    <div class="feature-tile">
+      <div class="feature-icon red">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <h3>전세 보호</h3>
+      <p>전세 사기 예방을 위한 안전 분석, 전입신고, 확정일자, 전세권설정까지 원스톱 가이드.</p>
+    </div>
+    <div class="feature-tile">
+      <div class="feature-icon indigo">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <h3>AI 어시스턴트</h3>
+      <p>부동산 관련 궁금한 점을 AI에게 자유롭게 질문하세요. 법률, 세무, 시장 동향까지.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ Steps ═══════ -->
+<section class="steps">
+  <div class="section-header">
+    <h2>3단계로 시작하세요.</h2>
+  </div>
+  <div class="steps-grid">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h3>간편 가입</h3>
+      <p>Google, 카카오, 네이버로<br>10초 안에 가입하세요.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h3>분석 요청</h3>
+      <p>주소를 입력하거나<br>문서를 업로드하세요.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h3>결과 확인</h3>
+      <p>AI 분석 리포트를<br>즉시 확인하고 다운로드하세요.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ Pricing ═══════ -->
+<section class="pricing" id="pricing">
+  <div class="section-header">
+    <h2>합리적인 요금제.</h2>
+    <p>필요에 맞는 플랜을 선택하세요.</p>
+  </div>
+  <div class="pricing-grid">
+    <div class="plan">
+      <h3>무료</h3>
+      <div class="price">0<span class="period">원/월</span></div>
+      <div class="desc">부동산 분석을 체험해보세요</div>
+      <ul>
+        <li>권리분석 일 5회</li>
+        <li>기본 대시보드</li>
+        <li>AI 어시스턴트 (제한)</li>
+      </ul>
+      <a href="#" class="plan-cta">무료로 시작</a>
+    </div>
+    <div class="plan highlight">
+      <div class="plan-badge">인기</div>
+      <h3>프로</h3>
+      <div class="price">50,000<span class="period">원/월</span></div>
+      <div class="desc">전문적인 부동산 분석이 필요한 분</div>
+      <ul>
+        <li>모든 분석 기능</li>
+        <li>일 50회 분석</li>
+        <li>계약서 AI 검토</li>
+        <li>PDF 리포트 다운로드</li>
+        <li>AI 어시스턴트 무제한</li>
+      </ul>
+      <a href="#" class="plan-cta">프로 시작하기</a>
+    </div>
+    <div class="plan">
+      <h3>비즈니스</h3>
+      <div class="price">100,000<span class="period">원/월</span></div>
+      <div class="desc">기업 &middot; 부동산 전문가</div>
+      <ul>
+        <li>프로의 모든 기능</li>
+        <li>일 100회 분석</li>
+        <li>포트폴리오 관리</li>
+        <li>우선 기술 지원</li>
+        <li>팀 계정 (준비중)</li>
+      </ul>
+      <a href="#" class="plan-cta">비즈니스 시작</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ CTA ═══════ -->
+<section class="cta-banner">
+  <h2>지금 바로 시작하세요.</h2>
+  <p>가입 없이도 무료로 체험할 수 있습니다.</p>
+  <a href="#" class="btn-primary">
+    무료로 시작하기
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </a>
+</section>
+
+<!-- ═══════ Footer ═══════ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#" class="footer-brand-logo">
+          <svg width="22" height="22" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="fShield" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#001466"/><stop offset="100%" stop-color="#000F4D"/></linearGradient></defs>
+            <path d="M20 2C12 2 4 4 4 4v18c0 8 7.5 13.5 16 16 8.5-2.5 16-8 16-16V4S28 2 20 2z" fill="url(#fShield)"/>
+            <path d="M12.5 13L18.5 26L20 29L21.5 26L27.5 13" stroke="#fff" stroke-width="3.5" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+          </svg>
+          VESTRA
+        </a>
+        <p>AI 기반 부동산 자산관리 플랫폼.<br>전세사기 예방부터 안전한 매매까지.</p>
+      </div>
+      <div class="footer-col">
+        <h4>서비스</h4>
+        <ul>
+          <li><a href="#">권리분석</a></li>
+          <li><a href="#">계약서 검토</a></li>
+          <li><a href="#">세무 시뮬레이션</a></li>
+          <li><a href="#">시세 전망</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>지원</h4>
+        <ul>
+          <li><a href="#">이용 가이드</a></li>
+          <li><a href="#">자주 묻는 질문</a></li>
+          <li><a href="#">문의하기</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>회사</h4>
+        <ul>
+          <li><a href="#">소개</a></li>
+          <li><a href="#">채용</a></li>
+          <li><a href="#">블로그</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2025 VESTRA. All rights reserved.</span>
+      <div class="footer-bottom-links">
+        <a href="#">이용약관</a>
+        <a href="#">개인정보처리방침</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
