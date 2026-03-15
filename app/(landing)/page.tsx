@@ -92,7 +92,7 @@ export default function LandingPage() {
             <p className="text-[17px] font-semibold text-primary mb-3">
               AI 기반 부동산 분석 플랫폼
             </p>
-            <h1 className="text-[40px] md:text-[56px] lg:text-[64px] font-bold text-[#1d1d1f] leading-[1.05] tracking-[-0.03em]">
+            <h1 className="text-[40px] md:text-[56px] lg:text-[64px] font-bold text-[#1d1d1f] leading-[1.2] tracking-[-0.06em]">
               보이지 않는 위험까지 감지하는
               <br />
               <span className="bg-gradient-to-r from-primary to-[#2997ff] bg-clip-text text-transparent">
