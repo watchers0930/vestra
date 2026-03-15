@@ -93,10 +93,10 @@ export default function LandingPage() {
               AI 기반 부동산 분석 플랫폼
             </p>
             <h1 className="text-[40px] md:text-[56px] lg:text-[64px] font-bold text-[#1d1d1f] leading-[1.05] tracking-[-0.03em]">
-              AI가 분석하는
+              보이지 않는 위험까지 감지하는
               <br />
               <span className="bg-gradient-to-r from-primary to-[#2997ff] bg-clip-text text-transparent">
-                부동산 자산관리
+                부동산 자산관리 베스트라
               </span>
             </h1>
             <p className="mt-5 text-[19px] md:text-[21px] text-[#6e6e73] leading-[1.5] max-w-[520px] mx-auto">
