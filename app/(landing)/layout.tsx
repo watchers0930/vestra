@@ -76,6 +76,8 @@ export default function LandingLayout({
               <div className="mt-4 space-y-0.5 text-xs text-[#86868b]">
                 <p>BMI C&amp;S | 대표이사 김동의</p>
                 <p>사업자등록번호 263-87-03481</p>
+                <p>통신판매신고번호 2025-경기광명-0189</p>
+                <p>고객센터 010-8490-9271</p>
               </div>
             </div>
 
