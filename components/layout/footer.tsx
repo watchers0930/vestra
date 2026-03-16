@@ -11,9 +11,10 @@ export default function Footer() {
             <div className="space-y-1 text-xs text-gray-500 leading-relaxed">
               <p>대표이사 김동의</p>
               <p>사업자등록번호 263-87-03481</p>
+              <p>통신판매신고번호 2025-경기광명-0189</p>
               <p>경기도 광명시 디지털로64</p>
               <p>서울시 강남구 테헤란로 322 한신인터밸리24 1712, 13호</p>
-              <p>Tel 010-8490-9271</p>
+              <p>고객센터 010-8490-9271</p>
             </div>
           </div>
 
