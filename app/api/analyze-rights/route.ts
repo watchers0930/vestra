@@ -6,17 +6,9 @@ import { sanitizeField } from "@/lib/sanitize";
 import { fetchComprehensivePrices } from "@/lib/molit-api";
 import { estimatePrice, type PriceEstimationResult } from "@/lib/price-estimation";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
+import { formatKRW } from "@/lib/utils";
 
-/** 원 단위 숫자를 "X억 Y만원" 형태로 변환 */
-function formatKoreanPrice(won: number): string {
-  if (won <= 0) return "없음";
-  const eok = Math.floor(won / 100000000);
-  const man = Math.round((won % 100000000) / 10000);
-  if (eok > 0 && man > 0) return `${eok}억 ${man.toLocaleString()}만원`;
-  if (eok > 0) return `${eok}억원`;
-  if (man > 0) return `${man.toLocaleString()}만원`;
-  return `${won.toLocaleString()}원`;
-}
+const formatKoreanPrice = (won: number) => formatKRW(won, "없음");
 
 export async function POST(req: NextRequest) {
   try {
