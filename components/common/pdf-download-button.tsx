@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, type RefObject } from "react";
+import { useState, type RefObject } from "react";
 import { Download, Loader2 } from "lucide-react";
+import { useToast } from "@/components/common/toast";
 
 interface PdfDownloadButtonProps {
   targetRef: RefObject<HTMLElement | null>;
@@ -17,6 +18,7 @@ export default function PdfDownloadButton({
   className = "",
 }: PdfDownloadButtonProps) {
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
 
   const handleDownload = async () => {
     if (!targetRef.current || loading) return;
@@ -24,8 +26,10 @@ export default function PdfDownloadButton({
     try {
       const { exportToPdf } = await import("@/lib/pdf-export");
       await exportToPdf({ element: targetRef.current, filename, title });
+      showToast("PDF가 다운로드되었습니다.", "success");
     } catch (err) {
       console.error("PDF export failed:", err);
+      showToast("PDF 생성에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setLoading(false);
     }

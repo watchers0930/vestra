@@ -5,10 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatKRW(amount: number): string {
+export function formatKRW(amount: number, emptyLabel = "0원"): string {
+  if (amount <= 0) return emptyLabel;
   if (amount >= 100000000) {
     const eok = Math.floor(amount / 100000000);
-    const man = Math.floor((amount % 100000000) / 10000);
+    const man = Math.round((amount % 100000000) / 10000);
     return man > 0 ? `${eok}억 ${man.toLocaleString()}만원` : `${eok}억원`;
   }
   if (amount >= 10000) {

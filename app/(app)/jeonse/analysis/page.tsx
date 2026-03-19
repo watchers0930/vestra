@@ -13,6 +13,7 @@ import { FormInput, SliderInput, TabButtons } from "@/components/forms";
 import { LoadingSpinner } from "@/components/loading";
 import FraudRiskCard from "@/components/results/FraudRiskCard";
 import type { FraudRiskResult } from "@/lib/patent-types";
+import { useToast } from "@/components/common/toast";
 
 interface JeonseAnalysis {
   needsRegistration: "required" | "recommended" | "optional";
@@ -36,6 +37,7 @@ const propertyTypes = [
 ];
 
 export default function JeonsePage() {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState({
     landlordName: "",
     tenantName: "",
@@ -86,7 +88,7 @@ export default function JeonsePage() {
       })
         .then((r) => r.json())
         .then((fr) => { if (!fr.error) setFraudRisk(fr); })
-        .catch(() => {})
+        .catch(() => showToast("전세사기 위험도 분석에 실패했습니다."))
         .finally(() => setFraudLoading(false));
 
       addAnalysis({

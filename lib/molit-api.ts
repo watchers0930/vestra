@@ -320,11 +320,25 @@ export async function fetchRealTransactions(
   return result;
 }
 
+/** 배치 병렬 처리 — API 과부하 방지 (6개월씩 배치) */
+async function batchFetch<T>(
+  tasks: (() => Promise<T>)[],
+  batchSize: number = 6
+): Promise<T[]> {
+  const results: T[] = [];
+  for (let i = 0; i < tasks.length; i += batchSize) {
+    const batch = tasks.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map((fn) => fn()));
+    results.push(...batchResults);
+  }
+  return results;
+}
+
 /**
  * 특정 주소의 최근 실거래가 조회
  *
  * @param address - 부동산 주소
- * @param months - 조회 기간 (기본 6개월)
+ * @param months - 조회 기간 (기본 12개월, 최대 36개월)
  * @returns 평균 시세 및 거래 목록
  */
 export async function fetchRecentPrices(
@@ -336,13 +350,13 @@ export async function fetchRecentPrices(
 
   const now = new Date();
 
-  // 최근 N개월 병렬 조회
-  const promises = Array.from({ length: months }, (_, i) => {
+  // 최근 N개월 배치 병렬 조회 (6개월씩)
+  const tasks = Array.from({ length: months }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const dealYmd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`;
-    return fetchRealTransactions(lawdCd, dealYmd);
+    return () => fetchRealTransactions(lawdCd, dealYmd);
   });
-  const results = await Promise.all(promises);
+  const results = await batchFetch(tasks);
   const allTransactions = results.flat();
 
   if (allTransactions.length === 0) {
@@ -444,12 +458,12 @@ export async function fetchRecentRentPrices(
   if (!lawdCd) return null;
 
   const now = new Date();
-  const promises = Array.from({ length: months }, (_, i) => {
+  const tasks = Array.from({ length: months }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const dealYmd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`;
-    return fetchAptRentTransactions(lawdCd, dealYmd);
+    return () => fetchAptRentTransactions(lawdCd, dealYmd);
   });
-  const results = await Promise.all(promises);
+  const results = await batchFetch(tasks);
   const allTransactions = results.flat();
 
   // 전세만 필터링

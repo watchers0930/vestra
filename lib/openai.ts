@@ -29,6 +29,10 @@ export function getOpenAIClient() {
 /** 기본 일일 호출 한도 */
 const DEFAULT_DAILY_LIMIT = 50;
 
+/** DB 장애 시 메모리 기반 폴백 카운터 (인스턴스 단위) */
+const fallbackCounter = new Map<string, { date: string; count: number }>();
+const FALLBACK_LIMIT = 20; // DB 장애 시 보수적 한도
+
 export async function checkOpenAICostGuard(
   userId: string,
   dailyLimit: number = DEFAULT_DAILY_LIMIT
@@ -66,7 +70,19 @@ export async function checkOpenAICostGuard(
       limit: dailyLimit,
     };
   } catch {
-    // DB 오류 시 요청 허용 (가용성 우선)
-    return { allowed: true, remaining: dailyLimit, limit: dailyLimit };
+    // DB 장애 시 메모리 기반 폴백 (보수적 한도 적용)
+    const key = `${userId}:${today}`;
+    const fb = fallbackCounter.get(key) || { date: today, count: 0 };
+    if (fb.date !== today) {
+      fb.date = today;
+      fb.count = 0;
+    }
+    fb.count++;
+    fallbackCounter.set(key, fb);
+
+    if (fb.count > FALLBACK_LIMIT) {
+      return { allowed: false, remaining: 0, limit: FALLBACK_LIMIT };
+    }
+    return { allowed: true, remaining: FALLBACK_LIMIT - fb.count, limit: FALLBACK_LIMIT };
   }
 }

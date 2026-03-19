@@ -24,6 +24,7 @@ import {
   Megaphone,
   Gift,
 } from "lucide-react";
+import { useToast } from "@/components/common/toast";
 
 const ROLE_INFO: Record<string, { label: string; color: string; limit: number; icon: typeof Crown; features: string[] }> = {
   ADMIN: { label: "관리자", color: "bg-red-500", limit: 9999, icon: Crown, features: ["전체 기능", "관리자 패널"] },
@@ -42,6 +43,7 @@ const VERIFY_STATUS: Record<string, { label: string; icon: typeof CheckCircle2; 
 
 export default function ProfilePage() {
   const { data: session, update } = useSession();
+  const { showToast } = useToast();
   const [usage, setUsage] = useState<{ used: number; limit: number } | null>(null);
   const [businessNumber, setBusinessNumber] = useState("");
   const [selectedRole, setSelectedRole] = useState<"BUSINESS" | "REALESTATE">("BUSINESS");
@@ -57,11 +59,11 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (session?.user?.id) {
-      fetch("/api/user/usage").then((r) => r.json()).then(setUsage).catch(() => {});
-      fetch("/api/subscription").then((r) => r.json()).then(setSubscription).catch(() => {});
-      fetch("/api/user/notifications").then((r) => r.json()).then(setNotifications).catch(() => {});
+      fetch("/api/user/usage").then((r) => r.json()).then(setUsage).catch(() => showToast("사용량 정보를 불러오지 못했습니다."));
+      fetch("/api/subscription").then((r) => r.json()).then(setSubscription).catch(() => showToast("구독 정보를 불러오지 못했습니다."));
+      fetch("/api/user/notifications").then((r) => r.json()).then(setNotifications).catch(() => showToast("알림 설정을 불러오지 못했습니다."));
     }
-  }, [session?.user?.id]);
+  }, [session?.user?.id, showToast]);
 
   if (!session?.user) {
     return (

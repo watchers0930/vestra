@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Sora } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import SessionProvider from "@/components/auth/session-provider";
+import { ToastProvider } from "@/components/common/toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -68,13 +69,15 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} antialiased`}
       >
         <SessionProvider>
-          {process.env.NEXT_PUBLIC_KAKAO_MAP_KEY && (
-            <Script
-              src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_KEY}&libraries=services&autoload=false`}
-              strategy="afterInteractive"
-            />
-          )}
-          {children}
+          <ToastProvider>
+            {process.env.NEXT_PUBLIC_KAKAO_MAP_KEY && (
+              <Script
+                src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_KEY}&libraries=services&autoload=false`}
+                strategy="afterInteractive"
+              />
+            )}
+            {children}
+          </ToastProvider>
         </SessionProvider>
       </body>
     </html>

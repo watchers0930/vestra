@@ -18,6 +18,8 @@ import {
 import { cn } from "@/lib/utils";
 import { addAnalysis } from "@/lib/store";
 import { Card, Button, Badge, Alert } from "@/components/common";
+import { IntegrityBadge } from "@/components/common/IntegrityBadge";
+import { NerHighlight } from "@/components/common/NerHighlight";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
 import PdfDownloadButton from "@/components/common/pdf-download-button";
 import { ScoreGauge } from "@/components/results";
@@ -759,6 +761,16 @@ export default function ContractReviewPage() {
               <span>등기부등본에는 법적 &apos;공신력&apos;이 없습니다. 등기 내용이 실제와 달라도 국가가 보호하지 않으므로 위 항목을 반드시 확인하세요.</span>
             </div>
           </Card>
+
+          {/* 무결성 검증 배지 */}
+          <IntegrityBadge steps={5} />
+
+          {/* NER 개체명 인식 (계약서 원본) */}
+          {contractText && (
+            <Card className="p-6">
+              <NerHighlight text={contractText} />
+            </Card>
+          )}
 
           {/* 면책 조항 */}
           <Alert variant="warning">
