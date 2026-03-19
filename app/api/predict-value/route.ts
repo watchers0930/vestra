@@ -6,18 +6,14 @@ import { sanitizeField } from "@/lib/sanitize";
 import { fetchComprehensivePrices } from "@/lib/molit-api";
 import { estimatePrice } from "@/lib/price-estimation";
 import { predictValue } from "@/lib/prediction-engine";
+import type { MacroEconomicFactors } from "@/lib/prediction-engine";
+import { fetchBaseRate } from "@/lib/bok-api";
+import { fetchSupplyVolume } from "@/lib/supply-api";
+import { runBacktest } from "@/lib/backtesting";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
+import { formatKRW } from "@/lib/utils";
 
-/** 원 단위 숫자를 "X억 Y만원" 형태로 변환 */
-function formatKoreanPrice(won: number): string {
-  if (won <= 0) return "없음";
-  const eok = Math.floor(won / 100000000);
-  const man = Math.round((won % 100000000) / 10000);
-  if (eok > 0 && man > 0) return `${eok}억 ${man.toLocaleString()}만원`;
-  if (eok > 0) return `${eok}억원`;
-  if (man > 0) return `${man.toLocaleString()}만원`;
-  return `${won.toLocaleString()}원`;
-}
+const formatKoreanPrice = (won: number) => formatKRW(won, "없음");
 
 export async function POST(req: NextRequest) {
   try {
@@ -59,13 +55,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "주소를 입력해주세요." }, { status: 400 });
     }
 
-    // 1단계: 종합 시세 데이터 조회 (12개월 - 추세 분석용)
-    let comprehensive = null;
-    try {
-      comprehensive = await fetchComprehensivePrices(address, 12);
-    } catch (e) {
-      console.warn("MOLIT API 종합 조회 실패:", e);
-    }
+    // 1단계: 종합 데이터 병렬 조회 (36개월 실거래 + 거시경제)
+    const [comprehensive, bokData, supplyData] = await Promise.all([
+      fetchComprehensivePrices(address, 36).catch((e) => {
+        console.warn("MOLIT API 종합 조회 실패:", e);
+        return null;
+      }),
+      fetchBaseRate().catch(() => ({
+        baseRate: 2.75, baseRateDate: "fallback", dataSource: "fallback" as const,
+      })),
+      fetchSupplyVolume(address).catch(() => null),
+    ]);
+
+    // 거시경제 팩터 구성
+    const macroFactors: MacroEconomicFactors = {
+      baseRate: bokData.baseRate,
+      baseRateDate: bokData.baseRateDate,
+      supplyVolume: supplyData?.volume12m,
+      supplyRegion: supplyData?.region,
+      dataSource: bokData.dataSource,
+    };
 
     // 2단계: 자체 엔진으로 현재 시세 추정
     const priceEstimation = estimatePrice(
@@ -75,13 +84,22 @@ export async function POST(req: NextRequest) {
     );
     const currentPrice = priceEstimation.estimatedPrice;
 
-    // 3단계: 자체 엔진으로 가치 전망 산출
+    // 3단계: 자체 엔진으로 가치 전망 산출 (5모델 앙상블 + 거시경제)
     const predictionResult = predictValue(
       currentPrice,
       comprehensive?.sale?.transactions ?? [],
       comprehensive?.rent ?? null,
       comprehensive?.jeonseRatio ?? null,
+      macroFactors,
     );
+
+    // 3.5단계: 백테스팅 (36개월 데이터 있을 때)
+    const backtestResult = comprehensive?.sale?.transactions
+      ? runBacktest(comprehensive.sale.transactions)
+      : null;
+    if (backtestResult) {
+      predictionResult.backtestResult = backtestResult;
+    }
 
     // 4단계: LLM으로 종합 의견만 생성
     let aiOpinion = "";

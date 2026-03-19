@@ -74,14 +74,11 @@ declare global {
 
 export function KakaoMap({ address }: KakaoMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [status, setStatus] = useState<"loading" | "ready" | "no-key" | "error">("loading");
-  const [useKakao] = useState(() => !!process.env.NEXT_PUBLIC_KAKAO_MAP_KEY);
+  const hasKakaoKey = !!process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
+  const [status, setStatus] = useState<"loading" | "ready" | "no-key" | "error">(hasKakaoKey ? "loading" : "no-key");
 
   useEffect(() => {
-    if (!useKakao) {
-      setStatus("no-key");
-      return;
-    }
+    if (!hasKakaoKey) return;
 
     const initMap = () => {
       if (!window.kakao?.maps || !mapRef.current) return;
@@ -140,22 +137,17 @@ export function KakaoMap({ address }: KakaoMapProps) {
     if (window.kakao?.maps) {
       initMap();
     } else {
-      const checkInterval = setInterval(() => {
-        if (window.kakao?.maps) {
-          clearInterval(checkInterval);
-          initMap();
-        }
-      }, 200);
+      // SDK 스크립트 로드 대기 (next/script afterInteractive)
       const timeout = setTimeout(() => {
-        clearInterval(checkInterval);
-        if (!window.kakao?.maps) setStatus("error");
-      }, 5000);
-      return () => {
-        clearInterval(checkInterval);
-        clearTimeout(timeout);
-      };
+        if (window.kakao?.maps) {
+          initMap();
+        } else {
+          setStatus("error");
+        }
+      }, 3000);
+      return () => clearTimeout(timeout);
     }
-  }, [address, useKakao]);
+  }, [address, hasKakaoKey]);
 
   // 카카오맵 키가 없거나 에러 시 OpenStreetMap(Leaflet) 사용
   if (status === "no-key" || status === "error") {
