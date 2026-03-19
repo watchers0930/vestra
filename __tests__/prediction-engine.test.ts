@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { predictValue, calculateTrend } from "@/lib/prediction-engine";
+import { predictValue, calculateTrend, detectMarketCycle } from "@/lib/prediction-engine";
 import type { RealTransaction } from "@/lib/molit-api";
 
 // ─── Mock 데이터 ───
@@ -13,9 +13,8 @@ function makeTx(overrides: Partial<RealTransaction> = {}): RealTransaction {
     dealYear: 2025,
     dealMonth: 6,
     dealDay: 15,
-    regionCode: "11680",
     buildYear: 2015,
-    roadName: "테헤란로",
+    dong: "역삼동",
     ...overrides,
   };
 }
@@ -158,5 +157,123 @@ describe("predictValue (가치 전망 엔진)", () => {
       expect(result.predictions.optimistic["5y"]).toBe(0);
       expect(result.predictions.pessimistic["10y"]).toBe(0);
     });
+  });
+
+  describe("5모델 앙상블 (ARIMA/ETS 포함)", () => {
+    // 24건 이상 데이터: ARIMA/ETS 포함 5모델
+    const longTermTx: RealTransaction[] = Array.from({ length: 30 }, (_, i) =>
+      makeTx({
+        dealAmount: 500000000 + i * 5000000,
+        dealYear: 2024 + Math.floor(i / 12),
+        dealMonth: (i % 12) + 1,
+        dealDay: 15,
+      })
+    );
+
+    it("24건 이상 데이터에서 앙상블 모델이 3개 이상이다", () => {
+      const result = predictValue(600000000, longTermTx, null, null);
+      expect(result.ensemble).toBeDefined();
+      expect(result.ensemble!.models.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it("앙상블 가중치 합이 1이다", () => {
+      const result = predictValue(600000000, longTermTx, null, null);
+      const totalWeight = result.ensemble!.models.reduce((sum, m) => sum + m.weight, 0);
+      expect(totalWeight).toBeCloseTo(1, 1);
+    });
+
+    it("dominantModel이 모델 목록에 포함된다", () => {
+      const result = predictValue(600000000, longTermTx, null, null);
+      const modelNames = result.ensemble!.models.map((m) => m.modelName);
+      expect(modelNames).toContain(result.ensemble!.dominantModel);
+    });
+
+    it("modelAgreement가 0~1 범위이다", () => {
+      const result = predictValue(600000000, longTermTx, null, null);
+      expect(result.ensemble!.modelAgreement).toBeGreaterThanOrEqual(0);
+      expect(result.ensemble!.modelAgreement).toBeLessThanOrEqual(1);
+    });
+
+    it("데이터 부족 시 3모델 폴백 (ARIMA/ETS 제외)", () => {
+      const result = predictValue(500000000, risingTransactions, null, null);
+      expect(result.ensemble).toBeDefined();
+      // 6건이면 ARIMA/ETS는 제외될 수 있음
+      const modelNames = result.ensemble!.models.map((m) => m.modelName);
+      expect(modelNames).toContain("linear");
+      expect(modelNames).toContain("meanReversion");
+    });
+  });
+
+  describe("월별 세분화 예측", () => {
+    const longTermTx: RealTransaction[] = Array.from({ length: 24 }, (_, i) =>
+      makeTx({
+        dealAmount: 500000000 + i * 3000000,
+        dealYear: 2024 + Math.floor(i / 12),
+        dealMonth: (i % 12) + 1,
+        dealDay: 15,
+      })
+    );
+
+    it("monthlyForecast가 12개월 배열이다", () => {
+      const result = predictValue(550000000, longTermTx, null, null);
+      expect(result.monthlyForecast).toBeDefined();
+      expect(result.monthlyForecast!.length).toBe(12);
+    });
+
+    it("각 월별 예측에 month, price, confidence가 있다", () => {
+      const result = predictValue(550000000, longTermTx, null, null);
+      for (const forecast of result.monthlyForecast!) {
+        expect(forecast.month).toBeGreaterThanOrEqual(1);
+        expect(forecast.month).toBeLessThanOrEqual(12);
+        expect(forecast.price).toBeGreaterThan(0);
+        expect(forecast.confidence).toBeGreaterThanOrEqual(0);
+        expect(forecast.confidence).toBeLessThanOrEqual(100);
+      }
+    });
+  });
+
+  describe("거시경제 인자 반영", () => {
+    it("macroFactors를 전달하면 결과에 포함된다", () => {
+      const macro = {
+        baseRate: 3.0,
+        baseRateDate: "2026-03-01",
+        supplyVolume: 50000,
+        supplyRegion: "서울특별시",
+        dataSource: "live" as const,
+      };
+      const result = predictValue(500000000, risingTransactions, null, null, macro);
+      expect(result.macroFactors).toBeDefined();
+      expect(result.macroFactors!.baseRate).toBe(3.0);
+    });
+  });
+});
+
+describe("detectMarketCycle (시장 사이클 탐지)", () => {
+  it("상승 추세 데이터에서 유효한 사이클 정보를 반환한다", () => {
+    const cycle = detectMarketCycle(risingTransactions);
+    expect(["상승", "회복", "횡보", "하락"]).toContain(cycle.phase);
+    expect(cycle.confidence).toBeGreaterThanOrEqual(0);
+    expect(cycle.confidence).toBeLessThanOrEqual(100);
+    expect(cycle.durationMonths).toBeGreaterThanOrEqual(0);
+    expect(cycle.signal).toBeTruthy();
+  });
+
+  it("하락 추세 데이터에서 유효한 사이클을 반환한다", () => {
+    const cycle = detectMarketCycle(fallingTransactions);
+    expect(["하락", "횡보", "상승", "회복"]).toContain(cycle.phase);
+  });
+
+  it("빈 데이터에서 횡보를 반환한다", () => {
+    const cycle = detectMarketCycle([]);
+    expect(cycle.phase).toBe("횡보");
+    expect(cycle.signal).toBe("데이터 부족");
+  });
+
+  it("MarketCycleInfo 인터페이스를 준수한다", () => {
+    const cycle = detectMarketCycle(risingTransactions);
+    expect(cycle).toHaveProperty("phase");
+    expect(cycle).toHaveProperty("confidence");
+    expect(cycle).toHaveProperty("durationMonths");
+    expect(cycle).toHaveProperty("signal");
   });
 });
