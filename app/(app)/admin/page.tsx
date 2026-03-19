@@ -36,12 +36,14 @@ import { cn } from "@/lib/utils";
 import { Card, Button, Badge, PageHeader } from "@/components/common";
 import { KpiCard } from "@/components/results";
 import { MlTrainingTab } from "@/components/admin/MlTrainingTab";
+import { WeightTuningTab } from "@/components/admin/WeightTuningTab";
+import { IntegrityAuditTab } from "@/components/admin/IntegrityAuditTab";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "ml-training" | "account" | "apikey";
+type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "ml-training" | "weight-tuning" | "integrity-audit" | "account" | "apikey";
 
 interface Stats {
   totalUsers: number;
@@ -141,7 +143,7 @@ function AdminContent() {
 
   // URL ?tab= 파라미터에서 현재 탭 읽기
   const urlTab = searchParams.get("tab") as Tab | null;
-  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "ml-training", "account", "apikey"].includes(urlTab)
+  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "ml-training", "weight-tuning", "integrity-audit", "account", "apikey"].includes(urlTab)
     ? urlTab
     : "overview";
 
@@ -561,6 +563,8 @@ function AdminContent() {
     { key: "analyses", label: "분석 이력" },
     { key: "announcements", label: "공지사항" },
     { key: "ml-training", label: "ML 학습관리" },
+    { key: "weight-tuning", label: "가중치 튜닝" },
+    { key: "integrity-audit", label: "무결성 감사" },
     { key: "apikey", label: "API KEY" },
     { key: "account", label: "계정 설정" },
   ];
@@ -1486,6 +1490,16 @@ function AdminContent() {
           {/* ML 학습관리 탭                                                  */}
           {/* ============================================================= */}
           {tab === "ml-training" && <MlTrainingTab />}
+
+          {/* ============================================================= */}
+          {/* 가중치 튜닝 탭                                                  */}
+          {/* ============================================================= */}
+          {tab === "weight-tuning" && <WeightTuningTab />}
+
+          {/* ============================================================= */}
+          {/* 무결성 감사 탭                                                  */}
+          {/* ============================================================= */}
+          {tab === "integrity-audit" && <IntegrityAuditTab />}
 
           {/* ============================================================= */}
           {/* 계정 설정 탭                                                    */}
