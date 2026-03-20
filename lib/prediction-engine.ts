@@ -34,6 +34,19 @@ export interface MacroEconomicFactors {
   supplyVolume?: number;
   supplyRegion?: string;
   dataSource: "live" | "fallback";
+  // 한국부동산원 시장 데이터 (v2.5)
+  rebSaleChangeRate?: number;   // 매매가격지수 변동률 (%)
+  rebJeonseChangeRate?: number; // 전세가격지수 변동률 (%)
+  rebMarketTrend?: "상승" | "하락" | "보합";
+  // 건축물대장 데이터 (v2.5)
+  buildingAge?: number;         // 건물 연식 (년)
+  buildingFloors?: number;      // 층수
+  buildingHouseholds?: number;  // 세대수
+  // 교차 검증 (v2.5)
+  crossValidation?: {
+    confidence: "high" | "medium" | "low";
+    deviation: number;
+  };
 }
 
 export interface BacktestResult {

@@ -7,17 +7,24 @@
  * data.go.kr 동일 인증키 사용. 미구독 시 graceful fallback.
  */
 
+import { apiCache, APICache } from "./api-cache";
+import { extractLawdCode } from "./molit-api";
+
 export interface BuildingInfo {
   address: string;        // 도로명주소 또는 지번주소
   buildingName: string;   // 건물명
   mainPurpose: string;    // 주용도 (아파트, 오피스텔 등)
   structure: string;      // 구조 (철근콘크리트 등)
   totalArea: number;      // 연면적 (㎡)
-  buildDate: string;      // 사용승인일
+  buildDate: string;      // 사용승인일 (YYYYMMDD)
+  buildYear: number;      // 건축년도
   floors: number;         // 지상 층수
   undergroundFloors: number; // 지하 층수
   elevatorCount: number;  // 승강기 수
   parkingCount: number;   // 주차 대수
+  households: number;     // 세대수
+  floorAreaRatio: number; // 용적률 (%)
+  buildingCoverage: number; // 건폐율 (%)
 }
 
 /** XML에서 태그 값 추출 */
@@ -26,6 +33,18 @@ function extractTag(xml: string, tag: string): string {
   const match = xml.match(regex);
   return match ? match[1].trim() : "";
 }
+
+/**
+ * 주소에서 법정동코드 추출을 위한 매핑
+ * LAWD_CODE(시군구 5자리)에서 기본 법정동코드를 유추
+ */
+const BJDONG_DEFAULTS: Record<string, string> = {
+  // 서울 주요 구
+  "11680": "10300", // 강남구 역삼동
+  "11650": "10800", // 서초구 서초동
+  "11710": "10100", // 송파구 잠실동
+  "11440": "10500", // 마포구 합정동
+};
 
 /**
  * 건축물대장 기본정보 조회
@@ -44,6 +63,10 @@ export async function fetchBuildingInfo(
   const serviceKey = process.env.MOLIT_API_KEY;
   if (!serviceKey) return null;
 
+  const cacheKey = APICache.makeKey("building", sigunguCd, bjdongCd, bun, ji);
+  const cached = apiCache.get<BuildingInfo>(cacheKey);
+  if (cached) return cached;
+
   const baseUrl =
     "http://apis.data.go.kr/1613000/BldRgstHubService/getBrTitleInfo";
 
@@ -52,38 +75,54 @@ export async function fetchBuildingInfo(
     sigunguCd,
     bjdongCd,
     pageNo: "1",
-    numOfRows: "1",
+    numOfRows: "5",
+    _type: "xml",
   });
   if (bun) params.set("bun", bun);
   if (ji) params.set("ji", ji);
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
     const res = await fetch(`${baseUrl}?${params.toString()}`, {
+      signal: controller.signal,
       headers: { Accept: "application/xml" },
     });
+    clearTimeout(timeout);
+
     if (!res.ok) {
       console.warn(`Building API error: ${res.status}`);
       return null;
     }
 
     const xml = await res.text();
-
-    // 응답에 item이 없으면 데이터 없음
     if (!xml.includes("<item>")) return null;
 
-    return {
+    const indoorParking = parseInt(extractTag(xml, "indrMechUtcnt"), 10) || 0;
+    const outdoorParking = parseInt(extractTag(xml, "oudrMechUtcnt"), 10) || 0;
+    const indoorSelf = parseInt(extractTag(xml, "indrAutoUtcnt"), 10) || 0;
+    const outdoorSelf = parseInt(extractTag(xml, "oudrAutoUtcnt"), 10) || 0;
+
+    const result: BuildingInfo = {
       address: extractTag(xml, "platPlc") || extractTag(xml, "newPlatPlc"),
       buildingName: extractTag(xml, "bldNm"),
       mainPurpose: extractTag(xml, "mainPurpsCdNm"),
       structure: extractTag(xml, "strctCdNm"),
       totalArea: parseFloat(extractTag(xml, "totArea")) || 0,
       buildDate: extractTag(xml, "useAprDay"),
+      buildYear: parseInt(extractTag(xml, "useAprDay")?.substring(0, 4), 10) || 0,
       floors: parseInt(extractTag(xml, "grndFlrCnt"), 10) || 0,
       undergroundFloors: parseInt(extractTag(xml, "ugrndFlrCnt"), 10) || 0,
       elevatorCount: parseInt(extractTag(xml, "rideUseElvtCnt"), 10) || 0,
-      parkingCount: parseInt(extractTag(xml, "indrMechUtcnt"), 10) +
-                    parseInt(extractTag(xml, "oudrMechUtcnt"), 10) || 0,
+      parkingCount: indoorParking + outdoorParking + indoorSelf + outdoorSelf,
+      households: parseInt(extractTag(xml, "hhldCnt"), 10) || 0,
+      floorAreaRatio: parseFloat(extractTag(xml, "vlRat")) || 0,
+      buildingCoverage: parseFloat(extractTag(xml, "bcRat")) || 0,
     };
+
+    apiCache.set(cacheKey, result, 7 * 24 * 60 * 60 * 1000); // 7일 캐시
+    return result;
   } catch (error) {
     console.warn("Building API fetch error:", error);
     return null;
@@ -91,18 +130,21 @@ export async function fetchBuildingInfo(
 }
 
 /**
- * 주소 기반 건축물대장 간편 조회
+ * 주소 문자열 기반 건축물대장 조회
  *
- * 시군구코드(LAWD_CD 앞 5자리)와 법정동코드를 기반으로 조회를 시도.
- * 정확한 본번/부번이 없으면 해당 지역의 첫 번째 건물 정보를 반환.
+ * MOLIT의 extractLawdCode를 재사용하여 주소에서 시군구코드 추출 후 조회.
  */
 export async function fetchBuildingInfoByAddress(
-  sigunguCd: string
+  address: string
 ): Promise<BuildingInfo | null> {
-  // sigunguCd를 5자리로 사용, bjdongCd는 기본값 "10100" (일반적인 법정동)
-  // 정확한 법정동코드가 없으면 시군구 단위로 조회
+  const lawdCode = extractLawdCode(address);
+  if (!lawdCode) return null;
+
+  const sigunguCd = lawdCode.substring(0, 5);
+  const bjdongCd = BJDONG_DEFAULTS[sigunguCd] || "10100";
+
   try {
-    return await fetchBuildingInfo(sigunguCd, "10100");
+    return await fetchBuildingInfo(sigunguCd, bjdongCd);
   } catch {
     return null;
   }

@@ -9,6 +9,9 @@ import { predictValue } from "@/lib/prediction-engine";
 import type { MacroEconomicFactors } from "@/lib/prediction-engine";
 import { fetchBaseRate } from "@/lib/bok-api";
 import { fetchSupplyVolume } from "@/lib/supply-api";
+import { fetchREBMarketData } from "@/lib/reb-api";
+import { fetchBuildingInfoByAddress } from "@/lib/building-api";
+import { fetchSeoulTransactions, crossValidatePrice } from "@/lib/seoul-data-api";
 import { runBacktest } from "@/lib/backtesting";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { formatKRW } from "@/lib/utils";
@@ -55,8 +58,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "주소를 입력해주세요." }, { status: 400 });
     }
 
-    // 1단계: 종합 데이터 병렬 조회 (36개월 실거래 + 거시경제)
-    const [comprehensive, bokData, supplyData] = await Promise.all([
+    // 1단계: 종합 데이터 병렬 조회 (5개 소스)
+    const [comprehensive, bokData, supplyData, rebData, buildingInfo, seoulData] = await Promise.all([
       fetchComprehensivePrices(address, 36).catch((e) => {
         console.warn("MOLIT API 종합 조회 실패:", e);
         return null;
@@ -65,15 +68,34 @@ export async function POST(req: NextRequest) {
         baseRate: 2.75, baseRateDate: "fallback", dataSource: "fallback" as const,
       })),
       fetchSupplyVolume(address).catch(() => null),
+      fetchREBMarketData().catch(() => null),
+      fetchBuildingInfoByAddress(address).catch(() => null),
+      fetchSeoulTransactions(address).catch(() => null),
     ]);
 
-    // 거시경제 팩터 구성
+    // 서울시 데이터 교차 검증
+    const crossValidation = (comprehensive?.sale && seoulData?.transactionCount)
+      ? crossValidatePrice(comprehensive.sale.avgPrice, seoulData.avgPrice)
+      : undefined;
+
+    // 거시경제 팩터 구성 (5개 소스 통합)
+    const currentYear = new Date().getFullYear();
     const macroFactors: MacroEconomicFactors = {
       baseRate: bokData.baseRate,
       baseRateDate: bokData.baseRateDate,
       supplyVolume: supplyData?.volume12m,
       supplyRegion: supplyData?.region,
       dataSource: bokData.dataSource,
+      // 한국부동산원
+      rebSaleChangeRate: rebData?.saleChangeRate,
+      rebJeonseChangeRate: rebData?.jeonseChangeRate,
+      rebMarketTrend: rebData?.marketTrend,
+      // 건축물대장
+      buildingAge: buildingInfo?.buildYear ? currentYear - buildingInfo.buildYear : undefined,
+      buildingFloors: buildingInfo?.floors,
+      buildingHouseholds: buildingInfo?.households,
+      // 교차 검증
+      crossValidation,
     };
 
     // 2단계: 자체 엔진으로 현재 시세 추정
@@ -158,6 +180,21 @@ export async function POST(req: NextRequest) {
           }
         : null,
       calculatedJeonseRatio: comprehensive?.jeonseRatio ?? null,
+      // v2.5: 추가 데이터 소스
+      buildingInfo: buildingInfo ?? null,
+      rebMarketData: rebData ? {
+        saleChangeRate: rebData.saleChangeRate,
+        jeonseChangeRate: rebData.jeonseChangeRate,
+        marketTrend: rebData.marketTrend,
+      } : null,
+      seoulCrossValidation: crossValidation ?? null,
+      dataSources: [
+        "국토교통부 실거래가",
+        bokData.dataSource === "live" ? "한국은행 기준금리" : null,
+        rebData?.dataSource === "live" ? "한국부동산원 가격지수" : null,
+        buildingInfo ? "건축물대장" : null,
+        seoulData?.dataSource === "live" ? "서울시 실거래가" : null,
+      ].filter(Boolean),
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "알 수 없는 오류";

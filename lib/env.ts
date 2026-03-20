@@ -15,7 +15,10 @@ const ENV_VARS: EnvVar[] = [
   { key: "OPENAI_API_KEY", required: true, description: "OpenAI API (AI 분석)" },
   { key: "DATABASE_URL", required: true, description: "PostgreSQL 연결" },
   { key: "AUTH_SECRET", required: true, description: "NextAuth 인증" },
-  { key: "MOLIT_API_KEY", required: false, description: "국토교통부 실거래가 API" },
+  { key: "MOLIT_API_KEY", required: false, description: "국토교통부 실거래가/건축물대장 API" },
+  { key: "BOK_API_KEY", required: false, description: "한국은행 기준금리 API" },
+  { key: "REB_API_KEY", required: false, description: "한국부동산원 R-ONE API" },
+  { key: "SEOUL_DATA_API_KEY", required: false, description: "서울 열린데이터광장 API" },
   { key: "NEXT_PUBLIC_KAKAO_MAP_KEY", required: false, description: "카카오 지도" },
 ];
 
