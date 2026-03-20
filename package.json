@@ -1,6 +1,6 @@
 {
   "name": "vestra",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -18,12 +18,14 @@
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "docx": "^9.6.1",
     "dompurify": "^3.3.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.0",
     "leaflet": "^1.9.4",
     "leaflet.heat": "^0.2.0",
     "lucide-react": "^0.575.0",
+    "mammoth": "^1.12.0",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
     "openai": "^6.23.0",
@@ -34,7 +36,8 @@
     "react-leaflet": "^5.0.0",
     "recharts": "^3.7.0",
     "tailwind-merge": "^3.5.0",
-    "unpdf": "^1.4.0"
+    "unpdf": "^1.4.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
