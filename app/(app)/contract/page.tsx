@@ -437,7 +437,7 @@ export default function ContractReviewPage() {
   // ---- Render ----
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-12">
+    <div className="space-y-6 pb-12">
       {/* Header */}
       <div>
         <div className="flex items-center gap-3">
@@ -445,7 +445,7 @@ export default function ContractReviewPage() {
             <FileSearch size={22} strokeWidth={1.5} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">계약검토</h1>
+            <h1 className="text-xl font-semibold text-[#1d1d1f]">계약검토</h1>
             <p className="text-sm text-gray-500">AI 기반 부동산 계약서 자동 분석</p>
           </div>
         </div>

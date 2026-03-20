@@ -104,8 +104,8 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">내 프로필</h1>
+    <div className="space-y-6">
+      <h1 className="text-xl font-semibold text-[#1d1d1f]">내 프로필</h1>
 
       {/* 사용자 정보 */}
       <div className="bg-card rounded-2xl border border-border p-6">

@@ -26,29 +26,29 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-card p-12 text-center shadow-sm",
+        "rounded-xl bg-white border border-gray-100 py-16 px-8 text-center",
         className
       )}
     >
-      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#f5f5f7]">
-        <Icon className="h-8 w-8 text-[#1d1d1f]" strokeWidth={1.5} />
+      <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-50">
+        <Icon className="h-9 w-9 text-[#86868b]" strokeWidth={1.2} />
       </div>
-      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
-      <p className="mt-2 text-sm text-muted max-w-md mx-auto">{description}</p>
+      <h3 className="text-base font-semibold text-[#1d1d1f]">{title}</h3>
+      <p className="mt-2 text-sm text-[#86868b] max-w-md mx-auto leading-relaxed">{description}</p>
       {actions && actions.length > 0 && (
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
           {actions.map((action) => (
             <a
               key={action.href}
               href={action.href}
               className={cn(
-                "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors",
+                "inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all",
                 action.variant === "secondary"
-                  ? "border border-border text-secondary hover:bg-gray-50"
-                  : "bg-primary text-white hover:bg-primary-dark"
+                  ? "border border-gray-200 text-[#424245] hover:border-primary/40 hover:text-primary hover:bg-primary/5"
+                  : "border border-primary text-primary hover:bg-primary hover:text-white"
               )}
             >
-              {action.icon && <action.icon size={16} />}
+              {action.icon && <action.icon size={15} strokeWidth={1.5} />}
               {action.label}
             </a>
           ))}

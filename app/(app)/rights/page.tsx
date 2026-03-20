@@ -208,7 +208,7 @@ export default function RightsAnalysisPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div>
       <PageHeader icon={Shield} title="권리분석" description="등기부등본 업로드 → 실제 데이터 기반 종합 권리분석" />
 
       {/* 입력 섹션 */}

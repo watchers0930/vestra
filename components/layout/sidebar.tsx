@@ -23,6 +23,7 @@ import {
   Megaphone,
   KeyRound,
   ExternalLink,
+  ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -66,6 +67,7 @@ const userMenuItems: MenuItem[] = [
       { href: "/jeonse/lease-report", label: "주택임대차 신고" },
     ],
   },
+  { href: "/feasibility", icon: ClipboardCheck, label: "사업성 분석", description: "다중 문서 기반 SCR 수준 사업성 검증 보고서를 생성합니다" },
   { href: "/assistant", icon: MessageSquare, label: "AI 어시스턴트", description: "부동산 관련 궁금한 점을 AI에게 자유롭게 질문할 수 있습니다" },
   { href: "/api-hub", icon: Database, label: "API 데이터 허브", description: "국토교통부·법원 등 공공 API 연동 현황과 데이터를 조회합니다" },
 ];
@@ -76,7 +78,7 @@ const userMenuItems: MenuItem[] = [
 const userMenuGroups: MenuGroup[] = [
   {
     label: "분석 도구",
-    items: [userMenuItems[0], userMenuItems[1], userMenuItems[2]],
+    items: [userMenuItems[0], userMenuItems[1], userMenuItems[2], userMenuItems[6]],
   },
   {
     label: "시세·보호",
@@ -84,7 +86,7 @@ const userMenuGroups: MenuGroup[] = [
   },
   {
     label: "도구",
-    items: [userMenuItems[6], userMenuItems[7]],
+    items: [userMenuItems[7], userMenuItems[8]],
   },
 ];
 

@@ -375,7 +375,7 @@ export default function PredictionPage() {
   if (!result?.realTransactions || result.realTransactions.length < 3) disabledTabs.push("anomaly");
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div>
       <PageHeader icon={TrendingUp} title="시세전망" description="실거래 데이터 + AI 기반 부동산 시세 분석 및 미래 가격 전망" />
 
       <div className="mb-6 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg">

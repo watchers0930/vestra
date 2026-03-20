@@ -109,7 +109,7 @@ export default function TaxPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div>
       <PageHeader icon={Calculator} title="세무 시뮬레이션" description="취득세 · 보유세 · 양도세 실시간 계산" />
 
       {/* Tax Comparison Chart */}

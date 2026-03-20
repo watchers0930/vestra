@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VESTRA Dashboard Mockup</title>
+<style>
+  @font-face { font-family: 'Paperlogy'; font-weight: 100; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-1Thin.woff2') format('woff2'); }
+  @font-face { font-family: 'Paperlogy'; font-weight: 200; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-2ExtraLight.woff2') format('woff2'); }
+  @font-face { font-family: 'Paperlogy'; font-weight: 300; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-3Light.woff2') format('woff2'); }
+  @font-face { font-family: 'Paperlogy'; font-weight: 400; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2') format('woff2'); }
+  @font-face { font-family: 'Paperlogy'; font-weight: 500; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2') format('woff2'); }
+  @font-face { font-family: 'Paperlogy'; font-weight: 600; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2') format('woff2'); }
+  @font-face { font-family: 'Paperlogy'; font-weight: 700; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2'); }
+  @font-face { font-family: 'Paperlogy'; font-weight: 800; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2'); }
+  @font-face { font-family: 'Paperlogy'; font-weight: 900; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-9Black.woff2') format('woff2'); }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Paperlogy', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    padding: 32px 40px;
+    max-width: 1200px;
+  }
+
+  /* Header */
+  .header h1 { font-size: 20px; font-weight: 700; color: #1d1d1f; }
+  .header p { margin-top: 2px; font-size: 14px; color: #86868b; }
+
+  /* Info Banner */
+  .info-banner {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px; margin-top: 24px;
+    border-radius: 12px;
+    background: rgba(59,130,246,0.05);
+    border: 1px solid rgba(59,130,246,0.1);
+  }
+  .info-banner svg { color: #3b82f6; flex-shrink: 0; }
+  .info-banner p { font-size: 14px; color: #424245; }
+
+  /* KPI Grid */
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 16px; margin-top: 24px;
+  }
+  .kpi-card {
+    background: #fff; border: 1px solid #f0f0f0;
+    border-radius: 12px; padding: 20px;
+    transition: all 0.2s;
+  }
+  .kpi-card:hover { border-color: rgba(59,130,246,0.3); box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .kpi-card .top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .kpi-card .label { font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-card .value { margin-top: 8px; font-size: 24px; font-weight: 600; color: #1d1d1f; }
+  .kpi-card .desc { margin-top: 4px; font-size: 12px; color: #86868b; }
+  .kpi-card .icon-box {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: #f5f5f7;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .kpi-card .icon-box svg { color: #1d1d1f; }
+
+  /* Section Card */
+  .section-card {
+    background: #fff; border: 1px solid #f0f0f0;
+    border-radius: 12px; overflow: hidden; margin-top: 24px;
+  }
+  .section-header {
+    padding: 16px 20px; border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-header h2 { font-size: 14px; font-weight: 600; color: #1d1d1f; }
+  .section-header .sub { font-size: 12px; color: #86868b; margin-top: 2px; }
+  .section-header .badge {
+    font-size: 12px; font-weight: 600; color: #3b82f6;
+    background: rgba(59,130,246,0.08);
+    padding: 4px 10px; border-radius: 999px;
+  }
+
+  /* Asset Cards */
+  .asset-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 16px; padding: 20px;
+  }
+  .asset-card {
+    border: 1px solid #f0f0f0; border-radius: 12px; padding: 16px;
+    transition: all 0.2s;
+  }
+  .asset-card:hover { border-color: rgba(59,130,246,0.3); box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .asset-card .asset-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .asset-card .address { font-size: 14px; font-weight: 500; color: #1d1d1f; }
+  .asset-card .type { font-size: 12px; color: #86868b; margin-top: 2px; }
+  .asset-card .mini-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #f5f5f7;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .asset-card .mini-icon svg { color: #1d1d1f; }
+  .asset-card .row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
+  .asset-card .row .label { color: #86868b; }
+  .asset-card .row .val { font-weight: 600; color: #3b82f6; }
+  .asset-card .row .val.dark { color: #1d1d1f; }
+  .asset-card .row .val.safe { color: #059669; font-weight: 600; }
+  .asset-card .row .val.warn { color: #d97706; font-weight: 600; }
+  .asset-card .footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid #f0f0f0; }
+  .asset-card .footer span { font-size: 10px; color: #86868b; display: flex; align-items: center; gap: 4px; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { border-bottom: 1px solid #f0f0f0; background: rgba(249,250,251,0.5); }
+  th { padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #86868b; }
+  th:nth-child(4), td:nth-child(4) { text-align: right; }
+  tbody tr { border-bottom: 1px solid #fafafa; transition: background 0.15s; }
+  tbody tr:last-child { border: none; }
+  tbody tr:hover { background: rgba(249,250,251,0.5); }
+  td { padding: 14px 16px; }
+  .type-badge { display: flex; align-items: center; gap: 10px; }
+  .type-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .type-icon.blue, .type-icon.violet, .type-icon.emerald, .type-icon.amber, .type-icon.cyan {
+    background: #f5f5f7; color: #1d1d1f;
+  }
+  .type-label { font-size: 14px; font-weight: 500; color: #1d1d1f; }
+  .addr-chip {
+    display: inline-block; background: #f9fafb; border-radius: 8px;
+    padding: 4px 10px; font-size: 12px; font-weight: 500; color: #424245;
+  }
+  .summary { font-size: 14px; color: #86868b; max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .date { font-size: 12px; color: #86868b; }
+  .del-btn {
+    background: none; border: none; cursor: pointer; padding: 6px;
+    border-radius: 8px; color: #d1d5db; opacity: 0; transition: all 0.2s;
+  }
+  tbody tr:hover .del-btn { opacity: 1; }
+  .del-btn:hover { color: #ef4444; background: #fef2f2; }
+
+  /* Watermark */
+  .watermark {
+    margin-top: 32px; text-align: center;
+    font-size: 12px; color: #c7c7cc;
+    padding: 16px; border-top: 1px solid #f0f0f0;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>대시보드</h1>
+  <p>자산 현황 및 리스크 모니터링</p>
+</div>
+
+<!-- Info Banner -->
+<div class="info-banner">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+  <p>권리분석, 계약검토, 시세전망 등에서 분석한 결과가 이 대시보드에 자동으로 표시됩니다.</p>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="top">
+      <div>
+        <div class="label">관리 자산</div>
+        <div class="value">3건</div>
+        <div class="desc">분석된 부동산</div>
+      </div>
+      <div class="icon-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="kpi-card">
+    <div class="top">
+      <div>
+        <div class="label">총 평가액</div>
+        <div class="value">14.2억</div>
+        <div class="desc">추정 시세 합계</div>
+      </div>
+      <div class="icon-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2.5"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="kpi-card">
+    <div class="top">
+      <div>
+        <div class="label">평균 안전지수</div>
+        <div class="value">78/100</div>
+        <div class="desc">등록 자산 평균</div>
+      </div>
+      <div class="icon-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s8 4 8 10-8 10-8 10-8-4-8-10 8-10 8-10Z"/><path d="m8 11 3 3 5-5"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="kpi-card">
+    <div class="top">
+      <div>
+        <div class="label">평균 리스크</div>
+        <div class="value">32/100</div>
+        <div class="desc">낮을수록 안전</div>
+      </div>
+      <div class="icon-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Assets Section -->
+<div class="section-card">
+  <div class="section-header">
+    <div>
+      <h2>관리 자산</h2>
+      <div class="sub">분석된 부동산 목록</div>
+    </div>
+    <span class="badge">3건</span>
+  </div>
+  <div class="asset-grid">
+    <!-- Asset 1 -->
+    <div class="asset-card">
+      <div class="asset-top">
+        <div>
+          <div class="address">서울 강남구 역삼동 123-4</div>
+          <div class="type">아파트</div>
+        </div>
+        <div class="mini-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+        </div>
+      </div>
+      <div class="row"><span class="label">추정 시세</span><span class="val">8.5억</span></div>
+      <div class="row"><span class="label">전세가</span><span class="val dark">5.2억</span></div>
+      <div class="row"><span class="label">안전지수</span><span class="val safe">82점</span></div>
+      <div class="footer">
+        <span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          2025. 3. 18.
+        </span>
+      </div>
+    </div>
+    <!-- Asset 2 -->
+    <div class="asset-card">
+      <div class="asset-top">
+        <div>
+          <div class="address">서울 마포구 합정동 56-7</div>
+          <div class="type">오피스텔</div>
+        </div>
+        <div class="mini-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+        </div>
+      </div>
+      <div class="row"><span class="label">추정 시세</span><span class="val">3.2억</span></div>
+      <div class="row"><span class="label">전세가</span><span class="val dark">2.1억</span></div>
+      <div class="row"><span class="label">안전지수</span><span class="val safe">74점</span></div>
+      <div class="footer">
+        <span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          2025. 3. 15.
+        </span>
+      </div>
+    </div>
+    <!-- Asset 3 -->
+    <div class="asset-card">
+      <div class="asset-top">
+        <div>
+          <div class="address">경기 성남시 분당구 정자동</div>
+          <div class="type">아파트</div>
+        </div>
+        <div class="mini-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+        </div>
+      </div>
+      <div class="row"><span class="label">추정 시세</span><span class="val">2.5억</span></div>
+      <div class="row"><span class="label">안전지수</span><span class="val warn">58점</span></div>
+      <div class="footer">
+        <span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          2025. 3. 10.
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Analysis History Table -->
+<div class="section-card">
+  <div class="section-header">
+    <div>
+      <h2>최근 분석 내역</h2>
+      <div class="sub">AI 분석 리포트 히스토리</div>
+    </div>
+    <span style="font-size:12px;color:#86868b;">5건</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="padding-left:20px;">유형</th>
+          <th>대상</th>
+          <th>분석 요약</th>
+          <th>날짜</th>
+          <th style="width:40px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding-left:20px;">
+            <div class="type-badge">
+              <div class="type-icon blue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2s8 4 8 10-8 10-8 10-8-4-8-10 8-10 8-10Z"/></svg></div>
+              <span class="type-label">권리분석</span>
+            </div>
+          </td>
+          <td><span class="addr-chip">서울 강남구 역삼동 123-4</span></td>
+          <td><span class="summary">근저당권 1건 설정, 전세권 미설정. 안전지수 82점으로 양호한 상태입니다.</span></td>
+          <td><span class="date">2025. 3. 18.</span></td>
+          <td><button class="del-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td>
+        </tr>
+        <tr>
+          <td style="padding-left:20px;">
+            <div class="type-badge">
+              <div class="type-icon violet"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg></div>
+              <span class="type-label">계약검토</span>
+            </div>
+          </td>
+          <td><span class="addr-chip">서울 마포구 합정동 56-7</span></td>
+          <td><span class="summary">특약 조항 3건 확인, 위험 조항 없음. 계약 조건 적정합니다.</span></td>
+          <td><span class="date">2025. 3. 17.</span></td>
+          <td><button class="del-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td>
+        </tr>
+        <tr>
+          <td style="padding-left:20px;">
+            <div class="type-badge">
+              <div class="type-icon emerald"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+              <span class="type-label">가치예측</span>
+            </div>
+          </td>
+          <td><span class="addr-chip">서울 강남구 역삼동 123-4</span></td>
+          <td><span class="summary">향후 1년 내 3~5% 상승 전망. 주변 개발호재 반영.</span></td>
+          <td><span class="date">2025. 3. 15.</span></td>
+          <td><button class="del-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td>
+        </tr>
+        <tr>
+          <td style="padding-left:20px;">
+            <div class="type-badge">
+              <div class="type-icon amber"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+              <span class="type-label">전세보호</span>
+            </div>
+          </td>
+          <td><span class="addr-chip">서울 마포구 합정동 56-7</span></td>
+          <td><span class="summary">전세가율 65.6%, 안전 범위 내. 확정일자 등록 확인됨.</span></td>
+          <td><span class="date">2025. 3. 12.</span></td>
+          <td><button class="del-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td>
+        </tr>
+        <tr>
+          <td style="padding-left:20px;">
+            <div class="type-badge">
+              <div class="type-icon cyan"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></div>
+              <span class="type-label">사업성분석</span>
+            </div>
+          </td>
+          <td><span class="addr-chip">경기 성남시 분당구 정자동</span></td>
+          <td><span class="summary">NPV 양수, IRR 8.2%. 투자 적정성 확인됨.</span></td>
+          <td><span class="date">2025. 3. 10.</span></td>
+          <td><button class="del-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="watermark">VESTRA Dashboard Mockup - MiriCanvas DesignHub Style Preview</div>
+
+</body>
+</html>

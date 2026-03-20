@@ -80,7 +80,7 @@ export default function AssistantPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto h-[calc(100vh-5rem)] lg:h-[calc(100vh-3rem)] flex flex-col">
+    <div className="h-[calc(100vh-5rem)] lg:h-[calc(100vh-3rem)] flex flex-col">
       <PageHeader icon={MessageSquare} title="AI 어시스턴트" description="부동산 전문 AI에게 무엇이든 물어보세요" />
 
       {/* Chat Area */}

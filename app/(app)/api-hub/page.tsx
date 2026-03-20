@@ -128,7 +128,7 @@ const dataTypes = [
 
 export default function ApiHubPage() {
   return (
-    <div className="max-w-6xl mx-auto">
+    <div>
       <PageHeader icon={Database} title="API 데이터 허브" description="10개 공공기관 API 연동 현황" />
 
       {/* Summary */}

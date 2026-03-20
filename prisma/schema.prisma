@@ -84,6 +84,9 @@ model User {
   subscription        Subscription?
   notificationSetting NotificationSetting?
 
+  // 사업성 분석
+  feasibilityReports FeasibilityReport[]
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }
@@ -371,4 +374,119 @@ model DomainVocabulary {
 
   @@unique([term])
   @@index([category])
+}
+
+// ---------------------------------------------------------------------------
+// 사업성 분석 보고서 (Feasibility Report)
+// ---------------------------------------------------------------------------
+
+model FeasibilityReport {
+  id                String   @id @default(cuid())
+  userId            String
+  projectName       String
+  address           String
+  purpose           String                  // "아파트" | "오피스텔" | ...
+  totalFloorArea    Float                   // 연면적 (㎡)
+  totalUnits        Int                     // 세대/호실 수
+  mergedContext     Json                    // MergedProjectContext
+  verificationData  Json                    // VerificationResult[]
+  rationalityData   Json                    // RationalityItem[]
+  chapters          Json                    // ChapterOpinion[]
+  vScore            Int                     // 0-100
+  vScoreGrade       String                  // "A" ~ "F"
+  vScoreDetail      Json                    // FeasibilityScore
+  status            String   @default("draft") // "draft" | "completed"
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user  User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  files FeasibilityFile[]
+
+  @@index([userId])
+  @@index([address])
+}
+
+model FeasibilityFile {
+  id         String   @id @default(cuid())
+  reportId   String
+  filename   String
+  fileType   String                        // "pdf" | "docx" | "xlsx" | "hwp"
+  fileSize   Int                           // bytes
+  pageCount  Int?
+  confidence Int?                          // 파싱 신뢰도 0-100
+  createdAt  DateTime @default(now())
+
+  report FeasibilityReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+}
+
+// ---------------------------------------------------------------------------
+// 적응형 가중치 튜닝 (Adaptive Weight Tuning)
+// ---------------------------------------------------------------------------
+
+model WeightConfig {
+  id              String   @id @default(cuid())
+  weights         Json     // { "등기부 파싱": 0.25, "위험도 스코어": 0.30, ... }
+  betaParams      Json     // { "등기부 파싱": { alpha: 12, beta: 4 }, ... }
+  brierScore      Float    @default(0)
+  logLoss         Float    @default(0)
+  ece             Float    @default(0)
+  feedbackCount   Int      @default(0)
+  improvement     Float    @default(0)
+  confidence      Float    @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+model WeightFeedback {
+  id             String   @id @default(cuid())
+  analysisId     String
+  predictedRisk  Float
+  actualOutcome  String   // safe | fraud | partial_loss | unknown
+  lossAmount     Float?
+  featureValues  Json
+  weightSnapshot Json
+  createdAt      DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actualOutcome])
+}
+
+// ---------------------------------------------------------------------------
+// 무결성 체인 (Integrity Chain)
+// ---------------------------------------------------------------------------
+
+model IntegrityRecord {
+  id            String   @id @default(cuid())
+  analysisId    String
+  analysisType  String   // rights | contract | prediction | jeonse | feasibility
+  address       String?
+  steps         Int
+  stepsData     Json     // AnalysisStep[]
+  merkleRoot    String
+  isValid       Boolean  @default(true)
+  verifiedAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@index([analysisType])
+  @@index([isValid])
+  @@index([createdAt])
+}
+
+model BenchmarkCache {
+  id          String   @id @default(cuid())
+  key         String   @unique            // "kict:2026-03", "pf_rate:gradeA" 등
+  category    String                      // "construction_cost" | "pf_rate" | "cap_rate" | "supply"
+  data        Json                        // 벤치마크 수치 데이터
+  source      String                      // 데이터 출처
+  asOfDate    DateTime                    // 데이터 기준일
+  expiresAt   DateTime                    // 캐시 만료일
+  createdAt   DateTime @default(now())
+
+  @@index([category])
+  @@index([expiresAt])
 }

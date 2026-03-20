@@ -5,7 +5,7 @@ import { ProcedureCard } from "@/components/jeonse";
 
 export default function JeonseHubPage() {
   return (
-    <div className="max-w-5xl mx-auto">
+    <div>
       <PageHeader icon={Home} title="전세보호" description="전세 보증금 보호를 위한 행정 절차 가이드" />
 
       {/* AI 분석 CTA */}

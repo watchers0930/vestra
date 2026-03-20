@@ -144,7 +144,7 @@ export default function JeonsePage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div>
       <nav className="flex items-center gap-1 text-sm mb-4">
         <Link href="/jeonse" className="text-primary hover:underline">전세보호</Link>
         <ChevronRight size={14} className="text-muted" strokeWidth={1.5} />

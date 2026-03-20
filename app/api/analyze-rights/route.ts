@@ -7,6 +7,7 @@ import { fetchComprehensivePrices } from "@/lib/molit-api";
 import { estimatePrice, type PriceEstimationResult } from "@/lib/price-estimation";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { formatKRW } from "@/lib/utils";
+import { recordIntegrity } from "@/lib/integrity-recorder";
 
 const formatKoreanPrice = (won: number) => formatKRW(won, "없음");
 
@@ -159,6 +160,21 @@ export async function POST(req: NextRequest) {
     } catch {
       aiOpinion = "AI 의견 생성에 실패했습니다. 자체 분석 결과를 참고해주세요.";
     }
+
+    // 무결성 체인 기록 (비동기, 실패해도 결과 반환)
+    try {
+      const analysisId = `rights_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+      recordIntegrity({
+        analysisId,
+        analysisType: "rights",
+        address: propertyInfo?.address,
+        steps: [
+          { name: "등기부 파싱", input: { address: propertyInfo?.address }, output: { type: propertyInfo?.type } },
+          { name: "위험도 분석", input: propertyInfo, output: { score: riskAnalysis?.safetyScore, riskScore: riskAnalysis?.riskScore } },
+          { name: "AI 의견 생성", input: { safetyScore: riskAnalysis?.safetyScore }, output: { hasOpinion: !!aiOpinion } },
+        ],
+      }).catch(() => {});
+    } catch {}
 
     return NextResponse.json({ propertyInfo, riskAnalysis, aiOpinion });
   } catch (error: unknown) {
