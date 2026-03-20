@@ -86,7 +86,8 @@ export async function POST(req: NextRequest) {
       resolvedContext,
       verifications,
       rationalityItems,
-      ip
+      ip,
+      vScore
     );
 
     // 종합 의견을 vScore에 반영
