@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
 import { addAnalysis, addOrUpdateAsset } from "@/lib/store";
-import { getSidoList, getSigunguList, getEupmyeondongList } from "@/lib/korea-address";
+// korea-address 제거 — Daum Postcode API로 통합
 import {
   LineChart,
   Line,
@@ -103,9 +103,14 @@ interface PredictionResult {
   macroFactors?: MacroEconomicFactors;
   backtestResult?: BacktestResult;
   marketCycle?: MarketCycleInfo;
+  integrity?: {
+    merkleRoot: string;
+    totalSteps: number;
+    isValid: boolean;
+    stages: { name: string; hash: string }[];
+  };
 }
 
-type InputMode = "dong" | "jibun" | "road";
 type AddressTab = "admin" | "jibun" | "road";
 
 interface AddressInfo {
@@ -146,13 +151,8 @@ declare global {
 }
 
 export default function PredictionPage() {
-  const [inputMode, setInputMode] = useState<InputMode>("dong");
-  const [selectedSido, setSelectedSido] = useState("");
-  const [selectedSigungu, setSelectedSigungu] = useState("");
-  const [selectedDong, setSelectedDong] = useState("");
-  const [detailAddr, setDetailAddr] = useState("");
-  const [jibunInput, setJibunInput] = useState("");
   const [roadResult, setRoadResult] = useState("");
+  const [buildingName, setBuildingName] = useState("");
 
   const resultRef = useRef<HTMLDivElement>(null);
   const [address, setAddress] = useState("");
@@ -164,10 +164,6 @@ export default function PredictionPage() {
   const [addressTab, setAddressTab] = useState<AddressTab>("admin");
   const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null);
   const [activeTab, setActiveTab] = useState<PredictionTabId>("dashboard");
-
-  const sidoList = getSidoList();
-  const sigunguList = selectedSido ? getSigunguList(selectedSido) : [];
-  const dongList = selectedSido && selectedSigungu ? getEupmyeondongList(selectedSido, selectedSigungu) : [];
 
   useEffect(() => {
     if (document.getElementById("daum-postcode-script")) return;
@@ -187,20 +183,14 @@ export default function PredictionPage() {
       oncomplete: (data: DaumPostcodeData) => {
         const addr = data.userSelectedType === "R" ? data.roadAddress : data.jibunAddress;
         setRoadResult(addr);
+        setBuildingName(data.buildingName || "");
       },
     }).open();
   }, []);
 
-  const buildAddress = () => {
-    if (inputMode === "jibun") return jibunInput.trim();
-    if (inputMode === "road") return roadResult.trim();
-    return [selectedSido, selectedSigungu, selectedDong, detailAddr.trim()].filter(Boolean).join(" ");
-  };
+  const buildAddress = () => roadResult.trim();
 
-  const canSearch =
-    inputMode === "dong" ? !!(selectedSido && selectedSigungu) :
-    inputMode === "jibun" ? !!jibunInput.trim() :
-    !!roadResult.trim();
+  const canSearch = !!roadResult.trim();
 
   const handleAnalyze = async () => {
     const builtAddress = buildAddress();
@@ -218,7 +208,7 @@ export default function PredictionPage() {
       const res = await fetch("/api/predict-value", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: builtAddress }),
+        body: JSON.stringify({ address: builtAddress, buildingName: buildingName || undefined }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -226,8 +216,23 @@ export default function PredictionPage() {
 
       if (data.realTransactions?.length) {
         const aptNames = [...new Set(data.realTransactions.map((t: RealTransaction) => t.aptName))] as string[];
-        const query = address.trim().replace(/\s/g, "");
-        const matched = aptNames.find((name) => query.includes(name.replace(/\s/g, "")));
+        const query = builtAddress.trim().replace(/\s/g, "");
+        const bldg = buildingName.replace(/\s/g, "").replace(/아파트$/, "");
+        // 아파트명에서 "아파트" 접미사 제거하여 비교
+        const normalize = (s: string) => s.replace(/\s/g, "").replace(/아파트$/, "");
+        // 1) buildingName으로 매칭 (Daum Postcode에서 제공)
+        let matched: string | undefined;
+        if (bldg) {
+          // 정확 매칭
+          matched = aptNames.find((name) => normalize(name) === bldg);
+          // 부분 매칭
+          if (!matched) matched = aptNames.find((name) => {
+            const n = normalize(name);
+            return bldg.includes(n) || n.includes(bldg);
+          });
+        }
+        // 2) 주소 문자열로 매칭 (fallback)
+        if (!matched) matched = aptNames.find((name) => query.includes(name.replace(/\s/g, "")));
         if (matched) setSelectedApt(matched);
       }
 
@@ -337,8 +342,19 @@ export default function PredictionPage() {
     : [];
   const filteredStats = (() => {
     if (filteredTransactions.length === 0) return null;
-    const prices = filteredTransactions.map((t) => t.dealAmount);
-    return { avgPrice: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length), count: filteredTransactions.length };
+    // 시간 가중 평균: 최근 거래일수록 높은 가중치 (e^(-0.1 × 개월수))
+    const now = new Date();
+    let totalWeight = 0;
+    let weightedSum = 0;
+    for (const t of filteredTransactions) {
+      const txDate = new Date(t.dealYear, t.dealMonth - 1, t.dealDay);
+      const months = Math.max(0, (now.getTime() - txDate.getTime()) / (30.44 * 24 * 60 * 60 * 1000));
+      const w = Math.exp(-0.1 * months);
+      weightedSum += t.dealAmount * w;
+      totalWeight += w;
+    }
+    const avgPrice = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : filteredTransactions[0].dealAmount;
+    return { avgPrice, count: filteredTransactions.length };
   })();
 
   const scenarios = [
@@ -386,72 +402,18 @@ export default function PredictionPage() {
 
       {/* 검색 섹션 */}
       <Card className="p-4 sm:p-6 mb-6">
-        <div className="flex gap-1 sm:gap-1.5 mb-3 sm:mb-4">
-          {([
-            { key: "dong" as InputMode, label: "읍면동" },
-            { key: "jibun" as InputMode, label: "지번" },
-            { key: "road" as InputMode, label: "도로명" },
-          ]).map((tab) => (
-            <button key={tab.key} onClick={() => setInputMode(tab.key)} className={cn(
-              "px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border transition-all font-medium",
-              inputMode === tab.key ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
-            )}>{tab.label}</button>
-          ))}
+        <p className="text-xs text-gray-400 mb-3 sm:mb-4 sm:text-center">주소를 검색하여 선택하세요.</p>
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <div onClick={openDaumPostcode} className={cn(
+            "flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border text-sm cursor-pointer transition-colors",
+            roadResult ? "border-border bg-white text-gray-900" : "border-dashed border-gray-300 bg-gray-50 text-gray-400 hover:bg-gray-100"
+          )}>{roadResult || "클릭하여 주소 검색"}</div>
+          {roadResult ? (
+            <Button icon={Search} loading={loading} disabled={!canSearch} size="lg" onClick={handleAnalyze}>분석</Button>
+          ) : (
+            <Button icon={Search} size="lg" onClick={openDaumPostcode}>주소 검색</Button>
+          )}
         </div>
-
-        {inputMode === "dong" && (
-          <>
-            <p className="text-xs text-gray-400 mb-3 sm:mb-4 sm:text-center">시도 &gt; 시군구 &gt; 읍면동 순서로 선택하세요. 번지는 선택사항입니다.</p>
-            <div className="grid grid-cols-2 sm:flex sm:flex-row sm:items-center gap-2">
-              <select value={selectedSido} onChange={(e) => { setSelectedSido(e.target.value); setSelectedSigungu(""); setSelectedDong(""); }} className="col-span-1 min-w-0 px-2.5 sm:px-3 py-2.5 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary sm:flex-1">
-                <option value="">시도 선택</option>
-                {sidoList.map((sido) => <option key={sido} value={sido}>{sido}</option>)}
-              </select>
-              <select value={selectedSigungu} onChange={(e) => { setSelectedSigungu(e.target.value); setSelectedDong(""); }} disabled={!selectedSido} className="col-span-1 min-w-0 px-2.5 sm:px-3 py-2.5 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:bg-gray-100 disabled:text-gray-400 sm:flex-1">
-                <option value="">시군구</option>
-                {sigunguList.map((sg) => <option key={sg} value={sg}>{sg}</option>)}
-              </select>
-              <select value={selectedDong} onChange={(e) => setSelectedDong(e.target.value)} disabled={!selectedSigungu} className="col-span-1 min-w-0 px-2.5 sm:px-3 py-2.5 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:bg-gray-100 disabled:text-gray-400 sm:flex-1">
-                <option value="">읍면동</option>
-                {dongList.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
-              <input type="text" value={detailAddr} onChange={(e) => setDetailAddr(e.target.value)} onKeyDown={(e) => e.key === "Enter" && canSearch && handleAnalyze()} placeholder="번지" className="col-span-1 min-w-0 px-2.5 sm:px-3 py-2.5 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary sm:w-28 sm:flex-none" />
-              <Button icon={Search} loading={loading} disabled={!canSearch} size="lg" onClick={handleAnalyze} className="col-span-2 sm:col-span-1">검색</Button>
-            </div>
-          </>
-        )}
-
-        {inputMode === "jibun" && (
-          <>
-            <p className="text-xs text-gray-400 mb-3 sm:mb-4 sm:text-center">예: 서울 강남구 역삼동 677, 경기 성남시 분당구 정자동 178-1</p>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <input type="text" value={jibunInput} onChange={(e) => setJibunInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && canSearch && handleAnalyze()} placeholder="지번 주소를 입력하세요" className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm" />
-              <Button icon={Search} loading={loading} disabled={!canSearch} size="lg" onClick={handleAnalyze}>검색</Button>
-            </div>
-            <div className="flex gap-1.5 sm:gap-2 mt-2.5 sm:mt-3 flex-wrap">
-              {["서울 강남구 역삼동 래미안", "서울 송파구 잠실동 40", "서울 서초구 반포동 18-1", "경기 성남시 분당구 정자동"].map((q) => (
-                <button key={q} onClick={() => setJibunInput(q)} className="px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs bg-gray-100 text-secondary rounded-full hover:bg-gray-200 transition-colors">{q}</button>
-              ))}
-            </div>
-          </>
-        )}
-
-        {inputMode === "road" && (
-          <>
-            <p className="text-xs text-gray-400 mb-3 sm:mb-4 sm:text-center">검색 버튼을 눌러 도로명주소를 선택하세요.</p>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <div onClick={openDaumPostcode} className={cn(
-                "flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border text-sm cursor-pointer transition-colors",
-                roadResult ? "border-border bg-white text-gray-900" : "border-dashed border-gray-300 bg-gray-50 text-gray-400 hover:bg-gray-100"
-              )}>{roadResult || "클릭하여 도로명주소 검색"}</div>
-              {roadResult ? (
-                <Button icon={Search} loading={loading} disabled={!canSearch} size="lg" onClick={handleAnalyze}>검색</Button>
-              ) : (
-                <Button icon={Search} size="lg" onClick={openDaumPostcode}>주소 검색</Button>
-              )}
-            </div>
-          </>
-        )}
       </Card>
 
       {/* 지도 + 주소 정보 */}
@@ -475,6 +437,9 @@ export default function PredictionPage() {
               </div>
             </div>
             <p className="text-sm font-medium text-gray-900">{addressInfo[addressTab]}</p>
+            {(buildingName || selectedApt) && (
+              <p className="text-xs text-gray-600 mt-1 font-medium">{selectedApt || buildingName}</p>
+            )}
             {addressInfo.zipCode && addressInfo.zipCode !== "-" && (
               <p className="text-[11px] text-gray-400 mt-1">우편번호: {addressInfo.zipCode}</p>
             )}
@@ -526,7 +491,10 @@ export default function PredictionPage() {
 
           {/* 대시보드 탭 */}
           {activeTab === "dashboard" && (
-            <PredictionDashboard result={result as never} address={address} />
+            <PredictionDashboard
+              result={filteredStats && selectedArea !== null ? { ...result, currentPrice: filteredStats.avgPrice } as never : result as never}
+              address={address}
+            />
           )}
 
           {/* 차트 탭 */}
@@ -663,12 +631,15 @@ export default function PredictionPage() {
           )}
 
           {/* 이상탐지 탭 */}
-          {activeTab === "anomaly" && result.realTransactions?.length >= 3 && (
-            <AnomalyDetectionView transactions={result.realTransactions} currentPrice={result.currentPrice} />
+          {activeTab === "anomaly" && filteredTransactions.length >= 3 && (
+            <AnomalyDetectionView
+              transactions={filteredTransactions}
+              currentPrice={filteredStats?.avgPrice ?? result.currentPrice}
+            />
           )}
 
           {/* 무결성 검증 배지 */}
-          <IntegrityBadge steps={5} />
+          <IntegrityBadge data={result?.integrity ?? null} />
 
           {/* 실거래 내역 */}
           {filteredTransactions.length > 0 && (

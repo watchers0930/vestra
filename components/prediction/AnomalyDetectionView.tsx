@@ -4,20 +4,14 @@ import { useMemo } from "react";
 import { AlertTriangle, TrendingUp, TrendingDown, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatKRW } from "@/lib/utils";
-import { Card } from "@/components/common";
 import {
-  AreaChart,
-  Area,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  ReferenceLine,
-  Scatter,
-  ScatterChart,
   ComposedChart,
   Line,
+  Area,
 } from "recharts";
 
 /**
@@ -132,15 +126,15 @@ export function AnomalyDetectionView({ transactions, currentPrice }: Props) {
 
   if (!transactions?.length || transactions.length < 3) {
     return (
-      <Card className="p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Activity size={16} />
-          <h3 className="font-semibold text-sm">이상탐지 분석</h3>
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="flex items-center gap-1.5 mb-2">
+          <Activity size={14} className="text-gray-400" />
+          <p className="text-[11px] font-medium text-gray-400">이상탐지 분석</p>
         </div>
-        <p className="text-sm text-gray-400 text-center py-8">
+        <p className="text-xs text-gray-400 text-center py-8">
           이상탐지 분석을 위해 최소 3건 이상의 거래 데이터가 필요합니다
         </p>
-      </Card>
+      </div>
     );
   }
 
@@ -155,117 +149,132 @@ export function AnomalyDetectionView({ transactions, currentPrice }: Props) {
   const trendDirection = secondAvg > firstAvg * 1.05 ? "up" : secondAvg < firstAvg * 0.95 ? "down" : "stable";
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold flex items-center gap-2">
-          <Activity size={16} strokeWidth={1.5} />
-          이상탐지 분석
-        </h3>
-        <div className="flex items-center gap-2">
-          {anomalies.length > 0 && (
-            <span className="px-2 py-0.5 text-[10px] rounded-full bg-red-100 text-red-700 font-medium">
-              이상치 {anomalies.length}건
+    <div className="space-y-3">
+      {/* 헤더 카드: 요약 정보 */}
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1.5">
+            <Activity size={14} className="text-gray-400" />
+            <p className="text-[11px] font-medium text-gray-400">이상탐지 분석</p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {anomalies.length > 0 && (
+              <span className="px-2 py-0.5 text-[10px] rounded-full bg-gray-100 text-gray-600 font-medium">
+                이상치 {anomalies.length}건
+              </span>
+            )}
+            {changePoints.length > 0 && (
+              <span className="px-2 py-0.5 text-[10px] rounded-full bg-gray-100 text-gray-600 font-medium">
+                변화점 {changePoints.length}건
+              </span>
+            )}
+            <span className={cn(
+              "px-2 py-0.5 text-[10px] rounded-full font-medium flex items-center gap-1",
+              trendDirection === "up" ? "bg-red-50 text-red-500" :
+              trendDirection === "down" ? "bg-blue-50 text-blue-500" :
+              "bg-gray-100 text-gray-500"
+            )}>
+              {trendDirection === "up" ? <TrendingUp size={10} /> : trendDirection === "down" ? <TrendingDown size={10} /> : null}
+              {trendDirection === "up" ? "상승 추세" : trendDirection === "down" ? "하락 추세" : "안정"}
             </span>
-          )}
-          {changePoints.length > 0 && (
-            <span className="px-2 py-0.5 text-[10px] rounded-full bg-purple-100 text-purple-700 font-medium">
-              변화점 {changePoints.length}건
-            </span>
-          )}
-          <span className={cn(
-            "px-2 py-0.5 text-[10px] rounded-full font-medium flex items-center gap-1",
-            trendDirection === "up" ? "bg-emerald-100 text-emerald-700" :
-            trendDirection === "down" ? "bg-red-100 text-red-700" :
-            "bg-gray-100 text-gray-700"
-          )}>
-            {trendDirection === "up" ? <TrendingUp size={10} /> : trendDirection === "down" ? <TrendingDown size={10} /> : null}
-            {trendDirection === "up" ? "상승 추세" : trendDirection === "down" ? "하락 추세" : "안정"}
+          </div>
+        </div>
+
+        {/* Bollinger Band 차트 */}
+        <div className="h-[240px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={data}>
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+              <YAxis
+                tickFormatter={(v) => `${(v / 100000000).toFixed(1)}억`}
+                tick={{ fontSize: 10, fill: "#9ca3af" }}
+                axisLine={false}
+                tickLine={false}
+                width={50}
+              />
+              <Tooltip
+                formatter={(value: number | undefined, name: string | undefined) => {
+                  const labels: Record<string, string> = {
+                    price: "거래가", upper: "상한밴드", lower: "하한밴드", middle: "이동평균"
+                  };
+                  return [formatKRW(Number(value ?? 0)), labels[name ?? ""] || String(name ?? "")];
+                }}
+                contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #e5e7eb" }}
+              />
+              <Area type="monotone" dataKey="upper" stroke="none" fill="#fef3c7" fillOpacity={0.6} />
+              <Area type="monotone" dataKey="lower" stroke="none" fill="white" fillOpacity={1} />
+              <Line type="monotone" dataKey="middle" stroke="#f59e0b" strokeWidth={1} strokeDasharray="4 4" dot={false} />
+              <Line type="monotone" dataKey="upper" stroke="#fbbf24" strokeWidth={1} dot={false} />
+              <Line type="monotone" dataKey="lower" stroke="#fbbf24" strokeWidth={1} dot={false} />
+              <Line
+                type="monotone"
+                dataKey="price"
+                stroke="#6366f1"
+                strokeWidth={2}
+                dot={(props: Record<string, unknown>) => {
+                  const { cx, cy, payload } = props as { cx: number; cy: number; payload: { isAnomaly: boolean; isChangePoint: boolean } };
+                  if (payload?.isAnomaly) {
+                    return <circle cx={cx} cy={cy} r={4} fill="#ef4444" stroke="#fff" strokeWidth={2} />;
+                  }
+                  if (payload?.isChangePoint) {
+                    return <circle cx={cx} cy={cy} r={4} fill="#8b5cf6" stroke="#fff" strokeWidth={2} />;
+                  }
+                  return <circle cx={cx} cy={cy} r={1.5} fill="#6366f1" />;
+                }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* 범례 */}
+        <div className="flex flex-wrap gap-3 mt-2">
+          <span className="flex items-center gap-1 text-[10px] text-gray-400">
+            <span className="w-2.5 h-0.5 rounded bg-indigo-500" />실거래가
           </span>
-        </div>
-      </div>
-
-      {/* Bollinger Band 차트 */}
-      <div className="h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-            <YAxis tickFormatter={(v) => `${(v / 100000000).toFixed(1)}억`} tick={{ fontSize: 10 }} />
-            <Tooltip
-              formatter={(value, name) => {
-                const labels: Record<string, string> = {
-                  price: "거래가", upper: "상한밴드", lower: "하한밴드", middle: "이동평균"
-                };
-                return [formatKRW(Number(value)), labels[String(name)] || String(name)];
-              }}
-            />
-            <Area type="monotone" dataKey="upper" stroke="none" fill="#fee2e2" fillOpacity={0.5} />
-            <Area type="monotone" dataKey="lower" stroke="none" fill="white" fillOpacity={1} />
-            <Line type="monotone" dataKey="middle" stroke="#9ca3af" strokeWidth={1} strokeDasharray="4 4" dot={false} />
-            <Line type="monotone" dataKey="upper" stroke="#fca5a5" strokeWidth={1} dot={false} />
-            <Line type="monotone" dataKey="lower" stroke="#fca5a5" strokeWidth={1} dot={false} />
-            <Line
-              type="monotone"
-              dataKey="price"
-              stroke="#2563eb"
-              strokeWidth={2}
-              dot={(props: Record<string, unknown>) => {
-                const { cx, cy, payload } = props as { cx: number; cy: number; payload: { isAnomaly: boolean; isChangePoint: boolean } };
-                if (payload?.isAnomaly) {
-                  return <circle cx={cx} cy={cy} r={5} fill="#ef4444" stroke="#fff" strokeWidth={2} />;
-                }
-                if (payload?.isChangePoint) {
-                  return <circle cx={cx} cy={cy} r={5} fill="#8b5cf6" stroke="#fff" strokeWidth={2} />;
-                }
-                return <circle cx={cx} cy={cy} r={2} fill="#2563eb" />;
-              }}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* 범례 */}
-      <div className="flex flex-wrap gap-3 mt-3 px-1">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-blue-600" />
-          <span className="text-[10px] text-gray-500">실거래가</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-0.5 bg-gray-400" style={{ borderTop: "2px dashed #9ca3af" }} />
-          <span className="text-[10px] text-gray-500">이동평균</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 bg-red-100 border border-red-300 rounded" />
-          <span className="text-[10px] text-gray-500">Bollinger Band</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-red-500" />
-          <span className="text-[10px] text-gray-500">이상치</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-purple-500" />
-          <span className="text-[10px] text-gray-500">변화점</span>
+          <span className="flex items-center gap-1 text-[10px] text-gray-400">
+            <span className="w-2.5 h-0.5 rounded bg-amber-400" style={{ borderTop: "2px dashed #f59e0b" }} />이동평균
+          </span>
+          <span className="flex items-center gap-1 text-[10px] text-gray-400">
+            <span className="w-2.5 h-2.5 rounded-sm bg-amber-50 border border-amber-200" />밴드 범위
+          </span>
+          <span className="flex items-center gap-1 text-[10px] text-gray-400">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500" />이상치
+          </span>
+          <span className="flex items-center gap-1 text-[10px] text-gray-400">
+            <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />변화점
+          </span>
         </div>
       </div>
 
       {/* 이상치 목록 */}
       {anomalies.length > 0 && (
-        <div className="mt-4 space-y-1.5">
-          <h4 className="text-xs font-semibold text-gray-600 flex items-center gap-1">
-            <AlertTriangle size={12} />
-            감지된 이상 거래
-          </h4>
-          {anomalies.slice(0, 5).map((a, i) => (
-            <div key={i} className="flex items-center gap-2 text-xs px-3 py-1.5 bg-red-50 rounded-lg border border-red-100">
-              <span className="text-red-600 font-medium">{a.date}</span>
-              <span className="text-gray-600">{formatKRW(a.price)}</span>
-              <span className="text-red-500 text-[10px]">
-                (정상 범위: {formatKRW(a.lower)} ~ {formatKRW(a.upper)})
-              </span>
-            </div>
-          ))}
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="flex items-center gap-1.5 mb-3">
+            <AlertTriangle size={12} className="text-gray-400" />
+            <p className="text-[11px] font-medium text-gray-400">감지된 이상 거래</p>
+          </div>
+          <div className="space-y-1.5">
+            {anomalies.slice(0, 5).map((a, i) => (
+              <div key={i} className="flex items-center gap-3 text-xs px-3 py-2 bg-gray-50 rounded-lg">
+                <span className="text-gray-900 font-medium">{a.date}</span>
+                <span className="text-gray-600">{formatKRW(a.price)}</span>
+                <span className="text-gray-400 text-[10px] ml-auto">
+                  정상 범위: {formatKRW(a.lower)} ~ {formatKRW(a.upper)}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
-    </Card>
+
+      {/* 분석 설명 */}
+      <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-4">
+        <p className="text-[11px] font-medium text-gray-500 mb-1">이상탐지란?</p>
+        <p className="text-[11px] text-gray-400 leading-relaxed">
+          Bollinger Band와 MAD(중앙절대편차) 기법으로 정상 거래 범위를 벗어난 이상 거래를 탐지합니다.
+          CUSUM 알고리즘으로 시장 변화점도 함께 감지합니다.
+        </p>
+      </div>
+    </div>
   );
 }

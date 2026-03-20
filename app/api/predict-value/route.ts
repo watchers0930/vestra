@@ -13,6 +13,7 @@ import { fetchREBMarketData } from "@/lib/reb-api";
 import { fetchBuildingInfoByAddress } from "@/lib/building-api";
 import { fetchSeoulTransactions, crossValidatePrice } from "@/lib/seoul-data-api";
 import { runBacktest } from "@/lib/backtesting";
+import { VerifiedPipeline } from "@/lib/integrity-chain";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { formatKRW } from "@/lib/utils";
 
@@ -51,8 +52,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { address: rawAddress } = await req.json();
+    const { address: rawAddress, buildingName: rawBuildingName } = await req.json();
     const address = sanitizeField(rawAddress || "", 200);
+    const buildingName = sanitizeField(rawBuildingName || "", 100);
 
     if (!address) {
       return NextResponse.json({ error: "주소를 입력해주세요." }, { status: 400 });
@@ -98,32 +100,67 @@ export async function POST(req: NextRequest) {
       crossValidation,
     };
 
+    // 무결성 파이프라인 시작
+    const pipeline = new VerifiedPipeline(`predict-${Date.now()}`);
+
     // 2단계: 자체 엔진으로 현재 시세 추정
-    const priceEstimation = estimatePrice(
-      { address, aptName: address },
-      comprehensive?.sale ?? null,
-      comprehensive?.rent ?? null,
+    const priceEstimation = await pipeline.executeStage(
+      "시세추정",
+      { address, saleCount: comprehensive?.sale?.transactionCount ?? 0 },
+      async () => estimatePrice(
+        { address, aptName: address },
+        comprehensive?.sale ?? null,
+        comprehensive?.rent ?? null,
+      ),
     );
-    const currentPrice = priceEstimation.estimatedPrice;
+    const currentPrice = priceEstimation.output.estimatedPrice;
 
     // 3단계: 자체 엔진으로 가치 전망 산출 (5모델 앙상블 + 거시경제)
-    const predictionResult = predictValue(
-      currentPrice,
-      comprehensive?.sale?.transactions ?? [],
-      comprehensive?.rent ?? null,
-      comprehensive?.jeonseRatio ?? null,
-      macroFactors,
+    const predictionStage = await pipeline.executeStage(
+      "가치전망",
+      { currentPrice, macroFactors },
+      async () => predictValue(
+        currentPrice,
+        comprehensive?.sale?.transactions ?? [],
+        comprehensive?.rent ?? null,
+        comprehensive?.jeonseRatio ?? null,
+        macroFactors,
+      ),
     );
+    const predictionResult = predictionStage.output;
 
     // 3.5단계: 백테스팅 (36개월 데이터 있을 때)
-    const backtestResult = comprehensive?.sale?.transactions
-      ? runBacktest(comprehensive.sale.transactions)
-      : null;
-    if (backtestResult) {
-      predictionResult.backtestResult = backtestResult;
+    const backtestStage = await pipeline.executeStage(
+      "백테스팅",
+      { transactionCount: comprehensive?.sale?.transactions?.length ?? 0 },
+      async () => comprehensive?.sale?.transactions
+        ? runBacktest(comprehensive.sale.transactions)
+        : null,
+    );
+    if (backtestStage.output) {
+      predictionResult.backtestResult = backtestStage.output;
     }
 
-    // 4단계: LLM으로 종합 의견만 생성
+    // 3.6단계: buildingName 기반 거래 필터링
+    const allTx = comprehensive?.sale?.transactions ?? [];
+    let filteredTx = allTx;
+    if (buildingName && allTx.length > 0) {
+      const bldg = buildingName.replace(/아파트$/, "").replace(/\s/g, "");
+      const aptTx = allTx.filter((t) => {
+        const n = t.aptName.replace(/아파트$/, "").replace(/\s/g, "");
+        return n === bldg || n.includes(bldg) || bldg.includes(n);
+      });
+      if (aptTx.length > 0) filteredTx = aptTx;
+    }
+
+    // 4단계: 거래 필터링을 파이프라인에 기록
+    await pipeline.executeStage(
+      "거래필터링",
+      { totalTx: allTx.length, buildingName: buildingName || null },
+      async () => ({ filteredCount: filteredTx.length }),
+    );
+
+    // 5단계: LLM으로 종합 의견만 생성
     let aiOpinion = "";
     try {
       const openai = getOpenAIClient();
@@ -140,7 +177,8 @@ export async function POST(req: NextRequest) {
               predictions: predictionResult.predictions,
               factors: predictionResult.factors,
               confidence: predictionResult.confidence,
-              transactionCount: comprehensive?.sale?.transactionCount ?? 0,
+              aptTransactionCount: filteredTx.length,
+              regionTransactionCount: comprehensive?.sale?.transactionCount ?? 0,
               jeonseRatio: comprehensive?.jeonseRatio ?? null,
             }),
           },
@@ -158,19 +196,38 @@ export async function POST(req: NextRequest) {
       aiOpinion = "AI 의견 생성에 실패했습니다. 자체 분석 결과를 참고해주세요.";
     }
 
-    // 5단계: 프론트엔드 호환 응답 생성
+    // LLM 의견도 파이프라인에 기록
+    await pipeline.executeStage(
+      "AI의견생성",
+      { address, confidence: predictionResult.confidence },
+      async () => ({ opinion: aiOpinion.slice(0, 50) }),
+    );
+
+    // 파이프라인 확정 및 Merkle Root 생성
+    const integrityResult = await pipeline.finalize();
+
+    // 6단계: 프론트엔드 호환 응답 생성
     return NextResponse.json({
       ...predictionResult,
       aiOpinion,
-      realTransactions: comprehensive?.sale?.transactions.slice(0, 20) ?? [],
-      priceStats: comprehensive?.sale
-        ? {
-            avgPrice: comprehensive.sale.avgPrice,
-            minPrice: comprehensive.sale.minPrice,
-            maxPrice: comprehensive.sale.maxPrice,
-            transactionCount: comprehensive.sale.transactionCount,
-            period: comprehensive.sale.period,
-          }
+      integrity: {
+        merkleRoot: integrityResult.merkleRoot,
+        totalSteps: integrityResult.report.totalSteps,
+        isValid: integrityResult.report.isValid,
+        stages: integrityResult.stages.map((s) => ({ name: s.name, hash: s.stepHash.slice(0, 16) })),
+      },
+      realTransactions: filteredTx.slice(0, 50) ?? [],
+      priceStats: filteredTx.length > 0
+        ? (() => {
+            const prices = filteredTx.map((t) => t.dealAmount);
+            return {
+              avgPrice: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length),
+              minPrice: Math.min(...prices),
+              maxPrice: Math.max(...prices),
+              transactionCount: filteredTx.length,
+              period: comprehensive?.sale?.period ?? "",
+            };
+          })()
         : null,
       rentStats: comprehensive?.rent
         ? {

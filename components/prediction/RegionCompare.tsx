@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Search, Plus, X, MapPin } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
@@ -61,7 +62,7 @@ export function RegionCompare({ primaryResult }: RegionCompareProps) {
   ];
 
   const chartData = allResults.map((r) => ({
-    name: r.address.length > 10 ? r.address.slice(-10) : r.address,
+    name: r.address.length > 12 ? r.address.slice(-12) : r.address,
     "현재가": r.currentPrice,
     "1년 예측": r.prediction1y,
   }));
@@ -69,8 +70,11 @@ export function RegionCompare({ primaryResult }: RegionCompareProps) {
   return (
     <div className="space-y-4">
       {/* 비교 지역 입력 */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">지역 비교 (최대 3개)</h3>
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="flex items-center gap-1.5 mb-3">
+          <MapPin size={14} className="text-gray-400" />
+          <h3 className="text-[11px] font-medium text-gray-400">비교 지역 (최대 3개)</h3>
+        </div>
         <div className="space-y-2">
           {compareAddresses.map((addr, idx) => (
             <div key={idx} className="flex gap-2">
@@ -82,15 +86,16 @@ export function RegionCompare({ primaryResult }: RegionCompareProps) {
                   next[idx] = e.target.value;
                   setCompareAddresses(next);
                 }}
+                onKeyDown={(e) => e.key === "Enter" && handleCompare()}
                 placeholder="비교할 주소 입력 (예: 서울 서초구 반포동)"
-                className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                className="flex-1 px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300"
               />
               {compareAddresses.length > 1 && (
                 <button
                   onClick={() => setCompareAddresses(compareAddresses.filter((_, i) => i !== idx))}
-                  className="px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                  className="px-2.5 py-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                 >
-                  삭제
+                  <X size={16} />
                 </button>
               )}
             </div>
@@ -100,16 +105,18 @@ export function RegionCompare({ primaryResult }: RegionCompareProps) {
           {compareAddresses.length < 3 && (
             <button
               onClick={() => setCompareAddresses([...compareAddresses, ""])}
-              className="px-4 py-2 text-sm text-blue-500 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              + 지역 추가
+              <Plus size={14} />
+              지역 추가
             </button>
           )}
           <button
             onClick={handleCompare}
             disabled={loading}
-            className="px-4 py-2 text-sm text-white bg-blue-500 rounded-lg hover:bg-blue-600 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
           >
+            <Search size={14} />
             {loading ? "비교 중..." : "비교 분석"}
           </button>
         </div>
@@ -117,17 +124,17 @@ export function RegionCompare({ primaryResult }: RegionCompareProps) {
 
       {/* 비교 차트 */}
       {chartData.length > 1 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-4">지역별 시세 비교</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <p className="text-[11px] font-medium text-gray-400 mb-4">지역별 시세 비교</p>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={chartData} barGap={4}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#9ca3af" }} />
               <YAxis tickFormatter={(v) => formatPrice(v)} tick={{ fontSize: 11, fill: "#9ca3af" }} width={70} />
               <Tooltip formatter={(value: number | undefined) => formatPrice(value ?? 0)} />
-              <Legend />
-              <Bar dataKey="현재가" fill="#94a3b8" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="1년 예측" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="현재가" fill="#a5b4fc" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="1년 예측" fill="#6366f1" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -135,15 +142,15 @@ export function RegionCompare({ primaryResult }: RegionCompareProps) {
 
       {/* 비교 테이블 */}
       {allResults.length > 1 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-900">
-              <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">지역</th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">현재가</th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">1년 예측</th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">변동률</th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">신뢰도</th>
+            <thead>
+              <tr className="border-b border-gray-100">
+                <th className="px-4 py-3 text-left text-[11px] font-medium text-gray-400">지역</th>
+                <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400">현재가</th>
+                <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400">1년 예측</th>
+                <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400">변동률</th>
+                <th className="px-4 py-3 text-right text-[11px] font-medium text-gray-400">신뢰도</th>
               </tr>
             </thead>
             <tbody>
@@ -152,14 +159,14 @@ export function RegionCompare({ primaryResult }: RegionCompareProps) {
                   ? ((r.prediction1y - r.currentPrice) / r.currentPrice * 100).toFixed(1)
                   : "0";
                 return (
-                  <tr key={idx} className="border-t border-gray-100 dark:border-gray-800">
-                    <td className="px-4 py-2 text-gray-900 dark:text-white">{r.address}</td>
-                    <td className="px-4 py-2 text-right">{formatPrice(r.currentPrice)}</td>
-                    <td className="px-4 py-2 text-right">{formatPrice(r.prediction1y)}</td>
-                    <td className={`px-4 py-2 text-right font-medium ${parseFloat(change) >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                  <tr key={idx} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <td className="px-4 py-3 text-gray-900 text-xs">{r.address}</td>
+                    <td className="px-4 py-3 text-right text-xs">{formatPrice(r.currentPrice)}</td>
+                    <td className="px-4 py-3 text-right text-xs">{formatPrice(r.prediction1y)}</td>
+                    <td className={`px-4 py-3 text-right text-xs font-medium ${parseFloat(change) >= 0 ? "text-red-500" : "text-blue-500"}`}>
                       {parseFloat(change) >= 0 ? "+" : ""}{change}%
                     </td>
-                    <td className="px-4 py-2 text-right">{r.confidence}점</td>
+                    <td className="px-4 py-3 text-right text-xs">{r.confidence}점</td>
                   </tr>
                 );
               })}

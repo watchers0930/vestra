@@ -234,6 +234,9 @@ export const VALUE_PREDICTION_OPINION_PROMPT = `당신은 대한민국 부동산
 중요:
 - 제공된 predictions, factors, confidence 값을 근거로 의견을 작성하세요.
 - 금액은 formattedPrice 필드를 사용하세요.
+- aptTransactionCount는 해당 아파트(단지)의 거래 건수입니다. 거래 활성도를 언급할 때 이 값을 사용하세요.
+- regionTransactionCount는 해당 시군구 전체의 거래 건수입니다. 절대로 이 숫자를 해당 주소나 아파트의 거래 수라고 언급하지 마세요. 이 값은 의견에 포함하지 마세요.
+- 거래 건수를 언급할 때는 반드시 aptTransactionCount만 사용하고, "해당 단지", "해당 아파트" 등으로 표현하세요.
 
 다음을 포함하여 종합 의견을 작성하세요:
 1. 현재 시세와 실거래 데이터 기반 추세 요약

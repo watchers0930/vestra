@@ -267,7 +267,7 @@ export function RightsResult({ result, rawText }: RightsResultProps) {
         </div>
       </Card>
 
-      <IntegrityBadge steps={5} />
+      <IntegrityBadge />
 
       {result.parsed && (
         <Card className="p-6">

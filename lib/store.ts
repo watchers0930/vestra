@@ -4,7 +4,7 @@
 
 export interface AnalysisRecord {
   id: string;
-  type: "rights" | "contract" | "prediction" | "jeonse" | "registry";
+  type: "rights" | "contract" | "prediction" | "jeonse" | "registry" | "feasibility";
   typeLabel: string;
   address: string;
   summary: string;

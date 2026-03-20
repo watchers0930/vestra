@@ -763,7 +763,7 @@ export default function ContractReviewPage() {
           </Card>
 
           {/* 무결성 검증 배지 */}
-          <IntegrityBadge steps={5} />
+          <IntegrityBadge />
 
           {/* NER 개체명 인식 (계약서 원본) */}
           {contractText && (
