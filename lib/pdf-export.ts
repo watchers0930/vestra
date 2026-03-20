@@ -17,14 +17,45 @@ export async function exportToPdf({
   title = "VESTRA 분석 리포트",
   element,
 }: PdfExportOptions): Promise<void> {
-  // 요소를 캔버스로 캡처
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    backgroundColor: "#ffffff",
-    logging: false,
+  // iframe(지도 등)과 canvas를 캡처 전에 숨기고 placeholder로 대체
+  const iframes = element.querySelectorAll("iframe");
+  const hiddenEls: { el: HTMLElement; prev: string }[] = [];
+  iframes.forEach((iframe) => {
+    const wrapper = iframe.parentElement;
+    if (wrapper) {
+      hiddenEls.push({ el: iframe as HTMLElement, prev: iframe.style.display });
+      (iframe as HTMLElement).style.display = "none";
+      // placeholder 추가
+      const ph = document.createElement("div");
+      ph.className = "__pdf-placeholder__";
+      ph.style.cssText = `width:100%;height:${iframe.clientHeight || 300}px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;border-radius:12px;color:#9ca3af;font-size:13px;`;
+      ph.textContent = "지도 영역 (PDF 미지원)";
+      wrapper.appendChild(ph);
+    }
   });
+
+  // 요소를 캔버스로 캡처
+  let canvas: HTMLCanvasElement;
+  try {
+    canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: "#ffffff",
+      logging: false,
+      ignoreElements: (el) => {
+        // 카카오 지도 관련 요소 무시
+        const tag = el.tagName?.toLowerCase();
+        if (tag === "iframe") return true;
+        if (el.classList?.contains("kakao") || el.id?.includes("kakao")) return true;
+        return false;
+      },
+    });
+  } finally {
+    // 원상 복구
+    hiddenEls.forEach(({ el, prev }) => { el.style.display = prev; });
+    element.querySelectorAll(".__pdf-placeholder__").forEach((ph) => ph.remove());
+  }
 
   const imgData = canvas.toDataURL("image/png");
   const imgWidth = 210; // A4 너비 (mm)
