@@ -42,6 +42,12 @@ import PdfDownloadButton from "@/components/common/pdf-download-button";
 import { LoadingSpinner } from "@/components/loading";
 import { KakaoMap } from "@/components/prediction/KakaoMap";
 import type { KakaoGeocoderResult, KakaoPlaceResult } from "@/components/prediction/KakaoMap";
+import dynamic from "next/dynamic";
+
+const TransactionMap = dynamic(
+  () => import("@/components/prediction/TransactionMap"),
+  { ssr: false, loading: () => <div className="h-[300px] sm:h-[400px] animate-pulse bg-gray-100 rounded-xl" /> }
+);
 
 // 신규 컴포넌트 (prediction-enhancement)
 import { PredictionTabs, type PredictionTabId } from "@/components/prediction/PredictionTabs";
@@ -685,6 +691,20 @@ export default function PredictionPage() {
 
           {/* 무결성 검증 배지 */}
           <IntegrityBadge data={result?.integrity ?? null} />
+
+          {/* 거래 위치 지도 */}
+          {filteredTransactions.length > 0 && (
+            <Card className="p-4">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <MapPin size={16} strokeWidth={1.5} />
+                거래 분포 지도
+              </h3>
+              <TransactionMap
+                transactions={filteredTransactions}
+                address={address}
+              />
+            </Card>
+          )}
 
           {/* 실거래 내역 */}
           {filteredTransactions.length > 0 && (

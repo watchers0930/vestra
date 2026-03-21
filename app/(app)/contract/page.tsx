@@ -790,7 +790,13 @@ export default function ContractReviewPage() {
             </div>
           </Card>
 
-          {/* 무결성 검증 배지 */}
+          {/* 분석 무결성 검증 배지 */}
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] text-[#6e6e73] bg-[#f5f5f7] rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5">
+              <ShieldCheck size={13} strokeWidth={1.5} className="text-[#6e6e73]" />
+              SHA-256 무결성 검증 완료
+            </span>
+          </div>
           <IntegrityBadge />
 
           {/* NER 개체명 인식 (계약서 원본) */}

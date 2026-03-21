@@ -11,6 +11,8 @@ import { extractText } from "unpdf";
 import mammoth from "mammoth";
 import * as XLSX from "xlsx";
 import { getOpenAIClient } from "../openai";
+import { extractEntities } from "../nlp-ner-pipeline";
+import type { Entity } from "../nlp-ner-pipeline";
 import type { ParsedDocument, ExtractedValue, ClaimKey } from "./feasibility-types";
 import { CLAIM_KEYS, CLAIM_LABELS } from "./feasibility-types";
 
@@ -391,6 +393,80 @@ export function extractClaimsFromTextForTest(
 }
 
 // ---------------------------------------------------------------------------
+// NER 기반 폴백 추출 (정규식 추출 결과가 빈약할 때, AI 전에 시도)
+// ---------------------------------------------------------------------------
+
+function extractClaimsWithNER(
+  rawText: string,
+  sourceFile: string
+): Record<string, ExtractedValue> {
+  const entities = extractEntities(rawText);
+  const extracted: Record<string, ExtractedValue> = {};
+
+  // MONEY 엔티티 → 금액 관련 클레임 키로 매핑
+  const moneyEntities = entities.filter(
+    (e: Entity) => e.type === "MONEY" && typeof e.normalizedValue === "number" && (e.normalizedValue as number) > 0
+  );
+
+  for (const entity of moneyEntities) {
+    const value = entity.normalizedValue as number;
+    // 원문 문맥에서 해당 금액이 어떤 항목인지 판별
+    const contextStart = Math.max(0, entity.start - 40);
+    const context = rawText.slice(contextStart, entity.end + 20).trim();
+
+    if (!extracted.total_project_cost && (context.includes("사업비") || context.includes("총사업"))) {
+      const valueInEok = value >= 100_000_000 ? value / 100_000_000 : value;
+      extracted.total_project_cost = { key: "total_project_cost", value: valueInEok, unit: "억원", sourceFile, context };
+    } else if (!extracted.land_cost && (context.includes("토지비") || context.includes("용지비") || context.includes("토지매입"))) {
+      const valueInEok = value >= 100_000_000 ? value / 100_000_000 : value;
+      extracted.land_cost = { key: "land_cost", value: valueInEok, unit: "억원", sourceFile, context };
+    } else if (!extracted.total_construction_cost && (context.includes("공사비") || context.includes("건축비"))) {
+      const valueInEok = value >= 100_000_000 ? value / 100_000_000 : value;
+      extracted.total_construction_cost = { key: "total_construction_cost", value: valueInEok, unit: "억원", sourceFile, context };
+    }
+  }
+
+  // AREA 엔티티 → 면적 관련 클레임 키로 매핑
+  const areaEntities = entities.filter(
+    (e: Entity) => e.type === "AREA" && typeof e.normalizedValue === "number" && (e.normalizedValue as number) > 0
+  );
+
+  for (const entity of areaEntities) {
+    const value = entity.normalizedValue as number;
+    const contextStart = Math.max(0, entity.start - 40);
+    const context = rawText.slice(contextStart, entity.end + 20).trim();
+
+    if (!extracted.total_land_area && (context.includes("대지") || context.includes("토지") || context.includes("부지"))) {
+      extracted.total_land_area = { key: "total_land_area", value: Number(value.toFixed(2)), unit: "㎡", sourceFile, context };
+    } else if (!extracted.total_floor_area && (context.includes("연면적") || context.includes("연 면적"))) {
+      extracted.total_floor_area = { key: "total_floor_area", value: Number(value.toFixed(2)), unit: "㎡", sourceFile, context };
+    }
+  }
+
+  // RATE 엔티티 → 비율 관련 클레임 키로 매핑
+  const rateEntities = entities.filter(
+    (e: Entity) => e.type === "RATE" && typeof e.normalizedValue === "number"
+  );
+
+  for (const entity of rateEntities) {
+    // NER normalizer는 비율을 0-1 범위로 반환하므로 % 변환
+    const valuePercent = (entity.normalizedValue as number) * 100;
+    if (valuePercent <= 0 || valuePercent > 1000) continue;
+
+    const contextStart = Math.max(0, entity.start - 40);
+    const context = rawText.slice(contextStart, entity.end + 20).trim();
+
+    if (!extracted.floor_area_ratio && (context.includes("용적률") || context.includes("용적율"))) {
+      extracted.floor_area_ratio = { key: "floor_area_ratio", value: valuePercent, unit: "%", sourceFile, context };
+    } else if (!extracted.building_coverage && (context.includes("건폐율") || context.includes("건폐률"))) {
+      extracted.building_coverage = { key: "building_coverage", value: valuePercent, unit: "%", sourceFile, context };
+    }
+  }
+
+  return extracted;
+}
+
+// ---------------------------------------------------------------------------
 // AI 폴백 추출 (정규식 추출 결과가 빈약할 때)
 // ---------------------------------------------------------------------------
 
@@ -561,7 +637,18 @@ export async function parseDocument(
 
   let extractedData = extractClaims(rawText, filename);
 
-  // AI 폴백: 정규식으로 3개 미만 추출 시 OpenAI로 재추출
+  // NER 폴백: 정규식으로 3개 미만 추출 시, AI 전에 NER 파이프라인으로 시도
+  if (Object.keys(extractedData).length < 3 && rawText.length > 200) {
+    try {
+      const nerClaims = extractClaimsWithNER(rawText, filename);
+      // NER 결과를 병합 (정규식 결과 우선)
+      extractedData = { ...nerClaims, ...extractedData };
+    } catch (err) {
+      console.warn("NER claim extraction fallback failed:", err);
+    }
+  }
+
+  // AI 폴백: NER 후에도 3개 미만 추출 시 OpenAI로 재추출
   if (Object.keys(extractedData).length < 3 && rawText.length > 200) {
     try {
       const aiClaims = await extractClaimsWithAI(rawText, filename);
