@@ -5,6 +5,9 @@ import { parseRegistry } from "@/lib/registry-parser";
 import { calculateRiskScore } from "@/lib/risk-scoring";
 import { validateParsedRegistry } from "@/lib/validation-engine";
 import { fetchComprehensivePrices, type PriceResult, type RentPriceResult } from "@/lib/molit-api";
+import { fetchBaseRate } from "@/lib/bok-api";
+import { fetchBuildingInfoByAddress } from "@/lib/building-api";
+import { fetchSupplyVolume } from "@/lib/supply-api";
 import { estimatePrice } from "@/lib/price-estimation";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { stripHtml, truncateInput } from "@/lib/sanitize";
@@ -17,6 +20,108 @@ import { evaluateCrossAnalysis } from "@/lib/cross-analysis";
 import { predictFraudRisk, extractFeaturesFromRiskScore, type FraudModelInput } from "@/lib/fraud-risk-model";
 import { createEventBus } from "@/lib/event-bus";
 import { formatKRW } from "@/lib/utils";
+
+// ─── GET: 주소 기반 원스톱 통합 데이터 조회 ───
+// 단일 주소를 받아 시세/금리/건물정보/공급량을 병렬 조회 후 통합 반환
+
+export async function GET(req: NextRequest) {
+  try {
+    const ip = req.headers.get("x-forwarded-for") || "anonymous";
+
+    // Rate limiting (10 req/min)
+    const rl = await rateLimit(`analyze-unified-get:${ip}`, 10);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "요청 한도 초과. 잠시 후 다시 시도해주세요." },
+        { status: 429, headers: rateLimitHeaders(rl) }
+      );
+    }
+
+    const { searchParams } = new URL(req.url);
+    const address = searchParams.get("address");
+
+    if (!address || address.trim().length < 2) {
+      return NextResponse.json(
+        { error: "address 파라미터가 필요합니다. (최소 2자)" },
+        { status: 400 }
+      );
+    }
+
+    // 4개 API 병렬 호출 (개별 실패 시 null 반환, 전체는 실패하지 않음)
+    const [priceResult, rateResult, buildingResult, supplyResult] =
+      await Promise.all([
+        fetchComprehensivePrices(address, 12).catch((e) => {
+          console.warn("시세 조회 실패:", e);
+          return null;
+        }),
+        fetchBaseRate().catch((e) => {
+          console.warn("금리 조회 실패:", e);
+          return null;
+        }),
+        fetchBuildingInfoByAddress(address).catch((e) => {
+          console.warn("건물정보 조회 실패:", e);
+          return null;
+        }),
+        fetchSupplyVolume(address).catch((e) => {
+          console.warn("공급량 조회 실패:", e);
+          return null;
+        }),
+      ]);
+
+    // 데이터 소스 상태
+    const dataSources = {
+      price: !!priceResult?.sale,
+      rent: !!priceResult?.rent,
+      baseRate: !!rateResult,
+      building: !!buildingResult,
+      supply: !!supplyResult,
+    };
+
+    const availableCount = Object.values(dataSources).filter(Boolean).length;
+
+    return NextResponse.json({
+      address,
+      timestamp: new Date().toISOString(),
+      dataSources,
+      availableCount,
+      price: priceResult
+        ? {
+            sale: priceResult.sale
+              ? {
+                  avgPrice: priceResult.sale.avgPrice,
+                  minPrice: priceResult.sale.minPrice,
+                  maxPrice: priceResult.sale.maxPrice,
+                  transactionCount: priceResult.sale.transactionCount,
+                  period: priceResult.sale.period,
+                  recentTransactions: priceResult.sale.transactions.slice(0, 5),
+                }
+              : null,
+            rent: priceResult.rent
+              ? {
+                  avgDeposit: priceResult.rent.avgDeposit,
+                  jeonseCount: priceResult.rent.jeonseCount,
+                  wolseCount: priceResult.rent.wolseCount,
+                  period: priceResult.rent.period,
+                }
+              : null,
+            jeonseRatio: priceResult.jeonseRatio,
+          }
+        : null,
+      baseRate: rateResult,
+      building: buildingResult,
+      supply: supplyResult,
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "알 수 없는 오류";
+    console.error("Unified GET error:", message);
+    return NextResponse.json(
+      { error: `통합 조회 중 오류: ${message}` },
+      { status: 500 }
+    );
+  }
+}
+
+// ─── POST: 등기부등본 기반 심층 통합 분석 ───
 
 const formatKoreanPrice = (won: number) => formatKRW(won, "없음");
 

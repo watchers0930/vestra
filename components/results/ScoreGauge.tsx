@@ -50,6 +50,8 @@ export function ScoreGauge({
         width={config.svgSize}
         height={config.svgSize}
         viewBox={`0 0 ${config.svgSize} ${config.svgSize}`}
+        role="img"
+        aria-label={`${label}: ${score}점 (등급 ${displayGrade})`}
       >
         {/* Background circle */}
         <circle

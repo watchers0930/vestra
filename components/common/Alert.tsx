@@ -36,6 +36,7 @@ export function Alert({ variant = "info", children, className }: AlertProps) {
 
   return (
     <div
+      role="alert"
       className={cn(
         "rounded-xl border p-4 flex items-start gap-3",
         style.bg,

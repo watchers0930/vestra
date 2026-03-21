@@ -190,6 +190,9 @@ export default function Sidebar() {
             onClick={() => setOpenAccordion(isOpen ? null : item.href)}
             onMouseEnter={(e) => showTooltip(e, item.description)}
             onMouseLeave={hideTooltip}
+            aria-label={item.label}
+            aria-expanded={isOpen}
+            aria-current={isActive ? "page" : undefined}
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-lg text-sm w-full text-left",
               "transition-[background-color,color,opacity] duration-200 ease-out",
@@ -227,6 +230,8 @@ export default function Sidebar() {
                     <Link
                       key={child.href}
                       href={child.href}
+                      aria-label={child.label}
+                      aria-current={isChildActive ? "page" : undefined}
                       className={cn(
                         "flex items-center gap-2 pl-11 pr-3 py-1.5 rounded-lg text-xs",
                         "transition-[background-color,color] duration-200 ease-out",
@@ -255,6 +260,8 @@ export default function Sidebar() {
         href={item.href}
         onMouseEnter={(e) => showTooltip(e, item.description)}
         onMouseLeave={hideTooltip}
+        aria-label={item.label}
+        aria-current={isActive ? "page" : undefined}
         className={cn(
           "flex items-center gap-3 px-3 py-2 rounded-lg text-sm",
           "transition-[background-color,color,opacity] duration-200 ease-out",
@@ -328,7 +335,7 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-3 px-2.5 overflow-y-auto sidebar-scroll">
+        <nav role="navigation" aria-label="주요 메뉴" className="flex-1 py-3 px-2.5 overflow-y-auto sidebar-scroll">
           {/* 관리자 모드 배지 */}
           {isAdmin && isAdminPage && showLabel && (
             <div className="mx-0.5 mb-4 px-3 py-2.5 rounded-xl frosted-glass">

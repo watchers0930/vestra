@@ -118,6 +118,22 @@ export function removeAsset(id: string): void {
   localStorage.setItem(ASSETS_KEY, encode(assets));
 }
 
+/**
+ * 주소 기반 최신 분석 결과 조회
+ * 크로스 기능 연동: 동일 주소에 대해 다른 분석 도구에서 이전 결과를 자동 참조
+ */
+export function getLatestAnalysisForAddress(address: string): AnalysisRecord | null {
+  if (typeof window === "undefined" || !address) return null;
+  const analyses = getAnalyses();
+  const normalized = address.replace(/\s+/g, "");
+
+  const matched = analyses.find(
+    (a) => a.address.replace(/\s+/g, "") === normalized
+  );
+
+  return matched ?? null;
+}
+
 export function clearAll(): void {
   localStorage.removeItem(ANALYSIS_KEY);
   localStorage.removeItem(ASSETS_KEY);

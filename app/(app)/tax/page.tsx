@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Calculator, Building2, Home, ArrowRightLeft, Info } from "lucide-react";
+import { Calculator, Building2, Home, ArrowRightLeft, GitCompareArrows, Info } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
 import {
   calculateAcquisitionTax,
@@ -21,8 +21,9 @@ import {
 import { PageHeader, Card, Alert } from "@/components/common";
 import { SliderInput } from "@/components/forms";
 import { InfoRow, ScholarPapers } from "@/components/results";
+import { TaxScenarioCompare } from "@/components/tax/TaxScenarioCompare";
 
-type TaxTab = "acquisition" | "holding" | "transfer";
+type TaxTab = "acquisition" | "holding" | "transfer" | "scenario";
 
 export default function TaxPage() {
   const [activeTab, setActiveTab] = useState<TaxTab>("acquisition");
@@ -69,6 +70,7 @@ export default function TaxPage() {
     { id: "acquisition" as TaxTab, label: "취득세", icon: Building2 },
     { id: "holding" as TaxTab, label: "보유세", icon: Home },
     { id: "transfer" as TaxTab, label: "양도세", icon: ArrowRightLeft },
+    { id: "scenario" as TaxTab, label: "시나리오 비교", icon: GitCompareArrows },
   ];
 
   const comparisonData = [
@@ -342,11 +344,14 @@ export default function TaxPage() {
           </Card>
         </div>
       )}
+      {/* 시나리오 비교 */}
+      {activeTab === "scenario" && <TaxScenarioCompare />}
+
       {/* 관련 학술논문 */}
       <div className="mt-8">
         <ScholarPapers keywords={[
           "부동산 세금",
-          activeTab === "acquisition" ? "취득세" : activeTab === "holding" ? "재산세 종합부동산세" : "양도소득세",
+          activeTab === "acquisition" ? "취득세" : activeTab === "holding" ? "재산세 종합부동산세" : activeTab === "scenario" ? "세금 비교 시뮬레이션" : "양도소득세",
         ]} />
       </div>
 
