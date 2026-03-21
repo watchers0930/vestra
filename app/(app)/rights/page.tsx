@@ -22,6 +22,9 @@ import { formatKRW, cn } from "@/lib/utils";
 import { addAnalysis, addOrUpdateAsset } from "@/lib/store";
 import { SAMPLE_REGISTRY_TEXT } from "@/lib/registry-parser";
 import { PageHeader, Card, Alert } from "@/components/common";
+import { AnalysisLoader } from "@/components/common/AnalysisLoader";
+import { ErrorRetry } from "@/components/common/ErrorRetry";
+import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { SliderInput } from "@/components/forms";
 import { RightsResult, type UnifiedResult } from "@/components/rights/RightsResult";
 
@@ -302,20 +305,41 @@ export default function RightsAnalysisPage() {
       </Card>
 
       {/* 에러 */}
-      {error && <div className="mb-6"><Alert variant="error">{error}</Alert></div>}
+      {error && (
+        <div className="mb-6">
+          <ErrorRetry
+            message={error}
+            detail="입력 내용을 확인하거나 다시 시도해주세요."
+            onRetry={() => {
+              setError(null);
+              setStep("idle");
+            }}
+          />
+        </div>
+      )}
 
       {/* 분석 진행 중 */}
       {step !== "idle" && step !== "done" && !error && (
         <Card className="p-6 mb-6">
           <p className="text-sm font-medium text-[#1d1d1f] text-center mb-2">등기부등본 종합 분석 중...</p>
           <AnalysisStepIndicator step={step} showExtract={!!usedFile} fileType={fileType} />
+          <AnalysisLoader
+            steps={["등기부등본 파싱 중...", "권리관계 분석 중...", "위험도 점수 산출 중...", "AI 종합 의견 생성 중..."]}
+            interval={3000}
+          />
         </Card>
       )}
 
       {/* 결과 */}
       {result && step === "done" && (
         <>
-          <RightsResult result={result} rawText={rawText} />
+          <div id="rights-result">
+            <RightsResult result={result} rawText={rawText} />
+          </div>
+
+          <div className="mt-4 flex justify-end">
+            <PdfDownloadButton targetSelector="#rights-result" filename="vestra-권리분석.pdf" title="VESTRA 권리분석 리포트" />
+          </div>
 
           {/* 연관 분석 CTA */}
           <div className="mt-6 p-4 rounded-xl border border-[#e5e5e7] bg-[#f5f5f7]">

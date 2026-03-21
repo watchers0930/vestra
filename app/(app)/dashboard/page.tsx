@@ -170,7 +170,7 @@ export default function DashboardPage() {
             {/* 리스크 분포 파이 차트 */}
             <div>
               <h3 className="text-sm font-medium text-[#1d1d1f] mb-3">리스크 분포</h3>
-              <div className="h-[220px]">
+              <div className="h-[200px] sm:h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -210,7 +210,7 @@ export default function DashboardPage() {
             <div>
               <h3 className="text-sm font-medium text-[#1d1d1f] mb-3">자산별 추정가치</h3>
               {assetValueData.length > 0 ? (
-                <div className="h-[250px]">
+                <div className="h-[200px] sm:h-[250px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={assetValueData} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} />

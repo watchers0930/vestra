@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { ScoreExplainer } from "@/components/common/ScoreExplainer";
 
 interface ScoreGaugeProps {
   score: number;
@@ -6,6 +7,7 @@ interface ScoreGaugeProps {
   label?: string;
   grade?: string;
   showLabel?: boolean;
+  scoreType?: "safety" | "risk" | "feasibility" | "contract";
 }
 
 const sizeConfig = {
@@ -37,6 +39,7 @@ export function ScoreGauge({
   label = "안전 점수",
   grade,
   showLabel = true,
+  scoreType,
 }: ScoreGaugeProps) {
   const config = sizeConfig[size];
   const circumference = 2 * Math.PI * config.radius;
@@ -101,6 +104,9 @@ export function ScoreGauge({
       </svg>
       {showLabel && (
         <p className="text-xs text-muted mt-1">{label}</p>
+      )}
+      {scoreType && (
+        <ScoreExplainer score={score} type={scoreType} />
       )}
     </div>
   );

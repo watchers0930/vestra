@@ -20,6 +20,8 @@ import {
 import { cn } from "@/lib/utils";
 import { addAnalysis } from "@/lib/store";
 import { Card, Button, Badge, Alert } from "@/components/common";
+import { AnalysisLoader } from "@/components/common/AnalysisLoader";
+import { ErrorRetry } from "@/components/common/ErrorRetry";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
 import { NerHighlight } from "@/components/common/NerHighlight";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
@@ -574,7 +576,14 @@ export default function ContractReviewPage() {
         {/* Error */}
         {error && (
           <div className="mt-4">
-            <Alert variant="error">{error}</Alert>
+            <ErrorRetry
+              message={error}
+              detail="계약서 내용을 확인하거나 다시 시도해주세요."
+              onRetry={() => {
+                setError(null);
+                handleAnalyze();
+              }}
+            />
           </div>
         )}
 
@@ -591,6 +600,17 @@ export default function ContractReviewPage() {
           계약서 분석하기
         </Button>
       </Card>
+
+      {/* 분석 진행 중 */}
+      {isLoading && (
+        <Card className="p-6">
+          <p className="text-sm font-medium text-[#1d1d1f] text-center mb-2">계약서 AI 분석 중...</p>
+          <AnalysisLoader
+            steps={["계약서 텍스트 추출 중...", "조항 분석 중...", "판례 검색 중...", "AI 검토 의견 생성 중..."]}
+            interval={3000}
+          />
+        </Card>
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* Results                                                            */}

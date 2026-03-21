@@ -20,6 +20,7 @@ import {
   Cell,
 } from "recharts";
 import { PageHeader, Card, Alert } from "@/components/common";
+import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { SliderInput } from "@/components/forms";
 import { InfoRow, ScholarPapers } from "@/components/results";
 import { TaxScenarioCompare } from "@/components/tax/TaxScenarioCompare";
@@ -164,6 +165,7 @@ export default function TaxPage() {
       )}
 
       {/* Tax Comparison Chart */}
+      <div id="tax-result">
       <Card className="p-6 mb-6">
         <h3 className="font-semibold mb-4">세금 비교</h3>
         <div className="h-[200px]">
@@ -395,6 +397,11 @@ export default function TaxPage() {
       )}
       {/* 시나리오 비교 */}
       {activeTab === "scenario" && <TaxScenarioCompare />}
+      </div>
+
+      <div className="mt-4 flex justify-end">
+        <PdfDownloadButton targetSelector="#tax-result" filename="vestra-세무시뮬레이션.pdf" title="VESTRA 세무 시뮬레이션" />
+      </div>
 
       {/* 관련 학술논문 */}
       <div className="mt-8">

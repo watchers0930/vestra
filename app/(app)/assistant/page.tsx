@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { MessageSquare, Send, Bot, User, Sparkles } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { MessageSquare, Send, Bot, User, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageHeader, Card, Button } from "@/components/common";
 import { LoadingSpinner } from "@/components/loading";
@@ -9,8 +9,10 @@ import { LoadingSpinner } from "@/components/loading";
 interface Message {
   role: "user" | "assistant";
   content: string;
-  timestamp: Date;
+  timestamp: string; // ISO string for serialization
 }
+
+const STORAGE_KEY = "vestra_assistant_messages";
 
 const EXAMPLE_QUESTIONS = [
   "전세 계약 시 주의할 점은 무엇인가요?",
@@ -21,15 +23,66 @@ const EXAMPLE_QUESTIONS = [
   "종합부동산세 계산 방법을 알려주세요",
 ];
 
+function loadMessages(): Message[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return [];
+    return JSON.parse(stored) as Message[];
+  } catch {
+    return [];
+  }
+}
+
+function saveMessages(messages: Message[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+  } catch {
+    // storage full or unavailable
+  }
+}
+
+function getContextPrefix(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    const lastAddress = localStorage.getItem("vestra_last_address");
+    if (lastAddress) {
+      return `[사용자 컨텍스트] 최근 분석한 주소: ${lastAddress}\n\n`;
+    }
+  } catch {
+    // ignore
+  }
+  return "";
+}
+
 export default function AssistantPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Restore messages from localStorage on mount
+  useEffect(() => {
+    setMessages(loadMessages());
+    setHydrated(true);
+  }, []);
+
+  // Persist messages whenever they change (after hydration)
+  useEffect(() => {
+    if (hydrated) {
+      saveMessages(messages);
+    }
+  }, [messages, hydrated]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const clearConversation = useCallback(() => {
+    setMessages([]);
+    localStorage.removeItem(STORAGE_KEY);
+  }, []);
 
   const sendMessage = async (text?: string) => {
     const messageText = text || input.trim();
@@ -38,7 +91,7 @@ export default function AssistantPage() {
     const userMessage: Message = {
       role: "user",
       content: messageText,
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -46,15 +99,27 @@ export default function AssistantPage() {
     setLoading(true);
 
     try {
+      const contextPrefix = getContextPrefix();
+      const allMessages = [...messages, userMessage].map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      // Prepend context to the first user message if available
+      if (contextPrefix && allMessages.length > 0) {
+        const firstUserIdx = allMessages.findIndex((m) => m.role === "user");
+        if (firstUserIdx >= 0) {
+          allMessages[firstUserIdx] = {
+            ...allMessages[firstUserIdx],
+            content: contextPrefix + allMessages[firstUserIdx].content,
+          };
+        }
+      }
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [...messages, userMessage].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        }),
+        body: JSON.stringify({ messages: allMessages }),
       });
 
       const data = await res.json();
@@ -63,7 +128,7 @@ export default function AssistantPage() {
       const assistantMessage: Message = {
         role: "assistant",
         content: data.content,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -71,7 +136,7 @@ export default function AssistantPage() {
       const errorMessage: Message = {
         role: "assistant",
         content: "죄송합니다. 응답 생성 중 오류가 발생했습니다. API 키 설정을 확인해주세요.",
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -81,7 +146,19 @@ export default function AssistantPage() {
 
   return (
     <div className="h-[calc(100vh-5rem)] lg:h-[calc(100vh-3rem)] flex flex-col">
-      <PageHeader icon={MessageSquare} title="AI 어시스턴트" description="부동산 전문 AI에게 무엇이든 물어보세요" />
+      <div className="flex items-center justify-between">
+        <PageHeader icon={MessageSquare} title="AI 어시스턴트" description="부동산 전문 AI에게 무엇이든 물어보세요" />
+        {messages.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={Trash2}
+            onClick={clearConversation}
+          >
+            대화 초기화
+          </Button>
+        )}
+      </div>
 
       {/* Chat Area */}
       <Card className="flex-1 flex flex-col overflow-hidden">
@@ -134,7 +211,7 @@ export default function AssistantPage() {
               >
                 <div className="whitespace-pre-wrap leading-relaxed prose">{msg.content}</div>
                 <div className={cn("text-[10px] mt-2", msg.role === "user" ? "text-blue-200" : "text-muted")}>
-                  {msg.timestamp.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                  {new Date(msg.timestamp).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
                 </div>
               </div>
               {msg.role === "user" && (

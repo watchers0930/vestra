@@ -352,7 +352,7 @@ export function TaxScenarioCompare() {
           <GitCompareArrows size={20} strokeWidth={1.5} className="text-[#1d1d1f]" />
           시나리오 비교
         </h3>
-        <div className="h-[280px]">
+        <div className="h-[200px] sm:h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={comparisonChartData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />

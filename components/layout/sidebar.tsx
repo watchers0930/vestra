@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { version } from "../../package.json";
 import UserMenu from "@/components/auth/user-menu";
 import { VestraLogoMark } from "@/components/common/VestraLogo";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 interface MenuItem {
   href: string;
@@ -325,13 +326,16 @@ export default function Sidebar() {
               </div>
             )}
           </div>
-          <button
-            onClick={() => setMobileOpen(false)}
-            className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/[0.04] transition-colors duration-200"
-            aria-label="메뉴 닫기"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-1">
+            <NotificationBell collapsed={collapsed && !mobileOpen} />
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/[0.04] transition-colors duration-200"
+              aria-label="메뉴 닫기"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Navigation */}
