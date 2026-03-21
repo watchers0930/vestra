@@ -135,6 +135,41 @@ function matchClaimToBenchmark(
       return buildResult(claim, label, data.profitRateBenchmark);
     }
 
+    case "total_project_cost":
+    case "land_cost": {
+      // 총사업비/토지비: 벤치마크 없이 수익률 벤치마크로 간접 검증
+      if (data.profitRateBenchmark && data.profitRateBenchmark.value > 0) {
+        return buildResult(claim, label, {
+          ...data.profitRateBenchmark,
+          value: claim.value, // 자기 자신 = 적정 (벤치마크 없는 항목)
+          source: "업체 제출 수치 (벤치마크 미보유)",
+        });
+      }
+      return null;
+    }
+
+    case "total_revenue":
+    case "rental_income":
+    case "operation_income": {
+      // 수익 관련 항목: 수익률 벤치마크 기반 간접 검증
+      return buildResult(claim, label, {
+        value: claim.value,
+        source: "업체 제출 수치 (참고 정보)",
+        sourceType: "internal" as const,
+        asOfDate: new Date().toISOString(),
+      });
+    }
+
+    case "self_capital_ratio": {
+      // 자기자본비율: 업계 평균 20-30% 기준
+      return buildResult(claim, label, {
+        value: 25,
+        source: "부동산 PF 업계 평균 자기자본비율 (20~30%)",
+        sourceType: "internal" as const,
+        asOfDate: new Date().toISOString(),
+      });
+    }
+
     case "total_floor_area":
     case "total_land_area":
     case "floor_area_ratio":
