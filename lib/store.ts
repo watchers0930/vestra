@@ -73,6 +73,10 @@ export function addAnalysis(record: Omit<AnalysisRecord, "id" | "date">): Analys
   // 최대 50건
   if (analyses.length > 50) analyses.splice(50);
   localStorage.setItem(ANALYSIS_KEY, encode(analyses));
+
+  // 서버 동기화 (fire-and-forget, UI 블로킹 없음)
+  syncToServer("analysis", newRecord).catch(() => {});
+
   return newRecord;
 }
 
@@ -95,6 +99,10 @@ export function addOrUpdateAsset(asset: Omit<StoredAsset, "id" | "lastAnalyzedDa
   if (existing) {
     Object.assign(existing, asset, { lastAnalyzedDate: new Date().toISOString() });
     localStorage.setItem(ASSETS_KEY, encode(assets));
+
+    // 서버 동기화 (fire-and-forget)
+    syncToServer("asset", existing).catch(() => {});
+
     return existing;
   }
 
@@ -105,6 +113,10 @@ export function addOrUpdateAsset(asset: Omit<StoredAsset, "id" | "lastAnalyzedDa
   };
   assets.unshift(newAsset);
   localStorage.setItem(ASSETS_KEY, encode(assets));
+
+  // 서버 동기화 (fire-and-forget)
+  syncToServer("asset", newAsset).catch(() => {});
+
   return newAsset;
 }
 
@@ -137,4 +149,112 @@ export function getLatestAnalysisForAddress(address: string): AnalysisRecord | n
 export function clearAll(): void {
   localStorage.removeItem(ANALYSIS_KEY);
   localStorage.removeItem(ASSETS_KEY);
+}
+
+// ─── 서버 동기화 (DB 영속화) ───
+
+/**
+ * 서버에 데이터를 동기화 (fire-and-forget)
+ * localStorage가 주 저장소이고, 서버 동기화는 best-effort
+ */
+export async function syncToServer(
+  type: "analysis" | "asset",
+  data: AnalysisRecord | StoredAsset,
+): Promise<void> {
+  try {
+    await fetch("/api/user/sync-data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, data }),
+    });
+  } catch {
+    // 서버 동기화 실패 시 무시 (localStorage가 primary)
+  }
+}
+
+/**
+ * 서버에서 데이터를 불러와 localStorage와 병합
+ * 충돌 시 서버 데이터(최신 날짜 기준)가 우선
+ */
+export async function loadFromServer(): Promise<{
+  analyses: AnalysisRecord[];
+  assets: StoredAsset[];
+} | null> {
+  try {
+    const res = await fetch("/api/user/sync-data");
+    if (!res.ok) return null;
+
+    const serverData = await res.json() as {
+      analyses: AnalysisRecord[];
+      assets: StoredAsset[];
+    };
+
+    // 분석 이력 병합
+    const localAnalyses = getAnalyses();
+    const mergedAnalyses = mergeAnalyses(localAnalyses, serverData.analyses);
+    localStorage.setItem(ANALYSIS_KEY, encode(mergedAnalyses));
+
+    // 자산 병합
+    const localAssets = getAssets();
+    const mergedAssets = mergeAssets(localAssets, serverData.assets);
+    localStorage.setItem(ASSETS_KEY, encode(mergedAssets));
+
+    return { analyses: mergedAnalyses, assets: mergedAssets };
+  } catch {
+    return null;
+  }
+}
+
+/** 분석 이력 병합: 서버가 더 최신이면 서버 데이터로 덮어쓰기 */
+function mergeAnalyses(
+  local: AnalysisRecord[],
+  server: AnalysisRecord[],
+): AnalysisRecord[] {
+  const map = new Map<string, AnalysisRecord>();
+
+  // 로컬 먼저 등록
+  for (const item of local) {
+    map.set(item.id, item);
+  }
+
+  // 서버 데이터로 덮어쓰기 (충돌 시 날짜 비교, 서버가 같거나 최신이면 서버 우선)
+  for (const item of server) {
+    const existing = map.get(item.id);
+    if (!existing || new Date(item.date) >= new Date(existing.date)) {
+      map.set(item.id, item);
+    }
+  }
+
+  // 날짜 내림차순 정렬, 최대 50건
+  return Array.from(map.values())
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 50);
+}
+
+/** 자산 병합: 같은 주소면 lastAnalyzedDate가 더 최신인 쪽 우선 */
+function mergeAssets(
+  local: StoredAsset[],
+  server: StoredAsset[],
+): StoredAsset[] {
+  const map = new Map<string, StoredAsset>();
+
+  for (const item of local) {
+    map.set(item.address, item);
+  }
+
+  for (const item of server) {
+    const existing = map.get(item.address);
+    if (
+      !existing ||
+      new Date(item.lastAnalyzedDate) >= new Date(existing.lastAnalyzedDate)
+    ) {
+      map.set(item.address, item);
+    }
+  }
+
+  return Array.from(map.values()).sort(
+    (a, b) =>
+      new Date(b.lastAnalyzedDate).getTime() -
+      new Date(a.lastAnalyzedDate).getTime(),
+  );
 }

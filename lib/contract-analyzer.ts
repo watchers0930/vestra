@@ -472,7 +472,7 @@ function analyzeClauseInteractions(
   }
 
   const totalInteractionImpact = interactions.reduce(
-    (sum, i) => sum + (i.impactScore - 1) * 10,
+    (sum, i) => sum + (i.impactScore - 1) * 5,
     0,
   );
 
@@ -541,8 +541,8 @@ function calculateSafetyScore(
   }
 
   for (const mc of missingClauses) {
-    if (mc.importance === "high") score -= 10;
-    else score -= 3;
+    if (mc.importance === "high") score -= 5;
+    else score -= 2;
   }
 
   // 조항 상호작용에 의한 비선형 추가 감점

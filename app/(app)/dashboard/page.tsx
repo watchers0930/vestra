@@ -20,7 +20,7 @@ import {
   Calculator,
 } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
-import { getAssets, getAnalyses, removeAnalysis, type StoredAsset, type AnalysisRecord } from "@/lib/store";
+import { getAssets, getAnalyses, removeAnalysis, loadFromServer, type StoredAsset, type AnalysisRecord } from "@/lib/store";
 import { EmptyState } from "@/components/common";
 import { KpiCard } from "@/components/results";
 import {
@@ -58,9 +58,18 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // 1) localStorage에서 즉시 로드 (빠른 UX)
     setAssets(getAssets());
     setAnalyses(getAnalyses());
     setMounted(true);
+
+    // 2) 서버에서 데이터 병합 (비동기, 논블로킹)
+    loadFromServer().then((merged) => {
+      if (merged) {
+        setAnalyses(merged.analyses);
+        setAssets(merged.assets);
+      }
+    });
   }, []);
 
   const totalAssets = assets.length;

@@ -875,12 +875,32 @@ export function calculateRiskScore(
 
   // 14. 위험요소 상호작용 평가 (비선형 증폭)
   const interactionPenalties = evaluateInteractions(allFactors);
+  if (interactionPenalties.totalInteractionPenalty > 0) {
+    allFactors.push({
+      id: "interaction_penalty",
+      category: "복합위험",
+      description: "복합위험 가중",
+      deduction: interactionPenalties.totalInteractionPenalty,
+      severity: "high",
+      detail: `${interactionPenalties.appliedRules.length}건의 위험요소 상호작용으로 인한 추가 감점입니다.`,
+    });
+  }
   totalDeduction += interactionPenalties.totalInteractionPenalty;
 
   // 15. 시계열 이상 패턴 탐지
   const temporalPatterns = detectTemporalPatterns(parsed);
   // 시계열 위험도를 감점에 반영 (최대 20점 추가 감점)
   const temporalDeduction = Math.min(20, Math.round(temporalPatterns.overallTemporalRisk * 0.2));
+  if (temporalDeduction > 0) {
+    allFactors.push({
+      id: "temporal_pattern",
+      category: "시계열",
+      description: "시계열 이상 패턴",
+      deduction: temporalDeduction,
+      severity: "medium",
+      detail: `${temporalPatterns.patterns.length}건의 시계열 이상 패턴이 탐지되어 추가 감점됩니다.`,
+    });
+  }
   totalDeduction += temporalDeduction;
 
   // 최종 점수 계산 (최소 0점)
