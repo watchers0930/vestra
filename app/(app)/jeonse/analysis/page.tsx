@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Home, Shield, FileText, CheckCircle, Copy, AlertTriangle, Download, ChevronRight } from "lucide-react";
+import { Home, Shield, FileText, CheckCircle, Copy, AlertTriangle, Download, ChevronRight, TrendingUp } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
 import { addAnalysis } from "@/lib/store";
 import { PageHeader, Card, Alert, Button } from "@/components/common";
@@ -48,6 +48,15 @@ export default function JeonsePage() {
     endDate: "2027-02-28",
     propertyType: "아파트",
   });
+
+  // localStorage에서 주소 프리필
+  useEffect(() => {
+    const lastAddr = localStorage.getItem("vestra_last_address");
+    if (lastAddr) {
+      setFormData((prev) => ({ ...prev, propertyAddress: lastAddr }));
+      localStorage.removeItem("vestra_last_address");
+    }
+  }, []);
 
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<JeonseAnalysis | null>(null);
@@ -394,6 +403,35 @@ export default function JeonsePage() {
             임대인의 재정 상태, 근저당 설정 등 비공개 정보는 반영되지 않을 수 있습니다.
             전세 계약 체결 시 반드시 법무사, 공인중개사 등 전문가와 상담하세요.
           </Alert>
+
+          {/* 연관 분석 CTA */}
+          {analysis && !loading && (
+            <div className="mt-6 p-4 rounded-xl border border-[#e5e5e7] bg-[#f5f5f7]">
+              <p className="text-xs font-medium text-[#6e6e73] uppercase tracking-wider mb-3">이 물건으로 추가 분석</p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href="/rights"
+                  onClick={() => {
+                    if (formData.propertyAddress) localStorage.setItem("vestra_last_address", formData.propertyAddress);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#e5e5e7] bg-white text-sm font-medium text-[#1d1d1f] hover:bg-[#f5f5f7] transition-all"
+                >
+                  <Shield size={16} strokeWidth={1.5} />
+                  권리분석
+                </Link>
+                <Link
+                  href="/prediction"
+                  onClick={() => {
+                    if (formData.propertyAddress) localStorage.setItem("vestra_last_address", formData.propertyAddress);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#e5e5e7] bg-white text-sm font-medium text-[#1d1d1f] hover:bg-[#f5f5f7] transition-all"
+                >
+                  <TrendingUp size={16} strokeWidth={1.5} />
+                  시세 전망
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import Link from "next/link";
 import {
   Shield,
   CheckCircle,
@@ -13,6 +14,9 @@ import {
   Brain,
   ShieldCheck,
   Database as DatabaseIcon,
+  Home,
+  Calculator,
+  TrendingUp,
 } from "lucide-react";
 import { formatKRW, cn } from "@/lib/utils";
 import { addAnalysis, addOrUpdateAsset } from "@/lib/store";
@@ -310,7 +314,49 @@ export default function RightsAnalysisPage() {
 
       {/* 결과 */}
       {result && step === "done" && (
-        <RightsResult result={result} rawText={rawText} />
+        <>
+          <RightsResult result={result} rawText={rawText} />
+
+          {/* 연관 분석 CTA */}
+          <div className="mt-6 p-4 rounded-xl border border-[#e5e5e7] bg-[#f5f5f7]">
+            <p className="text-xs font-medium text-[#6e6e73] uppercase tracking-wider mb-3">이 물건으로 추가 분석</p>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/jeonse/analysis"
+                onClick={() => {
+                  const addr = result.parsed?.title?.address || result.propertyInfo?.address;
+                  if (addr) localStorage.setItem("vestra_last_address", addr);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#e5e5e7] bg-white text-sm font-medium text-[#1d1d1f] hover:bg-[#f5f5f7] transition-all"
+              >
+                <Home size={16} strokeWidth={1.5} />
+                전세 안전 진단
+              </Link>
+              <Link
+                href="/tax"
+                onClick={() => {
+                  const addr = result.parsed?.title?.address || result.propertyInfo?.address;
+                  if (addr) localStorage.setItem("vestra_last_address", addr);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#e5e5e7] bg-white text-sm font-medium text-[#1d1d1f] hover:bg-[#f5f5f7] transition-all"
+              >
+                <Calculator size={16} strokeWidth={1.5} />
+                세금 시뮬레이션
+              </Link>
+              <Link
+                href="/prediction"
+                onClick={() => {
+                  const addr = result.parsed?.title?.address || result.propertyInfo?.address;
+                  if (addr) localStorage.setItem("vestra_last_address", addr);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#e5e5e7] bg-white text-sm font-medium text-[#1d1d1f] hover:bg-[#f5f5f7] transition-all"
+              >
+                <TrendingUp size={16} strokeWidth={1.5} />
+                시세 전망
+              </Link>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

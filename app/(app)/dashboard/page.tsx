@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Building2,
   Wallet,
@@ -16,6 +17,7 @@ import {
   Trash2,
   Info,
   PieChart as PieChartIcon,
+  Calculator,
 } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
 import { getAssets, getAnalyses, removeAnalysis, type StoredAsset, type AnalysisRecord } from "@/lib/store";
@@ -347,11 +349,37 @@ export default function DashboardPage() {
                     </span>
                   </div>
                 </div>
-                <div className="mt-3 pt-2.5 border-t border-gray-100">
+                <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between">
                   <p className="text-[10px] text-[#6e6e73] flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     {new Date(asset.lastAnalyzedDate).toLocaleDateString("ko-KR")}
                   </p>
+                  <div className="flex items-center gap-1">
+                    <Link
+                      href="/rights"
+                      onClick={() => localStorage.setItem("vestra_last_address", asset.address)}
+                      className="group/btn p-1.5 rounded-lg text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] transition-all relative"
+                      title="권리분석"
+                    >
+                      <Shield size={16} strokeWidth={1.5} />
+                    </Link>
+                    <Link
+                      href="/prediction"
+                      onClick={() => localStorage.setItem("vestra_last_address", asset.address)}
+                      className="group/btn p-1.5 rounded-lg text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] transition-all relative"
+                      title="시세전망"
+                    >
+                      <TrendingUp size={16} strokeWidth={1.5} />
+                    </Link>
+                    <Link
+                      href="/tax"
+                      onClick={() => localStorage.setItem("vestra_last_address", asset.address)}
+                      className="group/btn p-1.5 rounded-lg text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] transition-all relative"
+                      title="세무"
+                    >
+                      <Calculator size={16} strokeWidth={1.5} />
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}

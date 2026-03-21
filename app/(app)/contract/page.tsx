@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, type RefObject } from "react";
+import Link from "next/link";
 import {
   FileSearch,
   Upload,
@@ -14,6 +15,7 @@ import {
   ShieldCheck,
   Landmark,
   Info,
+  Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { addAnalysis } from "@/lib/store";
@@ -779,6 +781,27 @@ export default function ContractReviewPage() {
             계약서의 법적 효력 및 유불리 판단은 반드시 변호사, 법무사 등 법률 전문가와 상담하시기 바랍니다.
             VESTRA는 본 분석 결과에 따른 계약 체결 및 손해에 대해 책임을 지지 않습니다.
           </Alert>
+
+          {/* 연관 분석 CTA */}
+          <div className="mt-6 p-4 rounded-xl border border-[#e5e5e7] bg-[#f5f5f7]">
+            <p className="text-xs font-medium text-[#6e6e73] uppercase tracking-wider mb-3">이 물건으로 추가 분석</p>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/rights"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#e5e5e7] bg-white text-sm font-medium text-[#1d1d1f] hover:bg-[#f5f5f7] transition-all"
+              >
+                <Shield size={16} strokeWidth={1.5} />
+                이 물건의 권리분석
+              </Link>
+              <Link
+                href="/tax"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#e5e5e7] bg-white text-sm font-medium text-[#1d1d1f] hover:bg-[#f5f5f7] transition-all"
+              >
+                <Calculator size={16} strokeWidth={1.5} />
+                세금 시뮬레이션
+              </Link>
+            </div>
+          </div>
         </div>
       )}
     </div>

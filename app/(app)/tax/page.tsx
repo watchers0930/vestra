@@ -34,6 +34,8 @@ export default function TaxPage() {
   useEffect(() => {
     const all = getAnalyses().filter((a) => a.type === "contract" || a.type === "rights");
     setContractAnalyses(all);
+    // localStorage에서 주소 정보 정리 (세금 페이지는 주소 입력 없음)
+    localStorage.removeItem("vestra_last_address");
   }, []);
 
   const handleImportContract = useCallback((analysis: AnalysisRecord) => {
