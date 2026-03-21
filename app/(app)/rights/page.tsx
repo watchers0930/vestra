@@ -54,13 +54,13 @@ function AnalysisStepIndicator({ step, showExtract, fileType }: { step: Analysis
             <div className="flex flex-col items-center gap-1">
               <div className={cn(
                 "w-9 h-9 rounded-full flex items-center justify-center transition-all",
-                isDone ? "bg-primary text-white" : isActive ? "bg-primary/20 text-primary animate-pulse" : "bg-gray-100 text-gray-400"
+                isDone ? "bg-primary text-white" : isActive ? "bg-primary/20 text-primary animate-pulse" : "bg-[#e5e5e7] text-[#6e6e73]"
               )}>
                 {isDone ? <CheckCircle size={18} /> : isActive ? <Loader2 size={18} className="animate-spin" /> : <s.icon size={18} />}
               </div>
-              <div className={cn("text-[10px] font-medium", isActive || isDone ? "text-primary" : "text-gray-400")}>{s.label}</div>
+              <div className={cn("text-[10px] font-medium", isActive || isDone ? "text-primary" : "text-[#6e6e73]")}>{s.label}</div>
             </div>
-            {i < steps.length - 1 && <div className={cn("w-6 sm:w-10 h-0.5 mb-5", isDone ? "bg-primary" : "bg-gray-200")} />}
+            {i < steps.length - 1 && <div className={cn("w-6 sm:w-10 h-0.5 mb-5", isDone ? "bg-primary" : "bg-[#e5e5e7]")} />}
           </div>
         );
       })}
@@ -215,13 +215,13 @@ export default function RightsAnalysisPage() {
       <Card className="p-6 mb-6">
         {/* 입력 모드 토글 */}
         <div className="flex gap-2 mb-4">
-          <button onClick={() => setInputMode("file")} className={cn("flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all", inputMode === "file" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-secondary border-border hover:bg-gray-50")}>
+          <button onClick={() => setInputMode("file")} className={cn("flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all", inputMode === "file" ? "bg-[#1d1d1f] text-white border-[#1d1d1f]" : "bg-white text-secondary border-border hover:bg-[#f5f5f7]")}>
             <Upload size={14} /> 파일 업로드
           </button>
-          <button onClick={() => setInputMode("text")} className={cn("flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all", inputMode === "text" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-secondary border-border hover:bg-gray-50")}>
+          <button onClick={() => setInputMode("text")} className={cn("flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all", inputMode === "text" ? "bg-[#1d1d1f] text-white border-[#1d1d1f]" : "bg-white text-secondary border-border hover:bg-[#f5f5f7]")}>
             <ClipboardPaste size={14} /> 텍스트 입력
           </button>
-          <button onClick={loadSample} className="px-3 py-1.5 text-xs rounded-lg border border-border text-secondary hover:bg-gray-50 transition-all">
+          <button onClick={loadSample} className="px-3 py-1.5 text-xs rounded-lg border border-border text-secondary hover:bg-[#f5f5f7] transition-all">
             샘플 데이터
           </button>
         </div>
@@ -235,7 +235,7 @@ export default function RightsAnalysisPage() {
             onClick={() => fileInputRef.current?.click()}
             className={cn(
               "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all",
-              isDragging ? "border-primary bg-primary/5" : fileName ? "border-emerald-300 bg-emerald-50" : "border-border hover:border-primary/50 hover:bg-gray-50"
+              isDragging ? "border-primary bg-primary/5" : fileName ? "border-emerald-300 bg-emerald-50" : "border-border hover:border-primary/50 hover:bg-[#f5f5f7]"
             )}
           >
             <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={handleFileChange} className="hidden" />
@@ -252,9 +252,9 @@ export default function RightsAnalysisPage() {
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
-                <Upload size={32} className="text-gray-400" />
-                <p className="text-sm text-gray-600">등기부등본 PDF 또는 이미지를 드래그하세요</p>
-                <p className="text-xs text-gray-400">PDF, JPG, PNG (최대 10MB)</p>
+                <Upload size={32} className="text-[#6e6e73]" />
+                <p className="text-sm text-[#6e6e73]">등기부등본 PDF 또는 이미지를 드래그하세요</p>
+                <p className="text-xs text-[#6e6e73]">PDF, JPG, PNG (최대 10MB)</p>
               </div>
             )}
           </div>
@@ -272,7 +272,7 @@ export default function RightsAnalysisPage() {
 
         {/* 추정 시세 슬라이더 */}
         {rawText && (
-          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+          <div className="mt-4 p-3 bg-[#f5f5f7] rounded-lg">
             <SliderInput
               label="추정 시세 (선택사항)"
               value={estimatedPrice}
@@ -282,7 +282,7 @@ export default function RightsAnalysisPage() {
               step={10000000}
               formatValue={formatKRW}
             />
-            <p className="text-[10px] text-gray-400 mt-1">MOLIT 실거래 데이터가 있으면 자동으로 시세를 반영합니다</p>
+            <p className="text-[10px] text-[#6e6e73] mt-1">MOLIT 실거래 데이터가 있으면 자동으로 시세를 반영합니다</p>
           </div>
         )}
 
@@ -290,7 +290,7 @@ export default function RightsAnalysisPage() {
         <button
           onClick={handleAnalyze}
           disabled={!rawText.trim() || (step !== "idle" && step !== "done")}
-          className="mt-4 w-full py-3 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+          className="mt-4 w-full py-3 rounded-lg bg-[#1d1d1f] text-white text-sm font-medium hover:bg-[#1d1d1f]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
         >
           <Shield size={16} />
           종합 권리분석 시작
@@ -303,7 +303,7 @@ export default function RightsAnalysisPage() {
       {/* 분석 진행 중 */}
       {step !== "idle" && step !== "done" && !error && (
         <Card className="p-6 mb-6">
-          <p className="text-sm font-medium text-gray-700 text-center mb-2">등기부등본 종합 분석 중...</p>
+          <p className="text-sm font-medium text-[#1d1d1f] text-center mb-2">등기부등본 종합 분석 중...</p>
           <AnalysisStepIndicator step={step} showExtract={!!usedFile} fileType={fileType} />
         </Card>
       )}

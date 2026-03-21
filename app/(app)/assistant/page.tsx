@@ -102,7 +102,7 @@ export default function AssistantPage() {
                   <button
                     key={i}
                     onClick={() => sendMessage(q)}
-                    className="text-left px-3 py-2.5 bg-gray-50 border border-border rounded-lg text-xs text-secondary hover:bg-gray-100 hover:text-foreground transition-colors"
+                    className="text-left px-3 py-2.5 bg-[#f5f5f7] border border-border rounded-lg text-xs text-secondary hover:bg-[#e5e5e7] hover:text-foreground transition-colors"
                   >
                     {q}
                   </button>
@@ -129,7 +129,7 @@ export default function AssistantPage() {
                   "max-w-[80%] rounded-xl px-4 py-3 text-sm",
                   msg.role === "user"
                     ? "bg-primary text-white"
-                    : "bg-gray-50 border border-border text-foreground"
+                    : "bg-[#f5f5f7] border border-border text-foreground"
                 )}
               >
                 <div className="whitespace-pre-wrap leading-relaxed prose">{msg.content}</div>
@@ -138,7 +138,7 @@ export default function AssistantPage() {
                 </div>
               </div>
               {msg.role === "user" && (
-                <div className="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-[#e5e5e7] flex items-center justify-center flex-shrink-0">
                   <User size={18} className="text-secondary" />
                 </div>
               )}
@@ -150,7 +150,7 @@ export default function AssistantPage() {
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <Bot size={18} className="text-primary" />
               </div>
-              <div className="bg-gray-50 border border-border rounded-xl px-4 py-3">
+              <div className="bg-[#f5f5f7] border border-border rounded-xl px-4 py-3">
                 <div className="flex items-center gap-2 text-sm text-secondary">
                   <LoadingSpinner size="sm" variant="inline" />
                   답변을 생성하고 있습니다...

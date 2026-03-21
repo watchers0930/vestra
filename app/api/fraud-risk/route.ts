@@ -3,6 +3,7 @@ import { predictFraudRisk, extractFeaturesFromRiskScore, type FraudModelInput } 
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { createAuditLog } from "@/lib/audit-log";
 import { prisma } from "@/lib/prisma";
+import { loadLiveWeights } from "@/lib/live-weights";
 
 /**
  * POST /api/fraud-risk
@@ -97,8 +98,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // 라이브 가중치 로드 (SystemSetting → 기본값 폴백)
+    const customWeights = await loadLiveWeights("fraud");
+
     // 전세사기 위험 예측
-    const result = predictFraudRisk(modelInput, nearbyFraudCases);
+    const result = predictFraudRisk(modelInput, nearbyFraudCases, customWeights);
 
     // 감사 로그
     createAuditLog({

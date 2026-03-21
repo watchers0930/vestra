@@ -446,7 +446,7 @@ export default function ContractReviewPage() {
           </div>
           <div>
             <h1 className="text-xl font-semibold text-[#1d1d1f]">계약검토</h1>
-            <p className="text-sm text-gray-500">AI 기반 부동산 계약서 자동 분석</p>
+            <p className="text-sm text-[#6e6e73]">AI 기반 부동산 계약서 자동 분석</p>
           </div>
         </div>
       </div>
@@ -483,15 +483,15 @@ export default function ContractReviewPage() {
               샘플 계약서 불러오기
             </Button>
             {showSampleMenu && (
-              <div className="absolute right-0 top-full mt-1 z-50 w-72 rounded-lg border border-gray-200 bg-white shadow-lg py-1">
+              <div className="absolute right-0 top-full mt-1 z-50 w-72 rounded-lg border border-[#e5e5e7] bg-white shadow-lg py-1">
                 {SAMPLE_CONTRACTS.map((s) => (
                   <button
                     key={s.id}
                     onClick={() => fillSample(s)}
-                    className="w-full text-left px-4 py-2.5 hover:bg-gray-50 transition-colors"
+                    className="w-full text-left px-4 py-2.5 hover:bg-[#f5f5f7] transition-colors"
                   >
-                    <div className="text-sm font-medium text-gray-900">{s.label}</div>
-                    <div className="text-xs text-gray-500">{s.description}</div>
+                    <div className="text-sm font-medium text-[#1d1d1f]">{s.label}</div>
+                    <div className="text-xs text-[#6e6e73]">{s.description}</div>
                   </button>
                 ))}
               </div>
@@ -508,7 +508,7 @@ export default function ContractReviewPage() {
               setError(null);
             }}
             placeholder="계약서 내용을 여기에 붙여넣으세요...&#10;&#10;예시: 부동산 임대차계약서, 매매계약서 등의 전문을 입력하면 AI가 조항별로 분석합니다."
-            className="min-h-[300px] w-full resize-y rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm leading-relaxed text-gray-800 placeholder:text-gray-400 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition-colors"
+            className="min-h-[300px] w-full resize-y rounded-lg border border-[#e5e5e7] bg-[#f5f5f7] p-4 text-sm leading-relaxed text-[#1d1d1f] placeholder:text-[#6e6e73] focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition-colors"
           />
         )}
 
@@ -524,15 +524,15 @@ export default function ContractReviewPage() {
                 "flex min-h-[300px] cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed transition-colors",
                 isDragging
                   ? "border-blue-400 bg-blue-50"
-                  : "border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100"
+                  : "border-[#e5e5e7] bg-[#f5f5f7] hover:border-[#6e6e73] hover:bg-[#e5e5e7]"
               )}
             >
               {fileName ? (
                 <>
                   <FileText size={48} className="text-blue-500" />
                   <div className="text-center">
-                    <p className="text-sm font-medium text-gray-700">{fileName}</p>
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="text-sm font-medium text-[#1d1d1f]">{fileName}</p>
+                    <p className="mt-1 text-xs text-[#6e6e73]">
                       파일이 선택되었습니다. 다른 파일을 선택하려면 클릭하세요.
                     </p>
                   </div>
@@ -541,13 +541,13 @@ export default function ContractReviewPage() {
                 <>
                   <Upload
                     size={48}
-                    className={cn("transition-colors", isDragging ? "text-blue-500" : "text-gray-400")}
+                    className={cn("transition-colors", isDragging ? "text-blue-500" : "text-[#6e6e73]")}
                   />
                   <div className="text-center">
-                    <p className="text-sm font-medium text-gray-600">
+                    <p className="text-sm font-medium text-[#6e6e73]">
                       파일을 여기로 드래그하거나 클릭하여 업로드
                     </p>
-                    <p className="mt-1 text-xs text-gray-400">.txt, .pdf 파일 지원</p>
+                    <p className="mt-1 text-xs text-[#6e6e73]">.txt, .pdf 파일 지원</p>
                   </div>
                 </>
               )}
@@ -564,7 +564,7 @@ export default function ContractReviewPage() {
 
         {/* Char count */}
         {contractText && (
-          <div className="mt-2 text-right text-xs text-gray-400">
+          <div className="mt-2 text-right text-xs text-[#6e6e73]">
             {contractText.length.toLocaleString()}자 입력됨
           </div>
         )}
@@ -604,7 +604,7 @@ export default function ContractReviewPage() {
           <div className="grid gap-6 md:grid-cols-[auto_1fr]">
             {/* Safety Score Card */}
             <Card className="flex flex-col items-center justify-center p-6">
-              <h2 className="mb-4 text-sm font-semibold text-gray-500">계약 안전점수</h2>
+              <h2 className="mb-4 text-sm font-semibold text-[#6e6e73]">계약 안전점수</h2>
               <ScoreGauge
                 score={result.safetyScore}
                 grade={getScoreLabel(result.safetyScore)}
@@ -613,11 +613,11 @@ export default function ContractReviewPage() {
 
             {/* AI Opinion Card */}
             <Card className="p-6">
-              <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-500">
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#6e6e73]">
                 <FileSearch size={16} strokeWidth={1.5} className="text-[#1d1d1f]" />
                 AI 종합 의견
               </h2>
-              <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
+              <p className="whitespace-pre-line text-sm leading-relaxed text-[#1d1d1f]">
                 {result.aiOpinion}
               </p>
             </Card>
@@ -625,31 +625,31 @@ export default function ContractReviewPage() {
 
           {/* Clauses Analysis */}
           <Card className="p-6">
-            <h2 className="mb-4 text-base font-semibold text-gray-800">조항별 분석 결과</h2>
+            <h2 className="mb-4 text-base font-semibold text-[#1d1d1f]">조항별 분석 결과</h2>
             <div className="space-y-4">
               {result.clauses.map((clause, idx) => (
                 <div
                   key={idx}
                   className={cn(
-                    "rounded-lg border border-gray-100 border-l-4 bg-gray-50/50 p-4",
+                    "rounded-lg border border-[#e5e5e7] border-l-4 bg-[#f5f5f7]/50 p-4",
                     borderForRisk(clause.riskLevel)
                   )}
                 >
                   <div className="mb-2 flex items-center gap-3">
-                    <h3 className="text-sm font-semibold text-gray-800">{clause.title}</h3>
+                    <h3 className="text-sm font-semibold text-[#1d1d1f]">{clause.title}</h3>
                     <Badge variant={riskBadgeVariant[clause.riskLevel]} icon={riskBadgeIcon[clause.riskLevel]} size="md">
                       {riskBadgeLabel[clause.riskLevel]}
                     </Badge>
                   </div>
                   {clause.content && (
-                    <p className="mb-2 rounded bg-white px-3 py-2 text-xs leading-relaxed text-gray-500 ring-1 ring-gray-100">
+                    <p className="mb-2 rounded bg-white px-3 py-2 text-xs leading-relaxed text-[#6e6e73] ring-1 ring-[#e5e5e7]">
                       {clause.content}
                     </p>
                   )}
-                  <p className="text-sm leading-relaxed text-gray-700">{clause.analysis}</p>
+                  <p className="text-sm leading-relaxed text-[#1d1d1f]">{clause.analysis}</p>
                   {clause.relatedLaw && (
-                    <p className="mt-2 text-xs text-gray-400">
-                      <span className="font-medium text-gray-500">관련 법규:</span>{" "}
+                    <p className="mt-2 text-xs text-[#6e6e73]">
+                      <span className="font-medium text-[#6e6e73]">관련 법규:</span>{" "}
                       {clause.relatedLaw}
                     </p>
                   )}
@@ -661,7 +661,7 @@ export default function ContractReviewPage() {
           {/* Missing Clauses */}
           {result.missingClauses.length > 0 && (
             <Card className="p-6">
-              <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-gray-800">
+              <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-[#1d1d1f]">
                 <AlertTriangle size={18} className="text-amber-500" />
                 누락된 중요 조항
               </h2>
@@ -677,12 +677,12 @@ export default function ContractReviewPage() {
                     )}
                   >
                     <div className="mb-2 flex items-center gap-2">
-                      <h3 className="text-sm font-semibold text-gray-800">{mc.title}</h3>
+                      <h3 className="text-sm font-semibold text-[#1d1d1f]">{mc.title}</h3>
                       <Badge variant={mc.importance === "high" ? "danger" : "warning"} size="md">
                         {mc.importance === "high" ? "필수" : "권장"}
                       </Badge>
                     </div>
-                    <p className="text-xs leading-relaxed text-gray-600">{mc.description}</p>
+                    <p className="text-xs leading-relaxed text-[#6e6e73]">{mc.description}</p>
                   </div>
                 ))}
               </div>
@@ -690,7 +690,7 @@ export default function ContractReviewPage() {
           )}
           {/* 계약 시 안전 체크리스트 */}
           <Card className="p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-gray-800">
+            <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-[#1d1d1f]">
               <ShieldAlert size={18} className="text-amber-500" />
               계약 전 안전 체크리스트
             </h2>

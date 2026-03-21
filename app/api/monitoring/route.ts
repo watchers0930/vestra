@@ -27,19 +27,40 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "인증 필요" }, { status: 401 });
     }
 
-    const properties = await prisma.monitoredProperty.findMany({
-      where: { userId: session.user.id },
-      include: {
-        alerts: {
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        },
-        _count: { select: { alerts: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const { searchParams } = new URL(req.url);
+    const limit = Math.min(Math.max(1, parseInt(searchParams.get("limit") || "20")), 100);
+    const offset = Math.max(0, parseInt(searchParams.get("offset") || "0"));
+    const status = searchParams.get("status"); // active | paused | expired
 
-    return NextResponse.json({ properties });
+    const where = {
+      userId: session.user.id,
+      ...(status ? { status } : {}),
+    };
+
+    const [properties, total] = await Promise.all([
+      prisma.monitoredProperty.findMany({
+        where,
+        include: {
+          alerts: {
+            orderBy: { createdAt: "desc" },
+            take: 5,
+          },
+          _count: { select: { alerts: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip: offset,
+        take: limit,
+      }),
+      prisma.monitoredProperty.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      properties,
+      total,
+      limit,
+      offset,
+      hasMore: offset + limit < total,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "알 수 없는 오류";
     return NextResponse.json({ error: `오류: ${message}` }, { status: 500 });

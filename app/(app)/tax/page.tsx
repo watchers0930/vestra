@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, Building2, Home, ArrowRightLeft, GitCompareArrows, Info } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Calculator, Building2, Home, ArrowRightLeft, GitCompareArrows, Info, FileInput } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
+import { getAnalyses, type AnalysisRecord } from "@/lib/store";
 import {
   calculateAcquisitionTax,
   calculateHoldingTax,
@@ -27,6 +28,24 @@ type TaxTab = "acquisition" | "holding" | "transfer" | "scenario";
 
 export default function TaxPage() {
   const [activeTab, setActiveTab] = useState<TaxTab>("acquisition");
+  const [contractAnalyses, setContractAnalyses] = useState<AnalysisRecord[]>([]);
+  const [showImport, setShowImport] = useState(false);
+
+  useEffect(() => {
+    const all = getAnalyses().filter((a) => a.type === "contract" || a.type === "rights");
+    setContractAnalyses(all);
+  }, []);
+
+  const handleImportContract = useCallback((analysis: AnalysisRecord) => {
+    const data = analysis.data as Record<string, unknown>;
+    // 계약서/권리분석에서 매매가 추출
+    const price = (data.dealAmount as number) || (data.price as number) || (data.estimatedPrice as number) || 0;
+    if (price > 0) {
+      setAcqPrice(price);
+      setTransAcqPrice(price);
+    }
+    setShowImport(false);
+  }, []);
 
   const [acqPrice, setAcqPrice] = useState(850000000);
   const [acqHouseCount, setAcqHouseCount] = useState(1);
@@ -113,6 +132,34 @@ export default function TaxPage() {
   return (
     <div>
       <PageHeader icon={Calculator} title="세무 시뮬레이션" description="취득세 · 보유세 · 양도세 실시간 계산" />
+
+      {/* 계약에서 가져오기 */}
+      {contractAnalyses.length > 0 && (
+        <div className="mb-4">
+          <button
+            onClick={() => setShowImport(!showImport)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#e5e5e7] bg-white text-sm font-medium text-[#1d1d1f] hover:bg-[#f5f5f7] transition-colors"
+          >
+            <FileInput size={16} strokeWidth={1.5} />
+            계약/분석에서 가져오기
+          </button>
+          {showImport && (
+            <div className="mt-2 rounded-xl border border-[#e5e5e7] bg-white p-3 space-y-2">
+              <p className="text-xs text-[#6e6e73] mb-2">최근 분석 결과에서 매매가를 불러옵니다</p>
+              {contractAnalyses.slice(0, 5).map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => handleImportContract(a)}
+                  className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#f5f5f7] transition-colors"
+                >
+                  <p className="text-sm font-medium text-[#1d1d1f]">{a.address || "주소 미상"}</p>
+                  <p className="text-xs text-[#6e6e73]">{a.typeLabel} · {a.date}</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tax Comparison Chart */}
       <Card className="p-6 mb-6">

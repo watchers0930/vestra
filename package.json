@@ -1,6 +1,6 @@
 {
   "name": "vestra",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,7 +10,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "seed:fraud": "npx tsx prisma/seed-fraud-cases.ts"
+    "seed:fraud": "npx tsx prisma/seed-fraud-cases.ts",
+    "seed:training": "npx tsx prisma/seed-training-data.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",

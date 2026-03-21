@@ -394,19 +394,19 @@ export default function PredictionPage() {
     <div>
       <PageHeader icon={TrendingUp} title="시세전망" description="실거래 데이터 + AI 기반 부동산 시세 분석 및 미래 가격 전망" />
 
-      <div className="mb-6 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg">
-        <p className="text-[11px] text-gray-500 leading-relaxed">
+      <div className="mb-6 px-4 py-2.5 bg-[#f5f5f7] border border-[#e5e5e7] rounded-lg">
+        <p className="text-[11px] text-[#6e6e73] leading-relaxed">
           ※ 본 분석 결과는 참고용 정보이며 투자 권유가 아닙니다. VESTRA는 이를 근거로 한 투자 결과에 대해 어떠한 책임도 지지 않습니다.
         </p>
       </div>
 
       {/* 검색 섹션 */}
       <Card className="p-4 sm:p-6 mb-6">
-        <p className="text-xs text-gray-400 mb-3 sm:mb-4 sm:text-center">주소를 검색하여 선택하세요.</p>
+        <p className="text-xs text-[#6e6e73] mb-3 sm:mb-4 sm:text-center">주소를 검색하여 선택하세요.</p>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <div onClick={openDaumPostcode} className={cn(
             "flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border text-sm cursor-pointer transition-colors",
-            roadResult ? "border-border bg-white text-gray-900" : "border-dashed border-gray-300 bg-gray-50 text-gray-400 hover:bg-gray-100"
+            roadResult ? "border-border bg-white text-[#1d1d1f]" : "border-dashed border-[#e5e5e7] bg-[#f5f5f7] text-[#6e6e73] hover:bg-[#e5e5e7]"
           )}>{roadResult || "클릭하여 주소 검색"}</div>
           {roadResult ? (
             <Button icon={Search} loading={loading} disabled={!canSearch} size="lg" onClick={handleAnalyze}>분석</Button>
@@ -420,9 +420,9 @@ export default function PredictionPage() {
       <Card className="p-4 mb-6">
         <h3 className="font-semibold mb-3 flex items-center gap-2"><MapPin size={16} strokeWidth={1.5} />위치</h3>
         {addressInfo && result && (
-          <div className="p-3 mb-3 bg-gray-50 rounded-lg">
+          <div className="p-3 mb-3 bg-[#f5f5f7] rounded-lg">
             <div className="flex items-center gap-2 mb-2">
-              <p className="text-xs text-gray-400">주소</p>
+              <p className="text-xs text-[#6e6e73]">주소</p>
               <div className="flex gap-1">
                 {([
                   { key: "admin" as AddressTab, label: "행정동" },
@@ -431,22 +431,22 @@ export default function PredictionPage() {
                 ]).map((tab) => (
                   <button key={tab.key} onClick={() => setAddressTab(tab.key)} className={cn(
                     "px-2 py-0.5 text-[10px] rounded-md border transition-all",
-                    addressTab === tab.key ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                    addressTab === tab.key ? "bg-[#1d1d1f] text-white border-[#1d1d1f]" : "bg-white text-[#6e6e73] border-[#e5e5e7] hover:bg-[#f5f5f7]"
                   )}>{tab.label}</button>
                 ))}
               </div>
             </div>
-            <p className="text-sm font-medium text-gray-900">{addressInfo[addressTab]}</p>
+            <p className="text-sm font-medium text-[#1d1d1f]">{addressInfo[addressTab]}</p>
             {(buildingName || selectedApt) && (
-              <p className="text-xs text-gray-600 mt-1 font-medium">{selectedApt || buildingName}</p>
+              <p className="text-xs text-[#6e6e73] mt-1 font-medium">{selectedApt || buildingName}</p>
             )}
             {addressInfo.zipCode && addressInfo.zipCode !== "-" && (
-              <p className="text-[11px] text-gray-400 mt-1">우편번호: {addressInfo.zipCode}</p>
+              <p className="text-[11px] text-[#6e6e73] mt-1">우편번호: {addressInfo.zipCode}</p>
             )}
           </div>
         )}
         {address ? <KakaoMap address={address} /> : (
-          <div className="h-[300px] rounded-xl bg-gray-100 flex items-center justify-center text-secondary text-sm">지역을 선택해 주세요</div>
+          <div className="h-[300px] rounded-xl bg-[#e5e5e7] flex items-center justify-center text-secondary text-sm">지역을 선택해 주세요</div>
         )}
       </Card>
 
@@ -476,9 +476,9 @@ export default function PredictionPage() {
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium text-secondary whitespace-nowrap">전용면적</span>
                   <div className="flex flex-wrap gap-1.5">
-                    <button onClick={() => setSelectedArea(null)} className={cn("px-3 py-1 text-xs rounded-full border transition-all", selectedArea === null ? "bg-gray-900 text-white border-gray-900" : "bg-white text-secondary border-border hover:bg-gray-50")}>전체평수</button>
+                    <button onClick={() => setSelectedArea(null)} className={cn("px-3 py-1 text-xs rounded-full border transition-all", selectedArea === null ? "bg-[#1d1d1f] text-white border-[#1d1d1f]" : "bg-white text-secondary border-border hover:bg-[#f5f5f7]")}>전체평수</button>
                     {availableAreas.map((area) => (
-                      <button key={area} onClick={() => setSelectedArea(area)} className={cn("px-3 py-1 text-xs rounded-full border transition-all", selectedArea === area ? "bg-gray-900 text-white border-gray-900" : "bg-white text-secondary border-border hover:bg-gray-50")}>{area}㎡</button>
+                      <button key={area} onClick={() => setSelectedArea(area)} className={cn("px-3 py-1 text-xs rounded-full border transition-all", selectedArea === area ? "bg-[#1d1d1f] text-white border-[#1d1d1f]" : "bg-white text-secondary border-border hover:bg-[#f5f5f7]")}>{area}㎡</button>
                     ))}
                   </div>
                 </div>
@@ -531,7 +531,7 @@ export default function PredictionPage() {
                   <h3 className="font-semibold">시나리오별 가격 예측</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {scenarios.map((s) => (
-                      <button key={s.id} onClick={() => setActiveScenario(s.id)} className={cn("px-3 py-1 text-xs rounded-full border transition-all", activeScenario === s.id ? "bg-gray-900 text-white border-gray-900" : "bg-white text-secondary border-border hover:bg-gray-50")}>{s.label}</button>
+                      <button key={s.id} onClick={() => setActiveScenario(s.id)} className={cn("px-3 py-1 text-xs rounded-full border transition-all", activeScenario === s.id ? "bg-[#1d1d1f] text-white border-[#1d1d1f]" : "bg-white text-secondary border-border hover:bg-[#f5f5f7]")}>{s.label}</button>
                     ))}
                   </div>
                 </div>
@@ -563,16 +563,16 @@ export default function PredictionPage() {
                   <h3 className="font-semibold mb-4 flex items-center gap-2"><Zap size={16} strokeWidth={1.5} />가격 영향 요인 분석</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {result.factors.map((factor, i) => (
-                      <div key={i} className="p-4 rounded-lg border border-border bg-gray-50/50">
+                      <div key={i} className="p-4 rounded-lg border border-border bg-[#f5f5f7]/50">
                         <div className="flex items-center gap-2 mb-2">
                           {factor.impact === "positive" && <TrendingUp size={16} className="text-emerald-600" />}
                           {factor.impact === "negative" && <TrendingDown size={16} className="text-red-600" />}
-                          {factor.impact === "neutral" && <Minus size={16} className="text-gray-500" />}
+                          {factor.impact === "neutral" && <Minus size={16} className="text-[#6e6e73]" />}
                           <span className="font-medium text-sm">{factor.name}</span>
                           <span className={cn("px-2 py-0.5 text-[10px] rounded-full font-medium",
                             factor.impact === "positive" && "bg-emerald-100 text-emerald-700",
                             factor.impact === "negative" && "bg-red-100 text-red-700",
-                            factor.impact === "neutral" && "bg-gray-100 text-gray-600"
+                            factor.impact === "neutral" && "bg-[#e5e5e7] text-[#6e6e73]"
                           )}>{factor.impact === "positive" ? "상승요인" : factor.impact === "negative" ? "하락요인" : "중립"}</span>
                         </div>
                         <p className="text-xs text-secondary leading-relaxed">{factor.description}</p>
@@ -601,7 +601,7 @@ export default function PredictionPage() {
                         { key: "base" as const, label: "기본", color: "text-blue-600" },
                         { key: "pessimistic" as const, label: "비관적", color: "text-red-600" },
                       ].map((scenario) => (
-                        <tr key={scenario.key} className="border-b border-border/50 hover:bg-gray-50">
+                        <tr key={scenario.key} className="border-b border-border/50 hover:bg-[#f5f5f7]">
                           <td className={cn("py-3 px-4 font-medium", scenario.color)}>{scenario.label}</td>
                           <td className="text-right py-3 px-4">{formatKRW(result.predictions[scenario.key]["1y"])}</td>
                           <td className="text-right py-3 px-4">{formatKRW(result.predictions[scenario.key]["5y"])}</td>
@@ -663,7 +663,7 @@ export default function PredictionPage() {
                   </thead>
                   <tbody>
                     {filteredTransactions.slice(0, 30).map((t, i) => (
-                      <tr key={i} className="border-b border-border/50 hover:bg-gray-50">
+                      <tr key={i} className="border-b border-border/50 hover:bg-[#f5f5f7]">
                         <td className="py-3 px-4">{t.aptName}</td>
                         <td className="text-right py-3 px-4 font-medium">{formatKRW(t.dealAmount)}</td>
                         <td className="text-right py-3 px-4">{Math.round(t.area)}㎡</td>
@@ -678,7 +678,7 @@ export default function PredictionPage() {
           )}
 
           {/* AI 분석 의견 */}
-          <div className="bg-[#f5f5f7] border border-gray-200 rounded-xl p-6">
+          <div className="bg-[#f5f5f7] border border-[#e5e5e7] rounded-xl p-6">
             <h3 className="font-semibold text-[#1d1d1f] mb-3 flex items-center gap-2"><TrendingUp size={20} strokeWidth={1.5} />AI 분석 의견</h3>
             <p className="text-[#1d1d1f] text-sm leading-relaxed whitespace-pre-line">{result.aiOpinion}</p>
           </div>

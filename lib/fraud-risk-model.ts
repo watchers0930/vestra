@@ -305,6 +305,67 @@ function calculateRawFraudScoreExcluding(
   return totalWeight > 0 ? weightedSum / totalWeight : 50;
 }
 
+// ─── 커스텀 가중치 대응 버전 ───
+
+function calculateContributionsWithFeatures(
+  input: FraudModelInput,
+  features: FraudFeature[],
+): FraudFeatureContribution[] {
+  const fullScore = calculateRawFraudScoreWithFeatures(input, features);
+
+  return features.map((feature) => {
+    const value = feature.extractor(input);
+    const withoutThis = calculateRawFraudScoreExcludingWithFeatures(input, features, feature.id);
+    const contribution = fullScore - withoutThis;
+
+    return {
+      featureName: feature.name,
+      featureGroup: feature.group,
+      featureValue: value,
+      contribution: Math.round(contribution * 100) / 100,
+      percentageImpact:
+        fullScore > 0
+          ? Math.round((Math.abs(contribution) / fullScore) * 100)
+          : 0,
+      explanation: feature.description(value),
+    };
+  });
+}
+
+function calculateRawFraudScoreWithFeatures(
+  input: FraudModelInput,
+  features: FraudFeature[],
+): number {
+  let weightedSum = 0;
+  let totalWeight = 0;
+
+  for (const feature of features) {
+    const value = feature.extractor(input);
+    weightedSum += value * feature.weight;
+    totalWeight += feature.weight;
+  }
+
+  return totalWeight > 0 ? weightedSum / totalWeight : 50;
+}
+
+function calculateRawFraudScoreExcludingWithFeatures(
+  input: FraudModelInput,
+  features: FraudFeature[],
+  excludeFeatureId: string,
+): number {
+  let weightedSum = 0;
+  let totalWeight = 0;
+
+  for (const feature of features) {
+    if (feature.id === excludeFeatureId) continue;
+    const value = feature.extractor(input);
+    weightedSum += value * feature.weight;
+    totalWeight += feature.weight;
+  }
+
+  return totalWeight > 0 ? weightedSum / totalWeight : 50;
+}
+
 // ─── 유사 사례 매칭 ───
 
 interface StoredFraudCase {
@@ -374,12 +435,22 @@ function haversineDistance(
 export function predictFraudRisk(
   input: FraudModelInput,
   nearbyFraudCases?: StoredFraudCase[],
+  customWeights?: Record<string, number>,
 ): FraudRiskResult {
+  // 커스텀 가중치 적용 (적응형 튜닝에서 로드된 라이브 가중치)
+  // 원본 배열을 변경하지 않고, 이번 호출에서만 사용할 피처 복사본 생성
+  const features = customWeights
+    ? FRAUD_FEATURES.map((f) => ({
+        ...f,
+        weight: customWeights[f.id] ?? f.weight,
+      }))
+    : FRAUD_FEATURES;
+
   // Step 1: 피처 추출 및 기여도 산출
-  const contributions = calculateContributions(input);
+  const contributions = calculateContributionsWithFeatures(input, features);
 
   // Step 2: 원시 점수 → 보정
-  const rawScore = calculateRawFraudScore(input);
+  const rawScore = calculateRawFraudScoreWithFeatures(input, features);
 
   // 비선형 보정: 복수 고위험 피처 존재 시 증폭
   const highRiskFeatures = contributions.filter(

@@ -30,12 +30,12 @@ const ROLE_INFO: Record<string, { label: string; color: string; limit: number; i
   ADMIN: { label: "관리자", color: "bg-red-500", limit: 9999, icon: Crown, features: ["전체 기능", "관리자 패널"] },
   REALESTATE: { label: "부동산", color: "bg-emerald-500", limit: 100, icon: Home, features: ["전체 기능", "리포트 다운로드", "포트폴리오 관리", "일 100회"] },
   BUSINESS: { label: "기업", color: "bg-blue-500", limit: 50, icon: Building2, features: ["전체 기능", "리포트 다운로드", "일 50회"] },
-  PERSONAL: { label: "개인", color: "bg-gray-500", limit: 5, icon: User, features: ["전체 기능", "일 5회"] },
-  GUEST: { label: "게스트", color: "bg-gray-400", limit: 2, icon: User, features: ["권리분석만", "일 2회"] },
+  PERSONAL: { label: "개인", color: "bg-[#6e6e73]", limit: 5, icon: User, features: ["전체 기능", "일 5회"] },
+  GUEST: { label: "게스트", color: "bg-[#6e6e73]", limit: 2, icon: User, features: ["권리분석만", "일 2회"] },
 };
 
 const VERIFY_STATUS: Record<string, { label: string; icon: typeof CheckCircle2; color: string }> = {
-  none: { label: "미인증", icon: XCircle, color: "text-gray-400" },
+  none: { label: "미인증", icon: XCircle, color: "text-[#6e6e73]" },
   pending: { label: "심사 중", icon: Clock, color: "text-amber-500" },
   verified: { label: "인증 완료", icon: CheckCircle2, color: "text-emerald-500" },
   rejected: { label: "반려", icon: XCircle, color: "text-red-500" },
@@ -146,7 +146,7 @@ export default function ProfilePage() {
               <span className="text-muted">분석 횟수</span>
               <span className="font-medium">{usage.used} / {usage.limit}회</span>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-2.5">
+            <div className="w-full bg-[#e5e5e7] rounded-full h-2.5">
               <div
                 className="bg-primary rounded-full h-2.5 transition-all"
                 style={{ width: `${Math.min((usage.used / usage.limit) * 100, 100)}%` }}
@@ -159,7 +159,7 @@ export default function ProfilePage() {
             )}
           </div>
         ) : (
-          <div className="h-8 bg-gray-100 rounded-lg animate-pulse" />
+          <div className="h-8 bg-[#e5e5e7] rounded-lg animate-pulse" />
         )}
       </div>
 
@@ -197,7 +197,7 @@ export default function ProfilePage() {
                 className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
                   selectedRole === "BUSINESS"
                     ? "border-blue-500 bg-blue-50 text-blue-700"
-                    : "border-border text-muted hover:bg-gray-50"
+                    : "border-border text-muted hover:bg-[#f5f5f7]"
                 }`}
               >
                 기업 (일 50회)
@@ -207,7 +207,7 @@ export default function ProfilePage() {
                 className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
                   selectedRole === "REALESTATE"
                     ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                    : "border-border text-muted hover:bg-gray-50"
+                    : "border-border text-muted hover:bg-[#f5f5f7]"
                 }`}
               >
                 부동산 (일 100회)
@@ -259,7 +259,7 @@ export default function ProfilePage() {
               </div>
               <span className={`text-xs px-2 py-1 rounded-full ${
                 subscription.status === "active" ? "bg-emerald-50 text-emerald-600" :
-                subscription.status === "canceled" ? "bg-red-50 text-red-600" : "bg-gray-100 text-gray-500"
+                subscription.status === "canceled" ? "bg-red-50 text-red-600" : "bg-[#e5e5e7] text-[#6e6e73]"
               }`}>
                 {subscription.status === "active" ? "활성" : subscription.status === "canceled" ? "해지됨" : "만료"}
               </span>
@@ -277,7 +277,7 @@ export default function ProfilePage() {
                   className={`py-2.5 rounded-lg text-xs font-medium border transition-colors ${
                     subscription.plan === p.plan
                       ? "border-primary bg-primary/5 text-primary"
-                      : "border-border text-muted hover:bg-gray-50"
+                      : "border-border text-muted hover:bg-[#f5f5f7]"
                   } disabled:cursor-default`}
                 >
                   <div>{p.label}</div>
@@ -301,12 +301,12 @@ export default function ProfilePage() {
               </button>
             )}
 
-            <p className="text-xs text-center text-gray-400">
+            <p className="text-xs text-center text-[#6e6e73]">
               결제 시스템 준비 중입니다. 곧 서비스될 예정입니다.
             </p>
           </div>
         ) : (
-          <div className="h-16 bg-gray-100 rounded-lg animate-pulse" />
+          <div className="h-16 bg-[#e5e5e7] rounded-lg animate-pulse" />
         )}
       </div>
 
@@ -330,10 +330,10 @@ export default function ProfilePage() {
               return (
                 <div key={item.key} className="flex items-center justify-between py-2">
                   <div className="flex items-center gap-3">
-                    <Icon size={16} className="text-gray-400 flex-shrink-0" strokeWidth={1.5} />
+                    <Icon size={16} className="text-[#6e6e73] flex-shrink-0" strokeWidth={1.5} />
                     <div>
-                      <p className="text-sm font-medium text-gray-800">{item.label}</p>
-                      <p className="text-xs text-gray-400">{item.desc}</p>
+                      <p className="text-sm font-medium text-[#1d1d1f]">{item.label}</p>
+                      <p className="text-xs text-[#6e6e73]">{item.desc}</p>
                     </div>
                   </div>
                   <button
@@ -350,7 +350,7 @@ export default function ProfilePage() {
                     }}
                     disabled={notifLoading}
                     className={`relative w-10 h-5.5 rounded-full transition-colors ${
-                      notifications[item.key] ? "bg-primary" : "bg-gray-200"
+                      notifications[item.key] ? "bg-primary" : "bg-[#e5e5e7]"
                     }`}
                   >
                     <span
@@ -364,14 +364,14 @@ export default function ProfilePage() {
             })}
           </div>
         ) : (
-          <div className="h-32 bg-gray-100 rounded-lg animate-pulse" />
+          <div className="h-32 bg-[#e5e5e7] rounded-lg animate-pulse" />
         )}
       </div>
 
       {/* 로그아웃 */}
       <button
         onClick={() => signOut({ redirectTo: "/" })}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-sm text-muted hover:text-foreground hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-sm text-muted hover:text-foreground hover:bg-[#f5f5f7] transition-colors"
       >
         <LogOut size={16} strokeWidth={1.5} />
         로그아웃
