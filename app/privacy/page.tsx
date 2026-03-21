@@ -153,7 +153,7 @@ export default function PrivacyPage() {
             <p><strong>개인정보 보호 책임자:</strong> 김동의</p>
             <p><strong>직책:</strong> 대표이사</p>
             <p><strong>연락처:</strong> 010-8490-9271</p>
-            <p><strong>이메일:</strong> privacy@vestra.kr</p>
+            <p><strong>이메일:</strong> vestra@vestra.co.kr</p>
           </div>
         </section>
 

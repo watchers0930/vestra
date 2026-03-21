@@ -4,9 +4,9 @@ export default function Footer() {
   return (
     <footer className="border-t border-gray-200 bg-white/80 backdrop-blur-sm mt-12">
       <div className="max-w-5xl mx-auto px-6 py-8">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+        <div className="flex flex-col items-start md:flex-row md:justify-between gap-6">
           {/* Company Info */}
-          <div className="space-y-2">
+          <div className="space-y-2 text-left">
             <h3 className="text-sm font-bold text-gray-900">BMI C&amp;S</h3>
             <div className="space-y-1 text-xs text-gray-500 leading-relaxed">
               <p>대표이사 김동의</p>
