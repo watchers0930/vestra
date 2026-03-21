@@ -12,19 +12,19 @@ interface AlertProps {
 const alertStyles: Record<AlertVariant, { bg: string; border: string; text: string; icon: typeof Info }> = {
   error: {
     bg: "bg-red-50",
-    border: "border-red-200",
+    border: "border-red-100",
     text: "text-red-700",
     icon: XCircle,
   },
   warning: {
     bg: "bg-amber-50",
-    border: "border-amber-200",
+    border: "border-amber-100",
     text: "text-amber-700",
     icon: AlertTriangle,
   },
   info: {
     bg: "bg-blue-50",
-    border: "border-blue-200",
+    border: "border-blue-100",
     text: "text-blue-700",
     icon: Info,
   },

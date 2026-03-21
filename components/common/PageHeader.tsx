@@ -15,7 +15,7 @@ export function PageHeader({ icon: Icon, title, description }: PageHeaderProps) 
         </div>
         {title}
       </h1>
-      <p className="text-sm text-[#86868b] mt-1 ml-12">{description}</p>
+      <p className="text-sm text-[#6e6e73] mt-1 ml-12">{description}</p>
     </div>
   );
 }

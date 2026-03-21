@@ -5,6 +5,11 @@
  * MOLIT 실거래 데이터와 교차 검증용.
  *
  * 서울시 한정 데이터. 미설정 시 graceful fallback (빈 배열).
+ *
+ * ┌───────────────────────────────────────────────────────────────────┐
+ * │ SEOUL_DATA_API_KEY 발급: https://data.seoul.go.kr/ → 인증키 신청. │
+ * │ .env.local에 SEOUL_DATA_API_KEY=발급받은키 추가                   │
+ * └───────────────────────────────────────────────────────────────────┘
  */
 
 import { apiCache, APICache } from "./api-cache";

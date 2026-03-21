@@ -70,7 +70,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-[#1d1d1f]">대시보드</h1>
-          <p className="mt-0.5 text-sm text-[#86868b]">자산 현황 및 리스크 모니터링</p>
+          <p className="mt-0.5 text-sm text-[#6e6e73]">자산 현황 및 리스크 모니터링</p>
         </div>
       </div>
 
@@ -130,7 +130,7 @@ export default function DashboardPage() {
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold text-[#1d1d1f]">관리 자산</h2>
-              <p className="text-xs text-[#86868b] mt-0.5">분석된 부동산 목록</p>
+              <p className="text-xs text-[#6e6e73] mt-0.5">분석된 부동산 목록</p>
             </div>
             <span className="text-xs font-semibold text-[#1d1d1f] bg-[#f5f5f7] px-2.5 py-1 rounded-full">
               {assets.length}건
@@ -148,7 +148,7 @@ export default function DashboardPage() {
                     <p className="text-sm font-medium text-[#1d1d1f] truncate max-w-[200px]">
                       {asset.address}
                     </p>
-                    <p className="text-xs text-[#86868b] mt-0.5">{asset.type}</p>
+                    <p className="text-xs text-[#6e6e73] mt-0.5">{asset.type}</p>
                   </div>
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5f5f7]">
                     <BarChart3 className="h-4 w-4 text-[#1d1d1f]" strokeWidth={1.5} />
@@ -156,17 +156,17 @@ export default function DashboardPage() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
-                    <span className="text-[#86868b]">추정 시세</span>
+                    <span className="text-[#6e6e73]">추정 시세</span>
                     <span className="font-semibold text-primary">{formatKRW(asset.estimatedPrice)}</span>
                   </div>
                   {asset.jeonsePrice && asset.jeonsePrice > 0 && (
                     <div className="flex justify-between text-xs">
-                      <span className="text-[#86868b]">전세가</span>
+                      <span className="text-[#6e6e73]">전세가</span>
                       <span className="font-medium text-[#1d1d1f]">{formatKRW(asset.jeonsePrice)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-xs">
-                    <span className="text-[#86868b]">안전지수</span>
+                    <span className="text-[#6e6e73]">안전지수</span>
                     <span className={cn(
                       "font-semibold",
                       asset.safetyScore >= 70 ? "text-emerald-600" : asset.safetyScore >= 40 ? "text-amber-600" : "text-red-600"
@@ -176,7 +176,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="mt-3 pt-2.5 border-t border-gray-100">
-                  <p className="text-[10px] text-[#86868b] flex items-center gap-1">
+                  <p className="text-[10px] text-[#6e6e73] flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     {new Date(asset.lastAnalyzedDate).toLocaleDateString("ko-KR")}
                   </p>
@@ -193,19 +193,19 @@ export default function DashboardPage() {
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold text-[#1d1d1f]">최근 분석 내역</h2>
-              <p className="text-xs text-[#86868b] mt-0.5">AI 분석 리포트 히스토리</p>
+              <p className="text-xs text-[#6e6e73] mt-0.5">AI 분석 리포트 히스토리</p>
             </div>
-            <span className="text-xs text-[#86868b]">{analyses.length}건</span>
+            <span className="text-xs text-[#6e6e73]">{analyses.length}건</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="py-3 px-5 text-left text-[11px] font-semibold uppercase tracking-wider text-[#86868b]">유형</th>
-                  <th className="py-3 px-4 text-left text-[11px] font-semibold uppercase tracking-wider text-[#86868b]">대상</th>
-                  <th className="py-3 px-4 text-left text-[11px] font-semibold uppercase tracking-wider text-[#86868b]">분석 요약</th>
-                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-wider text-[#86868b]">날짜</th>
+                  <th className="py-3 px-5 text-left text-[11px] font-semibold uppercase tracking-wider text-[#6e6e73]">유형</th>
+                  <th className="py-3 px-4 text-left text-[11px] font-semibold uppercase tracking-wider text-[#6e6e73]">대상</th>
+                  <th className="py-3 px-4 text-left text-[11px] font-semibold uppercase tracking-wider text-[#6e6e73]">분석 요약</th>
+                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-wider text-[#6e6e73]">날짜</th>
                   <th className="py-3 px-3 w-10"></th>
                 </tr>
               </thead>
@@ -229,10 +229,10 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="py-3.5 px-4">
-                        <p className="max-w-md truncate text-sm text-[#86868b]">{item.summary}</p>
+                        <p className="max-w-md truncate text-sm text-[#6e6e73]">{item.summary}</p>
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        <span className="text-xs text-[#86868b]">{new Date(item.date).toLocaleDateString("ko-KR")}</span>
+                        <span className="text-xs text-[#6e6e73]">{new Date(item.date).toLocaleDateString("ko-KR")}</span>
                       </td>
                       <td className="py-3.5 px-3 text-right">
                         <button

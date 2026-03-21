@@ -90,7 +90,7 @@ export function IntegrityAuditTab() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="animate-spin text-[#86868b]" size={24} />
+        <Loader2 className="animate-spin text-[#6e6e73]" size={24} />
       </div>
     );
   }
@@ -148,7 +148,7 @@ export function IntegrityAuditTab() {
         </div>
 
         {records.length === 0 ? (
-          <p className="text-sm text-[#86868b]">아직 무결성 기록이 없습니다. 분석을 실행하면 자동으로 기록됩니다.</p>
+          <p className="text-sm text-[#6e6e73]">아직 무결성 기록이 없습니다. 분석을 실행하면 자동으로 기록됩니다.</p>
         ) : (
           <>
             <div className="overflow-x-auto">

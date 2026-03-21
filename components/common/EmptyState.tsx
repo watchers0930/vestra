@@ -31,10 +31,10 @@ export function EmptyState({
       )}
     >
       <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-50">
-        <Icon className="h-9 w-9 text-[#86868b]" strokeWidth={1.2} />
+        <Icon className="h-9 w-9 text-[#6e6e73]" strokeWidth={1.2} />
       </div>
       <h3 className="text-base font-semibold text-[#1d1d1f]">{title}</h3>
-      <p className="mt-2 text-sm text-[#86868b] max-w-md mx-auto leading-relaxed">{description}</p>
+      <p className="mt-2 text-sm text-[#6e6e73] max-w-md mx-auto leading-relaxed">{description}</p>
       {actions && actions.length > 0 && (
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           {actions.map((action) => (

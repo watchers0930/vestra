@@ -344,7 +344,7 @@ export default function FeasibilityPage() {
           </div>
           <div>
             <h1 className="text-xl font-semibold text-[#1d1d1f]">사업성 분석 보고서</h1>
-            <p className="text-sm text-[#86868b]">다중 문서 기반 사업성 검증 보고서를 생성합니다.</p>
+            <p className="text-sm text-[#6e6e73]">다중 문서 기반 사업성 검증 보고서를 생성합니다.</p>
           </div>
         </div>
       </div>
@@ -373,12 +373,12 @@ export default function FeasibilityPage() {
           {/* 파싱 결과 미리보기 */}
           {parsedInfo && (
             <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-4">
-              <p className="text-xs font-semibold text-[#86868b] uppercase tracking-wider mb-3">파싱 결과</p>
+              <p className="text-xs font-semibold text-[#6e6e73] uppercase tracking-wider mb-3">파싱 결과</p>
               <div className="space-y-2">
                 {parsedInfo.map((f) => (
                   <div key={f.filename} className="flex items-center justify-between text-xs py-2 px-3 rounded-lg bg-gray-50/80">
                     <span className="font-medium text-[#1d1d1f]">{f.filename}</span>
-                    <div className="flex items-center gap-3 text-[#86868b]">
+                    <div className="flex items-center gap-3 text-[#6e6e73]">
                       <span>{f.extractedCount}개 항목</span>
                       {typeof f.pageCount === "number" && <span>{f.pageCount}p</span>}
                       <span>{(f.fileSize / (1024 * 1024)).toFixed(1)}MB</span>
@@ -422,7 +422,7 @@ export default function FeasibilityPage() {
             <div className="absolute inset-0 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           </div>
           <p className="text-base font-semibold text-[#1d1d1f]">사업성 검증 분석 중...</p>
-          <p className="text-sm text-[#86868b] mt-1.5">공공데이터 교차 검증 및 AI 의견 생성 중입니다</p>
+          <p className="text-sm text-[#6e6e73] mt-1.5">공공데이터 교차 검증 및 AI 의견 생성 중입니다</p>
           <div className="flex items-center justify-center gap-1.5 mt-6">
             {[0, 1, 2].map((i) => (
               <div
@@ -444,7 +444,7 @@ export default function FeasibilityPage() {
 
           {/* 장별 검토 의견 */}
           <div className="space-y-3">
-            <h2 className="text-sm font-semibold text-[#86868b] uppercase tracking-wider px-1">
+            <h2 className="text-sm font-semibold text-[#6e6e73] uppercase tracking-wider px-1">
               장별 검토 의견
             </h2>
             {chapters.map((ch) => (

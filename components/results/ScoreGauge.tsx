@@ -57,7 +57,7 @@ export function ScoreGauge({
           cy={config.svgSize / 2}
           r={config.radius}
           fill="none"
-          stroke="#f1f5f9"
+          stroke="#e5e5e7"
           strokeWidth={config.stroke}
         />
         {/* Progress circle */}
@@ -91,7 +91,7 @@ export function ScoreGauge({
           x={config.svgSize / 2}
           y={config.svgSize / 2 + 16}
           textAnchor="middle"
-          fill="#64748b"
+          fill="#6e6e73"
           fontSize={size === "lg" ? 14 : 12}
         >
           {displayGrade}

@@ -12,14 +12,14 @@
 @font-face { font-family: 'Paperlogy'; font-weight: 900; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-9Black.woff2') format('woff2'); }
 
 @theme inline {
-  --color-background: #fbfbfd;
+  --color-background: #ffffff;
   --color-foreground: #1d1d1f;
   --color-primary: #0071e3;
   --color-primary-dark: #0058b0;
   --color-primary-light: #2997ff;
-  --color-secondary: #86868b;
+  --color-secondary: #6e6e73;
   --color-accent: #f5a623;
-  --color-success: #34c759;
+  --color-success: #30d158;
   --color-warning: #ff9f0a;
   --color-danger: #ff3b30;
   --color-sidebar: #1d1d1f;
@@ -31,8 +31,8 @@
   --color-sidebar-surface: #2d2d2f;
   --color-sidebar-group: #86868b;
   --color-card: #ffffff;
-  --color-border: #d2d2d7;
-  --color-muted: #86868b;
+  --color-border: #e5e5e7;
+  --color-muted: #6e6e73;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

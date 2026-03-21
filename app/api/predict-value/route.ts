@@ -13,6 +13,7 @@ import { fetchREBMarketData } from "@/lib/reb-api";
 import { fetchBuildingInfoByAddress } from "@/lib/building-api";
 import { fetchSeoulTransactions, crossValidatePrice } from "@/lib/seoul-data-api";
 import { runBacktest } from "@/lib/backtesting";
+import { detectAnomalies, type AnomalyDetectionReport, type TimeSeriesPoint } from "@/lib/anomaly-detector";
 import { VerifiedPipeline } from "@/lib/integrity-chain";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { formatKRW } from "@/lib/utils";
@@ -141,6 +142,33 @@ export async function POST(req: NextRequest) {
       predictionResult.backtestResult = backtestStage.output;
     }
 
+    // 3.55단계: 이상탐지 (거래 이력 기반)
+    let anomalyReport: AnomalyDetectionReport | null = null;
+    try {
+      const txForAnomaly = comprehensive?.sale?.transactions ?? [];
+      if (txForAnomaly.length >= 5) {
+        const timeSeriesData: TimeSeriesPoint[] = txForAnomaly
+          .filter((t) => t.dealAmount > 0)
+          .map((t) => ({
+            timestamp: new Date(`${t.dealYear}-${String(t.dealMonth).padStart(2, "0")}-01`).getTime(),
+            value: t.dealAmount,
+            label: `${t.dealYear}.${t.dealMonth}`,
+          }))
+          .sort((a, b) => a.timestamp - b.timestamp);
+
+        if (timeSeriesData.length >= 5) {
+          const anomalyStage = await pipeline.executeStage(
+            "이상탐지",
+            { transactionCount: timeSeriesData.length },
+            async () => detectAnomalies(timeSeriesData),
+          );
+          anomalyReport = anomalyStage.output;
+        }
+      }
+    } catch (anomalyError) {
+      console.warn("이상탐지 실행 실패 (계속 진행):", anomalyError);
+    }
+
     // 3.6단계: buildingName 기반 거래 필터링
     const allTx = comprehensive?.sale?.transactions ?? [];
     let filteredTx = allTx;
@@ -245,12 +273,20 @@ export async function POST(req: NextRequest) {
         marketTrend: rebData.marketTrend,
       } : null,
       seoulCrossValidation: crossValidation ?? null,
+      anomalyDetection: anomalyReport ? {
+        anomalies: anomalyReport.anomalies,
+        changePoints: anomalyReport.changePoints,
+        statistics: anomalyReport.statistics,
+        anomalyCount: anomalyReport.anomalies.length,
+        hasSignificantAnomalies: anomalyReport.anomalies.some(a => a.severity === 'high' || a.severity === 'critical'),
+      } : null,
       dataSources: [
         "국토교통부 실거래가",
         bokData.dataSource === "live" ? "한국은행 기준금리" : null,
         rebData?.dataSource === "live" ? "한국부동산원 가격지수" : null,
         buildingInfo ? "건축물대장" : null,
         seoulData?.dataSource === "live" ? "서울시 실거래가" : null,
+        anomalyReport ? "시계열 이상탐지" : null,
       ].filter(Boolean),
     });
   } catch (error: unknown) {

@@ -76,7 +76,7 @@ export function WeightTuningTab() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="animate-spin text-[#86868b]" size={24} />
+        <Loader2 className="animate-spin text-[#6e6e73]" size={24} />
       </div>
     );
   }
@@ -136,7 +136,7 @@ export function WeightTuningTab() {
         </div>
 
         {Object.keys(weights).length === 0 ? (
-          <p className="text-sm text-[#86868b]">아직 가중치 설정이 없습니다. 피드백 데이터가 쌓이면 튜닝을 실행할 수 있습니다.</p>
+          <p className="text-sm text-[#6e6e73]">아직 가중치 설정이 없습니다. 피드백 데이터가 쌓이면 튜닝을 실행할 수 있습니다.</p>
         ) : (
           <div className="space-y-3">
             {Object.entries(weights).map(([name, weight]) => {

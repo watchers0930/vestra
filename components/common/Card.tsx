@@ -10,8 +10,8 @@ export function Card({ children, className, hover = false }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl bg-[#f5f5f7] border border-[#d2d2d7]/50",
-        hover && "transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)]",
+        "rounded-xl bg-white border border-[#e5e5e7] shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
+        hover && "transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]",
         className
       )}
     >
@@ -33,7 +33,7 @@ export function CardHeader({ title, description, children, className }: CardHead
       <div>
         <h2 className="text-lg font-semibold text-[#1d1d1f]">{title}</h2>
         {description && (
-          <p className="mt-0.5 text-sm text-[#86868b]">{description}</p>
+          <p className="mt-0.5 text-sm text-[#6e6e73]">{description}</p>
         )}
       </div>
       {children}

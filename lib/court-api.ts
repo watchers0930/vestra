@@ -6,6 +6,11 @@
  *
  * API 키: LAW_API_KEY 환경변수 (법제처 Open API 인증키)
  * 미설정 시 graceful fallback (빈 배열 반환).
+ *
+ * ┌──────────────────────────────────────────────────────────────┐
+ * │ LAW_API_KEY 발급: https://open.law.go.kr/ → 오픈API →       │
+ * │ 인증키 신청. .env.local에 LAW_API_KEY=발급받은키 추가        │
+ * └──────────────────────────────────────────────────────────────┘
  */
 
 import { apiCache, APICache } from "./api-cache";
