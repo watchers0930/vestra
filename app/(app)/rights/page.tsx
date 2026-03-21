@@ -19,9 +19,11 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { formatKRW, cn } from "@/lib/utils";
-import { addAnalysis, addOrUpdateAsset } from "@/lib/store";
+import { addAnalysis, addOrUpdateAsset, getLatestAnalysisForAddress } from "@/lib/store";
+import { addNotification } from "@/lib/notification-client";
 import { SAMPLE_REGISTRY_TEXT } from "@/lib/registry-parser";
 import { PageHeader, Card, Alert } from "@/components/common";
+import FeedbackWidget from "@/components/common/FeedbackWidget";
 import { AnalysisLoader } from "@/components/common/AnalysisLoader";
 import { ErrorRetry } from "@/components/common/ErrorRetry";
 import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
@@ -89,7 +91,23 @@ export default function RightsAnalysisPage() {
   const [fileType, setFileType] = useState<"pdf" | "image" | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [analysisId, setAnalysisId] = useState<string>("");
+  const [previousAnalysis, setPreviousAnalysis] = useState<{ date: string; summary: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 이전 분석 기록 확인
+  useEffect(() => {
+    const lastAddr = localStorage.getItem("vestra_last_address");
+    if (lastAddr) {
+      const prev = getLatestAnalysisForAddress(lastAddr);
+      if (prev) {
+        setPreviousAnalysis({
+          date: new Date(prev.date).toLocaleDateString("ko-KR"),
+          summary: prev.summary,
+        });
+      }
+    }
+  }, []);
 
   const loadSample = () => {
     setRawText(SAMPLE_REGISTRY_TEXT);
@@ -207,6 +225,10 @@ export default function RightsAnalysisPage() {
         safetyScore: data.riskAnalysis?.safetyScore || 0,
         riskScore: data.riskAnalysis?.riskScore || 0,
       });
+
+      const addr = data.parsed?.title?.address || (fileName || "직접 입력");
+      addNotification(`권리분석 완료: ${addr}`);
+      setAnalysisId(`rights_${Date.now()}`);
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") return;
       setError(e instanceof Error ? e.message : "분석 중 오류가 발생했습니다.");
@@ -217,6 +239,25 @@ export default function RightsAnalysisPage() {
   return (
     <div>
       <PageHeader icon={Shield} title="권리분석" description="등기부등본 업로드 → 실제 데이터 기반 종합 권리분석" />
+
+      {/* 이전 분석 기록 배너 */}
+      {previousAnalysis && (
+        <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-sm mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FileText size={16} className="text-blue-500 flex-shrink-0" />
+            <span className="text-blue-700">이전 분석 기록이 있습니다: {previousAnalysis.date}</span>
+          </div>
+          <button
+            onClick={() => {
+              const el = document.getElementById("rights-result");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors whitespace-nowrap ml-2"
+          >
+            결과 보기 →
+          </button>
+        </div>
+      )}
 
       {/* 입력 섹션 */}
       <Card className="p-6 mb-6">
@@ -340,6 +381,9 @@ export default function RightsAnalysisPage() {
           <div className="mt-4 flex justify-end">
             <PdfDownloadButton targetSelector="#rights-result" filename="vestra-권리분석.pdf" title="VESTRA 권리분석 리포트" />
           </div>
+
+          {/* 피드백 위젯 */}
+          {analysisId && <FeedbackWidget analysisId={analysisId} className="mt-4" />}
 
           {/* 연관 분석 CTA */}
           <div className="mt-6 p-4 rounded-xl border border-[#e5e5e7] bg-[#f5f5f7]">

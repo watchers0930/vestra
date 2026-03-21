@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { LoadingSpinner } from "@/components/loading";
 import {
   Users,
   ShieldCheck,
@@ -140,6 +142,17 @@ export default function AdminPage() {
 function AdminContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (!session?.user || session.user.role !== "ADMIN") {
+      router.replace("/dashboard");
+    }
+  }, [session, status, router]);
+
+  if (status === "loading") return <LoadingSpinner message="권한 확인 중..." />;
+  if (!session?.user || session.user.role !== "ADMIN") return null;
 
   // URL ?tab= 파라미터에서 현재 탭 읽기
   const urlTab = searchParams.get("tab") as Tab | null;

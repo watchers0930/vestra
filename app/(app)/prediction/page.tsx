@@ -14,9 +14,12 @@ import {
   Database,
   Home,
   Shield,
+  Activity,
 } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
-import { addAnalysis, addOrUpdateAsset } from "@/lib/store";
+import { addAnalysis, addOrUpdateAsset, getLatestAnalysisForAddress } from "@/lib/store";
+import { addNotification } from "@/lib/notification-client";
+import FeedbackWidget from "@/components/common/FeedbackWidget";
 // korea-address 제거 — Daum Postcode API로 통합
 import {
   LineChart,
@@ -167,13 +170,22 @@ export default function PredictionPage() {
   const [addressTab, setAddressTab] = useState<AddressTab>("admin");
   const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null);
   const [activeTab, setActiveTab] = useState<PredictionTabId>("dashboard");
+  const [analysisId, setAnalysisId] = useState<string>("");
+  const [previousAnalysis, setPreviousAnalysis] = useState<{ date: string; summary: string } | null>(null);
 
-  // localStorage에서 주소 프리필
+  // localStorage에서 주소 프리필 + 이전 분석 기록 확인
   useEffect(() => {
     const lastAddr = localStorage.getItem("vestra_last_address");
     if (lastAddr) {
       setRoadResult(lastAddr);
       localStorage.removeItem("vestra_last_address");
+      const prev = getLatestAnalysisForAddress(lastAddr);
+      if (prev) {
+        setPreviousAnalysis({
+          date: new Date(prev.date).toLocaleDateString("ko-KR"),
+          summary: prev.summary,
+        });
+      }
     }
   }, []);
 
@@ -262,6 +274,9 @@ export default function PredictionPage() {
         safetyScore: data.confidence,
         riskScore: 100 - data.confidence,
       });
+
+      addNotification(`시세전망 완료: ${builtAddress}`);
+      setAnalysisId(`prediction_${Date.now()}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.";
       if (confirm(msg + "\n\n회원가입 페이지로 이동하시겠습니까?")) {
@@ -405,6 +420,24 @@ export default function PredictionPage() {
   return (
     <div>
       <PageHeader icon={TrendingUp} title="시세전망" description="실거래 데이터 + AI 기반 부동산 시세 분석 및 미래 가격 전망" />
+
+      {/* 이전 분석 기록 배너 */}
+      {previousAnalysis && (
+        <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-sm mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BarChart3 size={16} className="text-blue-500 flex-shrink-0" />
+            <span className="text-blue-700">이전 분석 기록이 있습니다: {previousAnalysis.date}</span>
+          </div>
+          <button
+            onClick={() => {
+              if (resultRef.current) resultRef.current.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors whitespace-nowrap ml-2"
+          >
+            결과 보기 →
+          </button>
+        </div>
+      )}
 
       <div className="mb-6 px-4 py-2.5 bg-[#f5f5f7] border border-[#e5e5e7] rounded-lg">
         <p className="text-[11px] text-[#6e6e73] leading-relaxed">
@@ -704,6 +737,23 @@ export default function PredictionPage() {
               </div>
             </Card>
           )}
+
+          {/* 시계열 이상탐지 (독립 섹션) */}
+          {filteredTransactions.length >= 3 && (
+            <div>
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <Activity size={16} strokeWidth={1.5} />
+                시계열 이상탐지
+              </h3>
+              <AnomalyDetectionView
+                transactions={filteredTransactions}
+                currentPrice={filteredStats?.avgPrice ?? result.currentPrice}
+              />
+            </div>
+          )}
+
+          {/* 피드백 위젯 */}
+          {analysisId && <FeedbackWidget analysisId={analysisId} className="py-3" />}
 
           <ScholarPapers keywords={["부동산 가격예측", "실거래가", addressInfo?.admin?.split(" ").slice(0, 2).join(" ") || "부동산"].filter(Boolean)} />
 

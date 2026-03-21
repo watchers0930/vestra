@@ -239,75 +239,77 @@ export default function ProfilePage() {
 
       {/* 구독 관리 */}
       <div className="bg-card rounded-2xl border border-border p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <CreditCard size={20} className="text-[#1d1d1f]" strokeWidth={1.5} />
-          <h3 className="font-semibold">구독 관리</h3>
-        </div>
-        {subscription ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-sm text-muted">현재 플랜</span>
-                <p className="text-lg font-bold">
-                  {subscription.plan === "FREE" ? "무료" : subscription.plan === "PRO" ? "프로" : "비즈니스"}
-                  {subscription.plan !== "FREE" && (
-                    <span className="ml-2 text-sm font-normal text-muted">
-                      {subscription.price.toLocaleString()}원/월
-                    </span>
-                  )}
-                </p>
-              </div>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                subscription.status === "active" ? "bg-emerald-50 text-emerald-600" :
-                subscription.status === "canceled" ? "bg-red-50 text-red-600" : "bg-[#e5e5e7] text-[#6e6e73]"
-              }`}>
-                {subscription.status === "active" ? "활성" : subscription.status === "canceled" ? "해지됨" : "만료"}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { plan: "FREE", label: "무료", price: "0원" },
-                { plan: "PRO", label: "프로", price: "50,000원" },
-                { plan: "BUSINESS", label: "비즈니스", price: "100,000원" },
-              ].map((p) => (
-                <button
-                  key={p.plan}
-                  disabled={subscription.plan === p.plan}
-                  className={`py-2.5 rounded-lg text-xs font-medium border transition-colors ${
-                    subscription.plan === p.plan
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-border text-muted hover:bg-[#f5f5f7]"
-                  } disabled:cursor-default`}
-                >
-                  <div>{p.label}</div>
-                  <div className="text-[10px] mt-0.5 opacity-70">{p.price}/월</div>
-                </button>
-              ))}
-            </div>
-
-            {subscription.plan !== "FREE" && subscription.status === "active" && (
-              <button
-                onClick={async () => {
-                  if (!confirm("구독을 해지하시겠습니까? 무료 플랜으로 전환됩니다.")) return;
-                  const res = await fetch("/api/subscription/cancel", { method: "POST" });
-                  if (res.ok) {
-                    setSubscription({ plan: "FREE", price: 0, status: "active" });
-                  }
-                }}
-                className="w-full py-2 rounded-lg border border-red-200 text-red-500 text-xs hover:bg-red-50 transition-colors"
-              >
-                구독 해지
-              </button>
-            )}
-
-            <p className="text-xs text-center text-[#6e6e73]">
-              결제 시스템 준비 중입니다. 곧 서비스될 예정입니다.
-            </p>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <CreditCard size={20} className="text-[#1d1d1f]" strokeWidth={1.5} />
+            <h3 className="font-semibold">구독 관리</h3>
           </div>
-        ) : (
-          <div className="h-16 bg-[#e5e5e7] rounded-lg animate-pulse" />
-        )}
+          <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium bg-amber-50 text-amber-700 border-amber-100">
+            출시 예정
+          </span>
+        </div>
+
+        <div className="space-y-4">
+          {/* 현재 플랜 */}
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm text-muted">현재 플랜</span>
+              <p className="text-lg font-bold">무료</p>
+            </div>
+            <span className="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-600">활성</span>
+          </div>
+
+          {/* 예정 플랜 미리보기 (비활성) */}
+          <div className="grid grid-cols-3 gap-2 opacity-50 pointer-events-none">
+            {[
+              { label: "무료", price: "0원", active: true },
+              { label: "프로", price: "50,000원", active: false },
+              { label: "비즈니스", price: "100,000원", active: false },
+            ].map((p) => (
+              <div
+                key={p.label}
+                className={`py-2.5 rounded-lg text-xs font-medium border text-center ${
+                  p.active
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-[#e5e5e7] text-[#6e6e73]"
+                }`}
+              >
+                <div>{p.label}</div>
+                <div className="text-[10px] mt-0.5 opacity-70">{p.price}/월</div>
+              </div>
+            ))}
+          </div>
+
+          {/* 곧 출시 안내 */}
+          <div className="rounded-xl bg-[#f5f5f7] border border-[#e5e5e7] p-4 text-center">
+            <p className="text-sm font-medium text-[#1d1d1f] mb-1">프리미엄 플랜이 곧 출시됩니다</p>
+            <p className="text-xs text-[#6e6e73] mb-3">출시 시 알림을 받아보세요.</p>
+            <div className="flex gap-2">
+              <input
+                type="email"
+                placeholder="이메일 주소 입력"
+                defaultValue={(() => {
+                  if (typeof window !== "undefined") return localStorage.getItem("vestra_payment_notify_email") || "";
+                  return "";
+                })()}
+                id="payment-notify-email"
+                className="flex-1 px-3 py-2 rounded-lg border border-[#e5e5e7] text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+              <button
+                onClick={() => {
+                  const input = document.getElementById("payment-notify-email") as HTMLInputElement;
+                  const email = input?.value?.trim();
+                  if (!email) return;
+                  localStorage.setItem("vestra_payment_notify_email", email);
+                  showToast("출시 알림이 등록되었습니다.");
+                }}
+                className="px-4 py-2 rounded-lg bg-[#1d1d1f] text-white text-sm font-medium hover:bg-[#1d1d1f]/90 transition-colors whitespace-nowrap"
+              >
+                출시 알림 받기
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* 알림 설정 */}

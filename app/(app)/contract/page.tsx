@@ -19,7 +19,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { addAnalysis } from "@/lib/store";
+import { addNotification } from "@/lib/notification-client";
 import { Card, Button, Badge, Alert } from "@/components/common";
+import FeedbackWidget from "@/components/common/FeedbackWidget";
 import { AnalysisLoader } from "@/components/common/AnalysisLoader";
 import { ErrorRetry } from "@/components/common/ErrorRetry";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
@@ -280,6 +282,7 @@ export default function ContractReviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showSampleMenu, setShowSampleMenu] = useState(false);
+  const [analysisId, setAnalysisId] = useState<string>("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sampleMenuRef = useRef<HTMLDivElement>(null);
@@ -412,6 +415,9 @@ export default function ContractReviewPage() {
         summary: `안전점수 ${data.safetyScore}점, ${data.clauses?.length || 0}개 조항 분석`,
         data: data as unknown as Record<string, unknown>,
       });
+
+      addNotification(`계약검토 완료: ${fileName || "직접 입력 계약서"}`);
+      setAnalysisId(`contract_${Date.now()}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "분석 중 오류가 발생했습니다.");
     } finally {
@@ -793,6 +799,9 @@ export default function ContractReviewPage() {
               <NerHighlight text={contractText} />
             </Card>
           )}
+
+          {/* 피드백 위젯 */}
+          {analysisId && <FeedbackWidget analysisId={analysisId} className="mt-4" />}
 
           {/* 면책 조항 */}
           <Alert variant="warning">

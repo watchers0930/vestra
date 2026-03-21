@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Home, Shield, FileText, CheckCircle, Copy, AlertTriangle, Download, ChevronRight, TrendingUp } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
 import { addAnalysis } from "@/lib/store";
+import { addNotification } from "@/lib/notification-client";
 import { PageHeader, Card, Alert, Button } from "@/components/common";
 import { ScholarPapers } from "@/components/results";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
@@ -107,6 +108,8 @@ export default function JeonsePage() {
         summary: `전세권 ${data.needsRegistration === "required" ? "설정 필수" : data.needsRegistration === "recommended" ? "설정 권고" : "선택 사항"}, 위험도 ${data.riskLevel}`,
         data: data as unknown as Record<string, unknown>,
       });
+
+      addNotification("전세 안전 분석 완료");
     } catch {
       alert("분석 중 오류가 발생했습니다.");
     } finally {
