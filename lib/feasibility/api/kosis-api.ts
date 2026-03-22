@@ -11,6 +11,7 @@
  */
 
 import { apiCache, APICache } from "../../api-cache";
+import { fetchWithTimeout } from "./api-utils";
 
 // ─── 타입 정의 ───
 
@@ -70,7 +71,7 @@ const API_BASE = "https://kosis.kr/openapi/Param/statisticsParameterData.do";
 const TIMEOUT_MS = 10_000;
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24시간 (통계는 월/년 단위 갱신)
 
-// ─── 공통 fetch 유틸 ───
+// ─── 공통 fetch 유틸 (fetchWithTimeout 활용) ───
 
 async function kosisFetch(params: Record<string, string>): Promise<unknown | null> {
   const apiKey = process.env.KOSIS_API_KEY;
@@ -84,21 +85,10 @@ async function kosisFetch(params: Record<string, string>): Promise<unknown | nul
     ...params,
   });
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-    const res = await fetch(`${API_BASE}?${searchParams.toString()}`, {
-      signal: controller.signal,
-      headers: { "User-Agent": "VESTRA/1.0" },
-    });
-    clearTimeout(timeout);
-
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (error) {
-    console.warn("KOSIS API 호출 실패:", error);
-    return null;
-  }
+  return fetchWithTimeout<unknown>(
+    `${API_BASE}?${searchParams.toString()}`,
+    { timeout: TIMEOUT_MS }
+  );
 }
 
 // ─── 폴백 데이터 ───

@@ -12,6 +12,8 @@
  */
 
 import { apiCache, APICache } from "../../api-cache";
+import { fetchWithTimeout } from "./api-utils";
+import { ADMIN_CODE_MAP } from "./region-codes";
 
 // ─── 타입 정의 ───
 
@@ -55,37 +57,7 @@ const API_BASE = "https://jumin.mois.go.kr/openapi";
 const TIMEOUT_MS = 10_000;
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24시간
 
-// ─── 행정구역코드 매핑 ───
-
-const ADMIN_CODE_MAP: Record<string, string> = {
-  // 시도
-  "서울": "1100000000", "서울특별시": "1100000000",
-  "부산": "2600000000", "부산광역시": "2600000000",
-  "대구": "2700000000", "대구광역시": "2700000000",
-  "인천": "2800000000", "인천광역시": "2800000000",
-  "광주": "2900000000", "광주광역시": "2900000000",
-  "대전": "3000000000", "대전광역시": "3000000000",
-  "울산": "3100000000", "울산광역시": "3100000000",
-  "세종": "3611000000", "세종특별자치시": "3611000000",
-  "경기": "4100000000", "경기도": "4100000000",
-  "강원": "4200000000",
-  "충북": "4300000000", "충청북도": "4300000000",
-  "충남": "4400000000", "충청남도": "4400000000",
-  "전북": "4500000000",
-  "전남": "4600000000", "전라남도": "4600000000",
-  "경북": "4700000000", "경상북도": "4700000000",
-  "경남": "4800000000", "경상남도": "4800000000",
-  "제주": "5000000000", "제주특별자치도": "5000000000",
-  // 주요 시군구
-  "강남구": "1168000000", "서초구": "1165000000", "송파구": "1171000000",
-  "강동구": "1174000000", "마포구": "1144000000", "용산구": "1117000000",
-  "성동구": "1120000000", "영등포구": "1156000000", "노원구": "1135000000",
-  "해운대구": "2635000000", "수성구": "2726000000",
-  "연수구": "2818500000", "유성구": "3020000000",
-  "수원시": "4111000000", "성남시": "4113000000", "용인시": "4146000000",
-  "화성시": "4159000000", "고양시": "4128000000", "남양주시": "4136000000",
-  "분당구": "4113500000",
-};
+// ─── 행정구역코드 매핑 (region-codes.ts에서 import) ───
 
 /**
  * 주소에서 행정구역코드 추출
@@ -104,7 +76,7 @@ export function extractAdminCode(address: string): string | null {
   return null;
 }
 
-// ─── 공통 fetch 유틸 ───
+// ─── 공통 fetch 유틸 (fetchWithTimeout 활용) ───
 
 async function moisFetch(
   endpoint: string,
@@ -119,21 +91,10 @@ async function moisFetch(
     ...params,
   });
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-    const res = await fetch(`${API_BASE}/${endpoint}?${searchParams.toString()}`, {
-      signal: controller.signal,
-      headers: { "User-Agent": "VESTRA/1.0" },
-    });
-    clearTimeout(timeout);
-
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (error) {
-    console.warn("MOIS API 호출 실패:", error);
-    return null;
-  }
+  return fetchWithTimeout<unknown>(
+    `${API_BASE}/${endpoint}?${searchParams.toString()}`,
+    { timeout: TIMEOUT_MS }
+  );
 }
 
 // ─── 폴백 데이터 ───

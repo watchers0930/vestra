@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { ScrSection, thCls, tdCls, tdNumCls } from "./scr-shared";
 import { Building2, Calendar, Landmark, MapPin, Banknote, LayoutGrid } from "lucide-react";
 import type {
   ScrProjectOverview,
@@ -16,38 +17,6 @@ interface ScrChapterIProps {
   data: ScrProjectOverview;
 }
 
-/* ─── 공용 테이블 셀 스타일 ─── */
-const thCls = "py-3 px-4 text-xs font-semibold text-[#6e6e73] uppercase tracking-wider";
-const tdCls = "py-3 px-4 text-sm text-[#1d1d1f]";
-const tdNumCls = "py-3 px-4 text-sm text-[#1d1d1f] text-right tabular-nums font-medium";
-
-/* ─── 섹션 카드 래퍼 ─── */
-function Section({
-  icon: Icon,
-  title,
-  sub,
-  children,
-}: {
-  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
-  title: string;
-  sub?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden print:shadow-none print:border-gray-200">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-[#f5f5f7] flex items-center justify-center">
-          <Icon size={16} className="text-[#1d1d1f]" strokeWidth={1.5} />
-        </div>
-        <div>
-          <h4 className="text-sm font-semibold text-[#1d1d1f]">{title}</h4>
-          {sub && <p className="text-xs text-[#86868b]">{sub}</p>}
-        </div>
-      </div>
-      <div className="p-5">{children}</div>
-    </div>
-  );
-}
 
 /* ─── 표1: 사업개요 ─── */
 function ProjectSummaryTable({ data }: { data: ScrProjectOverview["projectSummary"] }) {
@@ -67,7 +36,7 @@ function ProjectSummaryTable({ data }: { data: ScrProjectOverview["projectSummar
   ];
 
   return (
-    <Section icon={Building2} title="표1. 사업개요">
+    <ScrSection icon={Building2} title="표1. 사업개요">
       <div className="rounded-xl bg-gray-50/80 overflow-hidden">
         <table className="w-full text-sm">
           <tbody>
@@ -80,14 +49,14 @@ function ProjectSummaryTable({ data }: { data: ScrProjectOverview["projectSummar
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
 /* ─── 구조도 ─── */
 function StructureDiagramView({ data }: { data: ScrStructureDiagram }) {
   return (
-    <Section icon={LayoutGrid} title="사업 구조도" sub="수분양자 / 시행사 / 대주단 / 신탁사 관계">
+    <ScrSection icon={LayoutGrid} title="사업 구조도" sub="수분양자 / 시행사 / 대주단 / 신탁사 관계">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "수분양자", value: data.buyer },
@@ -114,7 +83,7 @@ function StructureDiagramView({ data }: { data: ScrStructureDiagram }) {
       {data.description && (
         <p className="text-xs text-[#6e6e73] mt-3 leading-relaxed">{data.description}</p>
       )}
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -127,7 +96,7 @@ function ScheduleTable({ items }: { items: ScrScheduleItem[] }) {
   };
 
   return (
-    <Section icon={Calendar} title="표2. 사업일정">
+    <ScrSection icon={Calendar} title="표2. 사업일정">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -154,7 +123,7 @@ function ScheduleTable({ items }: { items: ScrScheduleItem[] }) {
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -202,7 +171,7 @@ function SaleTypeTable({ rows, label }: { rows: ScrSaleTypeRow[]; label: string 
 /* ─── 표5: 납입일정 ─── */
 function PaymentScheduleTable({ rows }: { rows: ScrPaymentScheduleRow[] }) {
   return (
-    <Section icon={Banknote} title="표5. 분양대금 납입일정">
+    <ScrSection icon={Banknote} title="표5. 분양대금 납입일정">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -225,7 +194,7 @@ function PaymentScheduleTable({ rows }: { rows: ScrPaymentScheduleRow[] }) {
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -240,7 +209,7 @@ function FundingPlanView({ data }: { data: ScrFundingPlan }) {
   ];
 
   return (
-    <Section icon={Landmark} title="표6. 자금조달">
+    <ScrSection icon={Landmark} title="표6. 자금조달">
       <div className="rounded-xl bg-gray-50/80 overflow-hidden">
         <table className="w-full text-sm">
           <tbody>
@@ -262,14 +231,14 @@ function FundingPlanView({ data }: { data: ScrFundingPlan }) {
           ))}
         </div>
       )}
-    </Section>
+    </ScrSection>
   );
 }
 
 /* ─── 표7: 토지현황 ─── */
 function LandStatusTable({ rows }: { rows: ScrLandStatusRow[] }) {
   return (
-    <Section icon={MapPin} title="표7. 매입토지 현황">
+    <ScrSection icon={MapPin} title="표7. 매입토지 현황">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -305,7 +274,7 @@ function LandStatusTable({ rows }: { rows: ScrLandStatusRow[] }) {
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -318,12 +287,12 @@ export function ScrChapterI({ data }: ScrChapterIProps) {
       <ScheduleTable items={data.schedule} />
 
       {/* 표3,4: 분양가 */}
-      <Section icon={Banknote} title="표3~4. 타입별 분양가">
+      <ScrSection icon={Banknote} title="표3~4. 타입별 분양가">
         <div className="space-y-5">
           <SaleTypeTable rows={data.salePlan.excludingExpansion} label="확장비 미포함" />
           <SaleTypeTable rows={data.salePlan.includingExpansion} label="확장비 포함" />
         </div>
-      </Section>
+      </ScrSection>
 
       <PaymentScheduleTable rows={data.paymentSchedule} />
       <FundingPlanView data={data.fundingPlan} />

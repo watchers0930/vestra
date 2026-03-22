@@ -7,6 +7,14 @@
  *   import { fetchPopulationTrends, fetchFinancials } from "@/lib/feasibility/api";
  */
 
+// ─── 공통 유틸리티 ───
+export { fetchWithTimeout } from "./api-utils";
+export {
+  REGION_CODE_MAP,
+  ADMIN_CODE_MAP,
+  extractRegionFromAddress,
+} from "./region-codes";
+
 // ─── 통계청 KOSIS API ───
 export {
   fetchPopulationTrends,

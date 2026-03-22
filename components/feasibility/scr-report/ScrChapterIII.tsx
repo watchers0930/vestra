@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { ScrSection, thCls, tdCls, tdNumCls } from "./scr-shared";
 import {
   Users, Home, TrendingDown, Building2, BarChart3, MapPin,
 } from "lucide-react";
@@ -21,36 +22,6 @@ interface ScrChapterIIIProps {
   data: ScrMarketAnalysis;
 }
 
-const thCls = "py-3 px-4 text-xs font-semibold text-[#6e6e73] uppercase tracking-wider";
-const tdCls = "py-3 px-4 text-sm text-[#1d1d1f]";
-const tdNumCls = "py-3 px-4 text-sm text-[#1d1d1f] text-right tabular-nums font-medium";
-
-function Section({
-  icon: Icon,
-  title,
-  sub,
-  children,
-}: {
-  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
-  title: string;
-  sub?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden print:shadow-none print:border-gray-200">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-[#f5f5f7] flex items-center justify-center">
-          <Icon size={16} className="text-[#1d1d1f]" strokeWidth={1.5} />
-        </div>
-        <div>
-          <h4 className="text-sm font-semibold text-[#1d1d1f]">{title}</h4>
-          {sub && <p className="text-xs text-[#86868b]">{sub}</p>}
-        </div>
-      </div>
-      <div className="p-5">{children}</div>
-    </div>
-  );
-}
 
 /* ─── 규제 요약 ─── */
 function RegulationsView({ data }: { data: ScrRegulations }) {
@@ -63,7 +34,7 @@ function RegulationsView({ data }: { data: ScrRegulations }) {
   ];
 
   return (
-    <Section icon={MapPin} title="부동산 주요 규제">
+    <ScrSection icon={MapPin} title="부동산 주요 규제">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         {items.map((item) => (
           <div key={item.label} className="rounded-xl bg-gray-50/80 p-3 text-center">
@@ -79,7 +50,7 @@ function RegulationsView({ data }: { data: ScrRegulations }) {
       {data.summary && (
         <p className="text-xs text-[#6e6e73] mt-3 leading-relaxed">{data.summary}</p>
       )}
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -92,7 +63,7 @@ function PopulationSection({ data }: { data: ScrDemographics }) {
   }));
 
   return (
-    <Section icon={Users} title="표17~19. 인구 / 세대 / 산업" sub="인구수, 세대수, 연령대별, 산업별">
+    <ScrSection icon={Users} title="표17~19. 인구 / 세대 / 산업" sub="인구수, 세대수, 연령대별, 산업별">
       {/* 인구 추이 차트 */}
       <div className="h-56 mb-5 print:hidden">
         <ResponsiveContainer width="100%" height="100%">
@@ -177,7 +148,7 @@ function PopulationSection({ data }: { data: ScrDemographics }) {
           </div>
         </>
       )}
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -192,7 +163,7 @@ function HousingMarketSection({ data }: { data: ScrHousingMarket }) {
   }));
 
   return (
-    <Section icon={Home} title="표20~24. 주택시장" sub="보급률, 거래량, 유형별, 건축연령, 면적별">
+    <ScrSection icon={Home} title="표20~24. 주택시장" sub="보급률, 거래량, 유형별, 건축연령, 면적별">
       {/* 주택보급률 차트 */}
       {data.supplyRate.length > 0 && (
         <div className="h-56 mb-5 print:hidden">
@@ -276,7 +247,7 @@ function HousingMarketSection({ data }: { data: ScrHousingMarket }) {
           </div>
         )}
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -316,10 +287,10 @@ function SupplySection({ upcoming, planned }: { upcoming: ScrSupplyItem[]; plann
   }
 
   return (
-    <Section icon={Building2} title="표25~27. 입주/분양 예정">
+    <ScrSection icon={Building2} title="표25~27. 입주/분양 예정">
       <SupplyTable items={upcoming} label="입주예정 단지" />
       <SupplyTable items={planned} label="분양예정 단지" />
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -338,7 +309,7 @@ function UnsoldSection({
   }));
 
   return (
-    <Section icon={TrendingDown} title="표28~29. 미분양 추이" sub="총 미분양 및 준공후 미분양">
+    <ScrSection icon={TrendingDown} title="표28~29. 미분양 추이" sub="총 미분양 및 준공후 미분양">
       {trend.length > 0 && (
         <div className="h-56 mb-5 print:hidden">
           <ResponsiveContainer width="100%" height="100%">
@@ -388,7 +359,7 @@ function UnsoldSection({
           </div>
         </>
       )}
-    </Section>
+    </ScrSection>
   );
 }
 

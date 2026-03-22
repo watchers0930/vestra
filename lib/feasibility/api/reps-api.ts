@@ -12,6 +12,8 @@
  */
 
 import { apiCache, APICache } from "../../api-cache";
+import { fetchWithTimeout } from "./api-utils";
+import { REGION_CODE_MAP } from "./region-codes";
 
 // ─── 타입 정의 ───
 
@@ -45,40 +47,7 @@ const API_BASE = "https://www.reb.or.kr/r-one/openapi";
 const TIMEOUT_MS = 10_000;
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24시간
 
-// ─── 지역코드 매핑 ───
-
-const REGION_CODE_MAP: Record<string, string> = {
-  // 전국
-  "전국": "0000000000",
-  // 서울
-  "서울": "1100000000", "서울특별시": "1100000000",
-  "강남구": "1168000000", "서초구": "1165000000", "송파구": "1171000000",
-  "강동구": "1174000000", "마포구": "1144000000", "용산구": "1117000000",
-  "성동구": "1120000000", "광진구": "1121500000", "영등포구": "1156000000",
-  "노원구": "1135000000", "강서구": "1150000000", "구로구": "1153000000",
-  // 경기
-  "경기": "4100000000", "경기도": "4100000000",
-  "수원": "4111000000", "성남": "4113000000", "분당": "4113500000",
-  "용인": "4146000000", "화성": "4159000000", "고양": "4128000000",
-  "남양주": "4136000000", "파주": "4148000000",
-  // 부산
-  "부산": "2600000000", "부산광역시": "2600000000",
-  "해운대구": "2635000000", "수영구": "2650000000",
-  // 대구
-  "대구": "2700000000", "수성구": "2726000000",
-  // 인천
-  "인천": "2800000000", "연수구": "2818500000",
-  // 광주
-  "광주": "2900000000",
-  // 대전
-  "대전": "3000000000", "유성구": "3020000000",
-  // 울산
-  "울산": "3100000000",
-  // 세종
-  "세종": "3611000000",
-  // 제주
-  "제주": "5000000000",
-};
+// ─── 지역코드 매핑 (region-codes.ts에서 import) ───
 
 /**
  * 주소에서 REPS 지역코드 추출
@@ -98,7 +67,7 @@ export function extractRegionCode(address: string): string | null {
   return null;
 }
 
-// ─── 공통 fetch 유틸 ───
+// ─── 공통 fetch 유틸 (fetchWithTimeout 활용) ───
 
 async function repsFetch(
   endpoint: string,
@@ -113,73 +82,36 @@ async function repsFetch(
     ...params,
   });
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
-    const res = await fetch(`${API_BASE}/${endpoint}?${searchParams.toString()}`, {
-      signal: controller.signal,
-      headers: { "User-Agent": "VESTRA/1.0" },
-    });
-    clearTimeout(timeout);
-
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (error) {
-    console.warn("REPS API 호출 실패:", error);
-    return null;
-  }
+  return fetchWithTimeout<unknown>(
+    `${API_BASE}/${endpoint}?${searchParams.toString()}`,
+    { timeout: TIMEOUT_MS }
+  );
 }
 
 // ─── 폴백 데이터 ───
 
-function getFallbackSalePriceIndices(): PriceIndex[] {
-  // 전국 아파트 매매가격지수 (2021.06=100 기준, 월별)
+/**
+ * 매매/전세 가격지수 폴백 데이터 생성 (통합 함수)
+ * @param type - "sale": 매매, "rent": 전세
+ */
+function getFallbackPriceIndices(type: "sale" | "rent"): PriceIndex[] {
   const base: PriceIndex[] = [];
   const startYear = 2019;
   const endYear = 2025;
 
-  // 연도별 기준 지수값 (대략적 전국 추세)
-  const yearlyBase: Record<number, number> = {
-    2019: 88.5, 2020: 93.2, 2021: 100.8,
-    2022: 107.5, 2023: 102.3, 2024: 104.8, 2025: 106.2,
+  // 매매/전세별 연도 기준 지수값 및 월별 변동 계수
+  const yearlyBaseMap: Record<"sale" | "rent", Record<number, number>> = {
+    sale: { 2019: 88.5, 2020: 93.2, 2021: 100.8, 2022: 107.5, 2023: 102.3, 2024: 104.8, 2025: 106.2 },
+    rent: { 2019: 91.2, 2020: 95.8, 2021: 100.5, 2022: 105.2, 2023: 100.8, 2024: 102.5, 2025: 103.8 },
   };
+  const monthVariationFactor = type === "sale" ? 0.08 : 0.06;
+  const yearlyBase = yearlyBaseMap[type];
 
   for (let year = startYear; year <= endYear; year++) {
     const monthEnd = year === endYear ? 2 : 12; // 현재년도는 2월까지
     for (let month = 1; month <= monthEnd; month++) {
       const baseIdx = yearlyBase[year] || 100;
-      // 월별 미세 변동 (-0.5% ~ +0.5%)
-      const monthVariation = (month - 6) * 0.08;
-      const index = Math.round((baseIdx + monthVariation) * 100) / 100;
-
-      const prevIndex = base.length > 0 ? base[base.length - 1].index : index;
-      const changeRate = Math.round(((index - prevIndex) / prevIndex) * 10000) / 100;
-
-      base.push({
-        yearMonth: `${year}-${String(month).padStart(2, "0")}`,
-        index,
-        changeRate: base.length > 0 ? changeRate : 0,
-      });
-    }
-  }
-  return base;
-}
-
-function getFallbackRentPriceIndices(): PriceIndex[] {
-  const base: PriceIndex[] = [];
-  const startYear = 2019;
-  const endYear = 2025;
-
-  const yearlyBase: Record<number, number> = {
-    2019: 91.2, 2020: 95.8, 2021: 100.5,
-    2022: 105.2, 2023: 100.8, 2024: 102.5, 2025: 103.8,
-  };
-
-  for (let year = startYear; year <= endYear; year++) {
-    const monthEnd = year === endYear ? 2 : 12;
-    for (let month = 1; month <= monthEnd; month++) {
-      const baseIdx = yearlyBase[year] || 100;
-      const monthVariation = (month - 6) * 0.06;
+      const monthVariation = (month - 6) * monthVariationFactor;
       const index = Math.round((baseIdx + monthVariation) * 100) / 100;
 
       const prevIndex = base.length > 0 ? base[base.length - 1].index : index;
@@ -210,7 +142,7 @@ export async function fetchSalePriceIndex(
   const cached = apiCache.get<REPSSalePriceResult>(cacheKey);
   if (cached) return cached;
 
-  const fallbackIndices = getFallbackSalePriceIndices();
+  const fallbackIndices = getFallbackPriceIndices("sale");
   const fallbackResult: REPSSalePriceResult = {
     region,
     regionCode: regionCode || "0000000000",
@@ -305,7 +237,7 @@ export async function fetchRentPriceIndex(
   const cached = apiCache.get<REPSRentPriceResult>(cacheKey);
   if (cached) return cached;
 
-  const fallbackIndices = getFallbackRentPriceIndices();
+  const fallbackIndices = getFallbackPriceIndices("rent");
   const fallbackResult: REPSRentPriceResult = {
     region,
     regionCode: regionCode || "0000000000",

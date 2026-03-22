@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { ScrSection, thCls, tdCls, tdNumCls } from "./scr-shared";
 import {
   Building, Users, Briefcase, TrendingUp, BarChart3, Wallet,
 } from "lucide-react";
@@ -23,36 +24,6 @@ interface ScrChapterIIProps {
   data: ScrDeveloperAnalysis;
 }
 
-const thCls = "py-3 px-4 text-xs font-semibold text-[#6e6e73] uppercase tracking-wider";
-const tdCls = "py-3 px-4 text-sm text-[#1d1d1f]";
-const tdNumCls = "py-3 px-4 text-sm text-[#1d1d1f] text-right tabular-nums font-medium";
-
-function Section({
-  icon: Icon,
-  title,
-  sub,
-  children,
-}: {
-  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
-  title: string;
-  sub?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden print:shadow-none print:border-gray-200">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-[#f5f5f7] flex items-center justify-center">
-          <Icon size={16} className="text-[#1d1d1f]" strokeWidth={1.5} />
-        </div>
-        <div>
-          <h4 className="text-sm font-semibold text-[#1d1d1f]">{title}</h4>
-          {sub && <p className="text-xs text-[#86868b]">{sub}</p>}
-        </div>
-      </div>
-      <div className="p-5">{children}</div>
-    </div>
-  );
-}
 
 /* ─── 표8: 회사개요 ─── */
 function CompanyOverviewTable({ data }: { data: ScrCompanyOverview }) {
@@ -67,7 +38,7 @@ function CompanyOverviewTable({ data }: { data: ScrCompanyOverview }) {
   ];
 
   return (
-    <Section icon={Building} title="표8. 회사개요">
+    <ScrSection icon={Building} title="표8. 회사개요">
       <div className="rounded-xl bg-gray-50/80 overflow-hidden">
         <table className="w-full text-sm">
           <tbody>
@@ -80,14 +51,14 @@ function CompanyOverviewTable({ data }: { data: ScrCompanyOverview }) {
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
 /* ─── 표9: 주주현황 ─── */
 function ShareholderTable({ rows }: { rows: ScrShareholderRow[] }) {
   return (
-    <Section icon={Users} title="표9. 주주현황">
+    <ScrSection icon={Users} title="표9. 주주현황">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -110,14 +81,14 @@ function ShareholderTable({ rows }: { rows: ScrShareholderRow[] }) {
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
 /* ─── 표10: 진행중 공사현장 ─── */
 function OngoingProjectsTable({ rows }: { rows: ScrOngoingProjectRow[] }) {
   return (
-    <Section icon={Briefcase} title="표10. 진행중 공사현장">
+    <ScrSection icon={Briefcase} title="표10. 진행중 공사현장">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -152,7 +123,7 @@ function OngoingProjectsTable({ rows }: { rows: ScrOngoingProjectRow[] }) {
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -166,7 +137,7 @@ function ProfitabilitySection({ rows }: { rows: ScrProfitabilityRow[] }) {
   }));
 
   return (
-    <Section icon={TrendingUp} title="표12. 수익성 지표" sub={`${rows[0]?.year}~${rows[rows.length - 1]?.year}년`}>
+    <ScrSection icon={TrendingUp} title="표12. 수익성 지표" sub={`${rows[0]?.year}~${rows[rows.length - 1]?.year}년`}>
       {/* 차트 */}
       <div className="h-64 mb-5 print:hidden">
         <ResponsiveContainer width="100%" height="100%">
@@ -217,14 +188,14 @@ function ProfitabilitySection({ rows }: { rows: ScrProfitabilityRow[] }) {
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
 /* ─── 표13~15: 재무안정성 ─── */
 function FinancialStabilitySection({ data }: { data: ScrFinancialStability }) {
   return (
-    <Section icon={BarChart3} title="표13~15. 재무안정성 / 유동성 / 차입금">
+    <ScrSection icon={BarChart3} title="표13~15. 재무안정성 / 유동성 / 차입금">
       {/* 재무안정성 */}
       <p className="text-xs font-semibold text-[#6e6e73] mb-2">재무안정성</p>
       <div className="overflow-x-auto mb-5">
@@ -307,7 +278,7 @@ function FinancialStabilitySection({ data }: { data: ScrFinancialStability }) {
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -322,7 +293,7 @@ function CashFlowSection({ rows }: { rows: ScrCashFlowRow[] }) {
   }));
 
   return (
-    <Section icon={Wallet} title="표16. 현금흐름" sub={`${rows[0]?.year}~${rows[rows.length - 1]?.year}년`}>
+    <ScrSection icon={Wallet} title="표16. 현금흐름" sub={`${rows[0]?.year}~${rows[rows.length - 1]?.year}년`}>
       <div className="h-56 mb-5 print:hidden">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
@@ -367,7 +338,7 @@ function CashFlowSection({ rows }: { rows: ScrCashFlowRow[] }) {
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 

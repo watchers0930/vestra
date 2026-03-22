@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { ScrSection, thCls, tdCls, tdNumCls } from "./scr-shared";
 import {
   ScrollText, Shield, MapPin, Home, Building2, TrendingUp, BarChart3,
 } from "lucide-react";
@@ -14,43 +15,13 @@ interface ScrAppendicesProps {
   data: ScrAppendicesData;
 }
 
-const thCls = "py-3 px-4 text-xs font-semibold text-[#6e6e73] uppercase tracking-wider";
-const tdCls = "py-3 px-4 text-sm text-[#1d1d1f]";
-const tdNumCls = "py-3 px-4 text-sm text-[#1d1d1f] text-right tabular-nums font-medium";
-
-function Section({
-  icon: Icon,
-  title,
-  sub,
-  children,
-}: {
-  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
-  title: string;
-  sub?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden print:shadow-none print:border-gray-200">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-[#f5f5f7] flex items-center justify-center">
-          <Icon size={16} className="text-[#1d1d1f]" strokeWidth={1.5} />
-        </div>
-        <div>
-          <h4 className="text-sm font-semibold text-[#1d1d1f]">{title}</h4>
-          {sub && <p className="text-xs text-[#86868b]">{sub}</p>}
-        </div>
-      </div>
-      <div className="p-5">{children}</div>
-    </div>
-  );
-}
 
 /* ─── 표53,54: 정책 히스토리 ─── */
 function PolicyHistoryTable({ data }: { data: ScrAppendicesData["policyHistory"] }) {
   if (!data.length) return null;
 
   return (
-    <Section icon={ScrollText} title="표53~54. 정책 히스토리">
+    <ScrSection icon={ScrollText} title="표53~54. 정책 히스토리">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -71,7 +42,7 @@ function PolicyHistoryTable({ data }: { data: ScrAppendicesData["policyHistory"]
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -80,7 +51,7 @@ function LoanRegulationsTable({ data }: { data: ScrAppendicesData["loanRegulatio
   if (!data.length) return null;
 
   return (
-    <Section icon={Shield} title="표55. 대출 규제">
+    <ScrSection icon={Shield} title="표55. 대출 규제">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -105,7 +76,7 @@ function LoanRegulationsTable({ data }: { data: ScrAppendicesData["loanRegulatio
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -114,7 +85,7 @@ function RegulatedAreasSection({ data }: { data: ScrAppendicesData["regulatedAre
   if (!data.length) return null;
 
   return (
-    <Section icon={MapPin} title="표56~58. 규제지역">
+    <ScrSection icon={MapPin} title="표56~58. 규제지역">
       <div className="space-y-4">
         {data.map((area, i) => (
           <div key={i}>
@@ -139,7 +110,7 @@ function RegulatedAreasSection({ data }: { data: ScrAppendicesData["regulatedAre
           </div>
         ))}
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -148,7 +119,7 @@ function HugAreasTable({ data }: { data: ScrAppendicesData["hugAreas"] }) {
   if (!data.length) return null;
 
   return (
-    <Section icon={Home} title="표59. HUG 보증 지역">
+    <ScrSection icon={Home} title="표59. HUG 보증 지역">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -169,7 +140,7 @@ function HugAreasTable({ data }: { data: ScrAppendicesData["hugAreas"] }) {
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -178,7 +149,7 @@ function NearbyDevelopmentDetailTable({ data }: { data: ScrAppendicesData["nearb
   if (!data.length) return null;
 
   return (
-    <Section icon={Building2} title="표60~64. 인근 개발 상세">
+    <ScrSection icon={Building2} title="표60~64. 인근 개발 상세">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -207,7 +178,7 @@ function NearbyDevelopmentDetailTable({ data }: { data: ScrAppendicesData["nearb
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -222,7 +193,7 @@ function InterestRateTrendSection({ data }: { data: ScrAppendicesData["interestR
   }));
 
   return (
-    <Section icon={TrendingUp} title="금리 추이">
+    <ScrSection icon={TrendingUp} title="금리 추이">
       <div className="h-56 mb-4 print:hidden">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
@@ -239,7 +210,7 @@ function InterestRateTrendSection({ data }: { data: ScrAppendicesData["interestR
           </LineChart>
         </ResponsiveContainer>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -254,7 +225,7 @@ function PriceIndexTrendSection({ data }: { data: ScrAppendicesData["priceIndexT
   }));
 
   return (
-    <Section icon={BarChart3} title="부동산 가격지수 추이">
+    <ScrSection icon={BarChart3} title="부동산 가격지수 추이">
       <div className="h-56 mb-4 print:hidden">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
@@ -270,7 +241,7 @@ function PriceIndexTrendSection({ data }: { data: ScrAppendicesData["priceIndexT
           </AreaChart>
         </ResponsiveContainer>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 

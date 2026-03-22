@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { ScrSection, thCls, tdCls, tdNumCls } from "./scr-shared";
 import {
   MapPin, TrendingUp, Home, Scale, MessageSquare,
 } from "lucide-react";
@@ -23,36 +24,6 @@ interface ScrChapterIVProps {
   data: ScrPriceAdequacy;
 }
 
-const thCls = "py-3 px-4 text-xs font-semibold text-[#6e6e73] uppercase tracking-wider";
-const tdCls = "py-3 px-4 text-sm text-[#1d1d1f]";
-const tdNumCls = "py-3 px-4 text-sm text-[#1d1d1f] text-right tabular-nums font-medium";
-
-function Section({
-  icon: Icon,
-  title,
-  sub,
-  children,
-}: {
-  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
-  title: string;
-  sub?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden print:shadow-none print:border-gray-200">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-[#f5f5f7] flex items-center justify-center">
-          <Icon size={16} className="text-[#1d1d1f]" strokeWidth={1.5} />
-        </div>
-        <div>
-          <h4 className="text-sm font-semibold text-[#1d1d1f]">{title}</h4>
-          {sub && <p className="text-xs text-[#86868b]">{sub}</p>}
-        </div>
-      </div>
-      <div className="p-5">{children}</div>
-    </div>
-  );
-}
 
 /* ─── 표30: 입지여건 ─── */
 function LocationSection({ data }: { data: ScrLocationAnalysis }) {
@@ -63,7 +34,7 @@ function LocationSection({ data }: { data: ScrLocationAnalysis }) {
   ];
 
   return (
-    <Section icon={MapPin} title="표30. 입지여건">
+    <ScrSection icon={MapPin} title="표30. 입지여건">
       <div className="space-y-4">
         {categories.map((cat) => (
           <div key={cat.label}>
@@ -87,7 +58,7 @@ function LocationSection({ data }: { data: ScrLocationAnalysis }) {
           <p className="text-xs text-[#6e6e73] leading-relaxed mt-2">{data.summary}</p>
         )}
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -100,7 +71,7 @@ function NearbyDevelopmentTable({ rows }: { rows: ScrNearbyDevelopmentRow[] }) {
   };
 
   return (
-    <Section icon={Home} title="표31. 인근 개발 계획">
+    <ScrSection icon={Home} title="표31. 인근 개발 계획">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -127,7 +98,7 @@ function NearbyDevelopmentTable({ rows }: { rows: ScrNearbyDevelopmentRow[] }) {
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -143,7 +114,7 @@ function RegionalTrendChart({ data }: { data: ScrPriceReview["regionalTrend"] })
   }));
 
   return (
-    <Section icon={TrendingUp} title="표32. 지역 평균 시세 및 분양가 추이" sub="최근 7년">
+    <ScrSection icon={TrendingUp} title="표32. 지역 평균 시세 및 분양가 추이" sub="최근 7년">
       <div className="h-64 mb-5 print:hidden">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
@@ -187,7 +158,7 @@ function RegionalTrendChart({ data }: { data: ScrPriceReview["regionalTrend"] })
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -196,7 +167,7 @@ function SalesCasesTable({ cases }: { cases: ScrSalesCase[] }) {
   if (!cases.length) return null;
 
   return (
-    <Section icon={Home} title="표33~34. 인근 매매사례">
+    <ScrSection icon={Home} title="표33~34. 인근 매매사례">
       <div className="overflow-x-auto">
         <table className="w-full text-sm whitespace-nowrap">
           <thead>
@@ -232,7 +203,7 @@ function SalesCasesTable({ cases }: { cases: ScrSalesCase[] }) {
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -241,7 +212,7 @@ function SupplyCasesTable({ cases }: { cases: ScrSupplyCase[] }) {
   if (!cases.length) return null;
 
   return (
-    <Section icon={Home} title="표35~36. 인근 분양사례">
+    <ScrSection icon={Home} title="표35~36. 인근 분양사례">
       <div className="overflow-x-auto">
         <table className="w-full text-sm whitespace-nowrap">
           <thead>
@@ -279,7 +250,7 @@ function SupplyCasesTable({ cases }: { cases: ScrSupplyCase[] }) {
           </tbody>
         </table>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -325,7 +296,7 @@ function PremiumTable({ rows }: { rows: ScrPremiumRow[] }) {
 /* ─── 표38,39: 적정성 의견 ─── */
 function AdequacyOpinionSection({ data }: { data: ScrAdequacyOpinion }) {
   return (
-    <Section icon={Scale} title="표38~39. 분양가 적정성 의견">
+    <ScrSection icon={Scale} title="표38~39. 분양가 적정성 의견">
       {/* 계획 분양가 */}
       <p className="text-xs font-semibold text-[#6e6e73] mb-2">본건 계획 분양가</p>
       <div className="overflow-x-auto mb-5">
@@ -386,7 +357,7 @@ function AdequacyOpinionSection({ data }: { data: ScrAdequacyOpinion }) {
         </div>
         <p className="text-sm text-[#424245] leading-relaxed">{data.conclusion}</p>
       </div>
-    </Section>
+    </ScrSection>
   );
 }
 
@@ -412,9 +383,9 @@ export function ScrChapterIV({ data }: ScrChapterIVProps) {
       <SalesCasesTable cases={data.priceReview.salesCases} />
       <SupplyCasesTable cases={data.priceReview.supplyCases} />
 
-      <Section icon={TrendingUp} title="표37. 프리미엄 분석">
+      <ScrSection icon={TrendingUp} title="표37. 프리미엄 분석">
         <PremiumTable rows={data.priceReview.premiumAnalysis} />
-      </Section>
+      </ScrSection>
 
       <AdequacyOpinionSection data={data.adequacyOpinion} />
     </div>

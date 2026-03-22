@@ -127,6 +127,22 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // parsedDocs 구조 검증
+      if (
+        !Array.isArray(body.parsedDocs) ||
+        !body.parsedDocs.every(
+          (d: unknown) =>
+            typeof d === "object" &&
+            d !== null &&
+            "claims" in d &&
+            Array.isArray((d as Record<string, unknown>).claims)
+        )
+      ) {
+        return NextResponse.json(
+          { error: "parsedDocs 형식이 올바르지 않습니다." },
+          { status: 400 }
+        );
+      }
       parsedDocs = body.parsedDocs as ParsedDocument[];
       projectType = validateProjectType(body.projectType);
       options = body.options || {};

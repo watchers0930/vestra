@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, Suspense } from "react";
 import { cn } from "@/lib/utils";
 import {
   FileText, Printer, Download, Building2, Users, BarChart3,
-  Scale, TrendingUp, BookOpen, ChevronLeft, ChevronRight,
+  Scale, TrendingUp, BookOpen, ChevronLeft, ChevronRight, Loader2,
 } from "lucide-react";
 import type { ScrReportData } from "@/lib/feasibility/scr-types";
-import { ScrChapterI } from "./ScrChapterI";
-import { ScrChapterII } from "./ScrChapterII";
-import { ScrChapterIII } from "./ScrChapterIII";
-import { ScrChapterIV } from "./ScrChapterIV";
-import { ScrChapterV } from "./ScrChapterV";
-import { ScrAppendices } from "./ScrAppendices";
+
+const ScrChapterI = React.lazy(() => import("./ScrChapterI").then((m) => ({ default: m.ScrChapterI })));
+const ScrChapterII = React.lazy(() => import("./ScrChapterII").then((m) => ({ default: m.ScrChapterII })));
+const ScrChapterIII = React.lazy(() => import("./ScrChapterIII").then((m) => ({ default: m.ScrChapterIII })));
+const ScrChapterIV = React.lazy(() => import("./ScrChapterIV").then((m) => ({ default: m.ScrChapterIV })));
+const ScrChapterV = React.lazy(() => import("./ScrChapterV").then((m) => ({ default: m.ScrChapterV })));
+const ScrAppendices = React.lazy(() => import("./ScrAppendices").then((m) => ({ default: m.ScrAppendices })));
 
 interface ScrReportViewerProps {
   data: ScrReportData;
@@ -179,12 +180,21 @@ export function ScrReportViewer({ data }: ScrReportViewerProps) {
           {TABS.find((t) => t.id === activeTab)?.label}
         </h2>
 
-        {activeTab === "overview" && <ScrChapterI data={data.projectOverview} />}
-        {activeTab === "developer" && <ScrChapterII data={data.developerAnalysis} />}
-        {activeTab === "market" && <ScrChapterIII data={data.marketAnalysis} />}
-        {activeTab === "price" && <ScrChapterIV data={data.priceAdequacy} />}
-        {activeTab === "repayment" && <ScrChapterV data={data.repaymentAnalysis} />}
-        {activeTab === "appendices" && <ScrAppendices data={data.appendices} />}
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center py-20">
+              <Loader2 size={24} className="animate-spin text-[#86868b]" />
+              <span className="ml-2 text-sm text-[#86868b]">불러오는 중...</span>
+            </div>
+          }
+        >
+          {activeTab === "overview" && <ScrChapterI data={data.projectOverview} />}
+          {activeTab === "developer" && <ScrChapterII data={data.developerAnalysis} />}
+          {activeTab === "market" && <ScrChapterIII data={data.marketAnalysis} />}
+          {activeTab === "price" && <ScrChapterIV data={data.priceAdequacy} />}
+          {activeTab === "repayment" && <ScrChapterV data={data.repaymentAnalysis} />}
+          {activeTab === "appendices" && <ScrAppendices data={data.appendices} />}
+        </Suspense>
       </div>
 
       {/* ─── 탭 전환 네비게이션 (하단) ─── */}

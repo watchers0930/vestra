@@ -409,7 +409,7 @@ function runCalculations(
       name: scenarioNames[i + 1] || `시나리오${i + 1}`,
       apartmentSaleRate: rate,
       officetelSaleRate: Math.min(rate + 0.05, 1.0),
-      commercialSaleRate: Math.min(rate - 0.05, 1.0),
+      commercialSaleRate: Math.max(0, Math.min(rate - 0.05, 1.0)),
     })),
   });
 
@@ -1013,14 +1013,24 @@ function buildAppendices(apiData: ExternalApiData): ScrAppendices {
 
 // ─── 유틸 함수들 ───
 
-/** 시나리오명을 SCR 시나리오 타입으로 매핑 */
+/** 시나리오명을 SCR 시나리오 타입으로 매핑 (분양률 기반) */
 function mapScenarioName(
-  name: string
+  name: string,
+  saleRate?: number
 ): "낙관" | "기본" | "보수" | "비관" {
+  // 분양률 기반 자동 분류 (우선)
+  if (saleRate !== undefined) {
+    if (saleRate >= 1.0) return "기본";
+    if (saleRate >= 0.95) return "낙관";
+    if (saleRate >= 0.9) return "보수";
+    return "비관";
+  }
+  // 이름 기반 폴백
   if (name.includes("차주") || name === "차주안") return "기본";
-  if (name.includes("1") || name.includes("낙관")) return "낙관";
-  if (name.includes("2") || name.includes("보수")) return "보수";
-  return "비관";
+  if (name.includes("낙관")) return "낙관";
+  if (name.includes("보수")) return "보수";
+  if (name.includes("비관")) return "비관";
+  return "보수";
 }
 
 /** 현재 시점에서 N개월 후의 YYYY-MM 반환 */
