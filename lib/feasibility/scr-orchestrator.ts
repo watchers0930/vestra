@@ -841,15 +841,17 @@ function buildRepaymentAnalysis(
 
   // 시나리오 분석
   const scenarioAnalysis: ScrScenarioAnalysis = {
-    conditions: scenarios.projections.slice(1).map((p) => ({
-      scenario: mapScenarioName(p.name),
-      saleRate: Math.round(
-        (p.totalRevenue / (scenarios.projections[0]?.totalRevenue || 1)) * 100
-      ),
-      description: `${p.name}: 분양률 변동 시나리오`,
-    })),
+    conditions: scenarios.projections.slice(1).map((p) => {
+      const baseRev = scenarios.projections[0]?.totalRevenue || 1;
+      const rate = p.totalRevenue / baseRev;
+      return {
+        scenario: mapScenarioName(p.name, rate),
+        saleRate: Math.round(rate * 100),
+        description: `${p.name}: 분양률 변동 시나리오`,
+      };
+    }),
     projections: scenarios.projections.map((p) => ({
-      scenario: mapScenarioName(p.name),
+      scenario: mapScenarioName(p.name, p.totalRevenue / (businessIncome.totalRevenue || 1)),
       totalRevenue: p.totalRevenue,
       totalCost: p.totalCost,
       profitBeforeTax: p.profitBeforeTax,

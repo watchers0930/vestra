@@ -245,17 +245,40 @@ function MonthlyTable({ rows, label }: { rows: MonthlyRow[]; label: string }) {
   );
 }
 
-/* ─── 표44~46: 월별 자금수지 ─── */
+/* ─── 표44~46: 월별 자금수지 (48개월 → 16개월 × 3분할) ─── */
 function MonthlyCashFlowSection({
   parts,
 }: {
   parts: { part1: MonthlyRow[]; part2: MonthlyRow[]; part3: MonthlyRow[] };
 }) {
+  const partLabel = (rows: MonthlyRow[], tableNo: number, start: number, end: number) => {
+    const from = rows[0]?.yearMonth ?? `${start}개월차`;
+    const to = rows[rows.length - 1]?.yearMonth ?? `${end}개월차`;
+    return `표${tableNo}. ${start}~${end}개월 (${from} ~ ${to})`;
+  };
+
   return (
     <ScrSection icon={BarChart3} title="표44~46. 월별 자금수지">
-      <MonthlyTable rows={parts.part1} label="Part 1" />
-      <MonthlyTable rows={parts.part2} label="Part 2" />
-      <MonthlyTable rows={parts.part3} label="Part 3" />
+      {parts.part1.length === 0 && parts.part2.length === 0 && parts.part3.length === 0 ? (
+        <div className="py-8 text-center text-sm text-[#86868b]">
+          월별 자금수지 데이터가 수집되지 않았습니다.
+        </div>
+      ) : (
+        <>
+          <MonthlyTable
+            rows={parts.part1}
+            label={partLabel(parts.part1, 44, 1, 16)}
+          />
+          <MonthlyTable
+            rows={parts.part2}
+            label={partLabel(parts.part2, 45, 17, 32)}
+          />
+          <MonthlyTable
+            rows={parts.part3}
+            label={partLabel(parts.part3, 46, 33, 48)}
+          />
+        </>
+      )}
     </ScrSection>
   );
 }
