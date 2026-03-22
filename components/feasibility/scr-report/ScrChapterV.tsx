@@ -1,14 +1,15 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ScrSection, thCls, tdCls, tdNumCls } from "./scr-shared";
+import { ScrSection, EmptyDataNotice, thCls, tdCls, tdNumCls } from "./scr-shared";
 import {
   TrendingUp, BarChart3, Wallet, Target, Activity, Calculator,
 } from "lucide-react";
 import {
-  BarChart, Bar,
+  BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
+import { CHART_COLORS } from "./scr-shared";
 import type {
   ScrRepaymentAnalysis,
   ScrPeriodSaleRateRow,
@@ -446,6 +447,124 @@ function ScenarioSection({ data }: { data: ScrScenarioAnalysis }) {
   );
 }
 
+/* ─── 그림18: 사업비 구성 파이차트 ─── */
+const PIE_COLORS = ["#0071e3", "#34c759", "#ff9500", "#ff3b30", "#8e8e93", "#5856d6", "#af52de", "#007aff", "#30b0c7"];
+
+function BusinessCostPieChart({ data }: { data: ScrBusinessIncome }) {
+  const costItems = [
+    { name: "토지비", value: data.cost.land },
+    { name: "직접공사비", value: data.cost.directConstruction },
+    { name: "간접공사비", value: data.cost.indirectConstruction },
+    { name: "분양경비", value: data.cost.salesExpense },
+    { name: "일반관리비", value: data.cost.generalAdmin },
+    { name: "제세공과금", value: data.cost.tax },
+    { name: "PF 수수료", value: data.cost.pfFee },
+    { name: "PF 이자", value: data.cost.pfInterest },
+    { name: "중도금이자", value: data.cost.interimInterest },
+  ].filter((item) => item.value > 0);
+
+  if (costItems.length === 0) return null;
+
+  return (
+    <ScrSection icon={Calculator} title="그림18. 사업비 구성" sub="지출 항목별 비중">
+      <div className="h-72 print:hidden">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={costItems}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={100}
+              paddingAngle={2}
+              dataKey="value"
+              nameKey="name"
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              label={(props: any) => `${String(props.name ?? "")} ${(((props.percent as number) ?? 0) * 100).toFixed(1)}%`}
+              labelLine={{ strokeWidth: 1 }}
+            >
+              {costItems.map((_, i) => (
+                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{ borderRadius: 12, border: "1px solid #e5e5e5", fontSize: 12 }}
+              formatter={(value) => `${Number(value).toLocaleString()} 만원`}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      {/* 인쇄용 대체 */}
+      <div className="hidden print:block">
+        <div className="grid grid-cols-3 gap-2">
+          {costItems.map((item, i) => (
+            <div key={item.name} className="flex items-center gap-2 text-xs">
+              <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+              <span className="text-[#6e6e73]">{item.name}</span>
+              <span className="ml-auto font-medium tabular-nums">{item.value.toLocaleString()}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </ScrSection>
+  );
+}
+
+/* ─── 그림19: 기간별 사업비 누적 영역차트 ─── */
+function MonthlyCumulativeAreaChart({ parts }: { parts: { part1: MonthlyRow[]; part2: MonthlyRow[]; part3: MonthlyRow[] } }) {
+  const allRows = [...parts.part1, ...parts.part2, ...parts.part3];
+  if (allRows.length === 0) return null;
+
+  // 누적 지출 계산: values 내 음수값 항목들의 절댓값 합산을 누적
+  let cumulative = 0;
+  const chartData = allRows.map((row) => {
+    const monthSpend = Object.values(row.values).reduce<number>((sum, v) => {
+      if (v != null && v < 0) return sum + Math.abs(v);
+      return sum;
+    }, 0);
+    cumulative += monthSpend;
+    return {
+      월: row.yearMonth,
+      누적지출: cumulative,
+    };
+  });
+
+  // 매월 0이면 차트 의미 없음
+  if (cumulative === 0) return null;
+
+  return (
+    <ScrSection icon={BarChart3} title="그림19. 기간별 사업비 추이" sub="월별 누적 지출">
+      <div className="h-64 print:hidden">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis
+              dataKey="월"
+              tick={{ fontSize: 10, fill: "#6e6e73" }}
+              interval={Math.max(0, Math.floor(chartData.length / 8) - 1)}
+            />
+            <YAxis
+              tick={{ fontSize: 11, fill: "#6e6e73" }}
+              tickFormatter={(v: number) => v >= 10000 ? `${(v / 10000).toFixed(0)}억` : `${v.toLocaleString()}`}
+            />
+            <Tooltip
+              contentStyle={{ borderRadius: 12, border: "1px solid #e5e5e5", fontSize: 12 }}
+              formatter={(value) => `${Number(value).toLocaleString()} 만원`}
+            />
+            <Area
+              type="monotone"
+              dataKey="누적지출"
+              stroke="#ef4444"
+              fill="#ef444430"
+              strokeWidth={2}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </ScrSection>
+  );
+}
+
 /* ─── 표50~52: BEP 분석 ─── */
 function BepSection({ data }: { data: ScrBepAnalysis }) {
   return (
@@ -542,10 +661,26 @@ export function ScrChapterV({ data }: ScrChapterVProps) {
         </div>
       )}
 
-      <PeriodSaleRateTable rows={data.periodSaleRate} />
+      {data.periodSaleRate.length > 0 ? (
+        <PeriodSaleRateTable rows={data.periodSaleRate} />
+      ) : (
+        <ScrSection icon={TrendingUp} title="표40. 기간별 분양률">
+          <EmptyDataNotice message="기간별 분양률 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
+
       <BusinessIncomeSection data={data.businessIncome} />
-      <CashFlowFundingSection summary={data.cashFlowSummary} funding={data.fundingScale} />
+      <BusinessCostPieChart data={data.businessIncome} />
+
+      {data.cashFlowSummary.length > 0 || data.fundingScale.length > 0 ? (
+        <CashFlowFundingSection summary={data.cashFlowSummary} funding={data.fundingScale} />
+      ) : (
+        <ScrSection icon={Wallet} title="표42~43. 자금흐름 요약 / 자금조달">
+          <EmptyDataNotice message="자금흐름 및 자금조달 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
       <MonthlyCashFlowSection parts={data.monthlyCashFlow} />
+      <MonthlyCumulativeAreaChart parts={data.monthlyCashFlow} />
       <ScenarioSection data={data.scenario} />
       <BepSection data={data.bep} />
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ScrSection, thCls, tdCls, tdNumCls } from "./scr-shared";
+import { ScrSection, EmptyDataNotice, thCls, tdCls, tdNumCls } from "./scr-shared";
 import {
   Building, Users, Briefcase, TrendingUp, BarChart3, Wallet,
 } from "lucide-react";
@@ -347,11 +347,46 @@ export function ScrChapterII({ data }: ScrChapterIIProps) {
   return (
     <div className="space-y-5">
       <CompanyOverviewTable data={data.companyOverview} />
-      <ShareholderTable rows={data.shareholders} />
-      <OngoingProjectsTable rows={data.ongoingProjects} />
-      <ProfitabilitySection rows={data.profitability} />
-      <FinancialStabilitySection data={data.financialStability} />
-      <CashFlowSection rows={data.cashFlow} />
+
+      {data.shareholders.length > 0 ? (
+        <ShareholderTable rows={data.shareholders} />
+      ) : (
+        <ScrSection icon={Users} title="표9. 주주현황">
+          <EmptyDataNotice message="주주현황 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {data.ongoingProjects.length > 0 ? (
+        <OngoingProjectsTable rows={data.ongoingProjects} />
+      ) : (
+        <ScrSection icon={Briefcase} title="표10. 진행중 공사현장">
+          <EmptyDataNotice message="진행중 공사현장 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {data.profitability.length > 0 ? (
+        <ProfitabilitySection rows={data.profitability} />
+      ) : (
+        <ScrSection icon={TrendingUp} title="표12. 수익성 지표">
+          <EmptyDataNotice message="수익성 지표 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {data.financialStability.balanceSheet.length > 0 ? (
+        <FinancialStabilitySection data={data.financialStability} />
+      ) : (
+        <ScrSection icon={BarChart3} title="표13~15. 재무안정성 / 유동성 / 차입금">
+          <EmptyDataNotice message="재무안정성 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {data.cashFlow.length > 0 ? (
+        <CashFlowSection rows={data.cashFlow} />
+      ) : (
+        <ScrSection icon={Wallet} title="표16. 현금흐름">
+          <EmptyDataNotice message="현금흐름 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
     </div>
   );
 }

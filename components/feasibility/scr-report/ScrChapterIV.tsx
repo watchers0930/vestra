@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ScrSection, thCls, tdCls, tdNumCls } from "./scr-shared";
+import { ScrSection, EmptyDataNotice, thCls, tdCls, tdNumCls } from "./scr-shared";
 import {
   MapPin, TrendingUp, Home, Scale, MessageSquare,
 } from "lucide-react";
@@ -361,12 +361,54 @@ function AdequacyOpinionSection({ data }: { data: ScrAdequacyOpinion }) {
   );
 }
 
+/* ─── 그림14: 위치도 자리표시자 ─── */
+function LocationMapPlaceholder({ summary }: { summary?: string }) {
+  return (
+    <ScrSection icon={MapPin} title="그림14. 위치도">
+      <div className="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 flex flex-col items-center justify-center py-12 px-6">
+        <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+          <MapPin size={24} className="text-[#86868b]" />
+        </div>
+        <p className="text-sm font-medium text-[#6e6e73] mb-1">위치도가 표시될 영역입니다</p>
+        <p className="text-xs text-[#86868b] text-center max-w-md leading-relaxed">
+          Kakao Maps 연동 시 사업지 위치가 지도 위에 표시됩니다.
+          {summary && (
+            <span className="block mt-2 text-[#6e6e73] font-medium">
+              주소: {summary}
+            </span>
+          )}
+        </p>
+      </div>
+    </ScrSection>
+  );
+}
+
 /* ─── 메인 IV장 컴포넌트 ─── */
 export function ScrChapterIV({ data }: ScrChapterIVProps) {
+  const hasLocation =
+    data.location.transportation.length > 0 ||
+    data.location.livingInfra.length > 0 ||
+    data.location.education.length > 0;
+
   return (
     <div className="space-y-5">
-      <LocationSection data={data.location} />
-      <NearbyDevelopmentTable rows={data.nearbyDevelopment} />
+      {hasLocation ? (
+        <LocationSection data={data.location} />
+      ) : (
+        <ScrSection icon={MapPin} title="표30. 입지여건">
+          <EmptyDataNotice message="입지여건 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      <LocationMapPlaceholder summary={data.location.summary} />
+
+      {data.nearbyDevelopment.length > 0 ? (
+        <NearbyDevelopmentTable rows={data.nearbyDevelopment} />
+      ) : (
+        <ScrSection icon={Home} title="표31. 인근 개발 계획">
+          <EmptyDataNotice message="인근 개발 계획 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
 
       {data.facilityOverview && (
         <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden print:shadow-none print:border-gray-200">
@@ -379,13 +421,39 @@ export function ScrChapterIV({ data }: ScrChapterIVProps) {
         </div>
       )}
 
-      <RegionalTrendChart data={data.priceReview.regionalTrend} />
-      <SalesCasesTable cases={data.priceReview.salesCases} />
-      <SupplyCasesTable cases={data.priceReview.supplyCases} />
+      {data.priceReview.regionalTrend.length > 0 ? (
+        <RegionalTrendChart data={data.priceReview.regionalTrend} />
+      ) : (
+        <ScrSection icon={TrendingUp} title="표32. 지역 평균 시세 및 분양가 추이">
+          <EmptyDataNotice message="시세 추이 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
 
-      <ScrSection icon={TrendingUp} title="표37. 프리미엄 분석">
-        <PremiumTable rows={data.priceReview.premiumAnalysis} />
-      </ScrSection>
+      {data.priceReview.salesCases.length > 0 ? (
+        <SalesCasesTable cases={data.priceReview.salesCases} />
+      ) : (
+        <ScrSection icon={Home} title="표33~34. 인근 매매사례">
+          <EmptyDataNotice message="인근 매매사례 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {data.priceReview.supplyCases.length > 0 ? (
+        <SupplyCasesTable cases={data.priceReview.supplyCases} />
+      ) : (
+        <ScrSection icon={Home} title="표35~36. 인근 분양사례">
+          <EmptyDataNotice message="인근 분양사례 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {data.priceReview.premiumAnalysis.length > 0 ? (
+        <ScrSection icon={TrendingUp} title="표37. 프리미엄 분석">
+          <PremiumTable rows={data.priceReview.premiumAnalysis} />
+        </ScrSection>
+      ) : (
+        <ScrSection icon={TrendingUp} title="표37. 프리미엄 분석">
+          <EmptyDataNotice message="프리미엄 분석 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
 
       <AdequacyOpinionSection data={data.adequacyOpinion} />
     </div>

@@ -67,7 +67,12 @@ import {
 } from "./calc";
 
 // 정적 데이터
-import { getStaticMarketContext, type StaticMarketContext } from "./static-data";
+import {
+  getStaticMarketContext,
+  getNearbySupplyCases,
+  type StaticMarketContext,
+  type SupplyCaseEntry,
+} from "./static-data";
 
 // ─── 입력 타입 ───
 
@@ -543,7 +548,8 @@ function assembleReport(
   const priceAdequacy: ScrPriceAdequacy = buildPriceAdequacy(
     calcResults.priceForecast,
     apiData,
-    val("planned_sale_price")
+    val("planned_sale_price"),
+    address
   );
 
   // ── V. 원리금상환가능성 분석 ──
@@ -706,7 +712,8 @@ function buildMarketAnalysis(
 function buildPriceAdequacy(
   priceForecast: PriceForecastResult,
   apiData: ExternalApiData,
-  plannedPrice: number
+  plannedPrice: number,
+  address: string = ""
 ): ScrPriceAdequacy {
   const comp = priceForecast.priceComparison;
 
@@ -731,7 +738,23 @@ function buildPriceAdequacy(
           };
         }) || [],
       salesCases: [],
-      supplyCases: [],
+      supplyCases: getNearbySupplyCases(address, 8).map(
+        (sc: SupplyCaseEntry) => ({
+          complexName: sc.name,
+          address: sc.address,
+          developer: "",
+          constructor: "",
+          totalUnits: sc.units,
+          exclusiveArea: 0,
+          supplyArea: 0,
+          saleDate: sc.supplyDate,
+          salePricePerPyeong: Math.round(sc.pricePerSqm * 3.3058),
+          currentMarketPrice: undefined,
+          premiumRate: undefined,
+          saleRate: sc.saleRate,
+          note: `${sc.projectType} / 경쟁률 ${sc.competitionRate}:1`,
+        })
+      ),
       premiumAnalysis: [],
     },
     adequacyOpinion: {

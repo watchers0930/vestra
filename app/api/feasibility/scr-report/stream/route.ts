@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
-import { gunzipSync } from "zlib";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { parseDocument } from "@/lib/feasibility/document-parser";
@@ -22,12 +21,15 @@ const FEASIBILITY_GUEST_DAILY_LIMIT_BYPASS =
   process.env.FEASIBILITY_GUEST_DAILY_LIMIT_BYPASS === "true";
 
 /**
- * SCR 사업성 분석 보고서 생성 API
+ * SCR 보고서 SSE 스트리밍 API
  *
- * POST: multipart/form-data (PDF 파일 + projectType + options JSON)
- * 또는 JSON body (이미 파싱된 문서 배열 + projectType + options)
+ * POST: multipart/form-data 또는 JSON body
+ * 응답: text/event-stream (SSE)
  *
- * 출력: ScrReportData JSON
+ * 이벤트 형식:
+ * - 진행률: { progress: number, message: string }
+ * - 완료:   { progress: 100, message: "완료", data: ScrReportData, reportId: string }
+ * - 에러:   { error: string }
  */
 export async function POST(req: NextRequest) {
   try {
@@ -37,7 +39,7 @@ export async function POST(req: NextRequest) {
     const userId = session?.user?.id;
     const dailyLimit = session?.user?.dailyLimit || ROLE_LIMITS.GUEST;
 
-    const rl = await rateLimit(`feasibility-scr:${userId || ip}`, 5);
+    const rl = await rateLimit(`feasibility-scr-stream:${userId || ip}`, 5);
     if (!rl.success) {
       return NextResponse.json(
         { error: "요청 한도 초과. 잠시 후 다시 시도해주세요." },
@@ -56,14 +58,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. 입력 분기: multipart/form-data vs JSON
+    // 2. 입력 파싱 (기존 route.ts와 동일 로직)
     const contentType = req.headers.get("content-type") || "";
     let parsedDocs: ParsedDocument[];
     let projectType: ProjectType;
     let options: Record<string, unknown> = {};
 
     if (contentType.includes("multipart/form-data")) {
-      // ── FormData: PDF 파일 업로드 + 옵션 ──
       const formData = await req.formData();
       const files = formData.getAll("files") as File[];
       const singleFile = formData.get("file") as File | null;
@@ -76,32 +77,23 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // projectType 추출
       const rawProjectType = formData.get("projectType") as string | null;
       projectType = validateProjectType(rawProjectType);
 
-      // options 추출
       const rawOptions = formData.get("options") as string | null;
       if (rawOptions) {
-        try {
-          options = JSON.parse(rawOptions);
-        } catch {
-          // options 파싱 실패 시 기본값 사용
-        }
+        try { options = JSON.parse(rawOptions); } catch { /* 기본값 사용 */ }
       }
 
-      // 파일 검증 + 파싱
       parsedDocs = [];
       for (const file of allFiles) {
         const buffer = Buffer.from(await file.arrayBuffer());
-
         if (buffer.length > MAX_FILE_SIZE) {
           return NextResponse.json(
             { error: `${file.name}: 파일 크기가 10MB를 초과합니다.` },
             { status: 400 }
           );
         }
-
         const ext = file.name.split(".").pop()?.toLowerCase();
         if (!ext || !ALLOWED_EXTENSIONS.has(ext)) {
           return NextResponse.json(
@@ -109,34 +101,23 @@ export async function POST(req: NextRequest) {
             { status: 400 }
           );
         }
-
-        const parsed = await parseDocument({
-          buffer,
-          name: file.name,
-          size: file.size,
-        });
+        const parsed = await parseDocument({ buffer, name: file.name, size: file.size });
         parsedDocs.push(parsed);
       }
     } else if (contentType.includes("application/json")) {
-      // ── JSON: 이미 파싱된 문서 배열 ──
       const body = await req.json();
-
       if (!body.parsedDocs?.length) {
         return NextResponse.json(
           { error: "파싱된 문서 데이터가 없습니다." },
           { status: 400 }
         );
       }
-
-      // parsedDocs 구조 검증
       if (
         !Array.isArray(body.parsedDocs) ||
         !body.parsedDocs.every(
           (d: unknown) =>
-            typeof d === "object" &&
-            d !== null &&
-            "claims" in d &&
-            Array.isArray((d as Record<string, unknown>).claims)
+            typeof d === "object" && d !== null &&
+            "claims" in d && Array.isArray((d as Record<string, unknown>).claims)
         )
       ) {
         return NextResponse.json(
@@ -147,47 +128,6 @@ export async function POST(req: NextRequest) {
       parsedDocs = body.parsedDocs as ParsedDocument[];
       projectType = validateProjectType(body.projectType);
       options = body.options || {};
-    } else if (req.headers.get("x-compressed") === "gzip") {
-      // ── gzip 압축 단일 파일 ──
-      const compressed = Buffer.from(await req.arrayBuffer());
-      const buffer = gunzipSync(compressed);
-      const filename = decodeURIComponent(
-        req.headers.get("x-file-name") || "unknown.pdf"
-      );
-
-      if (buffer.length > MAX_FILE_SIZE) {
-        return NextResponse.json(
-          { error: `${filename}: 파일 크기가 10MB를 초과합니다.` },
-          { status: 400 }
-        );
-      }
-
-      const ext = filename.split(".").pop()?.toLowerCase();
-      if (!ext || !ALLOWED_EXTENSIONS.has(ext)) {
-        return NextResponse.json(
-          { error: `${filename}: 지원하지 않는 파일 형식입니다.` },
-          { status: 400 }
-        );
-      }
-
-      const parsed = await parseDocument({
-        buffer,
-        name: filename,
-        size: buffer.length,
-      });
-      parsedDocs = [parsed];
-
-      const rawPt = req.headers.get("x-project-type");
-      projectType = validateProjectType(rawPt);
-
-      const rawOpts = req.headers.get("x-options");
-      if (rawOpts) {
-        try {
-          options = JSON.parse(rawOpts);
-        } catch {
-          // 무시
-        }
-      }
     } else {
       return NextResponse.json(
         { error: "지원하지 않는 Content-Type입니다. multipart/form-data 또는 application/json을 사용해주세요." },
@@ -195,25 +135,59 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. SCR 보고서 생성
-    const report = await generateScrReport({
-      parsedDocs,
-      projectType,
-      options: {
-        scenarioSaleRates: options.scenarioSaleRates as number[] | undefined,
-        sensitivityChangePercents: options.sensitivityChangePercents as number[] | undefined,
-        constructionMonths: options.constructionMonths as number | undefined,
-        analyst: options.analyst as string | undefined,
+    // 3. SSE 스트림 생성
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const result = await generateScrReport({
+            parsedDocs,
+            projectType,
+            options: {
+              scenarioSaleRates: options.scenarioSaleRates as number[] | undefined,
+              sensitivityChangePercents: options.sensitivityChangePercents as number[] | undefined,
+              constructionMonths: options.constructionMonths as number | undefined,
+              analyst: options.analyst as string | undefined,
+            },
+            onProgress: (progress: number, message: string) => {
+              const event = JSON.stringify({ progress: Math.min(99, progress), message });
+              controller.enqueue(encoder.encode(`data: ${event}\n\n`));
+            },
+          });
+
+          // 보고서 캐시 저장
+          const reportId = generateReportId();
+          cacheReport(reportId, result);
+
+          // 완료 이벤트 전송
+          const doneEvent = JSON.stringify({
+            progress: 100,
+            message: "완료",
+            data: result,
+            reportId,
+          });
+          controller.enqueue(encoder.encode(`data: ${doneEvent}\n\n`));
+          controller.close();
+        } catch (err: unknown) {
+          // 에러 이벤트 전송 후 스트림 종료
+          const errorMsg = err instanceof Error ? err.message : "보고서 생성 중 오류가 발생했습니다.";
+          const errorEvent = JSON.stringify({ error: errorMsg });
+          controller.enqueue(encoder.encode(`data: ${errorEvent}\n\n`));
+          controller.close();
+        }
       },
     });
 
-    // 보고서 캐시 저장 (24시간 TTL)
-    const reportId = generateReportId();
-    cacheReport(reportId, report);
-
-    return NextResponse.json({ ...report, _reportId: reportId });
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+      },
+    });
   } catch (error: unknown) {
-    return handleApiError(error, "SCR 보고서 생성");
+    return handleApiError(error, "SCR 보고서 스트리밍");
   }
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ScrSection, thCls, tdCls, tdNumCls } from "./scr-shared";
+import { ScrSection, EmptyDataNotice, thCls, tdCls, tdNumCls } from "./scr-shared";
 import {
   ScrollText, Shield, MapPin, Home, Building2, TrendingUp, BarChart3,
 } from "lucide-react";
@@ -249,13 +249,61 @@ function PriceIndexTrendSection({ data }: { data: ScrAppendicesData["priceIndexT
 export function ScrAppendices({ data }: ScrAppendicesProps) {
   return (
     <div className="space-y-5">
-      <PolicyHistoryTable data={data.policyHistory} />
-      <LoanRegulationsTable data={data.loanRegulations} />
-      <RegulatedAreasSection data={data.regulatedAreas} />
-      <HugAreasTable data={data.hugAreas} />
-      <NearbyDevelopmentDetailTable data={data.nearbyDevelopmentDetail} />
-      <InterestRateTrendSection data={data.interestRateTrend} />
-      <PriceIndexTrendSection data={data.priceIndexTrend} />
+      {data.policyHistory.length > 0 ? (
+        <PolicyHistoryTable data={data.policyHistory} />
+      ) : (
+        <ScrSection icon={ScrollText} title="표53~54. 정책 히스토리">
+          <EmptyDataNotice message="정책 히스토리 데이터가 수집되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {data.loanRegulations.length > 0 ? (
+        <LoanRegulationsTable data={data.loanRegulations} />
+      ) : (
+        <ScrSection icon={Shield} title="표55. 대출 규제">
+          <EmptyDataNotice message="대출 규제 데이터가 수집되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {data.regulatedAreas.length > 0 ? (
+        <RegulatedAreasSection data={data.regulatedAreas} />
+      ) : (
+        <ScrSection icon={MapPin} title="표56~58. 규제지역">
+          <EmptyDataNotice message="규제지역 데이터가 수집되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {data.hugAreas.length > 0 ? (
+        <HugAreasTable data={data.hugAreas} />
+      ) : (
+        <ScrSection icon={Home} title="표59. HUG 보증 지역">
+          <EmptyDataNotice message="HUG 보증 지역 데이터가 수집되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {data.nearbyDevelopmentDetail.length > 0 ? (
+        <NearbyDevelopmentDetailTable data={data.nearbyDevelopmentDetail} />
+      ) : (
+        <ScrSection icon={Building2} title="표60~64. 인근 개발 상세">
+          <EmptyDataNotice message="인근 개발 상세 데이터가 수집되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {data.interestRateTrend.length > 0 ? (
+        <InterestRateTrendSection data={data.interestRateTrend} />
+      ) : (
+        <ScrSection icon={TrendingUp} title="금리 추이">
+          <EmptyDataNotice message="금리 추이 데이터가 수집되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {data.priceIndexTrend.length > 0 ? (
+        <PriceIndexTrendSection data={data.priceIndexTrend} />
+      ) : (
+        <ScrSection icon={BarChart3} title="부동산 가격지수 추이">
+          <EmptyDataNotice message="부동산 가격지수 데이터가 수집되지 않았습니다." />
+        </ScrSection>
+      )}
     </div>
   );
 }

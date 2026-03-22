@@ -372,6 +372,279 @@ export function getLoanRegulations(
   };
 }
 
+// ─── 주요 수도권 분양사례 (2023~2025) ───
+
+export interface SupplyCaseEntry {
+  name: string;           // 단지명
+  address: string;        // 소재지
+  supplyDate: string;     // 분양시기 "YYYY-MM"
+  units: number;          // 세대수
+  pricePerSqm: number;    // 분양가 (만원/㎡)
+  competitionRate: number; // 청약경쟁률
+  saleRate: number;       // 분양률 (%)
+  projectType: string;    // 사업유형
+}
+
+/** 주요 수도권 분양사례 (2023~2025) */
+export const SUPPLY_CASES_DB: SupplyCaseEntry[] = [
+  // ─ 서울 ─
+  {
+    name: "래미안 원베일리",
+    address: "서울특별시 서초구 반포동",
+    supplyDate: "2023-03",
+    units: 2990,
+    pricePerSqm: 5850,
+    competitionRate: 308.5,
+    saleRate: 100,
+    projectType: "재건축",
+  },
+  {
+    name: "디에이치 방배",
+    address: "서울특별시 서초구 방배동",
+    supplyDate: "2024-06",
+    units: 3064,
+    pricePerSqm: 6120,
+    competitionRate: 425.0,
+    saleRate: 100,
+    projectType: "재건축",
+  },
+  {
+    name: "청담 르엘",
+    address: "서울특별시 강남구 청담동",
+    supplyDate: "2024-02",
+    units: 1261,
+    pricePerSqm: 7350,
+    competitionRate: 196.2,
+    saleRate: 100,
+    projectType: "재건축",
+  },
+  {
+    name: "동작하이팰리스",
+    address: "서울특별시 동작구 흑석동",
+    supplyDate: "2023-09",
+    units: 1540,
+    pricePerSqm: 4280,
+    competitionRate: 72.3,
+    saleRate: 98.5,
+    projectType: "재개발",
+  },
+  {
+    name: "힐스테이트 메이플",
+    address: "서울특별시 마포구 아현동",
+    supplyDate: "2024-04",
+    units: 1863,
+    pricePerSqm: 4950,
+    competitionRate: 145.7,
+    saleRate: 100,
+    projectType: "재개발",
+  },
+  {
+    name: "e편한세상 노원 포레스트",
+    address: "서울특별시 노원구 상계동",
+    supplyDate: "2023-11",
+    units: 1204,
+    pricePerSqm: 3150,
+    competitionRate: 35.8,
+    saleRate: 95.2,
+    projectType: "아파트",
+  },
+  {
+    name: "롯데캐슬 이스트폴",
+    address: "서울특별시 강동구 둔촌동",
+    supplyDate: "2024-08",
+    units: 2678,
+    pricePerSqm: 4780,
+    competitionRate: 88.9,
+    saleRate: 99.1,
+    projectType: "아파트",
+  },
+  // ─ 경기 ─
+  {
+    name: "수원 영통 자이",
+    address: "경기도 수원시 영통구 이의동",
+    supplyDate: "2023-05",
+    units: 1582,
+    pricePerSqm: 2680,
+    competitionRate: 52.4,
+    saleRate: 97.8,
+    projectType: "아파트",
+  },
+  {
+    name: "평택 고덕 대방 엘리움",
+    address: "경기도 평택시 고덕동",
+    supplyDate: "2023-07",
+    units: 2135,
+    pricePerSqm: 1850,
+    competitionRate: 18.3,
+    saleRate: 88.5,
+    projectType: "아파트",
+  },
+  {
+    name: "GTX 운정 중앙하이츠",
+    address: "경기도 파주시 운정동",
+    supplyDate: "2024-01",
+    units: 1875,
+    pricePerSqm: 2150,
+    competitionRate: 28.6,
+    saleRate: 92.3,
+    projectType: "아파트",
+  },
+  {
+    name: "광교 호수공원 자이",
+    address: "경기도 수원시 영통구 하동",
+    supplyDate: "2023-10",
+    units: 1345,
+    pricePerSqm: 3420,
+    competitionRate: 95.2,
+    saleRate: 100,
+    projectType: "아파트",
+  },
+  {
+    name: "힐스테이트 광명역",
+    address: "경기도 광명시 광명동",
+    supplyDate: "2024-05",
+    units: 1678,
+    pricePerSqm: 3580,
+    competitionRate: 115.8,
+    saleRate: 99.5,
+    projectType: "아파트",
+  },
+  {
+    name: "양주 옥정 제일풍경채",
+    address: "경기도 양주시 옥정동",
+    supplyDate: "2023-08",
+    units: 1920,
+    pricePerSqm: 1680,
+    competitionRate: 12.5,
+    saleRate: 78.4,
+    projectType: "아파트",
+  },
+  {
+    name: "동탄2 시범 더샵",
+    address: "경기도 화성시 동탄면",
+    supplyDate: "2024-03",
+    units: 2450,
+    pricePerSqm: 2380,
+    competitionRate: 42.1,
+    saleRate: 96.7,
+    projectType: "아파트",
+  },
+  {
+    name: "위례 포레자이",
+    address: "경기도 성남시 수정구 창곡동",
+    supplyDate: "2024-09",
+    units: 1128,
+    pricePerSqm: 3850,
+    competitionRate: 182.3,
+    saleRate: 100,
+    projectType: "아파트",
+  },
+  {
+    name: "과천 디에트르 퍼스티지",
+    address: "경기도 과천시 갈현동",
+    supplyDate: "2025-01",
+    units: 1560,
+    pricePerSqm: 4250,
+    competitionRate: 210.5,
+    saleRate: 100,
+    projectType: "아파트",
+  },
+  // ─ 인천 ─
+  {
+    name: "검단 파라곤 센트럴파크",
+    address: "인천광역시 서구 당하동",
+    supplyDate: "2023-06",
+    units: 2340,
+    pricePerSqm: 1720,
+    competitionRate: 15.8,
+    saleRate: 82.6,
+    projectType: "아파트",
+  },
+  {
+    name: "송도 더샵 퍼스트파크",
+    address: "인천광역시 연수구 송도동",
+    supplyDate: "2024-07",
+    units: 1856,
+    pricePerSqm: 2890,
+    competitionRate: 68.4,
+    saleRate: 97.2,
+    projectType: "아파트",
+  },
+  {
+    name: "루원시티 SK리더스뷰",
+    address: "인천광역시 미추홀구 학익동",
+    supplyDate: "2023-12",
+    units: 1495,
+    pricePerSqm: 2050,
+    competitionRate: 22.7,
+    saleRate: 89.3,
+    projectType: "재개발",
+  },
+  {
+    name: "영종하늘도시 제일풍경채",
+    address: "인천광역시 중구 운남동",
+    supplyDate: "2024-10",
+    units: 1680,
+    pricePerSqm: 1580,
+    competitionRate: 8.2,
+    saleRate: 72.8,
+    projectType: "아파트",
+  },
+];
+
+/**
+ * 주소 기반 주변 분양사례 필터링
+ * 동일 시/구 또는 인접 지역의 분양사례를 반환합니다.
+ * @param address - 검색 기준 주소
+ * @param radius - 결과 개수 제한 (기본: 10)
+ */
+export function getNearbySupplyCases(
+  address: string,
+  radius: number = 10
+): SupplyCaseEntry[] {
+  // 주소에서 키워드 추출 (시/구/동)
+  const keywords = address
+    .replace(/특별시|광역시|특별자치시/g, "")
+    .split(/\s+/)
+    .filter((w) => w.length >= 2);
+
+  // 1단계: 동일 구/시 매칭
+  const scored = SUPPLY_CASES_DB.map((entry) => {
+    let score = 0;
+    for (const kw of keywords) {
+      if (entry.address.includes(kw)) score += 1;
+    }
+    return { entry, score };
+  });
+
+  // 점수 높은 순 정렬, 0점은 광역 매칭 시도
+  const matched = scored
+    .filter((s) => s.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  if (matched.length >= radius) {
+    return matched.slice(0, radius).map((s) => s.entry);
+  }
+
+  // 2단계: 광역 매칭 (서울/경기/인천)
+  const metro = ["서울", "경기", "인천"].find((m) => address.includes(m));
+  if (metro) {
+    const metroMatched = SUPPLY_CASES_DB.filter(
+      (e) =>
+        e.address.includes(metro) &&
+        !matched.some((m) => m.entry.name === e.name)
+    );
+    const combined = [
+      ...matched.map((s) => s.entry),
+      ...metroMatched,
+    ];
+    return combined.slice(0, radius);
+  }
+
+  // 3단계: 전체 반환 (fallback)
+  return SUPPLY_CASES_DB.slice(0, radius);
+}
+
 // ─── 종합 정적 데이터 조회 ───
 
 export interface StaticMarketContext {

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ScrSection, thCls, tdCls, tdNumCls } from "./scr-shared";
+import { ScrSection, EmptyDataNotice, thCls, tdCls, tdNumCls } from "./scr-shared";
 import {
   Users, Home, TrendingDown, Building2, BarChart3, MapPin,
 } from "lucide-react";
@@ -9,6 +9,7 @@ import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
+import { CHART_COLORS } from "./scr-shared";
 import type {
   ScrMarketAnalysis,
   ScrRegulations,
@@ -251,6 +252,44 @@ function HousingMarketSection({ data }: { data: ScrHousingMarket }) {
   );
 }
 
+/* ─── 그림9~10: 공급량 수평 바차트 ─── */
+function SupplyBarChart({ items, label }: { items: ScrSupplyItem[]; label: string }) {
+  if (!items.length) return null;
+
+  // 연도별 세대수 집계
+  const byYear: Record<string, number> = {};
+  items.forEach((item) => {
+    const year = item.moveInDate.slice(0, 4) || "미정";
+    byYear[year] = (byYear[year] || 0) + item.totalUnits;
+  });
+
+  const chartData = Object.entries(byYear)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([year, units]) => ({ 연도: year, 세대수: units }));
+
+  if (chartData.length === 0) return null;
+
+  return (
+    <div className="mb-5 last:mb-0">
+      <p className="text-xs font-semibold text-[#6e6e73] mb-2">{label} (연도별)</p>
+      <div className="h-48 print:hidden">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, bottom: 5, left: 50 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis type="number" tick={{ fontSize: 11, fill: "#6e6e73" }} tickFormatter={(v: number) => `${v.toLocaleString()}`} />
+            <YAxis type="category" dataKey="연도" tick={{ fontSize: 11, fill: "#6e6e73" }} width={50} />
+            <Tooltip
+              contentStyle={{ borderRadius: 12, border: "1px solid #e5e5e5", fontSize: 12 }}
+              formatter={(value) => `${Number(value).toLocaleString()} 세대`}
+            />
+            <Bar dataKey="세대수" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
 /* ─── 표25~27: 입주/분양 예정 ─── */
 function SupplySection({ upcoming, planned }: { upcoming: ScrSupplyItem[]; planned: ScrSupplyItem[] }) {
   function SupplyTable({ items, label }: { items: ScrSupplyItem[]; label: string }) {
@@ -288,6 +327,11 @@ function SupplySection({ upcoming, planned }: { upcoming: ScrSupplyItem[]; plann
 
   return (
     <ScrSection icon={Building2} title="표25~27. 입주/분양 예정">
+      {/* 그림9: 입주예정 공급량 바차트 */}
+      <SupplyBarChart items={upcoming} label="그림9. 입주예정 공급량" />
+      {/* 그림10: 분양예정 공급량 바차트 */}
+      <SupplyBarChart items={planned} label="그림10. 분양예정 공급량" />
+
       <SupplyTable items={upcoming} label="입주예정 단지" />
       <SupplyTable items={planned} label="분양예정 단지" />
     </ScrSection>
@@ -365,19 +409,59 @@ function UnsoldSection({
 
 /* ─── 메인 III장 컴포넌트 ─── */
 export function ScrChapterIII({ data }: ScrChapterIIIProps) {
+  const hasPopulation = data.demographics.populationHousehold.length > 0;
+  const hasHousingMarket =
+    data.housingMarket.supplyRate.length > 0 ||
+    data.housingMarket.transactions.length > 0 ||
+    data.housingMarket.housingDistribution.length > 0;
+  const hasSupply =
+    data.housingMarket.upcomingSupply.length > 0 ||
+    data.housingMarket.plannedSupply.length > 0;
+  const hasUnsold =
+    data.housingMarket.unsoldTrend.length > 0 ||
+    data.housingMarket.unsoldComplexes.length > 0;
+
   return (
     <div className="space-y-5">
       <RegulationsView data={data.regulations} />
-      <PopulationSection data={data.demographics} />
-      <HousingMarketSection data={data.housingMarket} />
-      <SupplySection
-        upcoming={data.housingMarket.upcomingSupply}
-        planned={data.housingMarket.plannedSupply}
-      />
-      <UnsoldSection
-        trend={data.housingMarket.unsoldTrend}
-        complexes={data.housingMarket.unsoldComplexes}
-      />
+
+      {hasPopulation ? (
+        <PopulationSection data={data.demographics} />
+      ) : (
+        <ScrSection icon={Users} title="표17~19. 인구 / 세대 / 산업">
+          <EmptyDataNotice message="인구/세대 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {hasHousingMarket ? (
+        <HousingMarketSection data={data.housingMarket} />
+      ) : (
+        <ScrSection icon={Home} title="표20~24. 주택시장">
+          <EmptyDataNotice message="주택시장 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {hasSupply ? (
+        <SupplySection
+          upcoming={data.housingMarket.upcomingSupply}
+          planned={data.housingMarket.plannedSupply}
+        />
+      ) : (
+        <ScrSection icon={Building2} title="표25~27. 입주/분양 예정">
+          <EmptyDataNotice message="입주/분양 예정 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
+
+      {hasUnsold ? (
+        <UnsoldSection
+          trend={data.housingMarket.unsoldTrend}
+          complexes={data.housingMarket.unsoldComplexes}
+        />
+      ) : (
+        <ScrSection icon={TrendingDown} title="표28~29. 미분양 추이">
+          <EmptyDataNotice message="미분양 추이 데이터가 추출되지 않았습니다." />
+        </ScrSection>
+      )}
     </div>
   );
 }
