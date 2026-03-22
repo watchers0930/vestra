@@ -99,8 +99,9 @@ export default function LandingPage() {
                 부동산 자산관리 베스트라
               </span>
             </h1>
-            <p className="mt-5 text-[19px] md:text-[21px] text-[#6e6e73] leading-[1.5] max-w-[520px] mx-auto">
+            <p className="mt-5 text-[19px] md:text-[21px] text-[#6e6e73] leading-[1.5] max-w-[640px] mx-auto">
               전세사기 예방, 매매 권리분석, 계약서 위험 검출, 절세 시뮬레이션까지.
+              <br />
               안전한 부동산 거래를 위한 AI 분석.
             </p>
             <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
