@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import { AlertTriangle, CheckCircle, XCircle, GitBranch, Shield } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Card } from "@/components/common";
+import { AlertTriangle, CheckCircle, XCircle, GitBranch, Shield, Activity, Route, BarChart3 } from "lucide-react";
+import { cn, formatKRW } from "@/lib/utils";
+import { Card, Alert } from "@/components/common";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import type { ParsedRegistry } from "@/lib/registry-parser";
 
 /**
@@ -33,8 +34,23 @@ interface RiskChain {
   level: "critical" | "high" | "medium" | "low";
 }
 
+interface GraphAnalysisProp {
+  graph: { nodeCount: number; edgeCount: number; maxDepth: number };
+  cycles: { hasCycle: boolean; cycles: Array<{ path: string[]; riskScore: number; description: string }> };
+  riskPropagation: {
+    nodeRisks: Record<string, number>;
+    propagationSteps: Array<{ from: string; to: string; riskDelta: number; iteration: number }>;
+    convergenceIterations: number;
+    totalSystemRisk: number;
+  };
+  chainAnalysis: { chains: Array<{ id: string; nodes: string[]; totalAmount: number; riskLevel: string; description: string }>; longestChain: number; maxChainAmount: number };
+  criticalPath: { path: string[]; totalRisk: number; maxLossAmount: number; description: string };
+  clusterAnalysis: { clusters: Array<{ id: number; nodes: string[]; internalRisk: number; connectedTo: number[] }>; isolatedNodes: string[] };
+}
+
 interface Props {
   parsed: ParsedRegistry;
+  graphAnalysis?: GraphAnalysisProp;
 }
 
 // 노드 색상
@@ -65,7 +81,7 @@ function getRiskWeight(type: GraphNode["type"]): number {
   return weights[type] ?? 0.3;
 }
 
-export function RightsGraphView({ parsed }: Props) {
+export function RightsGraphView({ parsed, graphAnalysis }: Props) {
   const { nodes, edges, chains } = useMemo(() => {
     const nodes: GraphNode[] = [];
     const edges: GraphEdge[] = [];
@@ -270,6 +286,189 @@ export function RightsGraphView({ parsed }: Props) {
           </div>
         ))}
       </div>
+
+      {/* ─── 그래프 엔진 분석 결과 (graphAnalysis 제공 시) ─── */}
+      {graphAnalysis && (
+        <>
+          {/* 시스템 위험도 */}
+          <Card className="p-4">
+            <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-3">
+              <Activity size={14} />
+              시스템 위험도
+            </h4>
+            <div className="flex items-center gap-4">
+              <div
+                className={cn(
+                  "w-20 h-20 rounded-full flex items-center justify-center border-4",
+                  graphAnalysis.riskPropagation.totalSystemRisk >= 70
+                    ? "border-red-400 bg-red-50"
+                    : graphAnalysis.riskPropagation.totalSystemRisk >= 40
+                    ? "border-amber-400 bg-amber-50"
+                    : "border-emerald-400 bg-emerald-50"
+                )}
+              >
+                <span
+                  className={cn(
+                    "text-2xl font-bold",
+                    graphAnalysis.riskPropagation.totalSystemRisk >= 70
+                      ? "text-red-600"
+                      : graphAnalysis.riskPropagation.totalSystemRisk >= 40
+                      ? "text-amber-600"
+                      : "text-emerald-600"
+                  )}
+                >
+                  {graphAnalysis.riskPropagation.totalSystemRisk}
+                </span>
+              </div>
+              <div className="flex-1 space-y-1.5">
+                <p className="text-xs text-gray-500">
+                  PageRank 변형 위험 전파 알고리즘 결과 (0-100)
+                </p>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className={cn(
+                      "h-2 rounded-full transition-all",
+                      graphAnalysis.riskPropagation.totalSystemRisk >= 70
+                        ? "bg-red-500"
+                        : graphAnalysis.riskPropagation.totalSystemRisk >= 40
+                        ? "bg-amber-500"
+                        : "bg-emerald-500"
+                    )}
+                    style={{ width: `${graphAnalysis.riskPropagation.totalSystemRisk}%` }}
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-xs text-gray-500 mt-2">
+                  <div>
+                    <span className="font-medium text-gray-700">{graphAnalysis.graph.nodeCount}</span> 노드
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">{graphAnalysis.graph.edgeCount}</span> 엣지
+                  </div>
+                  <div>
+                    깊이 <span className="font-medium text-gray-700">{graphAnalysis.graph.maxDepth}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* 순환 경고 */}
+          {graphAnalysis.cycles.hasCycle && (
+            <Alert variant="error">
+              <div className="flex items-start gap-2">
+                <AlertTriangle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-red-800 mb-1">
+                    권리 순환 관계가 감지되었습니다
+                  </p>
+                  <div className="space-y-1">
+                    {graphAnalysis.cycles.cycles.map((cycle, i) => (
+                      <p key={i} className="text-xs text-red-700">
+                        {cycle.description} (위험도: {cycle.riskScore.toFixed(0)})
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Alert>
+          )}
+
+          {/* Critical Path */}
+          {graphAnalysis.criticalPath.path.length > 1 && (
+            <Card className="p-4">
+              <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-3">
+                <Route size={14} />
+                최대 위험 경로 (Critical Path)
+              </h4>
+              <div className="flex items-center gap-1.5 flex-wrap mb-3">
+                {graphAnalysis.criticalPath.path.map((nodeId, i) => (
+                  <span key={nodeId} className="flex items-center gap-1">
+                    {i > 0 && <span className="text-gray-400 text-xs">→</span>}
+                    <span
+                      className={cn(
+                        "px-2 py-1 rounded text-xs font-medium",
+                        i === 0
+                          ? "bg-blue-100 text-blue-800"
+                          : i === graphAnalysis.criticalPath.path.length - 1
+                          ? "bg-red-100 text-red-800"
+                          : "bg-gray-100 text-gray-700"
+                      )}
+                    >
+                      {nodeId.replace(/_/g, " ")}
+                    </span>
+                  </span>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-2 bg-red-50 rounded-lg text-center">
+                  <p className="text-[10px] text-red-600">경로 위험도</p>
+                  <p className="text-lg font-bold text-red-700">{graphAnalysis.criticalPath.totalRisk}</p>
+                </div>
+                <div className="p-2 bg-orange-50 rounded-lg text-center">
+                  <p className="text-[10px] text-orange-600">최대 피해 금액</p>
+                  <p className="text-lg font-bold text-orange-700">
+                    {graphAnalysis.criticalPath.maxLossAmount > 0
+                      ? formatKRW(graphAnalysis.criticalPath.maxLossAmount)
+                      : "-"}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* 위험 전파 점수 (BarChart) */}
+          {Object.keys(graphAnalysis.riskPropagation.nodeRisks).length > 0 && (
+            <Card className="p-4">
+              <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-3">
+                <BarChart3 size={14} />
+                노드별 위험 전파 점수
+              </h4>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={Object.entries(graphAnalysis.riskPropagation.nodeRisks)
+                      .map(([id, risk]) => ({
+                        name: id.replace(/_/g, " ").replace(/^(gapgu|eulgu) /, (m) =>
+                          m.includes("gapgu") ? "갑 " : "을 "
+                        ),
+                        risk: Math.round(Number(risk) * 100),
+                      }))
+                      .sort((a, b) => b.risk - a.risk)}
+                    margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 10, fill: "#6b7280" }}
+                      angle={-30}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis
+                      domain={[0, 100]}
+                      tick={{ fontSize: 10, fill: "#6b7280" }}
+                      tickFormatter={(v) => `${v}`}
+                    />
+                    <Tooltip
+                      formatter={(value) => [`${value}점`, "위험도"]}
+                      contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                    />
+                    <Bar
+                      dataKey="risk"
+                      radius={[4, 4, 0, 0]}
+                      fill="#ef4444"
+                      fillOpacity={0.8}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-[10px] text-gray-400 mt-2 text-center">
+                수정 PageRank 알고리즘 기반 위험 전파 시뮬레이션 ({graphAnalysis.riskPropagation.convergenceIterations}회 반복 수렴)
+              </p>
+            </Card>
+          )}
+        </>
+      )}
     </div>
   );
 }

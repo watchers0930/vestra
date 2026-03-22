@@ -55,16 +55,6 @@ export default function SignupPage() {
               Google로 시작하기
             </button>
 
-            {/* 카카오 - 카카오 개발자 콘솔 설정 완료 후 주석 해제 */}
-            {/* <button
-              onClick={() => signIn("kakao", { redirectTo: "/login" })}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-[#FEE500] hover:bg-[#FDD800] transition-colors text-sm font-medium text-[#191919]"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24">
-                <path d="M12 3C6.48 3 2 6.36 2 10.44c0 2.62 1.75 4.93 4.38 6.24l-1.12 4.12a.36.36 0 00.54.38l4.66-3.1c.5.06 1.01.1 1.54.1 5.52 0 10-3.36 10-7.5S17.52 3 12 3z" fill="#191919" />
-              </svg>
-              카카오로 시작하기
-            </button> */}
 
             {/* 네이버 */}
             <button

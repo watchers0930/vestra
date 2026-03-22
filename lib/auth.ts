@@ -13,7 +13,7 @@
 import NextAuth from "next-auth";
 import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
-import Kakao from "next-auth/providers/kakao";
+
 import Naver from "next-auth/providers/naver";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -155,11 +155,6 @@ function buildProviders(settings: Record<string, string>) {
     providers.push(Google({ clientId: googleId, clientSecret: googleSecret }));
   }
 
-  const kakaoId = settings.KAKAO_CLIENT_ID || process.env.KAKAO_CLIENT_ID;
-  const kakaoSecret = settings.KAKAO_CLIENT_SECRET || process.env.KAKAO_CLIENT_SECRET;
-  if (kakaoId && kakaoSecret) {
-    providers.push(Kakao({ clientId: kakaoId, clientSecret: kakaoSecret }));
-  }
 
   const naverId = settings.NAVER_CLIENT_ID || process.env.NAVER_CLIENT_ID;
   const naverSecret = settings.NAVER_CLIENT_SECRET || process.env.NAVER_CLIENT_SECRET;

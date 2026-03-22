@@ -138,14 +138,6 @@ export const OAUTH_PROVIDERS: OAuthProviderConfig[] = [
     callbackPath: "/api/auth/callback/google",
   },
   {
-    provider: "kakao",
-    label: "카카오",
-    clientIdKey: "KAKAO_CLIENT_ID",
-    clientSecretKey: "KAKAO_CLIENT_SECRET",
-    devConsoleUrl: "https://developers.kakao.com/console/app",
-    callbackPath: "/api/auth/callback/kakao",
-  },
-  {
     provider: "naver",
     label: "네이버",
     clientIdKey: "NAVER_CLIENT_ID",

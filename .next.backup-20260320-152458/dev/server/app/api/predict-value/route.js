@@ -1,0 +1,10 @@
+var R=require("../../../chunks/[turbopack]_runtime.js")("server/app/api/predict-value/route.js")
+R.c("server/chunks/node_modules_next_41878e2d._.js")
+R.c("server/chunks/node_modules_openai_83494e57._.js")
+R.c("server/chunks/97170_@auth_core_b390930a._.js")
+R.c("server/chunks/node_modules_jose_dist_webapi_868b124b._.js")
+R.c("server/chunks/[root-of-the-server]__ffc7ca1f._.js")
+R.c("server/chunks/[root-of-the-server]__6e32fc48._.js")
+R.c("server/chunks/_next-internal_server_app_api_predict-value_route_actions_188038a1.js")
+R.m("[project]/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/app/api/predict-value/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)")
+module.exports=R.m("[project]/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/app/api/predict-value/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)").exports

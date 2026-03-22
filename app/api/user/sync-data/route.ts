@@ -177,3 +177,32 @@ export async function GET() {
     return NextResponse.json({ error: "데이터 조회 실패" }, { status: 500 });
   }
 }
+
+/**
+ * DELETE /api/user/sync-data
+ * 분석 데이터 삭제
+ *
+ * Body: { analysisId: string }
+ */
+export async function DELETE(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "인증 필요" }, { status: 401 });
+  }
+
+  try {
+    const { analysisId } = await req.json();
+    if (!analysisId) {
+      return NextResponse.json({ error: "analysisId는 필수입니다." }, { status: 400 });
+    }
+
+    await prisma.analysis.deleteMany({
+      where: { id: analysisId, userId: session.user.id },
+    });
+
+    return NextResponse.json({ ok: true, deleted: analysisId });
+  } catch (error) {
+    console.error("sync-data DELETE 오류:", error);
+    return NextResponse.json({ error: "삭제 실패" }, { status: 500 });
+  }
+}

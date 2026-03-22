@@ -21,6 +21,7 @@ import type { ParsedRegistry } from "@/lib/registry-parser";
 import type { RiskScore } from "@/lib/risk-scoring";
 import type { ValidationResult } from "@/lib/validation-engine";
 import { Card, Alert } from "@/components/common";
+import { ChecklistSection } from "@/components/common/ChecklistSection";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
 import PdfDownloadButton from "@/components/common/pdf-download-button";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
@@ -72,6 +73,21 @@ export interface UnifiedResult {
     jeonseRatio: number | null;
   } | null;
   aiOpinion: string;
+  graphAnalysis?: {
+    graph: { nodeCount: number; edgeCount: number; maxDepth: number };
+    cycles: { hasCycle: boolean; cycles: Array<{ path: string[]; riskScore: number; description: string }> };
+    riskPropagation: {
+      nodeRisks: Record<string, number>;
+      propagationSteps: Array<{ from: string; to: string; riskDelta: number; iteration: number }>;
+      convergenceIterations: number;
+      totalSystemRisk: number;
+    };
+    chainAnalysis: { chains: Array<{ id: string; nodes: string[]; totalAmount: number; riskLevel: string; description: string }>; longestChain: number; maxChainAmount: number };
+    criticalPath: { path: string[]; totalRisk: number; maxLossAmount: number; description: string };
+    clusterAnalysis: { clusters: Array<{ id: number; nodes: string[]; internalRisk: number; connectedTo: number[] }>; isolatedNodes: string[] };
+  };
+  checklist?: import("@/lib/checklist-generator").ChecklistItem[];
+  checklistByCategory?: Record<string, import("@/lib/checklist-generator").ChecklistItem[]>;
   dataSource: {
     registryParsed: boolean;
     molitAvailable: boolean;
@@ -216,6 +232,11 @@ export function RightsResult({ result, rawText }: RightsResultProps) {
         </Card>
       </div>
 
+      {/* 맞춤 준비 체크리스트 */}
+      {result.checklistByCategory && Object.keys(result.checklistByCategory).length > 0 && (
+        <ChecklistSection checklistByCategory={result.checklistByCategory} />
+      )}
+
       {/* 부동산 기본정보 */}
       <Card className="p-6">
         <h2 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -271,7 +292,7 @@ export function RightsResult({ result, rawText }: RightsResultProps) {
 
       {result.parsed && (
         <Card className="p-6">
-          <RightsGraphView parsed={result.parsed} />
+          <RightsGraphView parsed={result.parsed} graphAnalysis={result.graphAnalysis} />
         </Card>
       )}
 

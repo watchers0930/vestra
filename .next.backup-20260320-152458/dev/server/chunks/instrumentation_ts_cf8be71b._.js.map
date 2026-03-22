@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/watchers/Desktop/vestra/instrumentation.ts"],"sourcesContent":["export async function register() {\n  if (process.env.NEXT_RUNTIME === \"nodejs\") {\n    const { validateEnv } = await import(\"@/lib/env\");\n    validateEnv();\n  }\n}\n"],"names":[],"mappings":";;;;AAAO,eAAe;IACpB,wCAA2C;QACzC,MAAM,EAAE,WAAW,EAAE,GAAG;QACxB;IACF;AACF"}}]
+}

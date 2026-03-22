@@ -19,6 +19,8 @@ import { calculateVScore } from "@/lib/v-score";
 import { evaluateCrossAnalysis } from "@/lib/cross-analysis";
 import { predictFraudRisk, extractFeaturesFromRiskScore, type FraudModelInput } from "@/lib/fraud-risk-model";
 import { createEventBus } from "@/lib/event-bus";
+import { analyzeRightsGraph } from "@/lib/rights-graph-engine";
+import { generateChecklist, groupChecklistByCategory } from "@/lib/checklist-generator";
 import { formatKRW } from "@/lib/utils";
 
 // ─── GET: 주소 기반 원스톱 통합 데이터 조회 ───
@@ -238,6 +240,13 @@ export async function POST(req: NextRequest) {
     // 4단계: 자체 리스크 스코어링 (AI 미사용)
     const riskScore = calculateRiskScore(parsed, estimatedPrice);
 
+    // 4-1단계: 그래프 기반 권리관계 분석 (특허: 방향 가중 그래프 모델링)
+    const graphAnalysis = analyzeRightsGraph(parsed, estimatedPrice);
+
+    // 4-2단계: 동적 체크리스트 생성
+    const checklist = generateChecklist(riskScore);
+    const checklistByCategory = groupChecklistByCategory(checklist);
+
     // 5단계: 통합 PropertyInfo 생성
     const propertyInfo = {
       address: parsed.title.address || address,
@@ -413,6 +422,15 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // graphAnalysis의 Map → 일반 객체 변환 (JSON 직렬화)
+    const serializedGraphAnalysis = {
+      ...graphAnalysis,
+      riskPropagation: {
+        ...graphAnalysis.riskPropagation,
+        nodeRisks: Object.fromEntries(graphAnalysis.riskPropagation.nodeRisks),
+      },
+    };
+
     return NextResponse.json({
       propertyInfo,
       riskAnalysis,
@@ -422,12 +440,15 @@ export async function POST(req: NextRequest) {
       marketData,
       aiOpinion,
       // 특허 강화 필드 (optional, 하위호환)
+      graphAnalysis: serializedGraphAnalysis,
       redemptionSimulation,
       confidencePropagation,
       selfVerification,
       vScore,
       crossAnalysis,
       fraudRisk,
+      checklist,
+      checklistByCategory,
       eventLog: eventBus.getHistory(),
       dataSource: {
         registryParsed: true,

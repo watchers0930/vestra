@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +10,8 @@ interface Notification {
   message: string;
   date: string;
   read: boolean;
+  source?: "local" | "db";
+  alertId?: string;
 }
 
 const STORAGE_KEY = "vestra_notifications";
@@ -28,13 +31,63 @@ function saveNotifications(items: Notification[]) {
 }
 
 export default function NotificationBell({ collapsed }: { collapsed?: boolean }) {
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const ref = useRef<HTMLDivElement>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+  const fetchAndMerge = useCallback(async () => {
+    const localNotifs = getNotifications().map((n) => ({
+      ...n,
+      source: "local" as const,
+    }));
+
+    if (!session?.user) {
+      setNotifications(localNotifs);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/monitoring/alerts?page=1&limit=20");
+      if (!res.ok) throw new Error("fetch failed");
+      const data = await res.json();
+      const dbNotifs: Notification[] = (data.alerts ?? []).map(
+        (alert: {
+          id: string;
+          message: string;
+          createdAt: string;
+          read: boolean;
+        }) => ({
+          id: alert.id,
+          message: alert.message,
+          date: alert.createdAt,
+          read: alert.read,
+          source: "db" as const,
+          alertId: alert.id,
+        })
+      );
+      const merged = [...dbNotifs, ...localNotifs].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      setNotifications(merged);
+    } catch {
+      setNotifications(localNotifs);
+    }
+  }, [session?.user]);
 
   useEffect(() => {
-    setNotifications(getNotifications());
-  }, []);
+    fetchAndMerge();
+  }, [fetchAndMerge]);
+
+  // 인증된 사용자: 60초 폴링
+  useEffect(() => {
+    if (!session?.user) return;
+    pollingRef.current = setInterval(fetchAndMerge, 60_000);
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [session?.user, fetchAndMerge]);
 
   // 외부 클릭 시 닫기
   useEffect(() => {
@@ -49,11 +102,23 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const markAllRead = useCallback(() => {
+  const markAllRead = useCallback(async () => {
     const updated = notifications.map((n) => ({ ...n, read: true }));
     setNotifications(updated);
-    saveNotifications(updated);
-  }, [notifications]);
+    saveNotifications(updated.filter((n) => n.source !== "db"));
+
+    if (session?.user) {
+      try {
+        await fetch("/api/monitoring/alerts", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ markAll: true }),
+        });
+      } catch {
+        // 실패해도 로컬 상태는 유지
+      }
+    }
+  }, [notifications, session?.user]);
 
   const formatDate = (dateStr: string) => {
     try {

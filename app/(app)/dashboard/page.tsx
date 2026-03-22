@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
   Building2,
@@ -18,9 +19,11 @@ import {
   Info,
   PieChart as PieChartIcon,
   Calculator,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
-import { getAssets, getAnalyses, removeAnalysis, loadFromServer, type StoredAsset, type AnalysisRecord } from "@/lib/store";
+import { getAssets, getAnalyses, removeAnalysis, type StoredAsset, type AnalysisRecord } from "@/lib/store";
 import { EmptyState } from "@/components/common";
 import { KpiCard } from "@/components/results";
 import {
@@ -53,24 +56,42 @@ const typeColors: Record<string, { bg: string; text: string }> = {
 };
 
 export default function DashboardPage() {
+  const { data: session } = useSession();
   const [assets, setAssets] = useState<StoredAsset[]>([]);
   const [analyses, setAnalyses] = useState<AnalysisRecord[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [cascadeLoading, setCascadeLoading] = useState<string | null>(null);
 
   useEffect(() => {
-    // 1) localStorage에서 즉시 로드 (빠른 UX)
-    setAssets(getAssets());
-    setAnalyses(getAnalyses());
-    setMounted(true);
-
-    // 2) 서버에서 데이터 병합 (비동기, 논블로킹)
-    loadFromServer().then((merged) => {
-      if (merged) {
-        setAnalyses(merged.analyses);
-        setAssets(merged.assets);
+    async function loadData() {
+      if (session?.user) {
+        // 인증 사용자: DB 우선 로딩
+        try {
+          const res = await fetch("/api/user/sync-data");
+          if (res.ok) {
+            const data = await res.json();
+            setAnalyses(data.analyses || []);
+            setAssets(data.assets || []);
+          } else {
+            // DB 실패 시 localStorage 폴백
+            setAssets(getAssets());
+            setAnalyses(getAnalyses());
+          }
+        } catch {
+          setAssets(getAssets());
+          setAnalyses(getAnalyses());
+        }
+      } else {
+        // 게스트: localStorage 로드
+        setAssets(getAssets());
+        setAnalyses(getAnalyses());
       }
-    });
-  }, []);
+      setMounted(true);
+      setLoading(false);
+    }
+    loadData();
+  }, [session]);
 
   const totalAssets = assets.length;
   const totalValue = assets.reduce((sum, a) => sum + a.estimatedPrice, 0);
@@ -103,12 +124,60 @@ export default function DashboardPage() {
       risk: a.riskScore,
     }));
 
-  const handleDeleteAnalysis = (id: string) => {
+  const handleDeleteAnalysis = async (id: string) => {
     removeAnalysis(id);
-    setAnalyses(getAnalyses());
+    setAnalyses((prev) => prev.filter((a) => a.id !== id));
+    // 인증 사용자면 서버에서도 삭제
+    if (session?.user) {
+      try {
+        await fetch("/api/user/sync-data", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ analysisId: id }),
+        });
+      } catch { /* 실패해도 로컬은 이미 삭제됨 */ }
+    }
+  };
+
+  // 동일 주소별 분석 건수 맵
+  const addressCountMap = analyses.reduce<Record<string, number>>((acc, a) => {
+    acc[a.address] = (acc[a.address] || 0) + 1;
+    return acc;
+  }, {});
+
+  const handleCascadeUpdate = async (address: string) => {
+    setCascadeLoading(address);
+    try {
+      const res = await fetch("/api/cascade-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`캐스케이드 업데이트 완료: ${data.cascade.totalNodesAffected}개 노드 영향, ${data.cascade.executionTimeMs}ms`);
+      } else {
+        alert(data.error || "캐스케이드 업데이트 실패");
+      }
+    } catch {
+      alert("캐스케이드 업데이트 요청 중 오류가 발생했습니다.");
+    } finally {
+      setCascadeLoading(null);
+    }
   };
 
   const isEmpty = totalAssets === 0 && analyses.length === 0;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-[#6e6e73]">대시보드 데이터를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -444,13 +513,28 @@ export default function DashboardPage() {
                         <span className="text-xs text-[#6e6e73]">{new Date(item.date).toLocaleDateString("ko-KR")}</span>
                       </td>
                       <td className="py-3.5 px-3 text-right">
-                        <button
-                          onClick={() => handleDeleteAnalysis(item.id)}
-                          className="p-1.5 rounded-lg text-gray-300 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 transition-all"
-                          title="삭제"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          {addressCountMap[item.address] >= 2 && (
+                            <button
+                              onClick={() => handleCascadeUpdate(item.address)}
+                              disabled={cascadeLoading === item.address}
+                              className="p-1.5 rounded-lg text-gray-300 opacity-0 group-hover:opacity-100 hover:text-primary hover:bg-primary/5 transition-all disabled:opacity-50"
+                              title="연관 분석 업데이트"
+                            >
+                              <RefreshCw
+                                size={14}
+                                className={cascadeLoading === item.address ? "animate-spin" : ""}
+                              />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteAnalysis(item.id)}
+                            className="p-1.5 rounded-lg text-gray-300 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 transition-all"
+                            title="삭제"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
