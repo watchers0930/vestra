@@ -232,7 +232,7 @@ export async function fetchFinancials(
       const items = isData.list as Array<Record<string, string>>;
       const findAmount = (accountNm: string): number => {
         const row = items.find((r) => r.account_nm?.includes(accountNm));
-        return parseInt(row?.thstrm_amount?.replace(/,/g, ""), 10) || 0;
+        return parseInt(row?.thstrm_amount?.replace(/,/g, "") ?? "0", 10) || 0;
       };
 
       const revenue = findAmount("매출액") || findAmount("영업수익");
