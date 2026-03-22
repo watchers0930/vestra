@@ -388,7 +388,7 @@ export default function RightsAnalysisPage() {
           </div>
 
           {/* 피드백 위젯 */}
-          {analysisId && <FeedbackWidget analysisId={analysisId} className="mt-4" />}
+          {analysisId && <FeedbackWidget analysisId={analysisId} analysisType="rights" className="mt-4" />}
 
           {/* 연관 분석 CTA */}
           <div className="mt-6 p-4 rounded-xl border border-[#e5e5e7] bg-[#f5f5f7]">

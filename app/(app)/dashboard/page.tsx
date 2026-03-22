@@ -21,6 +21,8 @@ import {
   Calculator,
   Loader2,
   RefreshCw,
+  Eye,
+  CheckCircle,
 } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
 import { getAssets, getAnalyses, removeAnalysis, type StoredAsset, type AnalysisRecord } from "@/lib/store";
@@ -62,6 +64,10 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [cascadeLoading, setCascadeLoading] = useState<string | null>(null);
+  const [monitoredCount, setMonitoredCount] = useState(0);
+  const [monitoredAddresses, setMonitoredAddresses] = useState<Set<string>>(new Set());
+  const [monitoringLoading, setMonitoringLoading] = useState<string | null>(null);
+  const [monitoringSuccess, setMonitoringSuccess] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function loadData() {
@@ -82,6 +88,18 @@ export default function DashboardPage() {
           setAssets(getAssets());
           setAnalyses(getAnalyses());
         }
+        // 모니터링 현황 로드
+        try {
+          const monRes = await fetch("/api/monitoring");
+          if (monRes.ok) {
+            const monData = await monRes.json();
+            setMonitoredCount(monData.total || 0);
+            const addrs = new Set<string>(
+              (monData.properties || []).map((p: { address: string }) => p.address)
+            );
+            setMonitoredAddresses(addrs);
+          }
+        } catch { /* 모니터링 조회 실패 무시 */ }
       } else {
         // 게스트: localStorage 로드
         setAssets(getAssets());
@@ -166,6 +184,27 @@ export default function DashboardPage() {
     }
   };
 
+  const handleMonitorRegister = async (address: string) => {
+    if (!session?.user) return;
+    setMonitoringLoading(address);
+    try {
+      const res = await fetch("/api/monitoring", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address }),
+      });
+      if (res.ok || res.status === 409) {
+        setMonitoredAddresses((prev) => new Set(prev).add(address));
+        setMonitoringSuccess((prev) => new Set(prev).add(address));
+        if (res.ok) {
+          setMonitoredCount((prev) => prev + 1);
+        }
+      }
+    } catch { /* 실패 무시 */ } finally {
+      setMonitoringLoading(null);
+    }
+  };
+
   const isEmpty = totalAssets === 0 && analyses.length === 0;
 
   if (loading) {
@@ -187,6 +226,12 @@ export default function DashboardPage() {
           <h1 className="text-xl font-bold text-[#1d1d1f]">대시보드</h1>
           <p className="mt-0.5 text-sm text-[#6e6e73]">자산 현황 및 리스크 모니터링</p>
         </div>
+        {session?.user && monitoredCount > 0 && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10">
+            <Eye size={14} className="text-primary" />
+            <span className="text-xs font-medium text-primary">모니터링 {monitoredCount}건</span>
+          </div>
+        )}
       </div>
 
       {/* Info Banner - MiriCanvas style */}
@@ -457,6 +502,27 @@ export default function DashboardPage() {
                     >
                       <Calculator size={16} strokeWidth={1.5} />
                     </Link>
+                    {session?.user && (
+                      <button
+                        onClick={() => handleMonitorRegister(asset.address)}
+                        disabled={monitoringLoading === asset.address || monitoredAddresses.has(asset.address)}
+                        className={cn(
+                          "p-1.5 rounded-lg transition-all relative",
+                          monitoredAddresses.has(asset.address)
+                            ? "text-emerald-500 bg-emerald-50 cursor-default"
+                            : "text-[#6e6e73] hover:text-primary hover:bg-primary/5"
+                        )}
+                        title={monitoredAddresses.has(asset.address) ? "이미 등록됨" : "모니터링"}
+                      >
+                        {monitoringLoading === asset.address ? (
+                          <Loader2 size={16} strokeWidth={1.5} className="animate-spin" />
+                        ) : monitoredAddresses.has(asset.address) ? (
+                          <CheckCircle size={16} strokeWidth={1.5} />
+                        ) : (
+                          <Eye size={16} strokeWidth={1.5} />
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

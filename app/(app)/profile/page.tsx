@@ -53,6 +53,8 @@ export default function ProfilePage() {
   // 구독 상태
   const [subscription, setSubscription] = useState<{ plan: string; price: number; status: string } | null>(null);
 
+  const [cancelLoading, setCancelLoading] = useState(false);
+
   // 알림 설정
   const [notifications, setNotifications] = useState<Record<string, boolean> | null>(null);
   const [notifLoading, setNotifLoading] = useState(false);
@@ -101,6 +103,24 @@ export default function ProfilePage() {
       setUpgradeMessage("네트워크 오류가 발생했습니다.");
     }
     setUpgradeLoading(false);
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!window.confirm("정말로 구독을 해지하시겠습니까? 현재 결제 주기가 끝나면 무료 플랜으로 전환됩니다.")) return;
+    setCancelLoading(true);
+    try {
+      const res = await fetch("/api/subscription/cancel", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setSubscription((prev) => prev ? { ...prev, status: "cancelled" } : prev);
+        showToast(data.message || "구독이 해지되었습니다.");
+      } else {
+        showToast(data.error || "구독 해지에 실패했습니다.");
+      }
+    } catch {
+      showToast("네트워크 오류가 발생했습니다.");
+    }
+    setCancelLoading(false);
   };
 
   return (
@@ -254,9 +274,28 @@ export default function ProfilePage() {
           <div className="flex items-center justify-between">
             <div>
               <span className="text-sm text-muted">현재 플랜</span>
-              <p className="text-lg font-bold">무료</p>
+              <p className="text-lg font-bold">
+                {subscription?.plan === "FREE" || !subscription?.plan ? "무료" : subscription.plan === "PRO" ? "프로" : subscription.plan === "BUSINESS" ? "비즈니스" : subscription.plan}
+              </p>
             </div>
-            <span className="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-600">활성</span>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs px-2 py-1 rounded-full ${
+                subscription?.status === "cancelled"
+                  ? "bg-red-50 text-red-600"
+                  : "bg-emerald-50 text-emerald-600"
+              }`}>
+                {subscription?.status === "cancelled" ? "해지됨" : "활성"}
+              </span>
+              {subscription?.plan && subscription.plan !== "FREE" && subscription.status === "active" && (
+                <button
+                  onClick={handleCancelSubscription}
+                  disabled={cancelLoading}
+                  className="text-xs px-3 py-1 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {cancelLoading ? "처리 중..." : "구독 해지"}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* 예정 플랜 미리보기 (비활성) */}

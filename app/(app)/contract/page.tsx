@@ -807,7 +807,7 @@ export default function ContractReviewPage() {
           )}
 
           {/* 피드백 위젯 */}
-          {analysisId && <FeedbackWidget analysisId={analysisId} className="mt-4" />}
+          {analysisId && <FeedbackWidget analysisId={analysisId} analysisType="contract" className="mt-4" />}
 
           {/* 면책 조항 */}
           <Alert variant="warning">

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface FeedbackWidgetProps {
   analysisId: string;
+  analysisType?: string;
   className?: string;
 }
 
@@ -15,7 +16,7 @@ function getStorageKey(analysisId: string): string {
   return `vestra_feedback_${analysisId}`;
 }
 
-export default function FeedbackWidget({ analysisId, className }: FeedbackWidgetProps) {
+export default function FeedbackWidget({ analysisId, analysisType = "general", className }: FeedbackWidgetProps) {
   const [feedback, setFeedback] = useState<FeedbackValue>(null);
 
   useEffect(() => {
@@ -26,10 +27,23 @@ export default function FeedbackWidget({ analysisId, className }: FeedbackWidget
     }
   }, [analysisId]);
 
-  const handleFeedback = (value: FeedbackValue) => {
+  const handleFeedback = async (value: FeedbackValue) => {
     if (!value) return;
     setFeedback(value);
     localStorage.setItem(getStorageKey(analysisId), value);
+
+    // 서버에 피드백 전송 (실패해도 UX에 영향 없음)
+    try {
+      await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          analysisId,
+          analysisType,
+          rating: value,
+        }),
+      });
+    } catch { /* 네트워크 실패 시 localStorage에는 이미 저장됨 */ }
   };
 
   if (feedback) {

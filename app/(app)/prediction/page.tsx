@@ -773,7 +773,7 @@ export default function PredictionPage() {
           )}
 
           {/* 피드백 위젯 */}
-          {analysisId && <FeedbackWidget analysisId={analysisId} className="py-3" />}
+          {analysisId && <FeedbackWidget analysisId={analysisId} analysisType="prediction" className="py-3" />}
 
           <ScholarPapers keywords={["부동산 가격예측", "실거래가", addressInfo?.admin?.split(" ").slice(0, 2).join(" ") || "부동산"].filter(Boolean)} />
 
