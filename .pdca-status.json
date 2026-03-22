@@ -1,0 +1,11 @@
+{
+  "feasibility-scr-upgrade": {
+    "phase": "design",
+    "feature": "feasibility-scr-upgrade",
+    "startedAt": "2026-03-22T00:00:00Z",
+    "planDoc": "docs/01-plan/features/feasibility-scr-upgrade.plan.md",
+    "designDoc": "docs/02-design/features/feasibility-scr-upgrade.design.md",
+    "matchRate": null,
+    "iterationCount": 0
+  }
+}

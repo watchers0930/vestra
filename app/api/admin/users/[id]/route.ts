@@ -1,19 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth, ROLE_LIMITS } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { ROLE_LIMITS } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logAuditWithRequest, createAuditLog } from "@/lib/audit-log";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 
 /** PATCH: 사용자 역할/일일한도 변경 */
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
-  const { id } = await params;
+export const PATCH = withAdminAuth<{ id: string }>(async (req, { session, params }) => {
+  const { id } = params;
   const body = await req.json();
   const data: Record<string, unknown> = {};
 
@@ -36,7 +29,6 @@ export async function PATCH(
     select: { id: true, role: true, dailyLimit: true },
   });
 
-  // 감사 로그: 관리자 사용자 수정
   await logAuditWithRequest({
     userId: session.user.id,
     action: "ADMIN_USER_UPDATE",
@@ -53,19 +45,11 @@ export async function PATCH(
   });
 
   return NextResponse.json(updated);
-}
+});
 
 /** DELETE: 사용자 삭제 (Cascade) */
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
-  const { id } = await params;
+export const DELETE = withAdminAuth<{ id: string }>(async (req, { session, params }) => {
+  const { id } = params;
 
   if (id === session.user.id) {
     return NextResponse.json({ error: "자신의 계정은 삭제할 수 없습니다" }, { status: 400 });
@@ -73,7 +57,6 @@ export async function DELETE(
 
   await prisma.user.delete({ where: { id } });
 
-  // 감사 로그: 관리자 사용자 삭제
   await logAuditWithRequest({
     userId: session.user.id,
     action: "ADMIN_USER_DELETE",
@@ -90,4 +73,4 @@ export async function DELETE(
   });
 
   return NextResponse.json({ message: "사용자가 삭제되었습니다" });
-}
+});

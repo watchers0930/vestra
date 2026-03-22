@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 
 /** GET: vocab.txt 내보내기 (KR-BERT 토크나이저용) */
-export async function GET() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const GET = withAdminAuth(async () => {
   const vocabs = await prisma.domainVocabulary.findMany({
     orderBy: [{ category: "asc" }, { frequency: "desc" }],
   });
@@ -29,4 +24,4 @@ export async function GET() {
       "Content-Disposition": `attachment; filename=vestra-vocab-${date}.txt`,
     },
   });
-}
+});

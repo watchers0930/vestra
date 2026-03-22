@@ -1,19 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog } from "@/lib/audit-log";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 
 /** PUT: 용어 수정 */
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
-  const { id } = await params;
+export const PUT = withAdminAuth<{ id: string }>(async (req, { session, params }) => {
+  const { id } = params;
   const body = await req.json();
   const { category, definition } = body;
 
@@ -40,19 +32,11 @@ export async function PUT(
   });
 
   return NextResponse.json(updated);
-}
+});
 
 /** DELETE: 용어 삭제 */
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
-  const { id } = await params;
+export const DELETE = withAdminAuth<{ id: string }>(async (req, { session, params }) => {
+  const { id } = params;
   const existing = await prisma.domainVocabulary.findUnique({ where: { id } });
   if (!existing) {
     return NextResponse.json({ error: "용어를 찾을 수 없습니다." }, { status: 404 });
@@ -61,7 +45,7 @@ export async function DELETE(
   await prisma.domainVocabulary.delete({ where: { id } });
 
   createAuditLog({
-    req: _req,
+    req,
     userId: session.user.id,
     action: "admin:delete-vocabulary",
     target: `vocabulary:${id}`,
@@ -69,4 +53,4 @@ export async function DELETE(
   });
 
   return NextResponse.json({ success: true });
-}
+});

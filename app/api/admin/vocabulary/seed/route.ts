@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { SEED_VOCABULARY } from "@/lib/domain-vocabulary";
 import { createAuditLog } from "@/lib/audit-log";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 
 /** POST: 초기 시드 데이터 일괄 등록 */
-export async function POST() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const POST = withAdminAuth(async (_req, { session }) => {
   let created = 0;
   let skipped = 0;
 
@@ -45,4 +40,4 @@ export async function POST() {
     skipped,
     total: SEED_VOCABULARY.length,
   });
-}
+});

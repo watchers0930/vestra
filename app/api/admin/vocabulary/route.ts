@@ -1,16 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog } from "@/lib/audit-log";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 
 /** GET: 용어 목록 조회 (카테고리 필터, 검색, 통계) */
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
-  const { searchParams } = new URL(req.url);
+export const GET = withAdminAuth(async (req) => {
+  const { searchParams } = req.nextUrl;
   const category = searchParams.get("category");
   const search = searchParams.get("search");
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
@@ -31,7 +26,6 @@ export async function GET(req: NextRequest) {
     prisma.domainVocabulary.count({ where }),
   ]);
 
-  // 카테고리별 통계
   const [registryRight, legalAction, structure, financeTax, totalCount] =
     await Promise.all([
       prisma.domainVocabulary.count({ where: { category: "registry_right" } }),
@@ -54,15 +48,10 @@ export async function GET(req: NextRequest) {
       finance_tax: financeTax,
     },
   });
-}
+});
 
 /** POST: 수동 용어 추가 */
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const POST = withAdminAuth(async (req, { session }) => {
   const body = await req.json();
   const { term, category, definition } = body;
 
@@ -75,7 +64,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "유효하지 않은 카테고리입니다." }, { status: 400 });
   }
 
-  // 중복 체크 후 upsert
   const vocab = await prisma.domainVocabulary.upsert({
     where: { term: term.trim() },
     update: { category, definition, frequency: { increment: 1 } },
@@ -96,4 +84,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json(vocab);
-}
+});

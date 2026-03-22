@@ -1,19 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog } from "@/lib/audit-log";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 
 /** PUT: 공지사항 수정 */
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
-  const { id } = await params;
+export const PUT = withAdminAuth<{ id: string }>(async (req, { session, params }) => {
+  const { id } = params;
   const { title, content } = await req.json();
 
   if (!title?.trim() || !content?.trim()) {
@@ -34,19 +26,11 @@ export async function PUT(
   });
 
   return NextResponse.json(updated);
-}
+});
 
 /** DELETE: 공지사항 삭제 */
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
-  const { id } = await params;
+export const DELETE = withAdminAuth<{ id: string }>(async (req, { session, params }) => {
+  const { id } = params;
 
   await prisma.announcement.delete({ where: { id } });
 
@@ -59,4 +43,4 @@ export async function DELETE(
   });
 
   return NextResponse.json({ message: "공지사항이 삭제되었습니다" });
-}
+});

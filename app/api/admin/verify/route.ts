@@ -1,15 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth, ROLE_LIMITS } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { ROLE_LIMITS } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog } from "@/lib/audit-log";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 
 /** 관리자: 대기 중인 사업자 인증 목록 조회 */
-export async function GET() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const GET = withAdminAuth(async () => {
   const pendingUsers = await prisma.user.findMany({
     where: { verifyStatus: "pending" },
     select: {
@@ -21,17 +17,11 @@ export async function GET() {
     },
     orderBy: { createdAt: "desc" },
   });
-
   return NextResponse.json(pendingUsers);
-}
+});
 
 /** 관리자: 인증 승인/거부 */
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const POST = withAdminAuth(async (req, { session }) => {
   const { userId, action, role } = await req.json();
 
   if (!userId || !["approve", "reject"].includes(action)) {
@@ -53,11 +43,7 @@ export async function POST(req: NextRequest) {
 
     await prisma.user.update({
       where: { id: userId },
-      data: {
-        role: approvedRole,
-        verifyStatus: "verified",
-        dailyLimit,
-      },
+      data: { role: approvedRole, verifyStatus: "verified", dailyLimit },
     });
 
     createAuditLog({
@@ -71,7 +57,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "승인 완료", role: approvedRole, dailyLimit });
   }
 
-  // 거부
   await prisma.user.update({
     where: { id: userId },
     data: { verifyStatus: "rejected" },
@@ -86,4 +71,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ message: "인증이 거부되었습니다" });
-}
+});

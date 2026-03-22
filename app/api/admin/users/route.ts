@@ -1,13 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 
-export async function GET(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const GET = withAdminAuth(async (request) => {
   const { searchParams } = request.nextUrl;
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 50));
@@ -34,4 +29,4 @@ export async function GET(request: NextRequest) {
   ]);
 
   return NextResponse.json({ users, total, page, limit, totalPages: Math.ceil(total / limit) });
-}
+});

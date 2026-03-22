@@ -1,29 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog } from "@/lib/audit-log";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 
 /** GET: 공지사항 목록 */
-export async function GET() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const GET = withAdminAuth(async () => {
   const announcements = await prisma.announcement.findMany({
     orderBy: { createdAt: "desc" },
   });
-
   return NextResponse.json(announcements);
-}
+});
 
 /** POST: 새 공지사항 작성 */
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const POST = withAdminAuth(async (req, { session }) => {
   const { title, content } = await req.json();
 
   if (!title?.trim() || !content?.trim()) {
@@ -43,4 +32,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json(announcement);
-}
+});

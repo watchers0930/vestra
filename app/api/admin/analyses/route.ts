@@ -1,15 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 
 /** GET: 전체 분석 이력 조회 */
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
-  const { searchParams } = new URL(req.url);
+export const GET = withAdminAuth(async (req) => {
+  const { searchParams } = req.nextUrl;
   const typeFilter = searchParams.get("type");
 
   const where = typeFilter ? { type: typeFilter } : {};
@@ -32,4 +27,4 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.json(analyses);
-}
+});
