@@ -7,11 +7,13 @@
  * @module lib/feasibility/document-parser
  */
 
-import { extractText } from "unpdf";
+import { extractText, getDocumentProxy } from "unpdf";
+import { join } from "path";
 import mammoth from "mammoth";
 import * as XLSX from "xlsx";
 import { getOpenAIClient } from "../openai";
 import { extractEntities } from "../nlp-ner-pipeline";
+import { extractTextFromScannedPDF } from "../image-ocr";
 import type { Entity } from "../nlp-ner-pipeline";
 import type { ParsedDocument, ExtractedValue, ClaimKey } from "./feasibility-types";
 import { CLAIM_KEYS, CLAIM_LABELS } from "./feasibility-types";
@@ -174,10 +176,13 @@ function detectFileType(filename: string): FileType {
 // ---------------------------------------------------------------------------
 
 async function extractTextFromPdf(buffer: Buffer): Promise<{ text: string; pageCount: number }> {
-  const { totalPages, text } = await extractText(
-    new Uint8Array(buffer),
-    { mergePages: true }
-  );
+  // CMap 경로를 지정하여 CIDFont(한글 등) PDF 텍스트 추출 지원
+  const cMapUrl = join(process.cwd(), "node_modules/pdfjs-dist/cmaps/");
+  const pdf = await getDocumentProxy(new Uint8Array(buffer), {
+    cMapUrl,
+    cMapPacked: true,
+  });
+  const { totalPages, text } = await extractText(pdf, { mergePages: true });
   return { text, pageCount: totalPages || 0 };
 }
 
@@ -611,6 +616,19 @@ export async function parseDocument(
       const result = await extractTextFromPdf(buffer);
       rawText = result.text;
       pageCount = result.pageCount;
+      // CIDFont(한글 등) PDF에서 텍스트 추출 실패 시 Vision OCR 폴백
+      if (!rawText || rawText.trim().length < 10) {
+        console.warn(`[document-parser] PDF 텍스트 추출 부족 (${rawText?.trim().length || 0}자), OCR 폴백: ${filename}`);
+        try {
+          const ocrResult = await extractTextFromScannedPDF(buffer, filename, {
+            skipRegistryNormalization: true,
+          });
+          rawText = ocrResult.text;
+          pageCount = ocrResult.pageCount || pageCount;
+        } catch (ocrErr) {
+          console.warn("[document-parser] OCR 폴백 실패:", ocrErr);
+        }
+      }
       break;
     }
     case "docx":

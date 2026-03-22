@@ -1,6 +1,6 @@
 {
   "name": "vestra",
-  "version": "4.3.1",
+  "version": "4.3.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -30,6 +30,7 @@
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
     "openai": "^6.23.0",
+    "pdfjs-dist": "^4.10.38",
     "prisma": "^6.19.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",

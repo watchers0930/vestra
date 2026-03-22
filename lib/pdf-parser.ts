@@ -10,7 +10,8 @@
  * @module lib/pdf-parser
  */
 
-import { extractText } from "unpdf";
+import { extractText, getDocumentProxy } from "unpdf";
+import { join } from "path";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -145,11 +146,15 @@ export async function extractTextFromPDF(
   buffer: Buffer,
   fileName: string = "document.pdf"
 ): Promise<PDFExtractResult> {
-  // unpdf로 텍스트 추출 (서버사이드 전용, DOMMatrix 등 브라우저 API 불필요)
-  const { totalPages, text: rawText } = await extractText(
-    new Uint8Array(buffer),
-    { mergePages: true }
-  );
+  // unpdf로 텍스트 추출 (CMap 포함하여 한글 CIDFont PDF 지원)
+  const cMapUrl = join(process.cwd(), "node_modules/pdfjs-dist/cmaps/");
+  const pdf = await getDocumentProxy(new Uint8Array(buffer), {
+    cMapUrl,
+    cMapPacked: true,
+  });
+  const { totalPages, text: rawText } = await extractText(pdf, {
+    mergePages: true,
+  });
 
   const pageCount = totalPages || 0;
 

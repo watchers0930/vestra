@@ -91,7 +91,8 @@ async function extractWithVision(
 
 export async function extractTextFromScannedPDF(
   buffer: Buffer,
-  fileName: string
+  fileName: string,
+  options?: { skipRegistryNormalization?: boolean }
 ): Promise<PDFExtractResult> {
   const openai = getOpenAIClient();
   const base64 = buffer.toString("base64");
@@ -99,6 +100,9 @@ export async function extractTextFromScannedPDF(
   console.log(`[PDF OCR] Responses API input_file로 스캔 PDF 처리: ${fileName}`);
 
   let extractedText = "";
+  const userPrompt = options?.skipRegistryNormalization
+    ? "이 PDF 문서에서 모든 텍스트를 추출해주세요. 표, 숫자, 항목 등을 빠짐없이 포함해주세요."
+    : "이 등기부등본 PDF에서 모든 텍스트를 추출해주세요.";
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -109,7 +113,7 @@ export async function extractTextFromScannedPDF(
           {
             role: "user",
             content: [
-              { type: "input_text", text: "이 등기부등본 PDF에서 모든 텍스트를 추출해주세요." },
+              { type: "input_text", text: userPrompt },
               {
                 type: "input_file",
                 filename: fileName,
@@ -134,8 +138,20 @@ export async function extractTextFromScannedPDF(
 
   if (!extractedText || extractedText.length < 20) {
     throw new Error(
-      "PDF에서 텍스트를 추출할 수 없습니다. 선명한 등기부등본을 업로드해주세요."
+      "PDF에서 텍스트를 추출할 수 없습니다. 텍스트가 포함된 PDF를 업로드해주세요."
     );
+  }
+
+  // 등기부등본이 아닌 일반 문서는 정규화 스킵
+  if (options?.skipRegistryNormalization) {
+    return {
+      text: extractedText,
+      pageCount: 1,
+      fileName: `${fileName} (스캔 PDF → AI OCR)`,
+      charCount: extractedText.length,
+      isRegistry: false,
+      confidence: 0,
+    };
   }
 
   const normalizedText = normalizeRegistryText(extractedText);
