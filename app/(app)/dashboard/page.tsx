@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
@@ -112,16 +112,18 @@ export default function DashboardPage() {
   }, [session]);
 
   const totalAssets = assets.length;
-  const totalValue = assets.reduce((sum, a) => sum + a.estimatedPrice, 0);
-  const avgSafety = assets.length > 0
-    ? Math.round(assets.reduce((sum, a) => sum + a.safetyScore, 0) / assets.length)
-    : 0;
-  const avgRisk = assets.length > 0
-    ? Math.round(assets.reduce((sum, a) => sum + a.riskScore, 0) / assets.length)
-    : 0;
+  const totalValue = useMemo(() => assets.reduce((sum, a) => sum + a.estimatedPrice, 0), [assets]);
+  const avgSafety = useMemo(
+    () => assets.length > 0 ? Math.round(assets.reduce((sum, a) => sum + a.safetyScore, 0) / assets.length) : 0,
+    [assets],
+  );
+  const avgRisk = useMemo(
+    () => assets.length > 0 ? Math.round(assets.reduce((sum, a) => sum + a.riskScore, 0) / assets.length) : 0,
+    [assets],
+  );
 
   // 리스크 분포 계산
-  const riskDistribution = (() => {
+  const riskDistribution = useMemo(() => {
     if (assets.length === 0) return [];
     const low = assets.filter((a) => a.riskScore <= 30).length;
     const mid = assets.filter((a) => a.riskScore > 30 && a.riskScore <= 60).length;
@@ -131,21 +133,21 @@ export default function DashboardPage() {
       { name: "중위험 (31-60)", value: mid, fill: "#fbbf24" },
       { name: "고위험 (61+)", value: high, fill: "#f87171" },
     ].filter((d) => d.value > 0);
-  })();
+  }, [assets]);
 
   // 자산별 가치 차트 데이터 (상위 8건)
-  const assetValueData = assets
-    .slice(0, 8)
-    .map((a) => ({
+  const assetValueData = useMemo(
+    () => assets.slice(0, 8).map((a) => ({
       name: a.address.length > 12 ? a.address.slice(0, 12) + "..." : a.address,
       value: a.estimatedPrice,
       risk: a.riskScore,
-    }));
+    })),
+    [assets],
+  );
 
-  const handleDeleteAnalysis = async (id: string) => {
+  const handleDeleteAnalysis = useCallback(async (id: string) => {
     removeAnalysis(id);
     setAnalyses((prev) => prev.filter((a) => a.id !== id));
-    // 인증 사용자면 서버에서도 삭제
     if (session?.user) {
       try {
         await fetch("/api/user/sync-data", {
@@ -155,13 +157,13 @@ export default function DashboardPage() {
         });
       } catch { /* 실패해도 로컬은 이미 삭제됨 */ }
     }
-  };
+  }, [session?.user]);
 
   // 동일 주소별 분석 건수 맵
-  const addressCountMap = analyses.reduce<Record<string, number>>((acc, a) => {
-    acc[a.address] = (acc[a.address] || 0) + 1;
-    return acc;
-  }, {});
+  const addressCountMap = useMemo(
+    () => analyses.reduce<Record<string, number>>((acc, a) => { acc[a.address] = (acc[a.address] || 0) + 1; return acc; }, {}),
+    [analyses],
+  );
 
   const handleCascadeUpdate = async (address: string) => {
     setCascadeLoading(address);

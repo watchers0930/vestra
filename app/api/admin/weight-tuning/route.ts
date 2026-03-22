@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { tuneWeights, type FeedbackRecord } from "@/lib/adaptive-weight-tuner";
+import { createAuditLog } from "@/lib/audit-log";
 
 const DEFAULT_WEIGHTS: Record<string, number> = {
   "등기부 파싱": 0.25,
@@ -205,6 +206,14 @@ export async function POST(req: NextRequest) {
       confidence: result.confidence,
       isActive: true,
     },
+  });
+
+  createAuditLog({
+    req,
+    userId: session.user.id,
+    action: "admin:run-weight-tuning",
+    target: `weight-config:${newConfig.id}`,
+    detail: { improvement: result.improvement, confidence: result.confidence, feedbackCount: feedbacks.length, description: "가중치 튜닝 실행" },
   });
 
   return NextResponse.json({

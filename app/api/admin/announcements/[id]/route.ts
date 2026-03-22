@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createAuditLog } from "@/lib/audit-log";
 
 /** PUT: 공지사항 수정 */
 export async function PUT(
@@ -24,6 +25,14 @@ export async function PUT(
     data: { title: title.trim(), content: content.trim() },
   });
 
+  createAuditLog({
+    req,
+    userId: session.user.id,
+    action: "admin:update-announcement",
+    target: `announcement:${id}`,
+    detail: { title: title.trim(), description: "공지사항 수정" },
+  });
+
   return NextResponse.json(updated);
 }
 
@@ -40,6 +49,14 @@ export async function DELETE(
   const { id } = await params;
 
   await prisma.announcement.delete({ where: { id } });
+
+  createAuditLog({
+    req,
+    userId: session.user.id,
+    action: "admin:delete-announcement",
+    target: `announcement:${id}`,
+    detail: { description: "공지사항 삭제" },
+  });
 
   return NextResponse.json({ message: "공지사항이 삭제되었습니다" });
 }

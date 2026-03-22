@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { decryptPII } from "@/lib/crypto";
+import { createAuditLog } from "@/lib/audit-log";
 
 /** GET: 개별 학습 데이터 상세 (복호화된 원문 포함) */
 export async function GET(
@@ -74,6 +75,14 @@ export async function PUT(
     },
   });
 
+  createAuditLog({
+    req,
+    userId: session.user.id,
+    action: "admin:update-training-data",
+    target: `training-data:${id}`,
+    detail: { status, description: "학습 데이터 수정" },
+  });
+
   return NextResponse.json(updated);
 }
 
@@ -94,5 +103,14 @@ export async function DELETE(
   }
 
   await prisma.trainingData.delete({ where: { id } });
+
+  createAuditLog({
+    req: _req,
+    userId: session.user.id,
+    action: "admin:delete-training-data",
+    target: `training-data:${id}`,
+    detail: { description: "학습 데이터 삭제" },
+  });
+
   return NextResponse.json({ success: true });
 }

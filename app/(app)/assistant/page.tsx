@@ -163,7 +163,7 @@ export default function AssistantPage() {
       {/* Chat Area */}
       <Card className="flex-1 flex flex-col overflow-hidden">
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4" role="log" aria-label="채팅 메시지" aria-live="polite">
           {messages.length === 0 && (
             <div className="h-full flex flex-col items-center justify-center text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
@@ -223,7 +223,7 @@ export default function AssistantPage() {
           ))}
 
           {loading && (
-            <div className="flex gap-3">
+            <div className="flex gap-3" aria-busy="true">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <Bot size={18} className="text-primary" />
               </div>
@@ -253,6 +253,7 @@ export default function AssistantPage() {
                 }
               }}
               placeholder="부동산에 관해 무엇이든 물어보세요..."
+              aria-label="메시지 입력"
               className="flex-1 px-4 py-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm"
               disabled={loading}
             />
@@ -261,6 +262,7 @@ export default function AssistantPage() {
               onClick={() => sendMessage()}
               disabled={loading || !input.trim()}
               size="lg"
+              aria-label="메시지 전송"
             />
           </div>
         </div>

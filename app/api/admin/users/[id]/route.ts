@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { logAuditWithRequest } from "@/lib/audit-log";
+import { logAuditWithRequest, createAuditLog } from "@/lib/audit-log";
 
 /** PATCH: 사용자 역할/일일한도 변경 */
 export async function PATCH(
@@ -44,6 +44,14 @@ export async function PATCH(
     detail: { changes: data, result: updated },
   });
 
+  createAuditLog({
+    req,
+    userId: session.user.id,
+    action: "admin:update-user",
+    target: `user:${id}`,
+    detail: { changes: data, description: "사용자 역할/한도 변경" },
+  });
+
   return NextResponse.json(updated);
 }
 
@@ -71,6 +79,14 @@ export async function DELETE(
     action: "ADMIN_USER_DELETE",
     target: id,
     detail: { deletedUserId: id },
+  });
+
+  createAuditLog({
+    req,
+    userId: session.user.id,
+    action: "admin:delete-user",
+    target: `user:${id}`,
+    detail: { description: "사용자 삭제" },
   });
 
   return NextResponse.json({ message: "사용자가 삭제되었습니다" });

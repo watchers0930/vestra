@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/watchers/Desktop/vestra/app/%28app%29/jeonse/layout.tsx"],"sourcesContent":["export default function JeonseLayout({ children }: { children: React.ReactNode }) {\n  return <>{children}</>;\n}\n"],"names":[],"mappings":";;;;;;AAAe,SAAS,aAAa,EAAE,QAAQ,EAAiC;IAC9E,qBAAO;kBAAG;;AACZ"}}]
-}

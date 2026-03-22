@@ -260,7 +260,7 @@ export default function RightsAnalysisPage() {
       )}
 
       {/* 입력 섹션 */}
-      <Card className="p-6 mb-6">
+      <Card className="p-6 mb-6" role="form" aria-label="등기부등본 입력">
         {/* 입력 모드 토글 */}
         <div className="flex gap-2 mb-4">
           <button onClick={() => setInputMode("file")} className={cn("flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all", inputMode === "file" ? "bg-[#1d1d1f] text-white border-[#1d1d1f]" : "bg-white text-secondary border-border hover:bg-[#f5f5f7]")}>
@@ -281,12 +281,14 @@ export default function RightsAnalysisPage() {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onClick={() => fileInputRef.current?.click()}
+            role="button"
+            aria-label={fileName ? `업로드된 파일: ${fileName}. 클릭하여 변경` : "등기부등본 파일 업로드 영역. 클릭 또는 드래그하여 업로드"}
             className={cn(
               "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all",
               isDragging ? "border-primary bg-primary/5" : fileName ? "border-emerald-300 bg-emerald-50" : "border-border hover:border-primary/50 hover:bg-[#f5f5f7]"
             )}
           >
-            <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={handleFileChange} className="hidden" />
+            <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={handleFileChange} className="hidden" aria-label="등기부등본 파일 선택" />
             {isExtracting ? (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 size={32} className="animate-spin text-primary" />
@@ -314,6 +316,7 @@ export default function RightsAnalysisPage() {
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
             placeholder="등기부등본 텍스트를 붙여넣으세요..."
+            aria-label="등기부등본 텍스트 입력"
             className="w-full h-48 px-4 py-3 rounded-lg border border-border text-xs font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         )}
@@ -347,7 +350,7 @@ export default function RightsAnalysisPage() {
 
       {/* 에러 */}
       {error && (
-        <div className="mb-6">
+        <div className="mb-6" role="alert">
           <ErrorRetry
             message={error}
             detail="입력 내용을 확인하거나 다시 시도해주세요."
@@ -361,7 +364,7 @@ export default function RightsAnalysisPage() {
 
       {/* 분석 진행 중 */}
       {step !== "idle" && step !== "done" && !error && (
-        <Card className="p-6 mb-6">
+        <Card className="p-6 mb-6" aria-busy="true" aria-live="polite">
           <p className="text-sm font-medium text-[#1d1d1f] text-center mb-2">등기부등본 종합 분석 중...</p>
           <AnalysisStepIndicator step={step} showExtract={!!usedFile} fileType={fileType} />
           <AnalysisLoader
@@ -374,7 +377,7 @@ export default function RightsAnalysisPage() {
       {/* 결과 */}
       {result && step === "done" && (
         <>
-          <div id="rights-result">
+          <div id="rights-result" aria-live="polite">
             <RightsResult result={result} rawText={rawText} />
           </div>
 

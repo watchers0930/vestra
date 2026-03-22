@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleApiError } from "@/lib/api-error-handler";
 import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
 import { CHAT_SYSTEM_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
@@ -79,17 +80,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ content });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    console.error("Chat error:", message);
-
-    if (message.includes("API key") || message.includes("api_key") || message.includes("환경변수")) {
-      return NextResponse.json(
-        { error: "OpenAI API 키가 설정되지 않았습니다." },
-        { status: 401 }
-      );
-    }
-
-    return NextResponse.json({ error: `응답 생성 중 오류: ${message}` }, { status: 500 });
+    return handleApiError(error, "AI 채팅");
   }
 }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createAuditLog } from "@/lib/audit-log";
 
 /** GET: 공지사항 목록 */
 export async function GET() {
@@ -31,6 +32,14 @@ export async function POST(req: NextRequest) {
 
   const announcement = await prisma.announcement.create({
     data: { title: title.trim(), content: content.trim() },
+  });
+
+  createAuditLog({
+    req,
+    userId: session.user.id,
+    action: "admin:create-announcement",
+    target: `announcement:${announcement.id}`,
+    detail: { title: title.trim(), description: "공지사항 생성" },
   });
 
   return NextResponse.json(announcement);

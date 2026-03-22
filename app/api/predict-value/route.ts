@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleApiError } from "@/lib/api-error-handler";
 import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
 import { VALUE_PREDICTION_OPINION_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
@@ -290,16 +291,6 @@ export async function POST(req: NextRequest) {
       ].filter(Boolean),
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    console.error("Value prediction error:", message);
-
-    if (message.includes("API key") || message.includes("api_key") || message.includes("환경변수")) {
-      return NextResponse.json(
-        { error: "OpenAI API 키가 설정되지 않았습니다. .env.local 파일을 확인해주세요." },
-        { status: 401 }
-      );
-    }
-
-    return NextResponse.json({ error: `예측 중 오류: ${message}` }, { status: 500 });
+    return handleApiError(error, "시세 예측");
   }
 }

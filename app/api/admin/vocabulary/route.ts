@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createAuditLog } from "@/lib/audit-log";
 
 /** GET: 용어 목록 조회 (카테고리 필터, 검색, 통계) */
 export async function GET(req: NextRequest) {
@@ -84,6 +85,14 @@ export async function POST(req: NextRequest) {
       source: "manual",
       definition: definition || null,
     },
+  });
+
+  createAuditLog({
+    req,
+    userId: session.user.id,
+    action: "admin:create-vocabulary",
+    target: `vocabulary:${vocab.id}`,
+    detail: { term: term.trim(), category, description: "도메인 용어 추가" },
   });
 
   return NextResponse.json(vocab);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { logAuditWithRequest } from "@/lib/audit-log";
+import { logAuditWithRequest, createAuditLog } from "@/lib/audit-log";
 import { validateOrigin } from "@/lib/csrf";
 import {
   getOAuthSettings,
@@ -153,10 +153,24 @@ export async function PUT(req: NextRequest) {
 
     if (!apiKey) {
       await deleteScholarSetting(config.apiKeyName);
+      createAuditLog({
+        req,
+        userId: session.user.id,
+        action: "admin:reset-settings",
+        target: `scholar:${provider}`,
+        detail: { category: "scholar", provider, description: "논문검색 서비스 설정 초기화" },
+      });
       return NextResponse.json({ message: `${config.label} 설정이 초기화되었습니다.` });
     }
 
     await setScholarSetting(config.apiKeyName, apiKey);
+    createAuditLog({
+      req,
+      userId: session.user.id,
+      action: "admin:update-settings",
+      target: `scholar:${provider}`,
+      detail: { category: "scholar", provider, description: "논문검색 API 키 저장" },
+    });
     return NextResponse.json({ message: `${config.label} API 키가 저장되었습니다.` });
   }
 
@@ -171,6 +185,13 @@ export async function PUT(req: NextRequest) {
     if (!clientKey && !secretKey) {
       await deletePGSetting(config.clientKeyName);
       await deletePGSetting(config.secretKeyName);
+      createAuditLog({
+        req,
+        userId: session.user.id,
+        action: "admin:reset-settings",
+        target: `pg:${provider}`,
+        detail: { category: "pg", provider, description: "PG 설정 초기화" },
+      });
       return NextResponse.json({ message: `${config.label} 설정이 초기화되었습니다.` });
     }
 
@@ -183,6 +204,13 @@ export async function PUT(req: NextRequest) {
 
     await setPGSetting(config.clientKeyName, clientKey);
     await setPGSetting(config.secretKeyName, secretKey);
+    createAuditLog({
+      req,
+      userId: session.user.id,
+      action: "admin:update-settings",
+      target: `pg:${provider}`,
+      detail: { category: "pg", provider, description: "PG 결제 설정 저장" },
+    });
     return NextResponse.json({ message: `${config.label} 결제 설정이 저장되었습니다.` });
   }
 
@@ -196,6 +224,13 @@ export async function PUT(req: NextRequest) {
   if (!clientId && !clientSecret) {
     await deleteOAuthSetting(config.clientIdKey);
     await deleteOAuthSetting(config.clientSecretKey);
+    createAuditLog({
+      req,
+      userId: session.user.id,
+      action: "admin:reset-settings",
+      target: `oauth:${provider}`,
+      detail: { category: "oauth", provider, description: "OAuth 설정 초기화" },
+    });
     return NextResponse.json({ message: `${config.label} 설정이 초기화되었습니다.` });
   }
 

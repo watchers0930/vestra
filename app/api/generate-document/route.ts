@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleApiError } from "@/lib/api-error-handler";
 import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
 import { JEONSE_ANALYSIS_PROMPT, DOCUMENT_GENERATION_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
@@ -143,16 +144,6 @@ JSON 형식으로 응답하세요: { "title": "임차권등기명령 신청서",
 
     return NextResponse.json({ error: "잘못된 요청 타입입니다." }, { status: 400 });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    console.error("Document generation error:", message);
-
-    if (message.includes("API key") || message.includes("api_key") || message.includes("환경변수")) {
-      return NextResponse.json(
-        { error: "OpenAI API 키가 설정되지 않았습니다." },
-        { status: 401 }
-      );
-    }
-
-    return NextResponse.json({ error: `오류: ${message}` }, { status: 500 });
+    return handleApiError(error, "문서 생성");
   }
 }

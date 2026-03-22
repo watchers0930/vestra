@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { handleApiError } from "@/lib/api-error-handler";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { createAuditLog } from "@/lib/audit-log";
 import { prisma } from "@/lib/prisma";
@@ -213,11 +214,6 @@ export async function POST(req: NextRequest) {
       { headers: rateLimitHeaders(rl) }
     );
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    console.error("[Feedback] 처리 오류:", message);
-    return NextResponse.json(
-      { error: `피드백 처리 중 오류: ${message}` },
-      { status: 500 }
-    );
+    return handleApiError(error, "피드백 저장");
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createAuditLog } from "@/lib/audit-log";
 
 /** 관리자: 대기 중인 사업자 인증 목록 조회 */
 export async function GET() {
@@ -59,6 +60,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    createAuditLog({
+      req,
+      userId: session.user.id,
+      action: "admin:approve-verification",
+      target: `user:${userId}`,
+      detail: { approvedRole, dailyLimit, description: "사업자 인증 승인" },
+    });
+
     return NextResponse.json({ message: "승인 완료", role: approvedRole, dailyLimit });
   }
 
@@ -66,6 +75,14 @@ export async function POST(req: NextRequest) {
   await prisma.user.update({
     where: { id: userId },
     data: { verifyStatus: "rejected" },
+  });
+
+  createAuditLog({
+    req,
+    userId: session.user.id,
+    action: "admin:reject-verification",
+    target: `user:${userId}`,
+    detail: { description: "사업자 인증 거부" },
   });
 
   return NextResponse.json({ message: "인증이 거부되었습니다" });

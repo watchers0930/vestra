@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createAuditLog } from "@/lib/audit-log";
 
 /** PUT: 용어 수정 */
 export async function PUT(
@@ -30,6 +31,14 @@ export async function PUT(
     data: updateData,
   });
 
+  createAuditLog({
+    req,
+    userId: session.user.id,
+    action: "admin:update-vocabulary",
+    target: `vocabulary:${id}`,
+    detail: { category, description: "도메인 용어 수정" },
+  });
+
   return NextResponse.json(updated);
 }
 
@@ -50,5 +59,14 @@ export async function DELETE(
   }
 
   await prisma.domainVocabulary.delete({ where: { id } });
+
+  createAuditLog({
+    req: _req,
+    userId: session.user.id,
+    action: "admin:delete-vocabulary",
+    target: `vocabulary:${id}`,
+    detail: { term: existing.term, description: "도메인 용어 삭제" },
+  });
+
   return NextResponse.json({ success: true });
 }

@@ -1,6 +1,6 @@
 {
   "name": "vestra",
-  "version": "3.8.1",
+  "version": "3.9.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -21,7 +21,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "docx": "^9.6.1",
-    "dompurify": "^3.3.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.0",
     "leaflet": "^1.9.4",
@@ -34,7 +33,6 @@
     "prisma": "^6.19.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-kakao-maps-sdk": "^1.2.1",
     "react-leaflet": "^5.0.0",
     "recharts": "^3.7.0",
     "tailwind-merge": "^3.5.0",
@@ -50,7 +48,6 @@
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "puppeteer": "^24.37.5",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.0.18"

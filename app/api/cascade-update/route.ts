@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleApiError } from "@/lib/api-error-handler";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
@@ -141,11 +142,6 @@ export async function POST(req: NextRequest) {
       headers: rateLimitHeaders(rl),
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    console.error("[cascade-update] Error:", message);
-    return NextResponse.json(
-      { error: `캐스케이드 업데이트 중 오류: ${message}` },
-      { status: 500 },
-    );
+    return handleApiError(error, "연쇄 업데이트");
   }
 }

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { IntegrityChain } from "@/lib/integrity-chain";
+import { createAuditLog } from "@/lib/audit-log";
 
 /**
  * GET /api/admin/integrity-audit
@@ -139,6 +140,14 @@ export async function POST(req: NextRequest) {
     if (isValid) verifiedCount++;
     else tamperedCount++;
   }
+
+  createAuditLog({
+    req,
+    userId: session.user.id,
+    action: "admin:run-integrity-audit",
+    target: "integrity-audit",
+    detail: { checked: records.length, verified: verifiedCount, tampered: tamperedCount, description: "무결성 전체 재검증 실행" },
+  });
 
   return NextResponse.json({
     success: true,

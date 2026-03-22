@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleApiError } from "@/lib/api-error-handler";
 import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
 import { UNIFIED_ANALYSIS_PROMPT } from "@/lib/prompts";
 import { parseRegistry } from "@/lib/registry-parser";
@@ -114,12 +115,7 @@ export async function GET(req: NextRequest) {
       supply: supplyResult,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    console.error("Unified GET error:", message);
-    return NextResponse.json(
-      { error: `통합 조회 중 오류: ${message}` },
-      { status: 500 }
-    );
+    return handleApiError(error, "통합 분석");
   }
 }
 
@@ -458,11 +454,6 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    console.error("Unified analysis error:", message);
-    return NextResponse.json(
-      { error: `통합 분석 중 오류: ${message}` },
-      { status: 500 }
-    );
+    return handleApiError(error, "통합 분석");
   }
 }

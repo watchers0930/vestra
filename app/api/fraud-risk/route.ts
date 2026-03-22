@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleApiError } from "@/lib/api-error-handler";
 import { predictFraudRisk, extractFeaturesFromRiskScore, type FraudModelInput } from "@/lib/fraud-risk-model";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { createAuditLog } from "@/lib/audit-log";
@@ -120,11 +121,6 @@ export async function POST(req: NextRequest) {
       headers: rateLimitHeaders(rl),
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    console.error("Fraud risk prediction error:", message);
-    return NextResponse.json(
-      { error: `전세사기 위험 예측 중 오류: ${message}` },
-      { status: 500 }
-    );
+    return handleApiError(error, "사기 위험도 분석");
   }
 }

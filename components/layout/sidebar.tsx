@@ -26,7 +26,7 @@ import {
   ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { version } from "../../package.json";
@@ -165,19 +165,19 @@ export default function Sidebar() {
   }, []);
 
   // 관리자 메뉴 활성 상태 체크
-  const isAdminItemActive = (item: MenuItem) => {
+  const isAdminItemActive = useCallback((item: MenuItem) => {
     if (!isAdminPage) return false;
     const itemUrl = new URL(item.href, "http://x");
     const itemTab = itemUrl.searchParams.get("tab");
-    if (!itemTab) return !currentTab; // 개요 탭
+    if (!itemTab) return !currentTab;
     return currentTab === itemTab;
-  };
+  }, [isAdminPage, currentTab]);
 
   // 사용자 메뉴 활성 상태 체크
-  const isUserItemActive = (item: MenuItem) => {
+  const isUserItemActive = useCallback((item: MenuItem) => {
     if (item.href === "/dashboard") return pathname === "/dashboard";
     return pathname === item.href || pathname.startsWith(item.href + "/");
-  };
+  }, [pathname]);
 
   // ---------------------------------------------------------------------------
   // 메뉴 아이템 렌더링 (공통)

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
+import { createAuditLog } from "@/lib/audit-log";
 
 export async function PUT(req: Request) {
   const csrfError = validateOrigin(req);
@@ -51,6 +52,14 @@ export async function PUT(req: Request) {
   await prisma.user.update({
     where: { id: session.user.id },
     data: { password: hashedPassword },
+  });
+
+  createAuditLog({
+    req,
+    userId: session.user.id,
+    action: "admin:update-password",
+    target: `user:${session.user.id}`,
+    detail: { description: "관리자 비밀번호 변경" },
   });
 
   return NextResponse.json({ message: "비밀번호가 변경되었습니다" });

@@ -452,10 +452,10 @@ export default function PredictionPage() {
       </div>
 
       {/* 검색 섹션 */}
-      <Card className="p-4 sm:p-6 mb-6">
+      <Card className="p-4 sm:p-6 mb-6" role="search" aria-label="주소 검색">
         <p className="text-xs text-[#6e6e73] mb-3 sm:mb-4 sm:text-center">주소를 검색하여 선택하세요.</p>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-          <div onClick={openDaumPostcode} className={cn(
+          <div onClick={openDaumPostcode} role="button" aria-label={roadResult ? `선택된 주소: ${roadResult}. 클릭하여 변경` : "클릭하여 주소 검색"} className={cn(
             "flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border text-sm cursor-pointer transition-colors",
             roadResult ? "border-border bg-white text-[#1d1d1f]" : "border-dashed border-[#e5e5e7] bg-[#f5f5f7] text-[#6e6e73] hover:bg-[#e5e5e7]"
           )}>{roadResult || "클릭하여 주소 검색"}</div>
@@ -501,11 +501,11 @@ export default function PredictionPage() {
         )}
       </Card>
 
-      {loading && <LoadingSpinner message="실거래 데이터 수집 및 AI 가치 예측 분석 중입니다..." />}
+      {loading && <div aria-busy="true" aria-live="polite"><LoadingSpinner message="실거래 데이터 수집 및 AI 가치 예측 분석 중입니다..." /></div>}
 
       {/* 결과 영역 (탭 기반) */}
       {result && !loading && (
-        <div ref={resultRef} className="space-y-6">
+        <div ref={resultRef} className="space-y-6" aria-live="polite">
           <div className="flex items-center justify-between">
             <AiDisclaimer compact />
             <PdfDownloadButton targetRef={resultRef} filename="vestra-prediction.pdf" title="VESTRA 시세전망 리포트" />

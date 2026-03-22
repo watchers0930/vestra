@@ -462,7 +462,7 @@ export default function ContractReviewPage() {
       </div>
 
       {/* Input Card */}
-      <Card className="p-6">
+      <Card className="p-6" role="form" aria-label="계약서 입력">
         {/* Tabs */}
         <div className="mb-5 flex flex-wrap items-center gap-2">
           <Button
@@ -518,6 +518,7 @@ export default function ContractReviewPage() {
               setError(null);
             }}
             placeholder="계약서 내용을 여기에 붙여넣으세요...&#10;&#10;예시: 부동산 임대차계약서, 매매계약서 등의 전문을 입력하면 AI가 조항별로 분석합니다."
+            aria-label="계약서 텍스트 입력"
             className="min-h-[300px] w-full resize-y rounded-lg border border-[#e5e5e7] bg-[#f5f5f7] p-4 text-sm leading-relaxed text-[#1d1d1f] placeholder:text-[#6e6e73] focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition-colors"
           />
         )}
@@ -530,6 +531,8 @@ export default function ContractReviewPage() {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onClick={() => fileInputRef.current?.click()}
+              role="button"
+              aria-label={fileName ? `업로드된 파일: ${fileName}. 클릭하여 변경` : "계약서 파일 업로드 영역. 클릭 또는 드래그하여 업로드"}
               className={cn(
                 "flex min-h-[300px] cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed transition-colors",
                 isDragging
@@ -567,6 +570,7 @@ export default function ContractReviewPage() {
               type="file"
               accept=".txt,.pdf"
               onChange={handleFileChange}
+              aria-label="계약서 파일 선택"
               className="hidden"
             />
           </>
@@ -581,7 +585,7 @@ export default function ContractReviewPage() {
 
         {/* Error */}
         {error && (
-          <div className="mt-4">
+          <div className="mt-4" role="alert">
             <ErrorRetry
               message={error}
               detail="계약서 내용을 확인하거나 다시 시도해주세요."
@@ -609,7 +613,7 @@ export default function ContractReviewPage() {
 
       {/* 분석 진행 중 */}
       {isLoading && (
-        <Card className="p-6">
+        <Card className="p-6" aria-busy="true" aria-live="polite">
           <p className="text-sm font-medium text-[#1d1d1f] text-center mb-2">계약서 AI 분석 중...</p>
           <AnalysisLoader
             steps={["계약서 텍스트 추출 중...", "조항 분석 중...", "판례 검색 중...", "AI 검토 의견 생성 중..."]}
@@ -622,7 +626,7 @@ export default function ContractReviewPage() {
       {/* Results                                                            */}
       {/* ------------------------------------------------------------------ */}
       {result && (
-        <div ref={resultRef} className="space-y-6">
+        <div ref={resultRef} className="space-y-6" aria-live="polite">
           {/* 결과 상단 액션 */}
           <div className="flex items-center justify-between">
             <AiDisclaimer compact />

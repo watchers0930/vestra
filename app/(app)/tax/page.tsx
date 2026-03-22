@@ -118,6 +118,8 @@ export default function TaxPage() {
           <button
             key={n}
             onClick={() => setCount(n)}
+            aria-pressed={count === n}
+            aria-label={`${n >= max ? `${max}채 이상` : `${n}채`} 주택`}
             className={cn(
               "flex-1 py-2 rounded-lg text-sm font-medium border transition-all",
               count === n
@@ -165,7 +167,7 @@ export default function TaxPage() {
       )}
 
       {/* Tax Comparison Chart */}
-      <div id="tax-result">
+      <div id="tax-result" aria-live="polite">
       <Card className="p-6 mb-6">
         <h3 className="font-semibold mb-4">세금 비교</h3>
         <div className="h-[200px]">
@@ -186,10 +188,13 @@ export default function TaxPage() {
       </Card>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-6" role="tablist" aria-label="세금 유형 선택">
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            aria-controls={`tabpanel-${tab.id}`}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
               "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all",

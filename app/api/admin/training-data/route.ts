@@ -5,6 +5,7 @@ import { parseRegistry } from "@/lib/registry-parser";
 import { extractTextFromPDF, normalizeRegistryText, detectRegistryConfidence } from "@/lib/pdf-parser";
 import { encryptPII, hashForSearch } from "@/lib/crypto";
 import { extractVocabularyFromParsed } from "@/lib/domain-vocabulary";
+import { createAuditLog } from "@/lib/audit-log";
 
 /** GET: 학습 데이터 목록 조회 */
 export async function GET(req: NextRequest) {
@@ -43,16 +44,20 @@ export async function GET(req: NextRequest) {
     prisma.trainingData.count({ where }),
   ]);
 
-  // 상태별 통계
-  const [totalCount, pendingCount, reviewedCount, approvedCount, rejectedCount, avgConfidence] =
-    await Promise.all([
-      prisma.trainingData.count(),
-      prisma.trainingData.count({ where: { status: "pending" } }),
-      prisma.trainingData.count({ where: { status: "reviewed" } }),
-      prisma.trainingData.count({ where: { status: "approved" } }),
-      prisma.trainingData.count({ where: { status: "rejected" } }),
-      prisma.trainingData.aggregate({ _avg: { confidence: true } }),
-    ]);
+  // 상태별 통계 (6개 쿼리 → 2개로 최적화)
+  const [statusGroups, avgConfidence] = await Promise.all([
+    prisma.trainingData.groupBy({
+      by: ["status"],
+      _count: { _all: true },
+    }),
+    prisma.trainingData.aggregate({ _avg: { confidence: true } }),
+  ]);
+
+  const statusCounts = statusGroups.reduce<Record<string, number>>((acc, g) => {
+    acc[g.status] = g._count._all;
+    return acc;
+  }, {});
+  const totalCount = Object.values(statusCounts).reduce((a, b) => a + b, 0);
 
   return NextResponse.json({
     items,
@@ -61,10 +66,10 @@ export async function GET(req: NextRequest) {
     totalPages: Math.ceil(total / limit),
     stats: {
       total: totalCount,
-      pending: pendingCount,
-      reviewed: reviewedCount,
-      approved: approvedCount,
-      rejected: rejectedCount,
+      pending: statusCounts["pending"] || 0,
+      reviewed: statusCounts["reviewed"] || 0,
+      approved: statusCounts["approved"] || 0,
+      rejected: statusCounts["rejected"] || 0,
       avgConfidence: Math.round(avgConfidence._avg.confidence || 0),
     },
   });
@@ -171,6 +176,14 @@ export async function POST(req: NextRequest) {
       gapguCount: parsed.gapgu.length,
       eulguCount: parsed.eulgu.length,
     },
+  });
+
+  createAuditLog({
+    req,
+    userId: session.user.id,
+    action: "admin:create-training-data",
+    target: `training-data:${record.id}`,
+    detail: { sourceFileName, sourceType, confidence, description: "학습 데이터 업로드" },
   });
 
   return NextResponse.json({

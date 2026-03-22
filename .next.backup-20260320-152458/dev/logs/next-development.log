@@ -1,5 +1,0 @@
-[00:00:02.397] Server  WARN    ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
-[00:00:02.627] Server  WARN    [VESTRA] 선택 환경변수 미설정:
-  - BOK_API_KEY: 한국은행 기준금리 API (선택, 해당 기능 비활성화)
-  - SEOUL_DATA_API_KEY: 서울 열린데이터광장 API (선택, 해당 기능 비활성화)
-[00:00:02.652] Server  LOG     ✓ Ready in 2.1s

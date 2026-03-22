@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { SEED_VOCABULARY } from "@/lib/domain-vocabulary";
+import { createAuditLog } from "@/lib/audit-log";
 
 /** POST: 초기 시드 데이터 일괄 등록 */
 export async function POST() {
@@ -30,6 +31,13 @@ export async function POST() {
       skipped++;
     }
   }
+
+  createAuditLog({
+    userId: session.user.id,
+    action: "admin:seed-vocabulary",
+    target: "vocabulary",
+    detail: { created, skipped, total: SEED_VOCABULARY.length, description: "도메인 용어 시드 데이터 등록" },
+  });
 
   return NextResponse.json({
     message: `시드 완료: ${created}건 등록, ${skipped}건 건너뜀`,

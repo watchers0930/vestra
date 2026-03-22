@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createAuditLog } from "@/lib/audit-log";
 
 /** POST: 대기/검토 상태 데이터 일괄 승인 */
 export async function POST(req: NextRequest) {
@@ -21,6 +22,14 @@ export async function POST(req: NextRequest) {
       status: "approved",
       reviewNotes: `일괄 승인 (${new Date().toLocaleDateString("ko-KR")}, 최소 신뢰도: ${minConfidence}%)`,
     },
+  });
+
+  createAuditLog({
+    req,
+    userId: session.user.id,
+    action: "admin:bulk-approve-training-data",
+    target: "training-data",
+    detail: { approved: result.count, minConfidence, description: "학습 데이터 일괄 승인" },
   });
 
   return NextResponse.json({

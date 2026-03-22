@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleApiError } from "@/lib/api-error-handler";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { auth } from "@/lib/auth";
 import { mergeContexts } from "@/lib/feasibility/context-merger";
@@ -70,11 +71,6 @@ export async function POST(req: NextRequest) {
       })),
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    console.error("Feasibility merge error:", message);
-    return NextResponse.json(
-      { error: `문서 병합 중 오류: ${message}` },
-      { status: 500 }
-    );
+    return handleApiError(error, "사업성 병합");
   }
 }
