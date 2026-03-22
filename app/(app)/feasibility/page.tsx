@@ -5,6 +5,9 @@ import { Button } from "@/components/common";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
 import { StepIndicator } from "@/components/loading/StepIndicator";
 import { FileUploadZone } from "@/components/feasibility/FileUploadZone";
+import { ScrFileUploadStep } from "@/components/feasibility/ScrFileUploadStep";
+import { DOCUMENT_SLOTS } from "@/lib/feasibility/scr-types";
+import type { ScrDocumentCategory, ProjectType } from "@/lib/feasibility/scr-types";
 import { ConflictResolver } from "@/components/feasibility/ConflictResolver";
 import { ClaimVerificationTable } from "@/components/feasibility/ClaimVerificationTable";
 import { RationalityBandChart } from "@/components/feasibility/RationalityBandChart";
@@ -89,6 +92,8 @@ export default function FeasibilityPage() {
 
   // Step 1: Upload state
   const [files, setFiles] = useState<File[]>([]);
+  const [categorizedFiles, setCategorizedFiles] = useState<Map<ScrDocumentCategory, File[]>>(new Map());
+  const [projectType, setProjectType] = useState<ProjectType>("아파트");
   const [context, setContext] = useState<MergedProjectContext | null>(null);
   const [conflicts, setConflicts] = useState<DataConflict[]>([]);
   const [parsedInfo, setParsedInfo] = useState<ParseResponse["parsedFiles"] | null>(null);
@@ -102,6 +107,19 @@ export default function FeasibilityPage() {
   const [vScore, setVScore] = useState<FeasibilityScore | null>(null);
   const [reportId, setReportId] = useState<string | null>(null);
   const [reportHtml, setReportHtml] = useState<string | null>(null);
+
+  // categorizedFiles → files 동기화
+  const handleCategorizedFilesChange = useCallback((newMap: Map<ScrDocumentCategory, File[]>) => {
+    setCategorizedFiles(newMap);
+    const allFiles: File[] = [];
+    newMap.forEach((fileList) => allFiles.push(...fileList));
+    setFiles(allFiles);
+  }, []);
+
+  // 필수 서류 충족 여부
+  const isRequiredComplete = DOCUMENT_SLOTS
+    .filter((s) => s.required)
+    .every((s) => (categorizedFiles.get(s.category)?.length ?? 0) > 0);
 
   const buildInlineReport = useCallback((): FeasibilityReport | null => {
     if (!context || !vScore) return null;
@@ -322,6 +340,8 @@ export default function FeasibilityPage() {
   const handleReset = () => {
     setStep("upload");
     setFiles([]);
+    setCategorizedFiles(new Map());
+    setProjectType("아파트");
     setContext(null);
     setConflicts([]);
     setParsedInfo(null);
@@ -365,10 +385,15 @@ export default function FeasibilityPage() {
         </div>
       )}
 
-      {/* Step 1: 문서 업로드 */}
+      {/* Step 1: 문서 업로드 (종류별 슬롯) */}
       {step === "upload" && (
         <div className="space-y-4">
-          <FileUploadZone files={files} onChange={setFiles} loading={loading} />
+          <ScrFileUploadStep
+            projectType={projectType}
+            onProjectTypeChange={setProjectType}
+            categorizedFiles={categorizedFiles}
+            onFilesChange={handleCategorizedFilesChange}
+          />
 
           {/* 파싱 결과 미리보기 */}
           {parsedInfo && (
@@ -403,7 +428,7 @@ export default function FeasibilityPage() {
             <Button
               onClick={handleParse}
               loading={loading}
-              disabled={!files.length}
+              disabled={!isRequiredComplete}
               icon={FileSearch}
               fullWidth
               size="lg"
