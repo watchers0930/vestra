@@ -10,6 +10,7 @@ import {
   type ScrClaimKey,
   type ScrClaimCategory,
 } from "@/lib/feasibility/scr-claim-keys";
+import { DOCUMENT_SLOTS, type ScrDocumentCategory } from "@/lib/feasibility/scr-types";
 import type { ParsedClaimItem } from "./ScrReportWizard";
 
 interface ScrDataReviewStepProps {
@@ -29,6 +30,39 @@ const CATEGORY_LABELS: Record<ScrClaimCategory, string> = {
   토지: "토지",
   운영수익: "운영수익",
 };
+
+/** 문서 카테고리별 뱃지 색상 */
+const SOURCE_BADGE_COLORS: Record<ScrDocumentCategory, { bg: string; text: string }> = {
+  "business-plan": { bg: "bg-blue-50", text: "text-blue-600" },
+  "pricing-detail": { bg: "bg-violet-50", text: "text-violet-600" },
+  "business-income": { bg: "bg-amber-50", text: "text-amber-600" },
+  "funding-plan": { bg: "bg-emerald-50", text: "text-emerald-600" },
+  appraisal: { bg: "bg-rose-50", text: "text-rose-600" },
+  "market-research": { bg: "bg-cyan-50", text: "text-cyan-600" },
+  other: { bg: "bg-gray-100", text: "text-gray-500" },
+};
+
+/** 문서 카테고리 → 한글 라벨 매핑 */
+const SOURCE_LABELS: Record<ScrDocumentCategory, string> = Object.fromEntries(
+  DOCUMENT_SLOTS.map((s) => [s.category, s.label])
+) as Record<ScrDocumentCategory, string>;
+
+/** 출처 뱃지 */
+function SourceBadge({ category }: { category: ScrDocumentCategory }) {
+  const color = SOURCE_BADGE_COLORS[category];
+  const label = SOURCE_LABELS[category];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap",
+        color.bg,
+        color.text
+      )}
+    >
+      {label}
+    </span>
+  );
+}
 
 /** 신뢰도 뱃지 */
 function ConfidenceBadge({ confidence }: { confidence: number }) {
@@ -76,10 +110,21 @@ export function ScrDataReviewStep({ items, onItemChange }: ScrDataReviewStepProp
   const filledCount = items.filter((it) => it.value != null && it.value !== "").length;
   const lowConfCount = items.filter((it) => it.confidence < 0.5).length;
 
+  // 문서별 추출 요약 계산
+  const sourceStats = new Map<ScrDocumentCategory, { filled: number; total: number }>();
+  items.forEach((it) => {
+    if (it.sourceCategory) {
+      const existing = sourceStats.get(it.sourceCategory) ?? { filled: 0, total: 0 };
+      existing.total++;
+      if (it.value != null && it.value !== "") existing.filled++;
+      sourceStats.set(it.sourceCategory, existing);
+    }
+  });
+
   return (
     <div className="space-y-5">
       {/* 상단 요약 */}
-      <div className="flex items-center gap-4 px-1">
+      <div className="flex items-center gap-4 px-1 flex-wrap">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-emerald-400" />
           <span className="text-xs text-[#6e6e73]">
@@ -101,6 +146,32 @@ export function ScrDataReviewStep({ items, onItemChange }: ScrDataReviewStepProp
           </span>
         </div>
       </div>
+
+      {/* 문서별 추출 요약 */}
+      {sourceStats.size > 0 && (
+        <div className="flex flex-wrap gap-2 px-1">
+          {Array.from(sourceStats.entries()).map(([category, stat]) => {
+            const pct = stat.total > 0 ? Math.round((stat.filled / stat.total) * 100) : 0;
+            const color = SOURCE_BADGE_COLORS[category];
+            return (
+              <div
+                key={category}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium",
+                  color.bg,
+                  color.text
+                )}
+              >
+                <span>{SOURCE_LABELS[category]}:</span>
+                <span className="font-bold tabular-nums">
+                  {stat.filled}/{stat.total}항목
+                </span>
+                <span className="opacity-70">({pct}%)</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* 카테고리별 아코디언 */}
       {(Object.entries(SCR_CLAIM_CATEGORIES) as [ScrClaimCategory, readonly ScrClaimKey[]][]).map(
@@ -151,6 +222,7 @@ export function ScrDataReviewStep({ items, onItemChange }: ScrDataReviewStepProp
                     const value = item?.value ?? "";
                     const confidence = item?.confidence ?? 0;
                     const isEmpty = value === "" || value === null;
+                    const sourceCategory = item?.sourceCategory;
 
                     return (
                       <div
@@ -160,11 +232,16 @@ export function ScrDataReviewStep({ items, onItemChange }: ScrDataReviewStepProp
                           isEmpty && "bg-red-50/30"
                         )}
                       >
-                        {/* 라벨 */}
+                        {/* 라벨 + 출처 뱃지 */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-[#1d1d1f] truncate">
-                            {label}
-                          </p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-xs font-medium text-[#1d1d1f] truncate">
+                              {label}
+                            </p>
+                            {sourceCategory && (
+                              <SourceBadge category={sourceCategory} />
+                            )}
+                          </div>
                           {unit && (
                             <p className="text-[10px] text-[#86868b]">{unit}</p>
                           )}

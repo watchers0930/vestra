@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { Check, ChevronLeft, ChevronRight, Sparkles, Loader2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Sparkles, Loader2, AlertCircle } from "lucide-react";
 import { ScrFileUploadStep } from "./ScrFileUploadStep";
 import { ScrDataReviewStep } from "./ScrDataReviewStep";
-import type { ScrReportData, ProjectType } from "@/lib/feasibility/scr-types";
+import {
+  DOCUMENT_SLOTS,
+  type ScrReportData,
+  type ProjectType,
+  type ScrDocumentCategory,
+} from "@/lib/feasibility/scr-types";
 import type { ScrClaimKey } from "@/lib/feasibility/scr-claim-keys";
 
 interface ScrReportWizardProps {
@@ -17,6 +22,7 @@ export interface ParsedClaimItem {
   key: ScrClaimKey;
   value: string | number | null;
   confidence: number; // 0~1
+  sourceCategory?: ScrDocumentCategory;
 }
 
 const STEPS = [
@@ -27,19 +33,52 @@ const STEPS = [
 
 export function ScrReportWizard({ onComplete }: ScrReportWizardProps) {
   const [step, setStep] = useState(0);
-  const [files, setFiles] = useState<File[]>([]);
+  const [categorizedFiles, setCategorizedFiles] = useState<Map<ScrDocumentCategory, File[]>>(new Map());
   const [projectType, setProjectType] = useState<ProjectType>("아파트");
   const [parsedItems, setParsedItems] = useState<ParsedClaimItem[]>([]);
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [requiredWarning, setRequiredWarning] = useState(false);
+
+  /** 필수 서류 충족 여부 */
+  const isRequiredComplete = useMemo(() => {
+    const requiredCategories = DOCUMENT_SLOTS
+      .filter((s) => s.required)
+      .map((s) => s.category);
+    return requiredCategories.every(
+      (cat) => (categorizedFiles.get(cat)?.length ?? 0) > 0
+    );
+  }, [categorizedFiles]);
+
+  /** 총 파일 수 */
+  const totalFileCount = useMemo(() => {
+    let count = 0;
+    categorizedFiles.forEach((files) => {
+      count += files.length;
+    });
+    return count;
+  }, [categorizedFiles]);
 
   /* Step 1 → 2: 파싱 시뮬레이션 (실제 API 연결 시 교체) */
   const handleFilesNext = useCallback(async () => {
-    if (files.length === 0) return;
-    // TODO: 실제 파싱 API 호출
+    if (!isRequiredComplete) {
+      setRequiredWarning(true);
+      return;
+    }
+    setRequiredWarning(false);
+
+    // TODO: 실제 파싱 API 호출 — categorizedFiles를 FormData로 변환
+    // const formData = new FormData();
+    // categorizedFiles.forEach((files, category) => {
+    //   files.forEach((file, idx) => {
+    //     formData.append(`file_${category}_${idx}`, file);
+    //     formData.append(`category_${category}_${idx}`, category);
+    //   });
+    // });
+
     setParsedItems([]);
     setStep(1);
-  }, [files]);
+  }, [isRequiredComplete, categorizedFiles]);
 
   /* Step 2 → 3: 보고서 생성 */
   const handleGenerate = useCallback(async () => {
@@ -84,7 +123,7 @@ export function ScrReportWizard({ onComplete }: ScrReportWizardProps) {
   );
 
   const canNext =
-    step === 0 ? files.length > 0 :
+    step === 0 ? isRequiredComplete :
     step === 1 ? true :
     false;
 
@@ -132,10 +171,10 @@ export function ScrReportWizard({ onComplete }: ScrReportWizardProps) {
         <div className="p-5">
           {step === 0 && (
             <ScrFileUploadStep
-              files={files}
-              onFilesChange={setFiles}
               projectType={projectType}
               onProjectTypeChange={setProjectType}
+              categorizedFiles={categorizedFiles}
+              onFilesChange={setCategorizedFiles}
             />
           )}
 
@@ -183,44 +222,59 @@ export function ScrReportWizard({ onComplete }: ScrReportWizardProps) {
 
         {/* ─── 하단 버튼 ─── */}
         {step < 2 && (
-          <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
-            <button
-              onClick={() => setStep((s) => Math.max(0, s - 1))}
-              disabled={step === 0}
-              className={cn(
-                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all",
-                step === 0
-                  ? "text-[#86868b] cursor-not-allowed"
-                  : "text-[#1d1d1f] hover:bg-gray-50"
-              )}
-            >
-              <ChevronLeft size={14} />
-              이전
-            </button>
+          <div className="px-5 py-4 border-t border-gray-100">
+            {/* 필수 미충족 경고 */}
+            {step === 0 && requiredWarning && !isRequiredComplete && (
+              <div className="flex items-center gap-2 mb-3 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-100">
+                <AlertCircle size={14} className="text-amber-500 shrink-0" />
+                <p className="text-xs text-amber-700">
+                  필수 서류 4종을 모두 제출해야 다음 단계로 진행할 수 있습니다.
+                </p>
+              </div>
+            )}
 
-            {step === 1 ? (
+            <div className="flex items-center justify-between">
               <button
-                onClick={handleGenerate}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0071e3] text-white text-sm font-semibold hover:bg-[#0077ED] transition-all shadow-sm"
-              >
-                <Sparkles size={14} />
-                보고서 생성
-              </button>
-            ) : (
-              <button
-                onClick={handleFilesNext}
-                disabled={!canNext}
+                onClick={() => {
+                  setRequiredWarning(false);
+                  setStep((s) => Math.max(0, s - 1));
+                }}
+                disabled={step === 0}
                 className={cn(
-                  "flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all",
-                  canNext
-                    ? "bg-[#0071e3] text-white hover:bg-[#0077ED] shadow-sm"
-                    : "bg-gray-100 text-[#86868b] cursor-not-allowed"
+                  "flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+                  step === 0
+                    ? "text-[#86868b] cursor-not-allowed"
+                    : "text-[#1d1d1f] hover:bg-gray-50"
                 )}
               >
-                다음
-                <ChevronRight size={14} />
+                <ChevronLeft size={14} />
+                이전
               </button>
-            )}
+
+              {step === 1 ? (
+                <button
+                  onClick={handleGenerate}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0071e3] text-white text-sm font-semibold hover:bg-[#0077ED] transition-all shadow-sm"
+                >
+                  <Sparkles size={14} />
+                  보고서 생성
+                </button>
+              ) : (
+                <button
+                  onClick={handleFilesNext}
+                  disabled={totalFileCount === 0}
+                  className={cn(
+                    "flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                    totalFileCount > 0
+                      ? "bg-[#0071e3] text-white hover:bg-[#0077ED] shadow-sm"
+                      : "bg-gray-100 text-[#86868b] cursor-not-allowed"
+                  )}
+                >
+                  다음
+                  <ChevronRight size={14} />
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
