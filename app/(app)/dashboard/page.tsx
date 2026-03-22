@@ -28,6 +28,7 @@ import { cn, formatKRW } from "@/lib/utils";
 import { getAssets, getAnalyses, removeAnalysis, type StoredAsset, type AnalysisRecord } from "@/lib/store";
 import { EmptyState } from "@/components/common";
 import { KpiCard } from "@/components/results";
+import { useToast } from "@/components/common/toast";
 import {
   PieChart,
   Pie,
@@ -59,6 +60,7 @@ const typeColors: Record<string, { bg: string; text: string }> = {
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const { showToast } = useToast();
   const [assets, setAssets] = useState<StoredAsset[]>([]);
   const [analyses, setAnalyses] = useState<AnalysisRecord[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -175,12 +177,12 @@ export default function DashboardPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(`캐스케이드 업데이트 완료: ${data.cascade.totalNodesAffected}개 노드 영향, ${data.cascade.executionTimeMs}ms`);
+        showToast(`캐스케이드 업데이트 완료: ${data.cascade.totalNodesAffected}개 노드 영향`, "success");
       } else {
-        alert(data.error || "캐스케이드 업데이트 실패");
+        showToast(data.error || "캐스케이드 업데이트 실패", "error");
       }
     } catch {
-      alert("캐스케이드 업데이트 요청 중 오류가 발생했습니다.");
+      showToast("캐스케이드 업데이트 요청 중 오류가 발생했습니다.", "error");
     } finally {
       setCascadeLoading(null);
     }

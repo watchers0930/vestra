@@ -40,6 +40,7 @@ import { AnomalyDetectionView } from "@/components/prediction/AnomalyDetectionVi
 import AiDisclaimer from "@/components/common/ai-disclaimer";
 import PdfDownloadButton from "@/components/common/pdf-download-button";
 import { LoadingSpinner } from "@/components/loading";
+import { useToast } from "@/components/common/toast";
 import { KakaoMap } from "@/components/prediction/KakaoMap";
 import type { KakaoGeocoderResult, KakaoPlaceResult } from "@/components/prediction/KakaoMap";
 import dynamic from "next/dynamic";
@@ -163,6 +164,7 @@ declare global {
 }
 
 export default function PredictionPage() {
+  const { showToast } = useToast();
   const [roadResult, setRoadResult] = useState("");
   const [buildingName, setBuildingName] = useState("");
 
@@ -206,7 +208,7 @@ export default function PredictionPage() {
 
   const openDaumPostcode = useCallback(() => {
     if (!window.daum?.Postcode) {
-      alert("주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+      showToast("주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.", "info");
       return;
     }
     new window.daum.Postcode({

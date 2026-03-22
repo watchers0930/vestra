@@ -28,7 +28,7 @@ export function handleApiError(error: unknown, context: string) {
   }
 
   return NextResponse.json(
-    { error: `${context} 중 오류: ${message}` },
+    { error: `${context} 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.` },
     { status: 500 },
   );
 }

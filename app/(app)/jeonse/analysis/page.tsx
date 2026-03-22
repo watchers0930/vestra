@@ -111,7 +111,7 @@ export default function JeonsePage() {
 
       addNotification("전세 안전 분석 완료");
     } catch {
-      alert("분석 중 오류가 발생했습니다.");
+      showToast("분석 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -132,7 +132,7 @@ export default function JeonsePage() {
       if (data.error) throw new Error(data.error);
       setGeneratedDoc(data);
     } catch {
-      alert("문서 생성 중 오류가 발생했습니다.");
+      showToast("문서 생성 중 오류가 발생했습니다.");
     } finally {
       setDocLoading(false);
     }
@@ -140,7 +140,7 @@ export default function JeonsePage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert("클립보드에 복사되었습니다.");
+    showToast("클립보드에 복사되었습니다.", "success");
   };
 
   const needsLabel = {

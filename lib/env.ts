@@ -20,6 +20,7 @@ const ENV_VARS: EnvVar[] = [
   { key: "REB_API_KEY", required: false, description: "한국부동산원 R-ONE API" },
   { key: "SEOUL_DATA_API_KEY", required: false, description: "서울 열린데이터광장 API" },
   { key: "NEXT_PUBLIC_KAKAO_MAP_KEY", required: false, description: "카카오 지도" },
+  { key: "PII_SALT", required: false, description: "PII 암호화 salt (미설정 시 기본값 사용)" },
 ];
 
 let validated = false;

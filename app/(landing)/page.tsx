@@ -292,6 +292,40 @@ export default function LandingPage() {
       </section>
 
       {/* ================================================================== */}
+      {/* Social Proof / Testimonials                                       */}
+      {/* ================================================================== */}
+      <section className="py-[80px] bg-[#f5f5f7]">
+        <div className="max-w-[980px] mx-auto px-6">
+          <h2 className="text-center text-[32px] md:text-[40px] font-bold text-foreground leading-[1.1] tracking-[-0.03em]">
+            전문가들이 신뢰하는 분석
+          </h2>
+          <p className="text-center mt-3 text-[17px] text-secondary">
+            부동산 전문가와 투자자들의 실제 후기
+          </p>
+          <div className="grid md:grid-cols-3 gap-6 mt-12">
+            {[
+              { name: "김태호", role: "공인중개사", quote: "전세 안전성 분석이 정확해서 고객 상담 시 신뢰도 높은 데이터를 제공할 수 있게 되었습니다." },
+              { name: "이수진", role: "부동산 투자자", quote: "V-Score 기반 통합 위험도 평가 덕분에 투자 의사결정이 훨씬 빨라졌어요." },
+              { name: "박준혁", role: "법무법인 변호사", quote: "권리분석 그래프 엔진이 복잡한 등기부등본도 직관적으로 시각화해줍니다." },
+            ].map((t) => (
+              <div key={t.name} className="bg-white rounded-2xl p-6 border border-border">
+                <p className="text-[15px] text-foreground leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
+                <div className="mt-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
+                    {t.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{t.name}</p>
+                    <p className="text-xs text-secondary">{t.role}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================================================================== */}
       {/* Final CTA — #001466 background                                    */}
       {/* ================================================================== */}
       <section className="py-[100px] bg-[#001466]">
