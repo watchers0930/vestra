@@ -191,7 +191,7 @@ export function ScrReportViewer({ data }: ScrReportViewerProps) {
           {activeTab === "overview" && <ScrChapterI data={data.projectOverview} />}
           {activeTab === "developer" && <ScrChapterII data={data.developerAnalysis} />}
           {activeTab === "market" && <ScrChapterIII data={data.marketAnalysis} />}
-          {activeTab === "price" && <ScrChapterIV data={data.priceAdequacy} />}
+          {activeTab === "price" && <ScrChapterIV data={data.priceAdequacy} siteAddress={data.projectOverview.projectSummary.siteAddress} />}
           {activeTab === "repayment" && <ScrChapterV data={data.repaymentAnalysis} />}
           {activeTab === "appendices" && <ScrAppendices data={data.appendices} />}
         </Suspense>

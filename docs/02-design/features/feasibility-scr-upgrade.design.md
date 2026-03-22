@@ -3,7 +3,7 @@
 > **Summary**: SCR 서울신용평가 사업성평가보고서와 동일한 5장+부록 구조(표64개, 그림23개, 60~80p) 보고서를 자동 생성하는 시스템 설계
 >
 > **Project**: VESTRA
-> **Version**: v3.9.1 -> v4.0.0
+> **Version**: v3.9.1 -> v4.2.0
 > **Author**: CTO Lead (Claude)
 > **Date**: 2026-03-22
 > **Status**: Draft
@@ -109,10 +109,10 @@ User Files -> Parse(45+ fields) -> Merge -> Validate
 |------|---------|------|
 | `scr-types.ts` | 없음 (순수 타입) | SCR 보고서 전체 데이터 모델 |
 | `scr-parser-extensions.ts` | `document-parser.ts` | 45개+ 항목 파싱 확장 |
-| `api/kosis.ts` | 외부 API | 통계청 인구/세대/사업체 |
-| `api/dart.ts` | 외부 API | 전자공시 재무제표 |
-| `api/reps.ts` | 외부 API | 부동산원 매매/전세지수 |
-| `api/mois.ts` | 외부 API | 행안부 주민등록 인구 |
+| `api/kosis-api.ts` | 외부 API | 통계청 인구/세대/사업체 |
+| `api/dart-api.ts` | 외부 API | 전자공시 재무제표 |
+| `api/reps-api.ts` | 외부 API | 부동산원 매매/전세지수 |
+| `api/mois-api.ts` | 외부 API | 행안부 주민등록 인구 |
 | `calc/business-income.ts` | `scr-types.ts` | 사업수지 계산 |
 | `calc/monthly-cashflow.ts` | `scr-types.ts` | 월별 자금수지 (48개월) |
 | `calc/scenario.ts` | `calc/business-income.ts` | 시나리오별 사업수지 |
@@ -340,7 +340,7 @@ interface MonthlyCashflowRow {
 /** 시나리오 분석 */
 interface ScenarioAnalysis {
   scenarios: {
-    name: string;  // "차주안", "시나리오1", "시나리오2"
+    name: string;  // "기본", "낙관", "보수", "비관"
     saleRates: Record<FacilityType, number>;
     businessIncome: BusinessIncome;
   }[];
@@ -544,11 +544,16 @@ interface ScrReportData {
 
 ### 5.3 시나리오 엔진 (calc/scenario.ts)
 
+4단계 시나리오 (분양률 기반 자동 분류):
+
 ```
-차주안:     아파트 100% / 오피스텔 100% / 상가 100%
-시나리오1:  아파트  95% / 오피스텔  50% / 상가  50%
-시나리오2:  아파트  90% / 오피스텔  50% / 상가  50%
+기본(Base):  아파트 100% / 오피스텔 100% / 상가 100%  (분양률 100%)
+낙관(Bull):  아파트  95% / 오피스텔  80% / 상가  70%  (분양률 90%+)
+보수(Bear):  아파트  90% / 오피스텔  50% / 상가  50%  (분양률 70~90%)
+비관(Worst): 아파트  80% / 오피스텔  30% / 상가  30%  (분양률 70% 미만)
 ```
+
+**자동 분류 로직**: 사용자가 시나리오를 직접 지정하지 않은 경우, 시설유형별 가중평균 분양률을 기준으로 4단계 중 자동 분류. 가중치는 각 시설의 수입 비중을 적용.
 
 시설유형별 분양률 분리 적용 -> 사업수지 재계산
 
@@ -649,7 +654,25 @@ interface PriceForecast {
 
 ---
 
-## 6. HTML 보고서 렌더링 설계
+## 6. 보고서 렌더링 설계
+
+### 6.0 렌더링 이중화 구조
+
+보고서 렌더링은 **React 컴포넌트 방식**과 **서버사이드 HTML string 방식**을 이중화하여 운영한다.
+
+| 방식 | 파일 | 용도 | 장점 |
+|------|------|------|------|
+| **React 컴포넌트** | `ScrChapter1.tsx` ~ `ScrChapter5.tsx`, `ScrAppendix.tsx` | 브라우저 미리보기, 인터랙티브 UI | 컴포넌트 재사용, 상태 관리, 실시간 업데이트 |
+| **서버사이드 HTML** | `scr-report-html.ts` | PDF 생성, API 응답 | Print-to-PDF 최적화, 서버 렌더링, 정적 HTML |
+
+**데이터 흐름**:
+```
+ScrReportData
+     ├──→ React 컴포넌트 (ScrChapter*.tsx) → 브라우저 미리보기
+     └──→ scr-report-html.ts → HTML string → Print-to-PDF → PDF 다운로드
+```
+
+두 방식 모두 동일한 `ScrReportData` 모델을 입력으로 사용하며, `scr-shared.tsx`의 공통 UI 컴포넌트를 공유한다.
 
 ### 6.1 SCR 스타일 CSS
 
@@ -727,13 +750,15 @@ function renderTable44_MonthlyCashflow1(data: MonthlyCashflowRow[]): string { ..
 ```
 lib/feasibility/
 ├── scr-types.ts                    # SCR 전체 데이터 모델 (Phase 1)
+├── scr-shared.tsx                  # 공통 UI 컴포넌트 (Phase 4)
 ├── scr-parser-extensions.ts        # 파싱 45개+ 확장 (Phase 2)
 ├── scr-project-type-detector.ts    # 사업 유형 자동 감지 (Phase 2)
 ├── api/
-│   ├── kosis.ts                    # 통계청 KOSIS API (Phase 1)
-│   ├── dart.ts                     # DART 전자공시 API (Phase 1)
-│   ├── reps.ts                     # 부동산원 REPS API (Phase 1)
-│   └── mois.ts                     # 행안부 주민등록 API (Phase 1)
+│   ├── kosis-api.ts                # 통계청 KOSIS API (Phase 1)
+│   ├── dart-api.ts                 # DART 전자공시 API (Phase 1)
+│   ├── reps-api.ts                 # 부동산원 REPS API (Phase 1)
+│   ├── mois-api.ts                 # 행안부 주민등록 API (Phase 1)
+│   └── api-utils.ts                # 공통 fetch 유틸리티 (Phase 1)
 ├── calc/
 │   ├── business-income.ts          # 사업수지 계산기 (Phase 3)
 │   ├── monthly-cashflow.ts         # 월별 자금수지 생성기 (Phase 3)
@@ -741,29 +766,37 @@ lib/feasibility/
 │   ├── bep.ts                      # BEP 분양률 계산기 (Phase 3)
 │   ├── dscr.ts                     # DSCR 계산기 (Phase 3)
 │   └── sensitivity.ts              # 민감도 분석 (Phase 3)
-├── scr-report-html.ts              # SCR 동일 HTML 렌더러 (Phase 4)
+├── scr-report-html.ts              # SCR 동일 HTML 렌더러 — 서버사이드 (Phase 4)
 ├── scr-report-charts.ts            # 23개 차트 생성 (Phase 4)
 ├── scr-report-tables.ts            # 64개 표 렌더 함수 (Phase 4)
 ├── scr-report-css.ts               # SCR 스타일시트 (Phase 4)
-├── static/
-│   ├── government-policies.json    # 정부 부동산 대책 연표 (Phase 1)
-│   ├── regulation-areas.json       # 규제지역 현황 (Phase 1)
-│   ├── hug-high-price.json         # HUG 고분양가 관리지역 (Phase 1)
-│   └── construction-cost-index.json # KICT 건설공사비지수 (Phase 1)
+├── scr-report-cache.ts             # 보고서 캐시 (Phase 4)
+├── region-codes.ts                 # 공통 지역코드 매핑 (Phase 1)
+├── static-data.ts                  # 정적 데이터 단일 TS 파일 (Phase 1)
+│                                   # (정부 부동산 대책 연표, 규제지역 현황,
+│                                   #  HUG 고분양가 관리지역, KICT 건설공사비지수)
+│                                   # → 타입 안전성 + import 편의성 위해 TS 단일 파일로 통합
 
 app/api/feasibility/
 ├── scr-parse/route.ts              # 확장 파싱 API (Phase 2)
 ├── scr-calculate/route.ts          # 계산 엔진 API (Phase 3)
 ├── scr-report/route.ts             # 보고서 생성 API (Phase 4)
+├── scr-report/stream/route.ts      # SSE 스트리밍 API — 실시간 진행률 (Phase 5)
 └── scr-report/[id]/route.ts        # 보고서 조회 API (Phase 4)
 
 components/feasibility/
-├── ScrReportWizard.tsx              # 입력 위저드 (Phase 5)
-├── ScrFileUploadStep.tsx            # 파일 업로드 단계 (Phase 5)
-├── ScrDataReviewStep.tsx            # 데이터 검토/수정 단계 (Phase 5)
-├── ScrProgressIndicator.tsx         # 생성 진행률 표시 (Phase 5)
-├── ScrReportPreview.tsx             # 보고서 미리보기 (Phase 5)
-└── ScrPdfDownload.tsx               # PDF 다운로드 버튼 (Phase 5)
+├── ScrChapter1.tsx                 # I장 React 컴포넌트 — 미리보기용 (Phase 4)
+├── ScrChapter2.tsx                 # II장 React 컴포넌트 (Phase 4)
+├── ScrChapter3.tsx                 # III장 React 컴포넌트 (Phase 4)
+├── ScrChapter4.tsx                 # IV장 React 컴포넌트 (Phase 4)
+├── ScrChapter5.tsx                 # V장 React 컴포넌트 (Phase 4)
+├── ScrAppendix.tsx                 # 부록 React 컴포넌트 (Phase 4)
+├── ScrReportWizard.tsx             # 입력 위저드 (Phase 5)
+├── ScrFileUploadStep.tsx           # 파일 업로드 단계 (Phase 5)
+├── ScrDataReviewStep.tsx           # 데이터 검토/수정 단계 (Phase 5)
+├── ScrProgressIndicator.tsx        # 생성 진행률 표시 (Phase 5)
+├── ScrReportPreview.tsx            # 보고서 미리보기 (Phase 5)
+└── ScrPdfDownload.tsx              # PDF 다운로드 버튼 (Phase 5)
 ```
 
 ---
@@ -775,11 +808,11 @@ components/feasibility/
 | # | 작업 | 파일 | 의존성 | 난이도 |
 |---|------|------|--------|-------|
 | 1.1 | SCR 전체 데이터 모델 타입 정의 | `scr-types.ts` | 없음 | 중 |
-| 1.2 | 통계청 KOSIS API 클라이언트 | `api/kosis.ts` | KOSIS_API_KEY | 중 |
-| 1.3 | DART 전자공시 API 클라이언트 | `api/dart.ts` | DART_API_KEY | 상 |
-| 1.4 | 부동산원 REPS API 클라이언트 | `api/reps.ts` | REPS_API_KEY | 중 |
-| 1.5 | 행안부 MOIS API 클라이언트 | `api/mois.ts` | MOIS_API_KEY | 중 |
-| 1.6 | 정적DB JSON 4종 생성 | `static/*.json` | 없음 | 하 |
+| 1.2 | 통계청 KOSIS API 클라이언트 | `api/kosis-api.ts` | KOSIS_API_KEY | 중 |
+| 1.3 | DART 전자공시 API 클라이언트 | `api/dart-api.ts` | DART_API_KEY | 상 |
+| 1.4 | 부동산원 REPS API 클라이언트 | `api/reps-api.ts` | REPS_API_KEY | 중 |
+| 1.5 | 행안부 MOIS API 클라이언트 | `api/mois-api.ts` | MOIS_API_KEY | 중 |
+| 1.6 | 정적 데이터 통합 TS 파일 | `static-data.ts` | 없음 | 하 |
 | 1.7 | 환경변수 등록 + API 키 발급 | `.env.local` | 외부 |  하 |
 
 ### Phase 2: 파싱 엔진 고도화 — 예상 2일
@@ -924,8 +957,32 @@ VESTRA 프로젝트 레벨: **Dynamic** -> 최대 3 에이전트
 
 ---
 
+---
+
+## 12. Phase별 완성도 현황 (v4.2.0 기준)
+
+| Phase | 항목 | 완성도 | 비고 |
+|-------|------|--------|------|
+| Phase 1 | 데이터 수집 인프라 (API + 정적DB + 타입) | **90%** | KOSIS/DART API 연동 완료, REPS/MOIS 일부 대기 |
+| Phase 2 | 파싱 엔진 고도화 | **80%** | 주요 항목 파싱 완료, 일부 엣지케이스 잔여 |
+| Phase 3 | 계산 엔진 구축 | **85%** | 사업수지/시나리오/BEP/DSCR 구현 완료, 민감도 분석 보완 중 |
+| Phase 4 | 보고서 렌더링 (React + HTML 이중화) | **70%** | React 컴포넌트 5장+부록 구조 완성, HTML 렌더러 연동 중 |
+| Phase 5 | UI/UX 고도화 | **60%** | 위저드 UI 구현, SSE 스트리밍 연동, PDF 다운로드 구현 |
+| **전체** | | **~77%** | |
+
+### 주요 변경사항 (v4.2.0)
+- 시나리오명 "차주안/시나리오1/2" → "기본/낙관/보수/비관" 4단계로 통일
+- 정적 데이터 `static/*.json` 4개 파일 → `static-data.ts` 단일 TypeScript 파일로 통합
+- API 파일명 `-api.ts` 접미사 규칙 적용 (kosis-api.ts, dart-api.ts 등)
+- 보고서 렌더링 이중화: React 컴포넌트(ScrChapter*.tsx) + 서버사이드 HTML(scr-report-html.ts)
+- 공통 모듈 추가: scr-shared.tsx, api-utils.ts, region-codes.ts, scr-report-cache.ts
+- 위저드 UI 및 SSE 스트리밍 API 추가
+
+---
+
 ## Version History
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
 | 0.1 | 2026-03-22 | 초안 작성 (SCR 79p 전수 분석 기반) | CTO Lead |
+| 0.2 (v4.2.0) | 2026-03-22 | 구현 현황 반영: 시나리오 4단계 통일, 정적DB→TS 단일파일, API 파일명 규칙, 렌더링 이중화, 추가 모듈 반영, Phase 완성도 명시 | CTO Lead |

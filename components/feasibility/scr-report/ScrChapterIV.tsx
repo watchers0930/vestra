@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { ScrSection, EmptyDataNotice, thCls, tdCls, tdNumCls } from "./scr-shared";
 import {
@@ -22,6 +23,8 @@ import type {
 
 interface ScrChapterIVProps {
   data: ScrPriceAdequacy;
+  /** 사업지 주소 (위치도 지도 표시용) */
+  siteAddress?: string;
 }
 
 
@@ -361,30 +364,223 @@ function AdequacyOpinionSection({ data }: { data: ScrAdequacyOpinion }) {
   );
 }
 
-/* ─── 그림14: 위치도 자리표시자 ─── */
-function LocationMapPlaceholder({ summary }: { summary?: string }) {
+/* ─── 그림14: 위치도 (Kakao Maps JS SDK) ─── */
+
+/** 마커 데이터 */
+interface MapMarker {
+  label: string;
+  address: string;
+  /** 마커 색상 구분: site=사업지, sales=매매사례, supply=분양사례 */
+  type: "site" | "sales" | "supply";
+}
+
+/** 위치도 자리표시자 (API 키 없거나 오류 시 폴백) */
+function LocationMapFallback({ summary }: { summary?: string }) {
+  return (
+    <div className="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 flex flex-col items-center justify-center py-12 px-6">
+      <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+        <MapPin size={24} className="text-[#86868b]" />
+      </div>
+      <p className="text-sm font-medium text-[#6e6e73] mb-1">위치도를 표시할 수 없습니다</p>
+      <p className="text-xs text-[#86868b] text-center max-w-md leading-relaxed">
+        Kakao Maps API 키가 설정되지 않았거나 주소 변환에 실패했습니다.
+        {summary && (
+          <span className="block mt-2 text-[#6e6e73] font-medium">
+            주소: {summary}
+          </span>
+        )}
+      </p>
+    </div>
+  );
+}
+
+/** Kakao Maps JS SDK 기반 위치도 */
+function LocationMap({
+  siteAddress,
+  summary,
+  salesCases,
+  supplyCases,
+}: {
+  siteAddress?: string;
+  summary?: string;
+  salesCases: ScrSalesCase[];
+  supplyCases: ScrSupplyCase[];
+}) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const hasKakaoKey = !!process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
+  const [status, setStatus] = useState<"loading" | "ready" | "fallback">(
+    hasKakaoKey ? "loading" : "fallback"
+  );
+
+  // 표시할 주소 결정: siteAddress 우선, 없으면 summary 사용
+  const primaryAddress = siteAddress || summary || "";
+
+  // 마커 목록 구성
+  const markers: MapMarker[] = [];
+  if (primaryAddress) {
+    markers.push({ label: "사업지", address: primaryAddress, type: "site" });
+  }
+  salesCases.forEach((c) => {
+    if (c.address) markers.push({ label: c.complexName, address: c.address, type: "sales" });
+  });
+  supplyCases.forEach((c) => {
+    if (c.address) markers.push({ label: c.complexName, address: c.address, type: "supply" });
+  });
+
+  /** Kakao Geocoder로 주소 → 좌표 변환 (번지 제거 폴백 포함) */
+  const geocode = useCallback(
+    (
+      geocoder: InstanceType<typeof window.kakao.maps.services.Geocoder>,
+      address: string,
+      OK: string,
+    ): Promise<{ lat: number; lng: number } | null> => {
+      return new Promise((resolve) => {
+        geocoder.addressSearch(address, (result, statusCode) => {
+          if (statusCode === OK && result[0]) {
+            resolve({ lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) });
+            return;
+          }
+          // 번지 제거 후 재시도
+          const stripped = address.replace(/\s+\d+(-\d+)?$/, "").trim();
+          if (stripped !== address) {
+            geocoder.addressSearch(stripped, (r2, s2) => {
+              if (s2 === OK && r2[0]) {
+                resolve({ lat: parseFloat(r2[0].y), lng: parseFloat(r2[0].x) });
+              } else {
+                resolve(null);
+              }
+            });
+          } else {
+            resolve(null);
+          }
+        });
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!hasKakaoKey || !primaryAddress) {
+      setStatus("fallback");
+      return;
+    }
+
+    const initMap = async () => {
+      if (!window.kakao?.maps || !mapRef.current) return;
+
+      window.kakao.maps.load(async () => {
+        const geocoder = new window.kakao.maps.services.Geocoder();
+        const OK = window.kakao.maps.services.Status.OK;
+
+        // 사업지 좌표 변환
+        const siteCoord = await geocode(geocoder, primaryAddress, OK);
+        if (!siteCoord) {
+          setStatus("fallback");
+          return;
+        }
+
+        const center = new window.kakao.maps.LatLng(siteCoord.lat, siteCoord.lng);
+        const map = new window.kakao.maps.Map(mapRef.current!, {
+          center,
+          level: 5,
+        });
+
+        // 사업지 마커 (기본 마커)
+        new window.kakao.maps.Marker({ map, position: center });
+
+        // 매매/분양사례 마커 비동기 추가
+        const caseMarkers = markers.filter((m) => m.type !== "site");
+        for (const marker of caseMarkers) {
+          const coord = await geocode(geocoder, marker.address, OK);
+          if (coord) {
+            new window.kakao.maps.Marker({
+              map,
+              position: new window.kakao.maps.LatLng(coord.lat, coord.lng),
+            });
+          }
+        }
+
+        setStatus("ready");
+
+        // 타일 로드 실패 감지 (기존 KakaoMap 패턴 동일)
+        setTimeout(() => {
+          const tiles = mapRef.current?.querySelectorAll("img");
+          const hasLoadedTile = tiles && Array.from(tiles).some(
+            (img) => img.naturalWidth > 0 && !img.src.includes("logo"),
+          );
+          if (!hasLoadedTile) setStatus("fallback");
+        }, 3000);
+      });
+    };
+
+    // SDK 로드 여부에 따라 즉시 또는 대기 후 초기화
+    if (window.kakao?.maps) {
+      initMap();
+    } else {
+      const timeout = setTimeout(() => {
+        if (window.kakao?.maps) {
+          initMap();
+        } else {
+          setStatus("fallback");
+        }
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primaryAddress, hasKakaoKey, salesCases.length, supplyCases.length]);
+
+  // 폴백: 자리표시자 표시
+  if (status === "fallback") {
+    return (
+      <ScrSection icon={MapPin} title="그림14. 위치도">
+        <LocationMapFallback summary={primaryAddress || summary} />
+      </ScrSection>
+    );
+  }
+
+  // 범례
+  const hasAnyCases = salesCases.length > 0 || supplyCases.length > 0;
+
   return (
     <ScrSection icon={MapPin} title="그림14. 위치도">
-      <div className="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 flex flex-col items-center justify-center py-12 px-6">
-        <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-          <MapPin size={24} className="text-[#86868b]" />
-        </div>
-        <p className="text-sm font-medium text-[#6e6e73] mb-1">위치도가 표시될 영역입니다</p>
-        <p className="text-xs text-[#86868b] text-center max-w-md leading-relaxed">
-          Kakao Maps 연동 시 사업지 위치가 지도 위에 표시됩니다.
-          {summary && (
-            <span className="block mt-2 text-[#6e6e73] font-medium">
-              주소: {summary}
+      <div className="relative rounded-xl overflow-hidden border border-gray-100">
+        {/* 로딩 오버레이 */}
+        {status === "loading" && (
+          <div className="absolute inset-0 z-10 animate-pulse bg-gray-100 rounded-xl" />
+        )}
+        <div ref={mapRef} className="h-[360px] w-full" />
+      </div>
+      {/* 범례 */}
+      {hasAnyCases && status === "ready" && (
+        <div className="flex items-center gap-4 mt-2 text-[11px] text-[#6e6e73]">
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500" />
+            사업지
+          </span>
+          {salesCases.length > 0 && (
+            <span className="flex items-center gap-1">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500" />
+              매매사례 ({salesCases.length}건)
             </span>
           )}
-        </p>
-      </div>
+          {supplyCases.length > 0 && (
+            <span className="flex items-center gap-1">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              분양사례 ({supplyCases.length}건)
+            </span>
+          )}
+        </div>
+      )}
+      {/* 주소 표시 */}
+      {primaryAddress && (
+        <p className="text-[11px] text-[#86868b] mt-1">주소: {primaryAddress}</p>
+      )}
     </ScrSection>
   );
 }
 
 /* ─── 메인 IV장 컴포넌트 ─── */
-export function ScrChapterIV({ data }: ScrChapterIVProps) {
+export function ScrChapterIV({ data, siteAddress }: ScrChapterIVProps) {
   const hasLocation =
     data.location.transportation.length > 0 ||
     data.location.livingInfra.length > 0 ||
@@ -400,7 +596,12 @@ export function ScrChapterIV({ data }: ScrChapterIVProps) {
         </ScrSection>
       )}
 
-      <LocationMapPlaceholder summary={data.location.summary} />
+      <LocationMap
+        siteAddress={siteAddress}
+        summary={data.location.summary}
+        salesCases={data.priceReview.salesCases}
+        supplyCases={data.priceReview.supplyCases}
+      />
 
       {data.nearbyDevelopment.length > 0 ? (
         <NearbyDevelopmentTable rows={data.nearbyDevelopment} />
