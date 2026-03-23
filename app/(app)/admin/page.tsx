@@ -159,7 +159,7 @@ function AdminContent() {
 
   // URL ?tab= 파라미터에서 현재 탭 읽기
   const urlTab = searchParams.get("tab") as Tab | null;
-  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "ml-training", "weight-tuning", "integrity-audit", "account", "apikey"].includes(urlTab)
+  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "ml-training", "weight-tuning", "integrity-audit", "account", "apikey", "news"].includes(urlTab)
     ? urlTab
     : "overview";
 
