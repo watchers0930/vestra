@@ -6,6 +6,7 @@ import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { stripHtml, truncateInput } from "@/lib/sanitize";
 import { searchCourtCases } from "@/lib/court-api";
 import { analyzeContract } from "@/lib/contract-analyzer";
+import { buildPolicyContext, logNewsUsage } from "@/lib/news-query";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
@@ -70,6 +71,17 @@ export async function POST(req: NextRequest) {
       console.warn("판례 검색 실패:", e);
     }
 
+    // 2.5단계: 최근 관련 정책 조회
+    let policyContext = "";
+    let policyArticleIds: string[] = [];
+    try {
+      const policy = await buildPolicyContext(["전세", "규제", "대출"]);
+      policyContext = policy.context;
+      policyArticleIds = policy.articleIds;
+    } catch {
+      // 정책 조회 실패 시 무시
+    }
+
     // 3단계: LLM으로 종합 의견만 생성
     let aiOpinion = "";
     try {
@@ -87,6 +99,7 @@ export async function POST(req: NextRequest) {
               highRiskCount: engineResult.clauses.filter((c) => c.riskLevel === "high").length,
               warningCount: engineResult.clauses.filter((c) => c.riskLevel === "warning").length,
               courtContext: courtContext || "관련 판례 없음",
+              policyContext: policyContext || "관련 정책 없음",
             }),
           },
         ],
@@ -101,6 +114,11 @@ export async function POST(req: NextRequest) {
       }
     } catch {
       aiOpinion = "AI 의견 생성에 실패했습니다. 자체 분석 결과를 참고해주세요.";
+    }
+
+    // 정책 활용 로그
+    if (policyArticleIds.length > 0) {
+      logNewsUsage(policyArticleIds, "contract").catch(() => {});
     }
 
     return NextResponse.json({

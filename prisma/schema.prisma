@@ -490,3 +490,38 @@ model BenchmarkCache {
   @@index([category])
   @@index([expiresAt])
 }
+
+// ---------------------------------------------------------------------------
+// 뉴스·정책 수집기
+// ---------------------------------------------------------------------------
+
+model NewsArticle {
+  id          String   @id @default(cuid())
+  title       String
+  summary     String   @db.Text
+  url         String   @unique
+  source      String                        // google | hankyung | mk | molit | moef | nts
+  category    String                        // news | policy
+  tags        String[]
+  policyType  String?                       // 세율변경 | 규제지역 | 대출규제 | 공급정책 | 전세대책
+  publishedAt DateTime
+  collectedAt DateTime @default(now())
+  isAlert     Boolean  @default(false)
+  alertAcked  Boolean  @default(false)
+  usageLogs   NewsUsageLog[]
+
+  @@index([category, publishedAt(sort: Desc)])
+  @@index([isAlert, alertAcked])
+}
+
+model NewsUsageLog {
+  id        String   @id @default(cuid())
+  articleId String
+  usedIn    String                          // chat | contract | prediction
+  usedAt    DateTime @default(now())
+
+  article   NewsArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
+  @@index([usedIn, usedAt(sort: Desc)])
+}

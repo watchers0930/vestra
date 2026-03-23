@@ -5,6 +5,7 @@ import { CHAT_SYSTEM_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { sanitizeMessages } from "@/lib/sanitize";
 import { searchCourtCases } from "@/lib/court-api";
+import { buildNewsContext, logNewsUsage } from "@/lib/news-query";
 
 export async function POST(req: NextRequest) {
   try {
@@ -56,9 +57,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // 최신 뉴스/정책 컨텍스트
+    let newsContext = "";
+    let newsArticleIds: string[] = [];
+    try {
+      const news = await buildNewsContext();
+      newsContext = news.context;
+      newsArticleIds = news.articleIds;
+    } catch {
+      // 뉴스 조회 실패 시 무시
+    }
+
     const openai = getOpenAIClient();
 
-    const systemPrompt = CHAT_SYSTEM_PROMPT + courtContext;
+    const systemPrompt = CHAT_SYSTEM_PROMPT + courtContext + newsContext;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
@@ -76,6 +88,11 @@ export async function POST(req: NextRequest) {
     const content = completion.choices[0]?.message?.content;
     if (!content) {
       return NextResponse.json({ error: "AI 응답이 없습니다." }, { status: 500 });
+    }
+
+    // 뉴스 활용 로그
+    if (newsArticleIds.length > 0) {
+      logNewsUsage(newsArticleIds, "chat").catch(() => {});
     }
 
     return NextResponse.json({ content });

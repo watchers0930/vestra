@@ -41,12 +41,13 @@ import { MlTrainingTab } from "@/components/admin/MlTrainingTab";
 import { WeightTuningTab } from "@/components/admin/WeightTuningTab";
 import { IntegrityAuditTab } from "@/components/admin/IntegrityAuditTab";
 import { ApiKeyTab } from "@/components/admin/ApiKeyTab";
+import { NewsTab } from "@/components/admin/NewsTab";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "ml-training" | "weight-tuning" | "integrity-audit" | "account" | "apikey";
+type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "ml-training" | "weight-tuning" | "integrity-audit" | "account" | "apikey" | "news";
 
 interface Stats {
   totalUsers: number;
@@ -368,6 +369,7 @@ function AdminContent() {
     { key: "weight-tuning", label: "가중치 튜닝" },
     { key: "integrity-audit", label: "무결성 감사" },
     { key: "apikey", label: "API KEY" },
+    { key: "news", label: "뉴스·정책" },
     { key: "account", label: "계정 설정" },
   ];
 
@@ -976,6 +978,11 @@ function AdminContent() {
           {/* 무결성 감사 탭                                                  */}
           {/* ============================================================= */}
           {tab === "integrity-audit" && <IntegrityAuditTab />}
+
+          {/* ============================================================= */}
+          {/* 뉴스·정책 탭                                                    */}
+          {/* ============================================================= */}
+          {tab === "news" && <NewsTab />}
 
           {/* ============================================================= */}
           {/* 계정 설정 탭                                                    */}

@@ -18,6 +18,7 @@ import { detectAnomalies, type AnomalyDetectionReport, type TimeSeriesPoint } fr
 import { VerifiedPipeline } from "@/lib/integrity-chain";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { formatKRW } from "@/lib/utils";
+import { buildPolicyContext, logNewsUsage } from "@/lib/news-query";
 
 const formatKoreanPrice = (won: number) => formatKRW(won, "없음");
 
@@ -189,6 +190,17 @@ export async function POST(req: NextRequest) {
       async () => ({ filteredCount: filteredTx.length }),
     );
 
+    // 4.5단계: 최근 관련 정책 조회
+    let policyContext = "";
+    let policyArticleIds: string[] = [];
+    try {
+      const policy = await buildPolicyContext(["규제", "대출", "공급", "금리"]);
+      policyContext = policy.context;
+      policyArticleIds = policy.articleIds;
+    } catch {
+      // 정책 조회 실패 시 무시
+    }
+
     // 5단계: LLM으로 종합 의견만 생성
     let aiOpinion = "";
     try {
@@ -209,6 +221,7 @@ export async function POST(req: NextRequest) {
               aptTransactionCount: filteredTx.length,
               regionTransactionCount: comprehensive?.sale?.transactionCount ?? 0,
               jeonseRatio: comprehensive?.jeonseRatio ?? null,
+              policyContext: policyContext || "관련 정책 없음",
             }),
           },
         ],
@@ -231,6 +244,11 @@ export async function POST(req: NextRequest) {
       { address, confidence: predictionResult.confidence },
       async () => ({ opinion: aiOpinion.slice(0, 50) }),
     );
+
+    // 정책 활용 로그
+    if (policyArticleIds.length > 0) {
+      logNewsUsage(policyArticleIds, "prediction").catch(() => {});
+    }
 
     // 파이프라인 확정 및 Merkle Root 생성
     const integrityResult = await pipeline.finalize();
