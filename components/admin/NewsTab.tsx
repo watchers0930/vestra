@@ -199,7 +199,7 @@ export function NewsTab() {
 
       {/* 정책 변경 알림 */}
       {alerts.length > 0 && (
-        <Card>
+        <Card className="border-0 shadow-none">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle size={18} className="text-red-500" />
             <h3 className="font-semibold text-sm">
@@ -272,11 +272,11 @@ export function NewsTab() {
       </div>
 
       {/* 데이터 목록 */}
-      <Card>
+      <Card className="border-0 shadow-none">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-gray-500">
+              <tr className="border-b border-gray-200 text-left text-gray-500">
                 <th className="pb-2 font-medium">제목</th>
                 <th className="pb-2 font-medium w-20">출처</th>
                 <th className="pb-2 font-medium w-16">분류</th>
@@ -288,7 +288,7 @@ export function NewsTab() {
             </thead>
             <tbody>
               {articles.map((a) => (
-                <tr key={a.id} className="hover:bg-gray-50">
+                <tr key={a.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
                   <td className="py-2.5 pr-3">
                     <a
                       href={a.url}
@@ -362,7 +362,7 @@ export function NewsTab() {
 
       {/* 활용 통계 */}
       {stats && stats.weeklyUsage.length > 0 && (
-        <Card>
+        <Card className="border-0 shadow-none">
           <h3 className="font-semibold text-sm mb-3">주간 활용 통계</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart
