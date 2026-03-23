@@ -41,7 +41,8 @@ import { MlTrainingTab } from "@/components/admin/MlTrainingTab";
 import { WeightTuningTab } from "@/components/admin/WeightTuningTab";
 import { IntegrityAuditTab } from "@/components/admin/IntegrityAuditTab";
 import { ApiKeyTab } from "@/components/admin/ApiKeyTab";
-import { NewsTab } from "@/components/admin/NewsTab";
+import dynamic from "next/dynamic";
+const NewsTab = dynamic(() => import("@/components/admin/NewsTab").then(m => m.NewsTab), { ssr: false });
 
 // ---------------------------------------------------------------------------
 // Types
