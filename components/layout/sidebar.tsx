@@ -309,7 +309,7 @@ export default function Sidebar() {
       >
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-white/5">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <VestraLogoMark
               size={32}
               variant={isAdmin && isAdminPage ? "admin" : "default"}
@@ -325,7 +325,7 @@ export default function Sidebar() {
                 </p>
               </div>
             )}
-          </div>
+          </Link>
           <div className="flex items-center gap-1">
             <NotificationBell collapsed={collapsed && !mobileOpen} />
             <button
