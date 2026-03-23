@@ -276,7 +276,7 @@ export function NewsTab() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-gray-500">
+              <tr className="text-left text-gray-500">
                 <th className="pb-2 font-medium">제목</th>
                 <th className="pb-2 font-medium w-20">출처</th>
                 <th className="pb-2 font-medium w-16">분류</th>
@@ -288,7 +288,7 @@ export function NewsTab() {
             </thead>
             <tbody>
               {articles.map((a) => (
-                <tr key={a.id} className="border-b last:border-0 hover:bg-gray-50">
+                <tr key={a.id} className="hover:bg-gray-50">
                   <td className="py-2.5 pr-3">
                     <a
                       href={a.url}
