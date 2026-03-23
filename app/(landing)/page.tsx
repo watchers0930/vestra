@@ -162,7 +162,7 @@ export default function LandingPage() {
       {/* Features Section — Apple tile layout                               */}
       {/* ================================================================== */}
       <section id="features" className="py-[100px] bg-[#fbfbfd]">
-        <div className="max-w-[980px] mx-auto px-6">
+        <div className="max-w-[1080px] mx-auto px-6">
           <div className="text-center mb-[60px]">
             <h2 className="text-[40px] md:text-[48px] font-bold text-[#1d1d1f] leading-[1.08] tracking-[-0.03em]">
               하나의 플랫폼에서
@@ -174,7 +174,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {features.map((f) => (
               <div
                 key={f.title}

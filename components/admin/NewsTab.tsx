@@ -70,6 +70,7 @@ export function NewsTab() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [collecting, setCollecting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
 
   // 검색 디바운스 (300ms)
@@ -84,8 +85,13 @@ export function NewsTab() {
   };
 
   const fetchStats = useCallback(async () => {
-    const res = await fetch("/api/admin/news/stats");
-    if (res.ok) setStats(await res.json());
+    try {
+      const res = await fetch("/api/admin/news/stats");
+      if (res.ok) setStats(await res.json());
+      else setStats({ today: 0, week: 0, total: 0, alertCount: 0, lastCollected: null, weeklyUsage: [] });
+    } catch {
+      setStats({ today: 0, week: 0, total: 0, alertCount: 0, lastCollected: null, weeklyUsage: [] });
+    }
   }, []);
 
   const fetchArticles = useCallback(async () => {
@@ -109,8 +115,7 @@ export function NewsTab() {
   }, []);
 
   useEffect(() => {
-    fetchStats();
-    fetchAlerts();
+    Promise.all([fetchStats(), fetchAlerts()]).finally(() => setLoading(false));
   }, [fetchStats, fetchAlerts]);
 
   useEffect(() => {
@@ -168,6 +173,10 @@ export function NewsTab() {
     contract: "계약서 분석",
     prediction: "시세전망",
   };
+
+  if (loading) {
+    return <div className="py-12 text-center text-gray-400">로딩 중...</div>;
+  }
 
   return (
     <div className="space-y-6">
