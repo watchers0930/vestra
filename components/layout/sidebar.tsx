@@ -110,6 +110,7 @@ const adminMenuItems: MenuItem[] = [
   { href: "/admin?tab=integrity-audit", icon: ShieldAlert, label: "무결성 감사", description: "분석 결과의 무결성을 검증합니다" },
   { href: "/admin?tab=apikey", icon: Key, label: "API KEY", description: "외부 API 키를 관리합니다" },
   { href: "/admin?tab=news", icon: Newspaper, label: "뉴스·정책", description: "부동산 뉴스/정책 수집 현황을 확인합니다" },
+  { href: "/admin?tab=guarantee-rules", icon: ShieldCheck, label: "보증보험 규칙", description: "보증보험 가입조건 규칙을 관리합니다" },
   { href: "/admin?tab=account", icon: KeyRound, label: "계정 설정", description: "관리자 비밀번호 변경 및 계정 설정을 관리합니다" },
 ];
 

@@ -525,3 +525,23 @@ model NewsUsageLog {
   @@index([articleId])
   @@index([usedIn, usedAt(sort: Desc)])
 }
+
+// ---------------------------------------------------------------------------
+// 보증보험 규칙 관리
+// ---------------------------------------------------------------------------
+
+model GuaranteeRule {
+  id            String   @id @default(cuid())
+  provider      String   // HUG | HF | SGI
+  rules         Json     // 기관별 조건 JSON
+  version       Int      @default(1)
+  isActive      Boolean  @default(true)
+  effectiveFrom DateTime @default(now())
+  changelog     String?  @db.Text
+  updatedBy     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([provider, version])
+  @@index([provider, isActive])
+}

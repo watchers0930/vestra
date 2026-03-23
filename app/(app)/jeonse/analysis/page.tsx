@@ -13,7 +13,10 @@ import PdfDownloadButton from "@/components/common/pdf-download-button";
 import { FormInput, SliderInput, TabButtons } from "@/components/forms";
 import { LoadingSpinner } from "@/components/loading";
 import FraudRiskCard from "@/components/results/FraudRiskCard";
+import { GuaranteeInsuranceCard } from "@/components/results";
 import type { FraudRiskResult } from "@/lib/patent-types";
+import { checkGuaranteeInsurance } from "@/lib/guarantee-insurance";
+import type { GuaranteeInsuranceResult } from "@/lib/guarantee-insurance";
 import { useToast } from "@/components/common/toast";
 
 interface JeonseAnalysis {
@@ -48,6 +51,10 @@ export default function JeonsePage() {
     startDate: "2025-03-01",
     endDate: "2027-02-28",
     propertyType: "아파트",
+    propertyPrice: 500000000,
+    seniorLiens: 0,
+    isMetro: true,
+    hasJeonseLoan: false,
   });
 
   // localStorage에서 주소 프리필
@@ -66,6 +73,7 @@ export default function JeonsePage() {
   const [docLoading, setDocLoading] = useState(false);
   const [generatedDoc, setGeneratedDoc] = useState<GeneratedDocument | null>(null);
   const [activeDocType, setActiveDocType] = useState<"jeonse" | "lease">("jeonse");
+  const [guaranteeResult, setGuaranteeResult] = useState<GuaranteeInsuranceResult | null>(null);
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const resultRef = useRef<HTMLDivElement>(null);
 
@@ -73,6 +81,7 @@ export default function JeonsePage() {
     setLoading(true);
     setAnalysis(null);
     setFraudRisk(null);
+    setGuaranteeResult(null);
 
     try {
       const res = await fetch("/api/generate-document", {
@@ -100,6 +109,19 @@ export default function JeonsePage() {
         .then((fr) => { if (!fr.error) setFraudRisk(fr); })
         .catch(() => showToast("전세사기 위험도 분석에 실패했습니다."))
         .finally(() => setFraudLoading(false));
+
+      // 보증보험 가입 가능성 판단 (클라이언트 사이드 즉시 계산)
+      const gResult = checkGuaranteeInsurance({
+        deposit: formData.deposit,
+        propertyPrice: formData.propertyPrice,
+        seniorLiens: formData.seniorLiens,
+        propertyType: formData.propertyType,
+        isMetro: formData.isMetro,
+        contractStartDate: formData.startDate,
+        contractEndDate: formData.endDate,
+        hasJeonseLoan: formData.hasJeonseLoan,
+      });
+      setGuaranteeResult(gResult);
 
       addAnalysis({
         type: "jeonse",
@@ -211,6 +233,46 @@ export default function JeonsePage() {
               max={2000000000}
               step={10000000}
             />
+
+            <SliderInput
+              label="주택 시세 (매매가)"
+              value={formData.propertyPrice}
+              onChange={(v) => setFormData({ ...formData, propertyPrice: v })}
+              min={100000000}
+              max={3000000000}
+              step={10000000}
+            />
+
+            <SliderInput
+              label="선순위 채권액 (근저당 등)"
+              value={formData.seniorLiens}
+              onChange={(v) => setFormData({ ...formData, seniorLiens: v })}
+              min={0}
+              max={2000000000}
+              step={10000000}
+            />
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5">지역</label>
+              <TabButtons
+                options={[
+                  { value: "true", label: "수도권" },
+                  { value: "false", label: "비수도권" },
+                ]}
+                value={String(formData.isMetro)}
+                onChange={(v) => setFormData({ ...formData, isMetro: v === "true" })}
+              />
+            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.hasJeonseLoan}
+                onChange={(e) => setFormData({ ...formData, hasJeonseLoan: e.target.checked })}
+                className="w-4 h-4 accent-primary"
+              />
+              <span className="text-sm">전세자금대출 연계 (HF 보증 판단용)</span>
+            </label>
 
             <FormInput
               label="월세 (없으면 0)"
@@ -330,6 +392,11 @@ export default function JeonsePage() {
               )}
               {fraudRisk && !fraudLoading && (
                 <FraudRiskCard result={fraudRisk} />
+              )}
+
+              {/* 보증보험 가입 가능성 */}
+              {guaranteeResult && (
+                <GuaranteeInsuranceCard result={guaranteeResult} />
               )}
 
               {/* Document Generation */}

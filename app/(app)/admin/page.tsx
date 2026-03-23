@@ -42,12 +42,13 @@ import { WeightTuningTab } from "@/components/admin/WeightTuningTab";
 import { IntegrityAuditTab } from "@/components/admin/IntegrityAuditTab";
 import { ApiKeyTab } from "@/components/admin/ApiKeyTab";
 import { NewsTab } from "@/components/admin/NewsTab";
+import { GuaranteeRulesTab } from "@/components/admin/GuaranteeRulesTab";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "ml-training" | "weight-tuning" | "integrity-audit" | "account" | "apikey" | "news";
+type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "ml-training" | "weight-tuning" | "integrity-audit" | "account" | "apikey" | "news" | "guarantee-rules";
 
 interface Stats {
   totalUsers: number;
@@ -231,7 +232,7 @@ function AdminContent() {
 
   // URL ?tab= 파라미터에서 현재 탭 읽기
   const urlTab = searchParams.get("tab") as Tab | null;
-  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "ml-training", "weight-tuning", "integrity-audit", "account", "apikey", "news"].includes(urlTab)
+  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "ml-training", "weight-tuning", "integrity-audit", "account", "apikey", "news", "guarantee-rules"].includes(urlTab)
     ? urlTab
     : "overview";
 
@@ -361,25 +362,28 @@ function AdminContent() {
     ? analyses
     : analyses.filter((a) => a.type === analysisTypeFilter);
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: "overview", label: "개요" },
-    { key: "users", label: "회원 관리" },
-    { key: "verifications", label: `인증 관리${pending.length > 0 ? ` (${pending.length})` : ""}` },
-    { key: "analyses", label: "분석 이력" },
-    { key: "announcements", label: "공지사항" },
-    { key: "ml-training", label: "ML 학습관리" },
-    { key: "weight-tuning", label: "가중치 튜닝" },
-    { key: "integrity-audit", label: "무결성 감사" },
-    { key: "apikey", label: "API KEY" },
-    { key: "news", label: "뉴스·정책" },
-    { key: "account", label: "계정 설정" },
+  const tabs: { key: Tab; label: string; description: string }[] = [
+    { key: "overview", label: "개요", description: "서비스 통계, 사용량, 시스템 상태를 한눈에 확인합니다" },
+    { key: "users", label: "회원 관리", description: "회원 목록 조회, 역할 변경, 사용 한도를 관리합니다" },
+    { key: "verifications", label: `인증 관리${pending.length > 0 ? ` (${pending.length})` : ""}`, description: "전문가 인증 요청을 검토하고 승인·거부합니다" },
+    { key: "analyses", label: "분석 이력", description: "전체 사용자의 분석 요청 기록을 조회합니다" },
+    { key: "announcements", label: "공지사항", description: "서비스 공지사항을 작성하고 관리합니다" },
+    { key: "ml-training", label: "ML 학습관리", description: "ML 학습 데이터를 관리하고 검수합니다" },
+    { key: "weight-tuning", label: "가중치 튜닝", description: "분석 모델의 가중치를 조정합니다" },
+    { key: "integrity-audit", label: "무결성 감사", description: "분석 결과의 무결성을 검증합니다" },
+    { key: "apikey", label: "API KEY", description: "외부 API 키를 관리합니다" },
+    { key: "news", label: "뉴스·정책", description: "부동산 뉴스/정책 수집 현황을 확인합니다" },
+    { key: "guarantee-rules", label: "보증보험 규칙", description: "보증보험 가입조건 규칙을 관리합니다" },
+    { key: "account", label: "계정 설정", description: "관리자 비밀번호 변경 및 계정 설정을 관리합니다" },
   ];
+
+  const activeTabInfo = tabs.find((t) => t.key === tab) ?? tabs[0];
 
   return (
     <div>
       <PageHeader
-        title="관리자 대시보드"
-        description="회원, 인증, 분석, 공지사항 관리"
+        title={activeTabInfo.label}
+        description={activeTabInfo.description}
         icon={ShieldCheck}
       />
 
@@ -967,6 +971,11 @@ function AdminContent() {
           {/* 뉴스·정책 탭                                                    */}
           {/* ============================================================= */}
           {tab === "news" && <NewsTab />}
+
+          {/* ============================================================= */}
+          {/* 보증보험 규칙 탭                                                */}
+          {/* ============================================================= */}
+          {tab === "guarantee-rules" && <GuaranteeRulesTab />}
 
           {/* ============================================================= */}
           {/* 계정 설정 탭                                                    */}
