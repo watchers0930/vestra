@@ -6,6 +6,7 @@ import {
   TrendingUp,
   Home,
   MessageSquare,
+  ClipboardCheck,
   CheckCircle,
   ArrowRight,
   Lock,
@@ -42,6 +43,11 @@ const features = [
     icon: Home,
     title: "전세 보호",
     description: "전세 사기 예방을 위한 안전 분석, 전입신고, 확정일자, 전세권설정까지 원스톱 가이드.",
+  },
+  {
+    icon: ClipboardCheck,
+    title: "사업성 분석",
+    description: "다중 문서 기반으로 사업성을 검증하고 SCR 수준의 분석 보고서를 자동 생성합니다.",
   },
   {
     icon: MessageSquare,
@@ -164,7 +170,7 @@ export default function LandingPage() {
               모든 부동산 분석을
             </h2>
             <p className="mt-3 text-[21px] text-[#6e6e73]">
-              6가지 핵심 기능으로 부동산 의사결정을 돕습니다
+              7가지 핵심 기능으로 부동산 의사결정을 돕습니다
             </p>
           </div>
 

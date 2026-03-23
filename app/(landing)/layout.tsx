@@ -104,6 +104,11 @@ export default function LandingLayout({
                   </Link>
                 </li>
                 <li>
+                  <Link href="/login" className="hover:text-[#1d1d1f] transition-colors">
+                    사업성 분석
+                  </Link>
+                </li>
+                <li>
                   <Link href="/pricing" className="hover:text-[#1d1d1f] transition-colors">
                     요금제
                   </Link>

@@ -17,28 +17,39 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Links */}
-          <div className="flex items-center gap-4 text-xs">
-            <a
-              href="/legal"
-              className="text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              법적고지
-            </a>
-            <span className="text-gray-300">|</span>
-            <a
-              href="/terms"
-              className="text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              이용약관
-            </a>
-            <span className="text-gray-300">|</span>
-            <a
-              href="/privacy"
-              className="text-gray-700 font-semibold hover:text-gray-900 transition-colors"
-            >
-              개인정보처리방침
-            </a>
+          {/* Service Links */}
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+              <a href="/rights" className="hover:text-gray-900 transition-colors">권리분석</a>
+              <a href="/contract" className="hover:text-gray-900 transition-colors">계약검토</a>
+              <a href="/tax" className="hover:text-gray-900 transition-colors">세무 시뮬레이션</a>
+              <a href="/prediction" className="hover:text-gray-900 transition-colors">시세전망</a>
+              <a href="/jeonse" className="hover:text-gray-900 transition-colors">전세보호</a>
+              <a href="/feasibility" className="hover:text-gray-900 transition-colors">사업성 분석</a>
+              <a href="/assistant" className="hover:text-gray-900 transition-colors">AI 어시스턴트</a>
+            </div>
+            <div className="flex items-center gap-4 text-xs">
+              <a
+                href="/legal"
+                className="text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                법적고지
+              </a>
+              <span className="text-gray-300">|</span>
+              <a
+                href="/terms"
+                className="text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                이용약관
+              </a>
+              <span className="text-gray-300">|</span>
+              <a
+                href="/privacy"
+                className="text-gray-700 font-semibold hover:text-gray-900 transition-colors"
+              >
+                개인정보처리방침
+              </a>
+            </div>
           </div>
         </div>
 
