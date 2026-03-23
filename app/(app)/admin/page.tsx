@@ -41,8 +41,7 @@ import { MlTrainingTab } from "@/components/admin/MlTrainingTab";
 import { WeightTuningTab } from "@/components/admin/WeightTuningTab";
 import { IntegrityAuditTab } from "@/components/admin/IntegrityAuditTab";
 import { ApiKeyTab } from "@/components/admin/ApiKeyTab";
-import dynamic from "next/dynamic";
-const NewsTab = dynamic(() => import("@/components/admin/NewsTab").then(m => m.NewsTab), { ssr: false });
+import { NewsTab } from "@/components/admin/NewsTab";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -147,32 +146,7 @@ function AdminContent() {
   const router = useRouter();
   const { data: session, status } = useSession();
 
-  useEffect(() => {
-    if (status === "loading") return;
-    if (!session?.user || session.user.role !== "ADMIN") {
-      router.replace("/dashboard");
-    }
-  }, [session, status, router]);
-
-  if (status === "loading") return <LoadingSpinner message="권한 확인 중..." />;
-  if (!session?.user || session.user.role !== "ADMIN") return null;
-
-  // URL ?tab= 파라미터에서 현재 탭 읽기
-  const urlTab = searchParams.get("tab") as Tab | null;
-  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "ml-training", "weight-tuning", "integrity-audit", "account", "apikey", "news"].includes(urlTab)
-    ? urlTab
-    : "overview";
-
-  // 탭 변경 시 URL 업데이트
-  const setTab = (newTab: Tab) => {
-    if (newTab === "overview") {
-      router.push("/admin");
-    } else {
-      router.push(`/admin?tab=${newTab}`);
-    }
-  };
-
-  const tab = currentTab;
+  // ─── 모든 hooks를 조건부 return 위에 선언 (React Hooks 규칙) ───
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<UserItem[]>([]);
   const [pending, setPending] = useState<UserItem[]>([]);
@@ -242,7 +216,34 @@ function AdminContent() {
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    if (status === "loading") return;
+    if (!session?.user || session.user.role !== "ADMIN") {
+      router.replace("/dashboard");
+      return;
+    }
+    fetchData();
+  }, [fetchData, session, status, router]);
+
+  // ─── 조건부 return (hooks 이후) ───
+  if (status === "loading") return <LoadingSpinner message="권한 확인 중..." />;
+  if (!session?.user || session.user.role !== "ADMIN") return null;
+
+  // URL ?tab= 파라미터에서 현재 탭 읽기
+  const urlTab = searchParams.get("tab") as Tab | null;
+  const currentTab: Tab = urlTab && ["overview", "users", "verifications", "analyses", "announcements", "ml-training", "weight-tuning", "integrity-audit", "account", "apikey", "news"].includes(urlTab)
+    ? urlTab
+    : "overview";
+
+  const setTab = (newTab: Tab) => {
+    if (newTab === "overview") {
+      router.push("/admin");
+    } else {
+      router.push(`/admin?tab=${newTab}`);
+    }
+  };
+
+  const tab = currentTab;
 
   // ---------------------------------------------------------------------------
   // Handlers
