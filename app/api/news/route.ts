@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for") || "anonymous";
+  const rl = await rateLimit(`news:${ip}`, 30);
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: "요청 한도 초과" },
+      { status: 429, headers: rateLimitHeaders(rl) }
+    );
+  }
+
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
   const tag = searchParams.get("tag");

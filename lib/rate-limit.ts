@@ -65,9 +65,10 @@ export async function rateLimit(
       remaining: limit - updated.count,
       reset: updated.resetTime.getTime(),
     };
-  } catch {
-    // DB 오류 시 요청 허용 (가용성 우선)
-    return { success: true, remaining: limit, reset: resetTime.getTime() };
+  } catch (error) {
+    // DB 오류 시 요청 차단 (보안 우선)
+    console.error("[RateLimit] DB 오류:", error);
+    return { success: false, remaining: 0, reset: resetTime.getTime() };
   }
 }
 

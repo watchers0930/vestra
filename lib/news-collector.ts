@@ -7,6 +7,7 @@
 
 import { prisma } from "./prisma";
 import { classifyArticle } from "./news-tagger";
+import { stripHtml } from "./sanitize";
 
 // ---------------------------------------------------------------------------
 // RSS 소스 설정
@@ -64,11 +65,6 @@ function extractXmlTag(xml: string, tag: string): string {
   );
   const match = xml.match(regex);
   return match ? match[1].trim() : "";
-}
-
-/** HTML 태그 제거 */
-function stripHtml(text: string): string {
-  return text.replace(/<[^>]*>/g, "").trim();
 }
 
 async function parseFeed(source: FeedSource): Promise<RawArticle[]> {
@@ -138,26 +134,23 @@ export async function collectNews(): Promise<CollectResult> {
     try {
       const articles = await parseFeed(source);
       result.total += articles.length;
+      if (articles.length === 0) continue;
 
-      for (const article of articles) {
-        if (totalSaved >= MAX_DAILY_ARTICLES) break;
+      // 배치 중복 확인: 한번에 URL 목록으로 조회
+      const urls = articles.map((a) => a.url);
+      const existing = await prisma.newsArticle.findMany({
+        where: { url: { in: urls } },
+        select: { url: true },
+      });
+      const existingUrls = new Set(existing.map((e) => e.url));
 
-        // 중복 확인
-        const exists = await prisma.newsArticle.findUnique({
-          where: { url: article.url },
-          select: { id: true },
-        });
-        if (exists) {
-          result.duplicates++;
-          continue;
-        }
-
-        // 분류
-        const { tags, policyType, isAlert } = classifyArticle(article.title, article.summary);
-
-        // 저장
-        await prisma.newsArticle.create({
-          data: {
+      // 새 기사만 필터 + 분류
+      const newArticles = articles
+        .filter((a) => !existingUrls.has(a.url))
+        .slice(0, MAX_DAILY_ARTICLES - totalSaved)
+        .map((article) => {
+          const { tags, policyType, isAlert } = classifyArticle(article.title, article.summary);
+          return {
             title: article.title,
             summary: article.summary,
             url: article.url,
@@ -167,13 +160,23 @@ export async function collectNews(): Promise<CollectResult> {
             policyType,
             publishedAt: article.publishedAt,
             isAlert,
-          },
+          };
         });
 
-        result.saved++;
-        totalSaved++;
-        if (isAlert) result.alerts++;
+      result.duplicates += articles.length - newArticles.length - (articles.length - urls.length);
+
+      // 배치 삽입
+      if (newArticles.length > 0) {
+        const created = await prisma.newsArticle.createMany({
+          data: newArticles,
+          skipDuplicates: true,
+        });
+        result.saved += created.count;
+        totalSaved += created.count;
+        result.alerts += newArticles.filter((a) => a.isAlert).length;
       }
+
+      result.duplicates = result.total - result.saved;
     } catch (error) {
       const msg = `${source.name}: ${String(error)}`;
       result.errors.push(msg);

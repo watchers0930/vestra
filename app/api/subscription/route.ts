@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { validateOrigin } from "@/lib/csrf";
 
 const PLAN_CONFIG = {
   FREE: { price: 0, dailyLimit: 5, role: "PERSONAL" },
@@ -32,6 +33,9 @@ export async function GET() {
 
 /** POST: 구독 생성/변경 (PG 연동 전 — 플랜 변경만) */
 export async function POST(req: NextRequest) {
+  const csrfError = validateOrigin(req);
+  if (csrfError) return csrfError;
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "로그인 필요" }, { status: 401 });

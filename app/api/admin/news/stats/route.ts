@@ -1,13 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 
-export async function GET() {
-  const session = await auth();
-  if (session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
-
+export const GET = withAdminAuth(async (_req: NextRequest) => {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const weekStart = new Date(todayStart);
@@ -34,4 +29,4 @@ export async function GET() {
     lastCollected: lastArticle?.collectedAt || null,
     weeklyUsage: weeklyUsage.map((u) => ({ usedIn: u.usedIn, count: u._count })),
   });
-}
+});

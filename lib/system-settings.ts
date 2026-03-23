@@ -15,7 +15,8 @@ const IV_LENGTH = 16;
 const TAG_LENGTH = 16;
 
 function deriveKey(): Buffer {
-  const secret = process.env.AUTH_SECRET || "vestra-default-secret-change-me";
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) throw new Error("AUTH_SECRET 환경변수가 설정되지 않았습니다.");
   return crypto.scryptSync(secret, "vestra-salt", 32);
 }
 

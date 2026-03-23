@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
-
+export const GET = withAdminAuth(async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
   const tag = searchParams.get("tag");
@@ -42,17 +37,16 @@ export async function GET(req: NextRequest) {
     page,
     totalPages: Math.ceil(total / limit),
   });
-}
+});
 
-export async function DELETE(req: NextRequest) {
-  const session = await auth();
-  if (session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
-
+export const DELETE = withAdminAuth(async (req: NextRequest) => {
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
 
-  await prisma.newsArticle.delete({ where: { id } });
-  return NextResponse.json({ success: true });
-}
+  try {
+    await prisma.newsArticle.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "삭제 실패" }, { status: 404 });
+  }
+});

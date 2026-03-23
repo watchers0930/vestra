@@ -1,20 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { collectNews } from "@/lib/news-collector";
-import { auth } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 
-export async function POST() {
-  const session = await auth();
-  if (session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
-
+export const POST = withAdminAuth(async (_req: NextRequest) => {
   try {
     const result = await collectNews();
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
+    console.error("[NewsCollector] 수동 수집 실패:", error);
     return NextResponse.json(
-      { error: "Collection failed", detail: String(error) },
+      { error: "수집에 실패했습니다." },
       { status: 500 }
     );
   }
-}
+});

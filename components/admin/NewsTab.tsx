@@ -68,7 +68,20 @@ export function NewsTab() {
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [collecting, setCollecting] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  // 검색 디바운스 (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const fetchStats = useCallback(async () => {
     const res = await fetch("/api/admin/news/stats");
@@ -78,14 +91,14 @@ export function NewsTab() {
   const fetchArticles = useCallback(async () => {
     const params = new URLSearchParams({ page: String(page), limit: "15" });
     if (category) params.set("category", category);
-    if (search) params.set("search", search);
+    if (debouncedSearch) params.set("search", debouncedSearch);
     const res = await fetch(`/api/admin/news?${params}`);
     if (res.ok) {
       const data = await res.json();
       setArticles(data.items);
       setTotal(data.total);
     }
-  }, [page, category, search]);
+  }, [page, category, debouncedSearch]);
 
   const fetchAlerts = useCallback(async () => {
     const res = await fetch("/api/admin/news/alerts");
@@ -107,29 +120,45 @@ export function NewsTab() {
   const handleCollect = async () => {
     setCollecting(true);
     try {
-      await fetch("/api/admin/news/collect", { method: "POST" });
+      const res = await fetch("/api/admin/news/collect", { method: "POST" });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      showToast(`수집 완료: ${data.saved}건 저장`);
       await Promise.all([fetchStats(), fetchArticles(), fetchAlerts()]);
+    } catch {
+      showToast("수집에 실패했습니다.");
     } finally {
       setCollecting(false);
     }
   };
 
   const handleAckAlert = async (id: string) => {
-    await fetch("/api/admin/news/alerts", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    await Promise.all([fetchAlerts(), fetchStats()]);
+    try {
+      const res = await fetch("/api/admin/news/alerts", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error();
+      await Promise.all([fetchAlerts(), fetchStats()]);
+    } catch {
+      showToast("알림 확인에 실패했습니다.");
+    }
   };
 
   const handleDelete = async (id: string) => {
-    await fetch("/api/admin/news", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    await Promise.all([fetchArticles(), fetchStats()]);
+    try {
+      const res = await fetch("/api/admin/news", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error();
+      showToast("삭제 완료");
+      await Promise.all([fetchArticles(), fetchStats()]);
+    } catch {
+      showToast("삭제에 실패했습니다.");
+    }
   };
 
   const totalPages = Math.ceil(total / 15);
@@ -341,6 +370,12 @@ export function NewsTab() {
             </BarChart>
           </ResponsiveContainer>
         </Card>
+      )}
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 bg-gray-900 text-white px-4 py-2.5 rounded-lg text-sm shadow-lg z-50 animate-in fade-in">
+          {toast}
+        </div>
       )}
     </div>
   );

@@ -25,8 +25,16 @@ export function validateOrigin(req: Request): NextResponse | null {
   const origin = req.headers.get("origin");
   const referer = req.headers.get("referer");
 
-  // 서버 사이드 호출 (origin 없음) 은 통과
-  if (!origin && !referer) return null;
+  // 서버 사이드 호출: Vercel Cron 등 내부 호출만 허용
+  if (!origin && !referer) {
+    const cronSecret = req.headers.get("authorization");
+    if (cronSecret) return null; // Cron 호출은 자체 인증으로 보호
+    // 브라우저가 아닌 호출도 차단 (Origin 없는 POST는 위험)
+    return NextResponse.json(
+      { error: "잘못된 요청 출처입니다" },
+      { status: 403 }
+    );
+  }
 
   // Origin 검증
   if (origin && ALLOWED_ORIGINS.has(origin)) return null;
