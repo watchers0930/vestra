@@ -189,7 +189,7 @@ export function NewsTab() {
             { label: "전체", value: `${stats.total}건` },
             { label: "마지막 수집", value: stats.lastCollected ? new Date(stats.lastCollected).toLocaleDateString("ko-KR") : "-" },
           ].map((kpi) => (
-            <Card key={kpi.label} className="p-4">
+            <Card key={kpi.label} className="p-4 border-0">
               <p className="text-xs text-gray-500">{kpi.label}</p>
               <p className="text-xl font-bold mt-1">{kpi.value}</p>
             </Card>
