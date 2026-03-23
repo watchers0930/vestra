@@ -24,6 +24,11 @@ import {
   KeyRound,
   ExternalLink,
   ClipboardCheck,
+  Brain,
+  SlidersHorizontal,
+  ShieldAlert,
+  Key,
+  Newspaper,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -100,6 +105,11 @@ const adminMenuItems: MenuItem[] = [
   { href: "/admin?tab=verifications", icon: CheckCircle, label: "인증 관리", description: "전문가 인증 요청을 검토하고 승인·거부합니다" },
   { href: "/admin?tab=analyses", icon: FileText, label: "분석 이력", description: "전체 사용자의 분석 요청 기록을 조회합니다" },
   { href: "/admin?tab=announcements", icon: Megaphone, label: "공지사항", description: "서비스 공지사항을 작성하고 관리합니다" },
+  { href: "/admin?tab=ml-training", icon: Brain, label: "ML 학습관리", description: "ML 학습 데이터를 관리하고 검수합니다" },
+  { href: "/admin?tab=weight-tuning", icon: SlidersHorizontal, label: "가중치 튜닝", description: "분석 모델의 가중치를 조정합니다" },
+  { href: "/admin?tab=integrity-audit", icon: ShieldAlert, label: "무결성 감사", description: "분석 결과의 무결성을 검증합니다" },
+  { href: "/admin?tab=apikey", icon: Key, label: "API KEY", description: "외부 API 키를 관리합니다" },
+  { href: "/admin?tab=news", icon: Newspaper, label: "뉴스·정책", description: "부동산 뉴스/정책 수집 현황을 확인합니다" },
   { href: "/admin?tab=account", icon: KeyRound, label: "계정 설정", description: "관리자 비밀번호 변경 및 계정 설정을 관리합니다" },
 ];
 
