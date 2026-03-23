@@ -15,8 +15,8 @@ export function handleApiError(error: unknown, context: string) {
     message.includes("환경변수")
   ) {
     return NextResponse.json(
-      { error: "OpenAI API 키가 설정되지 않았습니다. .env.local 파일을 확인해주세요." },
-      { status: 401 },
+      { error: "AI 서비스에 일시적으로 연결할 수 없습니다. 잠시 후 다시 시도해주세요." },
+      { status: 503 },
     );
   }
 

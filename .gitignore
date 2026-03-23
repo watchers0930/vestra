@@ -56,5 +56,8 @@ report.html
 # archives
 *.zip
 
+# documents (비개발 문서)
+/documents/
+
 # other project files
 public/LMS_MVP_*.html

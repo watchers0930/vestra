@@ -191,7 +191,12 @@ export async function generateChapterOpinions(
   costGuardIp: string,
   vScore?: FeasibilityScore
 ): Promise<ChapterOpinion[]> {
-  const openai = getOpenAIClient();
+  let openai: ReturnType<typeof getOpenAIClient> | null = null;
+  try {
+    openai = getOpenAIClient();
+  } catch {
+    // OpenAI 클라이언트 초기화 실패 시 폴백 모드로 진행
+  }
   const chapters: ChapterOpinion[] = [];
 
   for (const chapterConfig of CHAPTERS) {
@@ -254,6 +259,19 @@ export async function generateChapterOpinions(
   }
 
   // LLM 호출로 각 장의 summary와 overallReview 채우기
+  // OpenAI 클라이언트가 없으면 폴백 의견으로 반환
+  if (!openai) {
+    return chapters.map((ch) => ({
+      ...ch,
+      summary: ch.verificationDetails.length > 0
+        ? `${ch.title} 검토 결과, ${ch.verificationDetails.length}개 항목이 분석되었습니다.`
+        : `${ch.title}에 대한 직접 검증 데이터가 부족합니다.`,
+      overallReview: ch.verificationDetails
+        .map((d) => d.reasoning)
+        .join(" ") || "수치 기반 분석 결과입니다. AI 의견 생성을 일시적으로 사용할 수 없습니다.",
+    }));
+  }
+
   const costGuard = await checkOpenAICostGuard(costGuardIp);
   if (!costGuard.allowed) {
     // 비용 가드 초과 시 기본 의견 사용
