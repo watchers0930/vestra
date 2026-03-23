@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { tuneWeights, type FeedbackRecord } from "@/lib/adaptive-weight-tuner";
@@ -25,12 +25,7 @@ const DEFAULT_BETA: Record<string, { alpha: number; beta: number }> = {
  * GET /api/admin/weight-tuning
  * 현재 가중치 설정, 메트릭 히스토리, 캘리브레이션 데이터 조회
  */
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const GET = withAdminAuth(async (req: NextRequest) => {
   // 현재 활성 가중치 가져오기
   const activeConfig = await prisma.weightConfig.findFirst({
     where: { isActive: true },
@@ -118,18 +113,13 @@ export async function GET(req: NextRequest) {
       {} as Record<string, number>
     ),
   });
-}
+});
 
 /**
  * POST /api/admin/weight-tuning
  * 튜닝 실행: 피드백 기반으로 가중치 최적화
  */
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const POST = withAdminAuth(async (req: NextRequest, { session }) => {
   const csrfError = validateOrigin(req);
   if (csrfError) return csrfError;
 
@@ -227,4 +217,4 @@ export async function POST(req: NextRequest) {
     },
     configId: newConfig.id,
   });
-}
+});

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { parseRegistry } from "@/lib/registry-parser";
 import { extractTextFromPDF, normalizeRegistryText, detectRegistryConfidence } from "@/lib/pdf-parser";
@@ -8,12 +8,7 @@ import { extractVocabularyFromParsed } from "@/lib/domain-vocabulary";
 import { createAuditLog } from "@/lib/audit-log";
 
 /** GET: 학습 데이터 목록 조회 */
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const GET = withAdminAuth(async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
@@ -73,15 +68,10 @@ export async function GET(req: NextRequest) {
       avgConfidence: Math.round(avgConfidence._avg.confidence || 0),
     },
   });
-}
+});
 
 /** POST: 등기부등본 업로드 → 파싱 → 저장 */
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const POST = withAdminAuth(async (req: NextRequest, { session }) => {
   const contentType = req.headers.get("content-type") || "";
 
   let rawText = "";
@@ -196,4 +186,4 @@ export async function POST(req: NextRequest) {
     eulguCount: record.eulguCount,
     parsedData: parsed,
   });
-}
+});

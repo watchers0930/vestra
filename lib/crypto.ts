@@ -19,7 +19,13 @@ import crypto from "crypto";
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
 const TAG_LENGTH = 16;
-const PII_SALT = process.env.PII_SALT || "vestra-pii-salt";
+function getPIISalt(): string {
+  const salt = process.env.PII_SALT;
+  if (!salt) {
+    throw new Error("PII_SALT 환경변수가 설정되지 않았습니다. PII 암호화를 수행할 수 없습니다.");
+  }
+  return salt;
+}
 
 // ─── 키 파생 ───
 
@@ -32,7 +38,7 @@ function getSecret(): string {
 }
 
 function derivePIIKey(): Buffer {
-  return crypto.scryptSync(getSecret(), PII_SALT, 32);
+  return crypto.scryptSync(getSecret(), getPIISalt(), 32);
 }
 
 // ─── 암호화 / 복호화 ───

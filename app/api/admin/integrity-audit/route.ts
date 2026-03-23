@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { IntegrityChain } from "@/lib/integrity-chain";
@@ -9,12 +9,7 @@ import { createAuditLog } from "@/lib/audit-log";
  * GET /api/admin/integrity-audit
  * 무결성 감사 로그 조회
  */
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const GET = withAdminAuth(async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
@@ -69,18 +64,13 @@ export async function GET(req: NextRequest) {
       totalPages: Math.ceil(total / limit),
     },
   });
-}
+});
 
 /**
  * POST /api/admin/integrity-audit
  * 전체 재검증: 모든 체인의 무결성 확인
  */
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const POST = withAdminAuth(async (req: NextRequest, { session }) => {
   const csrfError = validateOrigin(req);
   if (csrfError) return csrfError;
 
@@ -156,4 +146,4 @@ export async function POST(req: NextRequest) {
     tampered: tamperedCount,
     verifiedAt: new Date().toISOString(),
   });
-}
+});

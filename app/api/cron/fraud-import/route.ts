@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   try {
     const result = await importFromExternalSource();
 
-    console.log(
+    console.info(
       `[FraudImport] 완료: ${result.imported}건 임포트, ${result.errors.length}건 오류`
     );
 

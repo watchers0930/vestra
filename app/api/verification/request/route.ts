@@ -48,7 +48,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ sent, received });
   } catch (error) {
     const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    return NextResponse.json({ error: `오류: ${message}` }, { status: 500 });
+    console.error(`[verification/request] ${message}`);
+    return NextResponse.json({ error: "처리 중 오류가 발생했습니다." }, { status: 500 });
   }
 }
 
@@ -153,6 +154,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    return NextResponse.json({ error: `오류: ${message}` }, { status: 500 });
+    console.error(`[verification/request] ${message}`);
+    return NextResponse.json({ error: "처리 중 오류가 발생했습니다." }, { status: 500 });
   }
 }

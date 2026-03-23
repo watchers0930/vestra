@@ -67,7 +67,8 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    return NextResponse.json({ error: `오류: ${message}` }, { status: 500 });
+    console.error(`[monitoring/alerts] ${message}`);
+    return NextResponse.json({ error: "처리 중 오류가 발생했습니다." }, { status: 500 });
   }
 }
 
@@ -114,6 +115,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ updated: result.count });
   } catch (error) {
     const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    return NextResponse.json({ error: `오류: ${message}` }, { status: 500 });
+    console.error(`[monitoring/alerts] ${message}`);
+    return NextResponse.json({ error: "처리 중 오류가 발생했습니다." }, { status: 500 });
   }
 }

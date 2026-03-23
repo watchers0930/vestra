@@ -97,7 +97,7 @@ export async function extractTextFromScannedPDF(
   const openai = getOpenAIClient();
   const base64 = buffer.toString("base64");
 
-  console.log(`[PDF OCR] Responses API input_file로 스캔 PDF 처리: ${fileName}`);
+  console.info(`[PDF OCR] Responses API input_file로 스캔 PDF 처리: ${fileName}`);
 
   let extractedText = "";
   const userPrompt = options?.skipRegistryNormalization

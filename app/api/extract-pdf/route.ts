@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(result);
       } catch {
         // 2차: 스캔 PDF → chat.completions Vision OCR
-        console.log("[PDF] 텍스트 추출 실패. Vision API로 스캔 PDF OCR 시도.");
+        console.info("[PDF] 텍스트 추출 실패. Vision API로 스캔 PDF OCR 시도.");
 
         const costGuard = await checkOpenAICostGuard(ip);
         if (!costGuard.allowed) {

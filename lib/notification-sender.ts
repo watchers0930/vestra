@@ -43,7 +43,7 @@ async function sendKakaoAlimtalk(
 
   if (!apiKey || !senderKey) {
     // Mock 모드
-    console.log(
+    console.info(
       `[NOTIFICATION:KAKAO:MOCK] To=${phoneNumber} Title="${title}" Body="${body.slice(0, 100)}"`
     );
     return { channel: "kakao_mock", success: true };
@@ -100,7 +100,7 @@ async function sendEmail(
   body: string
 ): Promise<SendResult> {
   // TODO: 실제 이메일 발송 (Resend, SendGrid 등)
-  console.log(
+  console.info(
     `[NOTIFICATION:EMAIL:MOCK] To=${email} Title="${title}" Body="${body.slice(0, 100)}"`
   );
   return { channel: "email_mock", success: true };
@@ -125,7 +125,7 @@ export async function sendNotification(
     });
 
     if (!setting) {
-      console.log(
+      console.info(
         `[NOTIFICATION:SKIP] userId=${payload.userId} — 알림 설정 없음`
       );
       return results;
@@ -134,7 +134,7 @@ export async function sendNotification(
     // 알림 타입별 활성 여부 확인
     const typeEnabled = checkTypeEnabled(setting, payload.type);
     if (!typeEnabled) {
-      console.log(
+      console.info(
         `[NOTIFICATION:SKIP] userId=${payload.userId} type=${payload.type} — 비활성`
       );
       return results;

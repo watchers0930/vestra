@@ -4,9 +4,10 @@
  */
 import { describe, it, expect, beforeAll } from "vitest";
 
-// AUTH_SECRET 설정 (테스트용)
+// 테스트용 환경변수 설정
 beforeAll(() => {
   process.env.AUTH_SECRET = "test-secret-key-for-vitest-32chars!!";
+  process.env.PII_SALT = "test-pii-salt-for-vitest";
 });
 
 import {

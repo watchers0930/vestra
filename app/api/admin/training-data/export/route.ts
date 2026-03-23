@@ -1,17 +1,12 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { withAdminAuth } from "@/lib/with-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { decryptPII } from "@/lib/crypto";
 import { generateAllLabels, toJSONL } from "@/lib/training-data-export";
 import type { ParsedRegistry } from "@/lib/registry-parser";
 
 /** GET: 승인된 데이터를 JSONL로 내보내기 */
-export async function GET() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
-  }
-
+export const GET = withAdminAuth(async (_req: NextRequest) => {
   const approved = await prisma.trainingData.findMany({
     where: { status: "approved" },
     orderBy: { createdAt: "asc" },
@@ -56,4 +51,4 @@ export async function GET() {
       "Content-Disposition": `attachment; filename=vestra-training-${date}.jsonl`,
     },
   });
-}
+});
