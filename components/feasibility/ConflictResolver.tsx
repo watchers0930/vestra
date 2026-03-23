@@ -29,20 +29,21 @@ function formatValue(value: number, field: string): string {
 }
 
 export function ConflictResolver({ conflicts, onResolve }: ConflictResolverProps) {
-  const [selections, setSelections] = useState<Record<string, "A" | "B">>({});
+  // field가 중복될 수 있으므로 인덱스 기반 키 사용
+  const [selections, setSelections] = useState<Record<number, "A" | "B">>({});
 
   const allResolved = Object.keys(selections).length === conflicts.length;
 
   const handleSelect = useCallback(
-    (field: string, side: "A" | "B") => {
-      setSelections((prev) => ({ ...prev, [field]: side }));
+    (index: number, side: "A" | "B") => {
+      setSelections((prev) => ({ ...prev, [index]: side }));
     },
     []
   );
 
   const handleConfirm = useCallback(() => {
-    const resolved: ResolvedConflict[] = conflicts.map((c) => {
-      const side = selections[c.field] || "A";
+    const resolved: ResolvedConflict[] = conflicts.map((c, i) => {
+      const side = selections[i] || "A";
       return {
         field: c.field,
         selectedFile: side === "A" ? c.fileA : c.fileB,
@@ -63,14 +64,14 @@ export function ConflictResolver({ conflicts, onResolve }: ConflictResolverProps
         <AlertTriangle size={18} className="text-amber-500" strokeWidth={1.5} />
       </CardHeader>
       <CardContent className="space-y-3">
-        {conflicts.map((conflict) => {
-          const selected = selections[conflict.field];
+        {conflicts.map((conflict, index) => {
+          const selected = selections[index];
           const label =
             CLAIM_LABELS[conflict.field as ClaimKey] || conflict.field;
 
           return (
             <div
-              key={conflict.field}
+              key={`${conflict.field}-${index}`}
               className="border border-[#e5e5e7] rounded-xl p-4 space-y-3"
             >
               <div className="flex items-center justify-between">
@@ -85,7 +86,7 @@ export function ConflictResolver({ conflicts, onResolve }: ConflictResolverProps
               <div className="grid grid-cols-2 gap-3">
                 {/* 파일 A */}
                 <button
-                  onClick={() => handleSelect(conflict.field, "A")}
+                  onClick={() => handleSelect(index, "A")}
                   className={cn(
                     "relative border rounded-lg p-3 text-left transition-all",
                     selected === "A"
@@ -109,7 +110,7 @@ export function ConflictResolver({ conflicts, onResolve }: ConflictResolverProps
 
                 {/* 파일 B */}
                 <button
-                  onClick={() => handleSelect(conflict.field, "B")}
+                  onClick={() => handleSelect(index, "B")}
                   className={cn(
                     "relative border rounded-lg p-3 text-left transition-all",
                     selected === "B"
