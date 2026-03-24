@@ -13,7 +13,7 @@ export default function AppLayout({
       <Suspense><Sidebar /></Suspense>
       <OnboardingModal />
       <div className="min-h-screen lg:ml-[240px] transition-all duration-300">
-        <main className="p-4 pt-16 lg:pt-6 lg:p-6 [&>.full-width]:!max-w-none [&>.full-width]:!p-0 max-w-6xl">
+        <main className="p-4 pt-16 lg:pt-6 lg:p-6 max-w-6xl has-[.full-width]:!max-w-none has-[.full-width]:!p-0">
           {children}
         </main>
         <Footer />
