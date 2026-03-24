@@ -8,34 +8,51 @@ import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { fetchRecentPrices, fetchRecentRentPrices, LAWD_CODE_MAP } from "@/lib/molit-api";
 
 // 카카오 로컬 API로 아파트 좌표 검색 (결과 캐시)
-const geocodeCache = new Map<string, { lat: number; lng: number }>();
+const geocodeCache = new Map<string, { lat: number; lng: number } | null>();
 
 async function geocodeApt(aptName: string, gu: string, dong: string): Promise<{ lat: number; lng: number } | null> {
-  const query = `${gu} ${dong} ${aptName}`;
-  if (geocodeCache.has(query)) return geocodeCache.get(query)!;
+  const cacheKey = `${gu}|${dong}|${aptName}`;
+  if (geocodeCache.has(cacheKey)) return geocodeCache.get(cacheKey)!;
 
-  const kakaoRestKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
-  if (!kakaoRestKey) return null;
-
-  // 카카오 REST API 키 (JS키와 별도) 확인
   const restKey = process.env.KAKAO_REST_KEY;
   if (!restKey) return null;
 
-  try {
-    const res = await fetch(
-      `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&category_group_code=AP4&size=1`,
-      { headers: { Authorization: `KakaoAK ${restKey}` } }
-    );
-    if (!res.ok) return null;
-    const json = await res.json();
-    if (json.documents?.length > 0) {
-      const doc = json.documents[0];
-      const result = { lat: parseFloat(doc.y), lng: parseFloat(doc.x) };
-      geocodeCache.set(query, result);
-      return result;
-    }
-  } catch { /* 무시 */ }
+  // 여러 쿼리 시도: 구체적 → 일반적 순서
+  const queries = [
+    `${aptName} 아파트 ${dong}`,
+    `${gu} ${dong} ${aptName}`,
+    `${aptName} ${gu}`,
+  ];
+
+  for (const query of queries) {
+    try {
+      const res = await fetch(
+        `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=1`,
+        { headers: { Authorization: `KakaoAK ${restKey}` } }
+      );
+      if (!res.ok) continue;
+      const json = await res.json();
+      if (json.documents?.length > 0) {
+        const doc = json.documents[0];
+        const result = { lat: parseFloat(doc.y), lng: parseFloat(doc.x) };
+        geocodeCache.set(cacheKey, result);
+        return result;
+      }
+    } catch { /* 다음 쿼리 시도 */ }
+  }
+
+  geocodeCache.set(cacheKey, null);
   return null;
+}
+
+// 구 중심 좌표에 인덱스 기반 산포 (랜덤 대신 결정적 배치)
+function spreadCoord(center: { lat: number; lng: number }, index: number, total: number): { lat: number; lng: number } {
+  const angle = (2 * Math.PI * index) / Math.max(total, 1);
+  const radius = 0.003 + (index % 3) * 0.002; // ~300~500m 반경
+  return {
+    lat: center.lat + radius * Math.cos(angle),
+    lng: center.lng + radius * Math.sin(angle),
+  };
 }
 
 interface AptPrice {
@@ -407,21 +424,24 @@ export async function GET(req: NextRequest) {
           const seedApts = SEED_DATA[gu] || [];
           const seedMap = new Map(seedApts.map(s => [s.name, s]));
 
-          const geocodePromises = [...grouped.entries()].map(async ([aptName, txs]) => {
+          const entries = [...grouped.entries()];
+          const totalEntries = entries.length;
+          const geocodePromises = entries.map(async ([aptName, txs], idx) => {
             const latest = txs[0]; // 이미 정렬됨
             const seed = seedMap.get(aptName);
             const deposit = latest.deposit || 0;
             if (deposit <= 0) return null;
             const priceInMan = Math.round(deposit / 10000);
-            // 카카오 좌표 검색 → 시드 → 구 중심 폴백
             const geo = await geocodeApt(aptName, gu, latest.dong || "");
+            const center = GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
+            const fallback = spreadCoord(center, idx, totalEntries);
             return {
               name: aptName,
               dong: latest.dong || "",
               price: priceInMan,
               area: latest.area ? Math.round(latest.area / 3.3058) : 0,
-              lat: geo?.lat || seed?.lat || (GU_CENTER[gu]?.lat || 37.4979),
-              lng: geo?.lng || seed?.lng || (GU_CENTER[gu]?.lng || 127.0276),
+              lat: geo?.lat || seed?.lat || fallback.lat,
+              lng: geo?.lng || seed?.lng || fallback.lng,
               change: 0,
               year: latest.buildYear || 0,
             };
@@ -442,20 +462,24 @@ export async function GET(req: NextRequest) {
           const seedApts = SEED_DATA[gu] || [];
           const seedMap = new Map(seedApts.map(s => [s.name, s]));
 
-          const geocodePromises = [...grouped.entries()].map(async ([aptName, txs]) => {
+          const entries = [...grouped.entries()];
+          const totalEntries = entries.length;
+          const geocodePromises = entries.map(async ([aptName, txs], idx) => {
             const latest = txs[0];
             const seed = seedMap.get(aptName);
             const price = latest.dealAmount || 0;
             if (price <= 0) return null;
             const priceInMan = Math.round(price / 10000);
             const geo = await geocodeApt(aptName, gu, latest.dong || "");
+            const center = GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
+            const fallback = spreadCoord(center, idx, totalEntries);
             return {
               name: aptName,
               dong: latest.dong || "",
               price: priceInMan,
               area: latest.area ? Math.round(latest.area / 3.3058) : 0,
-              lat: geo?.lat || seed?.lat || (GU_CENTER[gu]?.lat || 37.4979),
-              lng: geo?.lng || seed?.lng || (GU_CENTER[gu]?.lng || 127.0276),
+              lat: geo?.lat || seed?.lat || fallback.lat,
+              lng: geo?.lng || seed?.lng || fallback.lng,
               change: 0,
               year: latest.buildYear || 0,
             };
