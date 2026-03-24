@@ -70,7 +70,7 @@ export default function PriceMapPage() {
     const maps = window.kakao.maps;
     const pos = new maps.LatLng(apt.lat, apt.lng);
     (kakaoMapRef.current as { setCenter: (p: unknown) => void }).setCenter(pos);
-    (kakaoMapRef.current as { setLevel: (l: number) => void }).setLevel(5);
+    (kakaoMapRef.current as { setLevel: (l: number) => void }).setLevel(2);
 
     // 기존 원 제거
     circlesRef.current.forEach((c: unknown) => {
