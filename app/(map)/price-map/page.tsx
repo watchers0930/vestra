@@ -142,12 +142,8 @@ export default function PriceMapPage() {
       const { maps } = window.kakao;
       const center = new maps.LatLng(data.center.lat, data.center.lng);
 
-      // 맵 인스턴스 재사용 or 생성
-      if (!kakaoMapRef.current) {
-        kakaoMapRef.current = new maps.Map(mapRef.current!, { center, level: 5 });
-      } else {
-        (kakaoMapRef.current as { setCenter: (c: unknown) => void }).setCenter(center);
-      }
+      // 항상 새 맵 생성 (클라이언트 네비게이션 시 DOM이 바뀌므로)
+      kakaoMapRef.current = new maps.Map(mapRef.current!, { center, level: 5 });
 
       // 기존 오버레이 제거
       overlaysRef.current.forEach((o: unknown) => {
@@ -211,6 +207,12 @@ export default function PriceMapPage() {
       cancelled = true;
       clearInterval(pollId);
       clearTimeout(timeoutId);
+      // 페이지 이탈 시 맵/오버레이/원 초기화
+      overlaysRef.current.forEach((o: unknown) => { (o as { setMap: (m: null) => void }).setMap(null); });
+      overlaysRef.current = [];
+      circlesRef.current.forEach((c: unknown) => { (c as { setMap: (m: null) => void }).setMap(null); });
+      circlesRef.current = [];
+      kakaoMapRef.current = null;
     };
   }, [data, selectAndMoveToApt]);
 
