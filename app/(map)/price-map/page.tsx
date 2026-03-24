@@ -61,29 +61,6 @@ export default function PriceMapPage() {
   const [selectedSido, setSelectedSido] = useState("서울");
   const [tradeType, setTradeType] = useState<"매매" | "전세">("매매");
 
-  const [layoutReady, setLayoutReady] = useState(false);
-
-  // (app) 레이아웃의 main max-w/padding 제거 (마운트 시)
-  useEffect(() => {
-    const main = document.getElementById("app-main");
-    if (main) {
-      main.style.maxWidth = "none";
-      main.style.padding = "0";
-      main.style.paddingTop = "0";
-    }
-    // 기존 맵 인스턴스 초기화
-    kakaoMapRef.current = null;
-    // 레이아웃 준비 완료 (다음 틱에서 지도 초기화)
-    requestAnimationFrame(() => setLayoutReady(true));
-
-    return () => {
-      if (main) {
-        main.style.maxWidth = "";
-        main.style.padding = "";
-        main.style.paddingTop = "";
-      }
-    };
-  }, []);
 
   const fetchData = useCallback(async (gu: string) => {
     setLoading(true);
@@ -105,7 +82,7 @@ export default function PriceMapPage() {
 
   // 카카오맵 초기화 (SDK load 대기 + 레이아웃 준비 대기)
   useEffect(() => {
-    if (!data || !mapRef.current || !layoutReady) return;
+    if (!data || !mapRef.current) return;
     let cancelled = false;
 
     let mapRendered = false;
@@ -173,14 +150,14 @@ export default function PriceMapPage() {
       cancelled = true;
       window.removeEventListener("kakao-maps-ready", onReady);
     };
-  }, [data, layoutReady]);
+  }, [data]);
 
   const topChanges = data?.apartments
     ? [...data.apartments].sort((a, b) => b.change - a.change).slice(0, 5)
     : [];
 
   return (
-    <div className="full-width" style={{ height: "calc(100vh - 4px)", width: "calc(100vw - 240px)", paddingTop: "2px" }}>
+    <div className="h-full w-full">
       <div className="flex h-full flex-row">
         {/* 좌측 패널 (사이드바와 지도 사이) */}
         <div className="h-full w-[270px] shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-3 pl-1 pt-1">
