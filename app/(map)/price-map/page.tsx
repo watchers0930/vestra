@@ -133,36 +133,34 @@ export default function PriceMapPage() {
       });
     };
 
-    const initKakaoAndRender = () => {
-      if (cancelled) return;
-      // SDK 자체가 로드 안 됐으면 대기
+    const tryInit = () => {
+      if (cancelled || !mapRef.current) return false;
       if (!window.kakao?.maps?.load) return false;
 
-      // autoload=false이므로 load() 호출 필요. 이미 로드됐으면 콜백 즉시 실행됨
       window.kakao.maps.load(() => {
-        if (!cancelled) renderMap();
+        if (!cancelled && mapRef.current) {
+          // LatLng 존재 여부로 실제 로드 완료 확인
+          if (typeof window.kakao.maps.LatLng === "function") {
+            renderMap();
+          }
+        }
       });
       return true;
     };
 
-    // 즉시 시도
-    if (!initKakaoAndRender()) {
-      // SDK 스크립트 자체가 아직 안 왔으면 폴링
-      const pollId = setInterval(() => {
-        if (initKakaoAndRender()) clearInterval(pollId);
-      }, 300);
+    // 폴링으로 통일 — 즉시 + 반복 시도 (웨일/크롬 모두 안정적)
+    const pollId = setInterval(() => {
+      if (tryInit()) clearInterval(pollId);
+    }, 200);
+    tryInit(); // 즉시 1회 시도
 
-      // 10초 후 폴링 중지 (안전장치)
-      const timeoutId = setTimeout(() => clearInterval(pollId), 10000);
+    const timeoutId = setTimeout(() => clearInterval(pollId), 15000);
 
-      return () => {
-        cancelled = true;
-        clearInterval(pollId);
-        clearTimeout(timeoutId);
-      };
-    }
-
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      clearInterval(pollId);
+      clearTimeout(timeoutId);
+    };
   }, [data]);
 
   const topChanges = data?.apartments

@@ -455,7 +455,7 @@ export async function GET(req: NextRequest) {
               name: aptName,
               dong: latest.dong || "",
               price: priceInMan,
-              area: latest.area ? Math.round(latest.area / 3.3058) : 0,
+              area: latest.area ? Math.round((latest.area * 1.45) / 3.3058) : 0, // 전용→공급면적 환산(×1.45)
               lat: geo?.lat || seed?.lat || fallback.lat,
               lng: geo?.lng || seed?.lng || fallback.lng,
               change,
@@ -495,7 +495,7 @@ export async function GET(req: NextRequest) {
               name: aptName,
               dong: latest.dong || "",
               price: priceInMan,
-              area: latest.area ? Math.round(latest.area / 3.3058) : 0,
+              area: latest.area ? Math.round((latest.area * 1.45) / 3.3058) : 0, // 전용→공급면적 환산(×1.45)
               lat: geo?.lat || seed?.lat || fallback.lat,
               lng: geo?.lng || seed?.lng || fallback.lng,
               change,
