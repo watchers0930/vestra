@@ -59,6 +59,16 @@ function spreadCoord(center: { lat: number; lng: number }, index: number, total:
   };
 }
 
+// 동일 아파트 거래 내역에서 변동률 계산 (최근 거래 vs 이전 평균)
+function calcChange(prices: number[]): number {
+  if (prices.length < 2) return 0;
+  const latest = prices[0];
+  const older = prices.slice(1);
+  const avgOlder = older.reduce((s, p) => s + p, 0) / older.length;
+  if (avgOlder <= 0) return 0;
+  return +((latest - avgOlder) / avgOlder * 100).toFixed(1);
+}
+
 interface AptPrice {
   name: string;
   dong: string;
@@ -431,11 +441,13 @@ export async function GET(req: NextRequest) {
           const entries = [...grouped.entries()];
           const totalEntries = entries.length;
           const geocodePromises = entries.map(async ([aptName, txs], idx) => {
-            const latest = txs[0]; // 이미 정렬됨
+            const latest = txs[0];
             const seed = seedMap.get(aptName);
             const deposit = latest.deposit || 0;
             if (deposit <= 0) return null;
             const priceInMan = Math.round(deposit / 10000);
+            // 변동률: 최근 거래 vs 이전 거래 비교
+            const change = calcChange(txs.map(t => t.deposit || 0));
             const geo = await geocodeApt(aptName, gu, latest.dong || "");
             const center = GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
             const fallback = spreadCoord(center, idx, totalEntries);
@@ -446,7 +458,7 @@ export async function GET(req: NextRequest) {
               area: latest.area ? Math.round(latest.area / 3.3058) : 0,
               lat: geo?.lat || seed?.lat || fallback.lat,
               lng: geo?.lng || seed?.lng || fallback.lng,
-              change: 0,
+              change,
               year: latest.buildYear || 0,
             };
           });
@@ -474,6 +486,8 @@ export async function GET(req: NextRequest) {
             const price = latest.dealAmount || 0;
             if (price <= 0) return null;
             const priceInMan = Math.round(price / 10000);
+            // 변동률: 최근 거래 vs 이전 거래 비교
+            const change = calcChange(txs.map(t => t.dealAmount || 0));
             const geo = await geocodeApt(aptName, gu, latest.dong || "");
             const center = GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
             const fallback = spreadCoord(center, idx, totalEntries);
@@ -484,7 +498,7 @@ export async function GET(req: NextRequest) {
               area: latest.area ? Math.round(latest.area / 3.3058) : 0,
               lat: geo?.lat || seed?.lat || fallback.lat,
               lng: geo?.lng || seed?.lng || fallback.lng,
-              change: 0,
+              change,
               year: latest.buildYear || 0,
             };
           });
