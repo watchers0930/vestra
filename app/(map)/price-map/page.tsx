@@ -53,6 +53,7 @@ export default function PriceMapPage() {
   const mapRef = useRef<HTMLDivElement>(null);
   const kakaoMapRef = useRef<unknown>(null);
   const overlaysRef = useRef<unknown[]>([]);
+  const circlesRef = useRef<unknown[]>([]);
   const [data, setData] = useState<MapResponse | null>(null);
   const [selectedGu, setSelectedGu] = useState("강남구");
   const [selectedApt, setSelectedApt] = useState<AptData | null>(null);
@@ -61,6 +62,56 @@ export default function PriceMapPage() {
   const [selectedSido, setSelectedSido] = useState("서울");
   const [tradeType, setTradeType] = useState<"매매" | "전세">("매매");
 
+  // 아파트 선택 시 지도 이동 + 반경 원 표시
+  const selectAndMoveToApt = useCallback((apt: AptData) => {
+    setSelectedApt(apt);
+    if (!kakaoMapRef.current || !window.kakao?.maps?.LatLng) return;
+
+    const maps = window.kakao.maps;
+    const pos = new maps.LatLng(apt.lat, apt.lng);
+    (kakaoMapRef.current as { setCenter: (p: unknown) => void }).setCenter(pos);
+    (kakaoMapRef.current as { setLevel: (l: number) => void }).setLevel(5);
+
+    // 기존 원 제거
+    circlesRef.current.forEach((c: unknown) => {
+      (c as { setMap: (m: null) => void }).setMap(null);
+    });
+    circlesRef.current = [];
+
+    // 100m, 200m, 500m 반경 원
+    const radii = [
+      { radius: 100, color: "#6366f1", opacity: 0.15, strokeWeight: 2 },
+      { radius: 200, color: "#818cf8", opacity: 0.10, strokeWeight: 1.5 },
+      { radius: 500, color: "#a5b4fc", opacity: 0.06, strokeWeight: 1 },
+    ];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const KakaoCircle = (maps as any).Circle;
+    radii.forEach(({ radius, color, opacity, strokeWeight }) => {
+      const circle = new KakaoCircle({
+        center: pos,
+        radius,
+        strokeWeight,
+        strokeColor: color,
+        strokeOpacity: 0.8,
+        strokeStyle: "solid",
+        fillColor: color,
+        fillOpacity: opacity,
+      });
+      circle.setMap(kakaoMapRef.current);
+      circlesRef.current.push(circle);
+
+      // 반경 라벨 (CustomOverlay)
+      const labelContent = document.createElement("div");
+      labelContent.style.cssText = "font-size:10px;color:#6366f1;font-weight:600;background:white;padding:1px 4px;border-radius:4px;border:1px solid #c7d2fe;opacity:0.9;";
+      labelContent.textContent = `${radius}m`;
+      // 원 상단에 라벨 배치
+      const labelPos = new maps.LatLng(apt.lat + (radius / 111320), apt.lng);
+      const label = new maps.CustomOverlay({ position: labelPos, content: labelContent, yAnchor: 0.5 });
+      label.setMap(kakaoMapRef.current);
+      circlesRef.current.push(label);
+    });
+  }, []);
 
   const fetchData = useCallback(async (gu: string) => {
     setLoading(true);
@@ -124,7 +175,7 @@ export default function PriceMapPage() {
             <div style="width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:6px solid ${bgColor};"></div>
           </div>
         `;
-        content.addEventListener("click", () => setSelectedApt(apt));
+        content.addEventListener("click", () => selectAndMoveToApt(apt));
 
         const position = new maps.LatLng(apt.lat, apt.lng);
         const overlay = new maps.CustomOverlay({ position, content, yAnchor: 1 });
@@ -161,7 +212,7 @@ export default function PriceMapPage() {
       clearInterval(pollId);
       clearTimeout(timeoutId);
     };
-  }, [data]);
+  }, [data, selectAndMoveToApt]);
 
   const topChanges = data?.apartments
     ? [...data.apartments].sort((a, b) => b.change - a.change).slice(0, 5)
@@ -232,15 +283,7 @@ export default function PriceMapPage() {
                 {topChanges.map((apt, i) => (
                   <button
                     key={apt.name}
-                    onClick={() => {
-                      setSelectedApt(apt);
-                      // 지도를 해당 아파트 위치로 이동
-                      if (kakaoMapRef.current && window.kakao?.maps?.LatLng) {
-                        const pos = new window.kakao.maps.LatLng(apt.lat, apt.lng);
-                        (kakaoMapRef.current as { panTo: (p: unknown) => void }).panTo(pos);
-                        (kakaoMapRef.current as { setLevel: (l: number) => void }).setLevel(3);
-                      }
-                    }}
+                    onClick={() => selectAndMoveToApt(apt)}
                     className={`flex w-full items-center gap-2 rounded-lg bg-white p-2 text-left shadow-sm transition hover:shadow-md ${selectedApt?.name === apt.name ? "ring-2 ring-indigo-500" : ""}`}
                   >
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">{i + 1}</span>
