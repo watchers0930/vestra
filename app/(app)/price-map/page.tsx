@@ -108,17 +108,31 @@ export default function PriceMapPage() {
     if (!data || !mapRef.current || !layoutReady) return;
     let cancelled = false;
 
-    const waitForKakao = (retries = 40) => {
-      if (cancelled || !mapRef.current) return;
+    let mapRendered = false;
 
+    const waitForKakao = (retries = 60) => {
+      if (cancelled || !mapRef.current || mapRendered) return;
+
+      // API 준비 완료
       if (typeof window.kakao?.maps?.LatLng === "function") {
+        mapRendered = true;
         renderMap();
         return;
       }
 
-      // SDK 로드 대기 (autoload=true이므로 LatLng가 나타나면 준비 완료)
+      // load() 호출 시도 (매번 — 콜백이 누적되지 않음)
+      if (typeof window.kakao?.maps?.load === "function") {
+        window.kakao.maps.load(() => {
+          if (!cancelled && mapRef.current && !mapRendered && typeof window.kakao?.maps?.LatLng === "function") {
+            mapRendered = true;
+            renderMap();
+          }
+        });
+      }
+
+      // 폴링 계속
       if (retries > 0) {
-        setTimeout(() => waitForKakao(retries - 1), 250);
+        setTimeout(() => waitForKakao(retries - 1), 300);
       }
     };
 
