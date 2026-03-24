@@ -159,9 +159,10 @@ export default function PriceMapPage() {
         const bgColor = apt.area >= 60 ? '#1e3a5f' : apt.area >= 50 ? '#1e40af' : apt.area >= 40 ? '#2563eb' : apt.area >= 30 ? '#3b82f6' : '#93c5fd';
 
         const content = document.createElement("div");
+        content.style.pointerEvents = "none";
         content.innerHTML = `
-          <div style="cursor:pointer; display:flex; flex-direction:column; align-items:center; transform:translate(-50%, -100%);">
-            <div style="padding:4px 10px; border-radius:8px; font-size:13px; font-weight:700; color:white; background:${bgColor}; box-shadow:0 2px 8px rgba(0,0,0,0.25); white-space:nowrap; line-height:1.3; text-align:center; min-width:50px;">
+          <div style="display:flex; flex-direction:column; align-items:center; transform:translate(-50%, -100%);">
+            <div style="pointer-events:auto; cursor:pointer; padding:4px 10px; border-radius:8px; font-size:13px; font-weight:700; color:white; background:${bgColor}; box-shadow:0 2px 8px rgba(0,0,0,0.25); white-space:nowrap; line-height:1.3; text-align:center; min-width:50px;">
               <div style="font-size:11px; opacity:0.85;">${escapeHtml(apt.area)}평</div>
               <div>${escapeHtml(priceText)}</div>
               <div style="font-size:10px; color:#ffffff; background:rgba(255,255,255,0.2); border-radius:4px; padding:1px 4px; margin-top:2px;">
@@ -171,7 +172,10 @@ export default function PriceMapPage() {
             <div style="width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:6px solid ${bgColor};"></div>
           </div>
         `;
-        content.addEventListener("click", () => selectAndMoveToApt(apt));
+        content.querySelector("div > div:first-child")!.addEventListener("click", (e) => {
+          e.stopPropagation();
+          selectAndMoveToApt(apt);
+        });
 
         const position = new maps.LatLng(apt.lat, apt.lng);
         const overlay = new maps.CustomOverlay({ position, content, yAnchor: 1 });
