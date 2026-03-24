@@ -9,7 +9,7 @@ export default function MapLayout({
   return (
     <>
       <Suspense><Sidebar /></Suspense>
-      <div className="lg:ml-[230px] h-screen overflow-hidden">
+      <div className="lg:ml-[240px] h-screen overflow-hidden">
         {children}
       </div>
     </>
