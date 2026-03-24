@@ -324,7 +324,7 @@ export default function Sidebar() {
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-white/5">
+        <div className="flex items-center justify-between h-16 px-3 border-b border-white/5 overflow-hidden">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <VestraLogoMark
               size={32}
