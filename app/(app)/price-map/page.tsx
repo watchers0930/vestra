@@ -158,10 +158,10 @@ export default function PriceMapPage() {
     : [];
 
   return (
-    <div className="full-width" style={{ height: "100vh", width: "calc(100vw - 240px)" }}>
+    <div className="full-width" style={{ height: "calc(100vh - 16px)", width: "calc(100vw - 240px)", marginTop: "8px" }}>
       <div className="flex h-full flex-row">
         {/* 좌측 패널 (사이드바와 지도 사이) */}
-        <div className="h-full w-[280px] shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-3 pl-2">
+        <div className="h-full w-[270px] shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-3 pl-1 pt-1">
           {/* 구 선택 + 필터 */}
           <div className="mb-3 flex items-center gap-2">
             <div className="relative flex-1">
