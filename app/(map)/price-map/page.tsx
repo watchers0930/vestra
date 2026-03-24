@@ -232,7 +232,15 @@ export default function PriceMapPage() {
                 {topChanges.map((apt, i) => (
                   <button
                     key={apt.name}
-                    onClick={() => setSelectedApt(apt)}
+                    onClick={() => {
+                      setSelectedApt(apt);
+                      // 지도를 해당 아파트 위치로 이동
+                      if (kakaoMapRef.current && window.kakao?.maps?.LatLng) {
+                        const pos = new window.kakao.maps.LatLng(apt.lat, apt.lng);
+                        (kakaoMapRef.current as { panTo: (p: unknown) => void }).panTo(pos);
+                        (kakaoMapRef.current as { setLevel: (l: number) => void }).setLevel(3);
+                      }
+                    }}
                     className={`flex w-full items-center gap-2 rounded-lg bg-white p-2 text-left shadow-sm transition hover:shadow-md ${selectedApt?.name === apt.name ? "ring-2 ring-indigo-500" : ""}`}
                   >
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">{i + 1}</span>
