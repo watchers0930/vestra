@@ -181,7 +181,7 @@ export default function PriceMapPage() {
     : [];
 
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden flex-col lg:flex-row">
+    <div className="flex h-screen overflow-hidden flex-col lg:flex-row">
       {/* 좌측 패널 */}
       <div className="h-[280px] w-full shrink-0 overflow-y-auto border-b border-gray-200 bg-white p-4 lg:h-full lg:w-[320px] lg:border-b-0 lg:border-r">
         {/* 구 선택 + 필터 */}
