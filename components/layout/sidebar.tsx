@@ -342,7 +342,7 @@ export default function Sidebar() {
               </div>
             )}
           </Link>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0">
             <PushSubscriber />
             <NotificationBell collapsed={collapsed && !mobileOpen} />
             <button
