@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, Building, AlertTriangle, Shield, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { User, Building, AlertTriangle, ChevronDown, ChevronUp, Search } from "lucide-react";
 
 interface LandlordProperty {
   address: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Banknote, Building, CheckCircle, XCircle, AlertTriangle, TrendingUp, Star, ChevronRight } from "lucide-react";
+import { Banknote, CheckCircle, XCircle, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 interface LoanResult {
