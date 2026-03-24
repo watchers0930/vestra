@@ -134,8 +134,7 @@ export default function PriceMapPage() {
     : [];
 
   return (
-    // 음수 마진으로 (app) 레이아웃의 padding/max-width 무시
-    <div className="-mx-4 -mt-16 lg:-mx-6 lg:-mt-6" style={{ width: "calc(100% + 2rem)", height: "calc(100vh - 0px)" }}>
+    <div className="full-width -mx-4 -mt-16 lg:-mx-6 lg:-mt-6" style={{ width: "calc(100vw - 240px)", height: "calc(100vh)" }}>
       <div className="flex h-full flex-col lg:flex-row">
         {/* 좌측 패널 */}
         <div className="h-[260px] w-full shrink-0 overflow-y-auto border-b border-gray-200 bg-white p-4 lg:h-full lg:w-[320px] lg:border-b-0 lg:border-r">
