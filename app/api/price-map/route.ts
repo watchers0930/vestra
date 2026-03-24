@@ -7,54 +7,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { fetchRecentPrices, fetchRecentRentPrices, LAWD_CODE_MAP } from "@/lib/molit-api";
 
-// 카카오 로컬 API로 아파트 좌표 검색 (결과 캐시)
-const geocodeCache = new Map<string, { lat: number; lng: number } | null>();
-
-async function geocodeApt(aptName: string, gu: string, dong: string): Promise<{ lat: number; lng: number } | null> {
-  const cacheKey = `${gu}|${dong}|${aptName}`;
-  if (geocodeCache.has(cacheKey)) return geocodeCache.get(cacheKey)!;
-
-  const restKey = process.env.KAKAO_REST_KEY;
-  if (!restKey) return null;
-
-  // 아파트명 정제 (여러 변형 생성)
-  const base = aptName.replace(/\(.*?\)/g, "").replace(/\d+동.*$/, "").replace(/,.*$/, "").trim();
-  // "3차이-편한세상" → "이편한세상3차" / "현대그린1" → "현대그린"
-  const noSuffix = base.replace(/\d+차$/, "").replace(/\d+$/, "").trim();
-  // "이-편한세상" → "이편한세상", 하이픈 제거
-  const noHyphen = base.replace(/-/g, "").trim();
-
-  // 여러 쿼리 시도: 구체적 → 일반적 순서
-  const queries = [
-    `${base} 아파트 ${dong}`,
-    `${noHyphen} ${dong}`,
-    `${noSuffix} 아파트 ${dong}`,
-    `${dong} ${noSuffix}`,
-    `${gu} ${noSuffix}`,
-  ];
-  // 중복 제거
-  const uniqueQueries = [...new Set(queries)];
-
-  for (const query of uniqueQueries) {
-    try {
-      const res = await fetch(
-        `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=1`,
-        { headers: { Authorization: `KakaoAK ${restKey}` } }
-      );
-      if (!res.ok) continue;
-      const json = await res.json();
-      if (json.documents?.length > 0) {
-        const doc = json.documents[0];
-        const result = { lat: parseFloat(doc.y), lng: parseFloat(doc.x) };
-        geocodeCache.set(cacheKey, result);
-        return result;
-      }
-    } catch { /* 다음 쿼리 시도 */ }
-  }
-
-  geocodeCache.set(cacheKey, null);
-  return null;
-}
+// 동별 중심 좌표 (서울 주요 동)
+const DONG_CENTER: Record<string, { lat: number; lng: number }> = {
+  "압구정동": { lat: 37.5270, lng: 127.0280 }, "청담동": { lat: 37.5240, lng: 127.0480 },
+  "삼성동": { lat: 37.5145, lng: 127.0530 }, "대치동": { lat: 37.4980, lng: 127.0600 },
+  "역삼동": { lat: 37.4990, lng: 127.0430 }, "도곡동": { lat: 37.4880, lng: 127.0450 },
+  "개포동": { lat: 37.4840, lng: 127.0600 }, "논현동": { lat: 37.5120, lng: 127.0350 },
+  "신사동": { lat: 37.5240, lng: 127.0250 }, "일원동": { lat: 37.4870, lng: 127.0830 },
+  "수서동": { lat: 37.4860, lng: 127.0980 }, "세곡동": { lat: 37.4650, lng: 127.0980 },
+  "자곡동": { lat: 37.4740, lng: 127.0950 }, "용산동": { lat: 37.5310, lng: 126.9830 },
+};
 
 // 구 중심 좌표에 인덱스 기반 산포 (랜덤 대신 결정적 배치)
 function spreadCoord(center: { lat: number; lng: number }, index: number, total: number): { lat: number; lng: number } {
@@ -449,29 +411,26 @@ export async function GET(req: NextRequest) {
 
           const entries = [...grouped.entries()];
           const totalEntries = entries.length;
-          const geocodePromises = entries.map(async ([aptName, txs], idx) => {
+          entries.forEach(([aptName, txs], idx) => {
             const latest = txs[0];
             const seed = seedMap.get(aptName);
             const deposit = latest.deposit || 0;
-            if (deposit <= 0) return null;
+            if (deposit <= 0) return;
             const priceInMan = Math.round(deposit / 10000);
             const change = calcChangeByArea(txs.map(t => ({ amount: t.deposit || 0, area: t.area || 0 })));
-            const geo = await geocodeApt(aptName, gu, latest.dong || "");
-            const center = GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
-            const fallback = spreadCoord(center, idx, totalEntries);
-            return {
+            const dongCenter = DONG_CENTER[latest.dong || ""] || GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
+            const coords = seed ? { lat: seed.lat, lng: seed.lng } : spreadCoord(dongCenter, idx, totalEntries);
+            data.push({
               name: aptName,
               dong: latest.dong || "",
               price: priceInMan,
-              area: latest.area ? Math.round((latest.area * 1.45) / 3.3058) : 0, // 전용→공급면적 환산(×1.45)
-              lat: geo?.lat || seed?.lat || fallback.lat,
-              lng: geo?.lng || seed?.lng || fallback.lng,
+              area: latest.area ? Math.round((latest.area * 1.45) / 3.3058) : 0,
+              lat: coords.lat,
+              lng: coords.lng,
               change,
               year: latest.buildYear || 0,
-            };
+            });
           });
-          const results = (await Promise.all(geocodePromises)).filter(Boolean) as AptPrice[];
-          data.push(...results);
           if (data.length > 0) dataSource = "molit";
         }
       } else {
@@ -488,29 +447,26 @@ export async function GET(req: NextRequest) {
 
           const entries = [...grouped.entries()];
           const totalEntries = entries.length;
-          const geocodePromises = entries.map(async ([aptName, txs], idx) => {
+          entries.forEach(([aptName, txs], idx) => {
             const latest = txs[0];
             const seed = seedMap.get(aptName);
             const price = latest.dealAmount || 0;
-            if (price <= 0) return null;
+            if (price <= 0) return;
             const priceInMan = Math.round(price / 10000);
             const change = calcChangeByArea(txs.map(t => ({ amount: t.dealAmount || 0, area: t.area || 0 })));
-            const geo = await geocodeApt(aptName, gu, latest.dong || "");
-            const center = GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
-            const fallback = spreadCoord(center, idx, totalEntries);
-            return {
+            const dongCenter = DONG_CENTER[latest.dong || ""] || GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
+            const coords = seed ? { lat: seed.lat, lng: seed.lng } : spreadCoord(dongCenter, idx, totalEntries);
+            data.push({
               name: aptName,
               dong: latest.dong || "",
               price: priceInMan,
-              area: latest.area ? Math.round((latest.area * 1.45) / 3.3058) : 0, // 전용→공급면적 환산(×1.45)
-              lat: geo?.lat || seed?.lat || fallback.lat,
-              lng: geo?.lng || seed?.lng || fallback.lng,
+              area: latest.area ? Math.round((latest.area * 1.45) / 3.3058) : 0,
+              lat: coords.lat,
+              lng: coords.lng,
               change,
               year: latest.buildYear || 0,
-            };
+            });
           });
-          const results = (await Promise.all(geocodePromises)).filter(Boolean) as AptPrice[];
-          data.push(...results);
           if (data.length > 0) dataSource = "molit";
         }
       }
