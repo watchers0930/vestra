@@ -73,7 +73,7 @@ export default function RootLayout({
           <ToastProvider>
             {process.env.NEXT_PUBLIC_KAKAO_MAP_KEY && (
               <Script
-                src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_KEY}&libraries=services&autoload=false`}
+                src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_KEY}&libraries=services`}
                 strategy="afterInteractive"
               />
             )}

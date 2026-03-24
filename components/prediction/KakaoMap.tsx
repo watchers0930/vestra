@@ -86,7 +86,7 @@ export function KakaoMap({ address }: KakaoMapProps) {
     const initMap = () => {
       if (!window.kakao?.maps || !mapRef.current) return;
 
-      window.kakao.maps.load(() => {
+      const doInit = () => {
         const geocoder = new window.kakao.maps.services.Geocoder();
         const OK = window.kakao.maps.services.Status.OK;
 
@@ -134,13 +134,19 @@ export function KakaoMap({ address }: KakaoMapProps) {
             createMap(new window.kakao.maps.LatLng(37.4979, 127.0276), 7);
           }
         });
-      });
+      };
+
+      // autoload=true: load()가 있으면 호출, 없으면 직접 실행
+      if (typeof window.kakao.maps.load === "function") {
+        window.kakao.maps.load(doInit);
+      } else {
+        doInit();
+      }
     };
 
     if (window.kakao?.maps) {
       initMap();
     } else {
-      // SDK 스크립트 로드 대기 (next/script afterInteractive)
       const timeout = setTimeout(() => {
         if (window.kakao?.maps) {
           initMap();
