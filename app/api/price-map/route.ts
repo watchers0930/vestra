@@ -381,10 +381,12 @@ export async function GET(req: NextRequest) {
             const seed = seedMap.get(aptName);
             const deposit = latest.deposit || 0;
             if (deposit <= 0) continue;
+            // MOLIT는 원 단위 → 만원 단위로 변환
+            const priceInMan = Math.round(deposit / 10000);
             data.push({
               name: aptName,
               dong: latest.dong || "",
-              price: deposit,
+              price: priceInMan,
               area: latest.area ? Math.round(latest.area / 3.3058) : 0,
               lat: seed?.lat || (GU_CENTER[gu]?.lat || 37.4979) + (Math.random() - 0.5) * 0.01,
               lng: seed?.lng || (GU_CENTER[gu]?.lng || 127.0276) + (Math.random() - 0.5) * 0.01,
@@ -411,10 +413,12 @@ export async function GET(req: NextRequest) {
             const seed = seedMap.get(aptName);
             const price = latest.dealAmount || 0;
             if (price <= 0) continue;
+            // MOLIT는 원 단위 → 만원 단위로 변환
+            const priceInMan = Math.round(price / 10000);
             data.push({
               name: aptName,
               dong: latest.dong || "",
-              price,
+              price: priceInMan,
               area: latest.area ? Math.round(latest.area / 3.3058) : 0,
               lat: seed?.lat || (GU_CENTER[gu]?.lat || 37.4979) + (Math.random() - 0.5) * 0.01,
               lng: seed?.lng || (GU_CENTER[gu]?.lng || 127.0276) + (Math.random() - 0.5) * 0.01,

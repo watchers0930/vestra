@@ -108,7 +108,8 @@ export default function PriceMapPage() {
       data.apartments.forEach((apt) => {
         const priceText = formatPrice(apt.price);
         const changeSign = apt.change >= 0 ? "+" : "";
-        const bgColor = apt.price >= 500000 ? '#ef4444' : apt.price >= 300000 ? '#f97316' : '#3b82f6';
+        // 평형대별 연한→진한 파랑
+        const bgColor = apt.area >= 60 ? '#1e3a5f' : apt.area >= 50 ? '#1e40af' : apt.area >= 40 ? '#2563eb' : apt.area >= 30 ? '#3b82f6' : '#93c5fd';
 
         const content = document.createElement("div");
         content.innerHTML = `
@@ -293,14 +294,14 @@ export default function PriceMapPage() {
 
           {/* 범례 */}
           <div className="absolute bottom-4 right-4 z-10 rounded-lg border border-gray-200 bg-white/95 p-2 shadow-lg backdrop-blur-sm">
-            <p className="mb-1 text-[10px] font-semibold text-gray-700">시세 범례</p>
+            <p className="mb-1 text-[10px] font-semibold text-gray-700">평형대 범례</p>
             <div className="space-y-0.5">
               {[
-                { color: "bg-red-500", label: "50억+" },
-                { color: "bg-orange-500", label: "30~50억" },
-                { color: "bg-blue-600", label: "20~30억" },
-                { color: "bg-blue-500", label: "10~20억" },
-                { color: "bg-sky-400", label: "10억 미만" },
+                { color: "bg-[#1e3a5f]", label: "60평+" },
+                { color: "bg-[#1e40af]", label: "50평대" },
+                { color: "bg-[#2563eb]", label: "40평대" },
+                { color: "bg-[#3b82f6]", label: "30평대" },
+                { color: "bg-[#93c5fd]", label: "20평대 이하" },
               ].map(({ color, label }) => (
                 <div key={label} className="flex items-center gap-1.5">
                   <div className={`h-2.5 w-2.5 rounded-full ${color}`} />
