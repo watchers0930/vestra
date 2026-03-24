@@ -330,7 +330,7 @@ export default function PriceMapPage() {
       </div>
 
       {/* 지도 영역 */}
-      <div className="relative min-h-[400px] flex-1">
+      <div className="relative flex-1" style={{ minHeight: 0 }}>
         {loading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-100/80">
             <div className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 shadow">
@@ -339,7 +339,7 @@ export default function PriceMapPage() {
             </div>
           </div>
         )}
-        <div ref={mapRef} className="h-full w-full" />
+        <div ref={mapRef} className="absolute inset-0" />
 
         {/* 범례 */}
         <div className="absolute bottom-4 right-4 rounded-lg border border-gray-200 bg-white/95 p-3 shadow-lg backdrop-blur-sm">
