@@ -7,6 +7,37 @@ import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { fetchRecentPrices, fetchRecentRentPrices, LAWD_CODE_MAP } from "@/lib/molit-api";
 
+// 카카오 로컬 API로 아파트 좌표 검색 (결과 캐시)
+const geocodeCache = new Map<string, { lat: number; lng: number }>();
+
+async function geocodeApt(aptName: string, gu: string, dong: string): Promise<{ lat: number; lng: number } | null> {
+  const query = `${gu} ${dong} ${aptName}`;
+  if (geocodeCache.has(query)) return geocodeCache.get(query)!;
+
+  const kakaoRestKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
+  if (!kakaoRestKey) return null;
+
+  // 카카오 REST API 키 (JS키와 별도) 확인
+  const restKey = process.env.KAKAO_REST_KEY;
+  if (!restKey) return null;
+
+  try {
+    const res = await fetch(
+      `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&category_group_code=AP4&size=1`,
+      { headers: { Authorization: `KakaoAK ${restKey}` } }
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json.documents?.length > 0) {
+      const doc = json.documents[0];
+      const result = { lat: parseFloat(doc.y), lng: parseFloat(doc.x) };
+      geocodeCache.set(query, result);
+      return result;
+    }
+  } catch { /* 무시 */ }
+  return null;
+}
+
 interface AptPrice {
   name: string;
   dong: string;
@@ -376,24 +407,27 @@ export async function GET(req: NextRequest) {
           const seedApts = SEED_DATA[gu] || [];
           const seedMap = new Map(seedApts.map(s => [s.name, s]));
 
-          for (const [aptName, txs] of grouped) {
+          const geocodePromises = [...grouped.entries()].map(async ([aptName, txs]) => {
             const latest = txs[0]; // 이미 정렬됨
             const seed = seedMap.get(aptName);
             const deposit = latest.deposit || 0;
-            if (deposit <= 0) continue;
-            // MOLIT는 원 단위 → 만원 단위로 변환
+            if (deposit <= 0) return null;
             const priceInMan = Math.round(deposit / 10000);
-            data.push({
+            // 카카오 좌표 검색 → 시드 → 구 중심 폴백
+            const geo = await geocodeApt(aptName, gu, latest.dong || "");
+            return {
               name: aptName,
               dong: latest.dong || "",
               price: priceInMan,
               area: latest.area ? Math.round(latest.area / 3.3058) : 0,
-              lat: seed?.lat || (GU_CENTER[gu]?.lat || 37.4979) + (Math.random() - 0.5) * 0.01,
-              lng: seed?.lng || (GU_CENTER[gu]?.lng || 127.0276) + (Math.random() - 0.5) * 0.01,
+              lat: geo?.lat || seed?.lat || (GU_CENTER[gu]?.lat || 37.4979),
+              lng: geo?.lng || seed?.lng || (GU_CENTER[gu]?.lng || 127.0276),
               change: 0,
               year: latest.buildYear || 0,
-            });
-          }
+            };
+          });
+          const results = (await Promise.all(geocodePromises)).filter(Boolean) as AptPrice[];
+          data.push(...results);
           if (data.length > 0) dataSource = "molit";
         }
       } else {
@@ -408,24 +442,26 @@ export async function GET(req: NextRequest) {
           const seedApts = SEED_DATA[gu] || [];
           const seedMap = new Map(seedApts.map(s => [s.name, s]));
 
-          for (const [aptName, txs] of grouped) {
+          const geocodePromises = [...grouped.entries()].map(async ([aptName, txs]) => {
             const latest = txs[0];
             const seed = seedMap.get(aptName);
             const price = latest.dealAmount || 0;
-            if (price <= 0) continue;
-            // MOLIT는 원 단위 → 만원 단위로 변환
+            if (price <= 0) return null;
             const priceInMan = Math.round(price / 10000);
-            data.push({
+            const geo = await geocodeApt(aptName, gu, latest.dong || "");
+            return {
               name: aptName,
               dong: latest.dong || "",
               price: priceInMan,
               area: latest.area ? Math.round(latest.area / 3.3058) : 0,
-              lat: seed?.lat || (GU_CENTER[gu]?.lat || 37.4979) + (Math.random() - 0.5) * 0.01,
-              lng: seed?.lng || (GU_CENTER[gu]?.lng || 127.0276) + (Math.random() - 0.5) * 0.01,
+              lat: geo?.lat || seed?.lat || (GU_CENTER[gu]?.lat || 37.4979),
+              lng: geo?.lng || seed?.lng || (GU_CENTER[gu]?.lng || 127.0276),
               change: 0,
               year: latest.buildYear || 0,
-            });
-          }
+            };
+          });
+          const results = (await Promise.all(geocodePromises)).filter(Boolean) as AptPrice[];
+          data.push(...results);
           if (data.length > 0) dataSource = "molit";
         }
       }
