@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
+
+declare global {
+  interface Window {
+    __kakaoMapsReady?: boolean;
+  }
+}
 import { Geist, Geist_Mono, Sora } from "next/font/google";
-import Script from "next/script";
+
 import "./globals.css";
 import SessionProvider from "@/components/auth/session-provider";
 import { ToastProvider } from "@/components/common/toast";
 import PwaInstallPrompt from "@/components/pwa/PwaInstallPrompt";
+import KakaoScript from "@/components/common/KakaoScript";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -71,20 +78,7 @@ export default function RootLayout({
       >
         <SessionProvider>
           <ToastProvider>
-            {process.env.NEXT_PUBLIC_KAKAO_MAP_KEY && (
-              <Script
-                src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_KEY}&libraries=services&autoload=false`}
-                strategy="afterInteractive"
-                onReady={() => {
-                  if (window.kakao?.maps?.load) {
-                    window.kakao.maps.load(() => {
-                      window.__kakaoMapsReady = true;
-                      window.dispatchEvent(new Event("kakao-maps-ready"));
-                    });
-                  }
-                }}
-              />
-            )}
+            <KakaoScript />
             {children}
             <PwaInstallPrompt />
           </ToastProvider>

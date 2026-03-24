@@ -118,7 +118,7 @@ export default function PriceMapPage() {
     };
 
     // 이미 준비됐으면 바로 렌더
-    if ((window as unknown as Record<string, unknown>).__kakaoMapsReady) {
+    if (window.__kakaoMapsReady) {
       tryRender();
     }
 
