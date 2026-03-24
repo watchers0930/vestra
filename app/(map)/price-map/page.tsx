@@ -80,18 +80,20 @@ export default function PriceMapPage() {
     fetchData(selectedGu);
   }, [selectedGu, fetchData]);
 
-  // 카카오맵 초기화 (SDK load 대기 + 레이아웃 준비 대기)
+  // 카카오맵 초기화 — SDK 로드 완료 후 렌더
   useEffect(() => {
     if (!data || !mapRef.current) return;
     let cancelled = false;
 
-    let mapRendered = false;
-
     const renderMap = () => {
-      const center = new window.kakao.maps.LatLng(data.center.lat, data.center.lng);
+      if (cancelled || !mapRef.current) return;
 
+      const { maps } = window.kakao;
+      const center = new maps.LatLng(data.center.lat, data.center.lng);
+
+      // 맵 인스턴스 재사용 or 생성
       if (!kakaoMapRef.current) {
-        kakaoMapRef.current = new window.kakao.maps.Map(mapRef.current!, { center, level: 5 });
+        kakaoMapRef.current = new maps.Map(mapRef.current!, { center, level: 5 });
       } else {
         (kakaoMapRef.current as { setCenter: (c: unknown) => void }).setCenter(center);
       }
@@ -123,42 +125,43 @@ export default function PriceMapPage() {
         `;
         content.addEventListener("click", () => setSelectedApt(apt));
 
-        const position = new window.kakao.maps.LatLng(apt.lat, apt.lng);
-        const overlay = new window.kakao.maps.CustomOverlay({ position, content, yAnchor: 1 });
+        const position = new maps.LatLng(apt.lat, apt.lng);
+        const overlay = new maps.CustomOverlay({ position, content, yAnchor: 1 });
         overlay.setMap(kakaoMapRef.current);
         overlaysRef.current.push(overlay);
       });
     };
 
-    const tryRender = () => {
-      if (cancelled || !mapRef.current || mapRendered) return;
-      if (typeof window.kakao?.maps?.LatLng !== "function") return;
-      mapRendered = true;
-      renderMap();
+    const initKakaoAndRender = () => {
+      if (cancelled) return;
+      // SDK 자체가 로드 안 됐으면 대기
+      if (!window.kakao?.maps?.load) return false;
+
+      // autoload=false이므로 load() 호출 필요. 이미 로드됐으면 콜백 즉시 실행됨
+      window.kakao.maps.load(() => {
+        if (!cancelled) renderMap();
+      });
+      return true;
     };
 
-    // 이미 준비됐으면 바로 렌더
-    if (window.__kakaoMapsReady) {
-      tryRender();
+    // 즉시 시도
+    if (!initKakaoAndRender()) {
+      // SDK 스크립트 자체가 아직 안 왔으면 폴링
+      const pollId = setInterval(() => {
+        if (initKakaoAndRender()) clearInterval(pollId);
+      }, 300);
+
+      // 10초 후 폴링 중지 (안전장치)
+      const timeoutId = setTimeout(() => clearInterval(pollId), 10000);
+
+      return () => {
+        cancelled = true;
+        clearInterval(pollId);
+        clearTimeout(timeoutId);
+      };
     }
 
-    // 이벤트 리스너로 SDK 로드 완료 감지
-    const onReady = () => tryRender();
-    window.addEventListener("kakao-maps-ready", onReady);
-
-    // 폴링 백업 (이벤트를 놓친 경우 대비)
-    const pollId = setInterval(() => {
-      if (typeof window.kakao?.maps?.LatLng === "function") {
-        tryRender();
-        clearInterval(pollId);
-      }
-    }, 500);
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener("kakao-maps-ready", onReady);
-      clearInterval(pollId);
-    };
+    return () => { cancelled = true; };
   }, [data]);
 
   const topChanges = data?.apartments
