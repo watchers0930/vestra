@@ -33,7 +33,7 @@ import {
   Banknote,
   type LucideIcon,
 } from "lucide-react";
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { version } from "../../package.json";
@@ -76,6 +76,7 @@ const userMenuItems: MenuItem[] = [
       { href: "/jeonse/jeonse-right", label: "전세권설정등기" },
       { href: "/jeonse/lease-registration", label: "임차권등기명령" },
       { href: "/jeonse/lease-report", label: "주택임대차 신고" },
+      { href: "/landlord-profile", label: "임대인 프로파일" },
     ],
   },
   { href: "/feasibility", icon: ClipboardCheck, label: "사업성 분석", description: "다중 문서 기반 SCR 수준 사업성 검증 보고서를 생성합니다" },
@@ -134,7 +135,10 @@ export default function Sidebar() {
   // 현재 경로에 맞는 아코디언 자동 펼침
   useEffect(() => {
     const parent = userMenuItems.find(
-      (item) => item.children && pathname.startsWith(item.href)
+      (item) =>
+        item.children &&
+        (pathname.startsWith(item.href) ||
+          item.children.some((child) => pathname === child.href))
     );
     setOpenAccordion(parent ? parent.href : null);
   }, [pathname]);

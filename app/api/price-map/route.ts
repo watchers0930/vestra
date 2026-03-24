@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { fetchRecentPrices, fetchRecentRentPrices, LAWD_CODE_MAP } from "@/lib/molit-api";
 
 interface AptPrice {
   name: string;
@@ -294,6 +295,50 @@ const REGION_GROUPS: Record<string, string[]> = {
   "울산": ["남구(울산)", "울주군"],
 };
 
+// 구 이름 → MOLIT LAWD_CODE_MAP 검색용 주소
+const GU_ADDRESS_MAP: Record<string, string> = {
+  "강남구": "강남구", "서초구": "서초구", "송파구": "송파구", "강동구": "강동구",
+  "마포구": "마포구", "용산구": "용산구", "성동구": "성동구", "광진구": "광진구",
+  "영등포구": "영등포구", "동작구": "동작구", "양천구": "양천구", "강서구": "강서구",
+  "구로구": "구로구", "금천구": "금천구", "관악구": "관악구", "노원구": "노원구",
+  "도봉구": "도봉구", "강북구": "강북구", "성북구": "성북구", "동대문구": "동대문구",
+  "중랑구": "중랑구", "종로구": "종로구", "은평구": "은평구", "서대문구": "서대문구", "중구": "중구",
+  "해운대구": "해운대구", "수영구": "수영구", "부산진구": "부산진구", "동래구": "동래구",
+  "수성구": "수성구", "달서구": "달서구",
+  "연수구": "연수구", "부평구": "부평구", "남동구": "남동구",
+  "유성구": "유성구", "서구(대전)": "대전서구",
+  "광산구": "광산구", "남구(광주)": "광주남구",
+  "남구(울산)": "울산남구", "울주군": "울주군",
+  "분당구": "분당구", "수원영통구": "영통구", "용인수지구": "수지구",
+  "화성동탄": "화성시", "고양일산동구": "일산동구", "하남시": "하남시", "과천시": "과천시",
+};
+
+// 구별 중심 좌표
+const GU_CENTER: Record<string, { lat: number; lng: number }> = {
+  "강남구": { lat: 37.4979, lng: 127.0276 }, "서초구": { lat: 37.4837, lng: 127.0324 },
+  "송파구": { lat: 37.5145, lng: 127.1060 }, "강동구": { lat: 37.5301, lng: 127.1238 },
+  "마포구": { lat: 37.5663, lng: 126.9014 }, "용산구": { lat: 37.5326, lng: 126.9908 },
+  "성동구": { lat: 37.5634, lng: 127.0370 }, "광진구": { lat: 37.5385, lng: 127.0824 },
+  "영등포구": { lat: 37.5264, lng: 126.8963 }, "동작구": { lat: 37.5124, lng: 126.9394 },
+  "양천구": { lat: 37.5171, lng: 126.8664 }, "강서구": { lat: 37.5510, lng: 126.8496 },
+  "구로구": { lat: 37.4954, lng: 126.8874 }, "금천구": { lat: 37.4568, lng: 126.8953 },
+  "관악구": { lat: 37.4784, lng: 126.9516 }, "노원구": { lat: 37.6543, lng: 127.0568 },
+  "도봉구": { lat: 37.6688, lng: 127.0471 }, "강북구": { lat: 37.6397, lng: 127.0254 },
+  "성북구": { lat: 37.5894, lng: 127.0167 }, "동대문구": { lat: 37.5743, lng: 127.0400 },
+  "중랑구": { lat: 37.6063, lng: 127.0928 }, "종로구": { lat: 37.5735, lng: 126.9790 },
+  "은평구": { lat: 37.6027, lng: 126.9291 }, "서대문구": { lat: 37.5791, lng: 126.9368 },
+  "중구": { lat: 37.5641, lng: 126.9979 },
+  "해운대구": { lat: 35.1631, lng: 129.1636 }, "수영구": { lat: 35.1455, lng: 129.1134 },
+  "부산진구": { lat: 35.1629, lng: 129.0532 }, "동래구": { lat: 35.2050, lng: 129.0841 },
+  "수성구": { lat: 35.8583, lng: 128.6319 }, "달서구": { lat: 35.8283, lng: 128.5327 },
+  "연수구": { lat: 37.4101, lng: 126.6783 }, "부평구": { lat: 37.5076, lng: 126.7218 },
+  "남동구": { lat: 37.4488, lng: 126.7310 },
+  "유성구": { lat: 36.3624, lng: 127.3563 },
+  "광산구": { lat: 35.1395, lng: 126.7937 },
+  "분당구": { lat: 37.3825, lng: 127.1188 }, "과천시": { lat: 37.4292, lng: 126.9876 },
+  "하남시": { lat: 37.5393, lng: 127.2148 },
+};
+
 export async function GET(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for") || "anonymous";
   const rl = await rateLimit(`price-map:${ip}`, 30);
@@ -307,7 +352,89 @@ export async function GET(req: NextRequest) {
   const maxPrice = parseInt(searchParams.get("maxPrice") || "9999999");
   const tradeType = searchParams.get("type") || "매매";
 
-  let data = SEED_DATA[gu] || [];
+  // MOLIT 실거래가 API 시도 → 실패 시 시드 데이터 폴백
+  let data: AptPrice[] = [];
+  let dataSource: "molit" | "seed" = "seed";
+
+  // 구 이름 → 법정동 코드 매핑 (LAWD_CODE_MAP에서 검색)
+  const guToAddress = GU_ADDRESS_MAP[gu];
+  const lawdCode = guToAddress ? LAWD_CODE_MAP[guToAddress] : undefined;
+
+  if (lawdCode && process.env.MOLIT_API_KEY) {
+    try {
+      if (tradeType === "전세") {
+        const rentResult = await fetchRecentRentPrices(guToAddress, 3);
+        if (rentResult && rentResult.transactions.length > 0) {
+          // 아파트명별 최신 전세 거래 그룹핑
+          const grouped = new Map<string, typeof rentResult.transactions[0][]>();
+          for (const tx of rentResult.transactions) {
+            const key = tx.aptName || "알수없음";
+            if (!grouped.has(key)) grouped.set(key, []);
+            grouped.get(key)!.push(tx);
+          }
+          // 그룹별 최신 거래 + 좌표 (시드 데이터에서 가져오기)
+          const seedApts = SEED_DATA[gu] || [];
+          const seedMap = new Map(seedApts.map(s => [s.name, s]));
+
+          for (const [aptName, txs] of grouped) {
+            const latest = txs[0]; // 이미 정렬됨
+            const seed = seedMap.get(aptName);
+            const deposit = latest.deposit || 0;
+            if (deposit <= 0) continue;
+            data.push({
+              name: aptName,
+              dong: latest.dong || "",
+              price: deposit,
+              area: latest.area ? Math.round(latest.area / 3.3058) : 0,
+              lat: seed?.lat || (GU_CENTER[gu]?.lat || 37.4979) + (Math.random() - 0.5) * 0.01,
+              lng: seed?.lng || (GU_CENTER[gu]?.lng || 127.0276) + (Math.random() - 0.5) * 0.01,
+              change: 0,
+              year: latest.buildYear || 0,
+            });
+          }
+          if (data.length > 0) dataSource = "molit";
+        }
+      } else {
+        const saleResult = await fetchRecentPrices(guToAddress, 3);
+        if (saleResult && saleResult.transactions.length > 0) {
+          const grouped = new Map<string, typeof saleResult.transactions[0][]>();
+          for (const tx of saleResult.transactions) {
+            const key = tx.aptName || "알수없음";
+            if (!grouped.has(key)) grouped.set(key, []);
+            grouped.get(key)!.push(tx);
+          }
+          const seedApts = SEED_DATA[gu] || [];
+          const seedMap = new Map(seedApts.map(s => [s.name, s]));
+
+          for (const [aptName, txs] of grouped) {
+            const latest = txs[0];
+            const seed = seedMap.get(aptName);
+            const price = latest.dealAmount || 0;
+            if (price <= 0) continue;
+            data.push({
+              name: aptName,
+              dong: latest.dong || "",
+              price,
+              area: latest.area ? Math.round(latest.area / 3.3058) : 0,
+              lat: seed?.lat || (GU_CENTER[gu]?.lat || 37.4979) + (Math.random() - 0.5) * 0.01,
+              lng: seed?.lng || (GU_CENTER[gu]?.lng || 127.0276) + (Math.random() - 0.5) * 0.01,
+              change: 0,
+              year: latest.buildYear || 0,
+            });
+          }
+          if (data.length > 0) dataSource = "molit";
+        }
+      }
+    } catch (err) {
+      console.error("[price-map] MOLIT API 호출 실패, 시드 데이터로 폴백:", err);
+    }
+  }
+
+  // MOLIT 실패 or 데이터 없음 → 시드 데이터 폴백
+  if (data.length === 0) {
+    data = SEED_DATA[gu] || [];
+    dataSource = "seed";
+  }
 
   if (minPrice > 0 || maxPrice < 9999999) {
     data = data.filter(d => d.price >= minPrice && d.price <= maxPrice);
@@ -318,10 +445,11 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     gu,
     tradeType,
+    dataSource,
     apartments: data,
     center: data.length > 0
       ? { lat: data.reduce((s, d) => s + d.lat, 0) / data.length, lng: data.reduce((s, d) => s + d.lng, 0) / data.length }
-      : { lat: 37.4979, lng: 127.0276 },
+      : GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 },
     availableGus,
     regionGroups: REGION_GROUPS,
     total: data.length,

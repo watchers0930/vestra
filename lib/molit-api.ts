@@ -66,7 +66,7 @@ export interface ComprehensivePriceResult {
 //   - 여러 광역시에 동일 이름이 존재하는 구는 도시명 접두 (예: "부산중구", "대구동구")
 //   - 도시 약식 키도 함께 등록 (예: "수원시" → 영통구, "부산" → 해운대구)
 
-const LAWD_CODE_MAP: Record<string, string> = {
+export const LAWD_CODE_MAP: Record<string, string> = {
   // ── 서울특별시 (11) ──
   "강남구": "11680", "서초구": "11650", "송파구": "11710", "강동구": "11740",
   "마포구": "11440", "용산구": "11170", "성동구": "11200", "광진구": "11215",
