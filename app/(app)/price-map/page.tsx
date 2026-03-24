@@ -96,61 +96,68 @@ export default function PriceMapPage() {
     fetchData(selectedGu);
   }, [selectedGu, fetchData]);
 
-  // 카카오맵 초기화
+  // 카카오맵 초기화 (SDK load 대기 포함)
   useEffect(() => {
-    if (!data || !mapRef.current || !window.kakao?.maps) return;
+    if (!data || !mapRef.current) return;
+    let cancelled = false;
 
-    const initMap = () => {
+    const waitForKakao = (retries = 20) => {
+      if (cancelled) return;
+      if (!window.kakao?.maps) {
+        if (retries > 0) setTimeout(() => waitForKakao(retries - 1), 300);
+        return;
+      }
       window.kakao.maps.load(() => {
-        const center = new window.kakao.maps.LatLng(data.center.lat, data.center.lng);
-
-        if (!kakaoMapRef.current) {
-          kakaoMapRef.current = new window.kakao.maps.Map(mapRef.current!, {
-            center,
-            level: 5,
-          });
-        } else {
-          (kakaoMapRef.current as { setCenter: (c: unknown) => void }).setCenter(center);
-        }
-
-        // 기존 오버레이 제거
-        overlaysRef.current.forEach((o: unknown) => {
-          (o as { setMap: (m: null) => void }).setMap(null);
-        });
-        overlaysRef.current = [];
-
-        // 마커 생성
-        data.apartments.forEach((apt) => {
-          const priceText = formatPrice(apt.price);
-          const changeSign = apt.change >= 0 ? "+" : "";
-          const changeColor = "#ffffff";
-          const bgColor = apt.price >= 500000 ? '#ef4444' : apt.price >= 300000 ? '#f97316' : '#3b82f6';
-
-          const content = document.createElement("div");
-          content.innerHTML = `
-            <div style="cursor:pointer; display:flex; flex-direction:column; align-items:center; transform:translate(-50%, -100%);">
-              <div style="padding:4px 10px; border-radius:8px; font-size:13px; font-weight:700; color:white; background:${bgColor}; box-shadow:0 2px 8px rgba(0,0,0,0.25); white-space:nowrap; line-height:1.3; text-align:center; min-width:50px;">
-                <div style="font-size:11px; opacity:0.85;">${escapeHtml(apt.area)}평</div>
-                <div>${escapeHtml(priceText)}</div>
-                <div style="font-size:10px; color:${changeColor}; background:rgba(255,255,255,0.2); border-radius:4px; padding:1px 4px; margin-top:2px;">
-                  ${escapeHtml(changeSign)}${escapeHtml(apt.change)}%
-                </div>
-              </div>
-              <div style="width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:6px solid ${bgColor};"></div>
-            </div>
-          `;
-          content.addEventListener("click", () => setSelectedApt(apt));
-
-          const position = new window.kakao.maps.LatLng(apt.lat, apt.lng);
-          const overlay = new window.kakao.maps.CustomOverlay({ position, content, yAnchor: 1 });
-          overlay.setMap(kakaoMapRef.current);
-          overlaysRef.current.push(overlay);
-        });
+        if (cancelled || !mapRef.current) return;
+        renderMap();
       });
     };
 
-    if (window.kakao?.maps) initMap();
-    else setTimeout(initMap, 2000);
+    const renderMap = () => {
+      const center = new window.kakao.maps.LatLng(data.center.lat, data.center.lng);
+
+      if (!kakaoMapRef.current) {
+        kakaoMapRef.current = new window.kakao.maps.Map(mapRef.current!, { center, level: 5 });
+      } else {
+        (kakaoMapRef.current as { setCenter: (c: unknown) => void }).setCenter(center);
+      }
+
+      // 기존 오버레이 제거
+      overlaysRef.current.forEach((o: unknown) => {
+        (o as { setMap: (m: null) => void }).setMap(null);
+      });
+      overlaysRef.current = [];
+
+      // 마커 생성
+      data.apartments.forEach((apt) => {
+        const priceText = formatPrice(apt.price);
+        const changeSign = apt.change >= 0 ? "+" : "";
+        const bgColor = apt.price >= 500000 ? '#ef4444' : apt.price >= 300000 ? '#f97316' : '#3b82f6';
+
+        const content = document.createElement("div");
+        content.innerHTML = `
+          <div style="cursor:pointer; display:flex; flex-direction:column; align-items:center; transform:translate(-50%, -100%);">
+            <div style="padding:4px 10px; border-radius:8px; font-size:13px; font-weight:700; color:white; background:${bgColor}; box-shadow:0 2px 8px rgba(0,0,0,0.25); white-space:nowrap; line-height:1.3; text-align:center; min-width:50px;">
+              <div style="font-size:11px; opacity:0.85;">${escapeHtml(apt.area)}평</div>
+              <div>${escapeHtml(priceText)}</div>
+              <div style="font-size:10px; color:#ffffff; background:rgba(255,255,255,0.2); border-radius:4px; padding:1px 4px; margin-top:2px;">
+                ${escapeHtml(changeSign)}${escapeHtml(apt.change)}%
+              </div>
+            </div>
+            <div style="width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:6px solid ${bgColor};"></div>
+          </div>
+        `;
+        content.addEventListener("click", () => setSelectedApt(apt));
+
+        const position = new window.kakao.maps.LatLng(apt.lat, apt.lng);
+        const overlay = new window.kakao.maps.CustomOverlay({ position, content, yAnchor: 1 });
+        overlay.setMap(kakaoMapRef.current);
+        overlaysRef.current.push(overlay);
+      });
+    };
+
+    waitForKakao();
+    return () => { cancelled = true; };
   }, [data]);
 
   const topChanges = data?.apartments
