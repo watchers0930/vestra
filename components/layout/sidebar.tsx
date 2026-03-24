@@ -31,6 +31,7 @@ import {
   Newspaper,
   MapPin,
   Banknote,
+  Download,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -444,6 +445,9 @@ export default function Sidebar() {
           )}
         </nav>
 
+        {/* PWA 설치 버튼 */}
+        <PwaInstallButton collapsed={collapsed && !mobileOpen} />
+
         {/* User Menu */}
         <UserMenu collapsed={collapsed && !mobileOpen} />
 
@@ -480,5 +484,47 @@ export default function Sidebar() {
         </div>
       )}
     </>
+  );
+}
+
+// ── PWA 설치 버튼 (사이드바 내장) ──
+function PwaInstallButton({ collapsed }: { collapsed: boolean }) {
+  const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
+  const [installed, setInstalled] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setInstalled(true);
+      return;
+    }
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  if (installed || !deferredPrompt) return null;
+
+  const handleInstall = async () => {
+    const prompt = deferredPrompt as Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
+    await prompt.prompt();
+    const { outcome } = await prompt.userChoice;
+    if (outcome === "accepted") {
+      setInstalled(true);
+      setDeferredPrompt(null);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleInstall}
+      className="mx-3 mb-2 flex items-center gap-2 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-3 py-2 text-xs font-medium text-indigo-300 hover:bg-indigo-500/20 transition-colors"
+    >
+      <Download size={14} />
+      {!collapsed && <span>앱 설치하기</span>}
+    </button>
   );
 }

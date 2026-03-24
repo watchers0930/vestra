@@ -10,7 +10,7 @@ import { Geist, Geist_Mono, Sora } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/components/auth/session-provider";
 import { ToastProvider } from "@/components/common/toast";
-import PwaInstallPrompt from "@/components/pwa/PwaInstallPrompt";
+
 import KakaoScript from "@/components/common/KakaoScript";
 
 const geistSans = Geist({
@@ -80,7 +80,6 @@ export default function RootLayout({
           <ToastProvider>
             <KakaoScript />
             {children}
-            <PwaInstallPrompt />
           </ToastProvider>
         </SessionProvider>
       </body>
