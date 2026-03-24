@@ -79,9 +79,6 @@ export default function PushSubscriber() {
       ) : (
         <BellOff className="h-4 w-4" />
       )}
-      <span className="hidden sm:inline">
-        {loading ? "처리 중..." : isSubscribed ? "알림 켜짐" : "알림 받기"}
-      </span>
     </button>
   );
 }
