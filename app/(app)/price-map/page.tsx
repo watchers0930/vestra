@@ -181,9 +181,9 @@ export default function PriceMapPage() {
     : [];
 
   return (
-    <div className="flex h-[calc(100vh-64px)] flex-col lg:flex-row">
+    <div className="flex h-[calc(100vh-64px)] flex-col xl:flex-row">
       {/* 좌측 패널 */}
-      <div className="w-full shrink-0 overflow-y-auto border-b border-gray-200 bg-white p-4 lg:w-[380px] lg:border-b-0 lg:border-r">
+      <div className="max-h-[40vh] w-full shrink-0 overflow-y-auto border-b border-gray-200 bg-white p-4 xl:max-h-none xl:w-[340px] xl:border-b-0 xl:border-r">
         {/* 구 선택 + 필터 */}
         <div className="mb-4 flex items-center gap-2">
           <div className="relative flex-1">
@@ -330,7 +330,7 @@ export default function PriceMapPage() {
       </div>
 
       {/* 지도 영역 */}
-      <div className="relative flex-1">
+      <div className="relative min-h-[400px] flex-1">
         {loading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-100/80">
             <div className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 shadow">
