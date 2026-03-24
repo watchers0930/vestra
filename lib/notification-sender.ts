@@ -6,6 +6,7 @@
  */
 
 import { prisma } from "./prisma";
+import { sendPushToUser } from "./push-subscriptions";
 
 // ─── 타입 정의 ───
 
@@ -158,6 +159,25 @@ export async function sendNotification(
         payload.body
       );
       results.push(emailResult);
+    }
+
+    // Web Push (항상 시도 — 구독이 없으면 자동 스킵)
+    try {
+      const pushResult = await sendPushToUser(payload.userId, {
+        title: payload.title,
+        body: payload.body,
+        url: payload.data?.propertyId
+          ? `/monitoring/alerts/${payload.data.propertyId}`
+          : undefined,
+      });
+      if (pushResult.sent > 0) {
+        results.push({ channel: "web_push", success: true });
+      }
+    } catch (pushErr) {
+      console.error(
+        `[NOTIFICATION:PUSH:ERROR] userId=${payload.userId}`,
+        pushErr instanceof Error ? pushErr.message : pushErr
+      );
     }
   } catch (error) {
     console.error(

@@ -1,11 +1,11 @@
 {
   "name": "vestra",
-  "version": "4.8.0",
+  "version": "4.9.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "postinstall": "prisma generate",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
@@ -16,6 +16,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@prisma/client": "^6.19.2",
+    "@serwist/next": "^9.5.7",
     "@types/leaflet": "^1.9.21",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
@@ -32,8 +33,10 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.7.0",
+    "serwist": "^9.5.7",
     "tailwind-merge": "^3.5.0",
     "unpdf": "^1.4.0",
+    "web-push": "^3.6.7",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
@@ -42,6 +45,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",

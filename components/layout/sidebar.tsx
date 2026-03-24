@@ -38,6 +38,7 @@ import { version } from "../../package.json";
 import UserMenu from "@/components/auth/user-menu";
 import { VestraLogoMark } from "@/components/common/VestraLogo";
 import NotificationBell from "@/components/layout/NotificationBell";
+import PushSubscriber from "@/components/pwa/PushSubscriber";
 
 interface MenuItem {
   href: string;
@@ -338,6 +339,7 @@ export default function Sidebar() {
             )}
           </Link>
           <div className="flex items-center gap-1">
+            <PushSubscriber />
             <NotificationBell collapsed={collapsed && !mobileOpen} />
             <button
               onClick={() => setMobileOpen(false)}

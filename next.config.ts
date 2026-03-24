@@ -1,4 +1,10 @@
+import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
+
+const withSerwist = withSerwistInit({
+  swSrc: "app/sw.ts",
+  swDest: "public/sw.js",
+});
 
 const nextConfig: NextConfig = {
   async headers() {
@@ -26,7 +32,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://*.daumcdn.net https://*.kakao.com https://lh3.googleusercontent.com",
               "font-src 'self' data:",
-              "connect-src 'self' https://api.openai.com https://*.neon.tech https://dapi.kakao.com https://api.odcloud.kr https://apis.data.go.kr",
+              "connect-src 'self' https://api.openai.com https://*.neon.tech https://dapi.kakao.com https://api.odcloud.kr https://apis.data.go.kr https://fcm.googleapis.com https://*.push.services.mozilla.com https://*.notify.windows.com",
               "frame-src https://postcode.map.kakao.com",
               "object-src 'none'",
               "base-uri 'self'",
@@ -39,4 +45,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);

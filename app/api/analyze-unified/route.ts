@@ -146,8 +146,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 일일 사용량 체크
-    const daily = await checkDailyUsage(userId || `guest:${ip}`, dailyLimit);
+    // 일일 사용량 체크 — 등기부 기본 분석은 FREE 무제한
+    const daily = await checkDailyUsage(userId || `guest:${ip}`, dailyLimit, "analyze-rights");
     if (!daily.success) {
       return NextResponse.json(
         { error: "일일 사용 한도를 초과했습니다. 로그인하여 더 많이 분석하세요." },

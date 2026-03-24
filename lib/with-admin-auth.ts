@@ -17,7 +17,7 @@ type AuthenticatedHandler<P = Record<string, never>> = (
  * - 동적 라우트 params 전달 지원
  */
 export function withAdminAuth<P = Record<string, never>>(handler: AuthenticatedHandler<P>) {
-  return async (request: NextRequest, routeContext?: { params: Promise<P> }) => {
+  return async (request: NextRequest, routeContext: { params: Promise<P> }) => {
     const session = await auth();
     if (!session?.user || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });

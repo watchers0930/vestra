@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import SessionProvider from "@/components/auth/session-provider";
 import { ToastProvider } from "@/components/common/toast";
+import PwaInstallPrompt from "@/components/pwa/PwaInstallPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -77,6 +78,7 @@ export default function RootLayout({
               />
             )}
             {children}
+            <PwaInstallPrompt />
           </ToastProvider>
         </SessionProvider>
       </body>

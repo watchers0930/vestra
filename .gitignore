@@ -59,5 +59,10 @@ report.html
 # documents (비개발 문서)
 /documents/
 
+# PWA (serwist 빌드 산출물)
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js
+
 # other project files
 public/LMS_MVP_*.html

@@ -73,13 +73,39 @@ export async function rateLimit(
 }
 
 // ---------------------------------------------------------------------------
+// FREE 티어 무제한 분석 타입 (내집스캔 경쟁우위 전략)
+// ---------------------------------------------------------------------------
+
+/** 일일 제한 없이 무료로 제공되는 분석 타입 */
+export const FREE_UNLIMITED_TYPES = [
+  "jeonse-safety",      // 전세 안전도 분석
+  "rights-basic",       // 등기부 기본 분석
+  "guarantee-check",    // 보증보험 가입 확인
+  "analyze-rights",     // 권리분석 (등기부)
+  "fraud-risk",         // 전세사기 위험도
+] as const;
+
+/** 해당 분석 타입이 무제한 무료인지 확인 */
+export function isFreeUnlimitedType(analysisType: string): boolean {
+  return FREE_UNLIMITED_TYPES.includes(analysisType as typeof FREE_UNLIMITED_TYPES[number]);
+}
+
+// ---------------------------------------------------------------------------
 // 일일 사용량 체크 (역할 기반)
 // ---------------------------------------------------------------------------
 
 export async function checkDailyUsage(
   userId: string,
-  dailyLimit: number
+  dailyLimit: number,
+  analysisType?: string
 ): Promise<RateLimitResult> {
+  // FREE 무제한 타입은 일일 제한 바이패스
+  if (analysisType && isFreeUnlimitedType(analysisType)) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    return { success: true, remaining: 9999, reset: tomorrow.getTime() };
+  }
   // 명시적으로 RATE_LIMIT_BYPASS=true 설정 시에만 바이패스 (로컬 개발용)
   if (process.env.RATE_LIMIT_BYPASS === "true") {
     const tomorrow = new Date();
