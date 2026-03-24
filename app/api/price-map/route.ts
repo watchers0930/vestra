@@ -197,6 +197,82 @@ const SEED_DATA: Record<string, AptPrice[]> = {
     { name: "원문동 주공10단지", dong: "원문동", price: 218000, area: 33, lat: 37.4280, lng: 127.0010, change: 0.8, year: 1988 },
     { name: "과천지식정보타운", dong: "과천", price: 195000, area: 34, lat: 37.4170, lng: 127.0050, change: 2.8, year: 2024 },
   ],
+
+  // ── 부산광역시 ──
+  "해운대구": [
+    { name: "우동 마린시티", dong: "우동", price: 185000, area: 59, lat: 35.1620, lng: 129.1360, change: 1.2, year: 2009 },
+    { name: "우동 엘시티", dong: "우동", price: 320000, area: 72, lat: 35.1590, lng: 129.1410, change: 0.8, year: 2019 },
+    { name: "재송동 래미안", dong: "재송동", price: 72000, area: 34, lat: 35.1790, lng: 129.1260, change: 0.5, year: 2010 },
+  ],
+  "수영구": [
+    { name: "광안동 삼익비치", dong: "광안동", price: 78000, area: 33, lat: 35.1530, lng: 129.1180, change: 1.5, year: 1985 },
+    { name: "남천동 삼익비치", dong: "남천동", price: 95000, area: 34, lat: 35.1430, lng: 129.1120, change: 0.9, year: 1980 },
+  ],
+  "부산진구": [
+    { name: "부전동 래미안시티", dong: "부전동", price: 68000, area: 34, lat: 35.1610, lng: 129.0570, change: 0.7, year: 2007 },
+    { name: "전포동 더샵센트럴파크", dong: "전포동", price: 62000, area: 25, lat: 35.1550, lng: 129.0620, change: 0.4, year: 2014 },
+  ],
+  "동래구": [
+    { name: "온천동 래미안", dong: "온천동", price: 58000, area: 25, lat: 35.2060, lng: 129.0780, change: 0.6, year: 2005 },
+    { name: "사직동 쌍용", dong: "사직동", price: 52000, area: 33, lat: 35.1920, lng: 129.0600, change: 0.3, year: 2000 },
+  ],
+
+  // ── 대구광역시 ──
+  "수성구": [
+    { name: "범어동 두산위브", dong: "범어동", price: 95000, area: 42, lat: 35.8580, lng: 128.6250, change: 0.8, year: 2008 },
+    { name: "만촌동 래미안", dong: "만촌동", price: 72000, area: 34, lat: 35.8530, lng: 128.6380, change: 0.5, year: 2006 },
+    { name: "수성동 들안길", dong: "수성동", price: 58000, area: 25, lat: 35.8560, lng: 128.6180, change: 0.9, year: 2001 },
+  ],
+  "달서구": [
+    { name: "죽전동 e편한세상", dong: "죽전동", price: 48000, area: 34, lat: 35.8380, lng: 128.5590, change: 0.6, year: 2010 },
+    { name: "월성동 래미안", dong: "월성동", price: 42000, area: 25, lat: 35.8280, lng: 128.5450, change: 0.4, year: 2005 },
+  ],
+
+  // ── 인천광역시 ──
+  "연수구": [
+    { name: "송도동 더샵퍼스트월드", dong: "송도동", price: 98000, area: 34, lat: 37.3810, lng: 126.6610, change: 1.5, year: 2010 },
+    { name: "송도동 랜드마크시티", dong: "송도동", price: 115000, area: 44, lat: 37.3780, lng: 126.6550, change: 1.2, year: 2020 },
+    { name: "동춘동 래미안", dong: "동춘동", price: 62000, area: 25, lat: 37.3930, lng: 126.6830, change: 0.4, year: 2006 },
+  ],
+  "부평구": [
+    { name: "부평동 래미안", dong: "부평동", price: 45000, area: 25, lat: 37.4970, lng: 126.7230, change: 0.6, year: 2008 },
+    { name: "삼산동 래미안", dong: "삼산동", price: 52000, area: 33, lat: 37.5070, lng: 126.7370, change: 0.8, year: 2003 },
+  ],
+  "남동구": [
+    { name: "구월동 래미안", dong: "구월동", price: 55000, area: 34, lat: 37.4490, lng: 126.7300, change: 0.5, year: 2005 },
+    { name: "간석동 래미안", dong: "간석동", price: 42000, area: 25, lat: 37.4610, lng: 126.7200, change: 0.3, year: 2004 },
+  ],
+
+  // ── 대전광역시 ──
+  "유성구": [
+    { name: "봉명동 래미안", dong: "봉명동", price: 52000, area: 34, lat: 36.3620, lng: 127.3460, change: 0.8, year: 2008 },
+    { name: "도안동 트리풀시티", dong: "도안동", price: 68000, area: 34, lat: 36.3380, lng: 127.3200, change: 1.5, year: 2018 },
+    { name: "노은동 한빛", dong: "노은동", price: 42000, area: 25, lat: 36.3700, lng: 127.3280, change: 0.4, year: 2003 },
+  ],
+  "서구(대전)": [
+    { name: "둔산동 크로바", dong: "둔산동", price: 58000, area: 34, lat: 36.3530, lng: 127.3780, change: 0.6, year: 1995 },
+    { name: "관저동 래미안", dong: "관저동", price: 38000, area: 25, lat: 36.3220, lng: 127.3370, change: 0.9, year: 2010 },
+  ],
+
+  // ── 광주광역시 ──
+  "광산구": [
+    { name: "수완동 호반써밋", dong: "수완동", price: 48000, area: 34, lat: 35.1900, lng: 126.8210, change: 0.7, year: 2012 },
+    { name: "첨단동 현대", dong: "첨단동", price: 42000, area: 25, lat: 35.2150, lng: 126.8430, change: 0.5, year: 2005 },
+  ],
+  "남구(광주)": [
+    { name: "봉선동 부영", dong: "봉선동", price: 38000, area: 34, lat: 35.1310, lng: 126.9080, change: 0.4, year: 2001 },
+    { name: "진월동 래미안", dong: "진월동", price: 35000, area: 25, lat: 35.1200, lng: 126.9150, change: 0.6, year: 2008 },
+  ],
+
+  // ── 울산광역시 ──
+  "남구(울산)": [
+    { name: "신정동 문수로2차", dong: "신정동", price: 52000, area: 34, lat: 35.5380, lng: 129.3290, change: 0.5, year: 2005 },
+    { name: "달동 삼환나우빌", dong: "달동", price: 45000, area: 25, lat: 35.5420, lng: 129.3380, change: 0.3, year: 2008 },
+  ],
+  "울주군": [
+    { name: "범서읍 현대", dong: "범서읍", price: 38000, area: 33, lat: 35.5820, lng: 129.2580, change: 0.7, year: 2010 },
+    { name: "삼남면 KTX울산역", dong: "삼남면", price: 35000, area: 25, lat: 35.5520, lng: 129.1680, change: 1.2, year: 2015 },
+  ],
 };
 
 // 구/시 → 지역 그룹
@@ -210,6 +286,12 @@ const REGION_GROUPS: Record<string, string[]> = {
   "서울 기타": ["성북구", "동대문구", "중랑구", "은평구", "서대문구", "관악구"],
   "경기 남부": ["분당구", "수원영통구", "용인수지구", "화성동탄", "과천시"],
   "경기 북부·동부": ["고양일산동구", "하남시"],
+  "부산": ["해운대구", "수영구", "부산진구", "동래구"],
+  "대구": ["수성구", "달서구"],
+  "인천": ["연수구", "부평구", "남동구"],
+  "대전": ["유성구", "서구(대전)"],
+  "광주": ["광산구", "남구(광주)"],
+  "울산": ["남구(울산)", "울주군"],
 };
 
 export async function GET(req: NextRequest) {
