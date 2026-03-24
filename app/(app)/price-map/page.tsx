@@ -37,11 +37,17 @@ function escapeHtml(str: string | number): string {
   );
 }
 
-const SEOUL_GUS = [
-  "강남구", "서초구", "송파구", "강동구", "마포구", "용산구",
-  "성동구", "광진구", "영등포구", "양천구", "강서구", "노원구",
-  "도봉구", "강북구", "성북구", "동대문구", "종로구", "은평구",
-];
+const REGION_GROUPS: Record<string, string[]> = {
+  "서울 강남권": ["강남구", "서초구", "송파구", "강동구"],
+  "서울 마용성": ["마포구", "용산구", "성동구"],
+  "서울 여의도·영등포": ["영등포구", "동작구", "양천구"],
+  "서울 강서·구로": ["강서구", "구로구", "금천구"],
+  "서울 종로·중구": ["종로구", "중구", "광진구"],
+  "서울 노도강": ["노원구", "도봉구", "강북구"],
+  "서울 기타": ["성북구", "동대문구", "중랑구", "은평구", "서대문구", "관악구"],
+  "경기 남부": ["분당구", "수원영통구", "용인수지구", "화성동탄", "과천시"],
+  "경기 북부·동부": ["고양일산동구", "하남시"],
+};
 
 export default function PriceMapPage() {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -99,7 +105,7 @@ export default function PriceMapPage() {
         data.apartments.forEach((apt) => {
           const priceText = formatPrice(apt.price);
           const changeSign = apt.change >= 0 ? "+" : "";
-          const changeColor = apt.change >= 0 ? "#ef4444" : "#3b82f6";
+          const changeColor = "#ffffff";
           const bgColor = apt.price >= 500000 ? '#ef4444' : apt.price >= 300000 ? '#f97316' : '#3b82f6';
 
           const content = document.createElement("div");
@@ -152,15 +158,20 @@ export default function PriceMapPage() {
                 <ChevronDown className="h-4 w-4 text-gray-400" />
               </button>
               {showGuDropdown && (
-                <div className="absolute z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-                  {SEOUL_GUS.map((gu) => (
-                    <button
-                      key={gu}
-                      onClick={() => { setSelectedGu(gu); setShowGuDropdown(false); }}
-                      className={`block w-full px-3 py-2 text-left text-sm hover:bg-indigo-50 ${gu === selectedGu ? "bg-indigo-50 font-semibold text-indigo-600" : ""}`}
-                    >
-                      {gu}
-                    </button>
+                <div className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+                  {Object.entries(REGION_GROUPS).map(([group, gus]) => (
+                    <div key={group}>
+                      <p className="sticky top-0 bg-gray-50 px-3 py-1 text-[10px] font-bold text-gray-400 uppercase">{group}</p>
+                      {gus.map((gu) => (
+                        <button
+                          key={gu}
+                          onClick={() => { setSelectedGu(gu); setShowGuDropdown(false); }}
+                          className={`block w-full px-3 py-1.5 text-left text-sm hover:bg-indigo-50 ${gu === selectedGu ? "bg-indigo-50 font-semibold text-indigo-600" : ""}`}
+                        >
+                          {gu}
+                        </button>
+                      ))}
+                    </div>
                   ))}
                 </div>
               )}
