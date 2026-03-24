@@ -59,14 +59,16 @@ function spreadCoord(center: { lat: number; lng: number }, index: number, total:
   };
 }
 
-// 동일 아파트 거래 내역에서 변동률 계산 (최근 거래 vs 이전 평균)
-function calcChange(prices: number[]): number {
-  if (prices.length < 2) return 0;
-  const latest = prices[0];
-  const older = prices.slice(1);
-  const avgOlder = older.reduce((s, p) => s + p, 0) / older.length;
+// 동일 면적대 거래끼리 변동률 계산 (면적 ±5㎡ 범위)
+function calcChangeByArea(txs: { amount: number; area: number }[]): number {
+  if (txs.length < 2) return 0;
+  const latest = txs[0];
+  // 최근 거래와 동일 면적대(±5㎡) 이전 거래만 필터
+  const sameArea = txs.slice(1).filter(t => Math.abs(t.area - latest.area) <= 5);
+  if (sameArea.length === 0) return 0;
+  const avgOlder = sameArea.reduce((s, t) => s + t.amount, 0) / sameArea.length;
   if (avgOlder <= 0) return 0;
-  return +((latest - avgOlder) / avgOlder * 100).toFixed(1);
+  return +((latest.amount - avgOlder) / avgOlder * 100).toFixed(1);
 }
 
 interface AptPrice {
@@ -446,8 +448,7 @@ export async function GET(req: NextRequest) {
             const deposit = latest.deposit || 0;
             if (deposit <= 0) return null;
             const priceInMan = Math.round(deposit / 10000);
-            // 변동률: 최근 거래 vs 이전 거래 비교
-            const change = calcChange(txs.map(t => t.deposit || 0));
+            const change = calcChangeByArea(txs.map(t => ({ amount: t.deposit || 0, area: t.area || 0 })));
             const geo = await geocodeApt(aptName, gu, latest.dong || "");
             const center = GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
             const fallback = spreadCoord(center, idx, totalEntries);
@@ -486,8 +487,7 @@ export async function GET(req: NextRequest) {
             const price = latest.dealAmount || 0;
             if (price <= 0) return null;
             const priceInMan = Math.round(price / 10000);
-            // 변동률: 최근 거래 vs 이전 거래 비교
-            const change = calcChange(txs.map(t => t.dealAmount || 0));
+            const change = calcChangeByArea(txs.map(t => ({ amount: t.dealAmount || 0, area: t.area || 0 })));
             const geo = await geocodeApt(aptName, gu, latest.dong || "");
             const center = GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
             const fallback = spreadCoord(center, idx, totalEntries);
