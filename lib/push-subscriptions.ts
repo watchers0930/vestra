@@ -31,16 +31,21 @@ export async function addSubscription(
   userId: string,
   sub: { endpoint: string; keys: { p256dh: string; auth: string } },
 ) {
-  await prisma.pushSubscription.upsert({
-    where: { endpoint: sub.endpoint },
-    update: { userId, p256dh: sub.keys.p256dh, auth: sub.keys.auth },
-    create: {
-      userId,
-      endpoint: sub.endpoint,
-      p256dh: sub.keys.p256dh,
-      auth: sub.keys.auth,
-    },
-  });
+  try {
+    await prisma.pushSubscription.upsert({
+      where: { endpoint: sub.endpoint },
+      update: { userId, p256dh: sub.keys.p256dh, auth: sub.keys.auth },
+      create: {
+        userId,
+        endpoint: sub.endpoint,
+        p256dh: sub.keys.p256dh,
+        auth: sub.keys.auth,
+      },
+    });
+  } catch (err) {
+    console.error("[PUSH:SUBSCRIBE] DB 저장 실패:", err instanceof Error ? err.message : err);
+    throw err;
+  }
 }
 
 /** Push 구독 삭제 */

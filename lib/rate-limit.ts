@@ -83,6 +83,7 @@ export const FREE_UNLIMITED_TYPES = [
   "guarantee-check",    // 보증보험 가입 확인
   "analyze-rights",     // 권리분석 (등기부)
   "fraud-risk",         // 전세사기 위험도
+  "loan-simulate",      // 대출 가심사
 ] as const;
 
 /** 해당 분석 타입이 무제한 무료인지 확인 */

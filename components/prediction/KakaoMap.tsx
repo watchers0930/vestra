@@ -52,6 +52,9 @@ declare global {
           relayout: () => void;
         };
         Marker: new (options: { map: unknown; position: unknown }) => unknown;
+        CustomOverlay: new (options: { position: unknown; content: HTMLElement | string; yAnchor?: number; map?: unknown }) => {
+          setMap: (map: unknown | null) => void;
+        };
         services: {
           Geocoder: new () => {
             addressSearch: (

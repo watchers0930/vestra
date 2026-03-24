@@ -29,6 +29,8 @@ import {
   ShieldAlert,
   Key,
   Newspaper,
+  MapPin,
+  Banknote,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -62,6 +64,8 @@ const userMenuItems: MenuItem[] = [
   { href: "/contract", icon: FileSearch, label: "계약검토", description: "매매·임대차 계약서를 AI가 검토하고 위험 조항을 알려드립니다" },
   { href: "/tax", icon: Calculator, label: "세무 시뮬레이션", description: "취득세·양도세·종부세 등 부동산 세금을 시나리오별로 계산합니다" },
   { href: "/prediction", icon: TrendingUp, label: "시세전망", description: "실거래가 데이터 기반으로 시세 추이와 향후 전망을 분석합니다" },
+  { href: "/price-map", icon: MapPin, label: "시세지도", description: "지도 위에서 아파트별 실거래가와 시세 변동을 한눈에 확인합니다" },
+  { href: "/loan-check", icon: Banknote, label: "대출 가심사", description: "5대 시중은행 전세대출 조건을 한번에 비교하고 가능 여부를 확인합니다" },
   {
     href: "/jeonse", icon: Home, label: "전세보호", description: "전세 안전 진단부터 전입신고·확정일자까지 보호 절차를 안내합니다",
     children: [

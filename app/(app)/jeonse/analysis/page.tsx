@@ -18,6 +18,7 @@ import type { FraudRiskResult } from "@/lib/patent-types";
 import { checkGuaranteeInsurance } from "@/lib/guarantee-insurance";
 import type { GuaranteeInsuranceResult } from "@/lib/guarantee-insurance";
 import { useToast } from "@/components/common/toast";
+import LandlordTracker from "@/components/landlord/LandlordTracker";
 
 interface JeonseAnalysis {
   needsRegistration: "required" | "recommended" | "optional";
@@ -397,6 +398,14 @@ export default function JeonsePage() {
               {/* 보증보험 가입 가능성 */}
               {guaranteeResult && (
                 <GuaranteeInsuranceCard result={guaranteeResult} />
+              )}
+
+              {/* 임대인 종합 프로파일 */}
+              {analysis && (
+                <LandlordTracker
+                  ownerName={formData.landlordName}
+                  baseAddress={formData.propertyAddress}
+                />
               )}
 
               {/* Document Generation */}
