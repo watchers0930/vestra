@@ -61,6 +61,23 @@ export default function PriceMapPage() {
   const [selectedSido, setSelectedSido] = useState("서울");
   const [tradeType, setTradeType] = useState<"매매" | "전세">("매매");
 
+  // (app) 레이아웃의 main max-w/padding 제거 (마운트 시)
+  useEffect(() => {
+    const main = document.getElementById("app-main");
+    if (main) {
+      main.style.maxWidth = "none";
+      main.style.padding = "0";
+      main.style.paddingTop = "0";
+    }
+    return () => {
+      if (main) {
+        main.style.maxWidth = "";
+        main.style.padding = "";
+        main.style.paddingTop = "";
+      }
+    };
+  }, []);
+
   const fetchData = useCallback(async (gu: string) => {
     setLoading(true);
     try {
