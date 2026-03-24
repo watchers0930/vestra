@@ -110,31 +110,21 @@ export default function PriceMapPage() {
 
     let mapRendered = false;
 
-    const waitForKakao = (retries = 60) => {
+    const tryRender = () => {
       if (cancelled || !mapRef.current || mapRendered) return;
-
-      // API 준비 완료
-      if (typeof window.kakao?.maps?.LatLng === "function") {
-        mapRendered = true;
-        renderMap();
-        return;
-      }
-
-      // load() 호출 시도 (매번 — 콜백이 누적되지 않음)
-      if (typeof window.kakao?.maps?.load === "function") {
-        window.kakao.maps.load(() => {
-          if (!cancelled && mapRef.current && !mapRendered && typeof window.kakao?.maps?.LatLng === "function") {
-            mapRendered = true;
-            renderMap();
-          }
-        });
-      }
-
-      // 폴링 계속
-      if (retries > 0) {
-        setTimeout(() => waitForKakao(retries - 1), 300);
-      }
+      if (typeof window.kakao?.maps?.LatLng !== "function") return;
+      mapRendered = true;
+      renderMap();
     };
+
+    // 이미 준비됐으면 바로 렌더
+    if ((window as unknown as Record<string, unknown>).__kakaoMapsReady) {
+      tryRender();
+    }
+
+    // 이벤트 리스너로 SDK 로드 완료 감지
+    const onReady = () => tryRender();
+    window.addEventListener("kakao-maps-ready", onReady);
 
     const renderMap = () => {
       const center = new window.kakao.maps.LatLng(data.center.lat, data.center.lng);
@@ -179,8 +169,10 @@ export default function PriceMapPage() {
       });
     };
 
-    waitForKakao();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      window.removeEventListener("kakao-maps-ready", onReady);
+    };
   }, [data, layoutReady]);
 
   const topChanges = data?.apartments
@@ -188,7 +180,7 @@ export default function PriceMapPage() {
     : [];
 
   return (
-    <div className="full-width" style={{ height: "100vh", width: "calc(100vw - 240px)" }}>
+    <div className="full-width" style={{ height: "calc(100vh - 4px)", width: "calc(100vw - 240px)", paddingTop: "2px" }}>
       <div className="flex h-full flex-row">
         {/* 좌측 패널 (사이드바와 지도 사이) */}
         <div className="h-full w-[270px] shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-3 pl-1 pt-1">
