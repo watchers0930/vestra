@@ -7,16 +7,19 @@
 import webpush from "web-push";
 import { prisma } from "./prisma";
 
-// VAPID 키 설정
-const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_KEY || "";
-const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || "";
+// VAPID 키 설정 (lazy init — 빌드 시점에는 실행하지 않음)
+let vapidConfigured = false;
 
-if (VAPID_PUBLIC && VAPID_PRIVATE) {
-  webpush.setVapidDetails(
-    "mailto:support@vestra-plum.vercel.app",
-    VAPID_PUBLIC,
-    VAPID_PRIVATE,
-  );
+function ensureVapidConfigured() {
+  if (vapidConfigured) return true;
+  const pub = process.env.NEXT_PUBLIC_VAPID_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  if (pub && priv) {
+    webpush.setVapidDetails("mailto:support@vestra-plum.vercel.app", pub, priv);
+    vapidConfigured = true;
+    return true;
+  }
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -62,6 +65,11 @@ interface PushPayload {
 
 /** 특정 사용자에게 Push 알림 발송 */
 export async function sendPushToUser(userId: string, payload: PushPayload) {
+  if (!ensureVapidConfigured()) {
+    console.warn("[PUSH] VAPID 키 미설정 — Push 발송 스킵");
+    return { sent: 0, failed: 0 };
+  }
+
   const subs = await getUserSubscriptions(userId);
   if (subs.length === 0) return { sent: 0, failed: 0 };
 
