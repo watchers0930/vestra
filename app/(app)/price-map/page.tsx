@@ -110,22 +110,6 @@ export default function PriceMapPage() {
 
     let mapRendered = false;
 
-    const tryRender = () => {
-      if (cancelled || !mapRef.current || mapRendered) return;
-      if (typeof window.kakao?.maps?.LatLng !== "function") return;
-      mapRendered = true;
-      renderMap();
-    };
-
-    // 이미 준비됐으면 바로 렌더
-    if (window.__kakaoMapsReady) {
-      tryRender();
-    }
-
-    // 이벤트 리스너로 SDK 로드 완료 감지
-    const onReady = () => tryRender();
-    window.addEventListener("kakao-maps-ready", onReady);
-
     const renderMap = () => {
       const center = new window.kakao.maps.LatLng(data.center.lat, data.center.lng);
 
@@ -168,6 +152,22 @@ export default function PriceMapPage() {
         overlaysRef.current.push(overlay);
       });
     };
+
+    const tryRender = () => {
+      if (cancelled || !mapRef.current || mapRendered) return;
+      if (typeof window.kakao?.maps?.LatLng !== "function") return;
+      mapRendered = true;
+      renderMap();
+    };
+
+    // 이미 준비됐으면 바로 렌더
+    if (window.__kakaoMapsReady) {
+      tryRender();
+    }
+
+    // 이벤트 리스너로 SDK 로드 완료 감지
+    const onReady = () => tryRender();
+    window.addEventListener("kakao-maps-ready", onReady);
 
     return () => {
       cancelled = true;
