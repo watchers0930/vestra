@@ -17,18 +17,25 @@ async function geocodeApt(aptName: string, gu: string, dong: string): Promise<{ 
   const restKey = process.env.KAKAO_REST_KEY;
   if (!restKey) return null;
 
-  // 아파트명 정제: 괄호/동호수 제거 (예: "현대2차(10,11동)" → "현대2차")
-  const cleanName = aptName.replace(/\(.*?\)/g, "").replace(/\d+동.*$/, "").trim();
+  // 아파트명 정제 (여러 변형 생성)
+  const base = aptName.replace(/\(.*?\)/g, "").replace(/\d+동.*$/, "").replace(/,.*$/, "").trim();
+  // "3차이-편한세상" → "이편한세상3차" / "현대그린1" → "현대그린"
+  const noSuffix = base.replace(/\d+차$/, "").replace(/\d+$/, "").trim();
+  // "이-편한세상" → "이편한세상", 하이픈 제거
+  const noHyphen = base.replace(/-/g, "").trim();
 
   // 여러 쿼리 시도: 구체적 → 일반적 순서
   const queries = [
-    `${cleanName} 아파트 ${dong}`,
-    `${dong} ${cleanName}`,
-    `${gu} ${cleanName}`,
-    `${gu} ${dong} ${aptName}`,
+    `${base} 아파트 ${dong}`,
+    `${noHyphen} ${dong}`,
+    `${noSuffix} 아파트 ${dong}`,
+    `${dong} ${noSuffix}`,
+    `${gu} ${noSuffix}`,
   ];
+  // 중복 제거
+  const uniqueQueries = [...new Set(queries)];
 
-  for (const query of queries) {
+  for (const query of uniqueQueries) {
     try {
       const res = await fetch(
         `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=1`,
