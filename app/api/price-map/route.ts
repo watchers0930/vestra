@@ -17,11 +17,15 @@ async function geocodeApt(aptName: string, gu: string, dong: string): Promise<{ 
   const restKey = process.env.KAKAO_REST_KEY;
   if (!restKey) return null;
 
+  // 아파트명 정제: 괄호/동호수 제거 (예: "현대2차(10,11동)" → "현대2차")
+  const cleanName = aptName.replace(/\(.*?\)/g, "").replace(/\d+동.*$/, "").trim();
+
   // 여러 쿼리 시도: 구체적 → 일반적 순서
   const queries = [
-    `${aptName} 아파트 ${dong}`,
+    `${cleanName} 아파트 ${dong}`,
+    `${dong} ${cleanName}`,
+    `${gu} ${cleanName}`,
     `${gu} ${dong} ${aptName}`,
-    `${aptName} ${gu}`,
   ];
 
   for (const query of queries) {
