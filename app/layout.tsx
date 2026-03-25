@@ -15,6 +15,8 @@ import { ToastProvider } from "@/components/common/toast";
 
 import KakaoScript from "@/components/common/KakaoScript";
 import JsonLd from "@/components/common/JsonLd";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -122,6 +124,8 @@ export default function RootLayout({
             {children}
           </ToastProvider>
         </SessionProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
