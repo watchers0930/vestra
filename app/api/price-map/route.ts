@@ -22,18 +22,28 @@ const DONG_CENTER: Record<string, { lat: number; lng: number }> = {
 // 카카오 REST API로 아파트 실제 좌표 검색
 const GEOCODE_TTL = 7 * 24 * 60 * 60 * 1000; // 7일
 
-// 구 중심 좌표 기준 반경 내 검색 (다른 지역 결과 방지)
+// 구 중심 좌표 기준 반경 내 검색 — 아파트 카테고리 우선
 async function kakaoSearch(kakaoKey: string, query: string, center?: { lat: number; lng: number }): Promise<{ lat: number; lng: number } | null> {
   try {
-    let url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=1`;
+    let url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=15`;
     if (center) {
       url += `&x=${center.lng}&y=${center.lat}&radius=5000&sort=distance`;
     }
     const res = await fetch(url, { headers: { Authorization: `KakaoAK ${kakaoKey}` } });
     if (!res.ok) return null;
     const json = await res.json();
-    const doc = json.documents?.[0];
-    if (doc) return { lat: parseFloat(doc.y), lng: parseFloat(doc.x) };
+    const docs = json.documents || [];
+
+    // 1순위: 카테고리에 "아파트" 포함된 결과
+    const aptDoc = docs.find((d: any) => d.category_name?.includes("아파트"));
+    if (aptDoc) return { lat: parseFloat(aptDoc.y), lng: parseFloat(aptDoc.x) };
+
+    // 2순위: 카테고리에 "주거" 포함된 결과
+    const residDoc = docs.find((d: any) => d.category_name?.includes("주거"));
+    if (residDoc) return { lat: parseFloat(residDoc.y), lng: parseFloat(residDoc.x) };
+
+    // 3순위: 첫 번째 결과 (폴백)
+    if (docs[0]) return { lat: parseFloat(docs[0].y), lng: parseFloat(docs[0].x) };
   } catch { /* ignore */ }
   return null;
 }
