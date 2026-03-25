@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { fetchRecentPrices, fetchRecentRentPrices, LAWD_CODE_MAP } from "@/lib/molit-api";
+import { fetchREBMarketData } from "@/lib/reb-api";
 import { apiCache, APICache } from "@/lib/api-cache";
 import { kvCache } from "@/lib/kv-cache";
 import { AptPrice, SEED_DATA, DONG_CENTER, GU_CENTER, GU_ADDRESS_MAP, REGION_GROUPS } from "@/lib/price-map-data";
@@ -18,10 +19,42 @@ function isResidentialCategory(cat: string): boolean {
   return /아파트|주거|빌딩|주택|오피스텔/.test(cat || "");
 }
 
-// 구 중심 좌표 기준 반경 내 검색 — 주거 카테고리 우선
-async function kakaoSearch(kakaoKey: string, query: string, center?: { lat: number; lng: number }): Promise<{ lat: number; lng: number } | null> {
+// 두 좌표 간 거리 계산 (km) — Haversine 공식
+function haversineDistance(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const sinLat = Math.sin(dLat / 2);
+  const sinLng = Math.sin(dLng / 2);
+  const h = sinLat * sinLat + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * sinLng * sinLng;
+  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+// 카카오 주소 검색 API — 도로명/지번 주소를 정확한 좌표로 변환
+async function kakaoAddressSearch(kakaoKey: string, query: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const url = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(query)}&size=5`;
+    const res = await fetch(url, { headers: { Authorization: `KakaoAK ${kakaoKey}` } });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const docs = json.documents || [];
+    if (docs[0]) return { lat: parseFloat(docs[0].y), lng: parseFloat(docs[0].x) };
+  } catch { /* ignore */ }
+  return null;
+}
+
+// 카카오 키워드 검색 — 아파트 카테고리(AP4) 필터 지원
+async function kakaoKeywordSearch(
+  kakaoKey: string,
+  query: string,
+  center?: { lat: number; lng: number },
+  categoryGroupCode?: string
+): Promise<{ lat: number; lng: number } | null> {
   try {
     let url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=15`;
+    if (categoryGroupCode) {
+      url += `&category_group_code=${categoryGroupCode}`;
+    }
     if (center) {
       url += `&x=${center.lng}&y=${center.lat}&radius=5000&sort=distance`;
     }
@@ -44,6 +77,12 @@ async function kakaoSearch(kakaoKey: string, query: string, center?: { lat: numb
   return null;
 }
 
+// 거리 검증: center에서 maxKm 이내인지 확인
+function validateDistance(coord: { lat: number; lng: number }, center: { lat: number; lng: number } | undefined, maxKm: number): boolean {
+  if (!center) return false; // center 없으면 검증 불가 → 거부 (안전 우선)
+  return haversineDistance(coord, center) <= maxKm;
+}
+
 async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ lat: number; lng: number } | null> {
   const cacheKey = APICache.makeKey("geocode", gu, dong, aptName);
   const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
@@ -52,35 +91,73 @@ async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ 
   const kakaoKey = process.env.KAKAO_REST_KEY;
   if (!kakaoKey) return null;
 
-  const center = DONG_CENTER[dong] || GU_CENTER[gu];
+  const guCenter = GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 }; // 강남 기본값
+  const center = DONG_CENTER[dong] || guCenter;
+  const MAX_DISTANCE_KM = 5; // 구 중심에서 5km 이상이면 부정확한 결과로 판단
 
   // 아파트명 정제: 괄호/숫자 제거 (예: "신동아(22)" → "신동아")
   const cleanName = aptName.replace(/\(.*?\)/g, "").replace(/\d+$/g, "").trim();
 
-  // 검색 전략 (5단계 — 정확도순)
-  const queries = [
-    `${gu} ${dong} ${cleanName}아파트`,       // 1) 구+동+이름아파트
-    `${gu} ${dong} ${cleanName}`,              // 2) 구+동+이름 (아파트 없이)
-    `${dong} ${cleanName}아파트`,              // 3) 동+이름아파트
-    `${cleanName}`,                             // 4) 이름만 (한강자이에클라트 같은 경우)
-    `${gu} ${cleanName}`,                       // 5) 구+이름
+  // ── 1단계: 카카오 주소 검색 (가장 정확) ──
+  // 동+아파트명 조합으로 주소 검색 API 사용
+  const addressQueries = [
+    `${gu} ${dong} ${cleanName}`,
+    `${dong} ${cleanName}`,
   ];
-
-  for (const q of queries) {
-    const coord = await kakaoSearch(kakaoKey, q, center);
-    if (coord) {
+  for (const q of addressQueries) {
+    const coord = await kakaoAddressSearch(kakaoKey, q);
+    if (coord && validateDistance(coord, center, MAX_DISTANCE_KM)) {
       await kvCache.set(cacheKey, coord, GEOCODE_TTL);
       return coord;
     }
   }
+
+  // ── 2단계: 카카오 키워드 검색 + 아파트 카테고리 필터 (AP4) ──
+  const categoryQueries = [
+    `${gu} ${dong} ${cleanName}아파트`,
+    `${dong} ${cleanName}아파트`,
+    `${cleanName}아파트`,
+  ];
+  for (const q of categoryQueries) {
+    const coord = await kakaoKeywordSearch(kakaoKey, q, center, "AP4");
+    if (coord && validateDistance(coord, center, MAX_DISTANCE_KM)) {
+      await kvCache.set(cacheKey, coord, GEOCODE_TTL);
+      return coord;
+    }
+  }
+
+  // ── 3단계: 카카오 키워드 검색 (카테고리 필터 없음, 폴백) ──
+  const fallbackQueries = [
+    `${gu} ${dong} ${cleanName}아파트`,
+    `${gu} ${dong} ${cleanName}`,
+    `${dong} ${cleanName}아파트`,
+    `${cleanName}`,
+    `${gu} ${cleanName}`,
+  ];
+  for (const q of fallbackQueries) {
+    const coord = await kakaoKeywordSearch(kakaoKey, q, center);
+    if (coord && validateDistance(coord, center, MAX_DISTANCE_KM)) {
+      await kvCache.set(cacheKey, coord, GEOCODE_TTL);
+      return coord;
+    }
+  }
+
   return null;
 }
 
-// 여러 아파트 좌표를 병렬로 조회 (배치 단위로 rate limit 관리)
+// 여러 아파트 좌표를 병렬로 조회 (배치 단위 + 전체 타임아웃)
 async function geocodeAll(apartments: { gu: string; dong: string; name: string }[]): Promise<Map<string, { lat: number; lng: number }>> {
   const results = new Map<string, { lat: number; lng: number }>();
   const BATCH_SIZE = 10;
+  const TOTAL_TIMEOUT = 8000; // 전체 geocoding 8초 제한 (Vercel 10초 함수 제한 고려)
+  const startTime = Date.now();
+
   for (let i = 0; i < apartments.length; i += BATCH_SIZE) {
+    // 타임아웃 체크
+    if (Date.now() - startTime > TOTAL_TIMEOUT) {
+      console.log(`[geocode] Timeout after ${results.size}/${apartments.length} apartments`);
+      break;
+    }
     const batch = apartments.slice(i, i + BATCH_SIZE);
     const promises = batch.map(async (apt) => {
       const coord = await geocodeApt(apt.gu, apt.dong, apt.name);
@@ -101,16 +178,29 @@ function spreadCoord(center: { lat: number; lng: number }, index: number, total:
   };
 }
 
-// 동일 면적대 거래끼리 변동률 계산 (면적 ±5㎡ 범위)
+// 단지 평균가 변동률 — 최근 6개월 평균 vs 이전 6개월 평균 (㎡당 단가 기준)
 function calcChangeByArea(txs: { amount: number; area: number }[]): number {
-  if (txs.length < 2) return 0;
-  const latest = txs[0];
-  // 최근 거래와 동일 면적대(±5㎡) 이전 거래만 필터
-  const sameArea = txs.slice(1).filter(t => Math.abs(t.area - latest.area) <= 5);
-  if (sameArea.length === 0) return 0;
-  const avgOlder = sameArea.reduce((s, t) => s + t.amount, 0) / sameArea.length;
-  if (avgOlder <= 0) return 0;
-  return +((latest.amount - avgOlder) / avgOlder * 100).toFixed(1);
+  // 면적 0인 거래 제외, ㎡당 단가로 정규화 (평형 차이 제거)
+  const valid = txs.filter(t => t.area > 0 && t.amount > 0);
+  if (valid.length < 4) return 0;
+
+  // txs는 최신순 정렬 — 절반으로 분할 (최근 vs 이전)
+  const mid = Math.floor(valid.length / 2);
+  const recent = valid.slice(0, mid);
+  const older = valid.slice(mid);
+
+  // ㎡당 단가의 중앙값 비교 (면적 차이 + 이상치 노이즈 동시 제거)
+  const median = (arr: number[]) => {
+    const s = [...arr].sort((a, b) => a - b);
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  };
+
+  const recentMedian = median(recent.map(t => t.amount / t.area));
+  const olderMedian = median(older.map(t => t.amount / t.area));
+
+  if (olderMedian <= 0) return 0;
+  return +((recentMedian - olderMedian) / olderMedian * 100).toFixed(1);
 }
 
 export async function GET(req: NextRequest) {
@@ -141,12 +231,19 @@ export async function GET(req: NextRequest) {
   const guToAddress = GU_ADDRESS_MAP[gu];
   const lawdCode = guToAddress ? LAWD_CODE_MAP[guToAddress] : undefined;
 
+  // 부동산원 지역 변동률 (거래 부족 단지용 fallback)
+  let rebChangeRate = 0;
+  try {
+    const rebData = await fetchREBMarketData();
+    rebChangeRate = tradeType === "전세" ? rebData.jeonseChangeRate : rebData.saleChangeRate;
+  } catch { /* fallback 0 */ }
+
   if (lawdCode && process.env.MOLIT_API_KEY) {
     try {
       // 전세/매매 공통 처리
       const txResult = tradeType === "전세"
-        ? await fetchRecentRentPrices(guToAddress, 3)
-        : await fetchRecentPrices(guToAddress, 3);
+        ? await fetchRecentRentPrices(guToAddress, 12)
+        : await fetchRecentPrices(guToAddress, 12);
 
       if (txResult && txResult.transactions.length > 0) {
         // 아파트명별 그룹핑
@@ -161,11 +258,29 @@ export async function GET(req: NextRequest) {
         const seedMap = new Map(seedApts.map(s => [s.name, s]));
         const entries = [...grouped.entries()];
 
-        // 좌표가 없는 아파트들을 카카오 REST API로 일괄 geocoding
-        const needsGeocode = entries
-          .filter(([aptName]) => !seedMap.has(aptName))
-          .map(([aptName, txs]) => ({ gu, dong: txs[0].dong || "", name: aptName }));
-        const geocoded = await geocodeAll(needsGeocode);
+        // 좌표 조회: KV캐시 → 시드 데이터 → 카카오 geocode API
+        const geocoded = new Map<string, { lat: number; lng: number }>();
+
+        // 1단계: 시드 데이터에 없는 아파트만 KV 캐시 확인
+        const needsGeocode: { gu: string; dong: string; name: string }[] = [];
+        await Promise.allSettled(entries.map(async ([aptName, txs]) => {
+          if (seedMap.has(aptName)) return; // 시드 데이터 있으면 스킵 (좌표 사용)
+          const cacheKey = APICache.makeKey("geocode", gu, txs[0].dong || "", aptName);
+          const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
+          if (cached) {
+            geocoded.set(aptName, cached);
+          } else {
+            needsGeocode.push({ gu, dong: txs[0].dong || "", name: aptName });
+          }
+        }));
+
+        // 2단계: 캐시 미스 아파트 → 카카오 geocode API 호출 (배치 + 타임아웃)
+        if (needsGeocode.length > 0) {
+          const freshCoords = await geocodeAll(needsGeocode);
+          for (const [name, coord] of freshCoords) {
+            geocoded.set(name, coord);
+          }
+        }
 
         const totalEntries = entries.length;
         entries.forEach(([aptName, txs], idx) => {
@@ -177,14 +292,18 @@ export async function GET(req: NextRequest) {
           if (amount <= 0) return;
 
           const priceInMan = Math.round(amount / 10000);
-          const change = calcChangeByArea(txs.map(t => ({
+          const aptChange = calcChangeByArea(txs.map(t => ({
             amount: tradeType === "전세" ? ((t as { deposit?: number }).deposit || 0) : ((t as { dealAmount?: number }).dealAmount || 0),
             area: t.area || 0,
           })));
+          // 단지별 실거래 변동률 우선, 거래 부족(0)이면 부동산원 지역 변동률
+          const change = aptChange !== 0 ? aptChange : rebChangeRate;
 
-          // 좌표 우선순위: geocode → 동 중심 폴백
+          // 좌표 우선순위: 1) KV캐시 geocode → 2) 시드 데이터 → 3) 동 중심 폴백
           const dongCenter = DONG_CENTER[latest.dong || ""] || GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
-          const coords = geocoded.get(aptName) || spreadCoord(dongCenter, idx, totalEntries);
+          const coords = geocoded.get(aptName)
+            || (seed ? { lat: seed.lat, lng: seed.lng } : null)
+            || spreadCoord(dongCenter, idx, totalEntries);
 
           data.push({
             name: aptName,
@@ -210,14 +329,13 @@ export async function GET(req: NextRequest) {
     dataSource = "seed";
   }
 
-  // MOLIT 데이터 좌표를 카카오 geocoding으로 보정 (시드 데이터는 스킵 — API 절약)
-  if (dataSource === "molit" && data.length > 0 && process.env.KAKAO_REST_KEY) {
-    const toGeocode = data.map(a => ({ gu, dong: a.dong, name: a.name }));
-    const geocoded = await geocodeAll(toGeocode);
-    data = data.map(a => {
-      const coord = geocoded.get(a.name);
-      return coord ? { ...a, lat: coord.lat, lng: coord.lng } : a;
-    });
+  // 캐시된 좌표로 보정 (API 호출 없음 — 타임아웃 방지)
+  if (dataSource === "molit" && data.length > 0) {
+    await Promise.allSettled(data.map(async (a) => {
+      const cacheKey = APICache.makeKey("geocode", gu, a.dong, a.name);
+      const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
+      if (cached) { a.lat = cached.lat; a.lng = cached.lng; }
+    }));
   }
 
   if (minPrice > 0 || maxPrice < 9999999) {

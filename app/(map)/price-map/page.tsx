@@ -168,13 +168,15 @@ export default function PriceMapPage() {
         new maps.Size(1, 1),
       );
 
-      // 마커 + 오버레이 생성 (뷰포트 기반 지연 렌더링)
+      // 마커 + 오버레이를 청크 단위로 순차 생성 (UI 블로킹 방지)
+      const CHUNK_SIZE = 20;
       const allOverlays: { overlay: any; apt: AptData; position: any }[] = [];
-      const markers = data.apartments.map((apt) => {
+      const allMarkers: any[] = [];
+
+      function createMarkerAndOverlay(apt: AptData) {
         const position = new maps.LatLng(apt.lat, apt.lng);
         const marker = new maps.Marker({ position, image: invisibleImage });
 
-        // 오버레이는 미리 생성하되 DOM은 최소화
         const priceText = formatPrice(apt.price);
         const changeSign = apt.change >= 0 ? "+" : "";
         const bgColor = getAreaColor(apt.area);
@@ -186,13 +188,13 @@ export default function PriceMapPage() {
 
         const overlay = new maps.CustomOverlay({ position, content, yAnchor: 1.1, map: null });
         allOverlays.push({ overlay, apt, position });
-        return marker;
-      });
+        allMarkers.push(marker);
+      }
 
-      // 클러스터러 생성
+      // 클러스터러 먼저 생성 (빈 상태)
       const clusterer = new maps.MarkerClusterer({
         map,
-        markers,
+        markers: [],
         gridSize: 60,
         minLevel: 4,
         disableClickZoom: false,
@@ -204,6 +206,25 @@ export default function PriceMapPage() {
         ],
       });
       clustererRef.current = clusterer;
+
+      // 순차 로딩: CHUNK_SIZE개씩 requestAnimationFrame으로 나눠 생성
+      let chunkIdx = 0;
+      const apartments = data.apartments;
+      const loadNextChunk = () => {
+        if (cancelled || chunkIdx >= apartments.length) {
+          // 로딩 완료 — 클러스터러에 전체 마커 추가 + 오버레이 토글 시작
+          clusterer.addMarkers(allMarkers);
+          updateOverlays();
+          return;
+        }
+        const end = Math.min(chunkIdx + CHUNK_SIZE, apartments.length);
+        for (let i = chunkIdx; i < end; i++) {
+          createMarkerAndOverlay(apartments[i]);
+        }
+        chunkIdx = end;
+        requestAnimationFrame(loadNextChunk);
+      };
+      requestAnimationFrame(loadNextChunk);
 
       // 뷰포트 기반 오버레이 토글 — 화면 밖 오버레이 제거로 DOM 최소화
       const DETAIL_LEVEL = 3;
@@ -224,13 +245,11 @@ export default function PriceMapPage() {
               if (visibleOverlays.has(idx)) overlay.setMap(null);
             }
           });
-          // 이전에 보였지만 이제 안 보이는 것 제거
           visibleOverlays.forEach((idx) => {
             if (!newVisible.has(idx)) allOverlays[idx].overlay.setMap(null);
           });
           visibleOverlays = newVisible;
         } else {
-          // 광역 줌: 모든 오버레이 숨기고 클러스터만
           visibleOverlays.forEach((idx) => allOverlays[idx].overlay.setMap(null));
           visibleOverlays = new Set();
           clusterer.setMap(map);
@@ -239,7 +258,6 @@ export default function PriceMapPage() {
 
       maps.event.addListener(map, "zoom_changed", updateOverlays);
       maps.event.addListener(map, "dragend", updateOverlays);
-      updateOverlays();
 
       // 반경 원 초기화
       circlesRef.current.forEach((c) => c.setMap(null));
@@ -351,7 +369,7 @@ export default function PriceMapPage() {
 
           {/* 상승 예측 TOP */}
           <div className="mb-3 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 p-3">
-            <h3 className="mb-2 text-xs font-bold text-gray-900">{selectedGu}, 2년 뒤 가장 상승할 아파트는?</h3>
+            <h3 className="mb-2 text-xs font-bold text-gray-900">{selectedGu}, 최근 1년 시세 변동 TOP</h3>
             {loading ? (
               <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-white/60" />)}</div>
             ) : (
