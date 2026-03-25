@@ -11,13 +11,15 @@ const FSS_BASE = "https://finlife.fss.or.kr/finlifeapi";
 const CACHE_KEY = "fss-loan-rates";
 const CACHE_TTL = 10 * 24 * 60 * 60 * 1000; // 10일
 
-// 5대 시중은행 매칭 키워드
+// 7대 은행 매칭 키워드
 const BANK_MATCH: Record<string, string[]> = {
   "KB국민": ["국민은행"],
   "신한": ["신한은행"],
   "하나": ["하나은행"],
   "우리": ["우리은행"],
   "NH농협": ["농협은행"],
+  "카카오뱅크": ["카카오뱅크"],
+  "토스뱅크": ["토스뱅크"],
 };
 
 export interface FSSLoanProduct {

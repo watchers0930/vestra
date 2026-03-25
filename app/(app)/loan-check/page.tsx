@@ -74,7 +74,7 @@ export default function LoanCheckPage() {
           <Banknote className="h-6 w-6 text-indigo-600" />
           <h1 className="text-xl font-bold text-gray-900">전세대출 가심사</h1>
         </div>
-        <p className="mt-1 text-sm text-gray-500">5대 시중은행 전세대출 조건을 한번에 비교합니다</p>
+        <p className="mt-1 text-sm text-gray-500">7대 은행 전세대출 조건을 한번에 비교합니다</p>
       </div>
 
       {/* 입력 폼 */}

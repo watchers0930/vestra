@@ -1,7 +1,7 @@
 /**
  * 전세대출 가심사 시뮬레이터
  * ─────────────────────────
- * 5대 시중은행 전세대출 조건 DB + LTV/DTI 기반 가능성 판단
+ * 7대 은행 전세대출 조건 DB + LTV/DTI 기반 가능성 판단
  * FSS 금융상품 비교 API 연동으로 금리 자동 갱신 (10일 간격)
  */
 
@@ -46,7 +46,7 @@ export interface LoanSimulateResponse {
 }
 
 // ---------------------------------------------------------------------------
-// 5대 은행 전세대출 조건 DB (2026-03 기준)
+// 7대 은행 전세대출 조건 DB (2026-03 기준)
 // ---------------------------------------------------------------------------
 
 interface BankLoanProduct {
@@ -154,6 +154,32 @@ const LOAN_PRODUCTS: BankLoanProduct[] = [
     isFirstHomeOnly: false,
     minCreditScore: 0,
     requirements: ["주민등록등본", "소득증빙서류", "전세계약서", "등기부등본", "무주택확인서"],
+  },
+  // 카카오뱅크
+  {
+    bankName: "카카오뱅크",
+    productName: "카카오뱅크 전세대출",
+    maxLTV: 0.8,
+    maxDTI: 0.6,
+    maxAmount: 500_000_000,
+    rateRange: { min: 3.0, max: 4.0 },
+    propertyTypes: ["아파트", "빌라/다세대", "오피스텔"],
+    isFirstHomeOnly: false,
+    minCreditScore: 600,
+    requirements: ["주민등록등본", "소득증빙서류", "전세계약서", "등기부등본"],
+  },
+  // 토스뱅크
+  {
+    bankName: "토스뱅크",
+    productName: "토스뱅크 전세대출",
+    maxLTV: 0.8,
+    maxDTI: 0.6,
+    maxAmount: 500_000_000,
+    rateRange: { min: 3.1, max: 4.1 },
+    propertyTypes: ["아파트", "빌라/다세대"],
+    isFirstHomeOnly: false,
+    minCreditScore: 600,
+    requirements: ["주민등록등본", "소득증빙서류", "전세계약서", "등기부등본"],
   },
 ];
 

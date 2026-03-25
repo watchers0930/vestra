@@ -420,6 +420,33 @@ export default function PredictionPage() {
     }));
   };
 
+  // 월별 평균 실거래가 추이 데이터 (실거래 추이 차트용)
+  const getMonthlyTrendData = () => {
+    if (!filteredTransactions.length) return [];
+    const monthMap = new Map<string, { total: number; count: number; min: number; max: number }>();
+    for (const t of filteredTransactions) {
+      const key = `${t.dealYear}.${String(t.dealMonth).padStart(2, "0")}`;
+      const existing = monthMap.get(key);
+      if (existing) {
+        existing.total += t.dealAmount;
+        existing.count += 1;
+        existing.min = Math.min(existing.min, t.dealAmount);
+        existing.max = Math.max(existing.max, t.dealAmount);
+      } else {
+        monthMap.set(key, { total: t.dealAmount, count: 1, min: t.dealAmount, max: t.dealAmount });
+      }
+    }
+    return Array.from(monthMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, data]) => ({
+        month,
+        avgPrice: Math.round(data.total / data.count),
+        minPrice: data.min,
+        maxPrice: data.max,
+        count: data.count,
+      }));
+  };
+
   // 탭 비활성 목록 계산
   const disabledTabs: PredictionTabId[] = [];
   if (!result?.backtestResult) disabledTabs.push("backtest");
@@ -538,6 +565,69 @@ export default function PredictionPage() {
               )}
             </Card>
           )}
+
+          {/* 실거래 추이 차트 */}
+          {(() => {
+            const trendData = getMonthlyTrendData();
+            if (trendData.length < 2) return null;
+            return (
+              <Card className="p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Activity size={16} strokeWidth={1.5} />
+                    실거래 추이
+                    <span className="text-xs font-normal text-secondary">
+                      (월별 평균{selectedApt ? ` · ${selectedApt}` : ""}{selectedArea !== null ? ` · ${selectedArea}㎡` : ""})
+                    </span>
+                  </h3>
+                  <span className="text-[11px] text-[#6e6e73]">{trendData.length}개월</span>
+                </div>
+                <div className="h-[280px] sm:h-[320px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={trendData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                      <defs>
+                        <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="#2563eb" stopOpacity={0.01} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e7" />
+                      <XAxis dataKey="month" tick={{ fontSize: 11 }} tickLine={false} axisLine={{ stroke: "#e5e5e7" }} />
+                      <YAxis
+                        tickFormatter={(v: number) => v >= 100000000 ? `${(v / 100000000).toFixed(1)}억` : `${Math.round(v / 10000).toLocaleString()}만`}
+                        tick={{ fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                        width={55}
+                      />
+                      <Tooltip
+                        formatter={(value: number, name: string) => {
+                          const label = name === "avgPrice" ? "평균가" : name === "maxPrice" ? "최고가" : name === "minPrice" ? "최저가" : name;
+                          return [formatKRW(value), label];
+                        }}
+                        labelFormatter={(label: string) => `${label}`}
+                        contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e5e5e7" }}
+                      />
+                      <Area type="monotone" dataKey="maxPrice" stroke="none" fill="#e5e5e7" fillOpacity={0.3} name="최고가" />
+                      <Area type="monotone" dataKey="minPrice" stroke="none" fill="#ffffff" fillOpacity={1} name="최저가" />
+                      <Line type="monotone" dataKey="avgPrice" stroke="#2563eb" strokeWidth={2.5} dot={{ r: 3, fill: "#2563eb", strokeWidth: 0 }} activeDot={{ r: 5, fill: "#2563eb" }} name="평균가" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-4 text-[11px] text-[#6e6e73]">
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-3 h-0.5 bg-[#2563eb] rounded" />평균 거래가
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-3 h-3 bg-[#e5e5e7] rounded-sm opacity-50" />최고-최저 범위
+                  </span>
+                  <span className="ml-auto">
+                    총 {filteredTransactions.length}건 거래
+                  </span>
+                </div>
+              </Card>
+            );
+          })()}
 
           {/* 탭 네비게이션 */}
           <PredictionTabs activeTab={activeTab} onTabChange={setActiveTab} disabledTabs={disabledTabs} />

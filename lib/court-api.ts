@@ -18,6 +18,31 @@ import { apiCache, APICache } from "./api-cache";
 /** 검색어 최대 길이 */
 const MAX_QUERY_LENGTH = 100;
 
+/**
+ * 검색 결과 0건 시 키워드를 분리/확장하여 재검색 후보 생성
+ * 예: "전세사기" → ["전세 사기", "임대차 보증금", "보증금 반환"]
+ */
+function generateRetryQueries(query: string): string[] {
+  const retries: string[] = [];
+
+  // 1) 붙어있는 단어를 띄어쓰기로 분리 (2글자+2글자 이상)
+  if (query.length >= 4 && !query.includes(" ")) {
+    for (let i = 2; i <= query.length - 2; i++) {
+      retries.push(`${query.slice(0, i)} ${query.slice(i)}`);
+    }
+  }
+
+  // 2) 부동산/임대차 맥락 키워드 추가
+  const contextKeywords = ["임대차", "부동산", "보증금", "매매"];
+  for (const kw of contextKeywords) {
+    if (!query.includes(kw)) {
+      retries.push(`${query} ${kw}`);
+    }
+  }
+
+  return retries.slice(0, 5); // 최대 5개 재시도
+}
+
 export interface CourtCase {
   caseNumber: string;     // 사건번호
   caseName: string;       // 사건명
@@ -60,32 +85,50 @@ export async function searchCourtCases(
   const cached = apiCache.get<CourtCase[]>(cacheKey);
   if (cached) return cached;
 
-  const baseUrl = "http://www.law.go.kr/DRF/lawSearch.do";
+  // 1차 검색 시도
+  const cases = await fetchCourtCasesRaw(apiKey, sanitizedQuery, maxResults);
+  if (cases.length > 0) {
+    apiCache.set(cacheKey, cases, 60 * 60 * 1000);
+    return cases;
+  }
 
+  // 0건 시 키워드 분리/확장 재검색
+  const retryQueries = generateRetryQueries(sanitizedQuery);
+  for (const retryQ of retryQueries) {
+    const retryCases = await fetchCourtCasesRaw(apiKey, retryQ, maxResults);
+    if (retryCases.length > 0) {
+      apiCache.set(cacheKey, retryCases, 60 * 60 * 1000);
+      return retryCases;
+    }
+  }
+
+  // 모든 재검색 실패 시 빈 배열 캐시 (불필요한 반복 방지)
+  apiCache.set(cacheKey, [], 10 * 60 * 1000); // 10분
+  return [];
+}
+
+/** 법제처 API 단건 호출 */
+async function fetchCourtCasesRaw(apiKey: string, query: string, maxResults: number): Promise<CourtCase[]> {
+  const baseUrl = "http://www.law.go.kr/DRF/lawSearch.do";
   const params = new URLSearchParams({
     OC: apiKey,
     target: "prec",
     type: "XML",
-    query: sanitizedQuery,
+    query,
     display: String(maxResults),
-    sort: "ddes",  // 최신순
+    sort: "ddes",
   });
 
   try {
     const res = await fetch(`${baseUrl}?${params.toString()}`, {
       headers: { Accept: "application/xml" },
+      signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) {
-      console.warn(`Court API error: ${res.status}`);
-      return [];
-    }
+    if (!res.ok) return [];
 
     const xml = await res.text();
-    // XML 크기 제한 (5MB)
-    if (xml.length > 5 * 1024 * 1024) {
-      console.warn("Court API response too large, truncating");
-      return [];
-    }
+    if (xml.length > 5 * 1024 * 1024) return [];
+
     const cases: CourtCase[] = [];
     const itemRegex = /<prec>([\s\S]*?)<\/prec>/g;
     let match;
@@ -94,7 +137,6 @@ export async function searchCourtCases(
       const item = match[1];
       const caseName = extractTag(item, "사건명");
       if (!caseName) continue;
-
       cases.push({
         caseNumber: extractTag(item, "사건번호"),
         caseName,
@@ -103,11 +145,8 @@ export async function searchCourtCases(
         summary: extractTag(item, "판시사항").slice(0, 300),
       });
     }
-
-    apiCache.set(cacheKey, cases, 60 * 60 * 1000); // 1시간
     return cases;
-  } catch (error) {
-    console.warn("Court API fetch error:", error);
+  } catch {
     return [];
   }
 }
