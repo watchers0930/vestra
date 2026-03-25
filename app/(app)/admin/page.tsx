@@ -43,12 +43,13 @@ import { IntegrityAuditTab } from "@/components/admin/IntegrityAuditTab";
 import { ApiKeyTab } from "@/components/admin/ApiKeyTab";
 import { NewsTab } from "@/components/admin/NewsTab";
 import { GuaranteeRulesTab } from "@/components/admin/GuaranteeRulesTab";
+import { LoanRatesTab } from "@/components/admin/LoanRatesTab";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "ml-training" | "weight-tuning" | "integrity-audit" | "account" | "apikey" | "news" | "guarantee-rules";
+type Tab = "overview" | "users" | "verifications" | "analyses" | "announcements" | "ml-training" | "weight-tuning" | "integrity-audit" | "account" | "apikey" | "news" | "guarantee-rules" | "loan-rates";
 
 interface Stats {
   totalUsers: number;
@@ -374,6 +375,7 @@ function AdminContent() {
     { key: "apikey", label: "API KEY", description: "외부 API 키를 관리합니다" },
     { key: "news", label: "뉴스·정책", description: "부동산 뉴스/정책 수집 현황을 확인합니다" },
     { key: "guarantee-rules", label: "보증보험 규칙", description: "보증보험 가입조건 규칙을 관리합니다" },
+    { key: "loan-rates", label: "대출 금리", description: "FSS 연동 전세대출 금리 관리" },
     { key: "account", label: "계정 설정", description: "관리자 비밀번호 변경 및 계정 설정을 관리합니다" },
   ];
 
@@ -976,6 +978,11 @@ function AdminContent() {
           {/* 보증보험 규칙 탭                                                */}
           {/* ============================================================= */}
           {tab === "guarantee-rules" && <GuaranteeRulesTab />}
+
+          {/* ============================================================= */}
+          {/* 대출 금리 탭                                                     */}
+          {/* ============================================================= */}
+          {tab === "loan-rates" && <LoanRatesTab />}
 
           {/* ============================================================= */}
           {/* 계정 설정 탭                                                    */}

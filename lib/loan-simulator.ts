@@ -2,8 +2,10 @@
  * 전세대출 가심사 시뮬레이터
  * ─────────────────────────
  * 5대 시중은행 전세대출 조건 DB + LTV/DTI 기반 가능성 판단
- * 내집스캔 대비 차별화: 대출 가능 여부 + 최적 상품 추천
+ * FSS 금융상품 비교 API 연동으로 금리 자동 갱신 (10일 간격)
  */
+
+import { getCachedRates, getBankRateRange } from "./fss-loan-api";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -243,7 +245,19 @@ function simulateProduct(input: LoanSimulateInput, product: BankLoanProduct): Lo
 // ---------------------------------------------------------------------------
 
 export function simulateLoan(input: LoanSimulateInput): LoanSimulateResponse {
-  const results = LOAN_PRODUCTS.map((product) => simulateProduct(input, product));
+  // FSS 실시간 금리로 상품별 금리 덮어쓰기
+  const fssRates = getCachedRates();
+  const products = LOAN_PRODUCTS.map((product) => {
+    if (fssRates && fssRates.dataSource === "fss") {
+      const fssRate = getBankRateRange(fssRates, product.bankName);
+      if (fssRate) {
+        return { ...product, rateRange: fssRate };
+      }
+    }
+    return product;
+  });
+
+  const results = products.map((product) => simulateProduct(input, product));
 
   const eligible = results.filter((r) => r.isEligible);
   const maxAvailable = eligible.length > 0

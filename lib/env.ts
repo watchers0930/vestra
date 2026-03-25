@@ -25,6 +25,7 @@ const ENV_VARS: EnvVar[] = [
   { key: "CRON_SECRET", required: true, description: "Vercel Cron 인증 시크릿" },
   { key: "DART_API_KEY", required: false, description: "DART 전자공시 API" },
   { key: "KOSIS_API_KEY", required: false, description: "통계청 KOSIS API" },
+  { key: "FSS_API_KEY", required: false, description: "금융감독원 금융상품비교 API" },
 ];
 
 let validated = false;

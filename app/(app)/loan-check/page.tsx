@@ -29,6 +29,14 @@ function formatKRW(val: number): string {
   return val.toLocaleString() + "원";
 }
 
+function formatNumber(val: number): string {
+  return val.toLocaleString();
+}
+
+function parseNumber(val: string): number {
+  return Number(val.replace(/,/g, "")) || 0;
+}
+
 export default function LoanCheckPage() {
   const [form, setForm] = useState({
     deposit: 300_000_000,
@@ -81,9 +89,10 @@ export default function LoanCheckPage() {
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-600">전세 보증금</label>
             <input
-              type="number"
-              value={form.deposit}
-              onChange={(e) => update("deposit", Number(e.target.value))}
+              type="text"
+              inputMode="numeric"
+              value={formatNumber(form.deposit)}
+              onChange={(e) => update("deposit", parseNumber(e.target.value))}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
             <p className="mt-0.5 text-xs text-gray-400">{formatKRW(form.deposit)}</p>
@@ -91,9 +100,10 @@ export default function LoanCheckPage() {
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-600">매매 시세</label>
             <input
-              type="number"
-              value={form.propertyPrice}
-              onChange={(e) => update("propertyPrice", Number(e.target.value))}
+              type="text"
+              inputMode="numeric"
+              value={formatNumber(form.propertyPrice)}
+              onChange={(e) => update("propertyPrice", parseNumber(e.target.value))}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
             <p className="mt-0.5 text-xs text-gray-400">{formatKRW(form.propertyPrice)}</p>
@@ -101,9 +111,10 @@ export default function LoanCheckPage() {
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-600">연소득</label>
             <input
-              type="number"
-              value={form.annualIncome}
-              onChange={(e) => update("annualIncome", Number(e.target.value))}
+              type="text"
+              inputMode="numeric"
+              value={formatNumber(form.annualIncome)}
+              onChange={(e) => update("annualIncome", parseNumber(e.target.value))}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
             <p className="mt-0.5 text-xs text-gray-400">{formatKRW(form.annualIncome)}</p>
@@ -123,9 +134,10 @@ export default function LoanCheckPage() {
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-600">기존 대출 잔액</label>
             <input
-              type="number"
-              value={form.existingLoans}
-              onChange={(e) => update("existingLoans", Number(e.target.value))}
+              type="text"
+              inputMode="numeric"
+              value={formatNumber(form.existingLoans)}
+              onChange={(e) => update("existingLoans", parseNumber(e.target.value))}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
           </div>
