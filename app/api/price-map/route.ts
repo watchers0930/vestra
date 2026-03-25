@@ -497,11 +497,9 @@ export async function GET(req: NextRequest) {
             area: t.area || 0,
           })));
 
-          // 좌표 우선순위: 시드 → geocode → 동 중심 폴백
+          // 좌표 우선순위: geocode → 동 중심 폴백
           const dongCenter = DONG_CENTER[latest.dong || ""] || GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
-          const coords = seed
-            ? { lat: seed.lat, lng: seed.lng }
-            : geocoded.get(aptName) || spreadCoord(dongCenter, idx, totalEntries);
+          const coords = geocoded.get(aptName) || spreadCoord(dongCenter, idx, totalEntries);
 
           data.push({
             name: aptName,
@@ -523,8 +521,18 @@ export async function GET(req: NextRequest) {
 
   // MOLIT 실패 or 데이터 없음 → 시드 데이터 폴백
   if (data.length === 0) {
-    data = SEED_DATA[gu] || [];
+    data = [...(SEED_DATA[gu] || [])];
     dataSource = "seed";
+  }
+
+  // 모든 아파트 좌표를 카카오 geocoding으로 보정
+  if (data.length > 0 && process.env.KAKAO_REST_KEY) {
+    const toGeocode = data.map(a => ({ gu, dong: a.dong, name: a.name }));
+    const geocoded = await geocodeAll(toGeocode);
+    data = data.map(a => {
+      const coord = geocoded.get(a.name);
+      return coord ? { ...a, lat: coord.lat, lng: coord.lng } : a;
+    });
   }
 
   if (minPrice > 0 || maxPrice < 9999999) {
