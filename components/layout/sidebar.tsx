@@ -66,7 +66,15 @@ const userMenuItems: MenuItem[] = [
   { href: "/tax", icon: Calculator, label: "세무 시뮬레이션", description: "취득세·양도세·종부세 등 부동산 세금을 시나리오별로 계산합니다" },
   { href: "/prediction", icon: TrendingUp, label: "시세전망", description: "실거래가 데이터 기반으로 시세 추이와 향후 전망을 분석합니다" },
   { href: "/price-map", icon: MapPin, label: "시세지도", description: "지도 위에서 아파트별 실거래가와 시세 변동을 한눈에 확인합니다" },
-  { href: "/loan-check", icon: Banknote, label: "대출 가심사", description: "5대 시중은행 전세대출 조건을 한번에 비교하고 가능 여부를 확인합니다" },
+  {
+    href: "/loan-check", icon: Banknote, label: "대출 가심사", description: "7대 은행 전세대출 조건을 한번에 비교하고 가능 여부를 확인합니다",
+    children: [
+      { href: "/loan-check", label: "대출 가심사" },
+      { href: "/jeonse/comparison", label: "전세 vs 월세 비교" },
+      { href: "/jeonse/yield", label: "임대 수익률" },
+      { href: "/jeonse/moving-cost", label: "이사 비용 계산기" },
+    ],
+  },
   {
     href: "/jeonse", icon: Home, label: "전세보호", description: "전세 안전 진단부터 전입신고·확정일자까지 보호 절차를 안내합니다",
     children: [
@@ -78,10 +86,18 @@ const userMenuItems: MenuItem[] = [
       { href: "/jeonse/lease-registration", label: "임차권등기명령" },
       { href: "/jeonse/lease-report", label: "주택임대차 신고" },
       { href: "/landlord-profile", label: "임대인 프로파일" },
+      { href: "/jeonse/checklist", label: "계약 체크리스트" },
+      { href: "/jeonse/neighborhood", label: "주변 환경 분석" },
     ],
   },
   { href: "/feasibility", icon: ClipboardCheck, label: "사업성 분석", description: "다중 문서 기반 SCR 수준 사업성 검증 보고서를 생성합니다" },
-  { href: "/assistant", icon: MessageSquare, label: "AI 어시스턴트", description: "부동산 관련 궁금한 점을 AI에게 자유롭게 질문할 수 있습니다" },
+  {
+    href: "/assistant", icon: MessageSquare, label: "AI 어시스턴트", description: "부동산 관련 궁금한 점을 AI에게 자유롭게 질문할 수 있습니다",
+    children: [
+      { href: "/assistant", label: "AI 상담" },
+      { href: "/assistant/negotiation", label: "AI 협상 코치" },
+    ],
+  },
   { href: "/api-hub", icon: Database, label: "API 데이터 허브", description: "국토교통부·법원 등 공공 API 연동 현황과 데이터를 조회합니다" },
   { href: "/ai-trust", icon: ShieldCheck, label: "AI 신뢰도", description: "AI 분석의 정확도와 전문가 일치율을 투명하게 공개합니다" },
   { href: "/expert-connect", icon: Users, label: "전문가 상담", description: "AI 분석 결과를 전문가가 직접 검증하고 상담해드립니다" },
@@ -244,7 +260,7 @@ export default function Sidebar() {
             <div
               className={cn(
                 "overflow-hidden transition-all duration-200",
-                isOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"
+                isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
               )}
             >
               <div className="mt-1 space-y-0.5">
