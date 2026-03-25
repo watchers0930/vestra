@@ -601,11 +601,12 @@ export default function PredictionPage() {
                         width={55}
                       />
                       <Tooltip
-                        formatter={(value: number, name: string) => {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        formatter={(value: any, name: any) => {
                           const label = name === "avgPrice" ? "평균가" : name === "maxPrice" ? "최고가" : name === "minPrice" ? "최저가" : name;
-                          return [formatKRW(value), label];
+                          return [formatKRW(Number(value)), label];
                         }}
-                        labelFormatter={(label: string) => `${label}`}
+                        labelFormatter={(label) => `${label}`}
                         contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e5e5e7" }}
                       />
                       <Area type="monotone" dataKey="maxPrice" stroke="none" fill="#e5e5e7" fillOpacity={0.3} name="최고가" />
