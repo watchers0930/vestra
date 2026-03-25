@@ -6,8 +6,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { fetchRecentPrices, fetchRecentRentPrices, LAWD_CODE_MAP } from "@/lib/molit-api";
+import { apiCache, APICache } from "@/lib/api-cache";
 
-// 동별 중심 좌표 (서울 주요 동)
+// 동별 중심 좌표 (폴백용)
 const DONG_CENTER: Record<string, { lat: number; lng: number }> = {
   "압구정동": { lat: 37.5270, lng: 127.0280 }, "청담동": { lat: 37.5240, lng: 127.0480 },
   "삼성동": { lat: 37.5145, lng: 127.0530 }, "대치동": { lat: 37.4980, lng: 127.0600 },
@@ -18,10 +19,55 @@ const DONG_CENTER: Record<string, { lat: number; lng: number }> = {
   "자곡동": { lat: 37.4740, lng: 127.0950 }, "용산동": { lat: 37.5310, lng: 126.9830 },
 };
 
-// 구 중심 좌표에 인덱스 기반 산포 (랜덤 대신 결정적 배치)
+// 카카오 REST API로 아파트 실제 좌표 검색
+const GEOCODE_TTL = 7 * 24 * 60 * 60 * 1000; // 7일
+async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ lat: number; lng: number } | null> {
+  const cacheKey = APICache.makeKey("geocode", gu, aptName);
+  const cached = apiCache.get<{ lat: number; lng: number }>(cacheKey);
+  if (cached) return cached;
+
+  const kakaoKey = process.env.KAKAO_REST_KEY;
+  if (!kakaoKey) return null;
+
+  try {
+    const query = `${dong} ${aptName}`;
+    const url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&category_group_code=AP4&size=1`;
+    const res = await fetch(url, {
+      headers: { Authorization: `KakaoAK ${kakaoKey}` },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const doc = json.documents?.[0];
+    if (doc) {
+      const coord = { lat: parseFloat(doc.y), lng: parseFloat(doc.x) };
+      apiCache.set(cacheKey, coord, GEOCODE_TTL);
+      return coord;
+    }
+  } catch {
+    // 검색 실패 시 null 반환 → 폴백 좌표 사용
+  }
+  return null;
+}
+
+// 여러 아파트 좌표를 병렬로 조회 (배치 단위로 rate limit 관리)
+async function geocodeAll(apartments: { gu: string; dong: string; name: string }[]): Promise<Map<string, { lat: number; lng: number }>> {
+  const results = new Map<string, { lat: number; lng: number }>();
+  const BATCH_SIZE = 10;
+  for (let i = 0; i < apartments.length; i += BATCH_SIZE) {
+    const batch = apartments.slice(i, i + BATCH_SIZE);
+    const promises = batch.map(async (apt) => {
+      const coord = await geocodeApt(apt.gu, apt.dong, apt.name);
+      if (coord) results.set(apt.name, coord);
+    });
+    await Promise.allSettled(promises);
+  }
+  return results;
+}
+
+// 폴백: 동 중심 좌표에 산포 (geocode 실패 시)
 function spreadCoord(center: { lat: number; lng: number }, index: number, total: number): { lat: number; lng: number } {
   const angle = (2 * Math.PI * index) / Math.max(total, 1);
-  const radius = 0.003 + (index % 3) * 0.002; // ~300~500m 반경
+  const radius = 0.002 + (index % 3) * 0.001;
   return {
     lat: center.lat + radius * Math.cos(angle),
     lng: center.lng + radius * Math.sin(angle),
@@ -395,80 +441,63 @@ export async function GET(req: NextRequest) {
 
   if (lawdCode && process.env.MOLIT_API_KEY) {
     try {
-      if (tradeType === "전세") {
-        const rentResult = await fetchRecentRentPrices(guToAddress, 3);
-        if (rentResult && rentResult.transactions.length > 0) {
-          // 아파트명별 최신 전세 거래 그룹핑
-          const grouped = new Map<string, typeof rentResult.transactions[0][]>();
-          for (const tx of rentResult.transactions) {
-            const key = tx.aptName || "알수없음";
-            if (!grouped.has(key)) grouped.set(key, []);
-            grouped.get(key)!.push(tx);
-          }
-          // 그룹별 최신 거래 + 좌표 (시드 데이터에서 가져오기)
-          const seedApts = SEED_DATA[gu] || [];
-          const seedMap = new Map(seedApts.map(s => [s.name, s]));
+      // 전세/매매 공통 처리
+      const txResult = tradeType === "전세"
+        ? await fetchRecentRentPrices(guToAddress, 3)
+        : await fetchRecentPrices(guToAddress, 3);
 
-          const entries = [...grouped.entries()];
-          const totalEntries = entries.length;
-          entries.forEach(([aptName, txs], idx) => {
-            const latest = txs[0];
-            const seed = seedMap.get(aptName);
-            const deposit = latest.deposit || 0;
-            if (deposit <= 0) return;
-            const priceInMan = Math.round(deposit / 10000);
-            const change = calcChangeByArea(txs.map(t => ({ amount: t.deposit || 0, area: t.area || 0 })));
-            const dongCenter = DONG_CENTER[latest.dong || ""] || GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
-            const coords = seed ? { lat: seed.lat, lng: seed.lng } : spreadCoord(dongCenter, idx, totalEntries);
-            data.push({
-              name: aptName,
-              dong: latest.dong || "",
-              price: priceInMan,
-              area: latest.area ? Math.round((latest.area * 1.45) / 3.3058) : 0,
-              lat: coords.lat,
-              lng: coords.lng,
-              change,
-              year: latest.buildYear || 0,
-            });
-          });
-          if (data.length > 0) dataSource = "molit";
+      if (txResult && txResult.transactions.length > 0) {
+        // 아파트명별 그룹핑
+        const grouped = new Map<string, typeof txResult.transactions[0][]>();
+        for (const tx of txResult.transactions) {
+          const key = tx.aptName || "알수없음";
+          if (!grouped.has(key)) grouped.set(key, []);
+          grouped.get(key)!.push(tx);
         }
-      } else {
-        const saleResult = await fetchRecentPrices(guToAddress, 3);
-        if (saleResult && saleResult.transactions.length > 0) {
-          const grouped = new Map<string, typeof saleResult.transactions[0][]>();
-          for (const tx of saleResult.transactions) {
-            const key = tx.aptName || "알수없음";
-            if (!grouped.has(key)) grouped.set(key, []);
-            grouped.get(key)!.push(tx);
-          }
-          const seedApts = SEED_DATA[gu] || [];
-          const seedMap = new Map(seedApts.map(s => [s.name, s]));
 
-          const entries = [...grouped.entries()];
-          const totalEntries = entries.length;
-          entries.forEach(([aptName, txs], idx) => {
-            const latest = txs[0];
-            const seed = seedMap.get(aptName);
-            const price = latest.dealAmount || 0;
-            if (price <= 0) return;
-            const priceInMan = Math.round(price / 10000);
-            const change = calcChangeByArea(txs.map(t => ({ amount: t.dealAmount || 0, area: t.area || 0 })));
-            const dongCenter = DONG_CENTER[latest.dong || ""] || GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
-            const coords = seed ? { lat: seed.lat, lng: seed.lng } : spreadCoord(dongCenter, idx, totalEntries);
-            data.push({
-              name: aptName,
-              dong: latest.dong || "",
-              price: priceInMan,
-              area: latest.area ? Math.round((latest.area * 1.45) / 3.3058) : 0,
-              lat: coords.lat,
-              lng: coords.lng,
-              change,
-              year: latest.buildYear || 0,
-            });
+        const seedApts = SEED_DATA[gu] || [];
+        const seedMap = new Map(seedApts.map(s => [s.name, s]));
+        const entries = [...grouped.entries()];
+
+        // 좌표가 없는 아파트들을 카카오 REST API로 일괄 geocoding
+        const needsGeocode = entries
+          .filter(([aptName]) => !seedMap.has(aptName))
+          .map(([aptName, txs]) => ({ gu, dong: txs[0].dong || "", name: aptName }));
+        const geocoded = await geocodeAll(needsGeocode);
+
+        const totalEntries = entries.length;
+        entries.forEach(([aptName, txs], idx) => {
+          const latest = txs[0];
+          const seed = seedMap.get(aptName);
+          const amount = tradeType === "전세"
+            ? (latest as { deposit?: number }).deposit || 0
+            : (latest as { dealAmount?: number }).dealAmount || 0;
+          if (amount <= 0) return;
+
+          const priceInMan = Math.round(amount / 10000);
+          const change = calcChangeByArea(txs.map(t => ({
+            amount: tradeType === "전세" ? ((t as { deposit?: number }).deposit || 0) : ((t as { dealAmount?: number }).dealAmount || 0),
+            area: t.area || 0,
+          })));
+
+          // 좌표 우선순위: 시드 → geocode → 동 중심 폴백
+          const dongCenter = DONG_CENTER[latest.dong || ""] || GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
+          const coords = seed
+            ? { lat: seed.lat, lng: seed.lng }
+            : geocoded.get(aptName) || spreadCoord(dongCenter, idx, totalEntries);
+
+          data.push({
+            name: aptName,
+            dong: latest.dong || "",
+            price: priceInMan,
+            area: latest.area ? Math.round((latest.area * 1.45) / 3.3058) : 0,
+            lat: coords.lat,
+            lng: coords.lng,
+            change,
+            year: latest.buildYear || 0,
           });
-          if (data.length > 0) dataSource = "molit";
-        }
+        });
+        if (data.length > 0) dataSource = "molit";
       }
     } catch (err) {
       console.error("[price-map] MOLIT API 호출 실패, 시드 데이터로 폴백:", err);
