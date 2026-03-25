@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       isFirstHome: isFirstHome ?? false,
     };
 
-    const result = simulateLoan(input);
+    const result = await simulateLoan(input);
     return NextResponse.json(result);
   } catch (error) {
     console.error("[LOAN:SIMULATE]", error);

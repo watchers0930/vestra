@@ -6,6 +6,7 @@
  */
 
 import { apiCache, APICache } from "./api-cache";
+import { kvCache } from "./kv-cache";
 
 const FSS_BASE = "https://finlife.fss.or.kr/finlifeapi";
 const CACHE_KEY = "fss-loan-rates";
@@ -56,8 +57,8 @@ interface FSSOptionItem {
 }
 
 /** 캐시된 FSS 금리 데이터 반환 (없으면 null) */
-export function getCachedRates(): FSSLoanRates | null {
-  return apiCache.get<FSSLoanRates>(CACHE_KEY);
+export async function getCachedRates(): Promise<FSSLoanRates | null> {
+  return kvCache.get<FSSLoanRates>(CACHE_KEY);
 }
 
 /** FSS API에서 전세대출 금리 수집 + 캐시 저장 */
@@ -125,7 +126,7 @@ export async function fetchFSSLoanRates(): Promise<FSSLoanRates> {
       dataSource: "fss",
     };
 
-    apiCache.set(CACHE_KEY, result, CACHE_TTL);
+    await kvCache.set(CACHE_KEY, result, CACHE_TTL);
     console.log(`[FSS-LOAN] ${products.length}개 상품 금리 갱신 완료`);
     return result;
   } catch (err) {

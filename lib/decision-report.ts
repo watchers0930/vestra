@@ -106,7 +106,7 @@ function calculateDecisionGrade(loan: LoanSimulateResponse, input: DecisionRepor
 // 메인
 // ---------------------------------------------------------------------------
 
-export function generateDecisionReport(input: DecisionReportInput): DecisionReportResult {
+export async function generateDecisionReport(input: DecisionReportInput): Promise<DecisionReportResult> {
   // 대출 시뮬레이션
   const loanInput: LoanSimulateInput = {
     deposit: input.deposit,
@@ -116,7 +116,7 @@ export function generateDecisionReport(input: DecisionReportInput): DecisionRepo
     annualIncome: input.annualIncome,
     isFirstHome: input.isFirstHome,
   };
-  const loanSimulation = simulateLoan(loanInput);
+  const loanSimulation = await simulateLoan(loanInput);
 
   // 등급 산정
   const { grade, recommendation, keyPoints } = calculateDecisionGrade(loanSimulation, input);

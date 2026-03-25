@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = generateDecisionReport({
+    const result = await generateDecisionReport({
       address,
       deposit,
       propertyPrice,

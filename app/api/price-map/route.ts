@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { fetchRecentPrices, fetchRecentRentPrices, LAWD_CODE_MAP } from "@/lib/molit-api";
 import { apiCache, APICache } from "@/lib/api-cache";
+import { kvCache } from "@/lib/kv-cache";
 import { AptPrice, SEED_DATA, DONG_CENTER, GU_CENTER, GU_ADDRESS_MAP, REGION_GROUPS } from "@/lib/price-map-data";
 
 // 카카오 REST API로 아파트 실제 좌표 검색
@@ -45,7 +46,7 @@ async function kakaoSearch(kakaoKey: string, query: string, center?: { lat: numb
 
 async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ lat: number; lng: number } | null> {
   const cacheKey = APICache.makeKey("geocode", gu, dong, aptName);
-  const cached = apiCache.get<{ lat: number; lng: number }>(cacheKey);
+  const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
   if (cached) return cached;
 
   const kakaoKey = process.env.KAKAO_REST_KEY;
@@ -68,7 +69,7 @@ async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ 
   for (const q of queries) {
     const coord = await kakaoSearch(kakaoKey, q, center);
     if (coord) {
-      apiCache.set(cacheKey, coord, GEOCODE_TTL);
+      await kvCache.set(cacheKey, coord, GEOCODE_TTL);
       return coord;
     }
   }

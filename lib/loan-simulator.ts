@@ -270,9 +270,9 @@ function simulateProduct(input: LoanSimulateInput, product: BankLoanProduct): Lo
 // 메인 함수
 // ---------------------------------------------------------------------------
 
-export function simulateLoan(input: LoanSimulateInput): LoanSimulateResponse {
+export async function simulateLoan(input: LoanSimulateInput): Promise<LoanSimulateResponse> {
   // FSS 실시간 금리로 상품별 금리 덮어쓰기
-  const fssRates = getCachedRates();
+  const fssRates = await getCachedRates();
   const products = LOAN_PRODUCTS.map((product) => {
     if (fssRates && fssRates.dataSource === "fss") {
       const fssRate = getBankRateRange(fssRates, product.bankName);

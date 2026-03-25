@@ -18,7 +18,7 @@ export async function GET() {
     return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
   }
 
-  const cached = getCachedRates();
+  const cached = await getCachedRates();
   return NextResponse.json({
     rates: cached,
     hasCachedData: !!cached,
