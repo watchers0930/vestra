@@ -41,39 +41,7 @@ export interface KakaoPlaceResult {
   y: string;
 }
 
-declare global {
-  interface Window {
-    kakao: {
-      maps: {
-        load: (callback: () => void) => void;
-        LatLng: new (lat: number, lng: number) => unknown;
-        Map: new (container: HTMLElement, options: { center: unknown; level: number }) => {
-          setCenter: (latlng: unknown) => void;
-          relayout: () => void;
-        };
-        Marker: new (options: { map: unknown; position: unknown }) => unknown;
-        CustomOverlay: new (options: { position: unknown; content: HTMLElement | string; yAnchor?: number; map?: unknown }) => {
-          setMap: (map: unknown | null) => void;
-        };
-        services: {
-          Geocoder: new () => {
-            addressSearch: (
-              address: string,
-              callback: (result: KakaoGeocoderResult[], status: string) => void
-            ) => void;
-          };
-          Places: new () => {
-            keywordSearch: (
-              keyword: string,
-              callback: (result: KakaoPlaceResult[], status: string) => void
-            ) => void;
-          };
-          Status: { OK: string };
-        };
-      };
-    };
-  }
-}
+// kakao 타입은 app/layout.tsx에서 글로벌 선언 (any)
 
 export function KakaoMap({ address }: KakaoMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -109,7 +77,7 @@ export function KakaoMap({ address }: KakaoMapProps) {
         };
 
         // 1차: 전체 주소로 검색
-        geocoder.addressSearch(address, (result, statusCode) => {
+        geocoder.addressSearch(address, (result: any[], statusCode: string) => {
           if (statusCode === OK && result[0]) {
             createMap(
               new window.kakao.maps.LatLng(parseFloat(result[0].y), parseFloat(result[0].x)),
@@ -120,7 +88,7 @@ export function KakaoMap({ address }: KakaoMapProps) {
 
           // 2차: 번지 제거 후 재시도
           if (addrWithoutNumber !== address) {
-            geocoder.addressSearch(addrWithoutNumber, (result2, status2) => {
+            geocoder.addressSearch(addrWithoutNumber, (result2: any[], status2: string) => {
               if (status2 === OK && result2[0]) {
                 createMap(
                   new window.kakao.maps.LatLng(parseFloat(result2[0].y), parseFloat(result2[0].x)),

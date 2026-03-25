@@ -8,7 +8,7 @@ export default function KakaoScript() {
 
   return (
     <Script
-      src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoKey}&libraries=services&autoload=false`}
+      src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoKey}&libraries=services,clusterer&autoload=false`}
       strategy="afterInteractive"
       onReady={() => {
         tryLoadWithRetry(0);
@@ -45,7 +45,7 @@ function tryLoadWithRetry(attempt: number) {
       const key = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY || document.querySelector('script[src*="dapi.kakao.com"]')?.getAttribute("src")?.match(/appkey=([^&]+)/)?.[1];
       if (key) {
         const s = document.createElement("script");
-        s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&libraries=services&autoload=false&_retry=${attempt}`;
+        s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&libraries=services,clusterer&autoload=false&_retry=${attempt}`;
         s.onload = () => tryLoadWithRetry(attempt + 1);
         document.head.appendChild(s);
       }

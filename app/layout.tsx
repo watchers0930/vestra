@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 declare global {
   interface Window {
     __kakaoMapsReady?: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    kakao: any;
   }
 }
 import { Geist, Geist_Mono, Sora } from "next/font/google";
