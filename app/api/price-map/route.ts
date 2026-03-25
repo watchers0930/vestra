@@ -22,7 +22,12 @@ const DONG_CENTER: Record<string, { lat: number; lng: number }> = {
 // 카카오 REST API로 아파트 실제 좌표 검색
 const GEOCODE_TTL = 7 * 24 * 60 * 60 * 1000; // 7일
 
-// 구 중심 좌표 기준 반경 내 검색 — 아파트 카테고리 우선
+// 주거 관련 카테고리 판별
+function isResidentialCategory(cat: string): boolean {
+  return /아파트|주거|빌딩|주택|오피스텔/.test(cat || "");
+}
+
+// 구 중심 좌표 기준 반경 내 검색 — 주거 카테고리 우선
 async function kakaoSearch(kakaoKey: string, query: string, center?: { lat: number; lng: number }): Promise<{ lat: number; lng: number } | null> {
   try {
     let url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=15`;
@@ -34,12 +39,12 @@ async function kakaoSearch(kakaoKey: string, query: string, center?: { lat: numb
     const json = await res.json();
     const docs = json.documents || [];
 
-    // 1순위: 카테고리에 "아파트" 포함된 결과
+    // 1순위: 카테고리에 "아파트" 포함
     const aptDoc = docs.find((d: any) => d.category_name?.includes("아파트"));
     if (aptDoc) return { lat: parseFloat(aptDoc.y), lng: parseFloat(aptDoc.x) };
 
-    // 2순위: 카테고리에 "주거" 포함된 결과
-    const residDoc = docs.find((d: any) => d.category_name?.includes("주거"));
+    // 2순위: 주거 관련 카테고리 (빌딩, 주거, 주택, 오피스텔)
+    const residDoc = docs.find((d: any) => isResidentialCategory(d.category_name));
     if (residDoc) return { lat: parseFloat(residDoc.y), lng: parseFloat(residDoc.x) };
 
     // 3순위: 첫 번째 결과 (폴백)
@@ -56,17 +61,18 @@ async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ 
   const kakaoKey = process.env.KAKAO_REST_KEY;
   if (!kakaoKey) return null;
 
-  // 동 또는 구 중심 좌표를 검색 기준점으로 사용
   const center = DONG_CENTER[dong] || GU_CENTER[gu];
 
   // 아파트명 정제: 괄호/숫자 제거 (예: "신동아(22)" → "신동아")
   const cleanName = aptName.replace(/\(.*?\)/g, "").replace(/\d+$/g, "").trim();
 
-  // 검색 전략: 구+동+이름아파트 (가장 정확) → 동+이름아파트 → 이름 아파트
+  // 검색 전략 (5단계 — 정확도순)
   const queries = [
-    `${gu} ${dong} ${cleanName}아파트`,
-    `${dong} ${cleanName}아파트`,
-    `${cleanName} 아파트`,
+    `${gu} ${dong} ${cleanName}아파트`,       // 1) 구+동+이름아파트
+    `${gu} ${dong} ${cleanName}`,              // 2) 구+동+이름 (아파트 없이)
+    `${dong} ${cleanName}아파트`,              // 3) 동+이름아파트
+    `${cleanName}`,                             // 4) 이름만 (한강자이에클라트 같은 경우)
+    `${gu} ${cleanName}`,                       // 5) 구+이름
   ];
 
   for (const q of queries) {
