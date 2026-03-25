@@ -21,6 +21,19 @@ const DONG_CENTER: Record<string, { lat: number; lng: number }> = {
 
 // 카카오 REST API로 아파트 실제 좌표 검색
 const GEOCODE_TTL = 7 * 24 * 60 * 60 * 1000; // 7일
+
+async function kakaoSearch(kakaoKey: string, query: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=1`;
+    const res = await fetch(url, { headers: { Authorization: `KakaoAK ${kakaoKey}` } });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const doc = json.documents?.[0];
+    if (doc) return { lat: parseFloat(doc.y), lng: parseFloat(doc.x) };
+  } catch { /* ignore */ }
+  return null;
+}
+
 async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ lat: number; lng: number } | null> {
   const cacheKey = APICache.makeKey("geocode", gu, aptName);
   const cached = apiCache.get<{ lat: number; lng: number }>(cacheKey);
@@ -29,22 +42,19 @@ async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ 
   const kakaoKey = process.env.KAKAO_REST_KEY;
   if (!kakaoKey) return null;
 
-  try {
-    const query = `${dong} ${aptName}`;
-    const url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&category_group_code=AP4&size=1`;
-    const res = await fetch(url, {
-      headers: { Authorization: `KakaoAK ${kakaoKey}` },
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    const doc = json.documents?.[0];
-    if (doc) {
-      const coord = { lat: parseFloat(doc.y), lng: parseFloat(doc.x) };
+  // 검색 전략: 1) "아파트명 아파트" → 2) "동 아파트명 아파트" → 3) "구 아파트명"
+  const queries = [
+    `${aptName} 아파트`,
+    `${dong} ${aptName} 아파트`,
+    `${gu} ${aptName}`,
+  ];
+
+  for (const q of queries) {
+    const coord = await kakaoSearch(kakaoKey, q);
+    if (coord) {
       apiCache.set(cacheKey, coord, GEOCODE_TTL);
       return coord;
     }
-  } catch {
-    // 검색 실패 시 null 반환 → 폴백 좌표 사용
   }
   return null;
 }
