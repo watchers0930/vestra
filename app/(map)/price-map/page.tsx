@@ -12,7 +12,7 @@ interface AptData {
   area: number;
   lat: number;
   lng: number;
-  change: number;
+  change: number | null;
   year: number;
 }
 
@@ -178,11 +178,13 @@ export default function PriceMapPage() {
         const marker = new maps.Marker({ position, image: invisibleImage });
 
         const priceText = formatPrice(apt.price);
-        const changeSign = apt.change >= 0 ? "+" : "";
         const bgColor = getAreaColor(apt.area);
+        const changeHtml = apt.change !== null
+          ? `<div style="font-size:10px;color:#fff;background:rgba(255,255,255,.2);border-radius:4px;padding:1px 4px;margin-top:2px">${apt.change >= 0 ? "+" : ""}${escapeHtml(apt.change)}%</div>`
+          : "";
 
         const content = document.createElement("div");
-        content.innerHTML = `<div style="cursor:pointer;padding:4px 10px;border-radius:8px;font-size:13px;font-weight:700;color:#fff;background:${bgColor};box-shadow:0 2px 8px rgba(0,0,0,.25);white-space:nowrap;line-height:1.3;text-align:center;min-width:50px"><div style="font-size:11px;opacity:.85">${escapeHtml(apt.area)}평</div><div>${escapeHtml(priceText)}</div><div style="font-size:10px;color:#fff;background:rgba(255,255,255,.2);border-radius:4px;padding:1px 4px;margin-top:2px">${escapeHtml(changeSign)}${escapeHtml(apt.change)}%</div></div><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid ${bgColor};margin:0 auto"></div>`;
+        content.innerHTML = `<div style="cursor:pointer;padding:4px 10px;border-radius:8px;font-size:13px;font-weight:700;color:#fff;background:${bgColor};box-shadow:0 2px 8px rgba(0,0,0,.25);white-space:nowrap;line-height:1.3;text-align:center;min-width:50px"><div style="font-size:11px;opacity:.85">${escapeHtml(apt.area)}평</div><div>${escapeHtml(priceText)}</div>${changeHtml}</div><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid ${bgColor};margin:0 auto"></div>`;
         content.style.cssText = "display:flex;flex-direction:column;align-items:center";
         content.addEventListener("click", () => selectAndMoveToApt(apt));
 
@@ -310,7 +312,7 @@ export default function PriceMapPage() {
 
   /* ─── 파생 데이터 ─── */
   const topChanges = data?.apartments
-    ? [...data.apartments].sort((a, b) => b.change - a.change).slice(0, 5)
+    ? [...data.apartments].filter((a) => a.change !== null).sort((a, b) => (b.change as number) - (a.change as number)).slice(0, 5)
     : [];
 
   /* ─── 렌더 ─── */
@@ -387,8 +389,8 @@ export default function PriceMapPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-xs font-bold">{formatPrice(apt.price)}</p>
-                      <p className={`text-[10px] font-semibold ${apt.change >= 0 ? "text-red-500" : "text-blue-500"}`}>
-                        {apt.change >= 0 ? "+" : ""}{apt.change}%
+                      <p className={`text-[10px] font-semibold ${(apt.change ?? 0) >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                        {apt.change !== null ? `${apt.change >= 0 ? "+" : ""}${apt.change}%` : "-"}
                       </p>
                     </div>
                   </button>
@@ -402,10 +404,14 @@ export default function PriceMapPage() {
             <div className="rounded-xl border border-indigo-200 bg-white p-3">
               <div className="mb-2 flex items-center justify-between">
                 <h4 className="text-xs font-bold text-gray-900">{selectedApt.name}</h4>
-                <span className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${selectedApt.change >= 0 ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-600"}`}>
-                  {selectedApt.change >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                  {selectedApt.change >= 0 ? "+" : ""}{selectedApt.change}%
-                </span>
+                {selectedApt.change !== null ? (
+                  <span className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${selectedApt.change >= 0 ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-600"}`}>
+                    {selectedApt.change >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                    {selectedApt.change >= 0 ? "+" : ""}{selectedApt.change}%
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-400">데이터 부족</span>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-1.5 text-[10px]">
                 <div className="rounded bg-gray-50 p-1.5"><p className="text-gray-500">시세</p><p className="text-xs font-bold">{formatPrice(selectedApt.price)}</p></div>

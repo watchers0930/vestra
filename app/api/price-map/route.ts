@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { fetchRecentPrices, fetchRecentRentPrices, LAWD_CODE_MAP } from "@/lib/molit-api";
-import { fetchREBMarketData } from "@/lib/reb-api";
+// fetchREBMarketData 제거 — 단지별 실거래 데이터만 사용
 import { apiCache, APICache } from "@/lib/api-cache";
 import { kvCache } from "@/lib/kv-cache";
 import { AptPrice, SEED_DATA, DONG_CENTER, GU_CENTER, GU_ADDRESS_MAP, REGION_GROUPS } from "@/lib/price-map-data";
@@ -231,13 +231,6 @@ export async function GET(req: NextRequest) {
   const guToAddress = GU_ADDRESS_MAP[gu];
   const lawdCode = guToAddress ? LAWD_CODE_MAP[guToAddress] : undefined;
 
-  // 부동산원 지역 변동률 (거래 부족 단지용 fallback)
-  let rebChangeRate = 0;
-  try {
-    const rebData = await fetchREBMarketData();
-    rebChangeRate = tradeType === "전세" ? rebData.jeonseChangeRate : rebData.saleChangeRate;
-  } catch { /* fallback 0 */ }
-
   if (lawdCode && process.env.MOLIT_API_KEY) {
     try {
       // 전세/매매 공통 처리
@@ -292,12 +285,11 @@ export async function GET(req: NextRequest) {
           if (amount <= 0) return;
 
           const priceInMan = Math.round(amount / 10000);
-          const aptChange = calcChangeByArea(txs.map(t => ({
+          const change = calcChangeByArea(txs.map(t => ({
             amount: tradeType === "전세" ? ((t as { deposit?: number }).deposit || 0) : ((t as { dealAmount?: number }).dealAmount || 0),
             area: t.area || 0,
           })));
-          // 단지별 실거래 변동률 우선, 거래 부족(0)이면 부동산원 지역 변동률
-          const change = aptChange !== 0 ? aptChange : rebChangeRate;
+          // 거래 부족(0)이면 null → 프론트에서 변동률 미표시
 
           // 좌표 우선순위: 1) KV캐시 geocode → 2) 시드 데이터 → 3) 동 중심 폴백
           const dongCenter = DONG_CENTER[latest.dong || ""] || GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
@@ -312,7 +304,7 @@ export async function GET(req: NextRequest) {
             area: latest.area ? Math.round((latest.area * 1.45) / 3.3058) : 0,
             lat: coords.lat,
             lng: coords.lng,
-            change,
+            change: change !== 0 ? change : null,
             year: latest.buildYear || 0,
           });
         });

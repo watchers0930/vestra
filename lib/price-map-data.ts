@@ -10,7 +10,7 @@ export interface AptPrice {
   area: number;        // 평
   lat: number;
   lng: number;
-  change: number;      // 1개월 증감률 (%)
+  change: number | null; // 실거래 기반 변동률 (%), null=데이터 부족
   year: number;        // 건축년도
 }
 
