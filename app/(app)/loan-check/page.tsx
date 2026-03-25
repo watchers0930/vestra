@@ -82,8 +82,9 @@ export default function LoanCheckPage() {
         <h2 className="mb-4 text-sm font-bold text-gray-900">물건 · 소득 정보</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">전세 보증금</label>
+            <label htmlFor="deposit" className="mb-1 block text-xs font-medium text-gray-600">전세 보증금</label>
             <input
+              id="deposit"
               type="text"
               inputMode="numeric"
               value={formatNumber(form.deposit)}
@@ -93,8 +94,9 @@ export default function LoanCheckPage() {
             <p className="mt-0.5 text-xs text-gray-400">{formatKRW(form.deposit)}</p>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">매매 시세</label>
+            <label htmlFor="propertyPrice" className="mb-1 block text-xs font-medium text-gray-600">매매 시세</label>
             <input
+              id="propertyPrice"
               type="text"
               inputMode="numeric"
               value={formatNumber(form.propertyPrice)}
@@ -104,8 +106,9 @@ export default function LoanCheckPage() {
             <p className="mt-0.5 text-xs text-gray-400">{formatKRW(form.propertyPrice)}</p>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">연소득</label>
+            <label htmlFor="annualIncome" className="mb-1 block text-xs font-medium text-gray-600">연소득</label>
             <input
+              id="annualIncome"
               type="text"
               inputMode="numeric"
               value={formatNumber(form.annualIncome)}
@@ -115,8 +118,9 @@ export default function LoanCheckPage() {
             <p className="mt-0.5 text-xs text-gray-400">{formatKRW(form.annualIncome)}</p>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">물건 유형</label>
+            <label htmlFor="propertyType" className="mb-1 block text-xs font-medium text-gray-600">물건 유형</label>
             <select
+              id="propertyType"
               value={form.propertyType}
               onChange={(e) => update("propertyType", e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
@@ -127,8 +131,9 @@ export default function LoanCheckPage() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">기존 대출 잔액</label>
+            <label htmlFor="existingLoans" className="mb-1 block text-xs font-medium text-gray-600">기존 대출 잔액</label>
             <input
+              id="existingLoans"
               type="text"
               inputMode="numeric"
               value={formatNumber(form.existingLoans)}
@@ -160,7 +165,7 @@ export default function LoanCheckPage() {
 
       {/* 에러 메시지 */}
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+        <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4">
           <p className="text-sm text-red-600">{error}</p>
         </div>
       )}

@@ -236,6 +236,7 @@ export default function Sidebar() {
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-lg text-sm w-full text-left",
               "transition-[background-color,color,opacity] duration-200 ease-out",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50",
               isActive
                 ? "sidebar-active-accent text-white font-medium"
                 : "text-gray-400 hover:bg-white/[0.04] hover:text-gray-100"
@@ -275,6 +276,7 @@ export default function Sidebar() {
                       className={cn(
                         "flex items-center gap-2 pl-11 pr-3 py-1.5 rounded-lg text-xs",
                         "transition-[background-color,color] duration-200 ease-out",
+                        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50",
                         isChildActive
                           ? "text-white font-medium"
                           : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
@@ -305,6 +307,7 @@ export default function Sidebar() {
         className={cn(
           "flex items-center gap-3 px-3 py-2 rounded-lg text-sm",
           "transition-[background-color,color,opacity] duration-200 ease-out",
+          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50",
           isActive
             ? "sidebar-active-accent text-white font-medium"
             : "text-gray-400 hover:bg-white/[0.04] hover:text-gray-100"
@@ -348,7 +351,7 @@ export default function Sidebar() {
       >
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-3 border-b border-white/5 overflow-hidden">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <Link href="/" aria-label="VESTRA 홈" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <VestraLogoMark
               size={32}
               variant={isAdmin && isAdminPage ? "admin" : "default"}
@@ -433,7 +436,8 @@ export default function Sidebar() {
                   href="/dashboard"
                   onMouseEnter={(e) => showTooltip(e, "사용자 화면으로 전환하여 서비스를 확인합니다")}
                   onMouseLeave={hideTooltip}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/[0.04] hover:text-gray-100 transition-[background-color,color] duration-200 ease-out"
+                  aria-label="사용자 사이트"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/[0.04] hover:text-gray-100 transition-[background-color,color] duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
                   title={!showLabel ? "사용자 사이트" : undefined}
                 >
                   <ExternalLink size={20} className="flex-shrink-0" />
@@ -444,9 +448,11 @@ export default function Sidebar() {
                   href="/admin"
                   onMouseEnter={(e) => showTooltip(e, "서비스 관리, 회원 관리, 분석 이력을 확인합니다")}
                   onMouseLeave={hideTooltip}
+                  aria-label="관리자"
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm",
                     "transition-[background-color,color] duration-200 ease-out",
+                    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50",
                     pathname.startsWith("/admin")
                       ? "sidebar-active-accent text-white font-medium"
                       : "text-gray-400 hover:bg-white/[0.04] hover:text-gray-100"
@@ -470,7 +476,8 @@ export default function Sidebar() {
         {/* Collapse toggle (데스크톱 전용) */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden lg:flex items-center justify-center h-10 border-t border-white/5 hover:bg-white/[0.04] transition-colors duration-200 group"
+          aria-label={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
+          className="hidden lg:flex items-center justify-center h-10 border-t border-white/5 hover:bg-white/[0.04] transition-colors duration-200 group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
         >
           <div className="w-6 h-6 rounded-md flex items-center justify-center bg-white/[0.04] group-hover:bg-white/[0.08] transition-colors duration-200">
             {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}

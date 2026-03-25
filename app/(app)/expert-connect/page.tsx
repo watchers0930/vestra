@@ -11,6 +11,8 @@ import {
   ArrowRight,
   Phone,
   Mail,
+  CreditCard,
+  CalendarClock,
 } from "lucide-react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent } from "@/components/common/Card";
@@ -96,6 +98,20 @@ const CONSULT_TYPES = [
   "계약서 검토",
 ];
 
+const PRICING = [
+  { label: "법무사 상담", price: "50,000", icon: "📜" },
+  { label: "세무사 상담", price: "80,000", icon: "📊" },
+  { label: "공인중개사 상담", price: "30,000", icon: "🏠" },
+  { label: "종합 컨설팅", price: "150,000", icon: "💼", highlight: true },
+];
+
+const RESERVATION_TYPES = [
+  "법무사 상담",
+  "세무사 상담",
+  "공인중개사 상담",
+  "종합 컨설팅",
+];
+
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -112,6 +128,24 @@ export default function ExpertConnectPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+
+  const [reservationForm, setReservationForm] = useState({
+    consultType: "",
+    preferredDate: "",
+    inquiry: "",
+  });
+
+  const handleReservationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reservationForm.consultType || !reservationForm.preferredDate || !reservationForm.inquiry) {
+      alert("모든 항목을 입력해주세요.");
+      return;
+    }
+    alert(
+      `상담 예약이 완료되었습니다.\n\n상담 유형: ${reservationForm.consultType}\n희망 일시: ${reservationForm.preferredDate}\n문의 내용: ${reservationForm.inquiry}`
+    );
+    setReservationForm({ consultType: "", preferredDate: "", inquiry: "" });
+  };
 
   const handleConsult = (expert: Expert) => {
     setSelectedExpert(expert);
@@ -182,6 +216,140 @@ export default function ExpertConnectPage() {
             />
           ))}
         </div>
+      </div>
+
+      {/* ───── Fee / Pricing Section ───── */}
+      <div className="mb-10">
+        <Card>
+          <CardContent>
+            <div className="flex items-center gap-2 mb-1">
+              <CreditCard className="h-5 w-5 text-indigo-500" />
+              <h2 className="text-lg font-semibold text-[#1d1d1f]">
+                상담 요금 안내
+              </h2>
+            </div>
+            <p className="text-sm text-[#6e6e73] mb-6">
+              분야별 전문가 상담 요금을 확인하세요 (VAT 포함)
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {PRICING.map((item) => (
+                <div
+                  key={item.label}
+                  className={`relative rounded-xl border p-5 text-center transition-shadow hover:shadow-md ${
+                    item.highlight
+                      ? "border-indigo-300 bg-indigo-50/60 ring-1 ring-indigo-200"
+                      : "border-[#e5e5e7] bg-white"
+                  }`}
+                >
+                  {item.highlight && (
+                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500 text-white">
+                      BEST
+                    </span>
+                  )}
+                  <div className="text-2xl mb-2">{item.icon}</div>
+                  <h3 className="text-sm font-semibold text-[#1d1d1f] mb-1">
+                    {item.label}
+                  </h3>
+                  <p className={`text-xl font-bold ${item.highlight ? "text-indigo-600" : "text-[#1d1d1f]"}`}>
+                    {item.price}
+                    <span className="text-xs font-normal text-[#6e6e73] ml-0.5">
+                      원/건
+                    </span>
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ───── Reservation Form ───── */}
+      <div className="mb-10">
+        <Card>
+          <CardContent>
+            <div className="flex items-center gap-2 mb-1">
+              <CalendarClock className="h-5 w-5 text-indigo-500" />
+              <h2 className="text-lg font-semibold text-[#1d1d1f]">
+                상담 예약
+              </h2>
+            </div>
+            <p className="text-sm text-[#6e6e73] mb-6">
+              원하시는 상담 유형과 일시를 선택하고 예약하세요
+            </p>
+
+            <form onSubmit={handleReservationSubmit} className="space-y-5">
+              {/* 상담 유형 */}
+              <div>
+                <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">
+                  상담 유형 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={reservationForm.consultType}
+                  onChange={(e) =>
+                    setReservationForm((p) => ({
+                      ...p,
+                      consultType: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[#e5e5e7] px-4 py-2.5 text-sm text-[#1d1d1f] bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                >
+                  <option value="">상담 유형을 선택하세요</option>
+                  {RESERVATION_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 희망 일시 */}
+              <div>
+                <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">
+                  희망 일시 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  value={reservationForm.preferredDate}
+                  onChange={(e) =>
+                    setReservationForm((p) => ({
+                      ...p,
+                      preferredDate: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[#e5e5e7] px-4 py-2.5 text-sm text-[#1d1d1f] bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                />
+              </div>
+
+              {/* 문의 내용 */}
+              <div>
+                <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">
+                  문의 내용 <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={reservationForm.inquiry}
+                  onChange={(e) =>
+                    setReservationForm((p) => ({
+                      ...p,
+                      inquiry: e.target.value,
+                    }))
+                  }
+                  rows={4}
+                  placeholder="상담받고 싶은 내용을 자세히 적어주세요"
+                  className="w-full rounded-xl border border-[#e5e5e7] px-4 py-2.5 text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-600 active:bg-indigo-700"
+              >
+                <CalendarClock className="h-4 w-4" />
+                예약하기
+              </button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
 
       {/* ───── Consultation Form ───── */}

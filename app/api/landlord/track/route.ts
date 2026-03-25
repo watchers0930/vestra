@@ -2,6 +2,8 @@
  * 임대인 물건 추적 API
  * 등기부에서 추출한 소유자명으로 동일 소유자의 다른 물건을 조회하고
  * 종합 위험 프로파일을 반환한다.
+ *
+ * v2: MOLIT 실거래가 API로 추정 시세 조회 (하드코딩 제거)
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -12,6 +14,7 @@ import {
   assessPropertyRisk,
   type LandlordProperty,
 } from "@/lib/landlord-profiler";
+import { fetchRecentPrices } from "@/lib/molit-api";
 
 // 시드 데이터: 소유자별 물건 목록 (실 데이터 연동 전)
 // TODO: MOLIT 등기부 API 또는 한국평가데이터 API 연동
@@ -29,6 +32,45 @@ const SEED_OWNERS: Record<string, LandlordProperty[]> = {
     { address: "서울특별시 용산구 이촌동 303", mortgageTotal: 80_000_000, liensTotal: 0, estimatedPrice: 1_500_000_000, riskLevel: "LOW" },
   ],
 };
+
+/**
+ * 주소 기반으로 MOLIT 실거래가 API에서 추정 시세를 조회
+ * - 최근 6개월 거래 데이터의 평균가를 사용
+ * - 아파트명이 주소에 포함되어 있으면 해당 아파트만 필터링
+ */
+async function estimatePriceFromMolit(address: string): Promise<number> {
+  try {
+    const result = await fetchRecentPrices(address, 6);
+    if (!result || result.transactions.length === 0) return 0;
+
+    // 주소에서 아파트명 추출 시도 (예: "철산한신 아파트" → "철산한신")
+    const aptNameMatch = address.match(/([가-힣]+(?:아파트|APT|apt))/);
+    const aptKeyword = aptNameMatch
+      ? aptNameMatch[1].replace(/아파트|APT|apt/gi, "").trim()
+      : null;
+
+    let filtered = result.transactions;
+
+    // 아파트명이 있으면 해당 아파트만 필터
+    if (aptKeyword && aptKeyword.length >= 2) {
+      const aptFiltered = result.transactions.filter((t) =>
+        t.aptName?.includes(aptKeyword)
+      );
+      if (aptFiltered.length > 0) {
+        filtered = aptFiltered;
+      }
+    }
+
+    // 최근 거래 기준 평균가 산출
+    const prices = filtered.map((t) => t.dealAmount);
+    const avgPrice = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
+
+    return avgPrice;
+  } catch (err) {
+    console.error("[landlord:estimatePrice] MOLIT 조회 실패:", err);
+    return 0;
+  }
+}
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -57,16 +99,21 @@ export async function POST(req: NextRequest) {
     let properties = SEED_OWNERS[ownerName.trim()];
 
     if (!properties) {
-      // 시드에 없으면 기본 물건 1건 (입력된 주소)
-      properties = baseAddress
-        ? [{
-            address: baseAddress,
-            mortgageTotal: 0,
-            liensTotal: 0,
-            estimatedPrice: 500_000_000,
-            riskLevel: assessPropertyRisk(0, 0, 500_000_000),
-          }]
-        : [];
+      if (baseAddress) {
+        // MOLIT 실거래가 API로 추정 시세 조회
+        const estimatedPrice = await estimatePriceFromMolit(baseAddress);
+        const finalPrice = estimatedPrice > 0 ? estimatedPrice : 0;
+
+        properties = [{
+          address: baseAddress,
+          mortgageTotal: 0,
+          liensTotal: 0,
+          estimatedPrice: finalPrice,
+          riskLevel: assessPropertyRisk(0, 0, finalPrice),
+        }];
+      } else {
+        properties = [];
+      }
     }
 
     // 위험도 재계산
