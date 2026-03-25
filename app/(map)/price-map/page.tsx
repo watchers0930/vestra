@@ -154,9 +154,20 @@ export default function PriceMapPage() {
       const maps = window.kakao.maps;
       const center = new maps.LatLng(data.center.lat, data.center.lng);
 
-      // 맵 생성
-      const map = new maps.Map(mapRef.current!, { center, level: 5 });
+      // 맵 생성 — 초기 줌 레벨 7 (타일 로딩 최소화)
+      const map = new maps.Map(mapRef.current!, { center, level: 7 });
       kakaoMapRef.current = map;
+
+      // 영역 제한 — 구 경계 밖 타일 로딩 방지
+      if (data.apartments.length > 0) {
+        const bounds = new maps.LatLngBounds();
+        data.apartments.forEach((apt) => bounds.extend(new maps.LatLng(apt.lat, apt.lng)));
+        map.setBounds(bounds, 50); // 50px 패딩
+      }
+
+      // 줌 레벨 제한 (1~10, 너무 줌아웃 방지)
+      map.setMinLevel(1);
+      map.setMaxLevel(10);
 
       // 기존 클러스터러 제거
       if (clustererRef.current) {
@@ -164,47 +175,30 @@ export default function PriceMapPage() {
         clustererRef.current = null;
       }
 
-      // 투명 마커 이미지 (클러스터링 위치 계산용, 화면에 안 보임)
+      // 투명 마커 이미지 (클러스터링 위치 계산용)
       const invisibleImage = new maps.MarkerImage(
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
         new maps.Size(1, 1),
       );
 
-      // 마커 + 오버레이 생성
-      const overlays: { overlay: any; apt: AptData }[] = [];
+      // 마커 + 오버레이 생성 (뷰포트 기반 지연 렌더링)
+      const allOverlays: { overlay: any; apt: AptData; position: any }[] = [];
       const markers = data.apartments.map((apt) => {
         const position = new maps.LatLng(apt.lat, apt.lng);
-
-        // 투명 마커 (클러스터러용 — 화면에 표시 안 됨)
         const marker = new maps.Marker({ position, image: invisibleImage });
 
-        // 가격 태그 오버레이
+        // 오버레이는 미리 생성하되 DOM은 최소화
         const priceText = formatPrice(apt.price);
         const changeSign = apt.change >= 0 ? "+" : "";
         const bgColor = getAreaColor(apt.area);
 
         const content = document.createElement("div");
-        content.innerHTML = `
-          <div style="cursor:pointer;padding:4px 10px;border-radius:8px;font-size:13px;font-weight:700;color:white;background:${bgColor};box-shadow:0 2px 8px rgba(0,0,0,0.25);white-space:nowrap;line-height:1.3;text-align:center;min-width:50px;">
-            <div style="font-size:11px;opacity:0.85;">${escapeHtml(apt.area)}평</div>
-            <div>${escapeHtml(priceText)}</div>
-            <div style="font-size:10px;color:#fff;background:rgba(255,255,255,0.2);border-radius:4px;padding:1px 4px;margin-top:2px;">
-              ${escapeHtml(changeSign)}${escapeHtml(apt.change)}%
-            </div>
-          </div>
-          <div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid ${bgColor};margin:0 auto;"></div>
-        `;
-        content.style.cssText = "display:flex;flex-direction:column;align-items:center;";
+        content.innerHTML = `<div style="cursor:pointer;padding:4px 10px;border-radius:8px;font-size:13px;font-weight:700;color:#fff;background:${bgColor};box-shadow:0 2px 8px rgba(0,0,0,.25);white-space:nowrap;line-height:1.3;text-align:center;min-width:50px"><div style="font-size:11px;opacity:.85">${escapeHtml(apt.area)}평</div><div>${escapeHtml(priceText)}</div><div style="font-size:10px;color:#fff;background:rgba(255,255,255,.2);border-radius:4px;padding:1px 4px;margin-top:2px">${escapeHtml(changeSign)}${escapeHtml(apt.change)}%</div></div><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid ${bgColor};margin:0 auto"></div>`;
+        content.style.cssText = "display:flex;flex-direction:column;align-items:center";
         content.addEventListener("click", () => selectAndMoveToApt(apt));
 
-        const overlay = new maps.CustomOverlay({
-          position,
-          content,
-          yAnchor: 1.1,
-          map: null,
-        });
-
-        overlays.push({ overlay, apt });
+        const overlay = new maps.CustomOverlay({ position, content, yAnchor: 1.1, map: null });
+        allOverlays.push({ overlay, apt, position });
         return marker;
       });
 
@@ -213,64 +207,52 @@ export default function PriceMapPage() {
         map,
         markers,
         gridSize: 60,
-        minLevel: 4, // 줌 레벨 4 이상에서 클러스터링
+        minLevel: 4,
         disableClickZoom: false,
         averageCenter: true,
         styles: [
-          // 소규모 클러스터 (2~10)
-          {
-            width: "44px", height: "44px",
-            background: "rgba(99, 102, 241, 0.85)",
-            borderRadius: "50%",
-            color: "#fff",
-            textAlign: "center",
-            fontWeight: "700",
-            fontSize: "14px",
-            lineHeight: "44px",
-          },
-          // 중규모 클러스터 (11~50)
-          {
-            width: "56px", height: "56px",
-            background: "rgba(79, 70, 229, 0.85)",
-            borderRadius: "50%",
-            color: "#fff",
-            textAlign: "center",
-            fontWeight: "700",
-            fontSize: "15px",
-            lineHeight: "56px",
-          },
-          // 대규모 클러스터 (51+)
-          {
-            width: "68px", height: "68px",
-            background: "rgba(55, 48, 163, 0.85)",
-            borderRadius: "50%",
-            color: "#fff",
-            textAlign: "center",
-            fontWeight: "700",
-            fontSize: "16px",
-            lineHeight: "68px",
-          },
+          { width: "44px", height: "44px", background: "rgba(99,102,241,.85)", borderRadius: "50%", color: "#fff", textAlign: "center", fontWeight: "700", fontSize: "14px", lineHeight: "44px" },
+          { width: "56px", height: "56px", background: "rgba(79,70,229,.85)", borderRadius: "50%", color: "#fff", textAlign: "center", fontWeight: "700", fontSize: "15px", lineHeight: "56px" },
+          { width: "68px", height: "68px", background: "rgba(55,48,163,.85)", borderRadius: "50%", color: "#fff", textAlign: "center", fontWeight: "700", fontSize: "16px", lineHeight: "68px" },
         ],
       });
       clustererRef.current = clusterer;
 
-      // 줌 변경 시 오버레이 토글
-      const DETAIL_LEVEL = 3; // 줌 레벨 3 이하에서 개별 가격 태그 표시
-      const toggleOverlays = () => {
+      // 뷰포트 기반 오버레이 토글 — 화면 밖 오버레이 제거로 DOM 최소화
+      const DETAIL_LEVEL = 3;
+      let visibleOverlays = new Set<number>();
+
+      const updateOverlays = () => {
         const level = map.getLevel();
         if (level <= DETAIL_LEVEL) {
-          // 상세 줌: 가격 태그 표시, 클러스터 숨김
-          overlays.forEach(({ overlay }) => overlay.setMap(map));
           clusterer.setMap(null);
+          const bounds = map.getBounds();
+          const newVisible = new Set<number>();
+
+          allOverlays.forEach(({ overlay, position }, idx) => {
+            if (bounds.contain(position)) {
+              if (!visibleOverlays.has(idx)) overlay.setMap(map);
+              newVisible.add(idx);
+            } else {
+              if (visibleOverlays.has(idx)) overlay.setMap(null);
+            }
+          });
+          // 이전에 보였지만 이제 안 보이는 것 제거
+          visibleOverlays.forEach((idx) => {
+            if (!newVisible.has(idx)) allOverlays[idx].overlay.setMap(null);
+          });
+          visibleOverlays = newVisible;
         } else {
-          // 광역 줌: 클러스터만 표시, 가격 태그 숨김
-          overlays.forEach(({ overlay }) => overlay.setMap(null));
+          // 광역 줌: 모든 오버레이 숨기고 클러스터만
+          visibleOverlays.forEach((idx) => allOverlays[idx].overlay.setMap(null));
+          visibleOverlays = new Set();
           clusterer.setMap(map);
         }
       };
 
-      maps.event.addListener(map, "zoom_changed", toggleOverlays);
-      toggleOverlays();
+      maps.event.addListener(map, "zoom_changed", updateOverlays);
+      maps.event.addListener(map, "dragend", updateOverlays);
+      updateOverlays();
 
       // 반경 원 초기화
       circlesRef.current.forEach((c) => c.setMap(null));
