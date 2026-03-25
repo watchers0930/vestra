@@ -49,11 +49,14 @@ async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ 
   // 동 또는 구 중심 좌표를 검색 기준점으로 사용
   const center = DONG_CENTER[dong] || GU_CENTER[gu];
 
-  // 검색 전략: 구 중심 5km 반경 내에서 검색
+  // 아파트명 정제: 괄호/숫자 제거 (예: "신동아(22)" → "신동아")
+  const cleanName = aptName.replace(/\(.*?\)/g, "").replace(/\d+$/g, "").trim();
+
+  // 검색 전략: 구+동+이름아파트 (가장 정확) → 동+이름아파트 → 이름 아파트
   const queries = [
-    `${dong} ${aptName} 아파트`,
-    `${aptName} 아파트`,
-    `${gu} ${aptName}`,
+    `${gu} ${dong} ${cleanName}아파트`,
+    `${dong} ${cleanName}아파트`,
+    `${cleanName} 아파트`,
   ];
 
   for (const q of queries) {
