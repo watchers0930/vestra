@@ -164,47 +164,47 @@ export default function PriceMapPage() {
         clustererRef.current = null;
       }
 
-      // 마커 생성 (클러스터러에 넣을 Marker 배열)
-      const markers = data.apartments.map((apt) => {
-        const marker = new maps.Marker({
-          position: new maps.LatLng(apt.lat, apt.lng),
-        });
+      // 투명 마커 이미지 (클러스터링 위치 계산용, 화면에 안 보임)
+      const invisibleImage = new maps.MarkerImage(
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        new maps.Size(1, 1),
+      );
 
-        // 커스텀 오버레이 (줌인 시 개별 마커 위에 표시)
+      // 마커 + 오버레이 생성
+      const overlays: { overlay: any; apt: AptData }[] = [];
+      const markers = data.apartments.map((apt) => {
+        const position = new maps.LatLng(apt.lat, apt.lng);
+
+        // 투명 마커 (클러스터러용 — 화면에 표시 안 됨)
+        const marker = new maps.Marker({ position, image: invisibleImage });
+
+        // 가격 태그 오버레이
         const priceText = formatPrice(apt.price);
         const changeSign = apt.change >= 0 ? "+" : "";
         const bgColor = getAreaColor(apt.area);
 
         const content = document.createElement("div");
-        content.style.pointerEvents = "none";
         content.innerHTML = `
-          <div style="display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%);">
-            <div style="pointer-events:auto;cursor:pointer;padding:4px 10px;border-radius:8px;font-size:13px;font-weight:700;color:white;background:${bgColor};box-shadow:0 2px 8px rgba(0,0,0,0.25);white-space:nowrap;line-height:1.3;text-align:center;min-width:50px;">
-              <div style="font-size:11px;opacity:0.85;">${escapeHtml(apt.area)}평</div>
-              <div>${escapeHtml(priceText)}</div>
-              <div style="font-size:10px;color:#fff;background:rgba(255,255,255,0.2);border-radius:4px;padding:1px 4px;margin-top:2px;">
-                ${escapeHtml(changeSign)}${escapeHtml(apt.change)}%
-              </div>
+          <div style="cursor:pointer;padding:4px 10px;border-radius:8px;font-size:13px;font-weight:700;color:white;background:${bgColor};box-shadow:0 2px 8px rgba(0,0,0,0.25);white-space:nowrap;line-height:1.3;text-align:center;min-width:50px;">
+            <div style="font-size:11px;opacity:0.85;">${escapeHtml(apt.area)}평</div>
+            <div>${escapeHtml(priceText)}</div>
+            <div style="font-size:10px;color:#fff;background:rgba(255,255,255,0.2);border-radius:4px;padding:1px 4px;margin-top:2px;">
+              ${escapeHtml(changeSign)}${escapeHtml(apt.change)}%
             </div>
-            <div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid ${bgColor};"></div>
           </div>
+          <div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid ${bgColor};margin:0 auto;"></div>
         `;
-        content.querySelector("div > div:first-child")!.addEventListener("click", (e) => {
-          e.stopPropagation();
-          selectAndMoveToApt(apt);
-        });
+        content.style.cssText = "display:flex;flex-direction:column;align-items:center;";
+        content.addEventListener("click", () => selectAndMoveToApt(apt));
 
         const overlay = new maps.CustomOverlay({
-          position: new maps.LatLng(apt.lat, apt.lng),
+          position,
           content,
-          yAnchor: 1,
-          map: null, // 처음엔 숨김 — 줌 레벨에 따라 토글
+          yAnchor: 1.1,
+          map: null,
         });
 
-        // marker에 overlay와 데이터 연결
-        (marker as Record<string, unknown>).__overlay = overlay;
-        (marker as Record<string, unknown>).__aptData = apt;
-
+        overlays.push({ overlay, apt });
         return marker;
       });
 
@@ -254,23 +254,22 @@ export default function PriceMapPage() {
       });
       clustererRef.current = clusterer;
 
-      // 줌 변경 시 오버레이 토글 (상세 줌에서만 가격 태그 표시)
-      const DETAIL_LEVEL = 3; // 줌 레벨 3 이하면 개별 표시
+      // 줌 변경 시 오버레이 토글
+      const DETAIL_LEVEL = 3; // 줌 레벨 3 이하에서 개별 가격 태그 표시
       const toggleOverlays = () => {
         const level = map.getLevel();
-        markers.forEach((m) => {
-          const overlay = (m as Record<string, unknown>).__overlay as { setMap: (map: unknown) => void };
-          if (level <= DETAIL_LEVEL) {
-            // 상세 줌: 클러스터러에서 빠진 개별 마커에 오버레이 표시
-            overlay.setMap(map);
-          } else {
-            overlay.setMap(null);
-          }
-        });
+        if (level <= DETAIL_LEVEL) {
+          // 상세 줌: 가격 태그 표시, 클러스터 숨김
+          overlays.forEach(({ overlay }) => overlay.setMap(map));
+          clusterer.setMap(null);
+        } else {
+          // 광역 줌: 클러스터만 표시, 가격 태그 숨김
+          overlays.forEach(({ overlay }) => overlay.setMap(null));
+          clusterer.setMap(map);
+        }
       };
 
       maps.event.addListener(map, "zoom_changed", toggleOverlays);
-      // 초기 상태 적용
       toggleOverlays();
 
       // 반경 원 초기화
