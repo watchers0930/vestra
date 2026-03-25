@@ -35,6 +35,24 @@ export interface FSSLoanRates {
   dataSource: "fss" | "fallback";
 }
 
+/** FSS API baseList 항목 (전세자금대출 상품 기본정보) */
+interface FSSBaseItem {
+  fin_co_no: string;        // 금융회사 코드
+  fin_prdt_cd: string;      // 금융상품 코드
+  kor_co_nm: string;        // 금융회사명 (한글)
+  fin_prdt_nm: string;      // 금융상품명
+  loan_lmt: string;         // 대출한도
+  dcls_strt_day: string;    // 공시 시작일
+}
+
+/** FSS API optionList 항목 (전세자금대출 금리 옵션) */
+interface FSSOptionItem {
+  fin_co_no: string;        // 금융회사 코드
+  fin_prdt_cd: string;      // 금융상품 코드
+  lend_rate_min: number;    // 최저금리
+  lend_rate_max: number;    // 최고금리
+}
+
 /** 캐시된 FSS 금리 데이터 반환 (없으면 null) */
 export function getCachedRates(): FSSLoanRates | null {
   return apiCache.get<FSSLoanRates>(CACHE_KEY);
@@ -62,8 +80,8 @@ export async function fetchFSSLoanRates(): Promise<FSSLoanRates> {
       throw new Error(`FSS error: ${data.result?.err_msg}`);
     }
 
-    const baseList = data.result?.baseList || [];
-    const optionList = data.result?.optionList || [];
+    const baseList: FSSBaseItem[] = data.result?.baseList || [];
+    const optionList: FSSOptionItem[] = data.result?.optionList || [];
 
     const products: FSSLoanProduct[] = [];
 
@@ -80,12 +98,12 @@ export async function fetchFSSLoanRates(): Promise<FSSLoanRates> {
 
       // 해당 상품의 금리 옵션 조회
       const options = optionList.filter(
-        (o: any) => o.fin_co_no === base.fin_co_no && o.fin_prdt_cd === base.fin_prdt_cd
+        (o) => o.fin_co_no === base.fin_co_no && o.fin_prdt_cd === base.fin_prdt_cd
       );
 
       const rates = options
-        .flatMap((o: any) => [o.lend_rate_min, o.lend_rate_max])
-        .filter((r: any) => r != null && r > 0);
+        .flatMap((o) => [o.lend_rate_min, o.lend_rate_max])
+        .filter((r): r is number => r != null && r > 0);
 
       if (rates.length === 0) continue;
 

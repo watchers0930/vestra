@@ -26,7 +26,6 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error("[NewsCollector] 크론 실패:", error);
-    console.error("[NewsCollector] 크론 실패:", error);
     return NextResponse.json(
       { error: "Collection failed" },
       { status: 500 }

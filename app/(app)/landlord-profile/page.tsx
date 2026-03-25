@@ -15,6 +15,7 @@ import {
 import { PageHeader, Card, Badge } from "@/components/common";
 import { Button } from "@/components/common";
 import ReportModal from "@/components/landlord/ReportModal";
+import { formatKRW } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
 // Types (LandlordTracker의 인터페이스와 동일)
@@ -41,21 +42,6 @@ interface LandlordProfile {
   courtCaseCount: number;
   fraudCaseCount: number;
   riskFactors: string[];
-}
-
-// ---------------------------------------------------------------------------
-// 유틸
-// ---------------------------------------------------------------------------
-
-function formatKRW(value: number): string {
-  if (value >= 100_000_000) {
-    const eok = (value / 100_000_000).toFixed(1);
-    return `${eok}억`;
-  }
-  if (value >= 10_000) {
-    return `${Math.round(value / 10_000).toLocaleString()}만`;
-  }
-  return value.toLocaleString() + "원";
 }
 
 const GRADE_CONFIG: Record<

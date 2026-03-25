@@ -24,3 +24,10 @@ export function formatNumber(val: number): string {
 export function parseNumber(val: string): number {
   return Number(val.replace(/,/g, "")) || 0;
 }
+
+/** HTML 특수문자 이스케이프 (XSS 방지) */
+export function escapeHtml(str: string | number): string {
+  return String(str).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] || c)
+  );
+}

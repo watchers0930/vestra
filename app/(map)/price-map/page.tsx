@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { MapPin, TrendingUp, TrendingDown, ChevronDown } from "lucide-react";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, escapeHtml } from "@/lib/format";
 
 /* ─── 타입 ─── */
 interface AptData {
@@ -25,12 +25,6 @@ interface MapResponse {
 }
 
 /* ─── 유틸 ─── */
-function escapeHtml(str: string | number): string {
-  return String(str).replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] || c)
-  );
-}
-
 function getAreaColor(area: number): string {
   if (area >= 60) return "#1e3a5f";
   if (area >= 50) return "#1e40af";
@@ -54,11 +48,10 @@ const SIDO_MAP: Record<string, string[]> = {
 /* ─── 메인 컴포넌트 ─── */
 export default function PriceMapPage() {
   const mapRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Kakao Maps SDK does not provide TypeScript type definitions,
+  // so we use `any` for map instance refs.
   const kakaoMapRef = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const clustererRef = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const circlesRef = useRef<any[]>([]);
 
   const [data, setData] = useState<MapResponse | null>(null);

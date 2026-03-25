@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { FileText, TrendingUp, Shield, Banknote, Lock } from "lucide-react";
+import { formatKRW } from "@/lib/format";
 
 interface DecisionSummary {
   overallGrade: string;
@@ -25,12 +26,6 @@ interface ReportData {
   summary: DecisionSummary;
   loanSimulation: { results: LoanResult[]; bestOption: { bankName: string; productName: string; reason: string } | null };
   generatedAt: string;
-}
-
-function formatKRW(val: number): string {
-  if (val >= 100_000_000) return `${(val / 100_000_000).toFixed(1)}억`;
-  if (val >= 10_000) return `${Math.round(val / 10_000).toLocaleString()}만`;
-  return val.toLocaleString() + "원";
 }
 
 const GRADE_STYLES: Record<string, { bg: string; text: string; label: string }> = {

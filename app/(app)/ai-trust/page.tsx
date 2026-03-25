@@ -23,6 +23,7 @@ import {
 } from "recharts";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent } from "@/components/common/Card";
+import { formatNumber } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,10 +62,6 @@ interface TrustData {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function formatNumber(n: number) {
-  return n.toLocaleString("ko-KR");
-}
-
 function AccuracyBar({ value, label }: { value: number; label: string }) {
   const color =
     value >= 95
