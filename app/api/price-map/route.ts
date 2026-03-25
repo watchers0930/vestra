@@ -22,9 +22,13 @@ const DONG_CENTER: Record<string, { lat: number; lng: number }> = {
 // 카카오 REST API로 아파트 실제 좌표 검색
 const GEOCODE_TTL = 7 * 24 * 60 * 60 * 1000; // 7일
 
-async function kakaoSearch(kakaoKey: string, query: string): Promise<{ lat: number; lng: number } | null> {
+// 구 중심 좌표 기준 반경 내 검색 (다른 지역 결과 방지)
+async function kakaoSearch(kakaoKey: string, query: string, center?: { lat: number; lng: number }): Promise<{ lat: number; lng: number } | null> {
   try {
-    const url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=1`;
+    let url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=1`;
+    if (center) {
+      url += `&x=${center.lng}&y=${center.lat}&radius=5000&sort=distance`;
+    }
     const res = await fetch(url, { headers: { Authorization: `KakaoAK ${kakaoKey}` } });
     if (!res.ok) return null;
     const json = await res.json();
@@ -35,22 +39,25 @@ async function kakaoSearch(kakaoKey: string, query: string): Promise<{ lat: numb
 }
 
 async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ lat: number; lng: number } | null> {
-  const cacheKey = APICache.makeKey("geocode", gu, aptName);
+  const cacheKey = APICache.makeKey("geocode", gu, dong, aptName);
   const cached = apiCache.get<{ lat: number; lng: number }>(cacheKey);
   if (cached) return cached;
 
   const kakaoKey = process.env.KAKAO_REST_KEY;
   if (!kakaoKey) return null;
 
-  // 검색 전략: 1) "아파트명 아파트" → 2) "동 아파트명 아파트" → 3) "구 아파트명"
+  // 동 또는 구 중심 좌표를 검색 기준점으로 사용
+  const center = DONG_CENTER[dong] || GU_CENTER[gu];
+
+  // 검색 전략: 구 중심 5km 반경 내에서 검색
   const queries = [
-    `${aptName} 아파트`,
     `${dong} ${aptName} 아파트`,
+    `${aptName} 아파트`,
     `${gu} ${aptName}`,
   ];
 
   for (const q of queries) {
-    const coord = await kakaoSearch(kakaoKey, q);
+    const coord = await kakaoSearch(kakaoKey, q, center);
     if (coord) {
       apiCache.set(cacheKey, coord, GEOCODE_TTL);
       return coord;
