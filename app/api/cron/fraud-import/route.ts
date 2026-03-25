@@ -32,7 +32,7 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error("[FraudImport] 크론 실패:", error);
     return NextResponse.json(
-      { error: "Import failed", detail: String(error) },
+      { error: "Import failed" },
       { status: 500 }
     );
   }

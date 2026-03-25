@@ -97,7 +97,7 @@ function detectChangeType(
 
 export async function GET(req: NextRequest) {
   try {
-    if (!verifyCronSecret(req.headers.get("authorization")) && process.env.NODE_ENV === "production") {
+    if (!verifyCronSecret(req.headers.get("authorization"))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
