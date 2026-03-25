@@ -7,15 +7,12 @@
 
 import { NextResponse } from "next/server";
 import { importFromExternalSource } from "@/lib/fraud-data-importer";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  // Vercel Cron 인증
-  const authHeader = req.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!verifyCronSecret(req.headers.get("authorization"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

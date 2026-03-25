@@ -26,6 +26,9 @@ export class APICache {
       this.cache.delete(key);
       return null;
     }
+    // LRU: 접근한 항목을 끝으로 이동
+    this.cache.delete(key);
+    this.cache.set(key, entry);
     return entry.data as T;
   }
 

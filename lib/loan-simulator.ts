@@ -162,7 +162,7 @@ const LOAN_PRODUCTS: BankLoanProduct[] = [
 // ---------------------------------------------------------------------------
 
 function estimateAnnualRepayment(loanAmount: number, rate: number): number {
-  // 원리금균등 30년 가정 → 연간 상환액 추정
+  if (rate <= 0) return loanAmount / 30; // 0% 금리 시 단순 원금 분할
   const monthlyRate = rate / 100 / 12;
   const months = 360;
   const monthlyPayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1);

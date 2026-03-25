@@ -55,7 +55,7 @@ export async function fetchFSSLoanRates(): Promise<FSSLoanRates> {
       signal: AbortSignal.timeout(15000),
     });
 
-    if (!res.ok) throw new Error(`FSS API ${res.status}`);
+    if (!res.ok) throw new Error(`FSS API 응답 오류 (${res.status})`);
     const data = await res.json();
 
     if (data.result?.err_cd !== "000") {
@@ -109,7 +109,9 @@ export async function fetchFSSLoanRates(): Promise<FSSLoanRates> {
     console.log(`[FSS-LOAN] ${products.length}개 상품 금리 갱신 완료`);
     return result;
   } catch (err) {
-    console.error("[FSS-LOAN] API 호출 실패:", err);
+    // API 키가 포함된 URL 노출 방지
+    const msg = err instanceof Error ? err.message : "unknown error";
+    console.error("[FSS-LOAN] API 호출 실패:", msg);
     return { products: [], fetchedAt: new Date().toISOString(), dataSource: "fallback" };
   }
 }

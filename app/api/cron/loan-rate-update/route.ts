@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchFSSLoanRates } from "@/lib/fss-loan-api";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 /**
  * 전세대출 금리 자동 갱신 (Vercel Cron)
@@ -9,8 +10,7 @@ import { fetchFSSLoanRates } from "@/lib/fss-loan-api";
  */
 
 export async function GET(req: Request) {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyCronSecret(req.headers.get("authorization"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

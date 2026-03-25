@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 /**
  * 보증보험 조건 변경 모니터링 (Vercel Cron)
@@ -28,9 +29,7 @@ const MONITOR_TARGETS = [
 ];
 
 export async function GET(req: Request) {
-  // Vercel Cron 인증
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyCronSecret(req.headers.get("authorization"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createHash } from "crypto";
 import { sendNotification } from "@/lib/notification-sender";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 const BATCH_SIZE = 50; // Vercel 60초 타임아웃 고려
 
@@ -96,13 +97,8 @@ function detectChangeType(
 
 export async function GET(req: NextRequest) {
   try {
-    // Vercel Cron 인증
-    const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      // 개발 환경에서는 통과
-      if (process.env.NODE_ENV === "production") {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+    if (!verifyCronSecret(req.headers.get("authorization")) && process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 활성 모니터링 대상 조회 (배치)

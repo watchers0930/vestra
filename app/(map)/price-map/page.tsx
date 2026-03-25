@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { MapPin, TrendingUp, TrendingDown, ChevronDown } from "lucide-react";
+import { formatPrice } from "@/lib/format";
 
 /* ─── 타입 ─── */
 interface AptData {
@@ -24,15 +25,6 @@ interface MapResponse {
 }
 
 /* ─── 유틸 ─── */
-function formatPrice(price: number): string {
-  if (price >= 10000) {
-    const eok = Math.floor(price / 10000);
-    const remainder = Math.round((price % 10000) / 1000);
-    return remainder > 0 ? `${eok}.${remainder}억` : `${eok}억`;
-  }
-  return `${(price / 10000).toFixed(1)}억`;
-}
-
 function escapeHtml(str: string | number): string {
   return String(str).replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] || c)
@@ -129,11 +121,13 @@ export default function PriceMapPage() {
     setLoading(true);
     try {
       const res = await fetch(`/api/price-map?gu=${encodeURIComponent(gu)}&type=${tradeType}`);
+      if (!res.ok) throw new Error(`API ${res.status}`);
       const json: MapResponse = await res.json();
       setData(json);
       setSelectedApt(null);
     } catch (err) {
       console.error("시세 데이터 로드 실패:", err);
+      setData(null);
     } finally {
       setLoading(false);
     }

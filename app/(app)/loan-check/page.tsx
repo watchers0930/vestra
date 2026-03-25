@@ -23,19 +23,7 @@ interface SimResponse {
   disclaimer: string;
 }
 
-function formatKRW(val: number): string {
-  if (val >= 100_000_000) return `${(val / 100_000_000).toFixed(1)}억`;
-  if (val >= 10_000) return `${Math.round(val / 10_000).toLocaleString()}만`;
-  return val.toLocaleString() + "원";
-}
-
-function formatNumber(val: number): string {
-  return val.toLocaleString();
-}
-
-function parseNumber(val: string): number {
-  return Number(val.replace(/,/g, "")) || 0;
-}
+import { formatKRW, formatNumber, parseNumber } from "@/lib/format";
 
 export default function LoanCheckPage() {
   const [form, setForm] = useState({
@@ -50,26 +38,33 @@ export default function LoanCheckPage() {
   });
   const [result, setResult] = useState<SimResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedBank, setSelectedBank] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/loan/simulate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const data = await res.json();
-      if (res.ok) setResult(data);
-    } catch (err) {
-      console.error(err);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setError(err.error || `서버 오류 (${res.status})`);
+        return;
+      }
+      setResult(await res.json());
+    } catch {
+      setError("네트워크 오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setLoading(false);
     }
   };
 
-  const update = (key: string, value: unknown) => setForm((p) => ({ ...p, [key]: value }));
+  type FormKey = keyof typeof form;
+  const update = (key: FormKey, value: typeof form[FormKey]) => setForm((p) => ({ ...p, [key]: value }));
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
@@ -162,6 +157,13 @@ export default function LoanCheckPage() {
           {loading ? "시뮬레이션 중..." : "대출 가심사 시작"}
         </button>
       </div>
+
+      {/* 에러 메시지 */}
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
 
       {/* 결과 */}
       {result && (
