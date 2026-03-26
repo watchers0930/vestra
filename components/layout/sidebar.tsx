@@ -66,15 +66,15 @@ const userMenuItems: MenuItem[] = [
   { href: "/tax", icon: Calculator, label: "세무 시뮬레이션", description: "취득세·양도세·종부세 등 부동산 세금을 시나리오별로 계산합니다" },
   { href: "/prediction", icon: TrendingUp, label: "시세전망", description: "실거래가 데이터 기반으로 시세 추이와 향후 전망을 분석합니다" },
   { href: "/price-map", icon: MapPin, label: "시세지도", description: "지도 위에서 아파트별 실거래가와 시세 변동을 한눈에 확인합니다" },
-  {
-    href: "/loan-check", icon: Banknote, label: "대출 가심사", description: "7대 은행 전세대출 조건을 한번에 비교하고 가능 여부를 확인합니다",
-    children: [
-      { href: "/loan-check", label: "대출 가심사" },
-      { href: "/jeonse/comparison", label: "전세 vs 월세 비교" },
-      { href: "/jeonse/yield", label: "임대 수익률" },
-      { href: "/jeonse/moving-cost", label: "이사 비용 계산기" },
-    ],
-  },
+  // {
+  //   href: "/loan-check", icon: Banknote, label: "대출 가심사", description: "7대 은행 전세대출 조건을 한번에 비교하고 가능 여부를 확인합니다",
+  //   children: [
+  //     { href: "/loan-check", label: "대출 가심사" },
+  //     { href: "/jeonse/comparison", label: "전세 vs 월세 비교" },
+  //     { href: "/jeonse/yield", label: "임대 수익률" },
+  //     { href: "/jeonse/moving-cost", label: "이사 비용 계산기" },
+  //   ],
+  // },
   {
     href: "/jeonse", icon: Home, label: "전세보호", description: "전세 안전 진단부터 전입신고·확정일자까지 보호 절차를 안내합니다",
     children: [
@@ -85,7 +85,7 @@ const userMenuItems: MenuItem[] = [
       { href: "/jeonse/jeonse-right", label: "전세권설정등기" },
       { href: "/jeonse/lease-registration", label: "임차권등기명령" },
       { href: "/jeonse/lease-report", label: "주택임대차 신고" },
-      { href: "/landlord-profile", label: "임대인 프로파일" },
+      // { href: "/landlord-profile", label: "임대인 프로파일" },
       { href: "/jeonse/checklist", label: "계약 체크리스트" },
       { href: "/jeonse/neighborhood", label: "주변 환경 분석" },
     ],
@@ -109,15 +109,15 @@ const userMenuItems: MenuItem[] = [
 const userMenuGroups: MenuGroup[] = [
   {
     label: "분석 도구",
-    items: [userMenuItems[0], userMenuItems[1], userMenuItems[2], userMenuItems[6]],
+    items: [userMenuItems[0], userMenuItems[1], userMenuItems[2], userMenuItems[5]],
   },
   {
     label: "시세·보호",
-    items: [userMenuItems[3], userMenuItems[4], userMenuItems[5]],
+    items: [userMenuItems[3], userMenuItems[4], userMenuItems[6]],
   },
   {
     label: "도구",
-    items: [userMenuItems[7], userMenuItems[8], userMenuItems[11], userMenuItems[12]],
+    items: [userMenuItems[7], userMenuItems[8], userMenuItems[10], userMenuItems[11]],
   },
 ];
 

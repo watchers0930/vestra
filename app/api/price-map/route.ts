@@ -163,29 +163,39 @@ function spreadCoord(center: { lat: number; lng: number }, index: number, total:
   };
 }
 
-// 단지 평균가 변동률 — 최근 6개월 평균 vs 이전 6개월 평균 (㎡당 단가 기준)
-function calcChangeByArea(txs: { amount: number; area: number }[]): number {
-  // 면적 0인 거래 제외, ㎡당 단가로 정규화 (평형 차이 제거)
-  const valid = txs.filter(t => t.area > 0 && t.amount > 0);
+// 단지 변동률 — 최근 6개월 평균 vs 이전 6개월 평균 (전체 거래금액, 평형 무관)
+// 데이터: 국토부 실거래가 12개월치 → 날짜 기준 절반 분할
+function calcChangeByArea(txs: { amount: number; area: number; dealYear?: number; dealMonth?: number }[]): number {
+  const valid = txs.filter(t => t.amount > 0 && t.dealYear && t.dealMonth);
   if (valid.length < 4) return 0;
 
-  // txs는 최신순 정렬 — 절반으로 분할 (최근 vs 이전)
-  const mid = Math.floor(valid.length / 2);
-  const recent = valid.slice(0, mid);
-  const older = valid.slice(mid);
+  // 6개월 전 기준점 (예: 2026.3 기준 → cutoff = 202510)
+  const now = new Date();
+  const sixAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+  const cutoff = sixAgo.getFullYear() * 100 + (sixAgo.getMonth() + 1);
 
-  // ㎡당 단가의 중앙값 비교 (면적 차이 + 이상치 노이즈 동시 제거)
-  const median = (arr: number[]) => {
-    const s = [...arr].sort((a, b) => a - b);
-    const m = Math.floor(s.length / 2);
-    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-  };
+  const recent: number[] = []; // 최근 6개월 거래금액
+  const older: number[] = [];  // 이전 6개월 거래금액
 
-  const recentMedian = median(recent.map(t => t.amount / t.area));
-  const olderMedian = median(older.map(t => t.amount / t.area));
+  for (const t of valid) {
+    const ym = t.dealYear! * 100 + t.dealMonth!;
+    if (ym >= cutoff) recent.push(t.amount);
+    else older.push(t.amount);
+  }
 
-  if (olderMedian <= 0) return 0;
-  return +((recentMedian - olderMedian) / olderMedian * 100).toFixed(1);
+  // 각 기간 최소 2건
+  if (recent.length < 2 || older.length < 2) return 0;
+
+  const avg = (arr: number[]) => arr.reduce((s, v) => s + v, 0) / arr.length;
+  const recentAvg = avg(recent);
+  const olderAvg = avg(older);
+
+  if (olderAvg <= 0) return 0;
+  const change = +((recentAvg - olderAvg) / olderAvg * 100).toFixed(1);
+
+  // ±30% 초과는 데이터 이상으로 간주
+  if (Math.abs(change) > 30) return 0;
+  return change;
 }
 
 export async function GET(req: NextRequest) {
@@ -273,6 +283,8 @@ export async function GET(req: NextRequest) {
           const change = calcChangeByArea(txs.map(t => ({
             amount: tradeType === "전세" ? ((t as { deposit?: number }).deposit || 0) : ((t as { dealAmount?: number }).dealAmount || 0),
             area: t.area || 0,
+            dealYear: (t as { dealYear?: number }).dealYear || 0,
+            dealMonth: (t as { dealMonth?: number }).dealMonth || 0,
           })));
           // 거래 부족(0)이면 null → 프론트에서 변동률 미표시
 
