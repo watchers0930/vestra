@@ -98,24 +98,11 @@ async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ 
   // 아파트명 정제: 괄호/숫자 제거 (예: "신동아(22)" → "신동아")
   const cleanName = aptName.replace(/\(.*?\)/g, "").replace(/\d+$/g, "").trim();
 
-  // ── 1단계: 카카오 주소 검색 (가장 정확) ──
-  // 동+아파트명 조합으로 주소 검색 API 사용
-  const addressQueries = [
-    `${gu} ${dong} ${cleanName}`,
-    `${dong} ${cleanName}`,
-  ];
-  for (const q of addressQueries) {
-    const coord = await kakaoAddressSearch(kakaoKey, q);
-    if (coord && validateDistance(coord, center, MAX_DISTANCE_KM)) {
-      await kvCache.set(cacheKey, coord, GEOCODE_TTL);
-      return coord;
-    }
-  }
-
-  // ── 2단계: 카카오 키워드 검색 + 아파트 카테고리 필터 (AP4) ──
+  // ── 1단계: 카카오 키워드 검색 + 아파트 카테고리 (AP4) — 가장 정확 ──
   const categoryQueries = [
     `${gu} ${dong} ${cleanName}아파트`,
     `${dong} ${cleanName}아파트`,
+    `${gu} ${cleanName}아파트`,
     `${cleanName}아파트`,
   ];
   for (const q of categoryQueries) {
@@ -126,12 +113,10 @@ async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ 
     }
   }
 
-  // ── 3단계: 카카오 키워드 검색 (카테고리 필터 없음, 폴백) ──
+  // ── 2단계: 카카오 키워드 검색 (카테고리 필터 없음, 폴백) ──
   const fallbackQueries = [
     `${gu} ${dong} ${cleanName}아파트`,
-    `${gu} ${dong} ${cleanName}`,
     `${dong} ${cleanName}아파트`,
-    `${cleanName}`,
     `${gu} ${cleanName}`,
   ];
   for (const q of fallbackQueries) {
