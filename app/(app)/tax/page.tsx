@@ -23,7 +23,12 @@ import { PageHeader, Card, Alert } from "@/components/common";
 import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { SliderInput } from "@/components/forms";
 import { InfoRow, ScholarPapers } from "@/components/results";
-import { TaxScenarioCompare } from "@/components/tax/TaxScenarioCompare";
+import dynamic from "next/dynamic";
+
+const TaxScenarioCompare = dynamic(
+  () => import("@/components/tax/TaxScenarioCompare").then((mod) => ({ default: mod.TaxScenarioCompare })),
+  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-gray-100 rounded-xl" /> }
+);
 
 type TaxTab = "acquisition" | "holding" | "transfer" | "scenario";
 

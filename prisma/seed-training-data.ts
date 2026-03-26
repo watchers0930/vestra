@@ -33,8 +33,10 @@ function sha256(text: string): string {
 
 // AES-256-GCM 암호화 (TrainingData 스키마의 rawTextEncrypted 필드용)
 function encryptText(plaintext: string): string {
-  const secret = process.env.AUTH_SECRET || "vestra-default-secret-change-me";
-  const key = crypto.scryptSync(secret, "vestra-salt", 32);
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) throw new Error("AUTH_SECRET 환경변수가 필요합니다");
+  const salt = process.env.PII_SALT || "vestra-seed-salt";
+  const key = crypto.scryptSync(secret, salt, 32);
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
   const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);

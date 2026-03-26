@@ -1,7 +1,7 @@
 "use client";
 
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+// html2canvas (~200KB) and jspdf (~300KB) are loaded on-demand via dynamic import()
+// to avoid including them in the initial page bundle.
 
 interface PdfExportOptions {
   filename?: string;
@@ -17,6 +17,12 @@ export async function exportToPdf({
   title = "VESTRA 분석 리포트",
   element,
 }: PdfExportOptions): Promise<void> {
+  // Dynamically import heavy libraries only when PDF export is triggered
+  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+    import("html2canvas"),
+    import("jspdf"),
+  ]);
+
   // iframe(지도 등)과 canvas를 캡처 전에 숨기고 placeholder로 대체
   const iframes = element.querySelectorAll("iframe");
   const hiddenEls: { el: HTMLElement; prev: string }[] = [];
@@ -123,6 +129,7 @@ export async function exportReportDirectPdf({
   filename = "vestra-report.pdf",
   report,
 }: DirectPdfOptions): Promise<void> {
+  const { default: jsPDF } = await import("jspdf");
   const pdf = new jsPDF("p", "mm", "a4");
   let y = MARGIN;
 

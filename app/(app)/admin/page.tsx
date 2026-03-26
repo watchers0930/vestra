@@ -37,13 +37,22 @@ import {
 import { cn } from "@/lib/utils";
 import { Card, Button, Badge, PageHeader } from "@/components/common";
 import { KpiCard } from "@/components/results";
+import dynamic from "next/dynamic";
 import { MlTrainingTab } from "@/components/admin/MlTrainingTab";
-import { WeightTuningTab } from "@/components/admin/WeightTuningTab";
 import { IntegrityAuditTab } from "@/components/admin/IntegrityAuditTab";
 import { ApiKeyTab } from "@/components/admin/ApiKeyTab";
-import { NewsTab } from "@/components/admin/NewsTab";
 import { GuaranteeRulesTab } from "@/components/admin/GuaranteeRulesTab";
 import { LoanRatesTab } from "@/components/admin/LoanRatesTab";
+
+// Recharts-heavy tab components — lazy-loaded to reduce initial bundle
+const WeightTuningTab = dynamic(
+  () => import("@/components/admin/WeightTuningTab").then((mod) => ({ default: mod.WeightTuningTab })),
+  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-gray-100 rounded-xl" /> }
+);
+const NewsTab = dynamic(
+  () => import("@/components/admin/NewsTab").then((mod) => ({ default: mod.NewsTab })),
+  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-gray-100 rounded-xl" /> }
+);
 
 // ---------------------------------------------------------------------------
 // Types

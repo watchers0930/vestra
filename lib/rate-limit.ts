@@ -138,7 +138,8 @@ export async function checkDailyUsage(
       reset: tomorrow.getTime(),
     };
   } catch {
-    return { success: true, remaining: dailyLimit, reset: tomorrow.getTime() };
+    // DB 에러 시 fail-closed: 무제한 호출 방지
+    return { success: false, remaining: 0, reset: tomorrow.getTime() };
   }
 }
 

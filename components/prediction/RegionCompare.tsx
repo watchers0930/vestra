@@ -34,10 +34,17 @@ export function RegionCompare({ primaryResult }: RegionCompareProps) {
     setLoading(true);
     try {
       const promises = addresses.map(async (addr) => {
+        // 주소에서 아파트/단지명 추출 시도 (예: "서울 강남구 대치동 까치마을" → buildingName: "까치마을")
+        const parts = addr.trim().split(/\s+/);
+        const lastPart = parts[parts.length - 1];
+        const hasBuilding = parts.length >= 3 && !/[시구군동읍면리로길]$/.test(lastPart);
         const res = await fetch("/api/predict-value", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ address: addr }),
+          body: JSON.stringify({
+            address: addr,
+            buildingName: hasBuilding ? lastPart : undefined,
+          }),
         });
         if (!res.ok) return null;
         const data = await res.json();

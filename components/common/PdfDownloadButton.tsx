@@ -1,50 +1,76 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, type RefObject } from "react";
 import { Button } from "./Button";
-import { Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
+import { useToast } from "@/components/common/toast";
 
-interface PdfDownloadButtonProps {
-  /** CSS selector or ref for the element to capture */
-  targetSelector: string;
+interface PdfDownloadButtonBaseProps {
   filename?: string;
   title?: string;
   className?: string;
 }
 
+interface PdfDownloadButtonWithRef extends PdfDownloadButtonBaseProps {
+  targetRef: RefObject<HTMLElement | null>;
+  targetSelector?: never;
+}
+
+interface PdfDownloadButtonWithSelector extends PdfDownloadButtonBaseProps {
+  targetSelector: string;
+  targetRef?: never;
+}
+
+type PdfDownloadButtonProps =
+  | PdfDownloadButtonWithRef
+  | PdfDownloadButtonWithSelector;
+
 export function PdfDownloadButton({
+  targetRef,
   targetSelector,
   filename = "vestra-report.pdf",
   title = "VESTRA 분석 리포트",
   className,
 }: PdfDownloadButtonProps) {
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
 
   const handleDownload = useCallback(async () => {
-    const element = document.querySelector(targetSelector) as HTMLElement;
-    if (!element) return;
+    let element: HTMLElement | null = null;
+
+    if (targetRef) {
+      element = targetRef.current;
+    } else if (targetSelector) {
+      element = document.querySelector(targetSelector) as HTMLElement;
+    }
+
+    if (!element || loading) return;
 
     setLoading(true);
     try {
       const { exportToPdf } = await import("@/lib/pdf-export");
       await exportToPdf({ element, filename, title });
+      showToast("PDF가 다운로드되었습니다.", "success");
     } catch (err) {
       console.error("PDF export failed:", err);
+      showToast("PDF 생성에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setLoading(false);
     }
-  }, [targetSelector, filename, title]);
+  }, [targetRef, targetSelector, filename, title, loading, showToast]);
 
   return (
     <Button
       variant="secondary"
-      icon={Download}
+      icon={loading ? Loader2 : Download}
       loading={loading}
       onClick={handleDownload}
       className={className}
       size="sm"
     >
-      PDF 저장
+      {loading ? "생성 중..." : "PDF 다운로드"}
     </Button>
   );
 }
+
+export default PdfDownloadButton;

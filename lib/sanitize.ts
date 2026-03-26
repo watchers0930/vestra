@@ -39,16 +39,9 @@ export function stripHtml(input: string): string {
   // 6. on* 이벤트 핸들러 패턴 제거
   text = text.replace(/\bon\w+\s*=\s*["'][^"']*["']/gi, "");
 
-  // 7. HTML 엔티티 디코딩 (기본)
-  text = text
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'");
-
-  // 8. 재귀적으로 남은 태그 한번 더 제거
-  text = text.replace(/<[^>]+>/g, "");
+  // 7. HTML 엔티티는 디코딩하지 않음 (인코딩된 XSS 페이로드 방지)
+  // &lt;script&gt; 같은 인코딩된 태그가 복원되는 것을 차단
+  // 필요 시 출력 단계에서 별도 디코딩
 
   return text;
 }

@@ -106,50 +106,106 @@ export async function POST(req: NextRequest) {
     // 무결성 파이프라인 시작
     const pipeline = new VerifiedPipeline(`predict-${Date.now()}`);
 
-    // 2단계: 자체 엔진으로 현재 시세 추정
+    // 1.5단계: buildingName 기반 거래 필터링 (예측 전에 수행)
+    const allTx = comprehensive?.sale?.transactions ?? [];
+    let filteredTx = allTx;
+    if (buildingName && allTx.length > 0) {
+      const bldg = buildingName.replace(/아파트$/, "").replace(/\s/g, "");
+      const aptTx = allTx.filter((t) => {
+        const n = t.aptName.replace(/아파트$/, "").replace(/\s/g, "");
+        return n === bldg || n.includes(bldg) || bldg.includes(n);
+      });
+      if (aptTx.length > 0) filteredTx = aptTx;
+    }
+
+    // 거래 필터링을 파이프라인에 기록
+    await pipeline.executeStage(
+      "거래필터링",
+      { totalTx: allTx.length, buildingName: buildingName || null },
+      async () => ({ filteredCount: filteredTx.length }),
+    );
+
+    // 단지별 필터 적용된 매매/전월세 데이터 구성
+    const filteredSale = filteredTx.length > 0 ? {
+      avgPrice: Math.round(filteredTx.reduce((s, t) => s + t.dealAmount, 0) / filteredTx.length),
+      minPrice: Math.min(...filteredTx.map((t) => t.dealAmount)),
+      maxPrice: Math.max(...filteredTx.map((t) => t.dealAmount)),
+      transactionCount: filteredTx.length,
+      transactions: filteredTx,
+      period: comprehensive?.sale?.period ?? `최근 36개월`,
+    } : comprehensive?.sale ?? null;
+
+    // 전월세도 단지명으로 필터링
+    let filteredRent = comprehensive?.rent ?? null;
+    if (buildingName && filteredRent && filteredRent.transactions.length > 0) {
+      const bldg = buildingName.replace(/아파트$/, "").replace(/\s/g, "");
+      const rentTx = filteredRent.transactions.filter((t) => {
+        const n = t.aptName.replace(/아파트$/, "").replace(/\s/g, "");
+        return n === bldg || n.includes(bldg) || bldg.includes(n);
+      });
+      if (rentTx.length > 0) {
+        const jeonseOnly = rentTx.filter((t) => t.rentType === "전세");
+        const deposits = jeonseOnly.map((t) => t.deposit);
+        filteredRent = {
+          ...filteredRent,
+          avgDeposit: deposits.length > 0 ? Math.round(deposits.reduce((a, b) => a + b, 0) / deposits.length) : 0,
+          minDeposit: deposits.length > 0 ? Math.min(...deposits) : 0,
+          maxDeposit: deposits.length > 0 ? Math.max(...deposits) : 0,
+          jeonseCount: jeonseOnly.length,
+          wolseCount: rentTx.filter((t) => t.rentType === "월세").length,
+          transactions: rentTx,
+        };
+      }
+    }
+
+    // 단지별 전세가율 재계산
+    const filteredJeonseRatio = (filteredSale && filteredSale.avgPrice > 0 && filteredRent && filteredRent.avgDeposit > 0)
+      ? Math.round((filteredRent.avgDeposit / filteredSale.avgPrice) * 1000) / 10
+      : comprehensive?.jeonseRatio ?? null;
+
+    // 2단계: 자체 엔진으로 현재 시세 추정 (단지 필터링 데이터 사용)
     const priceEstimation = await pipeline.executeStage(
       "시세추정",
-      { address, saleCount: comprehensive?.sale?.transactionCount ?? 0 },
+      { address, saleCount: filteredSale?.transactionCount ?? 0 },
       async () => estimatePrice(
-        { address, aptName: address },
-        comprehensive?.sale ?? null,
-        comprehensive?.rent ?? null,
+        { address, aptName: buildingName || address },
+        filteredSale,
+        filteredRent,
       ),
     );
     const currentPrice = priceEstimation.output.estimatedPrice;
 
-    // 3단계: 자체 엔진으로 가치 전망 산출 (5모델 앙상블 + 거시경제)
+    // 3단계: 자체 엔진으로 가치 전망 산출 (단지 필터링 데이터 사용)
     const predictionStage = await pipeline.executeStage(
       "가치전망",
       { currentPrice, macroFactors },
       async () => predictValue(
         currentPrice,
-        comprehensive?.sale?.transactions ?? [],
-        comprehensive?.rent ?? null,
-        comprehensive?.jeonseRatio ?? null,
+        filteredTx,
+        filteredRent,
+        filteredJeonseRatio,
         macroFactors,
       ),
     );
     const predictionResult = predictionStage.output;
 
-    // 3.5단계: 백테스팅 (36개월 데이터 있을 때)
+    // 3.5단계: 백테스팅 (단지 필터링 데이터 사용)
     const backtestStage = await pipeline.executeStage(
       "백테스팅",
-      { transactionCount: comprehensive?.sale?.transactions?.length ?? 0 },
-      async () => comprehensive?.sale?.transactions
-        ? runBacktest(comprehensive.sale.transactions)
+      { transactionCount: filteredTx.length },
+      async () => filteredTx.length > 0
+        ? runBacktest(filteredTx)
         : null,
     );
     if (backtestStage.output) {
       predictionResult.backtestResult = backtestStage.output;
     }
 
-    // 3.55단계: 이상탐지 (거래 이력 기반)
+    // 3.55단계: 이상탐지 (단지 필터링 데이터 사용)
     let anomalyReport: AnomalyDetectionReport | null = null;
     try {
-      const txForAnomaly = comprehensive?.sale?.transactions ?? [];
-      if (txForAnomaly.length >= 5) {
-        const timeSeriesData: TimeSeriesPoint[] = txForAnomaly
+      if (filteredTx.length >= 5) {
+        const timeSeriesData: TimeSeriesPoint[] = filteredTx
           .filter((t) => t.dealAmount > 0)
           .map((t) => ({
             timestamp: new Date(`${t.dealYear}-${String(t.dealMonth).padStart(2, "0")}-01`).getTime(),
@@ -170,25 +226,6 @@ export async function POST(req: NextRequest) {
     } catch (anomalyError) {
       console.warn("이상탐지 실행 실패 (계속 진행):", anomalyError);
     }
-
-    // 3.6단계: buildingName 기반 거래 필터링
-    const allTx = comprehensive?.sale?.transactions ?? [];
-    let filteredTx = allTx;
-    if (buildingName && allTx.length > 0) {
-      const bldg = buildingName.replace(/아파트$/, "").replace(/\s/g, "");
-      const aptTx = allTx.filter((t) => {
-        const n = t.aptName.replace(/아파트$/, "").replace(/\s/g, "");
-        return n === bldg || n.includes(bldg) || bldg.includes(n);
-      });
-      if (aptTx.length > 0) filteredTx = aptTx;
-    }
-
-    // 4단계: 거래 필터링을 파이프라인에 기록
-    await pipeline.executeStage(
-      "거래필터링",
-      { totalTx: allTx.length, buildingName: buildingName || null },
-      async () => ({ filteredCount: filteredTx.length }),
-    );
 
     // 4.5단계: 최근 관련 정책 조회
     let policyContext = "";
@@ -220,7 +257,7 @@ export async function POST(req: NextRequest) {
               confidence: predictionResult.confidence,
               aptTransactionCount: filteredTx.length,
               regionTransactionCount: comprehensive?.sale?.transactionCount ?? 0,
-              jeonseRatio: comprehensive?.jeonseRatio ?? null,
+              jeonseRatio: filteredJeonseRatio,
               policyContext: policyContext || "관련 정책 없음",
             }),
           },
@@ -276,14 +313,14 @@ export async function POST(req: NextRequest) {
             };
           })()
         : null,
-      rentStats: comprehensive?.rent
+      rentStats: filteredRent
         ? {
-            avgDeposit: comprehensive.rent.avgDeposit,
-            jeonseCount: comprehensive.rent.jeonseCount,
-            wolseCount: comprehensive.rent.wolseCount,
+            avgDeposit: filteredRent.avgDeposit,
+            jeonseCount: filteredRent.jeonseCount,
+            wolseCount: filteredRent.wolseCount,
           }
         : null,
-      calculatedJeonseRatio: comprehensive?.jeonseRatio ?? null,
+      calculatedJeonseRatio: filteredJeonseRatio,
       // v2.5: 추가 데이터 소스
       buildingInfo: buildingInfo ?? null,
       rebMarketData: rebData ? {

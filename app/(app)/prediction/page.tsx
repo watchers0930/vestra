@@ -36,9 +36,9 @@ import {
 import { PageHeader, Card, Button, Alert } from "@/components/common";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
 import { ScholarPapers } from "@/components/results";
-import { AnomalyDetectionView } from "@/components/prediction/AnomalyDetectionView";
+// AnomalyDetectionView uses Recharts — lazy-loaded below via next/dynamic
 import AiDisclaimer from "@/components/common/ai-disclaimer";
-import PdfDownloadButton from "@/components/common/pdf-download-button";
+import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { LoadingSpinner } from "@/components/loading";
 import { useToast } from "@/components/common/toast";
 import { KakaoMap } from "@/components/prediction/KakaoMap";
@@ -50,12 +50,26 @@ const TransactionMap = dynamic(
   { ssr: false, loading: () => <div className="h-[300px] sm:h-[400px] animate-pulse bg-gray-100 rounded-xl" /> }
 );
 
-// 신규 컴포넌트 (prediction-enhancement)
+// 신규 컴포넌트 (prediction-enhancement) — Recharts 사용 컴포넌트는 lazy-load
 import { PredictionTabs, type PredictionTabId } from "@/components/prediction/PredictionTabs";
-import { PredictionDashboard } from "@/components/prediction/Dashboard";
-import { MonthlyForecastChart } from "@/components/prediction/MonthlyForecast";
-import { RegionCompare } from "@/components/prediction/RegionCompare";
 import { BacktestView } from "@/components/prediction/BacktestView";
+
+const PredictionDashboard = dynamic(
+  () => import("@/components/prediction/Dashboard").then((mod) => ({ default: mod.PredictionDashboard })),
+  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-gray-100 rounded-xl" /> }
+);
+const MonthlyForecastChart = dynamic(
+  () => import("@/components/prediction/MonthlyForecast").then((mod) => ({ default: mod.MonthlyForecastChart })),
+  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-gray-100 rounded-xl" /> }
+);
+const RegionCompare = dynamic(
+  () => import("@/components/prediction/RegionCompare").then((mod) => ({ default: mod.RegionCompare })),
+  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-gray-100 rounded-xl" /> }
+);
+const AnomalyDetectionView = dynamic(
+  () => import("@/components/prediction/AnomalyDetectionView").then((mod) => ({ default: mod.AnomalyDetectionView })),
+  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-gray-100 rounded-xl" /> }
+);
 
 import type { MonthlyPrediction, MacroEconomicFactors, BacktestResult, MarketCycleInfo } from "@/lib/prediction-engine";
 

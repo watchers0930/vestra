@@ -23,11 +23,16 @@ import type { ValidationResult } from "@/lib/validation-engine";
 import { Card, Alert } from "@/components/common";
 import { ChecklistSection } from "@/components/common/ChecklistSection";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
-import PdfDownloadButton from "@/components/common/pdf-download-button";
+import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
 import { NerHighlight } from "@/components/common/NerHighlight";
 import { ScoreGauge, ScholarPapers } from "@/components/results";
-import { RightsGraphView } from "@/components/rights/RightsGraphView";
+import dynamic from "next/dynamic";
+
+const RightsGraphView = dynamic(
+  () => import("@/components/rights/RightsGraphView").then((mod) => ({ default: mod.RightsGraphView })),
+  { ssr: false, loading: () => <div className="h-48 animate-pulse bg-gray-100 rounded-xl" /> }
+);
 import type { KakaoGeocoderResult } from "@/components/prediction/KakaoMap";
 
 // ─── 타입 ───

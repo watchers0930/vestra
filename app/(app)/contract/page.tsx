@@ -27,7 +27,7 @@ import { ErrorRetry } from "@/components/common/ErrorRetry";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
 import { NerHighlight } from "@/components/common/NerHighlight";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
-import PdfDownloadButton from "@/components/common/pdf-download-button";
+import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { ScoreGauge } from "@/components/results";
 import { LoadingSpinner } from "@/components/loading";
 

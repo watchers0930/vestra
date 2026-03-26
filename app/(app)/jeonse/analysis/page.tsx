@@ -9,7 +9,7 @@ import { addNotification } from "@/lib/notification-client";
 import { PageHeader, Card, Alert, Button } from "@/components/common";
 import { ScholarPapers } from "@/components/results";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
-import PdfDownloadButton from "@/components/common/pdf-download-button";
+import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { FormInput, SliderInput, TabButtons } from "@/components/forms";
 import { LoadingSpinner } from "@/components/loading";
 import FraudRiskCard from "@/components/results/FraudRiskCard";
