@@ -94,7 +94,7 @@ const userMenuItems: MenuItem[] = [
   { href: "/assistant", icon: MessageSquare, label: "AI 상담", description: "부동산 관련 궁금한 점을 AI에게 자유롭게 질문할 수 있습니다" },
   { href: "/api-hub", icon: Database, label: "API 데이터 허브", description: "국토교통부·법원 등 공공 API 연동 현황과 데이터를 조회합니다" },
   { href: "/expert-connect", icon: Users, label: "전문가 상담", description: "AI 분석 결과를 전문가가 직접 검증하고 상담해드립니다" },
-  { href: "/ai-trust", icon: ShieldCheck, label: "AI 신뢰도", description: "AI 분석의 정확도와 전문가 일치율을 투명하게 공개합니다" },
+  // { href: "/ai-trust", icon: ShieldCheck, label: "AI 신뢰도", description: "AI 분석의 정확도와 전문가 일치율을 투명하게 공개합니다" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -111,7 +111,7 @@ const userMenuGroups: MenuGroup[] = [
   },
   {
     label: "도구",
-    items: [userMenuItems[7], userMenuItems[8], userMenuItems[10], userMenuItems[11]],
+    items: [userMenuItems[7], userMenuItems[8], userMenuItems[9], userMenuItems[10]],
   },
 ];
 
