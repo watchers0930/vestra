@@ -21,6 +21,7 @@ interface MapResponse {
   apartments: AptData[];
   center: { lat: number; lng: number };
   availableGus: string[];
+  regionGroups: Record<string, string[]>;
   total: number;
 }
 
@@ -33,16 +34,9 @@ function getAreaColor(area: number): string {
   return "#93c5fd";
 }
 
-/* ─── 시도 → 시군구 매핑 ─── */
-const SIDO_MAP: Record<string, string[]> = {
+/* ─── 시도 → 시군구 매핑 (폴백, API regionGroups로 대체됨) ─── */
+const SIDO_MAP_FALLBACK: Record<string, string[]> = {
   "서울": ["강남구", "서초구", "송파구", "강동구", "마포구", "용산구", "성동구", "광진구", "영등포구", "동작구", "양천구", "강서구", "구로구", "금천구", "관악구", "노원구", "도봉구", "강북구", "성북구", "동대문구", "중랑구", "종로구", "은평구", "서대문구", "중구"],
-  "경기": ["분당구", "수원영통구", "용인수지구", "화성동탄", "고양일산동구", "하남시", "과천시"],
-  "부산": ["해운대구", "수영구", "부산진구", "동래구"],
-  "대구": ["수성구", "달서구"],
-  "인천": ["연수구", "부평구", "남동구"],
-  "대전": ["유성구", "서구(대전)"],
-  "광주": ["광산구", "남구(광주)"],
-  "울산": ["남구(울산)", "울주군"],
 };
 
 /* ─── 메인 컴포넌트 ─── */
@@ -311,6 +305,9 @@ export default function PriceMapPage() {
   }, [data, selectAndMoveToApt]);
 
   /* ─── 파생 데이터 ─── */
+  // API regionGroups → 실제 데이터 있는 지역만 표시
+  const sidoMap = data?.regionGroups || SIDO_MAP_FALLBACK;
+
   const topChanges = data?.apartments
     ? [...data.apartments].filter((a) => a.change !== null).sort((a, b) => (b.change as number) - (a.change as number)).slice(0, 5)
     : [];
@@ -338,7 +335,7 @@ export default function PriceMapPage() {
                 <div className="absolute z-20 mt-1 flex rounded-lg border border-gray-200 bg-white shadow-lg" style={{ width: "360px" }}>
                   <div className="w-[100px] shrink-0 border-r border-gray-100 overflow-y-auto max-h-64">
                     <p className="sticky top-0 bg-gray-50 px-2 py-1 text-[10px] font-bold text-gray-400">시도</p>
-                    {Object.keys(SIDO_MAP).map((sido) => (
+                    {Object.keys(sidoMap).map((sido) => (
                       <button
                         key={sido}
                         onClick={() => setSelectedSido(sido)}
@@ -350,7 +347,7 @@ export default function PriceMapPage() {
                   </div>
                   <div className="flex-1 overflow-y-auto max-h-64">
                     <p className="sticky top-0 bg-gray-50 px-2 py-1 text-[10px] font-bold text-gray-400">시군구</p>
-                    {(SIDO_MAP[selectedSido] || []).map((gu) => (
+                    {(sidoMap[selectedSido] || []).map((gu) => (
                       <button
                         key={gu}
                         onClick={() => { setSelectedGu(gu); setShowGuDropdown(false); }}
