@@ -197,8 +197,8 @@ export default function PriceMapPage() {
       const clusterer = new maps.MarkerClusterer({
         map,
         markers: [],
-        gridSize: 60,
-        minLevel: 4,
+        gridSize: 80,
+        minLevel: 6,
         disableClickZoom: false,
         averageCenter: true,
         styles: [
@@ -229,7 +229,7 @@ export default function PriceMapPage() {
       requestAnimationFrame(loadNextChunk);
 
       // 뷰포트 기반 오버레이 토글 — 화면 밖 오버레이 제거로 DOM 최소화
-      const DETAIL_LEVEL = 3;
+      const DETAIL_LEVEL = 5;
       let visibleOverlays = new Set<number>();
 
       const updateOverlays = () => {

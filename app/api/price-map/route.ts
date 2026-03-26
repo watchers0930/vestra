@@ -291,11 +291,10 @@ export async function GET(req: NextRequest) {
           })));
           // 거래 부족(0)이면 null → 프론트에서 변동률 미표시
 
-          // 좌표 우선순위: 1) KV캐시 geocode → 2) 시드 데이터 → 3) 동 중심 폴백
-          const dongCenter = DONG_CENTER[latest.dong || ""] || GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 };
+          // 좌표 우선순위: 1) KV캐시 geocode → 2) 시드 데이터 → 정확한 좌표 없으면 제외
           const coords = geocoded.get(aptName)
-            || (seed ? { lat: seed.lat, lng: seed.lng } : null)
-            || spreadCoord(dongCenter, idx, totalEntries);
+            || (seed ? { lat: seed.lat, lng: seed.lng } : null);
+          if (!coords) return; // geocode 실패 → 지도에 미표시 (가짜 좌표 방지)
 
           data.push({
             name: aptName,
