@@ -16,6 +16,74 @@ interface AptData {
   year: number;
 }
 
+/* ─── 위험도 분석 ─── */
+interface RiskItem {
+  label: string;
+  level: "안전" | "주의" | "위험";
+  value: string;
+  detail: string;
+}
+
+function analyzeRisk(apt: AptData): { score: number; grade: string; color: string; items: RiskItem[] } {
+  const items: RiskItem[] = [];
+  let riskScore = 0;
+
+  // 1. 시세 변동 위험
+  const change = apt.change ?? 0;
+  if (change <= -10) {
+    items.push({ label: "시세 변동", level: "위험", value: `${change}%`, detail: "최근 1년 시세가 10% 이상 하락했습니다" });
+    riskScore += 30;
+  } else if (change <= -5) {
+    items.push({ label: "시세 변동", level: "주의", value: `${change}%`, detail: "최근 1년 시세가 5% 이상 하락했습니다" });
+    riskScore += 15;
+  } else {
+    items.push({ label: "시세 변동", level: "안전", value: `${change >= 0 ? "+" : ""}${change}%`, detail: "시세가 안정적이거나 상승 중입니다" });
+  }
+
+  // 2. 건물 노후도
+  const age = new Date().getFullYear() - apt.year;
+  if (age >= 30) {
+    items.push({ label: "건물 연식", level: "위험", value: `${age}년 (${apt.year}년 준공)`, detail: "30년 이상 노후 건물로 재건축 가능성 검토 필요" });
+    riskScore += 25;
+  } else if (age >= 20) {
+    items.push({ label: "건물 연식", level: "주의", value: `${age}년 (${apt.year}년 준공)`, detail: "20년 이상 경과, 시설 노후화 확인 필요" });
+    riskScore += 10;
+  } else {
+    items.push({ label: "건물 연식", level: "안전", value: `${age}년 (${apt.year}년 준공)`, detail: "비교적 신축 건물입니다" });
+  }
+
+  // 3. 평당가 적정성 (서울 평균 대비)
+  const pricePerPyeong = apt.price / apt.area;
+  if (pricePerPyeong > 8000) {
+    items.push({ label: "평당가", level: "주의", value: `${Math.round(pricePerPyeong).toLocaleString()}만원/평`, detail: "고가 매물로 가격 변동 리스크가 큽니다" });
+    riskScore += 10;
+  } else if (pricePerPyeong < 2000) {
+    items.push({ label: "평당가", level: "주의", value: `${Math.round(pricePerPyeong).toLocaleString()}만원/평`, detail: "주변 시세 대비 낮은 가격, 원인 확인 필요" });
+    riskScore += 15;
+  } else {
+    items.push({ label: "평당가", level: "안전", value: `${Math.round(pricePerPyeong).toLocaleString()}만원/평`, detail: "적정 가격 범위입니다" });
+  }
+
+  // 4. 소형 평수 전세 리스크
+  if (apt.area <= 20) {
+    items.push({ label: "면적 리스크", level: "주의", value: `${apt.area}평`, detail: "소형 평수는 전세보증금 반환 리스크가 높을 수 있습니다" });
+    riskScore += 10;
+  } else {
+    items.push({ label: "면적", level: "안전", value: `${apt.area}평`, detail: "일반적인 면적대입니다" });
+  }
+
+  // 종합 등급
+  const totalScore = Math.min(100, riskScore);
+  const safeScore = 100 - totalScore;
+  let grade: string, color: string;
+  if (safeScore >= 80) { grade = "양호"; color = "#22c55e"; }
+  else if (safeScore >= 60) { grade = "보통"; color = "#f59e0b"; }
+  else if (safeScore >= 40) { grade = "주의"; color = "#f97316"; }
+  else { grade = "위험"; color = "#ef4444"; }
+
+  return { score: safeScore, grade, color, items };
+}
+
 interface MapResponse {
   gu: string;
   apartments: AptData[];
@@ -62,6 +130,7 @@ export default function PriceMapPage() {
   const [showGuDropdown, setShowGuDropdown] = useState(false);
   const [selectedSido, setSelectedSido] = useState("서울");
   const [tradeType, setTradeType] = useState<"매매" | "전세">("매매");
+  const [riskPopup, setRiskPopup] = useState<{ apt: AptData; risk: ReturnType<typeof analyzeRisk> } | null>(null);
 
   /* ─── 아파트 선택 → 지도 이동 + 반경 원 ─── */
   const selectAndMoveToApt = useCallback((apt: AptData) => {
@@ -420,15 +489,87 @@ export default function PriceMapPage() {
                 <div className="rounded bg-gray-50 p-1.5"><p className="text-gray-500">건축</p><p className="text-xs font-bold">{selectedApt.year}년</p></div>
                 <div className="rounded bg-gray-50 p-1.5"><p className="text-gray-500">법정동</p><p className="text-xs font-bold">{selectedApt.dong}</p></div>
               </div>
-              <a
-                href={`/rights?address=${encodeURIComponent(`서울특별시 ${selectedGu} ${selectedApt.dong}`)}`}
-                className="mt-2 block w-full rounded-lg bg-indigo-600 py-1.5 text-center text-[11px] font-semibold text-white hover:bg-indigo-700"
+              <button
+                onClick={() => setRiskPopup({ apt: selectedApt, risk: analyzeRisk(selectedApt) })}
+                className="mt-2 block w-full rounded-lg bg-indigo-600 py-1.5 text-center text-[11px] font-semibold text-white hover:bg-indigo-700 cursor-pointer"
               >
-                이 아파트 안전도 분석하기 →
-              </a>
+                위험도 분석 →
+              </button>
             </div>
           )}
         </div>
+
+        {/* 위험도 분석 레이어 팝업 */}
+        {riskPopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setRiskPopup(null)}>
+            <div className="w-[420px] max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              {/* 헤더 */}
+              <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">{riskPopup.apt.name}</h3>
+                  <p className="text-xs text-gray-500">{riskPopup.apt.dong} · {riskPopup.apt.area}평 · {riskPopup.apt.year}년</p>
+                </div>
+                <button onClick={() => setRiskPopup(null)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 cursor-pointer">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                </button>
+              </div>
+
+              {/* 종합 점수 */}
+              <div className="flex items-center gap-4 px-6 py-5">
+                <div className="relative h-20 w-20 shrink-0">
+                  <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f3f4f6" strokeWidth="3" />
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke={riskPopup.risk.color} strokeWidth="3" strokeDasharray={`${riskPopup.risk.score} ${100 - riskPopup.risk.score}`} strokeLinecap="round" />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-lg font-bold" style={{ color: riskPopup.risk.color }}>{riskPopup.risk.score}</span>
+                    <span className="text-[9px] text-gray-400">/ 100</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">종합 안전 점수</p>
+                  <p className="text-xl font-bold" style={{ color: riskPopup.risk.color }}>{riskPopup.risk.grade}</p>
+                  <p className="mt-0.5 text-[11px] text-gray-400">공공데이터 기반 자동 분석 결과</p>
+                </div>
+              </div>
+
+              {/* 항목별 분석 */}
+              <div className="border-t border-gray-100 px-6 py-4">
+                <h4 className="mb-3 text-xs font-bold text-gray-700">항목별 분석</h4>
+                <div className="space-y-3">
+                  {riskPopup.risk.items.map((item) => (
+                    <div key={item.label} className="rounded-xl border border-gray-100 p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-semibold text-gray-800">{item.label}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          item.level === "안전" ? "bg-green-100 text-green-700" :
+                          item.level === "주의" ? "bg-amber-100 text-amber-700" :
+                          "bg-red-100 text-red-700"
+                        }`}>{item.level}</span>
+                      </div>
+                      <p className="text-xs font-bold text-gray-900">{item.value}</p>
+                      <p className="mt-0.5 text-[11px] text-gray-500">{item.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 하단 안내 */}
+              <div className="border-t border-gray-100 px-6 py-4">
+                <p className="text-[10px] text-gray-400 text-center">
+                  ※ 본 분석은 공공데이터 기반 자동 산출 결과이며, 투자 판단의 근거로 사용할 수 없습니다.
+                  정확한 분석을 위해 등기부등본 확인을 권장합니다.
+                </p>
+                <a
+                  href={`/rights?address=${encodeURIComponent(`서울특별시 ${selectedGu} ${riskPopup.apt.dong}`)}`}
+                  className="mt-3 block w-full rounded-lg border border-indigo-200 bg-indigo-50 py-2 text-center text-xs font-semibold text-indigo-600 hover:bg-indigo-100"
+                >
+                  등기부등본으로 정밀 분석하기 →
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 지도 영역 */}
         <div className="relative flex-1" style={{ minHeight: 0 }}>
