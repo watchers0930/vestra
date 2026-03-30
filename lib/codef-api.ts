@@ -13,8 +13,7 @@ import { apiCache, APICache } from "./api-cache";
 
 const CODEF_OAUTH_URL = "https://oauth.codef.io/oauth/token";
 const CODEF_DEMO_BASE = "https://development.codef.io";
-const CODEF_API_BASE = "https://api.codef.io";
-const CODEF_SANDBOX_BASE = "https://sandbox.codef.io";
+// 프로덕션 전환 시: const CODEF_PROD_BASE = "https://api.codef.io";
 
 // 공공 부동산 API 엔드포인트
 const PRODUCT_REGISTRY = "/v1/kr/public/ck/real-estate-register/status";
@@ -157,7 +156,19 @@ async function codefRequest(
     decoded = rawText;
   }
 
-  const data: CodefApiResponse = JSON.parse(decoded);
+  let data: CodefApiResponse;
+  try {
+    data = JSON.parse(decoded);
+  } catch (parseErr) {
+    throw new Error(
+      `CODEF 응답 파싱 실패: ${parseErr instanceof Error ? parseErr.message : String(parseErr)} (원본: ${decoded.slice(0, 200)})`
+    );
+  }
+
+  // 응답 구조 검증
+  if (!data?.result?.code) {
+    throw new Error(`CODEF 응답 구조 오류: result.code가 없습니다 (원본: ${decoded.slice(0, 200)})`);
+  }
 
   // CODEF 결과 코드 확인
   if (data.result.code !== "CF-00000" && data.result.code !== "CF-03002") {

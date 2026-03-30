@@ -36,7 +36,7 @@ import { RightsResult, type UnifiedResult } from "@/components/rights/RightsResu
 // ─── 타입 ───
 
 type InputMode = "file" | "text" | "codef";
-type AnalysisStep = "idle" | "codef-search" | "codef-fetch" | "extracting" | "parsing" | "validating" | "scoring" | "molit" | "ai" | "done";
+type AnalysisStep = "idle" | "codef-fetch" | "extracting" | "parsing" | "validating" | "scoring" | "molit" | "ai" | "done";
 
 interface CodefSearchResult {
   uniqueNo: string;
@@ -151,8 +151,11 @@ export default function RightsAnalysisPage() {
       const res = await fetch(`/api/codef/search?address=${encodeURIComponent(codefAddress.trim())}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      setCodefSearchResults(data.results || []);
-      if (data.results?.length === 0) {
+      const validResults = (data.results || []).filter(
+        (r: Partial<CodefSearchResult>) => r && (r.uniqueNo || r.address)
+      ) as CodefSearchResult[];
+      setCodefSearchResults(validResults);
+      if (validResults.length === 0) {
         setError("검색 결과가 없습니다. 주소를 다시 확인해주세요.");
       }
     } catch (e) {
@@ -214,6 +217,7 @@ export default function RightsAnalysisPage() {
     }
 
     setError(null);
+    setCodefSource(false);
     setFileType(isPdf ? "pdf" : "image");
     setFileName(isPdf ? firstFile.name : `${uploadFiles.length}개 이미지`);
     setIsExtracting(true);
@@ -472,7 +476,7 @@ export default function RightsAnalysisPage() {
         {inputMode === "text" && (
           <textarea
             value={rawText}
-            onChange={(e) => setRawText(e.target.value)}
+            onChange={(e) => { setRawText(e.target.value); setCodefSource(false); }}
             placeholder="등기부등본 텍스트를 붙여넣으세요..."
             aria-label="등기부등본 텍스트 입력"
             className="w-full h-48 px-4 py-3 rounded-lg border border-border text-xs font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary/30"
