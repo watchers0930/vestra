@@ -17,6 +17,9 @@ import {
   Home,
   Calculator,
   TrendingUp,
+  Search,
+  MapPin,
+  Building2,
 } from "lucide-react";
 import { formatKRW, cn } from "@/lib/utils";
 import { addAnalysis, addOrUpdateAsset, getLatestAnalysisForAddress } from "@/lib/store";
@@ -32,12 +35,19 @@ import { RightsResult, type UnifiedResult } from "@/components/rights/RightsResu
 
 // ─── 타입 ───
 
-type InputMode = "file" | "text";
-type AnalysisStep = "idle" | "extracting" | "parsing" | "validating" | "scoring" | "molit" | "ai" | "done";
+type InputMode = "file" | "text" | "codef";
+type AnalysisStep = "idle" | "codef-search" | "codef-fetch" | "extracting" | "parsing" | "validating" | "scoring" | "molit" | "ai" | "done";
+
+interface CodefSearchResult {
+  uniqueNo: string;
+  address: string;
+  realEstateType: string;
+  realEstateTypeCode: string;
+}
 
 // ─── 스텝 인디케이터 ───
 
-function AnalysisStepIndicator({ step, showExtract, fileType }: { step: AnalysisStep; showExtract?: boolean; fileType?: "pdf" | "image" | null }) {
+function AnalysisStepIndicator({ step, showExtract, showCodef, fileType }: { step: AnalysisStep; showExtract?: boolean; showCodef?: boolean; fileType?: "pdf" | "image" | null }) {
   const baseSteps = [
     { key: "parsing", icon: DatabaseIcon, label: "파싱 엔진" },
     { key: "validating", icon: ShieldCheck, label: "검증 엔진" },
@@ -50,7 +60,11 @@ function AnalysisStepIndicator({ step, showExtract, fileType }: { step: Analysis
     ? { key: "extracting", icon: ImageIcon, label: "이미지 OCR" }
     : { key: "extracting", icon: FileText, label: "PDF 추출" };
 
-  const steps = showExtract ? [extractStep, ...baseSteps] : baseSteps;
+  const codefStep = { key: "codef-fetch", icon: Building2, label: "등기부 조회" };
+
+  let steps = baseSteps;
+  if (showCodef) steps = [codefStep, ...baseSteps];
+  else if (showExtract) steps = [extractStep, ...baseSteps];
   const currentIdx = steps.findIndex((s) => s.key === step);
 
   return (
@@ -95,6 +109,14 @@ export default function RightsAnalysisPage() {
   const [previousAnalysis, setPreviousAnalysis] = useState<{ date: string; summary: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // CODEF 관련 상태
+  const [codefAddress, setCodefAddress] = useState("");
+  const [codefSearchResults, setCodefSearchResults] = useState<CodefSearchResult[]>([]);
+  const [codefSearching, setCodefSearching] = useState(false);
+  const [codefFetching, setCodefFetching] = useState(false);
+  const [codefSelected, setCodefSelected] = useState<CodefSearchResult | null>(null);
+  const [codefSource, setCodefSource] = useState(false);
+
   // 이전 분석 기록 확인
   useEffect(() => {
     const lastAddr = localStorage.getItem("vestra_last_address");
@@ -113,7 +135,62 @@ export default function RightsAnalysisPage() {
     setRawText(SAMPLE_REGISTRY_TEXT);
     setFileName(null);
     setFileType(null);
+    setCodefSource(false);
     setInputMode("text");
+  };
+
+  // CODEF 주소 검색
+  const handleCodefSearch = async () => {
+    if (!codefAddress.trim() || codefAddress.trim().length < 2) return;
+    setCodefSearching(true);
+    setCodefSearchResults([]);
+    setCodefSelected(null);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/codef/search?address=${encodeURIComponent(codefAddress.trim())}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setCodefSearchResults(data.results || []);
+      if (data.results?.length === 0) {
+        setError("검색 결과가 없습니다. 주소를 다시 확인해주세요.");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "주소 검색에 실패했습니다.");
+    } finally {
+      setCodefSearching(false);
+    }
+  };
+
+  // CODEF 등기부등본 조회
+  const handleCodefFetch = async (item: CodefSearchResult) => {
+    setCodefSelected(item);
+    setCodefFetching(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/codef/registry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address: item.address,
+          uniqueNo: item.uniqueNo,
+          realEstateType: item.realEstateTypeCode || "2",
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      setRawText(data.text);
+      setCodefSource(true);
+      setFileName(null);
+      setFileType(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "등기부등본 조회에 실패했습니다.");
+      setCodefSelected(null);
+    } finally {
+      setCodefFetching(false);
+    }
   };
 
   const handleFileUpload = useCallback(async (files: File[]) => {
@@ -178,6 +255,7 @@ export default function RightsAnalysisPage() {
   }, [handleFileUpload]);
 
   const usedFile = inputMode === "file" && fileName;
+  const usedCodef = codefSource && rawText;
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -190,7 +268,8 @@ export default function RightsAnalysisPage() {
     setResult(null);
     setError(null);
 
-    if (usedFile) { setStep("extracting"); await new Promise((r) => setTimeout(r, 400)); }
+    if (usedCodef) { setStep("codef-fetch"); await new Promise((r) => setTimeout(r, 400)); }
+    else if (usedFile) { setStep("extracting"); await new Promise((r) => setTimeout(r, 400)); }
     setStep("parsing"); await new Promise((r) => setTimeout(r, 600));
     setStep("validating"); await new Promise((r) => setTimeout(r, 400));
     setStep("scoring"); await new Promise((r) => setTimeout(r, 400));
@@ -201,7 +280,11 @@ export default function RightsAnalysisPage() {
       const res = await fetch("/api/analyze-unified", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rawText, estimatedPrice }),
+        body: JSON.stringify({
+          rawText,
+          estimatedPrice,
+          source: codefSource ? "codef" : "manual",
+        }),
         signal: controller.signal,
       });
       const data = await res.json();
@@ -262,7 +345,10 @@ export default function RightsAnalysisPage() {
       {/* 입력 섹션 */}
       <Card className="p-6 mb-6" role="form" aria-label="등기부등본 입력">
         {/* 입력 모드 토글 */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4">
+          <button onClick={() => setInputMode("codef")} className={cn("flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all", inputMode === "codef" ? "bg-[#1d1d1f] text-white border-[#1d1d1f]" : "bg-white text-secondary border-border hover:bg-[#f5f5f7]")}>
+            <Search size={14} /> 주소로 자동 조회
+          </button>
           <button onClick={() => setInputMode("file")} className={cn("flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all", inputMode === "file" ? "bg-[#1d1d1f] text-white border-[#1d1d1f]" : "bg-white text-secondary border-border hover:bg-[#f5f5f7]")}>
             <Upload size={14} /> 파일 업로드
           </button>
@@ -273,6 +359,78 @@ export default function RightsAnalysisPage() {
             샘플 데이터
           </button>
         </div>
+
+        {/* CODEF 주소 자동 조회 */}
+        {inputMode === "codef" && (
+          <div className="space-y-3">
+            {/* 주소 검색 입력 */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={codefAddress}
+                onChange={(e) => setCodefAddress(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCodefSearch()}
+                placeholder="주소를 입력하세요 (예: 서울시 강남구 테헤란로 123)"
+                aria-label="부동산 주소 검색"
+                className="flex-1 px-4 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <button
+                onClick={handleCodefSearch}
+                disabled={codefSearching || codefAddress.trim().length < 2}
+                className="px-4 py-2.5 rounded-lg bg-[#1d1d1f] text-white text-sm font-medium hover:bg-[#1d1d1f]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
+              >
+                {codefSearching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+                검색
+              </button>
+            </div>
+
+            {/* 검색 결과 목록 */}
+            {codefSearchResults.length > 0 && (
+              <div className="border border-border rounded-lg divide-y divide-border max-h-60 overflow-y-auto">
+                {codefSearchResults.map((item, idx) => (
+                  <button
+                    key={`${item.uniqueNo}-${idx}`}
+                    onClick={() => handleCodefFetch(item)}
+                    disabled={codefFetching}
+                    className={cn(
+                      "w-full px-4 py-3 text-left hover:bg-[#f5f5f7] transition-all flex items-center gap-3",
+                      codefSelected?.uniqueNo === item.uniqueNo && "bg-primary/5"
+                    )}
+                  >
+                    <MapPin size={16} className="text-[#6e6e73] flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[#1d1d1f] truncate">{item.address}</p>
+                      <p className="text-xs text-[#6e6e73]">
+                        {item.realEstateType || "부동산"}
+                        {item.uniqueNo && ` · ${item.uniqueNo}`}
+                      </p>
+                    </div>
+                    {codefFetching && codefSelected?.uniqueNo === item.uniqueNo ? (
+                      <Loader2 size={16} className="animate-spin text-primary flex-shrink-0" />
+                    ) : (
+                      <Building2 size={16} className="text-[#6e6e73] flex-shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* CODEF 조회 완료 */}
+            {codefSource && rawText && (
+              <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 flex items-center gap-2">
+                <CheckCircle size={18} className="text-emerald-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-emerald-700">등기부등본 자동 조회 완료</p>
+                  <p className="text-xs text-emerald-600">{codefSelected?.address} · {rawText.length.toLocaleString()}자</p>
+                </div>
+              </div>
+            )}
+
+            <p className="text-[10px] text-[#6e6e73]">
+              CODEF 인터넷등기소 연동 · 주소 입력 시 등기부등본을 자동으로 조회합니다
+            </p>
+          </div>
+        )}
 
         {/* 파일 업로드 */}
         {inputMode === "file" && (
@@ -366,7 +524,7 @@ export default function RightsAnalysisPage() {
       {step !== "idle" && step !== "done" && !error && (
         <Card className="p-6 mb-6" aria-busy="true" aria-live="polite">
           <p className="text-sm font-medium text-[#1d1d1f] text-center mb-2">등기부등본 종합 분석 중...</p>
-          <AnalysisStepIndicator step={step} showExtract={!!usedFile} fileType={fileType} />
+          <AnalysisStepIndicator step={step} showExtract={!!usedFile} showCodef={!!usedCodef} fileType={fileType} />
           <AnalysisLoader
             steps={["등기부등본 파싱 중...", "권리관계 분석 중...", "위험도 점수 산출 중...", "AI 종합 의견 생성 중..."]}
             interval={3000}

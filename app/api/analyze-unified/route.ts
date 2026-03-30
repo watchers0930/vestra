@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { rawText: rawInput, estimatedPrice: userPrice, address: userAddress } = await req.json();
+    const { rawText: rawInput, estimatedPrice: userPrice, address: userAddress, source: inputSource } = await req.json();
 
     // Input sanitization
     const rawText = truncateInput(stripHtml(rawInput || ""), 50000);
@@ -451,6 +451,7 @@ export async function POST(req: NextRequest) {
         molitAvailable: !!marketData,
         molitFiltered: marketDataFiltered,
         estimatedPriceSource: userPrice ? "user" : marketData?.sale?.avgPrice ? "molit" : "none",
+        inputSource: inputSource || "manual",
       },
     });
   } catch (error: unknown) {
