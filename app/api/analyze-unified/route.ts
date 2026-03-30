@@ -97,6 +97,8 @@ export async function GET(req: NextRequest) {
                   transactionCount: priceResult.sale.transactionCount,
                   period: priceResult.sale.period,
                   recentTransactions: priceResult.sale.transactions.slice(0, 5),
+                  filterLevel: priceResult.sale.filterLevel,
+                  totalBeforeFilter: priceResult.sale.totalBeforeFilter,
                 }
               : null,
             rent: priceResult.rent

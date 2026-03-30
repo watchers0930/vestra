@@ -28,6 +28,8 @@ export interface PriceResult {
   transactionCount: number;
   transactions: RealTransaction[];
   period: string;
+  filterLevel?: "dong_apt" | "dong" | "apt" | "none";
+  totalBeforeFilter?: number;
 }
 
 export interface RentTransaction {
@@ -220,6 +222,95 @@ export function extractLawdCode(address: string): string | null {
   return null;
 }
 
+/**
+ * 주소에서 법정동(읍/면/리) 및 아파트명 힌트를 추출
+ * 예: "서울시 강남구 역삼동 래미안" → { dong: "역삼동", aptHint: "래미안" }
+ *     "서울시 구로구 구로동 554-24" → { dong: "구로동", aptHint: null }
+ */
+export function extractAddressFilters(address: string): {
+  dong: string | null;
+  aptHint: string | null;
+} {
+  // 공백으로 분리
+  const tokens = address.trim().split(/\s+/);
+
+  let dong: string | null = null;
+  let aptHintTokens: string[] = [];
+
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    // 동/읍/면/리 패턴 감지
+    if (/^.{1,10}[동읍면리가]$/.test(t) && !/[시도구군]$/.test(t.slice(0, -1))) {
+      // "강남구" 같은 구 이름이 아닌 실제 동명
+      if (!/구$|시$|군$|도$/.test(t)) {
+        dong = t;
+        // 동 뒤에 오는 토큰 중 번지(숫자-숫자)가 아닌 것은 아파트명 힌트
+        aptHintTokens = tokens.slice(i + 1).filter(
+          (s) => !/^\d+[-\d]*$/.test(s) && s.length >= 2
+        );
+      }
+    }
+  }
+
+  // 동을 못 찾았으면 토큰 중 "~동" 패턴 재시도
+  if (!dong) {
+    const dongToken = tokens.find(
+      (t) => /동$/.test(t) && t.length >= 2 && t.length <= 10 && !/구$|시$/.test(t.slice(0, -1))
+    );
+    if (dongToken) {
+      dong = dongToken;
+      const idx = tokens.indexOf(dongToken);
+      aptHintTokens = tokens.slice(idx + 1).filter(
+        (s) => !/^\d+[-\d]*$/.test(s) && s.length >= 2
+      );
+    }
+  }
+
+  const aptHint = aptHintTokens.length > 0 ? aptHintTokens.join(" ") : null;
+
+  return { dong, aptHint };
+}
+
+/**
+ * 거래 목록을 동/아파트명으로 필터링
+ * 단계적 필터링: 동+아파트 → 동만 → 아파트만 → 전체 반환(fallback)
+ */
+function filterTransactions<T extends { dong: string; aptName: string }>(
+  transactions: T[],
+  dong: string | null,
+  aptHint: string | null,
+): { filtered: T[]; filterLevel: "dong_apt" | "dong" | "apt" | "none" } {
+  if (!dong && !aptHint) return { filtered: transactions, filterLevel: "none" };
+
+  // 동 + 아파트명 동시 매칭
+  if (dong && aptHint) {
+    const dongApt = transactions.filter(
+      (t) => t.dong === dong.replace(/동$/, "") || t.dong === dong
+    ).filter(
+      (t) => t.aptName.includes(aptHint) || aptHint.split(/\s+/).some((h) => t.aptName.includes(h))
+    );
+    if (dongApt.length >= 1) return { filtered: dongApt, filterLevel: "dong_apt" };
+  }
+
+  // 아파트명만 매칭 (동보다 아파트명이 더 정확)
+  if (aptHint) {
+    const aptOnly = transactions.filter(
+      (t) => t.aptName.includes(aptHint) || aptHint.split(/\s+/).some((h) => t.aptName.includes(h))
+    );
+    if (aptOnly.length >= 1) return { filtered: aptOnly, filterLevel: "apt" };
+  }
+
+  // 동만 매칭
+  if (dong) {
+    const dongOnly = transactions.filter(
+      (t) => t.dong === dong.replace(/동$/, "") || t.dong === dong
+    );
+    if (dongOnly.length >= 1) return { filtered: dongOnly, filterLevel: "dong" };
+  }
+
+  return { filtered: transactions, filterLevel: "none" };
+}
+
 /** XML에서 특정 태그 값 추출 */
 function extractXmlValue(xml: string, tag: string): string {
   const regex = new RegExp(`<${tag}>\\s*([^<]*)\\s*</${tag}>`);
@@ -348,6 +439,8 @@ export async function fetchRecentPrices(
   const lawdCd = extractLawdCode(address);
   if (!lawdCd) return null;
 
+  const { dong, aptHint } = extractAddressFilters(address);
+
   const now = new Date();
 
   // 최근 N개월 배치 병렬 조회 (6개월씩)
@@ -359,7 +452,10 @@ export async function fetchRecentPrices(
   const results = await batchFetch(tasks);
   const allTransactions = results.flat();
 
-  if (allTransactions.length === 0) {
+  // 동/아파트명 필터링 적용
+  const { filtered, filterLevel } = filterTransactions(allTransactions, dong, aptHint);
+
+  if (filtered.length === 0) {
     return {
       avgPrice: 0,
       minPrice: 0,
@@ -367,10 +463,12 @@ export async function fetchRecentPrices(
       transactionCount: 0,
       transactions: [],
       period: `최근 ${months}개월`,
-    };
+      filterLevel,
+      totalBeforeFilter: allTransactions.length,
+    } as PriceResult;
   }
 
-  const prices = allTransactions.map((t) => t.dealAmount);
+  const prices = filtered.map((t) => t.dealAmount);
   const avgPrice = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
@@ -379,14 +477,16 @@ export async function fetchRecentPrices(
     avgPrice,
     minPrice,
     maxPrice,
-    transactionCount: allTransactions.length,
-    transactions: allTransactions.sort(
+    transactionCount: filtered.length,
+    transactions: filtered.sort(
       (a, b) =>
         b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay -
         (a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay)
     ),
     period: `최근 ${months}개월`,
-  };
+    filterLevel,
+    totalBeforeFilter: allTransactions.length,
+  } as PriceResult;
 }
 
 // ─── 전월세 실거래 ───
@@ -457,6 +557,8 @@ export async function fetchRecentRentPrices(
   const lawdCd = extractLawdCode(address);
   if (!lawdCd) return null;
 
+  const { dong, aptHint } = extractAddressFilters(address);
+
   const now = new Date();
   const tasks = Array.from({ length: months }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -466,9 +568,12 @@ export async function fetchRecentRentPrices(
   const results = await batchFetch(tasks);
   const allTransactions = results.flat();
 
+  // 동/아파트명 필터링 적용
+  const { filtered } = filterTransactions(allTransactions, dong, aptHint);
+
   // 전세만 필터링
-  const jeonseOnly = allTransactions.filter((t) => t.rentType === "전세");
-  const wolseOnly = allTransactions.filter((t) => t.rentType === "월세");
+  const jeonseOnly = filtered.filter((t) => t.rentType === "전세");
+  const wolseOnly = filtered.filter((t) => t.rentType === "월세");
 
   if (jeonseOnly.length === 0 && wolseOnly.length === 0) {
     return {
@@ -489,7 +594,7 @@ export async function fetchRecentRentPrices(
     maxDeposit: deposits.length > 0 ? Math.max(...deposits) : 0,
     jeonseCount: jeonseOnly.length,
     wolseCount: wolseOnly.length,
-    transactions: allTransactions.sort(
+    transactions: filtered.sort(
       (a, b) =>
         b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay -
         (a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay)
