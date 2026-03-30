@@ -70,6 +70,8 @@ function formatDistance(m: number) {
 export default function NeighborhoodMapPage() {
   const mapRef = useRef<HTMLDivElement>(null);
   const kakaoMapRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const overlaysRef = useRef<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const circleRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
@@ -161,23 +163,29 @@ export default function NeighborhoodMapPage() {
     const maps = (window as any).kakao.maps; // eslint-disable-line @typescript-eslint/no-explicit-any
     const map = kakaoMapRef.current;
 
+    // 기존 오버레이 모두 제거
+    overlaysRef.current.forEach(o => o.setMap(null));
+    overlaysRef.current = [];
+    if (circleRef.current) { circleRef.current.setMap(null); circleRef.current = null; }
+
     // 중심 이동
     const center = new maps.LatLng(result.lat, result.lng);
     map.setCenter(center);
     map.setLevel(5);
 
-    // 기존 오버레이 제거 (맵 리셋)
     // 반경 원
     const circle = new maps.Circle({
       map, center, radius: 1000,
       strokeWeight: 2, strokeColor: "#6366f1", strokeOpacity: 0.4,
       fillColor: "#6366f1", fillOpacity: 0.06,
     });
+    circleRef.current = circle;
 
     // 중심 마커
-    new maps.Marker({ map, position: center, zIndex: 10 });
+    const centerMarker = new maps.Marker({ map, position: center, zIndex: 10 });
+    overlaysRef.current.push(centerMarker);
 
-    // 시설별 마커
+    // 시설별 마커 — visibleFacilities에 있는 것만
     if (result.facilities) {
       for (const [key, fac] of Object.entries(result.facilities)) {
         if (!visibleFacilities.has(key)) continue;
@@ -186,12 +194,11 @@ export default function NeighborhoodMapPage() {
           const pos = new maps.LatLng(item.lat, item.lng);
           const content = document.createElement("div");
           content.innerHTML = `<div style="background:${color};color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.15);border:2px solid #fff;cursor:pointer">${item.name.length > 8 ? item.name.slice(0, 8) + "…" : item.name}</div>`;
-          new maps.CustomOverlay({ map, position: pos, content, yAnchor: 1.3 });
+          const overlay = new maps.CustomOverlay({ map, position: pos, content, yAnchor: 1.3 });
+          overlaysRef.current.push(overlay);
         }
       }
     }
-
-    return () => { circle.setMap(null); };
   }, [result, visibleFacilities]);
 
   useEffect(() => {
@@ -346,34 +353,52 @@ export default function NeighborhoodMapPage() {
                       {expanded ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />}
                     </button>
 
-                    {expanded && (
+                    {expanded && result.facilities && (
                       <div className="px-3 pb-2.5 border-t border-gray-100">
                         <div className="flex items-center gap-3 py-2 text-[10px] text-gray-500">
                           <span>시설 <b className="text-gray-900">{cat.count}개</b></span>
                           <span>최근접 <b className="text-gray-900">{formatDistance(cat.nearest)}</b></span>
                         </div>
-                        {cat.items.length === 0 ? (
+                        {/* 시설별 하위 그룹 */}
+                        {Object.entries(result.facilities)
+                          .filter(([, fac]) => (fac as FacilityGroup).category === c.key)
+                          .map(([key, fac]) => {
+                            const f = fac as FacilityGroup;
+                            return (
+                              <div key={key} className="mb-2">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: f.color }} />
+                                  <span className="text-[10px] font-bold" style={{ color: f.color }}>{f.label}</span>
+                                  <span className="text-[10px] text-gray-400">({f.count})</span>
+                                </div>
+                                {f.items.length === 0 ? (
+                                  <p className="text-[10px] text-gray-400 pl-3.5">없음</p>
+                                ) : (
+                                  <div className="space-y-0.5">
+                                    {f.items.slice(0, 5).map((item, i) => (
+                                      <button
+                                        key={i}
+                                        onClick={() => {
+                                          if (kakaoMapRef.current) {
+                                            const maps = (window as any).kakao.maps; // eslint-disable-line @typescript-eslint/no-explicit-any
+                                            kakaoMapRef.current.setCenter(new maps.LatLng(item.lat, item.lng));
+                                            kakaoMapRef.current.setLevel(3);
+                                          }
+                                        }}
+                                        className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md hover:bg-gray-50 transition-colors text-left"
+                                      >
+                                        <Navigation size={10} className="text-gray-300 shrink-0" />
+                                        <span className="text-[11px] text-gray-800 truncate flex-1">{item.name}</span>
+                                        <span className="text-[10px] text-gray-400 font-mono shrink-0">{formatDistance(item.distance)}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        {Object.entries(result.facilities).filter(([, fac]) => (fac as FacilityGroup).category === c.key).length === 0 && (
                           <p className="text-[11px] text-gray-400 py-1">반경 1km 내 시설 없음</p>
-                        ) : (
-                          <div className="space-y-0.5">
-                            {cat.items.slice(0, 6).map((item, i) => (
-                              <button
-                                key={i}
-                                onClick={() => {
-                                  if (kakaoMapRef.current) {
-                                    const maps = (window as any).kakao.maps; // eslint-disable-line @typescript-eslint/no-explicit-any
-                                    kakaoMapRef.current.setCenter(new maps.LatLng(item.lat, item.lng));
-                                    kakaoMapRef.current.setLevel(3);
-                                  }
-                                }}
-                                className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md hover:bg-gray-50 transition-colors text-left"
-                              >
-                                <Navigation size={10} className="text-gray-300 shrink-0" />
-                                <span className="text-[11px] text-gray-800 truncate flex-1">{item.name}</span>
-                                <span className="text-[10px] text-gray-400 font-mono shrink-0">{formatDistance(item.distance)}</span>
-                              </button>
-                            ))}
-                          </div>
                         )}
                       </div>
                     )}
