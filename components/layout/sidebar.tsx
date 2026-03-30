@@ -87,7 +87,7 @@ const userMenuItems: MenuItem[] = [
       { href: "/jeonse/lease-report", label: "주택임대차 신고" },
       // { href: "/landlord-profile", label: "임대인 프로파일" },
       { href: "/jeonse/checklist", label: "계약 체크리스트" },
-      { href: "/jeonse/neighborhood", label: "주변 환경 분석" },
+      { href: "/neighborhood", label: "주변 환경 분석" },
     ],
   },
   { href: "/feasibility", icon: ClipboardCheck, label: "사업성 분석", description: "다중 문서 기반 SCR 수준 사업성 검증 보고서를 생성합니다" },
