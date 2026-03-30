@@ -154,41 +154,61 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "주소를 찾을 수 없습니다. 정확한 주소를 입력해주세요." }, { status: 400 });
     }
 
-    // 2. 카테고리별 주변 시설 검색 (병렬)
-    const [subway, bus, school, academy, mart, pharmacy, hospital, convenience] = await Promise.all([
+    // 2. 시설별 주변 검색 (병렬)
+    const [subway, bus, school, academy, kindergarten, mart, pharmacy, hospital, convenience, park, bank] = await Promise.all([
       kakaoCategorySearch(kakaoKey, coord, "SW8"),
-      kakaoCategorySearch(kakaoKey, coord, "BK9").then(() => // BK9 없음 → 키워드 검색
-        kakaoKeywordSearch(kakaoKey, "버스정류장", coord, "")
-      ),
+      kakaoKeywordSearch(kakaoKey, "버스정류장", coord, ""),
       kakaoCategorySearch(kakaoKey, coord, "SC4"),
       kakaoCategorySearch(kakaoKey, coord, "AC5"),
+      kakaoKeywordSearch(kakaoKey, "유치원 어린이집", coord, ""),
       kakaoCategorySearch(kakaoKey, coord, "MT1"),
       kakaoCategorySearch(kakaoKey, coord, "PM9"),
       kakaoCategorySearch(kakaoKey, coord, "HP8"),
       kakaoCategorySearch(kakaoKey, coord, "CS2"),
+      kakaoKeywordSearch(kakaoKey, "공원", coord, ""),
+      kakaoCategorySearch(kakaoKey, coord, "BK9"),
     ]);
 
+    // 시설별 개별 데이터
+    const facilities: Record<string, { label: string; category: string; color: string; items: FacilityItem[] }> = {
+      subway: { label: "지하철역", category: "transport", color: "#3b82f6", items: placesToItems(subway) },
+      bus: { label: "버스정류장", category: "transport", color: "#60a5fa", items: placesToItems(bus) },
+      school: { label: "학교", category: "education", color: "#8b5cf6", items: placesToItems(school) },
+      academy: { label: "학원", category: "education", color: "#a78bfa", items: placesToItems(academy) },
+      kindergarten: { label: "유치원/어린이집", category: "education", color: "#c4b5fd", items: placesToItems(kindergarten) },
+      hospital: { label: "병원", category: "medical", color: "#ef4444", items: placesToItems(hospital) },
+      pharmacy: { label: "약국", category: "medical", color: "#f87171", items: placesToItems(pharmacy) },
+      mart: { label: "대형마트", category: "convenience", color: "#10b981", items: placesToItems(mart) },
+      convenience: { label: "편의점", category: "living", color: "#f59e0b", items: placesToItems(convenience) },
+      park: { label: "공원", category: "living", color: "#22c55e", items: placesToItems(park) },
+      bank: { label: "은행", category: "living", color: "#6366f1", items: placesToItems(bank) },
+    };
+
     // 3. 카테고리별 그룹화 + 점수 계산
-    const transportItems = placesToItems([...subway, ...bus].sort((a, b) => parseInt(a.distance) - parseInt(b.distance)));
-    const educationItems = placesToItems([...school, ...academy].sort((a, b) => parseInt(a.distance) - parseInt(b.distance)));
-    const convenienceItems = placesToItems([...mart, ...pharmacy, ...hospital].sort((a, b) => parseInt(a.distance) - parseInt(b.distance)));
-    const livingItems = placesToItems(convenience.sort((a, b) => parseInt(a.distance) - parseInt(b.distance)));
+    const transportItems = [...facilities.subway.items, ...facilities.bus.items].sort((a, b) => a.distance - b.distance);
+    const educationItems = [...facilities.school.items, ...facilities.academy.items, ...facilities.kindergarten.items].sort((a, b) => a.distance - b.distance);
+    const medicalItems = [...facilities.hospital.items, ...facilities.pharmacy.items].sort((a, b) => a.distance - b.distance);
+    const convenienceItems = [...facilities.mart.items, ...facilities.convenience.items].sort((a, b) => a.distance - b.distance);
+    const livingItems = [...facilities.park.items, ...facilities.bank.items].sort((a, b) => a.distance - b.distance);
 
     const transport = { ...calcCategoryScore(transportItems), count: transportItems.length, grade: "", items: transportItems };
     const education = { ...calcCategoryScore(educationItems), count: educationItems.length, grade: "", items: educationItems };
+    const medical = { ...calcCategoryScore(medicalItems), count: medicalItems.length, grade: "", items: medicalItems };
     const conv = { ...calcCategoryScore(convenienceItems), count: convenienceItems.length, grade: "", items: convenienceItems };
     const living = { ...calcCategoryScore(livingItems), count: livingItems.length, grade: "", items: livingItems };
 
     transport.grade = getGrade(transport.score);
     education.grade = getGrade(education.score);
+    medical.grade = getGrade(medical.score);
     conv.grade = getGrade(conv.score);
     living.grade = getGrade(living.score);
 
     // 4. 종합점수 (가중 평균)
     const totalScore = Math.round(
-      transport.score * 0.30 +
-      education.score * 0.25 +
-      conv.score * 0.25 +
+      transport.score * 0.25 +
+      education.score * 0.20 +
+      medical.score * 0.20 +
+      conv.score * 0.15 +
       living.score * 0.20
     );
     const totalGrade = getGrade(totalScore);
@@ -203,9 +223,10 @@ export async function POST(req: NextRequest) {
 종합점수: ${totalScore}/100 (${totalGrade})
 
 [교통] ${transport.score}점 — 지하철역 ${subway.length}개, 버스정류장 ${bus.length}개, 최근접 ${transport.nearest}m
-[교육] ${education.score}점 — 학교 ${school.length}개, 학원 ${academy.length}개, 최근접 ${education.nearest}m
-[편의] ${conv.score}점 — 마트 ${mart.length}개, 병원 ${hospital.length}개, 약국 ${pharmacy.length}개, 최근접 ${conv.nearest}m
-[생활] ${living.score}점 — 편의점 ${convenience.length}개, 최근접 ${living.nearest}m`;
+[교육] ${education.score}점 — 학교 ${school.length}개, 학원 ${academy.length}개, 유치원 ${kindergarten.length}개, 최근접 ${education.nearest}m
+[의료] ${medical.score}점 — 병원 ${hospital.length}개, 약국 ${pharmacy.length}개, 최근접 ${medical.nearest}m
+[편의] ${conv.score}점 — 마트 ${mart.length}개, 편의점 ${convenience.length}개, 최근접 ${conv.nearest}m
+[생활] ${living.score}점 — 공원 ${park.length}개, 은행 ${bank.length}개, 최근접 ${living.nearest}m`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4.1-mini",
@@ -225,9 +246,13 @@ export async function POST(req: NextRequest) {
       categories: {
         transport: { score: transport.score, grade: transport.grade, count: transport.count, nearest: transport.nearest, items: transport.items.slice(0, 10) },
         education: { score: education.score, grade: education.grade, count: education.count, nearest: education.nearest, items: education.items.slice(0, 10) },
+        medical: { score: medical.score, grade: medical.grade, count: medical.count, nearest: medical.nearest, items: medical.items.slice(0, 10) },
         convenience: { score: conv.score, grade: conv.grade, count: conv.count, nearest: conv.nearest, items: conv.items.slice(0, 10) },
         living: { score: living.score, grade: living.grade, count: living.count, nearest: living.nearest, items: living.items.slice(0, 10) },
       },
+      facilities: Object.fromEntries(
+        Object.entries(facilities).map(([k, v]) => [k, { label: v.label, category: v.category, color: v.color, count: v.items.length, items: v.items.slice(0, 8) }])
+      ),
       totalScore,
       totalGrade,
       aiComment,

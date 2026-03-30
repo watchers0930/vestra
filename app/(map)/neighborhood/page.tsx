@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MapPin, Train, GraduationCap, ShoppingCart, Building2, ChevronDown, ChevronRight, Loader2, Sparkles, Navigation, Search } from "lucide-react";
+import { MapPin, Train, GraduationCap, ShoppingCart, Building2, ChevronDown, ChevronRight, Loader2, Sparkles, Navigation, Search, Heart, Eye, EyeOff } from "lucide-react";
 
 /* ── types ── */
 interface FacilityItem {
@@ -20,6 +20,14 @@ interface CategoryData {
   items: FacilityItem[];
 }
 
+interface FacilityGroup {
+  label: string;
+  category: string;
+  color: string;
+  count: number;
+  items: FacilityItem[];
+}
+
 interface AnalysisResult {
   address: string;
   lat: number;
@@ -27,18 +35,21 @@ interface AnalysisResult {
   categories: {
     transport: CategoryData;
     education: CategoryData;
+    medical: CategoryData;
     convenience: CategoryData;
     living: CategoryData;
   };
+  facilities: Record<string, FacilityGroup>;
   totalScore: number;
   totalGrade: string;
   aiComment: string;
 }
 
 const CATEGORY_META = [
-  { key: "transport" as const, label: "교통", icon: Train, color: "#3b82f6", weight: "30%" },
-  { key: "education" as const, label: "교육", icon: GraduationCap, color: "#8b5cf6", weight: "25%" },
-  { key: "convenience" as const, label: "편의시설", icon: ShoppingCart, color: "#10b981", weight: "25%" },
+  { key: "transport" as const, label: "교통", icon: Train, color: "#3b82f6", weight: "25%" },
+  { key: "education" as const, label: "교육", icon: GraduationCap, color: "#8b5cf6", weight: "20%" },
+  { key: "medical" as const, label: "의료", icon: Heart, color: "#ef4444", weight: "20%" },
+  { key: "convenience" as const, label: "편의", icon: ShoppingCart, color: "#10b981", weight: "15%" },
   { key: "living" as const, label: "생활", icon: Building2, color: "#f59e0b", weight: "20%" },
 ];
 
@@ -65,7 +76,7 @@ export default function NeighborhoodMapPage() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState("");
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [visibleFacilities, setVisibleFacilities] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     try {
@@ -102,7 +113,7 @@ export default function NeighborhoodMapPage() {
       }
       setResult(json);
       setExpandedCats(new Set(CATEGORY_META.map(c => c.key)));
-      setActiveFilter(null);
+      setVisibleFacilities(new Set(Object.keys(json.facilities || {})));
     } catch {
       setError("서버 연결에 실패했습니다.");
     } finally {
@@ -166,34 +177,40 @@ export default function NeighborhoodMapPage() {
     // 중심 마커
     new maps.Marker({ map, position: center, zIndex: 10 });
 
-    const colorMap: Record<string, string> = {
-      transport: "#3b82f6", education: "#8b5cf6",
-      convenience: "#10b981", living: "#f59e0b",
-    };
-
-    // 시설 마커
-    for (const cat of CATEGORY_META) {
-      if (activeFilter && activeFilter !== cat.key) continue;
-      const data = result.categories[cat.key];
-      const color = colorMap[cat.key];
-      for (const item of data.items.slice(0, 8)) {
-        const pos = new maps.LatLng(item.lat, item.lng);
-        const content = document.createElement("div");
-        content.innerHTML = `<div style="background:${color};color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.15);border:2px solid #fff;cursor:pointer">${item.name.length > 8 ? item.name.slice(0, 8) + "…" : item.name}</div>`;
-        new maps.CustomOverlay({ map, position: pos, content, yAnchor: 1.3 });
+    // 시설별 마커
+    if (result.facilities) {
+      for (const [key, fac] of Object.entries(result.facilities)) {
+        if (!visibleFacilities.has(key)) continue;
+        const color = (fac as FacilityGroup).color;
+        for (const item of (fac as FacilityGroup).items.slice(0, 8)) {
+          const pos = new maps.LatLng(item.lat, item.lng);
+          const content = document.createElement("div");
+          content.innerHTML = `<div style="background:${color};color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.15);border:2px solid #fff;cursor:pointer">${item.name.length > 8 ? item.name.slice(0, 8) + "…" : item.name}</div>`;
+          new maps.CustomOverlay({ map, position: pos, content, yAnchor: 1.3 });
+        }
       }
     }
 
     return () => { circle.setMap(null); };
-  }, [result, activeFilter]);
+  }, [result, visibleFacilities]);
 
   useEffect(() => {
     if (result) renderMarkers();
   }, [result, renderMarkers]);
 
-  /* ── 카테고리 필터 토글 ── */
-  const toggleFilter = (key: string) => {
-    setActiveFilter(prev => prev === key ? null : key);
+  /* ── 개별 시설 보기/숨기기 토글 ── */
+  const toggleFacility = (key: string) => {
+    setVisibleFacilities(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
+
+  const toggleAllFacilities = (show: boolean) => {
+    if (result?.facilities) {
+      setVisibleFacilities(show ? new Set(Object.keys(result.facilities)) : new Set());
+    }
   };
 
   return (
@@ -249,21 +266,15 @@ export default function NeighborhoodMapPage() {
                     <p className="text-[11px] text-gray-500 truncate" style={{ maxWidth: 180 }}>{result.address}</p>
                   </div>
                 </div>
-                {/* 카테고리 배지 */}
+                {/* 카테고리 점수 배지 */}
                 <div className="flex flex-wrap gap-1.5">
                   {CATEGORY_META.map(c => {
                     const cat = result.categories[c.key];
-                    const isActive = activeFilter === c.key;
                     return (
-                      <button
-                        key={c.key}
-                        onClick={() => toggleFilter(c.key)}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${isActive ? "ring-2 ring-offset-1" : "opacity-80 hover:opacity-100"}`}
-                        style={{ backgroundColor: `${c.color}20`, color: c.color, outlineColor: isActive ? c.color : undefined }}
-                      >
+                      <span key={c.key} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium" style={{ backgroundColor: `${c.color}20`, color: c.color }}>
                         <c.icon size={12} />
                         {c.label} {cat.score}
-                      </button>
+                      </span>
                     );
                   })}
                 </div>
@@ -274,6 +285,37 @@ export default function NeighborhoodMapPage() {
                 <div className="mb-3 flex gap-2 p-3 rounded-lg bg-blue-50 border border-blue-100">
                   <Sparkles size={14} className="text-blue-600 shrink-0 mt-0.5" />
                   <p className="text-[11px] text-gray-700 leading-relaxed">{result.aiComment}</p>
+                </div>
+              )}
+
+              {/* 시설별 보기/숨기기 토글 */}
+              {result.facilities && (
+                <div className="mb-3 rounded-lg border border-gray-200 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[11px] font-bold text-gray-500">시설 표시</p>
+                    <div className="flex gap-1">
+                      <button onClick={() => toggleAllFacilities(true)} className="text-[10px] text-indigo-600 hover:underline">전체 보기</button>
+                      <span className="text-gray-300">|</span>
+                      <button onClick={() => toggleAllFacilities(false)} className="text-[10px] text-gray-400 hover:underline">전체 숨기기</button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(result.facilities).map(([key, fac]) => {
+                      const f = fac as FacilityGroup;
+                      const visible = visibleFacilities.has(key);
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => toggleFacility(key)}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-all border ${visible ? "opacity-100" : "opacity-40"}`}
+                          style={{ borderColor: f.color, backgroundColor: visible ? `${f.color}15` : "transparent", color: f.color }}
+                        >
+                          {visible ? <Eye size={10} /> : <EyeOff size={10} />}
+                          {f.label} ({f.count})
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -356,19 +398,23 @@ export default function NeighborhoodMapPage() {
           <div ref={mapRef} className="h-full w-full" />
 
           {/* 지도 위 범례 */}
-          {result && (
-            <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 p-3">
+          {result && result.facilities && (
+            <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 p-3 max-h-[300px] overflow-y-auto">
               <p className="text-[10px] font-bold text-gray-500 mb-2">범례</p>
-              <div className="space-y-1.5">
-                {CATEGORY_META.map(c => (
-                  <div key={c.key} className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: c.color }} />
-                    <span className="text-[11px] text-gray-700">{c.label}</span>
-                  </div>
-                ))}
+              <div className="space-y-1">
+                {Object.entries(result.facilities).map(([key, fac]) => {
+                  const f = fac as FacilityGroup;
+                  const visible = visibleFacilities.has(key);
+                  return (
+                    <div key={key} className={`flex items-center gap-2 ${visible ? "" : "opacity-30"}`}>
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: f.color }} />
+                      <span className="text-[10px] text-gray-700">{f.label}</span>
+                    </div>
+                  );
+                })}
                 <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
-                  <div className="w-3 h-3 rounded-full border-2 border-indigo-400 bg-indigo-100" />
-                  <span className="text-[11px] text-gray-700">반경 1km</span>
+                  <div className="w-2.5 h-2.5 rounded-full border-2 border-indigo-400 bg-indigo-100" />
+                  <span className="text-[10px] text-gray-700">반경 1km</span>
                 </div>
               </div>
             </div>
