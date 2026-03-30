@@ -50,6 +50,37 @@ function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+// 저장 공간 절약: 대용량 텍스트 필드 제거, 문자열 500자 초과 시 잘라냄
+function trimData(data: Record<string, unknown>): Record<string, unknown> {
+  const SKIP_KEYS = new Set(["rawText", "text", "fullText", "pdfText", "originalText"]);
+  const result: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (SKIP_KEYS.has(k)) continue;
+    if (typeof v === "string" && v.length > 500) {
+      result[k] = v.slice(0, 500) + "…";
+    } else {
+      result[k] = v;
+    }
+  }
+  return result;
+}
+
+// QuotaExceededError 방어: 초과 시 전체 삭제 후 재시도
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    if (e instanceof DOMException && (e.name === "QuotaExceededError" || e.code === 22)) {
+      try {
+        localStorage.removeItem(key);
+        localStorage.setItem(key, value);
+      } catch {
+        // 그래도 실패하면 포기
+      }
+    }
+  }
+}
+
 // 분석 이력
 export function getAnalyses(): AnalysisRecord[] {
   if (typeof window === "undefined") return [];
@@ -66,13 +97,14 @@ export function addAnalysis(record: Omit<AnalysisRecord, "id" | "date">): Analys
   const analyses = getAnalyses();
   const newRecord: AnalysisRecord = {
     ...record,
+    data: trimData(record.data),
     id: generateId(),
     date: new Date().toISOString(),
   };
   analyses.unshift(newRecord);
-  // 최대 50건
-  if (analyses.length > 50) analyses.splice(50);
-  localStorage.setItem(ANALYSIS_KEY, encode(analyses));
+  // 최대 20건 (localStorage 용량 절약)
+  if (analyses.length > 20) analyses.splice(20);
+  safeSetItem(ANALYSIS_KEY, encode(analyses));
 
   // 서버 동기화 (fire-and-forget, UI 블로킹 없음)
   syncToServer("analysis", newRecord).catch(() => {});
@@ -98,7 +130,7 @@ export function addOrUpdateAsset(asset: Omit<StoredAsset, "id" | "lastAnalyzedDa
 
   if (existing) {
     Object.assign(existing, asset, { lastAnalyzedDate: new Date().toISOString() });
-    localStorage.setItem(ASSETS_KEY, encode(assets));
+    safeSetItem(ASSETS_KEY, encode(assets));
 
     // 서버 동기화 (fire-and-forget)
     syncToServer("asset", existing).catch(() => {});
@@ -112,7 +144,7 @@ export function addOrUpdateAsset(asset: Omit<StoredAsset, "id" | "lastAnalyzedDa
     lastAnalyzedDate: new Date().toISOString(),
   };
   assets.unshift(newAsset);
-  localStorage.setItem(ASSETS_KEY, encode(assets));
+  safeSetItem(ASSETS_KEY, encode(assets));
 
   // 서버 동기화 (fire-and-forget)
   syncToServer("asset", newAsset).catch(() => {});
@@ -122,12 +154,12 @@ export function addOrUpdateAsset(asset: Omit<StoredAsset, "id" | "lastAnalyzedDa
 
 export function removeAnalysis(id: string): void {
   const analyses = getAnalyses().filter((a) => a.id !== id);
-  localStorage.setItem(ANALYSIS_KEY, encode(analyses));
+  safeSetItem(ANALYSIS_KEY, encode(analyses));
 }
 
 export function removeAsset(id: string): void {
   const assets = getAssets().filter((a) => a.id !== id);
-  localStorage.setItem(ASSETS_KEY, encode(assets));
+  safeSetItem(ASSETS_KEY, encode(assets));
 }
 
 /**
@@ -149,6 +181,14 @@ export function getLatestAnalysisForAddress(address: string): AnalysisRecord | n
 export function clearAll(): void {
   localStorage.removeItem(ANALYSIS_KEY);
   localStorage.removeItem(ASSETS_KEY);
+}
+
+/** 특정 날짜(기본: 오늘)의 분석 이력 삭제 */
+export function clearByDate(dateStr?: string): void {
+  if (typeof window === "undefined") return;
+  const target = dateStr ?? new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  const analyses = getAnalyses().filter((a) => !a.date.startsWith(target));
+  safeSetItem(ANALYSIS_KEY, encode(analyses));
 }
 
 // ─── 서버 동기화 (DB 영속화) ───
@@ -192,12 +232,12 @@ export async function loadFromServer(): Promise<{
     // 분석 이력 병합
     const localAnalyses = getAnalyses();
     const mergedAnalyses = mergeAnalyses(localAnalyses, serverData.analyses);
-    localStorage.setItem(ANALYSIS_KEY, encode(mergedAnalyses));
+    safeSetItem(ANALYSIS_KEY, encode(mergedAnalyses));
 
     // 자산 병합
     const localAssets = getAssets();
     const mergedAssets = mergeAssets(localAssets, serverData.assets);
-    localStorage.setItem(ASSETS_KEY, encode(mergedAssets));
+    safeSetItem(ASSETS_KEY, encode(mergedAssets));
 
     return { analyses: mergedAnalyses, assets: mergedAssets };
   } catch {
