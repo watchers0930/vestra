@@ -182,20 +182,47 @@ function extractArea(text: string): string {
 
 /** 권리자/소유자 이름 추출 */
 function extractHolder(text: string): string {
-  // 법인/기관명 (개인보다 먼저 체크 — 법인명이 더 긴 패턴)
-  const corpPatterns = [
-    /((?:주식회사|㈜)\s*[가-힣A-Za-z0-9\s]{1,30})/,
-    /([가-힣]+(?:은행|보험|저축은행|캐피탈|신용협동조합|신탁|증권|자산관리|공사|조합|재단|학교법인|종교법인|사단법인|재단법인|유한회사|합자회사|합명회사)[가-힣\s]*)/,
-    /((?:사\)|사\(|법인)[가-힣\s]{2,20})/,
+  // 1) 법인/기관명 (개인보다 먼저 — 법인명이 더 긴 패턴)
+  const corpSuffix = "은행|보험|저축은행|캐피탈|신용협동조합|신탁|증권|자산관리|공사|조합|재단|학교법인|종교법인|사단법인|재단법인|유한회사|합자회사|합명회사|주식회사";
+  const corpPatterns: RegExp[] = [
+    // (주)카카오뱅크, ㈜한국토지신탁
+    new RegExp(`([（(]주[)）]|㈜)\\s*([가-힣A-Za-z0-9·]{1,20}(?:${corpSuffix})?[가-힣A-Za-z0-9·]*)`),
+    // 주식회사 하나은행 — 공백 포함 캡처 후 주소 제거
+    new RegExp(`(주식회사)\\s+([가-힣A-Za-z0-9·]+(?:\\s+[가-힣A-Za-z0-9·]+)?)`),
+    // OO은행주식회사, 농협은행주식회사 등 기관명 + 후위 법인 유형 (주식회사 포함)
+    new RegExp(`([가-힣A-Za-z0-9·]{1,15}(?:${corpSuffix})(?:주식회사|유한회사|합자회사|합명회사)?)`),
   ];
-  for (const pattern of corpPatterns) {
-    const m = text.match(pattern);
-    if (m) return m[1].trim();
+  for (let i = 0; i < corpPatterns.length; i++) {
+    const m = text.match(corpPatterns[i]);
+    if (m) {
+      let name: string;
+      if (i === 1 && m[2]) {
+        // "주식회사 하나은행" — 사이 공백 유지
+        name = (m[1] + " " + m[2]).trim().replace(/\s{2,}.*$/, "");
+      } else {
+        name = (m[2] ? (m[1] + m[2]) : m[1]).trim().replace(/\s{2,}.*$/, "");
+      }
+      if (name.length >= 2) return name;
+    }
   }
 
-  // 한글 이름 패턴 (2~5글자 — 복성/긴 이름 지원)
-  const m = text.match(/([가-힣]{2,5})\s*(?:\d{6}|[（(]|$)/);
-  if (m) return m[1];
+  // 2) "권리자", "소유자", "채무자", "근저당권자" 등 키워드 뒤 이름
+  const keywordMatch = text.match(
+    /(?:권리자|소유자|채무자|채권자|근저당권자|저당권자|임차인|임대인|전세권자|지상권자)\s*[:：]?\s*([가-힣]{2,5})/
+  );
+  if (keywordMatch) return keywordMatch[1];
+
+  // 3) 주민번호·생년월일 앞 한글 이름
+  const idMatch = text.match(/([가-힣]{2,5})\s*(?:\d{6}[-–]\d{7}|\d{6}[-–]\*{7}|\d{6}|\d{2}년\s*\d{1,2}월)/);
+  if (idMatch) return idMatch[1];
+
+  // 4) 괄호(주민번호 마스킹) 앞 이름
+  const parenMatch = text.match(/([가-힣]{2,5})\s*[（(]/);
+  if (parenMatch) return parenMatch[1];
+
+  // 5) 줄 끝 또는 공백 2개 이상 앞 독립적 한글 이름 (2~5글자)
+  const standaloneMatch = text.match(/(?:^|\s{2,})([가-힣]{2,5})(?:\s{2,}|$)/);
+  if (standaloneMatch) return standaloneMatch[1];
 
   return "";
 }
