@@ -102,9 +102,8 @@ export default function RightsAnalysisPage() {
   const [previousAnalysis, setPreviousAnalysis] = useState<{ date: string; summary: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // CODEF 관련 상태
+  // 주소 자동 분석 상태
   const [codefAddress, setCodefAddress] = useState("");
-  const [codefUniqueNo, setCodefUniqueNo] = useState("");
   const [codefFetching, setCodefFetching] = useState(false);
   const [codefSource, setCodefSource] = useState(false);
 
@@ -130,33 +129,94 @@ export default function RightsAnalysisPage() {
     setInputMode("text");
   };
 
-  // CODEF 등기부등본 조회 (고유번호 + 주소 직접 입력)
-  const handleCodefFetch = async () => {
+  // 주소 기반 자동 분석 (MOLIT + 건축물대장 → 분석 텍스트 구성 → 분석 실행)
+  const handleAddressAnalyze = async () => {
     const addr = codefAddress.trim();
-    const uniqueNo = codefUniqueNo.trim();
-    if (!addr || !uniqueNo) return;
+    if (!addr || addr.length < 4) return;
+
     setCodefFetching(true);
     setError(null);
+    setResult(null);
 
     try {
-      const res = await fetch("/api/codef/registry", {
+      // 1) 주소로 공공데이터 조회
+      const geoRes = await fetch(`/api/analyze-unified?address=${encodeURIComponent(addr)}`);
+      const geoData = await geoRes.json();
+      if (geoData.error) throw new Error(geoData.error);
+
+      const b = geoData.building;
+      const p = geoData.price;
+
+      // 2) 분석용 텍스트 구성
+      const lines: string[] = [
+        "【 표 제 부 】",
+        "",
+        `소재지번: ${addr}`,
+      ];
+      if (b?.buildingName) lines.push(`건물명칭: ${b.buildingName}`);
+      if (b?.totalArea) lines.push(`연면적: ${b.totalArea}㎡`);
+      if (b?.mainPurpose) lines.push(`주용도: ${b.mainPurpose}`);
+      if (b?.structure) lines.push(`구조: ${b.structure}`);
+      if (b?.buildYear) lines.push(`건축년도: ${b.buildYear}년`);
+      if (b?.floors) lines.push(`지상층수: ${b.floors}층`);
+      if (b?.households) lines.push(`세대수: ${b.households}세대`);
+
+      if (p?.sale) {
+        lines.push("", "─── 실거래가 정보 ───");
+        lines.push(`평균 매매가: ${p.sale.avgPrice.toLocaleString()}원`);
+        lines.push(`최근거래: ${p.sale.period} (${p.sale.transactionCount}건)`);
+      }
+      if (p?.rent?.avgDeposit) {
+        lines.push(`전세 평균가: ${p.rent.avgDeposit.toLocaleString()}원`);
+        if (p.jeonseRatio) lines.push(`전세가율: ${p.jeonseRatio.toFixed(1)}%`);
+      }
+
+      lines.push("", "【 갑 구 】 (소유권에 관한 사항)");
+      lines.push("※ 등기부등본 미제출 — 공공데이터 기반 간이 분석");
+      lines.push("", "【 을 구 】 (소유권 이외의 권리에 관한 사항)");
+      lines.push("※ 등기부등본 미제출 — 권리관계 직접 확인 필요");
+
+      const syntheticText = lines.join("\n");
+
+      // 3) 분석 실행 (rawText 우회해서 직접 POST)
+      setCodefSource(true);
+      setFileName(null);
+      setFileType(null);
+
+      setStep("codef-fetch"); await new Promise((r) => setTimeout(r, 400));
+      setStep("parsing"); await new Promise((r) => setTimeout(r, 600));
+      setStep("validating"); await new Promise((r) => setTimeout(r, 400));
+      setStep("scoring"); await new Promise((r) => setTimeout(r, 400));
+      setStep("molit"); await new Promise((r) => setTimeout(r, 300));
+      setStep("ai");
+
+      const res = await fetch("/api/analyze-unified", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          reqAddress: addr,
-          commUniqueNo: uniqueNo,
-          realEstateType: "2",
+          rawText: syntheticText,
+          estimatedPrice,
+          source: "address",
         }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      setRawText(data.text);
-      setCodefSource(true);
-      setFileName(null);
-      setFileType(null);
+      setRawText(syntheticText);
+      setResult(data);
+      setStep("done");
+
+      addAnalysis({
+        type: "rights",
+        typeLabel: "권리분석",
+        address: addr,
+        summary: `${data.riskScore?.grade || "?"}등급 (${data.riskScore?.gradeLabel || ""}, ${data.riskScore?.totalScore || 0}점) | 간이분석`,
+        data: data as unknown as Record<string, unknown>,
+      });
+
     } catch (e) {
-      setError(e instanceof Error ? e.message : "등기부등본 조회에 실패했습니다.");
+      setError(e instanceof Error ? e.message : "분석에 실패했습니다.");
+      setStep("idle");
     } finally {
       setCodefFetching(false);
     }
@@ -330,62 +390,32 @@ export default function RightsAnalysisPage() {
           </button>
         </div>
 
-        {/* CODEF 등기부등본 자동 조회 */}
+        {/* 주소 자동 분석 */}
         {inputMode === "codef" && (
           <div className="space-y-3">
-            {/* 주소 입력 */}
-            <div>
-              <label className="block text-xs font-medium text-[#1d1d1f] mb-1">부동산 주소 <span className="text-red-500">*</span></label>
+            <div className="flex gap-2">
               <input
                 type="text"
                 value={codefAddress}
                 onChange={(e) => { setCodefAddress(e.target.value); setCodefSource(false); }}
-                placeholder="예: 서울특별시 구로구 구로동 554-24"
+                onKeyDown={(e) => e.key === "Enter" && handleAddressAnalyze()}
+                placeholder="예: 서울시 구로구 구로동 554-24"
                 aria-label="부동산 주소"
-                className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="flex-1 px-4 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                disabled={codefFetching}
               />
+              <button
+                onClick={handleAddressAnalyze}
+                disabled={codefFetching || codefAddress.trim().length < 4}
+                className="px-4 py-2.5 rounded-lg bg-[#1d1d1f] text-white text-sm font-medium hover:bg-[#1d1d1f]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 whitespace-nowrap"
+              >
+                {codefFetching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+                {codefFetching ? "분석 중..." : "분석하기"}
+              </button>
             </div>
-
-            {/* 고유번호 입력 */}
-            <div>
-              <label className="block text-xs font-medium text-[#1d1d1f] mb-1">
-                부동산 고유번호 <span className="text-red-500">*</span>
-                <span className="text-[#6e6e73] font-normal ml-1">— 등기부등본 상단의 13자리 번호 (예: 1101-2024-001234)</span>
-              </label>
-              <input
-                type="text"
-                value={codefUniqueNo}
-                onChange={(e) => { setCodefUniqueNo(e.target.value); setCodefSource(false); }}
-                onKeyDown={(e) => e.key === "Enter" && handleCodefFetch()}
-                placeholder="예: 1101-2024-001234"
-                aria-label="부동산 고유번호"
-                className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
-              />
-            </div>
-
-            {/* 조회 버튼 */}
-            <button
-              onClick={handleCodefFetch}
-              disabled={codefFetching || !codefAddress.trim() || !codefUniqueNo.trim()}
-              className="w-full py-2.5 rounded-lg bg-[#1d1d1f] text-white text-sm font-medium hover:bg-[#1d1d1f]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-            >
-              {codefFetching ? <Loader2 size={14} className="animate-spin" /> : <Building2 size={14} />}
-              {codefFetching ? "등기부등본 조회 중..." : "등기부등본 조회"}
-            </button>
-
-            {/* 조회 완료 배너 */}
-            {codefSource && rawText && (
-              <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 flex items-center gap-2">
-                <CheckCircle size={18} className="text-emerald-500 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-emerald-700">등기부등본 자동 조회 완료</p>
-                  <p className="text-xs text-emerald-600 truncate">{codefAddress} · {rawText.length.toLocaleString()}자</p>
-                </div>
-              </div>
-            )}
 
             <p className="text-[10px] text-[#6e6e73]">
-              CODEF 인터넷등기소 연동 · 고유번호는 등기부등본 문서 상단 또는 대법원 인터넷등기소(iros.go.kr)에서 확인할 수 있습니다
+              건축물대장 + 실거래가 공공데이터 기반 · 등기부등본 없이 간이 분석 (권리관계 정보 제한)
             </p>
           </div>
         )}
