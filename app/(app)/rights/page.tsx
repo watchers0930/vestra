@@ -18,7 +18,6 @@ import {
   Calculator,
   TrendingUp,
   Search,
-  MapPin,
   Building2,
 } from "lucide-react";
 import { formatKRW, cn } from "@/lib/utils";
@@ -38,12 +37,6 @@ import { RightsResult, type UnifiedResult } from "@/components/rights/RightsResu
 type InputMode = "file" | "text" | "codef";
 type AnalysisStep = "idle" | "codef-fetch" | "extracting" | "parsing" | "validating" | "scoring" | "molit" | "ai" | "done";
 
-interface CodefSearchResult {
-  uniqueNo: string;
-  address: string;
-  realEstateType: string;
-  realEstateTypeCode: string;
-}
 
 // ─── 스텝 인디케이터 ───
 
@@ -111,10 +104,8 @@ export default function RightsAnalysisPage() {
 
   // CODEF 관련 상태
   const [codefAddress, setCodefAddress] = useState("");
-  const [codefSearchResults, setCodefSearchResults] = useState<CodefSearchResult[]>([]);
-  const [codefSearching, setCodefSearching] = useState(false);
+  const [codefUniqueNo, setCodefUniqueNo] = useState("");
   const [codefFetching, setCodefFetching] = useState(false);
-  const [codefSelected, setCodefSelected] = useState<CodefSearchResult | null>(null);
   const [codefSource, setCodefSource] = useState(false);
 
   // 이전 분석 기록 확인
@@ -139,35 +130,11 @@ export default function RightsAnalysisPage() {
     setInputMode("text");
   };
 
-  // CODEF 주소 검색
-  const handleCodefSearch = async () => {
-    if (!codefAddress.trim() || codefAddress.trim().length < 2) return;
-    setCodefSearching(true);
-    setCodefSearchResults([]);
-    setCodefSelected(null);
-    setError(null);
-
-    try {
-      const res = await fetch(`/api/codef/search?address=${encodeURIComponent(codefAddress.trim())}`);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      const validResults = (data.results || []).filter(
-        (r: Partial<CodefSearchResult>) => r && (r.uniqueNo || r.address)
-      ) as CodefSearchResult[];
-      setCodefSearchResults(validResults);
-      if (validResults.length === 0) {
-        setError("검색 결과가 없습니다. 주소를 다시 확인해주세요.");
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "주소 검색에 실패했습니다.");
-    } finally {
-      setCodefSearching(false);
-    }
-  };
-
-  // CODEF 등기부등본 조회
-  const handleCodefFetch = async (item: CodefSearchResult) => {
-    setCodefSelected(item);
+  // CODEF 등기부등본 조회 (고유번호 + 주소 직접 입력)
+  const handleCodefFetch = async () => {
+    const addr = codefAddress.trim();
+    const uniqueNo = codefUniqueNo.trim();
+    if (!addr || !uniqueNo) return;
     setCodefFetching(true);
     setError(null);
 
@@ -176,9 +143,9 @@ export default function RightsAnalysisPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          address: item.address,
-          uniqueNo: item.uniqueNo,
-          realEstateType: item.realEstateTypeCode || "2",
+          reqAddress: addr,
+          commUniqueNo: uniqueNo,
+          realEstateType: "2",
         }),
       });
       const data = await res.json();
@@ -190,7 +157,6 @@ export default function RightsAnalysisPage() {
       setFileType(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "등기부등본 조회에 실패했습니다.");
-      setCodefSelected(null);
     } finally {
       setCodefFetching(false);
     }
@@ -364,74 +330,62 @@ export default function RightsAnalysisPage() {
           </button>
         </div>
 
-        {/* CODEF 주소 자동 조회 */}
+        {/* CODEF 등기부등본 자동 조회 */}
         {inputMode === "codef" && (
           <div className="space-y-3">
-            {/* 주소 검색 입력 */}
-            <div className="flex gap-2">
+            {/* 주소 입력 */}
+            <div>
+              <label className="block text-xs font-medium text-[#1d1d1f] mb-1">부동산 주소 <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 value={codefAddress}
-                onChange={(e) => setCodefAddress(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleCodefSearch()}
-                placeholder="주소를 입력하세요 (예: 서울시 강남구 테헤란로 123)"
-                aria-label="부동산 주소 검색"
-                className="flex-1 px-4 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                onChange={(e) => { setCodefAddress(e.target.value); setCodefSource(false); }}
+                placeholder="예: 서울특별시 구로구 구로동 554-24"
+                aria-label="부동산 주소"
+                className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
-              <button
-                onClick={handleCodefSearch}
-                disabled={codefSearching || codefAddress.trim().length < 2}
-                className="px-4 py-2.5 rounded-lg bg-[#1d1d1f] text-white text-sm font-medium hover:bg-[#1d1d1f]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
-              >
-                {codefSearching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
-                검색
-              </button>
             </div>
 
-            {/* 검색 결과 목록 */}
-            {codefSearchResults.length > 0 && (
-              <div className="border border-border rounded-lg divide-y divide-border max-h-60 overflow-y-auto">
-                {codefSearchResults.map((item, idx) => (
-                  <button
-                    key={`${item.uniqueNo}-${idx}`}
-                    onClick={() => handleCodefFetch(item)}
-                    disabled={codefFetching}
-                    className={cn(
-                      "w-full px-4 py-3 text-left hover:bg-[#f5f5f7] transition-all flex items-center gap-3",
-                      codefSelected?.uniqueNo === item.uniqueNo && "bg-primary/5"
-                    )}
-                  >
-                    <MapPin size={16} className="text-[#6e6e73] flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#1d1d1f] truncate">{item.address}</p>
-                      <p className="text-xs text-[#6e6e73]">
-                        {item.realEstateType || "부동산"}
-                        {item.uniqueNo && ` · ${item.uniqueNo}`}
-                      </p>
-                    </div>
-                    {codefFetching && codefSelected?.uniqueNo === item.uniqueNo ? (
-                      <Loader2 size={16} className="animate-spin text-primary flex-shrink-0" />
-                    ) : (
-                      <Building2 size={16} className="text-[#6e6e73] flex-shrink-0" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
+            {/* 고유번호 입력 */}
+            <div>
+              <label className="block text-xs font-medium text-[#1d1d1f] mb-1">
+                부동산 고유번호 <span className="text-red-500">*</span>
+                <span className="text-[#6e6e73] font-normal ml-1">— 등기부등본 상단의 13자리 번호 (예: 1101-2024-001234)</span>
+              </label>
+              <input
+                type="text"
+                value={codefUniqueNo}
+                onChange={(e) => { setCodefUniqueNo(e.target.value); setCodefSource(false); }}
+                onKeyDown={(e) => e.key === "Enter" && handleCodefFetch()}
+                placeholder="예: 1101-2024-001234"
+                aria-label="부동산 고유번호"
+                className="w-full px-4 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
+              />
+            </div>
 
-            {/* CODEF 조회 완료 */}
+            {/* 조회 버튼 */}
+            <button
+              onClick={handleCodefFetch}
+              disabled={codefFetching || !codefAddress.trim() || !codefUniqueNo.trim()}
+              className="w-full py-2.5 rounded-lg bg-[#1d1d1f] text-white text-sm font-medium hover:bg-[#1d1d1f]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            >
+              {codefFetching ? <Loader2 size={14} className="animate-spin" /> : <Building2 size={14} />}
+              {codefFetching ? "등기부등본 조회 중..." : "등기부등본 조회"}
+            </button>
+
+            {/* 조회 완료 배너 */}
             {codefSource && rawText && (
               <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 flex items-center gap-2">
                 <CheckCircle size={18} className="text-emerald-500 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-emerald-700">등기부등본 자동 조회 완료</p>
-                  <p className="text-xs text-emerald-600">{codefSelected?.address} · {rawText.length.toLocaleString()}자</p>
+                  <p className="text-xs text-emerald-600 truncate">{codefAddress} · {rawText.length.toLocaleString()}자</p>
                 </div>
               </div>
             )}
 
             <p className="text-[10px] text-[#6e6e73]">
-              CODEF 인터넷등기소 연동 · 주소 입력 시 등기부등본을 자동으로 조회합니다
+              CODEF 인터넷등기소 연동 · 고유번호는 등기부등본 문서 상단 또는 대법원 인터넷등기소(iros.go.kr)에서 확인할 수 있습니다
             </p>
           </div>
         )}

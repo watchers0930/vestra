@@ -188,9 +188,9 @@ export async function searchAddress(address: string): Promise<CodefAddressResult
   if (cached) return cached;
 
   const response = await codefRequest(PRODUCT_ADDRESS, {
-    organization: "0001",
+    organization: "0002",
     inquiryType: "0",
-    address,
+    reqAddress: address,
   });
 
   const dataArr = Array.isArray(response.data) ? response.data : [response.data];
@@ -214,35 +214,38 @@ export async function searchAddress(address: string): Promise<CodefAddressResult
 /**
  * 등기부등본 열람 (텍스트 추출)
  *
- * @param params.address - 주소 (uniqueNo 없을 때 사용)
- * @param params.uniqueNo - 부동산 고유번호 (우선)
+ * CODEF 인터넷등기소 API (organization: "0002") 파라미터:
+ * - inquiryType="1" + commUniqueNo + reqAddress → 고유번호+주소 기반 조회 (권장)
+ *
+ * @param params.reqAddress - 부동산 주소 (필수)
+ * @param params.commUniqueNo - 부동산 고유번호 (등기부등본 상단 13자리, 필수)
  * @param params.realEstateType - 부동산 유형 코드 ("0": 토지, "1": 건물, "2": 집합건물)
  * @param params.registerType - 등기부 유형 ("0": 전체, "1": 갑구, "2": 을구)
  */
 export async function fetchRegistry(params: {
-  address?: string;
-  uniqueNo?: string;
+  reqAddress: string;
+  commUniqueNo: string;
   realEstateType?: string;
   registerType?: string;
 }): Promise<CodefRegistryResult> {
-  const { address, uniqueNo, realEstateType = "2", registerType = "0" } = params;
+  const { reqAddress, commUniqueNo, realEstateType = "2", registerType = "0" } = params;
 
-  if (!address && !uniqueNo) {
-    throw new Error("주소 또는 부동산 고유번호가 필요합니다.");
+  if (!reqAddress || !commUniqueNo) {
+    throw new Error("부동산 주소와 고유번호가 모두 필요합니다.");
   }
 
-  const cacheKey = APICache.makeKey("codef-reg", uniqueNo || address, realEstateType, registerType);
+  const cacheKey = APICache.makeKey("codef-reg", commUniqueNo, reqAddress, realEstateType, registerType);
   const cached = apiCache.get<CodefRegistryResult>(cacheKey);
   if (cached) return cached;
 
   const requestParams: Record<string, string> = {
-    organization: "0001",
-    inquiryType: uniqueNo ? "1" : "0",
+    organization: "0002",
+    inquiryType: "1",
     realEstateType,
     registerType,
+    commUniqueNo,
+    reqAddress,
   };
-  if (uniqueNo) requestParams.uniqueNo = uniqueNo;
-  if (address) requestParams.address = address;
 
   const response = await codefRequest(PRODUCT_REGISTRY, requestParams);
 
@@ -254,8 +257,8 @@ export async function fetchRegistry(params: {
   const result: CodefRegistryResult = {
     text,
     registerType: String(data?.resRegisterType || registerType),
-    uniqueNo: String(data?.resUniqueNo || uniqueNo || ""),
-    address: String(data?.resAddress || address || ""),
+    uniqueNo: String(data?.resUniqueNo || commUniqueNo),
+    address: String(data?.resAddress || reqAddress),
     rawData: (data || {}) as Record<string, unknown>,
   };
 

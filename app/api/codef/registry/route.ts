@@ -40,18 +40,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { address, uniqueNo, realEstateType, registerType } = await req.json();
+    const { reqAddress, commUniqueNo, realEstateType, registerType } = await req.json();
 
-    if (!address && !uniqueNo) {
+    if (!reqAddress || !commUniqueNo) {
       return NextResponse.json(
-        { error: "주소 또는 부동산 고유번호가 필요합니다." },
+        { error: "부동산 주소와 고유번호가 모두 필요합니다." },
         { status: 400 },
       );
     }
 
     const result = await fetchRegistry({
-      address,
-      uniqueNo,
+      reqAddress,
+      commUniqueNo,
       realEstateType,
       registerType,
     });
