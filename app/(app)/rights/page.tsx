@@ -178,7 +178,12 @@ export default function RightsAnalysisPage() {
 
       const syntheticText = lines.join("\n");
 
-      // 3) 분석 실행 (rawText 우회해서 직접 POST)
+      // 3) MOLIT 실거래 평균가로 추정시세 자동 설정
+      const autoPrice = p?.sale?.avgPrice || p?.rent?.avgDeposit || 0;
+      if (autoPrice > 0) setEstimatedPrice(autoPrice);
+      const priceForAnalysis = autoPrice > 0 ? autoPrice : estimatedPrice;
+
+      // 4) 분석 실행 (rawText 우회해서 직접 POST)
       setCodefSource(true);
       setFileName(null);
       setFileType(null);
@@ -195,7 +200,7 @@ export default function RightsAnalysisPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           rawText: syntheticText,
-          estimatedPrice,
+          estimatedPrice: priceForAnalysis,
           source: "address",
         }),
       });
