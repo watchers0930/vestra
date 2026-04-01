@@ -87,13 +87,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "인증 필요" }, { status: 401 });
     }
 
-    const { address } = await req.json();
+    const body = await req.json();
+    const { address, contractDate, moveInDate, deposit, commUniqueNo } = body;
     if (!address || typeof address !== "string" || address.trim().length < 5) {
       return NextResponse.json(
         { error: "유효한 주소를 입력해주세요." },
         { status: 400 }
       );
     }
+
+    // contract_gap 모드: 계약일이 제공되면 강화 감시
+    const monitorMode = contractDate ? "contract_gap" : "standard";
 
     // 중복 확인
     const existing = await prisma.monitoredProperty.findUnique({
@@ -112,10 +116,17 @@ export async function POST(req: NextRequest) {
           { status: 409 }
         );
       }
-      // 비활성 상태면 재활성화
+      // 비활성 상태면 재활성화 (계약감시 모드 포함)
       const reactivated = await prisma.monitoredProperty.update({
         where: { id: existing.id },
-        data: { status: "active" },
+        data: {
+          status: "active",
+          monitorMode,
+          ...(contractDate ? { contractDate: new Date(contractDate) } : {}),
+          ...(moveInDate ? { moveInDate: new Date(moveInDate) } : {}),
+          ...(deposit ? { deposit: Number(deposit) } : {}),
+          ...(commUniqueNo ? { commUniqueNo } : {}),
+        },
       });
       return NextResponse.json({ property: reactivated, reactivated: true });
     }
@@ -146,6 +157,11 @@ export async function POST(req: NextRequest) {
       data: {
         userId: session.user.id,
         address: address.trim(),
+        monitorMode,
+        ...(contractDate ? { contractDate: new Date(contractDate) } : {}),
+        ...(moveInDate ? { moveInDate: new Date(moveInDate) } : {}),
+        ...(deposit ? { deposit: Number(deposit) } : {}),
+        ...(commUniqueNo ? { commUniqueNo } : {}),
       },
     });
 

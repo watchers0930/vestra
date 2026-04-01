@@ -250,6 +250,12 @@ model MonitoredProperty {
   lastCheckedAt DateTime?
   lastHash      String?           // 등기부 내용 해시 (변동 감지용)
   status        String            @default("active") // active | paused | expired
+  monitorMode   String            @default("standard") // standard | contract_gap (계약~전입 강화 감시)
+  contractDate  DateTime?         // 계약 체결일
+  moveInDate    DateTime?         // 전입 예정일
+  deposit       Int?              // 보증금 (만원 단위)
+  commUniqueNo  String?           // CODEF 고유번호 (등기 조회용)
+  baselineData  String?           @db.Text // 계약 시점 등기부 스냅샷 (JSON)
   alerts        MonitoringAlert[]
   user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt     DateTime          @default(now())
@@ -257,6 +263,7 @@ model MonitoredProperty {
 
   @@unique([userId, address])
   @@index([status])
+  @@index([monitorMode])
 }
 
 model MonitoringAlert {
