@@ -198,6 +198,37 @@ function calcChangeByArea(txs: { amount: number; area: number; dealYear?: number
   return change;
 }
 
+// DELETE: 특정 구의 geocode 캐시 초기화 (관리자용)
+export async function DELETE(req: NextRequest) {
+  const cronSecret = process.env.CRON_SECRET;
+  const authHeader = req.headers.get("authorization");
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "인증 필요" }, { status: 401 });
+  }
+
+  const { searchParams } = req.nextUrl;
+  const gu = searchParams.get("gu");
+  if (!gu) return NextResponse.json({ error: "gu 파라미터 필요" }, { status: 400 });
+
+  // KV에서 해당 구의 geocode 키 패턴 삭제
+  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+    try {
+      const { kv } = await import("@vercel/kv");
+      const keys = await kv.keys("geocode:*");
+      let deleted = 0;
+      for (const key of keys) {
+        await kv.del(key);
+        deleted++;
+      }
+      return NextResponse.json({ ok: true, deleted, message: `전체 geocode 캐시 ${deleted}건 삭제` });
+    } catch (err) {
+      return NextResponse.json({ error: "KV 삭제 실패", detail: (err as Error).message }, { status: 500 });
+    }
+  }
+
+  return NextResponse.json({ ok: true, message: "KV 미설정 — 인메모리 캐시는 서버리스 재시작 시 자동 초기화" });
+}
+
 export async function GET(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for") || "anonymous";
   const rl = await rateLimit(`price-map:${ip}`, 30);
