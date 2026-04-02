@@ -163,39 +163,52 @@ function spreadCoord(center: { lat: number; lng: number }, index: number, total:
   };
 }
 
-// 단지 변동률 — 최근 6개월 평균 vs 이전 6개월 평균 (전체 거래금액, 평형 무관)
-// 데이터: 국토부 실거래가 12개월치 → 날짜 기준 절반 분할
+// 단지 변동률 — 평당가(₩/㎡) 기반, 면적대별 가중평균
+// 면적을 무시하면 24평→34평 거래 전환 시 가격 상승으로 왜곡됨
 function calcChangeByArea(txs: { amount: number; area: number; dealYear?: number; dealMonth?: number }[]): number {
-  const valid = txs.filter(t => t.amount > 0 && t.dealYear && t.dealMonth);
+  const valid = txs.filter(t => t.amount > 0 && t.area > 0 && t.dealYear && t.dealMonth);
   if (valid.length < 4) return 0;
 
-  // 6개월 전 기준점 (예: 2026.3 기준 → cutoff = 202510)
   const now = new Date();
   const sixAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
   const cutoff = sixAgo.getFullYear() * 100 + (sixAgo.getMonth() + 1);
 
-  const recent: number[] = []; // 최근 6개월 거래금액
-  const older: number[] = [];  // 이전 6개월 거래금액
+  // 면적대 그룹핑 (10㎡ 단위) → 같은 평형끼리만 비교
+  const groups = new Map<number, { recent: number[]; older: number[] }>();
 
   for (const t of valid) {
     const ym = t.dealYear! * 100 + t.dealMonth!;
-    if (ym >= cutoff) recent.push(t.amount);
-    else older.push(t.amount);
+    const pricePerSqm = t.amount / t.area;
+    const band = Math.round(t.area / 10) * 10; // 10㎡ 단위 그룹
+
+    if (!groups.has(band)) groups.set(band, { recent: [], older: [] });
+    const g = groups.get(band)!;
+    if (ym >= cutoff) g.recent.push(pricePerSqm);
+    else g.older.push(pricePerSqm);
   }
 
-  // 각 기간 최소 2건
-  if (recent.length < 2 || older.length < 2) return 0;
+  // 비교 가능한 면적대만 (양쪽 모두 1건 이상)
+  let weightedChange = 0;
+  let totalWeight = 0;
 
-  const avg = (arr: number[]) => arr.reduce((s, v) => s + v, 0) / arr.length;
-  const recentAvg = avg(recent);
-  const olderAvg = avg(older);
+  for (const [, g] of groups) {
+    if (g.recent.length === 0 || g.older.length === 0) continue;
+    const recentAvg = g.recent.reduce((s, v) => s + v, 0) / g.recent.length;
+    const olderAvg = g.older.reduce((s, v) => s + v, 0) / g.older.length;
+    if (olderAvg <= 0) continue;
 
-  if (olderAvg <= 0) return 0;
-  const change = +((recentAvg - olderAvg) / olderAvg * 100).toFixed(1);
+    const change = (recentAvg - olderAvg) / olderAvg * 100;
+    const weight = g.recent.length + g.older.length; // 거래 건수 가중
+    weightedChange += change * weight;
+    totalWeight += weight;
+  }
+
+  if (totalWeight === 0) return 0;
+  const result = +(weightedChange / totalWeight).toFixed(1);
 
   // ±30% 초과는 데이터 이상으로 간주
-  if (Math.abs(change) > 30) return 0;
-  return change;
+  if (Math.abs(result) > 30) return 0;
+  return result;
 }
 
 // DELETE: 특정 구의 geocode 캐시 초기화 (관리자용)
