@@ -95,6 +95,19 @@ export function isFreeUnlimitedType(analysisType: string): boolean {
 // 일일 사용량 체크 (역할 기반)
 // ---------------------------------------------------------------------------
 
+/**
+ * 게스트 식별자 생성: IP + User-Agent 조합으로 공유 IP 환경에서 구분도 향상
+ */
+export function guestIdentifier(ip: string, ua?: string | null): string {
+  if (!ua) return `guest:${ip}`;
+  // UA 해시 뒤 8자리를 추가하여 같은 IP의 다른 브라우저 구분
+  let hash = 0;
+  for (let i = 0; i < ua.length; i++) {
+    hash = ((hash << 5) - hash + ua.charCodeAt(i)) | 0;
+  }
+  return `guest:${ip}:${(hash >>> 0).toString(36)}`;
+}
+
 export async function checkDailyUsage(
   userId: string,
   dailyLimit: number,

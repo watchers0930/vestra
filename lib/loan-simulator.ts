@@ -242,7 +242,7 @@ function simulateProduct(input: LoanSimulateInput, product: BankLoanProduct): Lo
   const existingRepayment = existingLoans > 0 ? estimateAnnualRepayment(existingLoans, 4.5) : 0;
   const dti = input.annualIncome > 0
     ? (annualRepayment + existingRepayment) / input.annualIncome
-    : 1;
+    : Infinity;
 
   if (dti > product.maxDTI) {
     isEligible = false;

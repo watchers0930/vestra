@@ -62,9 +62,16 @@ export async function POST(req: NextRequest) {
     const ctx: CascadeContext = {};
 
     for (const analysis of analyses) {
-      const data = typeof analysis.data === "string"
-        ? JSON.parse(analysis.data)
-        : analysis.data;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let data: any;
+      try {
+        data = typeof analysis.data === "string"
+          ? JSON.parse(analysis.data)
+          : analysis.data ?? {};
+      } catch {
+        console.warn(`분석 데이터 파싱 실패 (id: ${analysis.id}), 건너뜀`);
+        continue;
+      }
 
       switch (analysis.type) {
         case "rights":

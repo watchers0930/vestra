@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, type RefObject } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import {
   FileSearch,
@@ -10,6 +10,8 @@ import {
   CheckCircle,
   XCircle,
   ClipboardPaste,
+  ClipboardCheck,
+  Copy,
   ShieldAlert,
   Shield,
   ShieldCheck,
@@ -283,6 +285,7 @@ export default function ContractReviewPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [showSampleMenu, setShowSampleMenu] = useState(false);
   const [analysisId, setAnalysisId] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sampleMenuRef = useRef<HTMLDivElement>(null);
@@ -630,7 +633,38 @@ export default function ContractReviewPage() {
           {/* 결과 상단 액션 */}
           <div className="flex items-center justify-between">
             <AiDisclaimer compact />
-            <PdfDownloadButton targetRef={resultRef} filename="vestra-contract-review.pdf" title="VESTRA 계약검토 리포트" />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={async () => {
+                  const lines: string[] = [];
+                  lines.push(`[계약 안전점수] ${result.safetyScore}점 (${getScoreLabel(result.safetyScore)})`);
+                  lines.push("");
+                  lines.push("[AI 종합 의견]");
+                  lines.push(result.aiOpinion);
+                  lines.push("");
+                  result.clauses.forEach((c) => {
+                    lines.push(`[${riskBadgeLabel[c.riskLevel]}] ${c.title}`);
+                    lines.push(c.analysis);
+                    if (c.relatedLaw) lines.push(`관련 법규: ${c.relatedLaw}`);
+                    lines.push("");
+                  });
+                  if (result.missingClauses.length > 0) {
+                    lines.push("[누락 조항]");
+                    result.missingClauses.forEach((mc) => {
+                      lines.push(`- ${mc.title}: ${mc.description}`);
+                    });
+                  }
+                  await navigator.clipboard.writeText(lines.join("\n"));
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#e5e5e7] bg-white text-xs font-medium text-[#1d1d1f] hover:bg-[#f5f5f7] transition-all"
+              >
+                {copied ? <ClipboardCheck size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                {copied ? "복사됨" : "결과 복사"}
+              </button>
+              <PdfDownloadButton targetRef={resultRef} filename="vestra-contract-review.pdf" title="VESTRA 계약검토 리포트" />
+            </div>
           </div>
           {/* Safety Score + AI Opinion row */}
           <div className="grid gap-6 md:grid-cols-[auto_1fr]">

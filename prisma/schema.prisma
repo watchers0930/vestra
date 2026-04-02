@@ -38,6 +38,8 @@ model Session {
   expires      DateTime
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model VerificationToken {
@@ -110,6 +112,10 @@ model Analysis {
   vScore    Json?    // V-Score 통합 위험도 결과 (VScoreResult)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([address])
 }
 
 model Asset {

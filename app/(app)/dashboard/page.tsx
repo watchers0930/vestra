@@ -213,10 +213,31 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-[#6e6e73]">대시보드 데이터를 불러오는 중...</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="h-6 w-24 bg-[#f5f5f7] rounded animate-pulse" />
+            <div className="h-4 w-48 bg-[#f5f5f7] rounded animate-pulse mt-1" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-gray-100 bg-white p-5">
+              <div className="h-4 w-20 bg-[#f5f5f7] rounded animate-pulse mb-3" />
+              <div className="h-7 w-28 bg-[#f5f5f7] rounded animate-pulse mb-1" />
+              <div className="h-3 w-16 bg-[#f5f5f7] rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-xl border border-gray-100 bg-white p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-8 bg-[#f5f5f7] rounded-lg animate-pulse" />
+            <div className="h-4 w-32 bg-[#f5f5f7] rounded animate-pulse" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="h-[220px] bg-[#f5f5f7] rounded-lg animate-pulse" />
+            <div className="h-[220px] bg-[#f5f5f7] rounded-lg animate-pulse" />
+          </div>
         </div>
       </div>
     );
@@ -535,6 +556,24 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* 분석 이력 없음 안내 */}
+      {mounted && analyses.length === 0 && !isEmpty && (
+        <div className="rounded-xl bg-white border border-gray-100 p-8 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f5f5f7] mx-auto mb-3">
+            <FileText className="h-6 w-6 text-[#6e6e73]" strokeWidth={1.5} />
+          </div>
+          <p className="text-sm font-medium text-[#1d1d1f] mb-1">아직 분석 이력이 없습니다</p>
+          <p className="text-xs text-[#6e6e73] mb-4">권리분석이나 계약검토를 시작해보세요.</p>
+          <Link
+            href="/rights"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1d1d1f] text-white text-sm font-medium hover:bg-[#1d1d1f]/90 transition-all"
+          >
+            <Shield size={16} strokeWidth={1.5} />
+            권리분석 시작
+          </Link>
+        </div>
+      )}
+
       {/* Recent Analysis History */}
       {mounted && analyses.length > 0 && (
         <div className="rounded-xl bg-white border border-gray-100 overflow-hidden">
@@ -562,13 +601,19 @@ export default function DashboardPage() {
                   const Icon = typeIcons[item.type] || FileText;
                   const colors = typeColors[item.type] || { bg: "bg-gray-50", text: "text-gray-600" };
                   return (
-                    <tr key={item.id} className="group border-b border-gray-50 last:border-0 transition-colors hover:bg-gray-50/50">
+                    <tr key={item.id} className={cn("group border-b border-gray-50 last:border-0 transition-colors hover:bg-gray-50/50", cascadeLoading === item.address && "bg-primary/5")}>
                       <td className="py-3.5 px-5">
                         <div className="flex items-center gap-2.5">
                           <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", colors.bg)}>
                             <Icon className={cn("h-4 w-4", colors.text)} strokeWidth={1.5} />
                           </div>
                           <span className="text-sm font-medium text-[#1d1d1f]">{item.typeLabel}</span>
+                          {cascadeLoading === item.address && (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-primary font-medium">
+                              <Loader2 size={10} className="animate-spin" />
+                              업데이트 중
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-3.5 px-4">

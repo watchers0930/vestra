@@ -189,6 +189,12 @@ function AdminContent() {
   // 사용자 삭제 확인 상태
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  // 확인 모달 상태
+  const [confirmModal, setConfirmModal] = useState<{
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
+
   // API KEY 설정 (ApiKeyTab 컴포넌트로 위임)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [apiKeyInitData, setApiKeyInitData] = useState<{ providers: Record<string, any>; pgProviders: Record<string, any>; scholarProviders: Record<string, any> }>({ providers: {}, pgProviders: {}, scholarProviders: {} });
@@ -247,6 +253,7 @@ function AdminContent() {
     : "overview";
 
   const setTab = (newTab: Tab) => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
     if (newTab === "overview") {
       router.push("/admin");
     } else {
@@ -650,7 +657,10 @@ function AdminContent() {
                               {editingUserId === user.id ? (
                                 <>
                                   <button
-                                    onClick={() => handleUserEdit(user.id)}
+                                    onClick={() => setConfirmModal({
+                                      message: `${user.name || user.email} 회원의 역할/한도를 변경하시겠습니까?`,
+                                      onConfirm: () => { handleUserEdit(user.id); setConfirmModal(null); },
+                                    })}
                                     className="p-1.5 rounded hover:bg-blue-50 text-blue-600 transition-colors"
                                     title="저장"
                                   >
@@ -758,7 +768,10 @@ function AdminContent() {
                         <Button
                           variant="primary"
                           size="sm"
-                          onClick={() => handleVerify(user.id, "approve", "BUSINESS")}
+                          onClick={() => setConfirmModal({
+                            message: `${user.name || user.email} 회원을 기업으로 승인하시겠습니까?`,
+                            onConfirm: () => { handleVerify(user.id, "approve", "BUSINESS"); setConfirmModal(null); },
+                          })}
                         >
                           <Building2 size={14} strokeWidth={1.5} className="mr-1" />
                           기업 승인
@@ -766,7 +779,10 @@ function AdminContent() {
                         <Button
                           variant="amber"
                           size="sm"
-                          onClick={() => handleVerify(user.id, "approve", "REALESTATE")}
+                          onClick={() => setConfirmModal({
+                            message: `${user.name || user.email} 회원을 부동산으로 승인하시겠습니까?`,
+                            onConfirm: () => { handleVerify(user.id, "approve", "REALESTATE"); setConfirmModal(null); },
+                          })}
                         >
                           <Crown size={14} strokeWidth={1.5} className="mr-1" />
                           부동산 승인
@@ -774,7 +790,10 @@ function AdminContent() {
                         <Button
                           variant="danger"
                           size="sm"
-                          onClick={() => handleVerify(user.id, "reject")}
+                          onClick={() => setConfirmModal({
+                            message: `${user.name || user.email} 회원의 인증 요청을 거부하시겠습니까?`,
+                            onConfirm: () => { handleVerify(user.id, "reject"); setConfirmModal(null); },
+                          })}
                         >
                           <XCircle size={14} strokeWidth={1.5} className="mr-1" />
                           거부
@@ -1058,6 +1077,22 @@ function AdminContent() {
             </div>
           )}
         </>
+      )}
+
+      {confirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <p className="text-sm text-[#1d1d1f] font-medium mb-5">{confirmModal.message}</p>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setConfirmModal(null)}>
+                취소
+              </Button>
+              <Button variant="primary" size="sm" onClick={confirmModal.onConfirm}>
+                확인
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

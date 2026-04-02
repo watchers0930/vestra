@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   Shield,
@@ -30,7 +31,12 @@ import { AnalysisLoader } from "@/components/common/AnalysisLoader";
 import { ErrorRetry } from "@/components/common/ErrorRetry";
 import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { SliderInput } from "@/components/forms";
-import { RightsResult, type UnifiedResult } from "@/components/rights/RightsResult";
+import type { UnifiedResult } from "@/components/rights/RightsResult";
+
+const RightsResult = dynamic(
+  () => import("@/components/rights/RightsResult").then((mod) => mod.RightsResult),
+  { loading: () => <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div> },
+);
 
 // ─── 타입 ───
 
@@ -516,7 +522,8 @@ export default function RightsAnalysisPage() {
       {/* 분석 진행 중 */}
       {step !== "idle" && step !== "done" && !error && (
         <Card className="p-6 mb-6" aria-busy="true" aria-live="polite">
-          <p className="text-sm font-medium text-[#1d1d1f] text-center mb-2">등기부등본 종합 분석 중...</p>
+          <p className="text-sm font-medium text-[#1d1d1f] text-center mb-1">등기부등본 종합 분석 중...</p>
+          <p className="text-xs text-[#6e6e73] text-center mb-2">약 10~15초 소요</p>
           <AnalysisStepIndicator step={step} showExtract={!!usedFile} showCodef={!!usedCodef} fileType={fileType} />
           <AnalysisLoader
             steps={["등기부등본 파싱 중...", "권리관계 분석 중...", "위험도 점수 산출 중...", "AI 종합 의견 생성 중..."]}

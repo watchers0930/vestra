@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { deposit, propertyPrice, propertyType, propertyAddress, annualIncome, creditScore, existingLoans, isFirstHome } = body;
 
-    if (!deposit || !propertyPrice || !annualIncome) {
+    if (deposit == null || propertyPrice == null || annualIncome == null) {
       return NextResponse.json(
         { error: "필수: deposit, propertyPrice, annualIncome" },
         { status: 400 },

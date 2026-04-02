@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import Link from "next/link";
 import {
   TrendingUp,
@@ -43,6 +43,7 @@ import { LoadingSpinner } from "@/components/loading";
 import { useToast } from "@/components/common/toast";
 import { KakaoMap } from "@/components/prediction/KakaoMap";
 import type { KakaoGeocoderResult, KakaoPlaceResult } from "@/components/prediction/KakaoMap";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
 import dynamic from "next/dynamic";
 
 const TransactionMap = dynamic(
@@ -649,10 +650,14 @@ export default function PredictionPage() {
 
           {/* 대시보드 탭 */}
           {activeTab === "dashboard" && (
-            <PredictionDashboard
-              result={filteredStats && selectedArea !== null ? { ...result, currentPrice: filteredStats.avgPrice } as never : result as never}
-              address={address}
-            />
+            <ErrorBoundary>
+              <Suspense fallback={<div className="h-64 animate-pulse bg-gray-100 rounded-xl" />}>
+                <PredictionDashboard
+                  result={filteredStats && selectedArea !== null ? { ...result, currentPrice: filteredStats.avgPrice } as never : result as never}
+                  address={address}
+                />
+              </Suspense>
+            </ErrorBoundary>
           )}
 
           {/* 차트 탭 */}
@@ -680,7 +685,11 @@ export default function PredictionPage() {
 
               {/* 월별 예측 추이 */}
               {result.monthlyForecast && result.monthlyForecast.length > 0 && (
-                <MonthlyForecastChart forecasts={result.monthlyForecast} currentPrice={result.currentPrice} />
+                <ErrorBoundary>
+                  <Suspense fallback={<div className="h-64 animate-pulse bg-gray-100 rounded-xl" />}>
+                    <MonthlyForecastChart forecasts={result.monthlyForecast} currentPrice={result.currentPrice} />
+                  </Suspense>
+                </ErrorBoundary>
               )}
 
               {/* 시나리오별 예측 차트 */}
@@ -775,12 +784,16 @@ export default function PredictionPage() {
 
           {/* 비교 탭 */}
           {activeTab === "compare" && (
-            <RegionCompare primaryResult={result ? {
-              address,
-              currentPrice: result.currentPrice,
-              prediction1y: result.predictions.base["1y"],
-              confidence: result.confidence,
-            } : undefined} />
+            <ErrorBoundary>
+              <Suspense fallback={<div className="h-64 animate-pulse bg-gray-100 rounded-xl" />}>
+                <RegionCompare primaryResult={result ? {
+                  address,
+                  currentPrice: result.currentPrice,
+                  prediction1y: result.predictions.base["1y"],
+                  confidence: result.confidence,
+                } : undefined} />
+              </Suspense>
+            </ErrorBoundary>
           )}
 
           {/* 백테스트 탭 */}
@@ -790,10 +803,14 @@ export default function PredictionPage() {
 
           {/* 이상탐지 탭 */}
           {activeTab === "anomaly" && filteredTransactions.length >= 3 && (
-            <AnomalyDetectionView
-              transactions={filteredTransactions}
-              currentPrice={filteredStats?.avgPrice ?? result.currentPrice}
-            />
+            <ErrorBoundary>
+              <Suspense fallback={<div className="h-64 animate-pulse bg-gray-100 rounded-xl" />}>
+                <AnomalyDetectionView
+                  transactions={filteredTransactions}
+                  currentPrice={filteredStats?.avgPrice ?? result.currentPrice}
+                />
+              </Suspense>
+            </ErrorBoundary>
           )}
 
           {/* 무결성 검증 배지 */}
@@ -806,10 +823,14 @@ export default function PredictionPage() {
                 <MapPin size={16} strokeWidth={1.5} />
                 거래 분포 지도
               </h3>
-              <TransactionMap
-                transactions={filteredTransactions}
-                address={address}
-              />
+              <ErrorBoundary>
+                <Suspense fallback={<div className="h-[300px] sm:h-[400px] animate-pulse bg-gray-100 rounded-xl" />}>
+                  <TransactionMap
+                    transactions={filteredTransactions}
+                    address={address}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             </Card>
           )}
 
@@ -872,10 +893,14 @@ export default function PredictionPage() {
                 <Activity size={16} strokeWidth={1.5} />
                 시계열 이상탐지
               </h3>
-              <AnomalyDetectionView
-                transactions={filteredTransactions}
-                currentPrice={filteredStats?.avgPrice ?? result.currentPrice}
-              />
+              <ErrorBoundary>
+                <Suspense fallback={<div className="h-64 animate-pulse bg-gray-100 rounded-xl" />}>
+                  <AnomalyDetectionView
+                    transactions={filteredTransactions}
+                    currentPrice={filteredStats?.avgPrice ?? result.currentPrice}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           )}
 

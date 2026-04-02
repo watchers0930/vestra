@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { Calculator, Building2, Home, ArrowRightLeft, GitCompareArrows, Info, FileInput } from "lucide-react";
 import { cn, formatKRW } from "@/lib/utils";
 import { getAnalyses, type AnalysisRecord } from "@/lib/store";
@@ -406,7 +406,11 @@ export default function TaxPage() {
         </div>
       )}
       {/* 시나리오 비교 */}
-      {activeTab === "scenario" && <TaxScenarioCompare />}
+      {activeTab === "scenario" && (
+        <Suspense fallback={<div className="h-64 animate-pulse bg-gray-100 rounded-xl" />}>
+          <TaxScenarioCompare />
+        </Suspense>
+      )}
       </div>
 
       <div className="mt-4 flex justify-end">

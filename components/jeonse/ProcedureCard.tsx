@@ -22,9 +22,9 @@ const badgeColors = {
 };
 
 const difficultyLabel = {
-  easy:   { text: "쉬움",   color: "text-emerald-600" },
-  medium: { text: "보통",   color: "text-amber-600" },
-  hard:   { text: "어려움", color: "text-red-600" },
+  easy:   { text: "쉬움",   color: "text-emerald-600", hint: "온라인으로 간편하게 처리 가능" },
+  medium: { text: "보통",   color: "text-amber-600",   hint: "서류 준비 후 방문 신청 필요" },
+  hard:   { text: "어려움", color: "text-red-600",      hint: "법적 절차와 서류가 복잡함" },
 };
 
 export default function ProcedureCard({ href, icon: Icon, title, description, badge, stepCount, difficulty, requiresLandlord }: ProcedureCardProps) {
@@ -45,7 +45,12 @@ export default function ProcedureCard({ href, icon: Icon, title, description, ba
         <p className="text-sm text-secondary mb-3">{description}</p>
         <div className="flex items-center gap-3 text-xs text-muted">
           <span>{stepCount}단계</span>
-          <span className={difficultyLabel[difficulty].color}>{difficultyLabel[difficulty].text}</span>
+          <span className={`${difficultyLabel[difficulty].color} group/diff relative cursor-help`} title={`난이도: ${difficultyLabel[difficulty].text} - ${difficultyLabel[difficulty].hint}`}>
+            {difficultyLabel[difficulty].text}
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 text-[10px] leading-tight text-white bg-[#1d1d1f] rounded-lg whitespace-nowrap opacity-0 pointer-events-none group-hover/diff:opacity-100 transition-opacity">
+              난이도: {difficultyLabel[difficulty].text} - {difficultyLabel[difficulty].hint}
+            </span>
+          </span>
           {requiresLandlord && (
             <span className="inline-flex items-center gap-1 text-amber-600">
               <Users size={10} strokeWidth={1.5} /> 임대인 동의

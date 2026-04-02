@@ -86,9 +86,50 @@ const plans = [
   },
 ];
 
+const faqItems = [
+  {
+    q: "VESTRA는 무료로 사용할 수 있나요?",
+    a: "네, 가입 없이도 일 2회 무료 체험이 가능하며, 무료 플랜에서는 권리분석 일 5회와 기본 대시보드를 제공합니다.",
+  },
+  {
+    q: "등기부등본 분석은 어떻게 진행되나요?",
+    a: "등기부등본 PDF를 업로드하면 AI가 자동으로 권리관계를 분석하고, 위험요소를 감지하여 안전지수와 함께 상세 리포트를 제공합니다.",
+  },
+  {
+    q: "전세사기 예방에 어떻게 도움이 되나요?",
+    a: "전세 안전성 분석을 통해 근저당 비율, 임대인 신뢰도, 보증보험 가입 가능 여부 등을 종합적으로 평가하여 위험 거래를 사전에 감지합니다.",
+  },
+  {
+    q: "분석 결과의 정확도는 어느 정도인가요?",
+    a: "공공데이터(등기부등본, 실거래가, 건축물대장 등)를 기반으로 AI가 교차 검증하며, 99.2%의 분석 정확도를 유지하고 있습니다.",
+  },
+  {
+    q: "개인정보 보호는 어떻게 하나요?",
+    a: "업로드된 문서는 분석 후 즉시 삭제되며, 모든 데이터는 암호화되어 전송됩니다. 개인정보 보호법을 준수합니다.",
+  },
+];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "VESTRA",
+  url: "https://vestra-plum.vercel.app",
+  description: "AI 기반 부동산 자산관리 플랫폼. 전세사기 예방, 권리분석, 계약서 검토, 세금 시뮬레이션.",
+  sameAs: [],
+  contactPoint: {
+    "@type": "ContactPoint",
+    contactType: "customer service",
+    availableLanguage: "Korean",
+  },
+};
+
 export default function LandingPage() {
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* ================================================================== */}
       {/* Hero Section — Apple style                                         */}
       {/* ================================================================== */}
@@ -328,6 +369,41 @@ export default function LandingPage() {
           <p className="text-center text-xs text-[#86868b] mt-8">
             모든 요금제는 부가세 포함 가격입니다. 언제든 해지 가능합니다.
           </p>
+        </div>
+      </section>
+
+      {/* ================================================================== */}
+      {/* FAQ Section                                                       */}
+      {/* ================================================================== */}
+      <section className="py-[100px] bg-[#fbfbfd]">
+        <div className="max-w-[860px] mx-auto px-6">
+          <div className="text-center mb-[60px]">
+            <h2 className="text-[40px] md:text-[48px] font-bold text-[#1d1d1f] leading-[1.08] tracking-[-0.03em]">
+              자주 묻는 질문
+            </h2>
+            <p className="mt-3 text-[21px] text-[#6e6e73]">
+              VESTRA에 대해 궁금한 점을 확인하세요
+            </p>
+          </div>
+          <div className="space-y-4">
+            {faqItems.map((item) => (
+              <details
+                key={item.q}
+                className="group bg-white rounded-2xl border border-[#d2d2d7] overflow-hidden"
+              >
+                <summary className="flex items-center justify-between cursor-pointer px-6 py-5 text-[17px] font-semibold text-[#1d1d1f] list-none [&::-webkit-details-marker]:hidden">
+                  {item.q}
+                  <ArrowRight
+                    size={18}
+                    className="text-[#86868b] transition-transform group-open:rotate-90 flex-shrink-0 ml-4"
+                  />
+                </summary>
+                <div className="px-6 pb-5 text-[15px] text-[#6e6e73] leading-relaxed">
+                  {item.a}
+                </div>
+              </details>
+            ))}
+          </div>
         </div>
       </section>
 

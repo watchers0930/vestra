@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MessageSquare, Send, Bot, User, Sparkles, Trash2 } from "lucide-react";
+import { MessageSquare, Send, Bot, User, Sparkles, Trash2, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageHeader, Card, Button } from "@/components/common";
-import { LoadingSpinner } from "@/components/loading";
 
 interface Message {
   role: "user" | "assistant";
@@ -34,9 +33,12 @@ function loadMessages(): Message[] {
   }
 }
 
+const MAX_STORED_MESSAGES = 100;
+
 function saveMessages(messages: Message[]) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    const trimmed = messages.slice(-MAX_STORED_MESSAGES);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
   } catch {
     // storage full or unavailable
   }
@@ -60,6 +62,7 @@ export default function AssistantPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Restore messages from localStorage on mount
@@ -82,6 +85,12 @@ export default function AssistantPage() {
   const clearConversation = useCallback(() => {
     setMessages([]);
     localStorage.removeItem(STORAGE_KEY);
+  }, []);
+
+  const handleCopy = useCallback(async (text: string, idx: number) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedIdx(idx);
+    setTimeout(() => setCopiedIdx(null), 2000);
   }, []);
 
   const sendMessage = async (text?: string) => {
@@ -203,15 +212,26 @@ export default function AssistantPage() {
               )}
               <div
                 className={cn(
-                  "max-w-[80%] rounded-xl px-4 py-3 text-sm",
+                  "max-w-[80%] rounded-xl px-4 py-3 text-sm group/msg relative",
                   msg.role === "user"
                     ? "bg-primary text-white"
                     : "bg-[#f5f5f7] border border-border text-foreground"
                 )}
               >
                 <div className="whitespace-pre-wrap leading-relaxed prose">{msg.content}</div>
-                <div className={cn("text-[10px] mt-2", msg.role === "user" ? "text-blue-200" : "text-muted")}>
-                  {new Date(msg.timestamp).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                <div className={cn("flex items-center gap-2 mt-2", msg.role === "user" ? "text-blue-200" : "text-muted")}>
+                  <span className="text-[10px]">
+                    {new Date(msg.timestamp).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  {msg.role === "assistant" && (
+                    <button
+                      onClick={() => handleCopy(msg.content, i)}
+                      className="opacity-0 group-hover/msg:opacity-100 transition-opacity p-0.5 rounded hover:bg-black/5"
+                      aria-label="메시지 복사"
+                    >
+                      {copiedIdx === i ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                    </button>
+                  )}
                 </div>
               </div>
               {msg.role === "user" && (
@@ -228,9 +248,14 @@ export default function AssistantPage() {
                 <Bot size={18} className="text-primary" />
               </div>
               <div className="bg-[#f5f5f7] border border-border rounded-xl px-4 py-3">
-                <div className="flex items-center gap-2 text-sm text-secondary">
-                  <LoadingSpinner size="sm" variant="inline" />
-                  답변을 생성하고 있습니다...
+                <div className="flex items-center gap-1.5">
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      className="w-2 h-2 rounded-full bg-primary/50 animate-bounce"
+                      style={{ animationDelay: `${i * 150}ms` }}
+                    />
+                  ))}
                 </div>
               </div>
             </div>

@@ -33,26 +33,36 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "분석 데이터가 불완전합니다." }, { status: 400 });
       }
 
-      await prisma.analysis.upsert({
-        where: { id },
-        update: {
-          type: analysisType,
-          typeLabel,
-          address,
-          summary,
-          data: JSON.stringify(analysisData ?? {}),
-        },
-        create: {
-          id,
-          userId,
-          type: analysisType,
-          typeLabel,
-          address,
-          summary,
-          data: JSON.stringify(analysisData ?? {}),
-          createdAt: date ? new Date(date) : new Date(),
-        },
-      });
+      // 기존 레코드가 있으면 소유권 확인 후 업데이트
+      const existing = await prisma.analysis.findUnique({ where: { id } });
+      if (existing) {
+        if (existing.userId !== userId) {
+          return NextResponse.json({ error: "권한 없음" }, { status: 403 });
+        }
+        await prisma.analysis.update({
+          where: { id },
+          data: {
+            type: analysisType,
+            typeLabel,
+            address,
+            summary,
+            data: JSON.stringify(analysisData ?? {}),
+          },
+        });
+      } else {
+        await prisma.analysis.create({
+          data: {
+            id,
+            userId,
+            type: analysisType,
+            typeLabel,
+            address,
+            summary,
+            data: JSON.stringify(analysisData ?? {}),
+            createdAt: date ? new Date(date) : new Date(),
+          },
+        });
+      }
 
       return NextResponse.json({ ok: true, synced: "analysis", id });
     }

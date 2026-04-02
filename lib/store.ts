@@ -194,21 +194,40 @@ export function clearByDate(dateStr?: string): void {
 // ─── 서버 동기화 (DB 영속화) ───
 
 /**
- * 서버에 데이터를 동기화 (fire-and-forget)
- * localStorage가 주 저장소이고, 서버 동기화는 best-effort
+ * 서버에 데이터를 동기화 (best-effort)
+ * localStorage가 주 저장소이고, 서버 동기화는 best-effort.
+ * 페이지 이탈 시에도 전송 보장을 위해 sendBeacon 폴백 사용.
  */
+const pendingSyncs = new Set<string>();
+
 export async function syncToServer(
   type: "analysis" | "asset",
   data: AnalysisRecord | StoredAsset,
 ): Promise<void> {
+  const payload = JSON.stringify({ type, data });
+  const syncKey = `${type}:${data.id}`;
+
+  // 중복 동기화 방지
+  if (pendingSyncs.has(syncKey)) return;
+  pendingSyncs.add(syncKey);
+
   try {
-    await fetch("/api/user/sync-data", {
+    const res = await fetch("/api/user/sync-data", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, data }),
+      body: payload,
     });
+    if (!res.ok) throw new Error(`sync failed: ${res.status}`);
   } catch {
-    // 서버 동기화 실패 시 무시 (localStorage가 primary)
+    // fetch 실패 시 sendBeacon으로 재시도 (페이지 이탈에도 전송)
+    if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+      navigator.sendBeacon(
+        "/api/user/sync-data",
+        new Blob([payload], { type: "application/json" }),
+      );
+    }
+  } finally {
+    pendingSyncs.delete(syncKey);
   }
 }
 
