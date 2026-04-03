@@ -442,7 +442,7 @@ export default function PriceMapPage() {
           {/* 상승 예측 TOP */}
           <div className="mb-3 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 p-3">
             <h3 className="mb-1 text-xs font-bold text-gray-900">{selectedGu}, 최근 1년 시세 변동 TOP</h3>
-            <p className="mb-2 text-[10px] text-amber-600">국토부 실거래 신고 기준 · 최근 정책 변동 미반영 (1~2개월 지연)</p>
+            <p className="mb-2 text-[10px] leading-relaxed text-amber-600">국토부 실거래 신고 기준<br />최근 정책 변동 미반영 (1~2개월 지연)</p>
             {loading ? (
               <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-white/60" />)}</div>
             ) : (
