@@ -242,6 +242,8 @@ export async function DELETE(req: NextRequest) {
   return NextResponse.json({ ok: true, message: "KV 미설정 — 인메모리 캐시는 서버리스 재시작 시 자동 초기화" });
 }
 
+const RESPONSE_CACHE_TTL = 30 * 60 * 1000; // 30분
+
 export async function GET(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for") || "anonymous";
   const rl = await rateLimit(`price-map:${ip}`, 30);
@@ -261,6 +263,16 @@ export async function GET(req: NextRequest) {
   const minPrice = parseInt(searchParams.get("minPrice") || "0");
   const maxPrice = parseInt(searchParams.get("maxPrice") || "9999999");
   const tradeType = searchParams.get("type") === "전세" ? "전세" : "매매";
+
+  // ── 전체 응답 KV 캐시 조회 (가격 필터 없는 요청만 캐시 적용) ──
+  const useResponseCache = minPrice === 0 && maxPrice === 9999999;
+  const responseCacheKey = `price-map:${gu}:${tradeType}`;
+  if (useResponseCache) {
+    const cached = await kvCache.get<object>(responseCacheKey);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
+  }
 
   // MOLIT 실거래가 API 시도 → 실패 시 시드 데이터 폴백
   let data: AptPrice[] = [];
@@ -361,22 +373,9 @@ export async function GET(req: NextRequest) {
     dataSource = "seed";
   }
 
-  // 캐시된 좌표로 보정 (API 호출 없음 — 타임아웃 방지)
-  if (dataSource === "molit" && data.length > 0) {
-    await Promise.allSettled(data.map(async (a) => {
-      const cacheKey = APICache.makeKey("geocode", gu, a.dong, a.name);
-      const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
-      if (cached) { a.lat = cached.lat; a.lng = cached.lng; }
-    }));
-  }
-
-  if (minPrice > 0 || maxPrice < 9999999) {
-    data = data.filter(d => d.price >= minPrice && d.price <= maxPrice);
-  }
-
   const availableGus = Object.keys(SEED_DATA);
 
-  return NextResponse.json({
+  const responsePayload = {
     gu,
     tradeType,
     dataSource,
@@ -387,5 +386,20 @@ export async function GET(req: NextRequest) {
     availableGus,
     regionGroups: REGION_GROUPS,
     total: data.length,
-  });
+  };
+
+  // 전체 응답 KV 캐시 저장 (가격 필터 없는 요청만)
+  if (useResponseCache) {
+    await kvCache.set(responseCacheKey, responsePayload, RESPONSE_CACHE_TTL);
+  }
+
+  // 가격 필터 적용 (캐시 저장 후 필터링 — 캐시에는 전체 데이터 보관)
+  if (minPrice > 0 || maxPrice < 9999999) {
+    responsePayload.apartments = responsePayload.apartments.filter(
+      (d) => d.price >= minPrice && d.price <= maxPrice
+    );
+    responsePayload.total = responsePayload.apartments.length;
+  }
+
+  return NextResponse.json(responsePayload);
 }
