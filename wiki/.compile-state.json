@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "compiled_at": "2026-04-12T00:00:00.000Z",
+  "source_count": 11,
+  "topic_count": 7,
+  "topics": [
+    "platform-overview",
+    "algorithm",
+    "api",
+    "frontend",
+    "security",
+    "features",
+    "deployment"
+  ],
+  "sources": [
+    "CLAUDE.md",
+    "docs/ALGORITHM.md",
+    "docs/04-API-Spec.md",
+    "docs/TECHNICAL-STATUS-REPORT.md",
+    "docs/01-SRS.md",
+    "docs/security/secure-coding-guide.md",
+    "docs/03-analysis/predict-value.analysis.md",
+    "docs/02-design/features/prediction-enhancement.design.md",
+    "docs/01-plan/features/vestra-dgon-integration.plan.md",
+    "docs/03-analysis/vestra-algorithm-advancement.analysis.md",
+    "package.json"
+  ],
+  "status": "complete",
+  "coverage": {
+    "platform-overview": "high",
+    "algorithm": "high",
+    "api": "high",
+    "frontend": "medium",
+    "security": "high",
+    "features": "high",
+    "deployment": "medium"
+  }
+}

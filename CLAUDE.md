@@ -50,6 +50,29 @@ prisma/                # Prisma 스키마
 docs/                  # PDCA 문서
 ```
 
+## 리팩터링 작업 규칙 (파일 분리 진행 중)
+
+> 브랜치: `refactor/file-split` — main은 절대 직접 수정하지 않는다
+
+### 500줄 초과 파일 목록 (우선순위 순)
+| 파일 | 현재 줄 수 | 상태 |
+|------|-----------|------|
+| `app/(app)/admin/page.tsx` | 1,099줄 | 작업 대기 |
+| `app/(app)/prediction/page.tsx` | 950줄 | 작업 대기 |
+| `app/(app)/contract/page.tsx` | 882줄 | 작업 대기 |
+| `app/(app)/dashboard/page.tsx` | 664줄 | 작업 대기 |
+| `app/(app)/expert-connect/page.tsx` | 621줄 | 작업 대기 |
+| `app/(map)/price-map/page.tsx` | 616줄 | 작업 대기 |
+| `app/(app)/rights/page.tsx` | 597줄 | 작업 대기 |
+| `app/(app)/jeonse/analysis/page.tsx` | 518줄 | 작업 대기 |
+| `app/(app)/feasibility/page.tsx` | 508줄 | 작업 대기 |
+
+### 분리 원칙
+- 분리된 컴포넌트는 해당 라우트 아래 `components/` 폴더에 배치
+- 상태·로직은 `hooks/` 또는 `lib/`으로 분리
+- 파일 하나씩 순서대로 작업 — 동시에 여러 파일 수정 금지
+- 각 파일 완료 후 빌드 확인 (`npm run build`) 후 다음 파일로 이동
+
 ## Key Conventions
 - 한국어 UI, 코드는 영어
 - App Router 사용 (pages/ 미사용)
@@ -57,6 +80,21 @@ docs/                  # PDCA 문서
 - Prisma로 DB 접근 (Neon PostgreSQL)
 - 인증 없이 API 공개, Rate Limit + Cost Guard로 비용 보호
 - Tailwind CSS v4 (postcss 플러그인 방식)
+
+## Knowledge Base (Wiki)
+
+컴파일된 지식 위키가 `wiki/` 폴더에 있습니다.
+
+**세션 시작 시:** `wiki/CONTEXT.md` 먼저 읽고, 현재 작업 관련 토픽 아티클 확인.
+
+**토픽 목록:** platform-overview, algorithm, api, frontend, security, features, deployment
+
+**coverage 태그 활용:**
+- `[coverage: high]` — 위키 신뢰, 원본 파일 불필요
+- `[coverage: medium]` — 개요 파악 후 필요 시 원본 확인
+- `[coverage: low]` — Sources 링크의 원본 파일 직접 읽기
+
+**wiki 파일 직접 수정 금지** — `/wiki-compile` 로만 갱신.
 
 ## Commands
 ```bash

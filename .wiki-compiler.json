@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "mode": "codebase",
+  "name": "Vestra",
+  "sources": [
+    {
+      "path": "./",
+      "exclude": ["node_modules/", "dist/", ".git/", "wiki/", ".next/", "coverage/", "prisma/migrations/"]
+    }
+  ],
+  "output": "wiki/",
+  "service_discovery": "auto",
+  "knowledge_files": [
+    "README.md",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "*.md",
+    "docs/**/*.md",
+    "docs/ALGORITHM.md",
+    "docs/04-API-Spec.md",
+    "docs/TECHNICAL-STATUS-REPORT.md",
+    "docs/01-SRS.md",
+    "docs/security/secure-coding-guide.md",
+    "package.json",
+    ".env.example"
+  ],
+  "deep_scan": false,
+  "auto_update": "prompt",
+  "article_sections": [
+    "Purpose",
+    "Architecture",
+    "Algorithm",
+    "API Surface",
+    "Data Models",
+    "Security",
+    "Features",
+    "External Integrations",
+    "Deployment",
+    "Key Decisions",
+    "Gotchas",
+    "Sources"
+  ]
+}
