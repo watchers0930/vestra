@@ -60,7 +60,24 @@ export function usePriceMap() {
     });
   }, []);
 
+  const LOCAL_TTL = 5 * 60 * 1000; // 5분
+  const localKey = (gu: string) => `pm:${gu}:${tradeType}`;
+
   const fetchData = useCallback(async (gu: string) => {
+    // localStorage 캐시 확인 → 있으면 즉시 표시 후 백그라운드 갱신
+    try {
+      const raw = localStorage.getItem(localKey(gu));
+      if (raw) {
+        const { ts, payload } = JSON.parse(raw) as { ts: number; payload: MapResponse };
+        if (Date.now() - ts < LOCAL_TTL) {
+          setData(payload);
+          setSelectedApt(null);
+          setLoading(false);
+          return; // 캐시 유효 → API 호출 생략
+        }
+      }
+    } catch { /* localStorage 접근 실패 시 무시 */ }
+
     setLoading(true);
     try {
       const res = await fetch(`/api/price-map?gu=${encodeURIComponent(gu)}&type=${tradeType}`);
@@ -68,6 +85,9 @@ export function usePriceMap() {
       const json: MapResponse = await res.json();
       setData(json);
       setSelectedApt(null);
+      try {
+        localStorage.setItem(localKey(gu), JSON.stringify({ ts: Date.now(), payload: json }));
+      } catch { /* QuotaExceededError 무시 */ }
     } catch (err) {
       console.error("시세 데이터 로드 실패:", err);
       setData(null);

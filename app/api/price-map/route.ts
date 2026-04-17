@@ -242,7 +242,7 @@ export async function DELETE(req: NextRequest) {
   return NextResponse.json({ ok: true, message: "KV 미설정 — 인메모리 캐시는 서버리스 재시작 시 자동 초기화" });
 }
 
-const RESPONSE_CACHE_TTL = 30 * 60 * 1000; // 30분
+const RESPONSE_CACHE_TTL = 6 * 60 * 60 * 1000; // 6시간
 
 export async function GET(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for") || "anonymous";
