@@ -25,9 +25,9 @@ const kakaoImg = "https://*.daumcdn.net https://*.kakao.com https://*.kakao.io";
 const baseCSP = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline' ${kakaoDomains}`,
-  "style-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   `img-src 'self' data: blob: ${kakaoImg} https://lh3.googleusercontent.com`,
-  "font-src 'self' data: https://fastly.jsdelivr.net",
+  "font-src 'self' data: https://fastly.jsdelivr.net https://fonts.gstatic.com",
   `connect-src 'self' https://api.openai.com https://*.neon.tech ${kakaoConnect} https://api.odcloud.kr https://apis.data.go.kr https://fcm.googleapis.com https://*.push.services.mozilla.com https://*.notify.windows.com`,
   "frame-src https://postcode.map.kakao.com",
   "worker-src 'self' blob:",

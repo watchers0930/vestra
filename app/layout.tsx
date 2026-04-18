@@ -113,6 +113,9 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#4F46E5" />
         <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet" />
         <JsonLd />
       </head>
       <body
