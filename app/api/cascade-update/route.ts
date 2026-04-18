@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
 import { auth } from "@/lib/auth";
+import { validateOrigin } from "@/lib/csrf";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { createCascadeEngine } from "@/lib/cascade-engine";
@@ -16,6 +17,9 @@ import { registerAllRecalculators, type CascadeContext } from "@/lib/cascade-rec
  * Body: { address: string }
  */
 export async function POST(req: NextRequest) {
+  const csrfError = validateOrigin(req);
+  if (csrfError) return csrfError;
+
   // Rate limit
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const rl = await rateLimit(ip);

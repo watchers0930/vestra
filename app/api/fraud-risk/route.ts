@@ -5,6 +5,7 @@ import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { createAuditLog } from "@/lib/audit-log";
 import { prisma } from "@/lib/prisma";
 import { loadLiveWeights } from "@/lib/live-weights";
+import { validateOrigin } from "@/lib/csrf";
 
 /**
  * POST /api/fraud-risk
@@ -32,6 +33,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     const body = await req.json();
 
     // 피처 조합

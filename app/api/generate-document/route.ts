@@ -4,9 +4,13 @@ import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
 import { JEONSE_ANALYSIS_PROMPT, DOCUMENT_GENERATION_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
+import { validateOrigin } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     // Rate limiting (보호 API: 30 req/min)
     const ip = req.headers.get("x-forwarded-for") || "anonymous";
     const rl = await rateLimit(`generate-document:${ip}`, 30);

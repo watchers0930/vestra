@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   ShieldCheck,
   Activity,
@@ -24,40 +23,7 @@ import {
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent } from "@/components/common/Card";
 import { formatNumber } from "@/lib/format";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-interface ModelAccuracy {
-  id: string;
-  name: string;
-  accuracy: number;
-  totalAnalyses: number;
-  expertAgreementRate: number;
-  lastUpdated: string;
-  description: string;
-  dataSources: string[];
-}
-
-interface MonthlyTrend {
-  month: string;
-  jeonse: number;
-  rights: number;
-  prediction: number;
-  contract: number;
-}
-
-interface TrustData {
-  overview: {
-    totalAnalyses: number;
-    avgAccuracy: number;
-    avgProcessingTime: number;
-    lastVerificationDate: string;
-    verificationCycle: string;
-  };
-  models: ModelAccuracy[];
-  trends: MonthlyTrend[];
-}
+import { useAiTrustData } from "./hooks/useAiTrustData";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -109,17 +75,7 @@ const CHART_LABELS: Record<string, string> = {
 // Page
 // ---------------------------------------------------------------------------
 export default function AiTrustPage() {
-  const [data, setData] = useState<TrustData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [expandedModel, setExpandedModel] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/ai-trust")
-      .then((r) => r.json())
-      .then((d) => setData(d))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, loading, expandedModel, toggleModel } = useAiTrustData();
 
   if (loading) {
     return (
@@ -230,9 +186,7 @@ export default function AiTrustPage() {
                 <div key={model.id}>
                   <button
                     className="w-full text-left"
-                    onClick={() =>
-                      setExpandedModel(isExpanded ? null : model.id)
-                    }
+                    onClick={() => toggleModel(model.id)}
                   >
                     <AccuracyBar
                       value={model.accuracy}
@@ -354,58 +308,22 @@ export default function AiTrustPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Methodology */}
             <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 flex-shrink-0 mt-0.5">
-                  <span className="text-sm font-bold text-blue-600">1</span>
+              {[
+                { step: 1, title: "데이터 수집", desc: "국토교통부, 대법원, 한국은행 등 공공 데이터를 실시간 연동합니다" },
+                { step: 2, title: "AI 분석 수행", desc: "LLM과 자체 알고리즘을 결합하여 다각도 분석을 수행합니다" },
+                { step: 3, title: "전문가 검증", desc: "매월 샘플 분석 결과를 공인중개사·법무사가 교차 검증합니다" },
+                { step: 4, title: "모델 개선", desc: "검증 결과를 반영하여 분석 모델의 정확도를 지속적으로 개선합니다" },
+              ].map(({ step, title, desc }) => (
+                <div key={step} className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 flex-shrink-0 mt-0.5">
+                    <span className="text-sm font-bold text-blue-600">{step}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#1d1d1f]">{title}</p>
+                    <p className="text-xs text-[#6e6e73] mt-0.5 leading-relaxed">{desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-[#1d1d1f]">
-                    데이터 수집
-                  </p>
-                  <p className="text-xs text-[#6e6e73] mt-0.5 leading-relaxed">
-                    국토교통부, 대법원, 한국은행 등 공공 데이터를 실시간 연동합니다
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 flex-shrink-0 mt-0.5">
-                  <span className="text-sm font-bold text-blue-600">2</span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[#1d1d1f]">
-                    AI 분석 수행
-                  </p>
-                  <p className="text-xs text-[#6e6e73] mt-0.5 leading-relaxed">
-                    LLM과 자체 알고리즘을 결합하여 다각도 분석을 수행합니다
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 flex-shrink-0 mt-0.5">
-                  <span className="text-sm font-bold text-blue-600">3</span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[#1d1d1f]">
-                    전문가 검증
-                  </p>
-                  <p className="text-xs text-[#6e6e73] mt-0.5 leading-relaxed">
-                    매월 샘플 분석 결과를 공인중개사·법무사가 교차 검증합니다
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 flex-shrink-0 mt-0.5">
-                  <span className="text-sm font-bold text-blue-600">4</span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[#1d1d1f]">
-                    모델 개선
-                  </p>
-                  <p className="text-xs text-[#6e6e73] mt-0.5 leading-relaxed">
-                    검증 결과를 반영하여 분석 모델의 정확도를 지속적으로 개선합니다
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
 
             {/* Update info */}
@@ -415,34 +333,20 @@ export default function AiTrustPage() {
                 실시간 업데이트 안내
               </div>
               <ul className="space-y-2.5 text-sm text-[#424245]">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2
-                    size={14}
-                    className="text-emerald-500 mt-0.5 flex-shrink-0"
-                  />
-                  매월 전문가 검증 결과를 반영하여 정확도 수치를 갱신합니다
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2
-                    size={14}
-                    className="text-emerald-500 mt-0.5 flex-shrink-0"
-                  />
-                  분석 건수와 처리 시간은 실시간으로 집계됩니다
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2
-                    size={14}
-                    className="text-emerald-500 mt-0.5 flex-shrink-0"
-                  />
-                  정확도가 기준치(85%) 이하로 하락 시 분석 서비스를 자동 중단합니다
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2
-                    size={14}
-                    className="text-emerald-500 mt-0.5 flex-shrink-0"
-                  />
-                  모든 분석 결과에 AI 분석임을 명시하고 전문가 상담을 권장합니다
-                </li>
+                {[
+                  "매월 전문가 검증 결과를 반영하여 정확도 수치를 갱신합니다",
+                  "분석 건수와 처리 시간은 실시간으로 집계됩니다",
+                  "정확도가 기준치(85%) 이하로 하락 시 분석 서비스를 자동 중단합니다",
+                  "모든 분석 결과에 AI 분석임을 명시하고 전문가 상담을 권장합니다",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <CheckCircle2
+                      size={14}
+                      className="text-emerald-500 mt-0.5 flex-shrink-0"
+                    />
+                    {item}
+                  </li>
+                ))}
               </ul>
               <p className="text-xs text-[#86868b] pt-2 border-t border-[#e5e5e7]">
                 최종 검증일: {overview.lastVerificationDate} · 검증 주기:{" "}

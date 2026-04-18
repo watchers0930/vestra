@@ -4,6 +4,7 @@ import { gunzipSync } from "zlib";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { parseDocument } from "@/lib/feasibility/document-parser";
+import { validateOrigin } from "@/lib/csrf";
 
 export const maxDuration = 60;
 
@@ -19,6 +20,9 @@ const FEASIBILITY_GUEST_DAILY_LIMIT_BYPASS =
  */
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     // 1. Auth + Rate Limit
     const session = await auth();
     const ip = req.headers.get("x-forwarded-for") || "anonymous";

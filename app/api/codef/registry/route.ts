@@ -3,9 +3,13 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { fetchRegistry, isCodefAvailable } from "@/lib/codef-api";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
+import { validateOrigin } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     if (!isCodefAvailable()) {
       return NextResponse.json(
         { error: "CODEF API가 설정되지 않았습니다." },

@@ -6,11 +6,15 @@ import { fetchComprehensivePrices } from "@/lib/molit-api";
 import { estimatePrice } from "@/lib/price-estimation";
 import { predictValue } from "@/lib/prediction-engine";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
+import { validateOrigin } from "@/lib/csrf";
 
 const MAX_ADDRESSES = 3;
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     const session = await auth();
     const ip = req.headers.get("x-forwarded-for") || "anonymous";
     const userId = session?.user?.id;

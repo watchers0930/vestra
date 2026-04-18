@@ -1,49 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { MapPin, Train, GraduationCap, ShoppingCart, Building2, ChevronDown, ChevronRight, Loader2, Sparkles, Navigation, Search, Heart, Eye, EyeOff } from "lucide-react";
-
-/* ── types ── */
-interface FacilityItem {
-  name: string;
-  distance: number;
-  lat: number;
-  lng: number;
-  address: string;
-}
-
-interface CategoryData {
-  score: number;
-  grade: string;
-  count: number;
-  nearest: number;
-  items: FacilityItem[];
-}
-
-interface FacilityGroup {
-  label: string;
-  category: string;
-  color: string;
-  count: number;
-  items: FacilityItem[];
-}
-
-interface AnalysisResult {
-  address: string;
-  lat: number;
-  lng: number;
-  categories: {
-    transport: CategoryData;
-    education: CategoryData;
-    medical: CategoryData;
-    convenience: CategoryData;
-    living: CategoryData;
-  };
-  facilities: Record<string, FacilityGroup>;
-  totalScore: number;
-  totalGrade: string;
-  aiComment: string;
-}
+import {
+  MapPin, Train, GraduationCap, ShoppingCart, Building2,
+  ChevronDown, ChevronRight, Loader2, Sparkles, Navigation,
+  Search, Heart, Eye, EyeOff,
+} from "lucide-react";
+import { useNeighborhoodData, type FacilityGroup } from "./hooks/useNeighborhoodData";
 
 const CATEGORY_META = [
   { key: "transport" as const, label: "교통", icon: Train, color: "#3b82f6", weight: "25%" },
@@ -66,159 +28,22 @@ function formatDistance(m: number) {
   return `${(m / 1000).toFixed(1)}km`;
 }
 
-/* ── page ── */
 export default function NeighborhoodMapPage() {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const kakaoMapRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
-  const overlaysRef = useRef<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
-  const circleRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-  const [address, setAddress] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [error, setError] = useState("");
-  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
-  const [visibleFacilities, setVisibleFacilities] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("vestra_last_address");
-      if (saved) setAddress(saved);
-    } catch { /* ignore */ }
-  }, []);
-
-  const toggleCat = (key: string) => {
-    setExpandedCats(prev => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
-  };
-
-  /* ── 분석 실행 ── */
-  const handleAnalyze = async () => {
-    if (!address.trim()) return;
-    setLoading(true);
-    setError("");
-    setResult(null);
-    try {
-      localStorage.setItem("vestra_last_address", address);
-      const res = await fetch("/api/neighborhood", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json.error ?? "분석에 실패했습니다.");
-        return;
-      }
-      setResult(json);
-      setExpandedCats(new Set(CATEGORY_META.map(c => c.key)));
-      setVisibleFacilities(new Set(Object.keys(json.facilities || {})));
-    } catch {
-      setError("서버 연결에 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* ── 카카오맵 초기화 (빈 지도) ── */
-  useEffect(() => {
-    const tryInit = () => {
-      if (!mapRef.current) return false;
-      const w = window as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-      if (!w.kakao?.maps?.LatLng) {
-        if (w.kakao?.maps?.load) {
-          w.kakao.maps.load(() => initMap());
-          return true;
-        }
-        return false;
-      }
-      initMap();
-      return true;
-    };
-
-    const initMap = () => {
-      if (!mapRef.current) return;
-      const maps = (window as any).kakao.maps; // eslint-disable-line @typescript-eslint/no-explicit-any
-      const center = new maps.LatLng(37.5665, 126.9780); // 서울 시청
-      const map = new maps.Map(mapRef.current, { center, level: 8 });
-      kakaoMapRef.current = map;
-    };
-
-    let rendered = false;
-    const pollId = setInterval(() => {
-      if (rendered) return;
-      if (tryInit()) { rendered = true; clearInterval(pollId); }
-    }, 300);
-    if (tryInit()) { rendered = true; clearInterval(pollId); }
-    const tid = setTimeout(() => clearInterval(pollId), 15000);
-    return () => { clearInterval(pollId); clearTimeout(tid); };
-  }, []);
-
-  /* ── 분석 결과 → 지도에 마커 표시 ── */
-  const renderMarkers = useCallback(() => {
-    if (!result || !kakaoMapRef.current) return;
-    const maps = (window as any).kakao.maps; // eslint-disable-line @typescript-eslint/no-explicit-any
-    const map = kakaoMapRef.current;
-
-    // 기존 오버레이 모두 제거
-    overlaysRef.current.forEach(o => o.setMap(null));
-    overlaysRef.current = [];
-    if (circleRef.current) { circleRef.current.setMap(null); circleRef.current = null; }
-
-    // 중심 이동
-    const center = new maps.LatLng(result.lat, result.lng);
-    map.setCenter(center);
-    map.setLevel(5);
-
-    // 반경 원
-    const circle = new maps.Circle({
-      map, center, radius: 1000,
-      strokeWeight: 2, strokeColor: "#6366f1", strokeOpacity: 0.4,
-      fillColor: "#6366f1", fillOpacity: 0.06,
-    });
-    circleRef.current = circle;
-
-    // 중심 마커
-    const centerMarker = new maps.Marker({ map, position: center, zIndex: 10 });
-    overlaysRef.current.push(centerMarker);
-
-    // 시설별 마커 — visibleFacilities에 있는 것만
-    if (result.facilities) {
-      for (const [key, fac] of Object.entries(result.facilities)) {
-        if (!visibleFacilities.has(key)) continue;
-        const color = (fac as FacilityGroup).color;
-        for (const item of (fac as FacilityGroup).items.slice(0, 8)) {
-          const pos = new maps.LatLng(item.lat, item.lng);
-          const content = document.createElement("div");
-          content.innerHTML = `<div style="background:${color};color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.15);border:2px solid #fff;cursor:pointer">${item.name.length > 8 ? item.name.slice(0, 8) + "…" : item.name}</div>`;
-          const overlay = new maps.CustomOverlay({ map, position: pos, content, yAnchor: 1.3 });
-          overlaysRef.current.push(overlay);
-        }
-      }
-    }
-  }, [result, visibleFacilities]);
-
-  useEffect(() => {
-    if (result) renderMarkers();
-  }, [result, renderMarkers]);
-
-  /* ── 개별 시설 보기/숨기기 토글 ── */
-  const toggleFacility = (key: string) => {
-    setVisibleFacilities(prev => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
-  };
-
-  const toggleAllFacilities = (show: boolean) => {
-    if (result?.facilities) {
-      setVisibleFacilities(show ? new Set(Object.keys(result.facilities)) : new Set());
-    }
-  };
+  const {
+    mapRef,
+    address,
+    setAddress,
+    loading,
+    result,
+    error,
+    expandedCats,
+    visibleFacilities,
+    toggleCat,
+    handleAnalyze,
+    toggleFacility,
+    toggleAllFacilities,
+    navigateTo,
+  } = useNeighborhoodData();
 
   return (
     <div className="h-full w-full">
@@ -232,8 +57,8 @@ export default function NeighborhoodMapPage() {
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   value={address}
-                  onChange={e => setAddress(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") handleAnalyze(); }}
+                  onChange={(e) => setAddress(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleAnalyze(); }}
                   placeholder="주소 입력 (예: 서울 강남구 역삼동)"
                   className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-gray-300 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
@@ -263,7 +88,10 @@ export default function NeighborhoodMapPage() {
               {/* 종합 점수 */}
               <div className="mb-3 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: `conic-gradient(${getScoreColor(result.totalScore)} ${result.totalScore * 3.6}deg, #e5e7eb 0deg)` }}>
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center"
+                    style={{ background: `conic-gradient(${getScoreColor(result.totalScore)} ${result.totalScore * 3.6}deg, #e5e7eb 0deg)` }}
+                  >
                     <div className="w-11 h-11 rounded-full bg-white flex items-center justify-center">
                       <span className="text-lg font-bold" style={{ color: getScoreColor(result.totalScore) }}>{result.totalScore}</span>
                     </div>
@@ -275,10 +103,14 @@ export default function NeighborhoodMapPage() {
                 </div>
                 {/* 카테고리 점수 배지 */}
                 <div className="flex flex-wrap gap-1.5">
-                  {CATEGORY_META.map(c => {
+                  {CATEGORY_META.map((c) => {
                     const cat = result.categories[c.key];
                     return (
-                      <span key={c.key} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium" style={{ backgroundColor: `${c.color}20`, color: c.color }}>
+                      <span
+                        key={c.key}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
+                        style={{ backgroundColor: `${c.color}20`, color: c.color }}
+                      >
                         <c.icon size={12} />
                         {c.label} {cat.score}
                       </span>
@@ -327,7 +159,7 @@ export default function NeighborhoodMapPage() {
               )}
 
               {/* 카테고리별 상세 */}
-              {CATEGORY_META.map(c => {
+              {CATEGORY_META.map((c) => {
                 const cat = result.categories[c.key];
                 const Icon = c.icon;
                 const expanded = expandedCats.has(c.key);
@@ -344,12 +176,20 @@ export default function NeighborhoodMapPage() {
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${cat.score}%`, backgroundColor: getScoreColor(cat.score) }} />
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{ width: `${cat.score}%`, backgroundColor: getScoreColor(cat.score) }}
+                            />
                           </div>
                           <span className="text-[11px] font-bold" style={{ color: getScoreColor(cat.score) }}>{cat.score}</span>
                         </div>
                       </div>
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: `${c.color}15`, color: c.color }}>{cat.grade}</span>
+                      <span
+                        className="px-1.5 py-0.5 rounded text-[10px] font-bold"
+                        style={{ backgroundColor: `${c.color}15`, color: c.color }}
+                      >
+                        {cat.grade}
+                      </span>
                       {expanded ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />}
                     </button>
 
@@ -378,13 +218,7 @@ export default function NeighborhoodMapPage() {
                                     {f.items.slice(0, 5).map((item, i) => (
                                       <button
                                         key={i}
-                                        onClick={() => {
-                                          if (kakaoMapRef.current) {
-                                            const maps = (window as any).kakao.maps; // eslint-disable-line @typescript-eslint/no-explicit-any
-                                            kakaoMapRef.current.setCenter(new maps.LatLng(item.lat, item.lng));
-                                            kakaoMapRef.current.setLevel(3);
-                                          }
-                                        }}
+                                        onClick={() => navigateTo(item.lat, item.lng)}
                                         className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md hover:bg-gray-50 transition-colors text-left"
                                       >
                                         <Navigation size={10} className="text-gray-300 shrink-0" />

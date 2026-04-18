@@ -4,6 +4,7 @@ import { extractTextFromPDF } from "@/lib/pdf-parser";
 import { extractTextFromImages, extractTextFromScannedPDF, isImageFile } from "@/lib/image-ocr";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { checkOpenAICostGuard } from "@/lib/openai";
+import { validateOrigin } from "@/lib/csrf";
 
 /** 최대 파일 크기: 10MB */
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -12,6 +13,9 @@ const MAX_IMAGE_COUNT = 5;
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     // Rate limiting (공개 API: 10 req/min)
     const ip = req.headers.get("x-forwarded-for") || "anonymous";
     const rl = await rateLimit(`extract-pdf:${ip}`, 10);

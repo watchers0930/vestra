@@ -1,70 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { Banknote, CheckCircle, XCircle, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
-
-interface LoanResult {
-  bankName: string;
-  productName: string;
-  isEligible: boolean;
-  maxLoanAmount: number;
-  estimatedRate: { min: number; max: number };
-  ltv: number;
-  dti: number;
-  reasons: string[];
-  requirements: string[];
-}
-
-interface SimResponse {
-  results: LoanResult[];
-  bestOption: { bankName: string; productName: string; reason: string } | null;
-  summary: { eligibleCount: number; maxAvailable: number; lowestRate: number };
-  disclaimer: string;
-}
-
 import { formatKRW, formatNumber, parseNumber } from "@/lib/format";
+import { useLoanCheckData } from "./hooks/useLoanCheckData";
 
 export default function LoanCheckPage() {
-  const [form, setForm] = useState({
-    deposit: 300_000_000,
-    propertyPrice: 500_000_000,
-    propertyType: "아파트",
-    propertyAddress: "",
-    annualIncome: 50_000_000,
-    creditScore: 700,
-    existingLoans: 0,
-    isFirstHome: false,
-  });
-  const [result, setResult] = useState<SimResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedBank, setSelectedBank] = useState<string | null>(null);
-
-  const handleSubmit = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/loan/simulate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        setError(err.error || `서버 오류 (${res.status})`);
-        return;
-      }
-      setResult(await res.json());
-    } catch {
-      setError("네트워크 오류가 발생했습니다. 다시 시도해주세요.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  type FormKey = keyof typeof form;
-  const update = (key: FormKey, value: typeof form[FormKey]) => setForm((p) => ({ ...p, [key]: value }));
+  const {
+    form,
+    update,
+    result,
+    loading,
+    error,
+    selectedBank,
+    toggleBank,
+    handleSubmit,
+  } = useLoanCheckData();
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
@@ -207,62 +158,65 @@ export default function LoanCheckPage() {
 
           {/* 은행별 결과 카드 */}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {result.results.map((r) => (
-              <button
-                key={`${r.bankName}-${r.productName}`}
-                onClick={() => setSelectedBank(selectedBank === `${r.bankName}-${r.productName}` ? null : `${r.bankName}-${r.productName}`)}
-                className={`rounded-xl border p-4 text-left transition ${
-                  r.isEligible
-                    ? "border-green-200 bg-white hover:border-green-400"
-                    : "border-gray-200 bg-gray-50 hover:border-gray-300"
-                } ${selectedBank === `${r.bankName}-${r.productName}` ? "ring-2 ring-indigo-500" : ""}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-bold text-gray-900">{r.bankName}</p>
-                    <p className="text-xs text-gray-500">{r.productName}</p>
+            {result.results.map((r) => {
+              const bankKey = `${r.bankName}-${r.productName}`;
+              return (
+                <button
+                  key={bankKey}
+                  onClick={() => toggleBank(bankKey)}
+                  className={`rounded-xl border p-4 text-left transition ${
+                    r.isEligible
+                      ? "border-green-200 bg-white hover:border-green-400"
+                      : "border-gray-200 bg-gray-50 hover:border-gray-300"
+                  } ${selectedBank === bankKey ? "ring-2 ring-indigo-500" : ""}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">{r.bankName}</p>
+                      <p className="text-xs text-gray-500">{r.productName}</p>
+                    </div>
+                    {r.isEligible ? (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-gray-400" />
+                    )}
                   </div>
+
                   {r.isEligible ? (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <div className="mt-3 space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-500">최대 한도</span>
+                        <span className="font-bold">{formatKRW(r.maxLoanAmount)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-500">금리</span>
+                        <span className="font-semibold text-green-600">{r.estimatedRate.min}~{r.estimatedRate.max}%</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-500">LTV / DTI</span>
+                        <span>{r.ltv}% / {r.dti}%</span>
+                      </div>
+                    </div>
                   ) : (
-                    <XCircle className="h-5 w-5 text-gray-400" />
+                    <div className="mt-3">
+                      {r.reasons.map((reason, i) => (
+                        <p key={i} className="text-xs text-red-500">• {reason}</p>
+                      ))}
+                    </div>
                   )}
-                </div>
 
-                {r.isEligible ? (
-                  <div className="mt-3 space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">최대 한도</span>
-                      <span className="font-bold">{formatKRW(r.maxLoanAmount)}</span>
+                  {/* 상세 (선택 시) */}
+                  {selectedBank === bankKey && r.isEligible && (
+                    <div className="mt-3 border-t border-gray-100 pt-3">
+                      <p className="text-xs font-semibold text-gray-600 mb-1">필요 서류</p>
+                      {r.requirements.map((req, i) => (
+                        <p key={i} className="text-xs text-gray-500">• {req}</p>
+                      ))}
                     </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">금리</span>
-                      <span className="font-semibold text-green-600">{r.estimatedRate.min}~{r.estimatedRate.max}%</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">LTV / DTI</span>
-                      <span>{r.ltv}% / {r.dti}%</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-3">
-                    {r.reasons.map((reason, i) => (
-                      <p key={i} className="text-xs text-red-500">• {reason}</p>
-                    ))}
-                  </div>
-                )}
-
-                {/* 상세 (선택 시) */}
-                {selectedBank === `${r.bankName}-${r.productName}` && r.isEligible && (
-                  <div className="mt-3 border-t border-gray-100 pt-3">
-                    <p className="text-xs font-semibold text-gray-600 mb-1">필요 서류</p>
-                    {r.requirements.map((req, i) => (
-                      <p key={i} className="text-xs text-gray-500">• {req}</p>
-                    ))}
-                  </div>
-                )}
-              </button>
-            ))}
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* 의사결정 리포트 CTA */}

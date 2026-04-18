@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { validateOrigin } from "@/lib/csrf";
 
 const CASE_TYPES = ["jeonse_fraud", "deposit_fraud", "rental_fraud", "other"];
 
@@ -28,6 +29,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const csrfError = validateOrigin(request);
+    if (csrfError) return csrfError;
+
     const body = await request.json();
     const { landlordName, address, caseType, amount, description, contactEmail } = body;
 

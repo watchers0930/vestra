@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { validateOrigin } from "@/lib/csrf";
 
 /** GET: 알림 설정 조회 */
 export async function GET() {
@@ -25,6 +26,9 @@ export async function GET() {
 
 /** PUT: 알림 설정 변경 */
 export async function PUT(req: NextRequest) {
+  const csrfError = validateOrigin(req);
+  if (csrfError) return csrfError;
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "로그인 필요" }, { status: 401 });

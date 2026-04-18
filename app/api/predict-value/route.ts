@@ -19,11 +19,15 @@ import { VerifiedPipeline } from "@/lib/integrity-chain";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { formatKRW } from "@/lib/utils";
 import { buildPolicyContext, logNewsUsage } from "@/lib/news-query";
+import { validateOrigin } from "@/lib/csrf";
 
 const formatKoreanPrice = (won: number) => formatKRW(won, "없음");
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     // 인증 + 역할 기반 제한
     const session = await auth();
     const ip = req.headers.get("x-forwarded-for") || "anonymous";

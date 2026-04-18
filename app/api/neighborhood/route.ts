@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getOpenAIClient } from "@/lib/openai";
+import { validateOrigin } from "@/lib/csrf";
 
 // ── 카카오 API ──────────────────────────────────
 
@@ -136,6 +137,9 @@ function placesToItems(places: KakaoPlace[]): FacilityItem[] {
 // ── 메인 핸들러 ──────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const csrfError = validateOrigin(req);
+  if (csrfError) return csrfError;
+
   try {
     const body = await req.json();
     const address = body.address as string;

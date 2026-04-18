@@ -10,12 +10,16 @@ import { generateChapterOpinions } from "@/lib/feasibility/feasibility-prompts";
 import { applyResolvedConflicts } from "@/lib/feasibility/context-merger";
 import type { MergedProjectContext, ResolvedConflict } from "@/lib/feasibility/feasibility-types";
 import { recordIntegrity } from "@/lib/integrity-recorder";
+import { validateOrigin } from "@/lib/csrf";
 
 const FEASIBILITY_GUEST_DAILY_LIMIT_BYPASS =
   process.env.FEASIBILITY_GUEST_DAILY_LIMIT_BYPASS === "true";
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     // 1. Auth + Rate Limit + Cost Guard (기존 패턴)
     const session = await auth();
     const ip = req.headers.get("x-forwarded-for") || "anonymous";

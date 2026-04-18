@@ -4,6 +4,7 @@ import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { auth } from "@/lib/auth";
 import { mergeContexts } from "@/lib/feasibility/context-merger";
 import type { ParsedDocument } from "@/lib/feasibility/feasibility-types";
+import { validateOrigin } from "@/lib/csrf";
 
 const MAX_FILES = 10;
 
@@ -14,6 +15,9 @@ const MAX_FILES = 10;
  */
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     const session = await auth();
     const ip = req.headers.get("x-forwarded-for") || "anonymous";
     const userId = session?.user?.id;

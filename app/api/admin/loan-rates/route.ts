@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { fetchFSSLoanRates, getCachedRates } from "@/lib/fss-loan-api";
+import { validateOrigin } from "@/lib/csrf";
 
 /**
  * 관리자 대출 금리 관리 API
@@ -25,7 +26,10 @@ export async function GET() {
   });
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const csrfError = validateOrigin(req);
+  if (csrfError) return csrfError;
+
   if (!(await checkAdmin())) {
     return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
   }

@@ -1,32 +1,9 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { FileText, TrendingUp, Shield, Banknote, Lock } from "lucide-react";
 import { formatKRW } from "@/lib/format";
-
-interface DecisionSummary {
-  overallGrade: string;
-  recommendation: string;
-  keyPoints: string[];
-  loanEligible: number;
-  maxLoanAmount: number;
-  lowestRate: number;
-}
-
-interface LoanResult {
-  bankName: string;
-  productName: string;
-  isEligible: boolean;
-  maxLoanAmount: number;
-  estimatedRate: { min: number; max: number };
-}
-
-interface ReportData {
-  summary: DecisionSummary;
-  loanSimulation: { results: LoanResult[]; bestOption: { bankName: string; productName: string; reason: string } | null };
-  generatedAt: string;
-}
+import { useDecisionReportData } from "./hooks/useDecisionReportData";
 
 const GRADE_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   A: { bg: "bg-green-100", text: "text-green-700", label: "적극 추천" },
@@ -37,44 +14,7 @@ const GRADE_STYLES: Record<string, { bg: string; text: string; label: string }> 
 };
 
 function DecisionReportContent() {
-  const searchParams = useSearchParams();
-  const [report, setReport] = useState<ReportData | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const deposit = searchParams.get("deposit");
-    const propertyPrice = searchParams.get("propertyPrice");
-    const annualIncome = searchParams.get("annualIncome");
-
-    if (deposit && propertyPrice && annualIncome) {
-      generateReport({
-        address: searchParams.get("address") || "서울특별시",
-        deposit: Number(deposit),
-        propertyPrice: Number(propertyPrice),
-        propertyType: searchParams.get("propertyType") || "아파트",
-        annualIncome: Number(annualIncome),
-        isFirstHome: searchParams.get("isFirstHome") === "true",
-        transactionType: "JEONSE",
-      });
-    }
-  }, [searchParams]);
-
-  const generateReport = async (input: Record<string, unknown>) => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/decision-report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      });
-      const data = await res.json();
-      if (res.ok) setReport(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { report, loading } = useDecisionReportData();
 
   if (loading) {
     return (

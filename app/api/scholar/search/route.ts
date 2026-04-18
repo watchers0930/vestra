@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { searchScholarPapers } from "@/lib/scholar";
+import { validateOrigin } from "@/lib/csrf";
 
 /**
  * POST /api/scholar/search
@@ -8,6 +9,9 @@ import { searchScholarPapers } from "@/lib/scholar";
  * Body: { keywords: string[] }
  */
 export async function POST(req: NextRequest) {
+  const csrfError = validateOrigin(req);
+  if (csrfError) return csrfError;
+
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });

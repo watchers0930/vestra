@@ -6,9 +6,13 @@ import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { sanitizeMessages } from "@/lib/sanitize";
 import { searchCourtCases } from "@/lib/court-api";
 import { buildNewsContext, logNewsUsage } from "@/lib/news-query";
+import { validateOrigin } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     // Rate limiting (보호 API: 30 req/min)
     const ip = req.headers.get("x-forwarded-for") || "anonymous";
     const rl = await rateLimit(`chat:${ip}`, 30);

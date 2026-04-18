@@ -23,6 +23,7 @@ import { createEventBus } from "@/lib/event-bus";
 import { analyzeRightsGraph } from "@/lib/rights-graph-engine";
 import { generateChecklist, groupChecklistByCategory } from "@/lib/checklist-generator";
 import { formatKRW } from "@/lib/utils";
+import { validateOrigin } from "@/lib/csrf";
 
 // ─── GET: 주소 기반 원스톱 통합 데이터 조회 ───
 // 단일 주소를 받아 시세/금리/건물정보/공급량을 병렬 조회 후 통합 반환
@@ -133,6 +134,9 @@ function parseAreaValue(areaStr: string): number {
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     // 인증 + 역할 기반 제한
     const session = await auth();
     const ip = req.headers.get("x-forwarded-for") || "anonymous";

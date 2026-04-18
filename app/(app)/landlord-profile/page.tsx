@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   UserSearch,
   Search,
@@ -16,34 +15,11 @@ import { PageHeader, Card, Badge } from "@/components/common";
 import { Button } from "@/components/common";
 import ReportModal from "@/components/landlord/ReportModal";
 import { formatKRW } from "@/lib/format";
+import { useLandlordProfileData } from "./hooks/useLandlordProfileData";
 
 // ---------------------------------------------------------------------------
-// Types (LandlordTracker의 인터페이스와 동일)
+// Grade / Risk config
 // ---------------------------------------------------------------------------
-
-interface LandlordProperty {
-  address: string;
-  mortgageTotal: number;
-  liensTotal: number;
-  estimatedPrice: number;
-  riskLevel: "LOW" | "MEDIUM" | "HIGH";
-}
-
-interface LandlordProfile {
-  nameDisplay: string;
-  properties: LandlordProperty[];
-  propertyCount: number;
-  totalMortgage: number;
-  totalLiens: number;
-  totalEstimatedValue: number;
-  mortgageRatio: number;
-  safetyGrade: string;
-  gradeScore: number;
-  courtCaseCount: number;
-  fraudCaseCount: number;
-  riskFactors: string[];
-}
-
 const GRADE_CONFIG: Record<
   string,
   { bg: string; text: string; border: string; label: string; badgeVariant: "success" | "info" | "warning" | "danger" }
@@ -64,7 +40,6 @@ const RISK_CONFIG: Record<string, { label: string; variant: "success" | "warning
 // ---------------------------------------------------------------------------
 // 근저당 비율 게이지
 // ---------------------------------------------------------------------------
-
 function MortgageGauge({ ratio }: { ratio: number }) {
   const clampedRatio = Math.min(ratio, 100);
   const color =
@@ -97,45 +72,19 @@ function MortgageGauge({ ratio }: { ratio: number }) {
 // ---------------------------------------------------------------------------
 // Page Component
 // ---------------------------------------------------------------------------
-
 export default function LandlordProfilePage() {
-  const [inputName, setInputName] = useState("");
-  const [inputAddress, setInputAddress] = useState("");
-  const [profile, setProfile] = useState<LandlordProfile | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [reportOpen, setReportOpen] = useState(false);
-
-  const handleSearch = async () => {
-    if (!inputName.trim()) return;
-
-    setLoading(true);
-    setError("");
-    setProfile(null);
-
-    try {
-      const res = await fetch("/api/landlord/track", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ownerName: inputName.trim(),
-          baseAddress: inputAddress.trim() || undefined,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "조회에 실패했습니다.");
-      }
-
-      const data = await res.json();
-      setProfile(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "조회 중 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    inputName,
+    setInputName,
+    inputAddress,
+    setInputAddress,
+    profile,
+    loading,
+    error,
+    reportOpen,
+    setReportOpen,
+    handleSearch,
+  } = useLandlordProfileData();
 
   const gradeStyle = profile ? GRADE_CONFIG[profile.safetyGrade] || GRADE_CONFIG.C : null;
 

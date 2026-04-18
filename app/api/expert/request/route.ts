@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { validateOrigin } from "@/lib/csrf";
 
 // ---------------------------------------------------------------------------
 // Expert Consultation Request API
@@ -45,6 +46,9 @@ const VALID_TYPES = [
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       req.headers.get("x-real-ip") ??

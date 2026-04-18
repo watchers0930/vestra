@@ -12,9 +12,13 @@ import type {
   ChapterOpinion,
   FeasibilityScore,
 } from "@/lib/feasibility/feasibility-types";
+import { validateOrigin } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     // 1. Auth + Rate Limit
     const session = await auth();
     const ip = req.headers.get("x-forwarded-for") || "anonymous";

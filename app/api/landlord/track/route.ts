@@ -15,6 +15,7 @@ import {
   type LandlordProperty,
 } from "@/lib/landlord-profiler";
 import { fetchRecentPrices } from "@/lib/molit-api";
+import { validateOrigin } from "@/lib/csrf";
 
 // 시드 데이터: 소유자별 물건 목록 (실 데이터 연동 전)
 // TODO: MOLIT 등기부 API 또는 한국평가데이터 API 연동
@@ -89,6 +90,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     const { ownerName, baseAddress } = await req.json();
 
     if (!ownerName) {

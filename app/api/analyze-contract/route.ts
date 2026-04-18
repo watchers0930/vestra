@@ -8,9 +8,13 @@ import { searchCourtCases } from "@/lib/court-api";
 import { analyzeContract } from "@/lib/contract-analyzer";
 import { buildPolicyContext, logNewsUsage } from "@/lib/news-query";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
+import { validateOrigin } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     // 인증 + 역할 기반 제한
     const session = await auth();
     const ip = req.headers.get("x-forwarded-for") || "anonymous";

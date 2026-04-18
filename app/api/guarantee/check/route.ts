@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkGuaranteeInsurance, type GuaranteeInput } from "@/lib/guarantee-insurance";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
+import { validateOrigin } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -33,6 +34,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     const body = await req.json();
     const {
       deposit,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { simulateLoan, type LoanSimulateInput } from "@/lib/loan-simulator";
+import { validateOrigin } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -20,6 +21,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     const body = await req.json();
     const { deposit, propertyPrice, propertyType, propertyAddress, annualIncome, creditScore, existingLoans, isFirstHome } = body;
 
