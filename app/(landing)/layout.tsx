@@ -32,7 +32,7 @@ export default function LandingLayout({
       </header>
 
       {/* Content */}
-      <main className="pt-16">{children}</main>
+      <main className="pt-[14px]">{children}</main>
 
       {/* ─── Dark Footer ─── */}
       <footer className="bg-[#00042a] text-white px-12 py-20">
