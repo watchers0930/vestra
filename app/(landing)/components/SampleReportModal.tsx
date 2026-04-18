@@ -29,7 +29,7 @@ export function SampleReportModal({ onClose }: Props) {
       />
 
       {/* 모달 */}
-      <div className="relative z-10 w-full max-w-[900px] mx-4 my-8 rounded-2xl bg-[#f5f5f7] shadow-2xl overflow-y-auto" style={{ maxHeight: "92vh" }}>
+      <div className="relative z-10 w-full max-w-[540px] mx-4 my-8 rounded-2xl bg-[#f5f5f7] shadow-2xl overflow-y-auto" style={{ maxHeight: "92vh" }}>
         {/* 모달 헤더 */}
         <div className="sticky top-0 z-20 flex items-center justify-between bg-[#00042a] text-white px-6 py-3">
           <span className="text-[10px] font-bold tracking-widest uppercase">
