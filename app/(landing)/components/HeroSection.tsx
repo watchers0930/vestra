@@ -81,7 +81,7 @@ export function HeroSection() {
           <div className="relative">
             <div className="landing-img-overlay h-[640px] rounded-xl shadow-2xl">
               <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9Ds1VLz-muSfe0j-s3osxXzmAjPV2zc4o6z0N_phqGuQS7TUCzFOxi7OVBVNGEB3XRWryeeOzSpMubi2-vbU3dtSW6KKOoejcUfJvHHHNh3OKiMpfrBC4UEduXQlRvtYDaKdejAwh8OUcIEJfC_NLed0iHs8t7nXzVVWECIwec4cfybC8bvEfcC3ileDZdiXW65hxhFiSvW4go-kBNAUQohp8QArZcG-tS9QaoUSccOZEsP_EqtanJDsZxpq6iZ-kzjQgeXHNsA"
+                src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80"
                 alt="부동산 자산관리 플랫폼"
                 className="w-full h-full object-cover"
               />
