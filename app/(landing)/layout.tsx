@@ -44,7 +44,7 @@ export default function LandingLayout({
               <p className="text-white/40 text-sm leading-relaxed">
                 The Digital Curator of Real Estate.<br />AI 기반 부동산 자산관리 플랫폼.
               </p>
-              <div className="mt-5 space-y-0.5 text-xs text-white/30">
+              <div className="mt-5 space-y-2 text-xs text-white/30 tracking-normal leading-relaxed">
                 <p>BMI C&amp;S | 대표이사 김동의</p>
                 <p>사업자등록번호 263-87-03481</p>
                 <p>통신판매신고번호 2025-경기광명-0189</p>
