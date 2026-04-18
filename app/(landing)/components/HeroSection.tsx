@@ -18,9 +18,9 @@ export function HeroSection() {
               <span className="landing-section-label">AI-Powered Real Estate Curation</span>
             </div>
             <h1 className="text-[55px] lg:text-[65px] font-extrabold text-[#00042a] tracking-tight mb-8">
-              <span style={{ display: "block", fontSize: "30px", fontWeight: 700, lineHeight: 1.2, marginBottom: "6px" }}>보이지 않는 위험까지 감지하는</span>
-              <span style={{ display: "block", lineHeight: 1.0 }}>부동산 자산관리 플랫폼</span>
-              <span style={{ display: "block", fontWeight: 100, fontStyle: "italic", lineHeight: 1.1 }}>베스트라</span>
+              <span style={{ display: "block", fontSize: "30px", fontWeight: 700, lineHeight: 1.3, marginBottom: "6px" }}>보이지 않는 위험까지 감지하는</span>
+              <span style={{ display: "block", lineHeight: 1.1 }}>부동산 자산관리 플랫폼</span>
+              <span style={{ display: "block", fontWeight: 100, fontStyle: "italic", lineHeight: 1.2 }}>베스트라</span>
             </h1>
             <p className="text-lg text-[#454651] max-w-md mb-14 leading-[1.8]">
               VESTRA는 수만 개의 데이터 포인트를 정밀하게 분석하여<br />전문가의 통찰력을 디지털화합니다.
