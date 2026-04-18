@@ -78,7 +78,7 @@ export function HeroSection() {
           </div>
 
           {/* Right — image */}
-          <div className="relative">
+          <div className="relative mt-16">
             <div className="landing-img-overlay h-[640px] rounded-xl shadow-2xl">
               <img
                 src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80"
