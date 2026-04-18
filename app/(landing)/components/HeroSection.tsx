@@ -1,8 +1,11 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import { TICKER_ITEMS } from "../constants";
+import { SampleReportModal } from "./SampleReportModal";
 
 export function HeroSection() {
+  const [modalOpen, setModalOpen] = useState(false);
   const tickerList = [...TICKER_ITEMS, ...TICKER_ITEMS];
 
   return (
@@ -40,7 +43,10 @@ export function HeroSection() {
                   arrow_forward
                 </span>
               </Link>
-              <Link href="/sample-report" className="text-[#00042a] font-bold text-[11px] tracking-widest uppercase flex items-center gap-2 group relative">
+              <button
+                onClick={() => setModalOpen(true)}
+                className="text-[#00042a] font-bold text-[11px] tracking-widest uppercase flex items-center gap-2 group relative"
+              >
                 <span className="border-b border-[#00042a]/30 pb-0.5 group-hover:border-[#00042a] transition-colors">
                   심층 보고서 샘플 보기
                 </span>
@@ -50,7 +56,7 @@ export function HeroSection() {
                 >
                   arrow_outward
                 </span>
-              </Link>
+              </button>
             </div>
 
             {/* Trust badges */}
@@ -93,6 +99,8 @@ export function HeroSection() {
         <div className="absolute -right-40 top-20 w-[600px] h-[600px] bg-[#001466]/4 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute -left-40 bottom-0 w-[500px] h-[500px] bg-[#4a58a7]/4 rounded-full blur-[100px] pointer-events-none" />
       </section>
+
+      {modalOpen && <SampleReportModal onClose={() => setModalOpen(false)} />}
 
       {/* Ticker */}
       <div className="bg-[#00042a] py-4 overflow-hidden">
