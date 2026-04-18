@@ -8,8 +8,8 @@ export function HeroSection() {
   return (
     <>
       {/* Hero */}
-      <section className="relative min-h-screen flex flex-col justify-start pt-[8vh] px-12 bg-[#fbf8ff] overflow-hidden">
-        <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-24 items-start">
+      <section className="relative min-h-screen flex flex-col justify-center px-12 bg-[#fbf8ff] overflow-hidden">
+        <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-24 items-center pt-10">
 
           {/* Left */}
           <div className="z-10">
@@ -78,7 +78,7 @@ export function HeroSection() {
           </div>
 
           {/* Right — image */}
-          <div className="relative mt-16">
+          <div className="relative">
             <div className="landing-img-overlay h-[640px] rounded-xl shadow-2xl">
               <img
                 src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80"
