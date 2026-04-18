@@ -35,7 +35,7 @@ export default function LandingLayout({
       <main className="pt-[14px]">{children}</main>
 
       {/* ─── Dark Footer ─── */}
-      <footer className="bg-zinc-900 text-white px-12 py-20">
+      <footer className="text-white px-12 py-20" style={{ backgroundColor: '#222222' }}>
         <div className="max-w-[1440px] mx-auto">
           <div className="flex flex-col md:flex-row justify-between gap-16 mb-16">
             {/* Company */}
