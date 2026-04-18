@@ -1,4 +1,6 @@
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
 import { ScrollReveal } from "./ScrollReveal";
 
 const FEATURES_DATA = [
@@ -6,25 +8,53 @@ const FEATURES_DATA = [
     icon: "gavel",
     label: "Rights Analysis",
     title: "권리 분석",
-    desc: "복잡한 등기부등본과 토지대장을 AI가 초단위로 스캔하여 잠재적인 법적 리스크를 사전에 식별합니다.",
+    desc: "등기부등본을 AI가 종합 분석하여 권리관계, 위험요소, 안전지수를 한눈에 파악합니다.",
   },
   {
     icon: "query_stats",
     label: "Market Prediction",
-    title: "시장 예측",
-    desc: "과거 실거래 데이터와 주변 상권 분석을 결합하여 향후 24개월간의 자산 가치 변동을 예측합니다.",
+    title: "시세 전망",
+    desc: "공공데이터와 AI 분석을 결합하여 부동산 시세 추이와 향후 전망을 제공합니다.",
   },
   {
     icon: "shield",
     label: "Tenant Protection",
-    title: "임대차 보호",
-    desc: "최신 법 개정 사항과 임대 시장 동향을 반영하여 계약 시 발생할 수 있는 독소 조항을 걸러냅니다.",
+    title: "전세 보호",
+    desc: "전세 사기 예방을 위한 안전 분석, 전입신고, 확정일자, 전세권설정까지 원스톱 가이드.",
+  },
+  {
+    icon: "contract",
+    label: "Contract Review",
+    title: "계약서 AI 검토",
+    desc: "부동산 계약서를 업로드하면 불리한 조항, 누락 사항, 위험 요소를 자동 검출합니다.",
+  },
+  {
+    icon: "calculate",
+    label: "Tax Simulation",
+    title: "세무 시뮬레이션",
+    desc: "취득세, 양도소득세, 종합부동산세를 실시간으로 계산하고 절세 전략을 제안합니다.",
+  },
+  {
+    icon: "analytics",
+    label: "Business Analysis",
+    title: "사업성 분석",
+    desc: "다중 문서 기반으로 사업성을 검증하고 SCR 수준의 분석 보고서를 자동 생성합니다.",
+  },
+  {
+    icon: "smart_toy",
+    label: "AI Assistant",
+    title: "AI 어시스턴트",
+    desc: "부동산 관련 궁금한 점을 AI에게 자유롭게 질문하세요. 법률, 세무, 시장 동향까지.",
   },
 ];
 
 const iconStyle = { fontVariationSettings: "'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24" };
 
 export function FeaturesSection() {
+  const [expanded, setExpanded] = useState(false);
+
+  const visible = expanded ? FEATURES_DATA : FEATURES_DATA.slice(0, 3);
+
   return (
     <section id="features" className="py-40 px-12 bg-[#fbf8ff]">
       <div className="max-w-[1440px] mx-auto">
@@ -40,20 +70,25 @@ export function FeaturesSection() {
               전문가의 시각을<br />AI로 구현했습니다
             </h2>
           </div>
-          <Link
-            href="/login"
+          <button
+            onClick={() => setExpanded((v) => !v)}
             className="hidden lg:flex items-center gap-2 text-[11px] font-bold text-[#454651] tracking-widest uppercase hover:text-[#00042a] transition-colors group"
           >
-            전체 서비스 보기
-            <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform" style={iconStyle}>
+            {expanded ? "간략히 보기" : "전체 서비스 보기"}
+            <span
+              className={`material-symbols-outlined text-sm transition-transform ${
+                expanded ? "rotate-90 group-hover:-translate-x-1" : "group-hover:translate-x-1"
+              }`}
+              style={iconStyle}
+            >
               arrow_forward
             </span>
-          </Link>
+          </button>
         </ScrollReveal>
 
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {FEATURES_DATA.map((f, i) => (
+          {visible.map((f, i) => (
             <ScrollReveal key={f.title} delay={(i + 1) * 0.1}>
               <div className="landing-feature-card rounded-xl p-10 bg-white cursor-default h-full">
 
@@ -84,6 +119,19 @@ export function FeaturesSection() {
               </div>
             </ScrollReveal>
           ))}
+        </div>
+
+        {/* Mobile expand button */}
+        <div className="flex lg:hidden justify-center mt-10">
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="flex items-center gap-2 text-[11px] font-bold text-[#454651] tracking-widest uppercase hover:text-[#00042a] transition-colors"
+          >
+            {expanded ? "간략히 보기" : "전체 서비스 보기"}
+            <span className="material-symbols-outlined text-sm" style={iconStyle}>
+              {expanded ? "expand_less" : "expand_more"}
+            </span>
+          </button>
         </div>
 
       </div>
