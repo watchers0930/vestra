@@ -40,7 +40,7 @@ export function HeroSection() {
                   arrow_forward
                 </span>
               </Link>
-              <button className="text-[#00042a] font-bold text-[11px] tracking-widest uppercase flex items-center gap-2 group relative">
+              <Link href="/sample-report" className="text-[#00042a] font-bold text-[11px] tracking-widest uppercase flex items-center gap-2 group relative">
                 <span className="border-b border-[#00042a]/30 pb-0.5 group-hover:border-[#00042a] transition-colors">
                   심층 보고서 샘플 보기
                 </span>
@@ -50,7 +50,7 @@ export function HeroSection() {
                 >
                   arrow_outward
                 </span>
-              </button>
+              </Link>
             </div>
 
             {/* Trust badges */}
