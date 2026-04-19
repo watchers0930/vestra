@@ -1,51 +1,92 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { Card, Badge } from "@/components/common";
-import { riskBadgeVariant, riskBadgeLabel, riskBadgeIcon, borderForRisk } from "../constants";
+import { XCircle, AlertTriangle, CheckCircle } from "lucide-react";
 import type { AnalyzedClause } from "../types";
 
-interface Props {
-  clauses: AnalyzedClause[];
-}
+const RISK_CONFIG = {
+  high:    { color: "#ff3b30", bg: "rgba(255,59,48,0.06)",   border: "rgba(255,59,48,0.25)",  accent: "#ff3b30", icon: XCircle,       label: "위험"  },
+  warning: { color: "#b86f00", bg: "rgba(255,159,10,0.06)",  border: "rgba(255,159,10,0.25)", accent: "#ff9f0a", icon: AlertTriangle, label: "주의"  },
+  safe:    { color: "#1a9e45", bg: "rgba(48,209,88,0.05)",   border: "rgba(48,209,88,0.22)",  accent: "#30d158", icon: CheckCircle,   label: "안전"  },
+} as const;
+
+interface Props { clauses: AnalyzedClause[] }
 
 export function ClauseAnalysisCard({ clauses }: Props) {
   return (
-    <Card className="p-6">
-      <h2 className="mb-4 text-base font-semibold text-[#1d1d1f]">조항별 분석 결과</h2>
-      <div className="space-y-4">
+    <div
+      style={{
+        background: "#fff",
+        border: "1px solid rgba(0,0,0,0.08)",
+        borderRadius: "20px",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        padding: "24px",
+      }}
+    >
+      <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "18px", letterSpacing: "-0.02em" }}>
+        조항별 분석 결과
+      </h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         {clauses.map((clause, idx) => {
-          const Icon = riskBadgeIcon[clause.riskLevel];
+          const cfg = RISK_CONFIG[clause.riskLevel] ?? RISK_CONFIG.safe;
+          const Icon = cfg.icon;
           return (
             <div
               key={idx}
-              className={cn(
-                "rounded-lg border border-[#e5e5e7] border-l-4 bg-[#f5f5f7]/50 p-4",
-                borderForRisk(clause.riskLevel)
-              )}
+              style={{
+                borderRadius: "14px",
+                border: `1px solid ${cfg.border}`,
+                borderLeft: `4px solid ${cfg.accent}`,
+                background: cfg.bg,
+                padding: "16px",
+              }}
             >
-              <div className="mb-2 flex items-center gap-3">
-                <h3 className="text-sm font-semibold text-[#1d1d1f]">{clause.title}</h3>
-                <Badge variant={riskBadgeVariant[clause.riskLevel]} icon={Icon} size="md">
-                  {riskBadgeLabel[clause.riskLevel]}
-                </Badge>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                <h3 style={{ fontSize: "13.5px", fontWeight: 600, color: "#1d1d1f", flex: 1 }}>{clause.title}</h3>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "3px 10px",
+                    borderRadius: "20px",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: cfg.color,
+                    background: "#fff",
+                    border: `1px solid ${cfg.border}`,
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon size={11} />
+                  {cfg.label}
+                </span>
               </div>
               {clause.content && (
-                <p className="mb-2 rounded bg-white px-3 py-2 text-xs leading-relaxed text-[#6e6e73] ring-1 ring-[#e5e5e7]">
+                <p
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    background: "rgba(255,255,255,0.7)",
+                    border: "1px solid rgba(0,0,0,0.06)",
+                    fontSize: "11.5px",
+                    lineHeight: 1.65,
+                    color: "#6e6e73",
+                    marginBottom: "8px",
+                  }}
+                >
                   {clause.content}
                 </p>
               )}
-              <p className="text-sm leading-relaxed text-[#1d1d1f]">{clause.analysis}</p>
+              <p style={{ fontSize: "13px", lineHeight: 1.65, color: "#1d1d1f" }}>{clause.analysis}</p>
               {clause.relatedLaw && (
-                <p className="mt-2 text-xs text-[#6e6e73]">
-                  <span className="font-medium text-[#6e6e73]">관련 법규:</span>{" "}
-                  {clause.relatedLaw}
+                <p style={{ marginTop: "8px", fontSize: "11.5px", color: "#aeaeb2" }}>
+                  <span style={{ fontWeight: 600 }}>관련 법규:</span> {clause.relatedLaw}
                 </p>
               )}
             </div>
           );
         })}
       </div>
-    </Card>
+    </div>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { FileText, Search, FileEdit, Upload, CheckCircle } from "lucide-react";
-import { Card } from "@/components/common";
 import { ProcedurePageLayout, FlowChart, DocumentChecklist, TipBox, GovernmentLink } from "@/components/jeonse";
 import type { FlowStepData } from "@/components/jeonse";
 
@@ -23,7 +22,7 @@ const steps: FlowStepData[] = [
   },
   {
     number: 4, title: "신고 완료 — 확정일자 자동 부여", icon: CheckCircle, color: "purple",
-    description: "주택임대차 신고가 완료되면 확정일자가 자동으로 부여됩니다. 별도로 확정일자를 받을 필요가 없습니다.",
+    description: "주택임대차 신고가 완료되면 확정일자가 자동으로 부여됩니다. 별도 신청 불필요합니다.",
   },
 ];
 
@@ -41,23 +40,23 @@ export default function LeaseReportPage() {
       description="임대차 계약을 신고하면 확정일자가 자동 부여됩니다"
       breadcrumbLabel="주택임대차 신고"
     >
-      <Card className="p-5">
-        <h3 className="font-semibold mb-2">주택임대차 신고란?</h3>
-        <p className="text-sm text-secondary leading-relaxed">
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>주택임대차 신고란?</h3>
+        <p style={{ fontSize: "13px", lineHeight: 1.75, color: "#6e6e73" }}>
           보증금이 일정 금액을 초과하는 주택 임대차 계약을 체결하면
-          30일 이내에 관할 주민센터에 신고해야 하는 <strong>의무 제도</strong>입니다.
-          신고를 완료하면 <strong>확정일자가 자동으로 부여</strong>되어 별도 신청이 필요 없습니다.
+          30일 이내에 관할 주민센터에 신고해야 하는 <strong style={{ color: "#1d1d1f" }}>의무 제도</strong>입니다.
+          신고를 완료하면 <strong style={{ color: "#1d1d1f" }}>확정일자가 자동으로 부여</strong>되어 별도 신청이 필요 없습니다.
         </p>
-      </Card>
+      </div>
 
-      <Card className="p-5">
-        <h3 className="font-semibold mb-4">절차 안내</h3>
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
         <FlowChart steps={steps} />
-      </Card>
+      </div>
 
       <DocumentChecklist documents={documents} />
 
-      <div className="space-y-3">
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         <TipBox variant="important" title="30일 이내 신고 의무">
           계약 체결(또는 갱신)일로부터 30일 이내에 신고해야 합니다. 미신고 시 최대 100만원의 과태료가 부과됩니다.
         </TipBox>
@@ -70,13 +69,13 @@ export default function LeaseReportPage() {
         </TipBox>
       </div>
 
-      <Card className="p-5">
-        <h3 className="font-semibold mb-3">관련 사이트</h3>
-        <div className="space-y-2">
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <GovernmentLink name="정부24" url="https://www.gov.kr" description="주택임대차 신고 온라인 제출" />
           <GovernmentLink name="국토교통부 실거래가 공개시스템" url="https://rt.molit.go.kr" description="임대차 신고 현황 확인" />
         </div>
-      </Card>
+      </div>
     </ProcedurePageLayout>
   );
 }

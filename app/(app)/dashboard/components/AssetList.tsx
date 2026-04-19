@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { BarChart3, Clock, Shield, TrendingUp, Calculator, Eye, CheckCircle, Loader2 } from "lucide-react";
-import { cn, formatKRW } from "@/lib/utils";
+import { Shield, TrendingUp, Eye, CheckCircle, Loader2 } from "lucide-react";
+import { formatKRW } from "@/lib/utils";
 import type { StoredAsset } from "@/lib/store";
 import type { Session } from "next-auth";
 
@@ -14,101 +14,197 @@ interface Props {
   handleMonitorRegister: (address: string) => void;
 }
 
-export function AssetList({ assets, session, monitoringLoading, monitoredAddresses, handleMonitorRegister }: Props) {
+function getAssetName(address: string, type: string): string {
+  const parts = address.split(/[\s,]+/).filter(Boolean);
+  const dong = [...parts].reverse().find((p) => p.endsWith("동") || p.endsWith("구") || p.endsWith("로") || p.endsWith("가"));
+  if (dong && type) return `${dong} ${type}`;
+  if (type) return type;
+  return address.slice(0, 16);
+}
+
+function getTypeBadge(type: string): { cls: string; label: string } {
+  const t = type.toLowerCase();
+  if (t.includes("아파트") || t === "apartment")
+    return { cls: "apt", label: type };
+  if (t.includes("빌라") || t.includes("다세대") || t.includes("다가구") || t === "villa")
+    return { cls: "villa", label: type };
+  if (t.includes("오피스텔") || t === "officetel")
+    return { cls: "ofc", label: type };
+  return { cls: "other", label: type };
+}
+
+function getSafetyBarBg(score: number): string {
+  if (score >= 70) return "#30d158";
+  if (score >= 40) return "#ff9f0a";
+  return "#ff3b30";
+}
+
+function getRiskColor(risk: number): string {
+  if (risk <= 30) return "#30d158";
+  if (risk <= 60) return "#ff9f0a";
+  return "#ff3b30";
+}
+
+const BADGE_STYLE: Record<string, { color: string; bg: string }> = {
+  apt:   { color: "#0071e3", bg: "rgba(0,113,227,0.09)" },
+  villa: { color: "#1a9e45", bg: "rgba(48,209,88,0.09)" },
+  ofc:   { color: "#b86f00", bg: "rgba(255,159,10,0.09)" },
+  other: { color: "#6e6e73", bg: "rgba(0,0,0,0.06)" },
+};
+
+export function AssetList({
+  assets,
+  session,
+  monitoringLoading,
+  monitoredAddresses,
+  handleMonitorRegister,
+}: Props) {
   if (assets.length === 0) return null;
 
   return (
-    <div className="rounded-xl bg-white border border-gray-100 overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold text-[#1d1d1f]">관리 자산</h2>
-          <p className="text-xs text-[#6e6e73] mt-0.5">분석된 부동산 목록</p>
-        </div>
-        <span className="text-xs font-semibold text-[#1d1d1f] bg-[#f5f5f7] px-2.5 py-1 rounded-full">
-          {assets.length}건
-        </span>
+    <div
+      className="overflow-hidden rounded-[18px] bg-white"
+      style={{ border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
+    >
+      {/* 테이블 헤더 */}
+      <div
+        className="grid items-center gap-[12px] px-[22px] py-[13px] text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[#6e6e73]"
+        style={{
+          gridTemplateColumns: "2fr 90px 1fr 120px 90px 100px",
+          background: "#f5f5f7",
+          borderBottom: "1px solid rgba(0,0,0,0.08)",
+        }}
+      >
+        <span>자산</span>
+        <span>유형</span>
+        <span>시세</span>
+        <span>안전지수</span>
+        <span>리스크</span>
+        <span className="text-right">액션</span>
       </div>
 
-      <div className="p-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {assets.map((asset) => (
+      {/* 자산 목록 */}
+      {assets.map((asset) => {
+        const badge = getTypeBadge(asset.type || "");
+        const bs = BADGE_STYLE[badge.cls];
+        const isMonitored = monitoredAddresses.has(asset.address);
+        const isLoading = monitoringLoading === asset.address;
+
+        return (
           <div
             key={asset.id}
-            className="rounded-xl border border-gray-100 p-4 transition-all hover:border-primary/30 hover:shadow-sm"
+            className="grid cursor-pointer items-center gap-[12px] px-[22px] py-[16px] transition-colors hover:bg-[#fafafa]"
+            style={{
+              gridTemplateColumns: "2fr 90px 1fr 120px 90px 100px",
+              borderBottom: "1px solid rgba(0,0,0,0.06)",
+            }}
           >
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className="text-sm font-medium text-[#1d1d1f] truncate max-w-[200px]">{asset.address}</p>
-                <p className="text-xs text-[#6e6e73] mt-0.5">{asset.type}</p>
+            {/* 자산명 + 주소 */}
+            <div>
+              <div
+                className="overflow-hidden text-ellipsis whitespace-nowrap text-[13.5px] font-semibold text-[#1d1d1f]"
+                style={{ maxWidth: 260 }}
+                title={asset.address}
+              >
+                {getAssetName(asset.address, asset.type)}
               </div>
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5f5f7]">
-                <BarChart3 className="h-4 w-4 text-[#1d1d1f]" strokeWidth={1.5} />
+              <div
+                className="mt-[2px] overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] text-[#6e6e73]"
+                style={{ maxWidth: 260 }}
+              >
+                {asset.address}
               </div>
             </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span className="text-[#6e6e73]">추정 시세</span>
-                <span className="font-semibold text-primary">{formatKRW(asset.estimatedPrice)}</span>
+
+            {/* 유형 배지 */}
+            <div>
+              <span
+                className="inline-flex items-center rounded-full px-[9px] py-[3px] text-[10.5px] font-semibold"
+                style={{ color: bs.color, background: bs.bg }}
+              >
+                {badge.label || "기타"}
+              </span>
+            </div>
+
+            {/* 시세 */}
+            <div>
+              <div className="text-[13.5px] font-semibold text-[#1d1d1f]">
+                {formatKRW(asset.estimatedPrice)}
               </div>
-              {asset.jeonsePrice && asset.jeonsePrice > 0 && (
-                <div className="flex justify-between text-xs">
-                  <span className="text-[#6e6e73]">전세가</span>
-                  <span className="font-medium text-[#1d1d1f]">{formatKRW(asset.jeonsePrice)}</span>
-                </div>
+              <div className="mt-[1px] text-[11px] text-[#6e6e73]">추정 시세</div>
+            </div>
+
+            {/* 안전지수 바 */}
+            <div>
+              <div className="mb-[4px] text-[11.5px] text-[#6e6e73]">{asset.safetyScore}점</div>
+              <div className="h-[5px] w-full overflow-hidden rounded-full bg-[#f5f5f7]">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${asset.safetyScore}%`,
+                    background: getSafetyBarBg(asset.safetyScore),
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* 리스크 점수 */}
+            <div
+              className="text-[15px] font-bold"
+              style={{ color: getRiskColor(asset.riskScore) }}
+            >
+              {asset.riskScore}점
+            </div>
+
+            {/* 액션 버튼 */}
+            <div className="flex items-center justify-end gap-[5px]">
+              {session?.user && (
+                <button
+                  onClick={() => handleMonitorRegister(asset.address)}
+                  disabled={isLoading || isMonitored}
+                  className="flex h-[28px] w-[28px] items-center justify-center rounded-[8px] transition-all"
+                  style={{
+                    border: isMonitored
+                      ? "1px solid rgba(0,113,227,0.20)"
+                      : "1px solid rgba(0,0,0,0.08)",
+                    background: isMonitored ? "rgba(0,113,227,0.09)" : "#fff",
+                    color: isMonitored ? "#0071e3" : "#6e6e73",
+                  }}
+                  title={isMonitored ? "모니터링 중" : "모니터링 등록"}
+                >
+                  {isLoading ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : isMonitored ? (
+                    <CheckCircle size={12} strokeWidth={2} />
+                  ) : (
+                    <Eye size={12} strokeWidth={1.5} />
+                  )}
+                </button>
               )}
-              <div className="flex justify-between text-xs">
-                <span className="text-[#6e6e73]">안전지수</span>
-                <span className={cn(
-                  "font-semibold",
-                  asset.safetyScore >= 70 ? "text-emerald-600" : asset.safetyScore >= 40 ? "text-amber-600" : "text-red-600"
-                )}>
-                  {asset.safetyScore}점
-                </span>
-              </div>
-            </div>
-            <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between">
-              <p className="text-[10px] text-[#6e6e73] flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {new Date(asset.lastAnalyzedDate).toLocaleDateString("ko-KR")}
-              </p>
-              <div className="flex items-center gap-1">
-                <Link href="/rights" onClick={() => localStorage.setItem("vestra_last_address", asset.address)}
-                  className="p-1.5 rounded-lg text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] transition-all" title="권리분석">
-                  <Shield size={16} strokeWidth={1.5} />
-                </Link>
-                <Link href="/prediction" onClick={() => localStorage.setItem("vestra_last_address", asset.address)}
-                  className="p-1.5 rounded-lg text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] transition-all" title="시세전망">
-                  <TrendingUp size={16} strokeWidth={1.5} />
-                </Link>
-                <Link href="/tax" onClick={() => localStorage.setItem("vestra_last_address", asset.address)}
-                  className="p-1.5 rounded-lg text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] transition-all" title="세무">
-                  <Calculator size={16} strokeWidth={1.5} />
-                </Link>
-                {session?.user && (
-                  <button
-                    onClick={() => handleMonitorRegister(asset.address)}
-                    disabled={monitoringLoading === asset.address || monitoredAddresses.has(asset.address)}
-                    className={cn(
-                      "p-1.5 rounded-lg transition-all",
-                      monitoredAddresses.has(asset.address)
-                        ? "text-emerald-500 bg-emerald-50 cursor-default"
-                        : "text-[#6e6e73] hover:text-primary hover:bg-primary/5"
-                    )}
-                    title={monitoredAddresses.has(asset.address) ? "이미 등록됨" : "모니터링"}
-                  >
-                    {monitoringLoading === asset.address ? (
-                      <Loader2 size={16} strokeWidth={1.5} className="animate-spin" />
-                    ) : monitoredAddresses.has(asset.address) ? (
-                      <CheckCircle size={16} strokeWidth={1.5} />
-                    ) : (
-                      <Eye size={16} strokeWidth={1.5} />
-                    )}
-                  </button>
-                )}
-              </div>
+
+              <Link
+                href="/rights"
+                onClick={() => localStorage.setItem("vestra_last_address", asset.address)}
+                className="flex h-[28px] w-[28px] items-center justify-center rounded-[8px] transition-all hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
+                style={{ border: "1px solid rgba(0,0,0,0.08)", background: "#fff", color: "#6e6e73" }}
+                title="권리분석"
+              >
+                <Shield size={12} strokeWidth={1.5} />
+              </Link>
+
+              <Link
+                href="/prediction"
+                onClick={() => localStorage.setItem("vestra_last_address", asset.address)}
+                className="flex h-[28px] w-[28px] items-center justify-center rounded-[8px] transition-all hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
+                style={{ border: "1px solid rgba(0,0,0,0.08)", background: "#fff", color: "#6e6e73" }}
+                title="시세전망"
+              >
+                <TrendingUp size={12} strokeWidth={1.5} />
+              </Link>
             </div>
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }

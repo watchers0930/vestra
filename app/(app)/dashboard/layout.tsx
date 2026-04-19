@@ -6,5 +6,9 @@ export const metadata: Metadata = {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <div style={{ margin: "-24px -24px 0" }}>
+      {children}
+    </div>
+  );
 }

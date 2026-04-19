@@ -117,6 +117,14 @@ export function useRightsAnalysis() {
         summary: `${data.riskScore?.grade || "?"}등급 (${data.riskScore?.gradeLabel || ""}, ${data.riskScore?.totalScore || 0}점) | 간이분석`,
         data: data as unknown as Record<string, unknown>,
       });
+      addOrUpdateAsset({
+        address: addr,
+        type: data.propertyInfo?.type || "부동산",
+        estimatedPrice: priceForAnalysis || data.propertyInfo?.estimatedPrice || 0,
+        jeonsePrice: data.propertyInfo?.jeonsePrice || 0,
+        safetyScore: data.riskAnalysis?.safetyScore || 0,
+        riskScore: data.riskAnalysis?.riskScore || 0,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "분석에 실패했습니다.");
       setStep("idle");

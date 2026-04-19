@@ -1,7 +1,6 @@
 "use client";
 
 import { CheckCircle, Loader2, FileText, ImageIcon, Building2, Database as DatabaseIcon, ShieldCheck, Zap, Brain } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { AnalysisStep } from "../types";
 
 interface Props {
@@ -13,41 +12,81 @@ interface Props {
 
 export function AnalysisStepIndicator({ step, showExtract, showCodef, fileType }: Props) {
   const baseSteps = [
-    { key: "parsing", icon: DatabaseIcon, label: "파싱 엔진" },
-    { key: "validating", icon: ShieldCheck, label: "검증 엔진" },
-    { key: "scoring", icon: Zap, label: "스코어링" },
-    { key: "molit", icon: DatabaseIcon, label: "실거래 조회" },
-    { key: "ai", icon: Brain, label: "AI 종합" },
+    { key: "parsing",    icon: DatabaseIcon, label: "파싱"     },
+    { key: "validating", icon: ShieldCheck,  label: "검증"     },
+    { key: "scoring",    icon: Zap,          label: "스코어링" },
+    { key: "molit",      icon: DatabaseIcon, label: "실거래"   },
+    { key: "ai",         icon: Brain,        label: "AI 분석"  },
   ];
 
   const extractStep = fileType === "image"
-    ? { key: "extracting", icon: ImageIcon, label: "이미지 OCR" }
-    : { key: "extracting", icon: FileText, label: "PDF 추출" };
+    ? { key: "extracting", icon: ImageIcon, label: "OCR" }
+    : { key: "extracting", icon: FileText,  label: "PDF 추출" };
 
-  const codefStep = { key: "codef-fetch", icon: Building2, label: "등기부 조회" };
+  const codefStep = { key: "codef-fetch", icon: Building2, label: "등기 조회" };
 
   let steps = baseSteps;
   if (showCodef) steps = [codefStep, ...baseSteps];
   else if (showExtract) steps = [extractStep, ...baseSteps];
+
   const currentIdx = steps.findIndex((s) => s.key === step);
 
   return (
-    <div className="flex items-center justify-center gap-2 sm:gap-3 py-4">
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", padding: "16px 0" }}>
       {steps.map((s, i) => {
         const isActive = s.key === step;
-        const isDone = step === "done" || currentIdx > i;
+        const isDone   = step === "done" || currentIdx > i;
         return (
-          <div key={s.key} className="flex items-center gap-2 sm:gap-3">
-            <div className="flex flex-col items-center gap-1">
-              <div className={cn(
-                "w-9 h-9 rounded-full flex items-center justify-center transition-all",
-                isDone ? "bg-primary text-white" : isActive ? "bg-primary/20 text-primary animate-pulse" : "bg-[#e5e5e7] text-[#6e6e73]"
-              )}>
-                {isDone ? <CheckCircle size={18} /> : isActive ? <Loader2 size={18} className="animate-spin" /> : <s.icon size={18} />}
+          <div key={s.key} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px" }}>
+              <div
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s",
+                  background: isDone
+                    ? "#0071e3"
+                    : isActive
+                    ? "rgba(0,113,227,0.12)"
+                    : "rgba(0,0,0,0.05)",
+                  border: isActive ? "2px solid #0071e3" : "2px solid transparent",
+                }}
+              >
+                {isDone ? (
+                  <CheckCircle size={16} style={{ color: "#fff" }} />
+                ) : isActive ? (
+                  <Loader2 size={16} className="animate-spin" style={{ color: "#0071e3" }} />
+                ) : (
+                  <s.icon size={16} style={{ color: "#aeaeb2" }} />
+                )}
               </div>
-              <div className={cn("text-[10px] font-medium", isActive || isDone ? "text-primary" : "text-[#6e6e73]")}>{s.label}</div>
+              <span
+                style={{
+                  fontSize: "10px",
+                  fontWeight: isActive || isDone ? 600 : 400,
+                  color: isActive || isDone ? "#0071e3" : "#aeaeb2",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {s.label}
+              </span>
             </div>
-            {i < steps.length - 1 && <div className={cn("w-6 sm:w-10 h-0.5 mb-5", isDone ? "bg-primary" : "bg-[#e5e5e7]")} />}
+            {i < steps.length - 1 && (
+              <div
+                style={{
+                  width: "32px",
+                  height: "2px",
+                  borderRadius: "1px",
+                  marginBottom: "18px",
+                  background: isDone ? "#0071e3" : "rgba(0,0,0,0.08)",
+                  transition: "background 0.3s",
+                }}
+              />
+            )}
           </div>
         );
       })}

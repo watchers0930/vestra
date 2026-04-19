@@ -23,7 +23,7 @@ export function KpiCard({
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[11px] font-medium text-[#6e6e73] uppercase tracking-wider">{label}</p>
-          <p className="mt-2 text-[28px] font-bold text-[#1d1d1f] leading-tight">{value}</p>
+          <p className="mt-2 font-bold text-[#1d1d1f] leading-tight" style={{ fontSize: value.length > 8 ? 18 : 28 }}>{value}</p>
           <p className="mt-1.5 text-xs text-[#6e6e73]">{description}</p>
         </div>
         <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", iconBg)}>

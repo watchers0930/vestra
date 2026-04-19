@@ -1,8 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { Card } from "@/components/common";
-
 interface Props {
   availableApts: string[];
   availableAreas: number[];
@@ -20,31 +17,61 @@ export function TransactionFilter({
   if (availableApts.length === 0 && availableAreas.length === 0) return null;
 
   return (
-    <Card className="p-4 space-y-3">
+    <div
+      style={{
+        background: "#fff",
+        border: "1px solid rgba(0,0,0,0.08)",
+        borderRadius: "20px",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        padding: "20px 24px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "14px",
+      }}
+    >
       {availableApts.length > 1 && (
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-secondary whitespace-nowrap">아파트</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <span style={{ fontSize: "12px", fontWeight: 600, color: "#6e6e73", whiteSpace: "nowrap" }}>아파트</span>
           <select
             value={selectedApt ?? ""}
             onChange={(e) => { setSelectedApt(e.target.value || null); setSelectedArea(null); }}
-            className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 max-w-xs"
+            style={{
+              flex: 1,
+              maxWidth: "320px",
+              padding: "7px 12px",
+              fontSize: "12px",
+              borderRadius: "10px",
+              border: "1px solid rgba(0,0,0,0.10)",
+              background: "#fff",
+              color: "#1d1d1f",
+              outline: "none",
+              cursor: "pointer",
+            }}
           >
             <option value="">전체 ({availableApts.length}개 단지)</option>
             {availableApts.map((apt) => <option key={apt} value={apt}>{apt}</option>)}
           </select>
         </div>
       )}
+
       {availableAreas.length > 0 && (
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-secondary whitespace-nowrap">전용면적</span>
-          <div className="flex flex-wrap gap-1.5">
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+          <span style={{ fontSize: "12px", fontWeight: 600, color: "#6e6e73", whiteSpace: "nowrap" }}>전용면적</span>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
             <button
               onClick={() => setSelectedArea(null)}
-              className={cn("px-3 py-1 text-xs rounded-full border transition-all",
-                selectedArea === null
-                  ? "bg-[#1d1d1f] text-white border-[#1d1d1f]"
-                  : "bg-white text-secondary border-border hover:bg-[#f5f5f7]"
-              )}
+              style={{
+                padding: "5px 14px",
+                fontSize: "12px",
+                borderRadius: "20px",
+                border: selectedArea === null ? "none" : "1px solid rgba(0,0,0,0.10)",
+                background: selectedArea === null ? "#0071e3" : "#fff",
+                color: selectedArea === null ? "#fff" : "#6e6e73",
+                cursor: "pointer",
+                fontWeight: selectedArea === null ? 600 : 400,
+                boxShadow: selectedArea === null ? "0 2px 8px rgba(0,113,227,0.25)" : "none",
+                transition: "all 0.12s",
+              }}
             >
               전체평수
             </button>
@@ -52,11 +79,18 @@ export function TransactionFilter({
               <button
                 key={area}
                 onClick={() => setSelectedArea(area)}
-                className={cn("px-3 py-1 text-xs rounded-full border transition-all",
-                  selectedArea === area
-                    ? "bg-[#1d1d1f] text-white border-[#1d1d1f]"
-                    : "bg-white text-secondary border-border hover:bg-[#f5f5f7]"
-                )}
+                style={{
+                  padding: "5px 14px",
+                  fontSize: "12px",
+                  borderRadius: "20px",
+                  border: selectedArea === area ? "none" : "1px solid rgba(0,0,0,0.10)",
+                  background: selectedArea === area ? "#0071e3" : "#fff",
+                  color: selectedArea === area ? "#fff" : "#6e6e73",
+                  cursor: "pointer",
+                  fontWeight: selectedArea === area ? 600 : 400,
+                  boxShadow: selectedArea === area ? "0 2px 8px rgba(0,113,227,0.25)" : "none",
+                  transition: "all 0.12s",
+                }}
               >
                 {area}㎡
               </button>
@@ -64,6 +98,6 @@ export function TransactionFilter({
           </div>
         </div>
       )}
-    </Card>
+    </div>
   );
 }

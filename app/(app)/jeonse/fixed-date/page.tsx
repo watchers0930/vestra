@@ -1,7 +1,6 @@
 "use client";
 
 import { Stamp, CheckCircle, Building2, FileCheck, Shield } from "lucide-react";
-import { Card } from "@/components/common";
 import { ProcedurePageLayout, FlowChart, DocumentChecklist, TipBox, GovernmentLink } from "@/components/jeonse";
 import type { FlowStepData } from "@/components/jeonse";
 
@@ -23,7 +22,7 @@ const steps: FlowStepData[] = [
   },
   {
     number: 4, title: "확정일자 부여 완료 — 우선변제권 확보", icon: Shield, color: "purple",
-    description: "전입신고 + 확정일자 + 점유(거주)를 모두 갖추면 우선변제권이 성립합니다. 경매 시 보증금을 우선적으로 배당받을 수 있습니다.",
+    description: "전입신고 + 확정일자 + 점유(거주)를 모두 갖추면 우선변제권이 성립합니다.",
   },
 ];
 
@@ -40,23 +39,23 @@ export default function FixedDatePage() {
       description="계약서에 확정일자를 받아 보증금 우선변제권을 확보합니다"
       breadcrumbLabel="확정일자"
     >
-      <Card className="p-5">
-        <h3 className="font-semibold mb-2">확정일자란?</h3>
-        <p className="text-sm text-secondary leading-relaxed">
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>확정일자란?</h3>
+        <p style={{ fontSize: "13px", lineHeight: 1.75, color: "#6e6e73" }}>
           임대차계약서에 관공서(주민센터)가 날짜를 확인하는 도장을 찍어주는 것입니다.
-          전입신고와 결합되면 <strong>우선변제권</strong>이 성립하여,
+          전입신고와 결합되면 <strong style={{ color: "#1d1d1f" }}>우선변제권</strong>이 성립하여,
           경매 시 후순위 권리자보다 보증금을 먼저 돌려받을 수 있습니다.
         </p>
-      </Card>
+      </div>
 
-      <Card className="p-5">
-        <h3 className="font-semibold mb-4">절차 안내</h3>
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
         <FlowChart steps={steps} />
-      </Card>
+      </div>
 
       <DocumentChecklist documents={documents} />
 
-      <div className="space-y-3">
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         <TipBox variant="important" title="전입신고와 함께!">
           확정일자만으로는 우선변제권이 성립하지 않습니다.
           반드시 <strong>전입신고 + 확정일자 + 실제 거주</strong> 세 가지가 모두 충족되어야 합니다.
@@ -69,13 +68,13 @@ export default function FixedDatePage() {
         </TipBox>
       </div>
 
-      <Card className="p-5">
-        <h3 className="font-semibold mb-3">관련 사이트</h3>
-        <div className="space-y-2">
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <GovernmentLink name="대법원 인터넷등기소" url="https://www.iros.go.kr" description="등기부등본 열람 및 확정일자 확인" />
           <GovernmentLink name="정부24" url="https://www.gov.kr" description="온라인 민원 처리" />
         </div>
-      </Card>
+      </div>
     </ProcedurePageLayout>
   );
 }

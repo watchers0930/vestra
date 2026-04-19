@@ -1,99 +1,161 @@
 "use client";
 
-import { FileText, Loader2, RefreshCw, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { RefreshCw, Loader2 } from "lucide-react";
 import type { AnalysisRecord } from "@/lib/store";
-import { typeIcons, typeColors } from "../constants";
+
+const TYPE_ICON: Record<string, string> = {
+  rights:      "⚖️",
+  contract:    "📋",
+  prediction:  "📈",
+  jeonse:      "🏠",
+  registry:    "📄",
+  feasibility: "🏗️",
+};
+
+const TYPE_BG: Record<string, string> = {
+  rights:      "rgba(0,113,227,0.09)",
+  contract:    "rgba(48,209,88,0.09)",
+  prediction:  "rgba(255,159,10,0.09)",
+  jeonse:      "rgba(255,59,48,0.07)",
+  registry:    "rgba(130,80,255,0.07)",
+  feasibility: "rgba(100,200,255,0.09)",
+};
+
+function getChip(summary: string): { label: string; color: string; bg: string } {
+  const s = summary.toLowerCase();
+  if (s.includes("안전") || s.includes("정상") || s.includes("이상없") || s.includes("문제없"))
+    return { label: `✓ ${summary.slice(0, 18)}`, color: "#1a9e45", bg: "rgba(48,209,88,0.09)" };
+  if (s.includes("위험") || s.includes("고위험") || s.includes("불법") || s.includes("하락"))
+    return { label: `↓ ${summary.slice(0, 18)}`, color: "#ff3b30", bg: "rgba(255,59,48,0.07)" };
+  if (s.includes("주의") || s.includes("확인") || s.includes("권고") || s.includes("보증"))
+    return { label: `⚠ ${summary.slice(0, 18)}`, color: "#b86f00", bg: "rgba(255,159,10,0.09)" };
+  return {
+    label: summary.slice(0, 20) || "분석 완료",
+    color: "#6e6e73",
+    bg: "rgba(0,0,0,0.05)",
+  };
+}
+
+function formatAddress(address: string): string {
+  if (address.length > 60 && /^[A-Za-z0-9+/=]+$/.test(address.replace(/\s/g, "")))
+    return "주소 정보 없음";
+  return address;
+}
 
 interface Props {
   analyses: AnalysisRecord[];
   addressCountMap: Record<string, number>;
   cascadeLoading: string | null;
   handleCascadeUpdate: (address: string) => void;
-  handleDeleteAnalysis: (id: string) => void;
+  handleDeleteAnalysis: (id: string) => void; // reserved for future delete UI
 }
 
-export function AnalysisHistory({ analyses, addressCountMap, cascadeLoading, handleCascadeUpdate, handleDeleteAnalysis }: Props) {
+export function AnalysisHistory({
+  analyses,
+  addressCountMap,
+  cascadeLoading,
+  handleCascadeUpdate,
+}: Props) {
   if (analyses.length === 0) return null;
 
-  return (
-    <div className="rounded-xl bg-white border border-gray-100 overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold text-[#1d1d1f]">최근 분석 내역</h2>
-          <p className="text-xs text-[#6e6e73] mt-0.5">AI 분석 리포트 히스토리</p>
-        </div>
-        <span className="text-xs text-[#6e6e73]">{analyses.length}건</span>
-      </div>
+  const items = analyses.slice(0, 5);
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-100 bg-gray-50/50">
-              <th className="py-3 px-5 text-left text-[11px] font-semibold uppercase tracking-wider text-[#6e6e73]">유형</th>
-              <th className="py-3 px-4 text-left text-[11px] font-semibold uppercase tracking-wider text-[#6e6e73]">대상</th>
-              <th className="py-3 px-4 text-left text-[11px] font-semibold uppercase tracking-wider text-[#6e6e73]">분석 요약</th>
-              <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-wider text-[#6e6e73]">날짜</th>
-              <th className="py-3 px-3 w-10"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {analyses.slice(0, 10).map((item) => {
-              const Icon = typeIcons[item.type] || FileText;
-              const colors = typeColors[item.type] || { bg: "bg-gray-50", text: "text-gray-600" };
-              return (
-                <tr key={item.id} className={cn("group border-b border-gray-50 last:border-0 transition-colors hover:bg-gray-50/50", cascadeLoading === item.address && "bg-primary/5")}>
-                  <td className="py-3.5 px-5">
-                    <div className="flex items-center gap-2.5">
-                      <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", colors.bg)}>
-                        <Icon className={cn("h-4 w-4", colors.text)} strokeWidth={1.5} />
-                      </div>
-                      <span className="text-sm font-medium text-[#1d1d1f]">{item.typeLabel}</span>
-                      {cascadeLoading === item.address && (
-                        <span className="inline-flex items-center gap-1 text-[10px] text-primary font-medium">
-                          <Loader2 size={10} className="animate-spin" />업데이트 중
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="inline-block rounded-lg bg-gray-50 px-2.5 py-1 text-xs font-medium text-[#424245] truncate max-w-[150px]">
-                      {item.address}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <p className="max-w-md truncate text-sm text-[#6e6e73]">{item.summary}</p>
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <span className="text-xs text-[#6e6e73]">{new Date(item.date).toLocaleDateString("ko-KR")}</span>
-                  </td>
-                  <td className="py-3.5 px-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      {addressCountMap[item.address] >= 2 && (
-                        <button
-                          onClick={() => handleCascadeUpdate(item.address)}
-                          disabled={cascadeLoading === item.address}
-                          className="p-1.5 rounded-lg text-gray-300 opacity-0 group-hover:opacity-100 hover:text-primary hover:bg-primary/5 transition-all disabled:opacity-50"
-                          title="연관 분석 업데이트"
-                        >
-                          <RefreshCw size={14} className={cascadeLoading === item.address ? "animate-spin" : ""} />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDeleteAnalysis(item.id)}
-                        className="p-1.5 rounded-lg text-gray-300 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 transition-all"
-                        title="삭제"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+  return (
+    <div className="grid grid-cols-1 gap-[13px] sm:grid-cols-2 xl:grid-cols-3">
+      {items.map((item) => {
+        const icon  = TYPE_ICON[item.type]  ?? "📄";
+        const iconBg = TYPE_BG[item.type]  ?? "rgba(0,0,0,0.06)";
+        const chip  = getChip(item.summary);
+        const addr  = formatAddress(item.address);
+        const isCascading = cascadeLoading === item.address;
+        const canCascade = addressCountMap[item.address] >= 2;
+
+        return (
+          <div
+            key={item.id}
+            className="group rounded-[18px] bg-white p-[20px] transition-all duration-200 hover:-translate-y-[2px]"
+            style={{
+              border: "1px solid rgba(0,0,0,0.08)",
+              boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.10)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLDivElement).style.boxShadow = "0 2px 12px rgba(0,0,0,0.06)";
+            }}
+          >
+            {/* 상단 — 아이콘 + 날짜 + 액션 */}
+            <div className="mb-[13px] flex items-start justify-between">
+              <div
+                className="flex h-[38px] w-[38px] items-center justify-center rounded-[11px] text-[17px]"
+                style={{ background: iconBg }}
+              >
+                {icon}
+              </div>
+              <div className="flex items-center gap-[6px]">
+                <span className="text-[11px] text-[#6e6e73]">
+                  {new Date(item.date).toLocaleDateString("ko-KR")}
+                </span>
+                {canCascade && (
+                  <button
+                    onClick={() => handleCascadeUpdate(item.address)}
+                    disabled={isCascading}
+                    className="flex h-[22px] w-[22px] items-center justify-center rounded-full transition-all hover:bg-[#f5f5f7]"
+                    style={{ color: "#6e6e73" }}
+                    title="연관 분석 업데이트"
+                  >
+                    <RefreshCw size={11} className={isCascading ? "animate-spin" : ""} />
+                  </button>
+                )}
+                {isCascading && (
+                  <span className="flex items-center gap-[3px] text-[10px] font-medium text-[#0071e3]">
+                    <Loader2 size={10} className="animate-spin" />
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* 분류 + 주소 */}
+            <div className="mb-[3px] text-[13.5px] font-semibold text-[#1d1d1f]">
+              {item.typeLabel}
+            </div>
+            <div
+              className="mb-[15px] overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] text-[#6e6e73]"
+              title={addr}
+            >
+              {addr}
+            </div>
+
+            {/* 하단 — 칩 + 화살표 */}
+            <div className="flex items-center justify-between">
+              <span
+                className="rounded-full px-[9px] py-[3px] text-[11px] font-semibold"
+                style={{ color: chip.color, background: chip.bg }}
+              >
+                {chip.label}
+              </span>
+              <div className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-[#f5f5f7] text-[11px] text-[#6e6e73]">
+                ›
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* + 새 분석 카드 */}
+      <Link
+        href="/rights"
+        className="flex min-h-[130px] flex-col items-center justify-center gap-[7px] rounded-[18px] transition-colors hover:bg-[#eeeef0]"
+        style={{
+          background: "#f5f5f7",
+          border: "2px dashed rgba(0,0,0,0.08)",
+        }}
+      >
+        <span className="text-[26px] text-[#c7c7cc]">＋</span>
+        <span className="text-[12px] font-semibold text-[#6e6e73]">새 분석 시작</span>
+      </Link>
     </div>
   );
 }

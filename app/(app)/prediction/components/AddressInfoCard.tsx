@@ -1,8 +1,6 @@
 "use client";
 
 import { MapPin } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Card } from "@/components/common";
 import { KakaoMap } from "@/components/prediction/KakaoMap";
 import type { AddressTab, AddressInfo } from "../types";
 
@@ -17,15 +15,44 @@ interface Props {
 
 export function AddressInfoCard({ address, addressInfo, addressTab, setAddressTab, buildingName, selectedApt }: Props) {
   return (
-    <Card className="p-4 mb-6">
-      <h3 className="font-semibold mb-3 flex items-center gap-2">
-        <MapPin size={16} strokeWidth={1.5} />위치
+    <div
+      style={{
+        background: "#fff",
+        border: "1px solid rgba(0,0,0,0.08)",
+        borderRadius: "20px",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        padding: "24px",
+        marginBottom: "20px",
+      }}
+    >
+      <h3
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "7px",
+          fontSize: "13px",
+          fontWeight: 600,
+          color: "#6e6e73",
+          marginBottom: "14px",
+        }}
+      >
+        <MapPin size={14} strokeWidth={1.5} style={{ color: "#1d1d1f" }} />
+        위치
       </h3>
+
       {addressInfo && address && (
-        <div className="p-3 mb-3 bg-[#f5f5f7] rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <p className="text-xs text-[#6e6e73]">주소</p>
-            <div className="flex gap-1">
+        <div
+          style={{
+            padding: "12px 14px",
+            marginBottom: "14px",
+            background: "#f5f5f7",
+            borderRadius: "12px",
+            border: "1px solid rgba(0,0,0,0.05)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+            <p style={{ fontSize: "11px", color: "#6e6e73" }}>주소</p>
+            <div style={{ display: "flex", gap: "4px" }}>
               {([
                 { key: "admin" as AddressTab, label: "행정동" },
                 { key: "jibun" as AddressTab, label: "지번" },
@@ -34,34 +61,53 @@ export function AddressInfoCard({ address, addressInfo, addressTab, setAddressTa
                 <button
                   key={tab.key}
                   onClick={() => setAddressTab(tab.key)}
-                  className={cn(
-                    "px-2 py-0.5 text-[10px] rounded-md border transition-all",
-                    addressTab === tab.key
-                      ? "bg-[#1d1d1f] text-white border-[#1d1d1f]"
-                      : "bg-white text-[#6e6e73] border-[#e5e5e7] hover:bg-[#f5f5f7]"
-                  )}
+                  style={{
+                    padding: "2px 8px",
+                    fontSize: "10px",
+                    borderRadius: "6px",
+                    border: addressTab === tab.key ? "none" : "1px solid rgba(0,0,0,0.10)",
+                    background: addressTab === tab.key ? "#0071e3" : "#fff",
+                    color: addressTab === tab.key ? "#fff" : "#6e6e73",
+                    cursor: "pointer",
+                    fontWeight: addressTab === tab.key ? 600 : 400,
+                    transition: "all 0.12s",
+                  }}
                 >
                   {tab.label}
                 </button>
               ))}
             </div>
           </div>
-          <p className="text-sm font-medium text-[#1d1d1f]">{addressInfo[addressTab]}</p>
+          <p style={{ fontSize: "13px", fontWeight: 600, color: "#1d1d1f" }}>{addressInfo[addressTab]}</p>
           {(buildingName || selectedApt) && (
-            <p className="text-xs text-[#6e6e73] mt-1 font-medium">{selectedApt || buildingName}</p>
+            <p style={{ fontSize: "11.5px", color: "#6e6e73", marginTop: "4px", fontWeight: 500 }}>
+              {selectedApt || buildingName}
+            </p>
           )}
           {addressInfo.zipCode && addressInfo.zipCode !== "-" && (
-            <p className="text-[11px] text-[#6e6e73] mt-1">우편번호: {addressInfo.zipCode}</p>
+            <p style={{ fontSize: "11px", color: "#aeaeb2", marginTop: "4px" }}>우편번호: {addressInfo.zipCode}</p>
           )}
         </div>
       )}
+
       {address ? (
         <KakaoMap address={address} />
       ) : (
-        <div className="h-[300px] rounded-xl bg-[#e5e5e7] flex items-center justify-center text-secondary text-sm">
+        <div
+          style={{
+            height: "300px",
+            borderRadius: "14px",
+            background: "#f5f5f7",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "13px",
+            color: "#aeaeb2",
+          }}
+        >
           지역을 선택해 주세요
         </div>
       )}
-    </Card>
+    </div>
   );
 }

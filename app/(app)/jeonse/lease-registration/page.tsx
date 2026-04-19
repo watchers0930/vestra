@@ -1,7 +1,6 @@
 "use client";
 
 import { Gavel, AlertOctagon, FileStack, Building, Clock, FileSignature, CheckCircle } from "lucide-react";
-import { Card } from "@/components/common";
 import { ProcedurePageLayout, FlowChart, DocumentChecklist, TipBox, GovernmentLink } from "@/components/jeonse";
 import type { FlowStepData } from "@/components/jeonse";
 
@@ -34,8 +33,8 @@ const steps: FlowStepData[] = [
     subSteps: ["등기부등본 을구에 임차권 기재"],
   },
   {
-    number: 6, title: "이사 후에도 권리 유지 — 보증금 반환 청구", icon: CheckCircle, color: "purple",
-    description: "임차권등기가 완료되면 이사를 가더라도 대항력과 우선변제권이 유지됩니다. 보증금 반환 소송 또는 경매를 진행할 수 있습니다.",
+    number: 6, title: "이사 후에도 권리 유지", icon: CheckCircle, color: "purple",
+    description: "임차권등기 완료 후 이사해도 대항력과 우선변제권이 유지됩니다. 보증금 반환 소송 또는 경매를 진행할 수 있습니다.",
   },
 ];
 
@@ -57,24 +56,24 @@ export default function LeaseRegistrationPage() {
       description="보증금 미반환 시 법원 명령으로 이사 후에도 권리를 유지합니다"
       breadcrumbLabel="임차권등기명령"
     >
-      <Card className="p-5">
-        <h3 className="font-semibold mb-2">임차권등기명령이란?</h3>
-        <p className="text-sm text-secondary leading-relaxed">
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>임차권등기명령이란?</h3>
+        <p style={{ fontSize: "13px", lineHeight: 1.75, color: "#6e6e73" }}>
           임대차 계약이 끝났는데 보증금을 돌려받지 못한 경우,
           법원에 신청하여 등기부에 임차권을 기재하는 제도입니다.
-          이 등기가 완료되면 <strong>이사를 가더라도</strong> 대항력과 우선변제권이 유지되어,
+          이 등기가 완료되면 <strong style={{ color: "#1d1d1f" }}>이사를 가더라도</strong> 대항력과 우선변제권이 유지되어,
           새 집으로 이사하면서도 보증금을 보호받을 수 있습니다.
         </p>
-      </Card>
+      </div>
 
-      <Card className="p-5">
-        <h3 className="font-semibold mb-4">절차 안내</h3>
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
         <FlowChart steps={steps} />
-      </Card>
+      </div>
 
       <DocumentChecklist documents={documents} />
 
-      <div className="space-y-3">
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         <TipBox variant="important" title="이사 전에 반드시 신청">
           임차권등기명령이 완료되기 전에 이사하면 대항력을 잃습니다.
           반드시 등기 완료 후 이사하세요.
@@ -90,14 +89,14 @@ export default function LeaseRegistrationPage() {
         </TipBox>
       </div>
 
-      <Card className="p-5">
-        <h3 className="font-semibold mb-3">관련 사이트</h3>
-        <div className="space-y-2">
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <GovernmentLink name="대법원 전자소송" url="https://ecfs.scourt.go.kr" description="임차권등기명령 온라인 신청" />
           <GovernmentLink name="대한법률구조공단" url="https://www.klac.or.kr" description="무료 법률 상담 및 소송 지원" />
           <GovernmentLink name="대법원 인터넷등기소" url="https://www.iros.go.kr" description="등기부등본 열람" />
         </div>
-      </Card>
+      </div>
     </ProcedurePageLayout>
   );
 }

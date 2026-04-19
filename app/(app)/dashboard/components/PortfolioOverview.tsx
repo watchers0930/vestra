@@ -1,11 +1,7 @@
 "use client";
 
-import { PieChart as PieChartIcon } from "lucide-react";
-import { cn, formatKRW } from "@/lib/utils";
-import {
-  PieChart, Pie, Cell,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from "recharts";
+import { useMemo } from "react";
+import { formatKRW } from "@/lib/utils";
 
 interface RiskItem { name: string; value: number; fill: string }
 interface AssetValueItem { name: string; value: number; risk: number }
@@ -19,105 +15,154 @@ interface Props {
   assetValueData: AssetValueItem[];
 }
 
-export function PortfolioOverview({ totalValue, totalAssets, avgRisk, avgSafety, riskDistribution, assetValueData }: Props) {
+const CIRCUMFERENCE = 2 * Math.PI * 46; // ≈ 289.03
+
+function getBarBg(risk: number): string {
+  if (risk <= 30) return "linear-gradient(90deg, #0071e3, #2997ff)";
+  if (risk <= 60) return "linear-gradient(90deg, #ff9f0a, #ffd60a)";
+  return "linear-gradient(90deg, #ff3b30, #ff7b73)";
+}
+
+function toEok(value: number): string {
+  const e = value / 100_000_000;
+  return `${e % 1 === 0 ? e : e.toFixed(1)}억`;
+}
+
+export function PortfolioOverview({
+  totalAssets,
+  riskDistribution,
+  assetValueData,
+}: Props) {
+  const total = useMemo(
+    () => riskDistribution.reduce((s, d) => s + d.value, 0),
+    [riskDistribution],
+  );
+
+  const segments = useMemo(() => {
+    let accumulated = 0;
+    return riskDistribution.map((d) => {
+      const arcLen = total > 0 ? (d.value / total) * CIRCUMFERENCE : 0;
+      const offset = -accumulated;
+      accumulated += arcLen;
+      return { ...d, arcLen, offset };
+    });
+  }, [riskDistribution, total]);
+
+  const maxValue = useMemo(
+    () => Math.max(...assetValueData.map((d) => d.value), 1),
+    [assetValueData],
+  );
+
   return (
-    <div className="rounded-xl bg-white border border-gray-100 overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5f5f7]">
-            <PieChartIcon className="h-4 w-4 text-[#1d1d1f]" strokeWidth={1.5} />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-[#1d1d1f]">포트폴리오 개요</h2>
-            <p className="text-xs text-[#6e6e73] mt-0.5">자산 구성 및 리스크 분포</p>
-          </div>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-[#6e6e73]">총 추정가치</p>
-          <p className="text-lg font-bold text-[#1d1d1f]">{formatKRW(totalValue)}</p>
-        </div>
-      </div>
+    <div className="grid grid-cols-1 gap-[14px] lg:grid-cols-2">
+      {/* 도넛 차트 — 리스크 분포 */}
+      <div
+        className="rounded-[18px] bg-white p-[26px]"
+        style={{ border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
+      >
+        <div className="mb-[2px] text-[14.5px] font-semibold text-[#1d1d1f]">리스크 분포</div>
+        <div className="mb-[22px] text-[11.5px] text-[#6e6e73]">자산별 위험도 분류 현황</div>
 
-      <div className="p-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 리스크 분포 파이 차트 */}
-        <div>
-          <h3 className="text-sm font-medium text-[#1d1d1f] mb-3">리스크 분포</h3>
-          <div className="h-[200px] sm:h-[220px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={riskDistribution}
-                  cx="50%" cy="50%"
-                  innerRadius={50} outerRadius={80}
-                  paddingAngle={3} dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}건`}
-                >
-                  {riskDistribution.map((entry, index) => (
-                    <Cell key={index} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [`${value}건`, "자산 수"]} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex justify-center gap-4 mt-2">
-            {riskDistribution.map((item) => (
-              <div key={item.name} className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.fill }} />
-                <span className="text-xs text-[#6e6e73]">{item.name}</span>
-              </div>
+        <div className="flex items-center gap-[28px]">
+          {/* SVG 도넛 */}
+          <svg width="116" height="116" viewBox="0 0 116 116" className="shrink-0">
+            {/* 빈 트랙 */}
+            <circle cx="58" cy="58" r="46" fill="none" stroke="#f5f5f7" strokeWidth="13" />
+            {/* 세그먼트 */}
+            {segments.map((seg, i) => (
+              <circle
+                key={i}
+                cx="58" cy="58" r="46"
+                fill="none"
+                stroke={seg.fill}
+                strokeWidth="13"
+                strokeDasharray={`${seg.arcLen} ${CIRCUMFERENCE - seg.arcLen}`}
+                strokeDashoffset={seg.offset}
+                transform="rotate(-90 58 58)"
+              />
             ))}
-          </div>
-        </div>
+            {/* 중앙 텍스트 */}
+            <text
+              x="58" y="54"
+              textAnchor="middle"
+              fontSize="15"
+              fontWeight="700"
+              fill="#1d1d1f"
+              fontFamily="Paperlogy, -apple-system, sans-serif"
+            >
+              {totalAssets}건
+            </text>
+            <text
+              x="58" y="69"
+              textAnchor="middle"
+              fontSize="10"
+              fill="#6e6e73"
+              fontFamily="Paperlogy, -apple-system, sans-serif"
+            >
+              총 자산
+            </text>
+          </svg>
 
-        {/* 자산별 추정가치 바 차트 */}
-        <div>
-          <h3 className="text-sm font-medium text-[#1d1d1f] mb-3">자산별 추정가치</h3>
-          {assetValueData.length > 0 ? (
-            <div className="h-[200px] sm:h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={assetValueData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" tickFormatter={(v) => `${(v / 100000000).toFixed(0)}억`} />
-                  <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(value) => [formatKRW(Number(value)), "추정가"]} />
-                  <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-                    {assetValueData.map((entry, index) => (
-                      <Cell key={index} fill={entry.risk <= 30 ? "#34d399" : entry.risk <= 60 ? "#fbbf24" : "#f87171"} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <p className="text-sm text-[#6e6e73]">자산 데이터가 없습니다.</p>
-          )}
+          {/* 범례 */}
+          <div className="flex-1 divide-y divide-black/[0.06]">
+            {riskDistribution.map((d) => {
+              const pct = total > 0 ? Math.round((d.value / total) * 100) : 0;
+              return (
+                <div key={d.name} className="flex items-center justify-between py-[8px]">
+                  <div className="flex items-center gap-[8px]">
+                    <span
+                      className="h-[9px] w-[9px] shrink-0 rounded-full"
+                      style={{ background: d.fill }}
+                    />
+                    <span className="text-[12.5px] font-medium text-[#1d1d1f]">
+                      {d.name.split(" ")[0]}
+                    </span>
+                    <span className="text-[11px] text-[#6e6e73]">({d.value}건)</span>
+                  </div>
+                  <span
+                    className="text-[12.5px] font-bold"
+                    style={{ color: d.fill }}
+                  >
+                    {pct}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* 요약 통계 */}
-      <div className="px-5 py-4 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="text-center">
-          <p className="text-xs text-[#6e6e73]">총 자산</p>
-          <p className="text-sm font-bold text-[#1d1d1f]">{totalAssets}건</p>
-        </div>
-        <div className="text-center">
-          <p className="text-xs text-[#6e6e73]">평균 리스크</p>
-          <p className={cn("text-sm font-bold", avgRisk <= 30 ? "text-emerald-600" : avgRisk <= 60 ? "text-amber-600" : "text-red-600")}>
-            {avgRisk}점
-          </p>
-        </div>
-        <div className="text-center">
-          <p className="text-xs text-[#6e6e73]">평균 안전지수</p>
-          <p className={cn("text-sm font-bold", avgSafety >= 70 ? "text-emerald-600" : avgSafety >= 40 ? "text-amber-600" : "text-red-600")}>
-            {avgSafety}점
-          </p>
-        </div>
-        <div className="text-center">
-          <p className="text-xs text-[#6e6e73]">평균 자산가치</p>
-          <p className="text-sm font-bold text-[#1d1d1f]">
-            {totalAssets > 0 ? formatKRW(Math.round(totalValue / totalAssets)) : "-"}
-          </p>
+      {/* 수평 바 차트 — 자산 시세 */}
+      <div
+        className="rounded-[18px] bg-white p-[26px]"
+        style={{ border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
+      >
+        <div className="mb-[2px] text-[14.5px] font-semibold text-[#1d1d1f]">자산 시세 현황</div>
+        <div className="mb-[22px] text-[11.5px] text-[#6e6e73]">추정 시세 기준</div>
+
+        <div className="space-y-[13px]">
+          {assetValueData.slice(0, 6).map((d, i) => {
+            const pct = (d.value / maxValue) * 100;
+            return (
+              <div key={i} className="flex items-center gap-[12px]">
+                <div
+                  className="w-[88px] shrink-0 overflow-hidden text-ellipsis whitespace-nowrap text-right text-[11.5px] text-[#6e6e73]"
+                  title={d.name}
+                >
+                  {d.name}
+                </div>
+                <div className="h-[7px] flex-1 overflow-hidden rounded-full bg-[#f5f5f7]">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${pct}%`, background: getBarBg(d.risk) }}
+                  />
+                </div>
+                <div className="w-[52px] text-[12px] font-semibold text-[#1d1d1f]">
+                  {d.value > 0 ? toEok(d.value) : formatKRW(d.value)}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

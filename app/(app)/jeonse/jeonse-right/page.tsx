@@ -1,7 +1,6 @@
 "use client";
 
 import { ShieldCheck, Users, FileStack, Building, FileSignature, Clock, CheckCircle } from "lucide-react";
-import { Card } from "@/components/common";
 import { ProcedurePageLayout, FlowChart, DocumentChecklist, TipBox, GovernmentLink } from "@/components/jeonse";
 import type { FlowStepData } from "@/components/jeonse";
 
@@ -23,7 +22,7 @@ const steps: FlowStepData[] = [
     location: "관할 등기소", duration: "약 30분",
   },
   {
-    number: 4, title: "전세권설정등기 신청서 제출", icon: FileSignature, color: "emerald",
+    number: 4, title: "등기 신청서 제출", icon: FileSignature, color: "emerald",
     description: "준비한 서류와 함께 등기 신청서를 제출합니다.",
     subSteps: ["인터넷등기소에서 전자 신청도 가능"],
   },
@@ -33,8 +32,8 @@ const steps: FlowStepData[] = [
     duration: "1~3일",
   },
   {
-    number: 6, title: "등기부등본 확인 — 전세권 등재 완료", icon: CheckCircle, color: "purple",
-    description: "등기부등본의 을구에 전세권이 기재됩니다. 물권으로서 가장 강력한 보호를 받습니다.",
+    number: 6, title: "전세권 등재 완료", icon: CheckCircle, color: "purple",
+    description: "등기부등본 을구에 전세권이 기재됩니다. 물권으로서 가장 강력한 보호를 받습니다.",
     subSteps: ["직접 경매 청구 가능", "별도 배당 신청 없이 권리 행사"],
   },
 ];
@@ -57,24 +56,24 @@ export default function JeonseRightPage() {
       description="등기부에 물권으로 기록하여 가장 강력한 보호를 받습니다"
       breadcrumbLabel="전세권설정등기"
     >
-      <Card className="p-5">
-        <h3 className="font-semibold mb-2">전세권설정등기란?</h3>
-        <p className="text-sm text-secondary leading-relaxed">
-          전세권을 등기부등본에 <strong>물권(物權)</strong>으로 등재하는 절차입니다.
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>전세권설정등기란?</h3>
+        <p style={{ fontSize: "13px", lineHeight: 1.75, color: "#6e6e73" }}>
+          전세권을 등기부등본에 <strong style={{ color: "#1d1d1f" }}>물권(物權)</strong>으로 등재하는 절차입니다.
           일반 임차권(채권)보다 훨씬 강력한 보호를 받으며,
-          보증금 미반환 시 별도 소송 없이 <strong>직접 경매를 청구</strong>할 수 있습니다.
+          보증금 미반환 시 별도 소송 없이 <strong style={{ color: "#1d1d1f" }}>직접 경매를 청구</strong>할 수 있습니다.
           다만 임대인의 협조가 반드시 필요합니다.
         </p>
-      </Card>
+      </div>
 
-      <Card className="p-5">
-        <h3 className="font-semibold mb-4">절차 안내</h3>
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
         <FlowChart steps={steps} />
-      </Card>
+      </div>
 
       <DocumentChecklist documents={documents} />
 
-      <div className="space-y-3">
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         <TipBox variant="important" title="물권 vs 채권">
           전세권설정등기를 하면 물권을 확보합니다.
           일반 전입신고+확정일자는 채권적 보호에 불과하지만, 전세권은 등기부에 기재되어 누구에게나 주장할 수 있는 물권입니다.
@@ -90,13 +89,13 @@ export default function JeonseRightPage() {
         </TipBox>
       </div>
 
-      <Card className="p-5">
-        <h3 className="font-semibold mb-3">관련 사이트</h3>
-        <div className="space-y-2">
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <GovernmentLink name="대법원 인터넷등기소" url="https://www.iros.go.kr" description="전자 등기 신청 및 등기부등본 열람" />
           <GovernmentLink name="위택스" url="https://www.wetax.go.kr" description="등록면허세 신고 및 납부" />
         </div>
-      </Card>
+      </div>
     </ProcedurePageLayout>
   );
 }

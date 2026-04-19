@@ -46,6 +46,7 @@ import PushSubscriber from "@/components/pwa/PushSubscriber";
 interface MenuItem {
   href: string;
   icon: LucideIcon;
+  emoji?: string;
   label: string;
   description: string;
   children?: { href: string; label: string }[];
@@ -60,23 +61,14 @@ interface MenuGroup {
 // 일반 사용자 메뉴
 // ---------------------------------------------------------------------------
 const userMenuItems: MenuItem[] = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "대시보드", description: "보유 자산 현황과 주요 지표를 한눈에 확인합니다" },
-  { href: "/rights", icon: Shield, label: "권리분석", description: "등기부등본을 업로드하면 갑구·을구 권리관계를 AI가 종합 분석합니다" },
-  { href: "/contract", icon: FileSearch, label: "계약검토", description: "매매·임대차 계약서를 AI가 검토하고 위험 조항을 알려드립니다" },
-  { href: "/tax", icon: Calculator, label: "세무 시뮬레이션", description: "취득세·양도세·종부세 등 부동산 세금을 시나리오별로 계산합니다" },
-  { href: "/prediction", icon: TrendingUp, label: "시세전망", description: "실거래가 데이터 기반으로 시세 추이와 향후 전망을 분석합니다" },
-  { href: "/price-map", icon: MapPin, label: "시세지도", description: "지도 위에서 아파트별 실거래가와 시세 변동을 한눈에 확인합니다" },
-  // {
-  //   href: "/loan-check", icon: Banknote, label: "대출 가심사", description: "7대 은행 전세대출 조건을 한번에 비교하고 가능 여부를 확인합니다",
-  //   children: [
-  //     { href: "/loan-check", label: "대출 가심사" },
-  //     { href: "/jeonse/comparison", label: "전세 vs 월세 비교" },
-  //     { href: "/jeonse/yield", label: "임대 수익률" },
-  //     { href: "/jeonse/moving-cost", label: "이사 비용 계산기" },
-  //   ],
-  // },
+  { href: "/dashboard", icon: LayoutDashboard, emoji: "⊞", label: "대시보드", description: "보유 자산 현황과 주요 지표를 한눈에 확인합니다" },
+  { href: "/rights", icon: Shield, emoji: "⚖️", label: "권리분석", description: "등기부등본을 업로드하면 갑구·을구 권리관계를 AI가 종합 분석합니다" },
+  { href: "/contract", icon: FileSearch, emoji: "📋", label: "계약검토", description: "매매·임대차 계약서를 AI가 검토하고 위험 조항을 알려드립니다" },
+  { href: "/tax", icon: Calculator, emoji: "💰", label: "세금계산", description: "취득세·양도세·종부세 등 부동산 세금을 시나리오별로 계산합니다" },
+  { href: "/prediction", icon: TrendingUp, emoji: "📈", label: "시세전망", description: "실거래가 데이터 기반으로 시세 추이와 향후 전망을 분석합니다" },
+  { href: "/price-map", icon: MapPin, emoji: "🗺️", label: "시세지도", description: "지도 위에서 아파트별 실거래가와 시세 변동을 한눈에 확인합니다" },
   {
-    href: "/jeonse", icon: Home, label: "전세보호", description: "전세 안전 진단부터 전입신고·확정일자까지 보호 절차를 안내합니다",
+    href: "/jeonse", icon: Home, emoji: "🏠", label: "전세보호", description: "전세 안전 진단부터 전입신고·확정일자까지 보호 절차를 안내합니다",
     children: [
       { href: "/jeonse", label: "절차 안내" },
       { href: "/jeonse/analysis", label: "전세 안전 분석" },
@@ -85,16 +77,14 @@ const userMenuItems: MenuItem[] = [
       { href: "/jeonse/jeonse-right", label: "전세권설정등기" },
       { href: "/jeonse/lease-registration", label: "임차권등기명령" },
       { href: "/jeonse/lease-report", label: "주택임대차 신고" },
-      // { href: "/landlord-profile", label: "임대인 프로파일" },
       { href: "/jeonse/checklist", label: "계약 체크리스트" },
       { href: "/neighborhood", label: "주변 환경 분석" },
     ],
   },
-  { href: "/feasibility", icon: ClipboardCheck, label: "사업성 분석", description: "다중 문서 기반 SCR 수준 사업성 검증 보고서를 생성합니다" },
-  { href: "/assistant", icon: MessageSquare, label: "AI 상담", description: "부동산 관련 궁금한 점을 AI에게 자유롭게 질문할 수 있습니다" },
-  { href: "/expert-connect", icon: Users, label: "전문가 상담", description: "AI 분석 결과를 전문가가 직접 검증하고 상담해드립니다" },
+  { href: "/feasibility", icon: ClipboardCheck, emoji: "🏗️", label: "수익성분석", description: "다중 문서 기반 SCR 수준 사업성 검증 보고서를 생성합니다" },
+  { href: "/assistant", icon: MessageSquare, emoji: "🤖", label: "AI 어시스턴트", description: "부동산 관련 궁금한 점을 AI에게 자유롭게 질문할 수 있습니다" },
+  { href: "/expert-connect", icon: Users, emoji: "👨‍💼", label: "전문가 연결", description: "AI 분석 결과를 전문가가 직접 검증하고 상담해드립니다" },
   { href: "/api-hub", icon: Database, label: "API 데이터 허브", description: "국토교통부·법원 등 공공 API 연동 현황과 데이터를 조회합니다" },
-  // { href: "/ai-trust", icon: ShieldCheck, label: "AI 신뢰도", description: "AI 분석의 정확도와 전문가 일치율을 투명하게 공개합니다" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -102,16 +92,20 @@ const userMenuItems: MenuItem[] = [
 // ---------------------------------------------------------------------------
 const userMenuGroups: MenuGroup[] = [
   {
-    label: "분석 도구",
-    items: [userMenuItems[0], userMenuItems[1], userMenuItems[2], userMenuItems[5]],
+    label: "메인",
+    items: [userMenuItems[0]],
   },
   {
-    label: "시세·보호",
-    items: [userMenuItems[3], userMenuItems[4], userMenuItems[6]],
+    label: "분석 서비스",
+    items: [userMenuItems[1], userMenuItems[2], userMenuItems[4], userMenuItems[6], userMenuItems[5]],
   },
   {
     label: "도구",
-    items: [userMenuItems[7], userMenuItems[8], userMenuItems[9], userMenuItems[10]],
+    items: [userMenuItems[8], userMenuItems[3], userMenuItems[7]],
+  },
+  {
+    label: "전문가",
+    items: [userMenuItems[9]],
   },
 ];
 
@@ -215,6 +209,18 @@ export default function Sidebar() {
   // ---------------------------------------------------------------------------
   // 메뉴 아이템 렌더링 (공통)
   // ---------------------------------------------------------------------------
+  const renderEmojiIcon = (item: MenuItem, isActive: boolean) =>
+    item.emoji ? (
+      <div
+        className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] text-[13px]"
+        style={{ background: isActive ? "rgba(0,113,227,0.30)" : "rgba(255,255,255,0.07)" }}
+      >
+        {item.emoji}
+      </div>
+    ) : (
+      <item.icon size={20} strokeWidth={1.5} className="flex-shrink-0" />
+    );
+
   const renderMenuItem = (item: MenuItem, isActive: boolean) => {
     if (item.children) {
       const isOpen = openAccordion === item.href;
@@ -237,7 +243,7 @@ export default function Sidebar() {
             )}
             title={!showLabel ? item.label : undefined}
           >
-            <item.icon size={20} strokeWidth={1.5} className="flex-shrink-0" />
+            {renderEmojiIcon(item, isActive)}
             {showLabel && (
               <>
                 <span className="flex-1">{item.label}</span>
@@ -308,7 +314,7 @@ export default function Sidebar() {
         )}
         title={!showLabel ? item.label : undefined}
       >
-        <item.icon size={20} strokeWidth={1.5} className="flex-shrink-0" />
+        {renderEmojiIcon(item, isActive)}
         {showLabel && <span>{item.label}</span>}
       </Link>
     );
