@@ -209,17 +209,8 @@ export default function Sidebar() {
   // ---------------------------------------------------------------------------
   // 메뉴 아이템 렌더링 (공통)
   // ---------------------------------------------------------------------------
-  const renderEmojiIcon = (item: MenuItem, isActive: boolean) =>
-    item.emoji ? (
-      <div
-        className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] text-[13px]"
-        style={{ background: isActive ? "rgba(0,113,227,0.30)" : "rgba(255,255,255,0.07)" }}
-      >
-        {item.emoji}
-      </div>
-    ) : (
-      <item.icon size={20} strokeWidth={1.5} className="flex-shrink-0" />
-    );
+  const renderEmojiIcon = (item: MenuItem, _isActive: boolean) =>
+    <item.icon size={20} strokeWidth={1.5} className="flex-shrink-0" />;
 
   const renderMenuItem = (item: MenuItem, isActive: boolean) => {
     if (item.children) {
