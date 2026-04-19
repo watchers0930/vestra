@@ -7,12 +7,14 @@ export default function ProcedurePageLayout({
   icon: Icon,
   breadcrumbLabel,
   children,
+  sidebar,
 }: {
   title: string;
   description: string;
   icon: LucideIcon;
   breadcrumbLabel: string;
   children: React.ReactNode;
+  sidebar?: React.ReactNode;
 }) {
   return (
     <div style={{ paddingBottom: "48px" }}>
@@ -63,9 +65,14 @@ export default function ProcedurePageLayout({
         </div>
       </section>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        {children}
-      </div>
+      {sidebar ? (
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[1fr_360px]">
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>{children}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>{sidebar}</div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>{children}</div>
+      )}
     </div>
   );
 }

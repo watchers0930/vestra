@@ -39,6 +39,18 @@ export default function LeaseReportPage() {
       title="주택임대차 신고"
       description="임대차 계약을 신고하면 확정일자가 자동 부여됩니다"
       breadcrumbLabel="주택임대차 신고"
+      sidebar={
+        <>
+          <DocumentChecklist documents={documents} />
+          <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <GovernmentLink name="정부24" url="https://www.gov.kr" description="주택임대차 신고 온라인 제출" />
+              <GovernmentLink name="국토교통부 실거래가 공개시스템" url="https://rt.molit.go.kr" description="임대차 신고 현황 확인" />
+            </div>
+          </div>
+        </>
+      }
     >
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
         <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>주택임대차 신고란?</h3>
@@ -54,8 +66,6 @@ export default function LeaseReportPage() {
         <FlowChart steps={steps} />
       </div>
 
-      <DocumentChecklist documents={documents} />
-
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         <TipBox variant="important" title="30일 이내 신고 의무">
           계약 체결(또는 갱신)일로부터 30일 이내에 신고해야 합니다. 미신고 시 최대 100만원의 과태료가 부과됩니다.
@@ -67,14 +77,6 @@ export default function LeaseReportPage() {
           수도권(서울·경기·인천)은 보증금 6,000만원 초과, 비수도권은 지역에 따라 다릅니다.
           본인의 계약이 신고 대상인지 확인하세요.
         </TipBox>
-      </div>
-
-      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <GovernmentLink name="정부24" url="https://www.gov.kr" description="주택임대차 신고 온라인 제출" />
-          <GovernmentLink name="국토교통부 실거래가 공개시스템" url="https://rt.molit.go.kr" description="임대차 신고 현황 확인" />
-        </div>
       </div>
     </ProcedurePageLayout>
   );

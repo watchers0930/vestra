@@ -55,6 +55,19 @@ export default function LeaseRegistrationPage() {
       title="임차권등기명령"
       description="보증금 미반환 시 법원 명령으로 이사 후에도 권리를 유지합니다"
       breadcrumbLabel="임차권등기명령"
+      sidebar={
+        <>
+          <DocumentChecklist documents={documents} />
+          <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <GovernmentLink name="대법원 전자소송" url="https://ecfs.scourt.go.kr" description="임차권등기명령 온라인 신청" />
+              <GovernmentLink name="대한법률구조공단" url="https://www.klac.or.kr" description="무료 법률 상담 및 소송 지원" />
+              <GovernmentLink name="대법원 인터넷등기소" url="https://www.iros.go.kr" description="등기부등본 열람" />
+            </div>
+          </div>
+        </>
+      }
     >
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
         <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>임차권등기명령이란?</h3>
@@ -70,8 +83,6 @@ export default function LeaseRegistrationPage() {
         <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
         <FlowChart steps={steps} />
       </div>
-
-      <DocumentChecklist documents={documents} />
 
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         <TipBox variant="important" title="이사 전에 반드시 신청">
@@ -91,11 +102,6 @@ export default function LeaseRegistrationPage() {
 
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
         <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <GovernmentLink name="대법원 전자소송" url="https://ecfs.scourt.go.kr" description="임차권등기명령 온라인 신청" />
-          <GovernmentLink name="대한법률구조공단" url="https://www.klac.or.kr" description="무료 법률 상담 및 소송 지원" />
-          <GovernmentLink name="대법원 인터넷등기소" url="https://www.iros.go.kr" description="등기부등본 열람" />
-        </div>
       </div>
     </ProcedurePageLayout>
   );

@@ -55,6 +55,18 @@ export default function JeonseRightPage() {
       title="전세권설정등기"
       description="등기부에 물권으로 기록하여 가장 강력한 보호를 받습니다"
       breadcrumbLabel="전세권설정등기"
+      sidebar={
+        <>
+          <DocumentChecklist documents={documents} />
+          <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <GovernmentLink name="대법원 인터넷등기소" url="https://www.iros.go.kr" description="전자 등기 신청 및 등기부등본 열람" />
+              <GovernmentLink name="위택스" url="https://www.wetax.go.kr" description="등록면허세 신고 및 납부" />
+            </div>
+          </div>
+        </>
+      }
     >
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
         <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>전세권설정등기란?</h3>
@@ -71,8 +83,6 @@ export default function JeonseRightPage() {
         <FlowChart steps={steps} />
       </div>
 
-      <DocumentChecklist documents={documents} />
-
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         <TipBox variant="important" title="물권 vs 채권">
           전세권설정등기를 하면 물권을 확보합니다.
@@ -87,14 +97,6 @@ export default function JeonseRightPage() {
         <TipBox variant="tip" title="비용 안내">
           등록면허세는 보증금의 약 0.2%입니다. 보증금 3억 기준 약 60만원 정도입니다.
         </TipBox>
-      </div>
-
-      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <GovernmentLink name="대법원 인터넷등기소" url="https://www.iros.go.kr" description="전자 등기 신청 및 등기부등본 열람" />
-          <GovernmentLink name="위택스" url="https://www.wetax.go.kr" description="등록면허세 신고 및 납부" />
-        </div>
       </div>
     </ProcedurePageLayout>
   );

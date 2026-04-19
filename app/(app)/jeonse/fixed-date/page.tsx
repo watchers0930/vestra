@@ -38,6 +38,18 @@ export default function FixedDatePage() {
       title="확정일자"
       description="계약서에 확정일자를 받아 보증금 우선변제권을 확보합니다"
       breadcrumbLabel="확정일자"
+      sidebar={
+        <>
+          <DocumentChecklist documents={documents} />
+          <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <GovernmentLink name="대법원 인터넷등기소" url="https://www.iros.go.kr" description="등기부등본 열람 및 확정일자 확인" />
+              <GovernmentLink name="정부24" url="https://www.gov.kr" description="온라인 민원 처리" />
+            </div>
+          </div>
+        </>
+      }
     >
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
         <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>확정일자란?</h3>
@@ -53,8 +65,6 @@ export default function FixedDatePage() {
         <FlowChart steps={steps} />
       </div>
 
-      <DocumentChecklist documents={documents} />
-
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         <TipBox variant="important" title="전입신고와 함께!">
           확정일자만으로는 우선변제권이 성립하지 않습니다.
@@ -66,14 +76,6 @@ export default function FixedDatePage() {
         <TipBox variant="warning" title="날짜가 순위를 결정">
           확정일자를 받은 날짜 기준으로 배당 순위가 정해집니다. 가능한 빨리 받으세요.
         </TipBox>
-      </div>
-
-      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <GovernmentLink name="대법원 인터넷등기소" url="https://www.iros.go.kr" description="등기부등본 열람 및 확정일자 확인" />
-          <GovernmentLink name="정부24" url="https://www.gov.kr" description="온라인 민원 처리" />
-        </div>
       </div>
     </ProcedurePageLayout>
   );

@@ -42,8 +42,18 @@ export default function TransferPage() {
       title="전입신고"
       description="새 주소지로 주민등록을 이전하여 대항력을 확보합니다"
       breadcrumbLabel="전입신고"
+      sidebar={
+        <>
+          <DocumentChecklist documents={documents} />
+          <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <GovernmentLink name="정부24" url="https://www.gov.kr" description="온라인 전입신고 및 각종 민원 처리" />
+            </div>
+          </div>
+        </>
+      }
     >
-      {/* 개요 */}
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
         <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>전입신고란?</h3>
         <p style={{ fontSize: "13px", lineHeight: 1.75, color: "#6e6e73" }}>
@@ -53,13 +63,10 @@ export default function TransferPage() {
         </p>
       </div>
 
-      {/* 절차 안내 */}
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
         <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
         <FlowChart steps={steps} />
       </div>
-
-      <DocumentChecklist documents={documents} />
 
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         <TipBox variant="important" title="14일 이내 신고">
@@ -72,13 +79,6 @@ export default function TransferPage() {
         <TipBox variant="tip" title="온라인 신고 가능">
           정부24 웹사이트에서 공동인증서로 온라인 전입신고가 가능합니다.
         </TipBox>
-      </div>
-
-      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <GovernmentLink name="정부24" url="https://www.gov.kr" description="온라인 전입신고 및 각종 민원 처리" />
-        </div>
       </div>
     </ProcedurePageLayout>
   );
