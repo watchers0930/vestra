@@ -1,8 +1,10 @@
+import type { LucideIcon } from "lucide-react";
+
 interface Props {
   label: string;
   value: string;
   description: string;
-  icon: string;
+  icon: LucideIcon;
   colorAccent: "blue" | "green" | "orange" | "red";
   trend?: string;
   trendDir?: "up" | "down" | "flat";
@@ -28,7 +30,14 @@ const TREND_STYLE: Record<string, { color: string; bg: string }> = {
   flat: { color: "#6e6e73", bg: "rgba(0,0,0,0.05)" },
 };
 
-export function DashboardKpiCard({ label, value, description, icon, colorAccent, trend, trendDir = "flat" }: Props) {
+const ICON_COLOR: Record<string, string> = {
+  blue:   "#0071e3",
+  green:  "#30d158",
+  orange: "#ff9f0a",
+  red:    "#ff3b30",
+};
+
+export function DashboardKpiCard({ label, value, description, icon: Icon, colorAccent, trend, trendDir = "flat" }: Props) {
   const ts = TREND_STYLE[trendDir];
 
   return (
@@ -53,10 +62,10 @@ export function DashboardKpiCard({ label, value, description, icon, colorAccent,
 
       <div className="mt-[3px] flex items-center justify-between mb-[14px]">
         <div
-          className="flex h-[38px] w-[38px] items-center justify-center rounded-[11px] text-[17px]"
+          className="flex h-[38px] w-[38px] items-center justify-center rounded-[11px]"
           style={{ background: ICON_BG[colorAccent] }}
         >
-          {icon}
+          <Icon size={18} strokeWidth={1.7} style={{ color: ICON_COLOR[colorAccent] }} />
         </div>
 
         {trend && (

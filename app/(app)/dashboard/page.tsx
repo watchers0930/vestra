@@ -1,6 +1,6 @@
 "use client";
 
-import { Shield, FileText, TrendingUp, Search } from "lucide-react";
+import { Shield, FileText, TrendingUp, Search, Building2, Banknote, AlertTriangle, Info } from "lucide-react";
 import { formatKRW } from "@/lib/utils";
 import { EmptyState } from "@/components/common";
 import { useDashboardData } from "./hooks/useDashboardData";
@@ -66,10 +66,10 @@ export default function DashboardPage() {
           }}
         >
           <div
-            className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px] text-[14px]"
+            className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px]"
             style={{ background: "rgba(0,113,227,0.10)" }}
           >
-            ℹ️
+            <Info size={15} strokeWidth={1.7} style={{ color: "#0071e3" }} />
           </div>
           <span>
             권리분석, 계약검토, 시세전망 등에서 분석한 결과가 이 대시보드에 자동으로 표시됩니다.
@@ -83,21 +83,21 @@ export default function DashboardPage() {
             label="관리 자산"
             value={mounted ? `${totalAssets}건` : "-"}
             description="분석된 부동산 총 건수"
-            icon="🏢"
+            icon={Building2}
             colorAccent="blue"
           />
           <DashboardKpiCard
             label="총 평가액"
             value={mounted && totalValue > 0 ? formatKRW(totalValue) : "-"}
             description="추정 시세 합계"
-            icon="💰"
+            icon={Banknote}
             colorAccent="green"
           />
           <DashboardKpiCard
             label="평균 안전지수"
             value={mounted && avgSafety > 0 ? `${avgSafety}점` : "-"}
             description="100점 만점 기준"
-            icon="🛡️"
+            icon={Shield}
             colorAccent="orange"
             trend={safetyStatus?.trend}
             trendDir={safetyStatus?.dir}
@@ -106,7 +106,7 @@ export default function DashboardPage() {
             label="평균 리스크"
             value={mounted && avgRisk > 0 ? `${avgRisk}점` : "-"}
             description="낮을수록 안전"
-            icon="⚠️"
+            icon={AlertTriangle}
             colorAccent="red"
             trend={riskStatus?.trend}
             trendDir={riskStatus?.dir}

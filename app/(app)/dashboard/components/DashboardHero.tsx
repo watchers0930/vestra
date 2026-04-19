@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Shield, FileText, BarChart2 } from "lucide-react";
+import { Shield, FileText, BarChart2, Building2, Banknote, type LucideIcon } from "lucide-react";
 import type { Session } from "next-auth";
 
 function toEok(value: number): string {
@@ -165,22 +165,25 @@ export function DashboardHero({ session, totalAssets, totalValue, avgSafety, mou
         <div className="hidden xl:block" style={{ width: "210px", flexShrink: 0 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <StatCard
-            icon="🏢"
+            icon={Building2}
             iconBg="rgba(41,151,255,0.12)"
+            iconColor="#2997ff"
             value={mounted ? `${totalAssets}건` : "-"}
             valueColor="#2997ff"
             label="관리 자산"
           />
           <StatCard
-            icon="💰"
+            icon={Banknote}
             iconBg="rgba(255,255,255,0.07)"
+            iconColor="rgba(255,255,255,0.7)"
             value={mounted && totalValue > 0 ? toEok(totalValue) : "-"}
             valueColor="#fff"
             label="총 평가액"
           />
           <StatCard
-            icon="🛡️"
+            icon={Shield}
             iconBg="rgba(48,209,88,0.12)"
+            iconColor="#30d158"
             value={mounted && avgSafety > 0 ? `${avgSafety}점` : "-"}
             valueColor="#30d158"
             label="평균 안전지수"
@@ -193,14 +196,16 @@ export function DashboardHero({ session, totalAssets, totalValue, avgSafety, mou
 }
 
 function StatCard({
-  icon,
+  icon: Icon,
   iconBg,
+  iconColor,
   value,
   valueColor,
   label,
 }: {
-  icon: string;
+  icon: LucideIcon;
   iconBg: string;
+  iconColor: string;
   value: string;
   valueColor: string;
   label: string;
@@ -216,10 +221,10 @@ function StatCard({
       }}
     >
       <div
-        className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-[10px] text-[15px]"
+        className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-[10px]"
         style={{ background: iconBg }}
       >
-        {icon}
+        <Icon size={17} strokeWidth={1.7} style={{ color: iconColor }} />
       </div>
       <div>
         <div
