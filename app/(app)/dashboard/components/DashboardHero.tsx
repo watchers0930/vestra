@@ -96,22 +96,30 @@ export function DashboardHero({ session, totalAssets, totalValue, avgSafety, mou
           </div>
 
           <h1
-            className="mb-[10px] font-bold leading-[1.15] tracking-[-0.03em] text-white"
-            style={{ fontSize: "clamp(28px, 3vw, 40px)" }}
+            className="mb-[10px] leading-[1.2] tracking-[-0.03em] text-white"
           >
-            안녕하세요,{" "}
             <span
-              style={{
-                background: "linear-gradient(135deg, #2997ff, #74d0ff)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
+              className="block font-semibold"
+              style={{ fontSize: "clamp(20px, 2.1vw, 28px)", color: "rgba(255,255,255,0.75)" }}
             >
-              {displayName}
+              <span
+                style={{
+                  background: "linear-gradient(135deg, #2997ff, #74d0ff)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                {displayName}
+              </span>
+              님,
             </span>
-            님.<br />
-            오늘도 자산을 지키세요.
+            <span
+              className="block font-bold"
+              style={{ fontSize: "clamp(28px, 3vw, 40px)" }}
+            >
+              보이지 않는 부분까지 감시하는 VESTRA입니다.
+            </span>
           </h1>
 
           <p className="mb-[30px] text-[15px] leading-[1.65]" style={{ color: "rgba(255,255,255,0.42)" }}>
