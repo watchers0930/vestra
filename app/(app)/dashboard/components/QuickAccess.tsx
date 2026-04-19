@@ -1,18 +1,20 @@
 import Link from "next/link";
+import { Scale, FileText, TrendingUp, Home, Bot, Calculator } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-const ITEMS = [
-  { href: "/rights",      icon: "⚖️",  label: "권리분석",     bg: "rgba(0,113,227,0.09)"   },
-  { href: "/contract",    icon: "📋",  label: "계약검토",     bg: "rgba(48,209,88,0.09)"   },
-  { href: "/prediction",  icon: "📈",  label: "시세전망",     bg: "rgba(255,159,10,0.09)"  },
-  { href: "/jeonse",      icon: "🏠",  label: "전세보호",     bg: "rgba(255,59,48,0.07)"   },
-  { href: "/assistant",   icon: "🤖",  label: "AI 어시스턴트", bg: "rgba(100,200,255,0.09)" },
-  { href: "/tax",         icon: "💰",  label: "세금계산",     bg: "rgba(130,80,255,0.07)"  },
-] as const;
+const ITEMS: { href: string; Icon: LucideIcon; label: string; bg: string; color: string }[] = [
+  { href: "/rights",     Icon: Scale,       label: "권리분석",     bg: "rgba(0,113,227,0.09)",   color: "#0071e3" },
+  { href: "/contract",   Icon: FileText,    label: "계약검토",     bg: "rgba(48,209,88,0.09)",   color: "#30d158" },
+  { href: "/prediction", Icon: TrendingUp,  label: "시세전망",     bg: "rgba(255,159,10,0.09)",  color: "#ff9f0a" },
+  { href: "/jeonse",     Icon: Home,        label: "전세보호",     bg: "rgba(255,59,48,0.07)",   color: "#ff3b30" },
+  { href: "/assistant",  Icon: Bot,         label: "AI 어시스턴트", bg: "rgba(100,200,255,0.09)", color: "#0a84ff" },
+  { href: "/tax",        Icon: Calculator,  label: "세금계산",     bg: "rgba(130,80,255,0.07)",  color: "#8250ff" },
+];
 
 export function QuickAccess() {
   return (
     <div className="grid grid-cols-3 gap-[12px] sm:grid-cols-6">
-      {ITEMS.map(({ href, icon, label, bg }) => (
+      {ITEMS.map(({ href, Icon, label, bg, color }) => (
         <Link
           key={href}
           href={href}
@@ -33,10 +35,10 @@ export function QuickAccess() {
           }}
         >
           <div
-            className="flex h-[42px] w-[42px] items-center justify-center rounded-[13px] text-[19px]"
+            className="flex h-[42px] w-[42px] items-center justify-center rounded-[13px]"
             style={{ background: bg }}
           >
-            {icon}
+            <Icon size={20} strokeWidth={1.7} style={{ color }} />
           </div>
           <span className="text-center text-[11.5px] font-semibold text-[#1d1d1f]">{label}</span>
         </Link>
