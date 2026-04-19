@@ -23,17 +23,17 @@ const CIRCLE_COLOR: Record<string, { bg: string; shadow: string }> = {
 
 export default function FlowChart({ steps }: { steps: FlowStepData[]; className?: string }) {
   return (
-    <div style={{ overflowX: "auto", marginLeft: "-4px", marginRight: "-4px", paddingBottom: "4px" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", minWidth: "max-content", padding: "4px 4px 8px" }}>
+    <div style={{ width: "100%" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", width: "100%" }}>
         {steps.map((step, i) => {
           const isLast = i === steps.length - 1;
           const c = CIRCLE_COLOR[step.color] ?? CIRCLE_COLOR.blue;
           const Icon = step.icon;
 
           return (
-            <div key={i} style={{ display: "flex", alignItems: "flex-start" }}>
+            <div key={i} style={{ display: "flex", alignItems: "flex-start", flex: 1, minWidth: 0 }}>
               {/* ── 스텝 카드 ── */}
-              <div style={{ width: "172px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
                 {/* 원 + 아이콘 */}
                 <div
                   style={{
