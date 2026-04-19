@@ -66,10 +66,13 @@ export default function ProcedurePageLayout({
       </section>
 
       {sidebar ? (
-        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[1fr_360px]">
-          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>{children}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>{sidebar}</div>
-        </div>
+        <>
+          <style>{`@media (min-width: 1024px) { .procedure-grid { display: grid !important; grid-template-columns: 1fr 360px !important; } }`}</style>
+          <div className="procedure-grid" style={{ display: "flex", flexDirection: "column", gap: "20px", alignItems: "start" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px", minWidth: 0 }}>{children}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>{sidebar}</div>
+          </div>
+        </>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>{children}</div>
       )}
