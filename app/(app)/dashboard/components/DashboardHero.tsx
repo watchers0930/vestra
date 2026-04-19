@@ -112,13 +112,13 @@ export function DashboardHero({ session, totalAssets, totalValue, avgSafety, mou
               >
                 {displayName}
               </span>
-              님,
+              님, 보이지 않는 부분까지 감시하는
             </span>
             <span
               className="block font-bold"
               style={{ fontSize: "clamp(28px, 3vw, 40px)" }}
             >
-              보이지 않는 부분까지 감시하는 VESTRA입니다.
+              VESTRA입니다.
             </span>
           </h1>
 
