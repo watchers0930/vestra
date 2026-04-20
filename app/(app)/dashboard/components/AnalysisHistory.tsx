@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { RefreshCw, Loader2 } from "lucide-react";
+import { RefreshCw, Loader2, Scale, ClipboardList, TrendingUp, Home, FileText, Building2 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { AnalysisRecord } from "@/lib/store";
 
-const TYPE_ICON: Record<string, string> = {
-  rights:      "⚖️",
-  contract:    "📋",
-  prediction:  "📈",
-  jeonse:      "🏠",
-  registry:    "📄",
-  feasibility: "🏗️",
+const TYPE_ICON: Record<string, LucideIcon> = {
+  rights:      Scale,
+  contract:    ClipboardList,
+  prediction:  TrendingUp,
+  jeonse:      Home,
+  registry:    FileText,
+  feasibility: Building2,
 };
 
 const TYPE_BG: Record<string, string> = {
@@ -22,6 +23,15 @@ const TYPE_BG: Record<string, string> = {
   feasibility: "rgba(100,200,255,0.09)",
 };
 
+const TYPE_COLOR: Record<string, string> = {
+  rights:      "#0071e3",
+  contract:    "#1a9e45",
+  prediction:  "#b86f00",
+  jeonse:      "#ff3b30",
+  registry:    "#7c3aed",
+  feasibility: "#0ea5e9",
+};
+
 function getChip(summary: string): { label: string; color: string; bg: string } {
   const s = summary.toLowerCase();
   if (s.includes("안전") || s.includes("정상") || s.includes("이상없") || s.includes("문제없"))
@@ -29,7 +39,7 @@ function getChip(summary: string): { label: string; color: string; bg: string } 
   if (s.includes("위험") || s.includes("고위험") || s.includes("불법") || s.includes("하락"))
     return { label: `↓ ${summary.slice(0, 18)}`, color: "#ff3b30", bg: "rgba(255,59,48,0.07)" };
   if (s.includes("주의") || s.includes("확인") || s.includes("권고") || s.includes("보증"))
-    return { label: `⚠ ${summary.slice(0, 18)}`, color: "#b86f00", bg: "rgba(255,159,10,0.09)" };
+    return { label: `! ${summary.slice(0, 18)}`, color: "#b86f00", bg: "rgba(255,159,10,0.09)" };
   return {
     label: summary.slice(0, 20) || "분석 완료",
     color: "#6e6e73",
@@ -48,7 +58,7 @@ interface Props {
   addressCountMap: Record<string, number>;
   cascadeLoading: string | null;
   handleCascadeUpdate: (address: string) => void;
-  handleDeleteAnalysis: (id: string) => void; // reserved for future delete UI
+  handleDeleteAnalysis: (id: string) => void;
 }
 
 export function AnalysisHistory({
@@ -64,12 +74,13 @@ export function AnalysisHistory({
   return (
     <div className="grid grid-cols-1 gap-[13px] sm:grid-cols-2 xl:grid-cols-3">
       {items.map((item) => {
-        const icon  = TYPE_ICON[item.type]  ?? "📄";
-        const iconBg = TYPE_BG[item.type]  ?? "rgba(0,0,0,0.06)";
-        const chip  = getChip(item.summary);
-        const addr  = formatAddress(item.address);
+        const IconComp = TYPE_ICON[item.type] ?? FileText;
+        const iconBg   = TYPE_BG[item.type]   ?? "rgba(0,0,0,0.06)";
+        const iconColor = TYPE_COLOR[item.type] ?? "#6e6e73";
+        const chip     = getChip(item.summary);
+        const addr     = formatAddress(item.address);
         const isCascading = cascadeLoading === item.address;
-        const canCascade = addressCountMap[item.address] >= 2;
+        const canCascade  = addressCountMap[item.address] >= 2;
 
         return (
           <div
@@ -89,10 +100,10 @@ export function AnalysisHistory({
             {/* 상단 — 아이콘 + 날짜 + 액션 */}
             <div className="mb-[13px] flex items-start justify-between">
               <div
-                className="flex h-[38px] w-[38px] items-center justify-center rounded-[11px] text-[17px]"
+                className="flex h-[38px] w-[38px] items-center justify-center rounded-[11px]"
                 style={{ background: iconBg }}
               >
-                {icon}
+                <IconComp size={17} strokeWidth={1.5} style={{ color: iconColor }} />
               </div>
               <div className="flex items-center gap-[6px]">
                 <span className="text-[11px] text-[#6e6e73]">

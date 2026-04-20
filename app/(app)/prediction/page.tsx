@@ -2,7 +2,8 @@
 
 import { Suspense } from "react";
 import Link from "next/link";
-import { TrendingUp, BarChart3, Home, Shield, Activity, MapPin, Zap } from "lucide-react";
+import { TrendingUp, BarChart3, Home, Shield, Activity, MapPin, Zap, Bot, Search as SearchIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
 import { ScholarPapers } from "@/components/results";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
@@ -38,11 +39,11 @@ const AnomalyDetectionView = dynamic(
   { ssr: false, loading: () => <div style={{ height: "256px", borderRadius: "14px", background: "#f5f5f7" }} /> }
 );
 
-const FEATURE_CHIPS = [
-  { icon: "📊", label: "실거래 분석" },
-  { icon: "🤖", label: "AI 가격 예측" },
-  { icon: "📈", label: "시나리오 전망" },
-  { icon: "🔍", label: "이상탐지" },
+const FEATURE_CHIPS: Array<{ icon: LucideIcon; label: string }> = [
+  { icon: BarChart3,   label: "실거래 분석" },
+  { icon: Bot,         label: "AI 가격 예측" },
+  { icon: TrendingUp,  label: "시나리오 전망" },
+  { icon: SearchIcon,  label: "이상탐지" },
 ];
 
 export default function PredictionPage() {
@@ -65,7 +66,7 @@ export default function PredictionPage() {
           overflow: "hidden",
           borderRadius: "28px",
           background: "linear-gradient(148deg, #141820 0%, #0c1527 50%, #0a1020 100%)",
-          marginTop: "36px",
+          marginTop: "10px",
           marginBottom: "28px",
         }}
       >
@@ -93,7 +94,7 @@ export default function PredictionPage() {
             </p>
           </div>
           <div className="hidden md:flex" style={{ flexDirection: "column", gap: "8px", flexShrink: 0 }}>
-            {FEATURE_CHIPS.map(({ icon, label }) => (
+            {FEATURE_CHIPS.map(({ icon: Icon, label }) => (
               <div
                 key={label}
                 style={{
@@ -103,7 +104,7 @@ export default function PredictionPage() {
                   backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", minWidth: "148px",
                 }}
               >
-                <span style={{ fontSize: "15px" }}>{icon}</span>
+                <Icon size={15} strokeWidth={1.5} style={{ color: "rgba(255,255,255,0.80)", flexShrink: 0 }} />
                 <span style={{ fontSize: "12.5px", fontWeight: 500, color: "rgba(255,255,255,0.80)" }}>{label}</span>
               </div>
             ))}

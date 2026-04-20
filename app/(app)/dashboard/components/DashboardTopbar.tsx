@@ -12,8 +12,10 @@ interface Props {
 export function DashboardTopbar({ monitoredCount, session }: Props) {
   return (
     <div
-      className="sticky top-0 z-10 flex h-[52px] items-center justify-between border-b border-black/[0.06] px-9"
+      className="fixed top-0 z-40 flex h-[52px] items-center justify-between border-b border-black/[0.06] px-9"
       style={{
+        left: 240,
+        right: 0,
         background: "rgba(245,245,247,0.82)",
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",

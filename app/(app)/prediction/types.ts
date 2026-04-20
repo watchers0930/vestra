@@ -42,6 +42,7 @@ export interface PredictionResult {
   confidence: number;
   aiOpinion: string;
   realTransactions: RealTransaction[];
+  monthlyTrend?: { month: string; avgPrice: number; minPrice: number; maxPrice: number; count: number }[];
   priceStats: {
     avgPrice: number;
     minPrice: number;

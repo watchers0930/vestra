@@ -49,29 +49,47 @@ export function usePredictionData() {
     }
   }, []);
 
+  const postcodeReadyRef = useRef(false);
+
   // Daum Postcode 스크립트 로드
   useEffect(() => {
-    if (document.getElementById("daum-postcode-script")) return;
+    if (window.daum?.Postcode) { postcodeReadyRef.current = true; return; }
+    const existing = document.getElementById("daum-postcode-script");
+    if (existing) {
+      existing.addEventListener("load", () => { postcodeReadyRef.current = true; });
+      return;
+    }
     const script = document.createElement("script");
     script.id = "daum-postcode-script";
-    script.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+    script.src = "https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
     script.async = true;
+    script.onload = () => { postcodeReadyRef.current = true; };
     document.head.appendChild(script);
   }, []);
 
   const openDaumPostcode = useCallback(() => {
-    if (!window.daum?.Postcode) {
-      showToast("주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.", "info");
-      return;
-    }
-    new window.daum.Postcode({
+    const open = () => new window.daum!.Postcode({
       oncomplete: (data: DaumPostcodeData) => {
         const addr = data.userSelectedType === "R" ? data.roadAddress : data.jibunAddress;
         setRoadResult(addr);
         setBuildingName(data.buildingName || "");
       },
     }).open();
-  }, [showToast]);
+
+    if (postcodeReadyRef.current && window.daum?.Postcode) {
+      open();
+    } else {
+      // 스크립트 로드 대기 후 재시도
+      const check = setInterval(() => {
+        if (window.daum?.Postcode) {
+          postcodeReadyRef.current = true;
+          clearInterval(check);
+          open();
+        }
+      }, 200);
+      setTimeout(() => clearInterval(check), 10000);
+    }
+  }, []);
 
   const canSearch = !!roadResult.trim();
 
@@ -266,29 +284,36 @@ export function usePredictionData() {
   };
 
   const getMonthlyTrendData = () => {
+    // API에서 전체 기간 집계한 monthlyTrend 우선 사용
+    if (result?.monthlyTrend?.length) {
+      // 아파트/면적 필터가 걸려 있으면 filteredTransactions 기반으로 재집계
+      if (selectedApt !== null || selectedArea !== null) {
+        if (!filteredTransactions.length) return [];
+        const monthMap = new Map<string, { total: number; count: number; min: number; max: number }>();
+        for (const t of filteredTransactions) {
+          const key = `${t.dealYear}.${String(t.dealMonth).padStart(2, "0")}`;
+          const e = monthMap.get(key);
+          if (e) { e.total += t.dealAmount; e.count++; e.min = Math.min(e.min, t.dealAmount); e.max = Math.max(e.max, t.dealAmount); }
+          else monthMap.set(key, { total: t.dealAmount, count: 1, min: t.dealAmount, max: t.dealAmount });
+        }
+        return Array.from(monthMap.entries())
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([month, d]) => ({ month, avgPrice: Math.round(d.total / d.count), minPrice: d.min, maxPrice: d.max, count: d.count }));
+      }
+      return result.monthlyTrend;
+    }
+    // 폴백: filteredTransactions 기반 재집계
     if (!filteredTransactions.length) return [];
     const monthMap = new Map<string, { total: number; count: number; min: number; max: number }>();
     for (const t of filteredTransactions) {
       const key = `${t.dealYear}.${String(t.dealMonth).padStart(2, "0")}`;
-      const existing = monthMap.get(key);
-      if (existing) {
-        existing.total += t.dealAmount;
-        existing.count += 1;
-        existing.min = Math.min(existing.min, t.dealAmount);
-        existing.max = Math.max(existing.max, t.dealAmount);
-      } else {
-        monthMap.set(key, { total: t.dealAmount, count: 1, min: t.dealAmount, max: t.dealAmount });
-      }
+      const e = monthMap.get(key);
+      if (e) { e.total += t.dealAmount; e.count++; e.min = Math.min(e.min, t.dealAmount); e.max = Math.max(e.max, t.dealAmount); }
+      else monthMap.set(key, { total: t.dealAmount, count: 1, min: t.dealAmount, max: t.dealAmount });
     }
     return Array.from(monthMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, data]) => ({
-        month,
-        avgPrice: Math.round(data.total / data.count),
-        minPrice: data.min,
-        maxPrice: data.max,
-        count: data.count,
-      }));
+      .map(([month, d]) => ({ month, avgPrice: Math.round(d.total / d.count), minPrice: d.min, maxPrice: d.max, count: d.count }));
   };
 
   const disabledTabs: PredictionTabId[] = [];

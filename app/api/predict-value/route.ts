@@ -304,7 +304,26 @@ export async function POST(req: NextRequest) {
         isValid: integrityResult.report.isValid,
         stages: integrityResult.stages.map((s) => ({ name: s.name, hash: s.stepHash.slice(0, 16) })),
       },
-      realTransactions: filteredTx.slice(0, 50) ?? [],
+      // 테이블/지도용: 최신 50건
+      realTransactions: [...filteredTx]
+        .sort((a, b) =>
+          b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay -
+          (a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay)
+        )
+        .slice(0, 50),
+      // 추이 차트용: 전체 기간 월별 집계
+      monthlyTrend: (() => {
+        const map = new Map<string, { total: number; count: number; min: number; max: number }>();
+        for (const t of filteredTx) {
+          const key = `${t.dealYear}.${String(t.dealMonth).padStart(2, "0")}`;
+          const e = map.get(key);
+          if (e) { e.total += t.dealAmount; e.count++; e.min = Math.min(e.min, t.dealAmount); e.max = Math.max(e.max, t.dealAmount); }
+          else map.set(key, { total: t.dealAmount, count: 1, min: t.dealAmount, max: t.dealAmount });
+        }
+        return Array.from(map.entries())
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([month, d]) => ({ month, avgPrice: Math.round(d.total / d.count), minPrice: d.min, maxPrice: d.max, count: d.count }));
+      })(),
       priceStats: filteredTx.length > 0
         ? (() => {
             const prices = filteredTx.map((t) => t.dealAmount);

@@ -1,10 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-
-// ─── 타입 ───
 
 interface Transaction {
   dealAmount: number;
@@ -14,18 +10,14 @@ interface Transaction {
   dealYear: number;
   dealMonth: number;
   dealDay: number;
+  dong?: string;
 }
 
 interface TransactionMapProps {
-  /** 거래 데이터 목록 */
   transactions: Transaction[];
-  /** 중심 주소 텍스트 (좌표 폴백용) */
   address: string;
-  /** 중심 좌표 (카카오맵 geocode 결과 등) */
   center?: [number, number];
 }
-
-// ─── 지역별 좌표 매핑 (Geocoding 폴백) ───
 
 const AREA_COORDS: Record<string, [number, number]> = {
   "강남구": [37.5172, 127.0473], "서초구": [37.4837, 127.0324],
@@ -60,112 +52,194 @@ function getFallbackCoords(address: string): [number, number] {
   return [37.5665, 126.9780];
 }
 
-// ─── 가격 → 색상 보간 ───
-
 function priceToColor(price: number, min: number, max: number): string {
   if (max === min) return "#6366f1";
   const ratio = Math.min(1, Math.max(0, (price - min) / (max - min)));
-  // 파랑(저가) → 보라(중간) → 빨강(고가)
-  const r = Math.round(59 + ratio * 196); // 59 → 255
-  const g = Math.round(130 - ratio * 80);  // 130 → 50
-  const b = Math.round(246 - ratio * 186); // 246 → 60
+  const r = Math.round(59 + ratio * 196);
+  const g = Math.round(130 - ratio * 80);
+  const b = Math.round(246 - ratio * 186);
   return `rgb(${r},${g},${b})`;
 }
 
-// ─── 컴포넌트 ───
+// 카카오 지오코더로 아파트 실제 좌표 조회
+function geocodeApt(
+  geocoder: unknown,
+  query: string,
+): Promise<[number, number] | null> {
+  return new Promise((resolve) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (geocoder as any).addressSearch(query, (results: any[], status: string) => {
+      if (status === "OK" && results.length > 0) {
+        resolve([parseFloat(results[0].y), parseFloat(results[0].x)]);
+      } else {
+        // keywordSearch 폴백
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (geocoder as any).constructor && resolve(null);
+        resolve(null);
+      }
+    });
+  });
+}
+
+function keywordSearchApt(
+  ps: unknown,
+  query: string,
+): Promise<[number, number] | null> {
+  return new Promise((resolve) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (ps as any).keywordSearch(query, (results: any[], status: string) => {
+      if (status === "OK" && results.length > 0) {
+        resolve([parseFloat(results[0].y), parseFloat(results[0].x)]);
+      } else {
+        resolve(null);
+      }
+    });
+  });
+}
 
 export default function TransactionMap({ transactions, address, center }: TransactionMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
+  const mapInstanceRef = useRef<unknown>(null);
 
   useEffect(() => {
     if (!mapRef.current || transactions.length === 0) return;
+    let cancelled = false;
 
-    // 이전 인스턴스 정리
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.remove();
-      mapInstanceRef.current = null;
-    }
+    const init = async () => {
+      if (!window.kakao?.maps || !mapRef.current) return;
+      const kakao = window.kakao;
 
-    const coords = center || getFallbackCoords(address);
+      if (mapRef.current) mapRef.current.innerHTML = "";
 
-    const map = L.map(mapRef.current, {
-      center: coords,
-      zoom: 14,
-      zoomControl: true,
-    });
+      const fallback = center || getFallbackCoords(address);
+      const map = new kakao.maps.Map(mapRef.current, {
+        center: new kakao.maps.LatLng(fallback[0], fallback[1]),
+        level: 5,
+      });
+      mapInstanceRef.current = map;
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | VESTRA',
-      maxZoom: 19,
-    }).addTo(map);
+      const prices = transactions.map((t) => t.dealAmount);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
 
-    // 가격 범위 계산
-    const prices = transactions.map((t) => t.dealAmount);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-
-    // 거래를 아파트별로 그룹화하여 약간의 좌표 오프셋 생성
-    const aptGroups = new Map<string, Transaction[]>();
-    for (const t of transactions) {
-      const group = aptGroups.get(t.aptName) || [];
-      group.push(t);
-      aptGroups.set(t.aptName, group);
-    }
-
-    let markerIndex = 0;
-    for (const [aptName, txs] of aptGroups) {
-      // 각 아파트 그룹에 대해 중심에서 약간의 랜덤 오프셋
-      const groupOffset: [number, number] = [
-        (Math.random() - 0.5) * 0.004,
-        (Math.random() - 0.5) * 0.004,
-      ];
-
-      for (const t of txs) {
-        // 개별 거래에 작은 추가 오프셋
-        const lat = coords[0] + groupOffset[0] + (Math.random() - 0.5) * 0.002;
-        const lng = coords[1] + groupOffset[1] + (Math.random() - 0.5) * 0.002;
-
-        const color = priceToColor(t.dealAmount, minPrice, maxPrice);
-        const formattedPrice = t.dealAmount >= 100_000_000
-          ? `${(t.dealAmount / 100_000_000).toFixed(1)}억`
-          : `${(t.dealAmount / 10_000).toLocaleString()}만`;
-
-        L.circleMarker([lat, lng], {
-          radius: 6,
-          fillColor: color,
-          fillOpacity: 0.75,
-          color: "#fff",
-          weight: 1.5,
-        })
-          .addTo(map)
-          .bindPopup(
-            `<div style="font-size:12px;line-height:1.5;min-width:120px">` +
-            `<b>${aptName}</b><br/>` +
-            `<span style="color:${color};font-weight:600">${formattedPrice}</span><br/>` +
-            `${Math.round(t.area)}㎡ · ${t.floor}층<br/>` +
-            `<span style="color:#888">${t.dealYear}.${String(t.dealMonth).padStart(2, "0")}.${String(t.dealDay).padStart(2, "0")}</span>` +
-            `</div>`
-          );
-
-        markerIndex++;
+      // 아파트별 그룹화
+      const aptGroups = new Map<string, { txs: Transaction[]; dong: string }>();
+      for (const t of transactions) {
+        const key = t.aptName;
+        if (!aptGroups.has(key)) aptGroups.set(key, { txs: [], dong: t.dong || "" });
+        aptGroups.get(key)!.txs.push(t);
       }
-    }
 
-    mapInstanceRef.current = map;
-    setTimeout(() => map.invalidateSize(), 100);
+      const geocoder = new kakao.maps.services.Geocoder();
+      const ps = new kakao.maps.services.Places();
+      const coordCache = new Map<string, [number, number]>();
+
+      // 지역명 추출 (주소에서)
+      const regionMatch = address.match(/([가-힣]+[시군구])\s*([가-힣]+[읍면동])?/);
+      const region = regionMatch ? regionMatch[0] : "";
+
+      for (const [aptName, { txs, dong }] of aptGroups) {
+        if (cancelled) return;
+
+        let coords: [number, number] | null = null;
+
+        // 1차: "지역 동 아파트명" 키워드 검색
+        const searchQuery = `${region} ${dong} ${aptName}`.trim();
+        coords = await keywordSearchApt(ps, searchQuery);
+
+        // 2차: "동 아파트명" 키워드 검색
+        if (!coords && dong) {
+          coords = await keywordSearchApt(ps, `${dong} ${aptName}`);
+        }
+
+        // 3차: 아파트명만 키워드 검색
+        if (!coords) {
+          coords = await keywordSearchApt(ps, aptName);
+        }
+
+        // 4차: 폴백 (중심 + 캐시 기반 랜덤 오프셋)
+        if (!coords) {
+          const cached = coordCache.get(dong || aptName);
+          if (cached) {
+            coords = [
+              cached[0] + (Math.random() - 0.5) * 0.002,
+              cached[1] + (Math.random() - 0.5) * 0.002,
+            ];
+          } else {
+            coords = [
+              fallback[0] + (Math.random() - 0.5) * 0.006,
+              fallback[1] + (Math.random() - 0.5) * 0.006,
+            ];
+          }
+        } else {
+          coordCache.set(dong || aptName, coords);
+        }
+
+        if (cancelled) return;
+
+        // 해당 아파트 평균 거래가로 마커 하나 표시
+        const avgPrice = Math.round(txs.reduce((s, t) => s + t.dealAmount, 0) / txs.length);
+        const color = priceToColor(avgPrice, minPrice, maxPrice);
+        const formattedPrice = avgPrice >= 100_000_000
+          ? `${(avgPrice / 100_000_000).toFixed(1)}억`
+          : `${(avgPrice / 10_000).toLocaleString()}만`;
+
+        const circle = new kakao.maps.Circle({
+          center: new kakao.maps.LatLng(coords[0], coords[1]),
+          radius: 50 + txs.length * 5, // 거래 건수에 비례한 크기
+          strokeWeight: 2,
+          strokeColor: "#fff",
+          strokeOpacity: 0.9,
+          fillColor: color,
+          fillOpacity: 0.8,
+        });
+        circle.setMap(map);
+
+        const txList = txs
+          .slice(0, 5)
+          .map((t) => {
+            const p = t.dealAmount >= 100_000_000
+              ? `${(t.dealAmount / 100_000_000).toFixed(1)}억`
+              : `${(t.dealAmount / 10_000).toLocaleString()}만`;
+            return `<div style="color:#555;font-size:11px">${p} · ${Math.round(t.area)}㎡ · ${t.floor}층</div>`;
+          })
+          .join("");
+
+        const infowindow = new kakao.maps.InfoWindow({
+          content:
+            `<div style="padding:10px 12px;font-size:12px;line-height:1.6;min-width:140px;max-width:200px">` +
+            `<b style="display:block;margin-bottom:4px;font-size:13px">${aptName}</b>` +
+            `<span style="color:${color};font-weight:700;font-size:14px">${formattedPrice}</span>` +
+            `<span style="color:#aaa;font-size:11px;margin-left:6px">평균 (${txs.length}건)</span>` +
+            `<div style="margin-top:6px;border-top:1px solid #f0f0f0;padding-top:6px">${txList}</div>` +
+            `</div>`,
+        });
+
+        const pos = new kakao.maps.LatLng(coords[0], coords[1]);
+        kakao.maps.event.addListener(circle, "click", () => {
+          infowindow.open(map, { getPosition: () => pos });
+        });
+      }
+    };
+
+    if (window.kakao?.maps) {
+      init();
+    } else {
+      const timer = setInterval(() => {
+        if (window.kakao?.maps) { clearInterval(timer); init(); }
+      }, 200);
+      setTimeout(() => clearInterval(timer), 10000);
+    }
 
     return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
+      cancelled = true;
+      if (mapRef.current) mapRef.current.innerHTML = "";
+      mapInstanceRef.current = null;
     };
   }, [transactions, address, center]);
 
   if (transactions.length === 0) return null;
 
-  // 가격 범위 (범례용)
   const prices = transactions.map((t) => t.dealAmount);
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
@@ -173,19 +247,18 @@ export default function TransactionMap({ transactions, address, center }: Transa
     v >= 100_000_000 ? `${(v / 100_000_000).toFixed(1)}억` : `${(v / 10_000).toLocaleString()}만`;
 
   return (
-    <div className="rounded-xl overflow-hidden border border-[#e5e5e7]">
-      <div ref={mapRef} className="h-[300px] sm:h-[400px] w-full" />
-      {/* 범례 */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-[#f5f5f7] text-[11px] text-[#6e6e73]">
-        <span>{transactions.length}건 거래</span>
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: priceToColor(minPrice, minPrice, maxPrice) }} />
+    <div style={{ borderRadius: "12px", overflow: "hidden", border: "1px solid #e5e5e7" }}>
+      <div ref={mapRef} style={{ height: "360px", width: "100%" }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "#f5f5f7", fontSize: "11px", color: "#6e6e73" }}>
+        <span>{transactions.length}건 거래 · 아파트별 실위치 표시</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: priceToColor(minPrice, minPrice, maxPrice), display: "inline-block" }} />
             {formatShort(minPrice)}
           </span>
-          <span className="w-10 h-1.5 rounded-full" style={{ background: "linear-gradient(to right, #3b82f6, #8b5cf6, #ef4444)" }} />
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: priceToColor(maxPrice, minPrice, maxPrice) }} />
+          <span style={{ width: "40px", height: "6px", borderRadius: "3px", background: "linear-gradient(to right, #3b82f6, #8b5cf6, #ef4444)", display: "inline-block" }} />
+          <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: priceToColor(maxPrice, minPrice, maxPrice), display: "inline-block" }} />
             {formatShort(maxPrice)}
           </span>
         </div>

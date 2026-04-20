@@ -7,6 +7,7 @@ import {
   ClipboardPaste,
   Loader2,
   Search,
+  FileText,
 } from "lucide-react";
 import { formatKRW, cn } from "@/lib/utils";
 import { SliderInput } from "@/components/forms";
@@ -220,13 +221,13 @@ export function RightsInputCard({
               </div>
             ) : fileName ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-                <div style={{ fontSize: "28px" }}>✅</div>
+                <CheckCircle size={28} strokeWidth={1.5} style={{ color: "#30d158" }} />
                 <p style={{ fontSize: "13.5px", fontWeight: 600, color: "#1a9e45" }}>{fileName}</p>
                 <p style={{ fontSize: "11.5px", color: "#30d158" }}>텍스트 추출 완료 ({rawText.length.toLocaleString()}자) — 클릭하여 변경</p>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-                <div style={{ fontSize: "30px" }}>📄</div>
+                <FileText size={30} strokeWidth={1.2} style={{ color: "#aeaeb2" }} />
                 <p style={{ fontSize: "13.5px", fontWeight: 500, color: "#3c3c43" }}>등기부등본 PDF 또는 이미지를 드래그하세요</p>
                 <p style={{ fontSize: "11.5px", color: "#aeaeb2" }}>PDF, JPG, PNG — 최대 10MB</p>
               </div>

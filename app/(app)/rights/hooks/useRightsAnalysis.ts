@@ -23,6 +23,7 @@ export function useRightsAnalysis() {
   const [codefAddress, setCodefAddress] = useState("");
   const [codefFetching, setCodefFetching] = useState(false);
   const [codefSource, setCodefSource] = useState(false);
+  const [autoAddress, setAutoAddress] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -38,6 +39,15 @@ export function useRightsAnalysis() {
         });
       }
     }
+
+    // URL ?address= 파라미터 감지 → 주소 자동 조회 모드로 전환
+    const params = new URLSearchParams(window.location.search);
+    const urlAddr = params.get("address");
+    if (urlAddr) {
+      setInputMode("codef");
+      setCodefAddress(urlAddr);
+      setAutoAddress(urlAddr);
+    }
   }, []);
 
   const loadSample = () => {
@@ -48,8 +58,8 @@ export function useRightsAnalysis() {
     setInputMode("text");
   };
 
-  const handleAddressAnalyze = async () => {
-    const addr = codefAddress.trim();
+  const handleAddressAnalyze = async (addrOverride?: string) => {
+    const addr = (addrOverride ?? codefAddress).trim();
     if (!addr || addr.length < 4) return;
     setCodefFetching(true);
     setError(null);
@@ -245,6 +255,14 @@ export function useRightsAnalysis() {
       setStep("idle");
     }
   };
+
+  // autoAddress 세팅 시 자동 분석 실행 (handleAddressAnalyze 정의 이후에 선언)
+  useEffect(() => {
+    if (!autoAddress) return;
+    setAutoAddress(null);
+    handleAddressAnalyze(autoAddress);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoAddress]);
 
   return {
     inputMode, setInputMode,

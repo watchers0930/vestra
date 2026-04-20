@@ -75,7 +75,7 @@ export default function JeonseHubPage() {
           overflow: "hidden",
           borderRadius: "28px",
           background: "linear-gradient(148deg, #141820 0%, #0c1527 50%, #0a1020 100%)",
-          marginTop: "36px",
+          marginTop: "10px",
           marginBottom: "28px",
         }}
       >

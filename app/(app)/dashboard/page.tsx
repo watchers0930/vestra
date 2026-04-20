@@ -1,6 +1,6 @@
 "use client";
 
-import { Shield, FileText, TrendingUp, Search, Building2, Banknote, AlertTriangle, Info } from "lucide-react";
+import { Shield, FileText, TrendingUp, Search, Building2, Banknote, AlertTriangle, Info, ClipboardList } from "lucide-react";
 import { formatKRW } from "@/lib/utils";
 import { EmptyState } from "@/components/common";
 import { useDashboardData } from "./hooks/useDashboardData";
@@ -19,7 +19,7 @@ export default function DashboardPage() {
     cascadeLoading, monitoredCount, monitoredAddresses, monitoringLoading,
     totalAssets, totalValue, avgSafety, avgRisk,
     riskDistribution, assetValueData, addressCountMap,
-    handleDeleteAnalysis, handleCascadeUpdate, handleMonitorRegister,
+    handleDeleteAnalysis, handleCascadeUpdate, handleMonitorToggle,
   } = useDashboardData();
 
   if (loading) return <DashboardSkeleton />;
@@ -47,7 +47,7 @@ export default function DashboardPage() {
       <div className="px-9 pb-20">
 
         {/* Hero */}
-        <div className="mt-9 mb-7">
+        <div className="mt-[18px] mb-7">
           <DashboardHero
             session={session}
             totalAssets={totalAssets}
@@ -169,7 +169,7 @@ export default function DashboardPage() {
               session={session}
               monitoringLoading={monitoringLoading}
               monitoredAddresses={monitoredAddresses}
-              handleMonitorRegister={handleMonitorRegister}
+              handleMonitorToggle={handleMonitorToggle}
             />
           </div>
         )}
@@ -200,10 +200,10 @@ export default function DashboardPage() {
             style={{ border: "1px solid rgba(0,0,0,0.08)" }}
           >
             <div
-              className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl text-2xl"
+              className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl"
               style={{ background: "#f5f5f7" }}
             >
-              📋
+              <ClipboardList size={22} strokeWidth={1.5} style={{ color: "#6e6e73" }} />
             </div>
             <p className="mb-1 text-sm font-medium text-[#1d1d1f]">아직 분석 이력이 없습니다</p>
             <p className="mb-4 text-xs text-[#6e6e73]">권리분석이나 계약검토를 시작해보세요.</p>

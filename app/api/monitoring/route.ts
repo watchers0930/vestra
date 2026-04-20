@@ -180,3 +180,42 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "처리 중 오류가 발생했습니다." }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
+    const ip = req.headers.get("x-forwarded-for") || "anonymous";
+    const rl = await rateLimit(`monitoring-del:${ip}`, 10);
+    if (!rl.success) {
+      return NextResponse.json({ error: "요청 한도 초과" }, { status: 429, headers: rateLimitHeaders(rl) });
+    }
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증 필요" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const address = searchParams.get("address");
+    if (!address || address.trim().length < 5) {
+      return NextResponse.json({ error: "유효한 주소를 입력해주세요." }, { status: 400 });
+    }
+
+    const updated = await prisma.monitoredProperty.updateMany({
+      where: { userId: session.user.id, address: address.trim(), status: "active" },
+      data: { status: "paused" },
+    });
+
+    if (updated.count === 0) {
+      return NextResponse.json({ error: "모니터링 중인 항목이 없습니다." }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "알 수 없는 오류";
+    console.error(`[monitoring] ${message}`);
+    return NextResponse.json({ error: "처리 중 오류가 발생했습니다." }, { status: 500 });
+  }
+}

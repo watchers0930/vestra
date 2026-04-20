@@ -1,17 +1,16 @@
 "use client";
 
 import { Star, Briefcase, BadgeCheck } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export interface Expert {
   id: string;
-  name: string; // masked, e.g. "김○○"
+  name: string;
   category: string;
   specialties: string[];
-  experience: number; // years
+  experience: number;
   rating: number;
   reviewCount: number;
-  consultFee: number; // KRW
+  consultFee: number;
   available: boolean;
 }
 
@@ -26,75 +25,57 @@ function formatFee(fee: number) {
   return `${fee.toLocaleString()}원`;
 }
 
-export function ExpertCard({ expert, onConsult, className }: ExpertCardProps) {
+export function ExpertCard({ expert, onConsult }: ExpertCardProps) {
   return (
-    <div
-      className={cn(
-        "rounded-xl bg-white border border-[#e5e5e7] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5 flex flex-col",
-        "transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]",
-        className
-      )}
+    <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "20px", display: "flex", flexDirection: "column", transition: "box-shadow 0.2s" }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 28px rgba(0,0,0,0.10)"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 2px 12px rgba(0,0,0,0.06)"; }}
     >
-      {/* Header */}
-      <div className="flex items-start gap-3 mb-4">
-        {/* Avatar placeholder */}
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f5f5f7] flex-shrink-0">
-          <span className="text-base font-semibold text-[#424245]">
-            {expert.name.charAt(0)}
-          </span>
+      {/* 헤더 */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "14px" }}>
+        <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "linear-gradient(148deg, #0c1527, #141820)", border: "1px solid rgba(0,113,227,0.20)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <span style={{ fontSize: "15px", fontWeight: 700, color: "#2997ff" }}>{expert.name.charAt(0)}</span>
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <h3 className="text-sm font-semibold text-[#1d1d1f] truncate">
-              {expert.name}
-            </h3>
-            <BadgeCheck size={14} className="text-blue-500 flex-shrink-0" />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ fontSize: "13px", fontWeight: 700, color: "#1d1d1f" }}>{expert.name}</span>
+            <BadgeCheck size={14} style={{ color: "#0071e3", flexShrink: 0 }} />
           </div>
-          <p className="text-xs text-[#6e6e73] mt-0.5">{expert.category}</p>
+          <p style={{ fontSize: "11px", color: "#6e6e73", margin: "2px 0 0" }}>{expert.category}</p>
         </div>
-        {/* Rating */}
-        <div className="flex items-center gap-0.5 flex-shrink-0">
-          <Star size={13} className="text-amber-400 fill-amber-400" />
-          <span className="text-xs font-medium text-[#1d1d1f]">
-            {expert.rating.toFixed(1)}
-          </span>
-          <span className="text-[10px] text-[#86868b]">
-            ({expert.reviewCount})
-          </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "3px", flexShrink: 0 }}>
+          <Star size={12} style={{ color: "#f59e0b", fill: "#f59e0b" }} />
+          <span style={{ fontSize: "12px", fontWeight: 600, color: "#1d1d1f" }}>{expert.rating.toFixed(1)}</span>
+          <span style={{ fontSize: "10px", color: "#aeaeb2" }}>({expert.reviewCount})</span>
         </div>
       </div>
 
-      {/* Specialties */}
-      <div className="flex flex-wrap gap-1.5 mb-4">
+      {/* 전문 분야 태그 */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "14px" }}>
         {expert.specialties.map((s) => (
-          <span
-            key={s}
-            className="px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[10px] text-[#424245] border border-[#e5e5e7]"
-          >
-            {s}
-          </span>
+          <span key={s} style={{ padding: "3px 8px", borderRadius: "20px", background: "#f5f5f7", border: "1px solid rgba(0,0,0,0.07)", fontSize: "10px", color: "#3d3d3f" }}>{s}</span>
         ))}
       </div>
 
-      {/* Stats */}
-      <div className="flex items-center gap-4 text-xs text-[#6e6e73] mb-4">
-        <span className="flex items-center gap-1">
-          <Briefcase size={12} />
-          경력 {expert.experience}년
+      {/* 통계 */}
+      <div style={{ display: "flex", alignItems: "center", gap: "14px", fontSize: "11px", color: "#6e6e73", marginBottom: "14px" }}>
+        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <Briefcase size={11} /> 경력 {expert.experience}년
         </span>
-        <span>상담료 {formatFee(expert.consultFee)}</span>
+        <span style={{ color: "#1d1d1f", fontWeight: 600 }}>상담료 {formatFee(expert.consultFee)}</span>
       </div>
 
       {/* CTA */}
       <button
         onClick={() => onConsult?.(expert)}
         disabled={!expert.available}
-        className={cn(
-          "mt-auto w-full rounded-xl py-2.5 text-sm font-medium transition-colors",
-          expert.available
-            ? "bg-[#1d1d1f] text-white hover:bg-[#1d1d1f]/90"
-            : "bg-[#f5f5f7] text-[#86868b] cursor-not-allowed"
-        )}
+        style={{
+          marginTop: "auto", width: "100%", padding: "10px", borderRadius: "12px", border: "none",
+          background: expert.available ? "linear-gradient(148deg, #0071e3, #0058b0)" : "#f5f5f7",
+          color: expert.available ? "#fff" : "#aeaeb2",
+          fontSize: "13px", fontWeight: 600, cursor: expert.available ? "pointer" : "not-allowed",
+          boxShadow: expert.available ? "0 4px 12px rgba(0,113,227,0.25)" : "none",
+        }}
       >
         {expert.available ? "상담 요청" : "상담 불가"}
       </button>

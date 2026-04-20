@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { ClipboardCheck, Download, RotateCcw } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
+import { ClipboardCheck, Download, RotateCcw, ChevronRight, CheckCircle2, ListChecks, TrendingUp, HardDrive, RefreshCw, Home, Key, FileText, type LucideIcon } from "lucide-react";
 
-/* ── 체크리스트 데이터 ── */
+/* ── 타입 ── */
 
 type DealType = "전세" | "매매" | "월세";
-type PropertyType = "아파트" | "빌라" | "오피스텔";
 type Stage = "계약 전" | "계약 중" | "계약 후" | "입주 전" | "입주 후";
 
 interface CheckItem {
@@ -14,6 +14,8 @@ interface CheckItem {
   label: string;
   description?: string;
 }
+
+/* ── 체크리스트 데이터 ── */
 
 const CHECKLIST_DATA: Record<DealType, Partial<Record<Stage, CheckItem[]>>> = {
   전세: {
@@ -139,215 +141,310 @@ const CHECKLIST_DATA: Record<DealType, Partial<Record<Stage, CheckItem[]>>> = {
   },
 };
 
+/* ── 단계별 색상 ── */
+
+const STAGE_META: Record<Stage, { color: string; bg: string; label: string }> = {
+  "계약 전":  { color: "#0071e3", bg: "rgba(0,113,227,0.10)",  label: "계약 전" },
+  "계약 중":  { color: "#b86f00", bg: "rgba(255,159,10,0.10)", label: "계약 중" },
+  "계약 후":  { color: "#1a9e45", bg: "rgba(48,209,88,0.10)",  label: "계약 후" },
+  "입주 전":  { color: "#6e3de8", bg: "rgba(110,61,232,0.10)", label: "입주 전" },
+  "입주 후":  { color: "#636366", bg: "rgba(99,99,102,0.10)",  label: "입주 후" },
+};
+
+const DEAL_META: Record<DealType, { color: string; bg: string; icon: LucideIcon }> = {
+  전세: { color: "#0071e3", bg: "rgba(0,113,227,0.10)", icon: Home },
+  매매: { color: "#1a9e45", bg: "rgba(48,209,88,0.10)", icon: Key },
+  월세: { color: "#b86f00", bg: "rgba(255,159,10,0.10)", icon: FileText },
+};
+
+const FEATURE_CHIPS: { icon: LucideIcon; label: string }[] = [
+  { icon: ListChecks,  label: "단계별 체크리스트" },
+  { icon: TrendingUp,  label: "진행률 자동 계산" },
+  { icon: HardDrive,   label: "브라우저 자동 저장" },
+  { icon: RefreshCw,   label: "전세·매매·월세" },
+];
+
 /* ── 스토리지 헬퍼 ── */
 
 const STORAGE_KEY = "vestra-checklist-state";
 
 function loadChecked(): Record<string, boolean> {
   if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  } catch {
-    return {};
-  }
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch { return {}; }
 }
 
 function saveChecked(state: Record<string, boolean>) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    /* quota exceeded – silently ignore */
-  }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* quota exceeded */ }
 }
 
-/* ── 페이지 컴포넌트 ── */
+/* ── 페이지 ── */
 
 export default function ChecklistPage() {
   const [dealType, setDealType] = useState<DealType>("전세");
-  const [propertyType, setPropertyType] = useState<PropertyType>("아파트");
   const [stage, setStage] = useState<Stage>("계약 전");
   const [items, setItems] = useState<CheckItem[]>([]);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [generated, setGenerated] = useState(false);
 
-  /* localStorage 초기 로드 */
-  useEffect(() => {
-    setChecked(loadChecked());
-  }, []);
+  const mounted = useRef(false);
 
-  /* checked 변경 시 저장 */
+  useEffect(() => { setChecked(loadChecked()); }, []);
   useEffect(() => {
-    if (Object.keys(checked).length > 0) {
-      saveChecked(checked);
-    }
+    if (!mounted.current) { mounted.current = true; return; }
+    saveChecked(checked);
   }, [checked]);
 
   const handleGenerate = () => {
-    const list = CHECKLIST_DATA[dealType]?.[stage] ?? [];
-    setItems(list);
+    setItems(CHECKLIST_DATA[dealType]?.[stage] ?? []);
     setGenerated(true);
   };
 
   const toggle = useCallback((id: string) => {
     setChecked((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
+      const next = { ...prev };
+      if (next[id]) delete next[id]; else next[id] = true;
       return next;
     });
   }, []);
 
   const resetChecklist = () => {
-    const resetState = { ...checked };
-    items.forEach((item) => {
-      delete resetState[item.id];
-    });
-    setChecked(resetState);
-    saveChecked(resetState);
+    const next = { ...checked };
+    items.forEach((item) => delete next[item.id]);
+    setChecked(next);
+    saveChecked(next);
   };
 
   const completedCount = items.filter((i) => checked[i.id]).length;
   const totalCount = items.length;
   const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
-  const selectClass =
-    "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none";
+  const stageMeta = STAGE_META[stage];
+  const dealMeta = DEAL_META[dealType];
+
+  const DEAL_TYPES: DealType[] = ["전세", "매매", "월세"];
+  const STAGES: Stage[] = ["계약 전", "계약 중", "계약 후", "입주 전", "입주 후"];
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
-      {/* 헤더 */}
-      <div>
-        <div className="flex items-center gap-2">
-          <ClipboardCheck className="h-6 w-6 text-indigo-600" />
-          <h1 className="text-xl font-bold text-gray-900">계약 체크리스트</h1>
-        </div>
-        <p className="mt-1 text-sm text-gray-500">
-          전세/매매 계약 전후 필수 확인사항을 자동 생성합니다
-        </p>
-      </div>
+    <div style={{ paddingBottom: "48px" }}>
 
-      {/* 입력 폼 */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5">
-        <h2 className="mb-4 text-sm font-bold text-gray-900">계약 정보</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+      {/* ── 히어로 배너 ── */}
+      <section
+        style={{
+          position: "relative", overflow: "hidden", borderRadius: "28px",
+          background: "linear-gradient(148deg, #141820 0%, #0c1527 50%, #0a1020 100%)",
+          marginTop: "10px", marginBottom: "28px",
+        }}
+      >
+        <div style={{ pointerEvents: "none", position: "absolute", top: "-80px", right: "-20px", height: "320px", width: "320px", borderRadius: "50%", background: "radial-gradient(circle, rgba(0,113,227,0.18) 0%, transparent 65%)" }} />
+        <div style={{ pointerEvents: "none", position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)", backgroundSize: "48px 48px" }} />
+
+        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "36px 44px", gap: "24px" }}>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">거래 유형</label>
-            <select value={dealType} onChange={(e) => setDealType(e.target.value as DealType)} className={selectClass}>
-              <option value="전세">전세</option>
-              <option value="매매">매매</option>
-              <option value="월세">월세</option>
-            </select>
+            <nav style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "12px" }}>
+              <Link href="/jeonse" style={{ fontSize: "11px", color: "rgba(41,151,255,0.80)", textDecoration: "none", fontWeight: 500 }}>전세보호</Link>
+              <ChevronRight size={11} style={{ color: "rgba(255,255,255,0.25)" }} strokeWidth={2} />
+              <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.50)", fontWeight: 500 }}>계약 체크리스트</span>
+            </nav>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 11px", borderRadius: "20px", fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase" as const, color: "#2997ff", background: "rgba(41,151,255,0.10)", border: "1px solid rgba(41,151,255,0.20)", marginBottom: "14px" }}>
+              📋 체크리스트
+            </div>
+            <h1 style={{ fontSize: "clamp(22px, 2.4vw, 32px)", fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.03em", color: "#fff", margin: 0 }}>
+              계약 체크리스트
+            </h1>
+            <p style={{ fontSize: "14px", lineHeight: 1.6, color: "rgba(255,255,255,0.42)", marginTop: "8px", marginBottom: 0 }}>
+              전세·매매·월세 계약 단계별 필수 확인사항을<br />자동으로 생성하고 진행률을 추적합니다.
+            </p>
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">물건 유형</label>
-            <select value={propertyType} onChange={(e) => setPropertyType(e.target.value as PropertyType)} className={selectClass}>
-              <option value="아파트">아파트</option>
-              <option value="빌라">빌라</option>
-              <option value="오피스텔">오피스텔</option>
-            </select>
+          <div className="hidden md:flex" style={{ flexDirection: "column", gap: "8px", flexShrink: 0 }}>
+            {FEATURE_CHIPS.map(({ icon: Icon, label }) => (
+              <div key={label} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px", borderRadius: "12px", background: "rgba(255,255,255,0.055)", border: "1px solid rgba(255,255,255,0.09)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", minWidth: "180px" }}>
+                <Icon size={15} strokeWidth={1.5} style={{ color: "rgba(255,255,255,0.70)", flexShrink: 0 }} />
+                <span style={{ fontSize: "12.5px", fontWeight: 500, color: "rgba(255,255,255,0.80)" }}>{label}</span>
+              </div>
+            ))}
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">계약 단계</label>
-            <select value={stage} onChange={(e) => setStage(e.target.value as Stage)} className={selectClass}>
-              <option value="계약 전">계약 전</option>
-              <option value="계약 중">계약 중</option>
-              <option value="계약 후">계약 후</option>
-              <option value="입주 전">입주 전</option>
-              <option value="입주 후">입주 후</option>
-            </select>
+        </div>
+      </section>
+
+      {/* ── 필터 카드 ── */}
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px", marginBottom: "16px" }}>
+        {/* 거래 유형 */}
+        <div style={{ marginBottom: "20px" }}>
+          <p style={{ fontSize: "11px", fontWeight: 700, color: "#aeaeb2", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: "10px" }}>거래 유형</p>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" as const }}>
+            {DEAL_TYPES.map((dt) => {
+              const active = dealType === dt;
+              const meta = DEAL_META[dt];
+              const DtIcon = meta.icon;
+              return (
+                <button
+                  key={dt}
+                  onClick={() => { setDealType(dt); setGenerated(false); }}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: "6px",
+                    padding: "8px 18px", borderRadius: "20px", border: "none", cursor: "pointer",
+                    fontSize: "13px", fontWeight: 600, transition: "all 0.15s",
+                    background: active ? meta.color : "rgba(0,0,0,0.04)",
+                    color: active ? "#fff" : "#6e6e73",
+                    boxShadow: active ? `0 2px 12px ${meta.color}44` : "none",
+                  }}
+                >
+                  <DtIcon size={14} strokeWidth={1.5} />{dt}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 계약 단계 */}
+        <div style={{ marginBottom: "20px" }}>
+          <p style={{ fontSize: "11px", fontWeight: 700, color: "#aeaeb2", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: "10px" }}>계약 단계</p>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" as const }}>
+            {STAGES.map((s) => {
+              const active = stage === s;
+              const meta = STAGE_META[s];
+              return (
+                <button
+                  key={s}
+                  onClick={() => { setStage(s); setGenerated(false); }}
+                  style={{
+                    padding: "7px 16px", borderRadius: "20px", border: "none", cursor: "pointer",
+                    fontSize: "12.5px", fontWeight: 600, transition: "all 0.15s",
+                    background: active ? meta.bg : "rgba(0,0,0,0.04)",
+                    color: active ? meta.color : "#6e6e73",
+                    outline: active ? `1.5px solid ${meta.color}55` : "none",
+                  }}
+                >
+                  {s}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         <button
           onClick={handleGenerate}
-          className="mt-5 w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 sm:w-auto sm:px-8"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: "8px",
+            padding: "11px 28px", borderRadius: "12px", border: "none", cursor: "pointer",
+            background: "#0071e3", color: "#fff", fontSize: "13.5px", fontWeight: 600,
+            boxShadow: "0 2px 12px rgba(0,113,227,0.30)", transition: "all 0.15s",
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#0077ed"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 20px rgba(0,113,227,0.40)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#0071e3"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 2px 12px rgba(0,113,227,0.30)"; }}
         >
+          <ClipboardCheck size={15} strokeWidth={2} />
           체크리스트 생성
         </button>
       </div>
 
-      {/* 결과 */}
+      {/* ── 결과 영역 ── */}
       {generated && (
         <>
           {items.length === 0 ? (
-            <div className="rounded-xl border border-gray-200 bg-white p-5 text-center">
-              <p className="text-sm text-gray-500">해당 조합에 대한 체크리스트가 없습니다.</p>
+            <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", padding: "40px 24px", textAlign: "center" as const }}>
+              <p style={{ fontSize: "14px", color: "#aeaeb2" }}>해당 조합에 대한 체크리스트가 없습니다.</p>
             </div>
           ) : (
             <>
-              {/* 프로그레스 요약 */}
-              <div className="rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50 p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-indigo-600">
-                      {dealType} · {propertyType} · {stage}
-                    </p>
-                    <p className="text-lg font-bold text-gray-900">
-                      {completedCount}/{totalCount}개 완료
-                    </p>
+              {/* 진행률 카드 */}
+              <div
+                style={{
+                  background: "#fff", border: "1px solid rgba(0,0,0,0.08)",
+                  borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+                  padding: "24px", marginBottom: "16px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", gap: "12px", flexWrap: "wrap" as const }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <span style={{ fontSize: "12px", fontWeight: 700, padding: "4px 12px", borderRadius: "20px", color: dealMeta.color, background: dealMeta.bg }}>{dealType}</span>
+                    <span style={{ fontSize: "12px", fontWeight: 700, padding: "4px 12px", borderRadius: "20px", color: stageMeta.color, background: stageMeta.bg }}>{stage}</span>
+                    <span style={{ fontSize: "13px", color: "#6e6e73" }}>{totalCount}개 항목</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold text-indigo-600">{progress}%</span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={resetChecklist}
-                        className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
-                      >
-                        <RotateCcw className="h-3 w-3" /> 초기화
-                      </button>
-                      <button
-                        onClick={() => alert("PDF 저장 기능은 준비 중입니다.")}
-                        className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
-                      >
-                        <Download className="h-3 w-3" /> PDF 저장
-                      </button>
-                    </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <button
+                      onClick={resetChecklist}
+                      style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "7px 14px", borderRadius: "10px", border: "1px solid rgba(0,0,0,0.10)", background: "#fff", cursor: "pointer", fontSize: "12px", fontWeight: 500, color: "#6e6e73", transition: "all 0.15s" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#f5f5f7"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#fff"; }}
+                    >
+                      <RotateCcw size={12} strokeWidth={2} /> 초기화
+                    </button>
+                    <button
+                      disabled
+                      title="PDF 저장 기능은 준비 중입니다"
+                      style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "7px 14px", borderRadius: "10px", border: "none", background: "rgba(0,113,227,0.35)", cursor: "not-allowed", fontSize: "12px", fontWeight: 600, color: "#fff", transition: "all 0.15s" }}
+                    >
+                      <Download size={12} strokeWidth={2} /> PDF 저장
+                    </button>
                   </div>
                 </div>
 
-                {/* 프로그레스 바 */}
-                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-indigo-100">
-                  <div
-                    className="h-full rounded-full bg-indigo-600 transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  />
+                {/* 진행률 바 */}
+                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                  <div style={{ flex: 1, height: "6px", borderRadius: "9999px", background: "rgba(0,0,0,0.06)", overflow: "hidden" }}>
+                    <div
+                      style={{
+                        height: "100%", borderRadius: "9999px", transition: "width 0.4s ease",
+                        width: `${progress}%`,
+                        background: progress === 100
+                          ? "linear-gradient(90deg, #1a9e45, #30d158)"
+                          : "linear-gradient(90deg, #0071e3, #2997ff)",
+                      }}
+                    />
+                  </div>
+                  <span style={{ fontSize: "20px", fontWeight: 700, color: progress === 100 ? "#1a9e45" : "#0071e3", minWidth: "48px", textAlign: "right" as const }}>
+                    {progress}%
+                  </span>
                 </div>
+                <p style={{ fontSize: "12px", color: "#aeaeb2", marginTop: "8px" }}>
+                  {completedCount}/{totalCount}개 완료
+                  {progress === 100 && <span style={{ color: "#1a9e45", fontWeight: 600, marginLeft: "6px" }}>· 모든 항목 완료!</span>}
+                </p>
               </div>
 
               {/* 체크리스트 아이템 */}
-              <div className="space-y-2">
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {items.map((item, idx) => {
                   const isChecked = !!checked[item.id];
                   return (
                     <button
                       key={item.id}
                       onClick={() => toggle(item.id)}
-                      className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition ${
-                        isChecked
-                          ? "border-green-200 bg-green-50"
-                          : "border-gray-200 bg-white hover:border-indigo-300"
-                      }`}
+                      style={{
+                        display: "flex", alignItems: "flex-start", gap: "14px",
+                        width: "100%", textAlign: "left" as const, cursor: "pointer",
+                        background: isChecked ? "rgba(48,209,88,0.05)" : "#fff",
+                        border: isChecked ? "1px solid rgba(48,209,88,0.25)" : "1px solid rgba(0,0,0,0.08)",
+                        borderRadius: "16px",
+                        boxShadow: isChecked ? "none" : "0 1px 6px rgba(0,0,0,0.04)",
+                        padding: "16px 18px",
+                        transition: "all 0.15s",
+                      }}
+                      onMouseEnter={(e) => { if (!isChecked) (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(0,113,227,0.25)"; }}
+                      onMouseLeave={(e) => { if (!isChecked) (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(0,0,0,0.08)"; }}
                     >
-                      <div className="mt-0.5 flex-shrink-0">
-                        <div
-                          className={`flex h-5 w-5 items-center justify-center rounded border-2 transition ${
-                            isChecked
-                              ? "border-green-500 bg-green-500 text-white"
-                              : "border-gray-300"
-                          }`}
-                        >
-                          {isChecked && (
-                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </div>
+                      {/* 체크 원형 */}
+                      <div style={{ flexShrink: 0, marginTop: "1px" }}>
+                        {isChecked ? (
+                          <CheckCircle2 size={22} style={{ color: "#30d158" }} strokeWidth={2} />
+                        ) : (
+                          <div style={{ width: "22px", height: "22px", borderRadius: "50%", border: "1.5px solid #c7c7cc", background: "#fff" }} />
+                        )}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-sm font-medium ${isChecked ? "text-green-700 line-through" : "text-gray-900"}`}>
-                          <span className="mr-2 text-xs text-gray-400">{idx + 1}.</span>
-                          {item.label}
-                        </p>
+
+                      {/* 텍스트 */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: item.description ? "4px" : 0 }}>
+                          <span style={{ fontSize: "11px", fontWeight: 700, color: isChecked ? "#30d158" : stageMeta.color, background: isChecked ? "rgba(48,209,88,0.10)" : stageMeta.bg, padding: "2px 8px", borderRadius: "20px", flexShrink: 0 }}>
+                            {String(idx + 1).padStart(2, "0")}
+                          </span>
+                          <p style={{ fontSize: "13.5px", fontWeight: 600, color: isChecked ? "#aeaeb2" : "#1d1d1f", textDecoration: isChecked ? "line-through" : "none", margin: 0, lineHeight: 1.4 }}>
+                            {item.label}
+                          </p>
+                        </div>
                         {item.description && (
-                          <p className={`mt-0.5 text-xs ${isChecked ? "text-green-500" : "text-gray-500"}`}>
+                          <p style={{ fontSize: "12px", lineHeight: 1.65, color: isChecked ? "#c7c7cc" : "#6e6e73", margin: 0, paddingLeft: "36px" }}>
                             {item.description}
                           </p>
                         )}
@@ -358,7 +455,7 @@ export default function ChecklistPage() {
               </div>
 
               {/* 안내 */}
-              <p className="text-center text-xs text-gray-400">
+              <p style={{ textAlign: "center" as const, fontSize: "11.5px", color: "#aeaeb2", marginTop: "20px", lineHeight: 1.65 }}>
                 체크 상태는 브라우저에 자동 저장됩니다. 본 체크리스트는 참고용이며, 실제 계약 시 전문가 상담을 권장합니다.
               </p>
             </>

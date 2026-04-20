@@ -128,19 +128,30 @@ export function useDashboardData() {
     }
   };
 
-  const handleMonitorRegister = async (address: string) => {
+  const handleMonitorToggle = async (address: string) => {
     if (!session?.user) return;
+    const isCurrentlyMonitored = monitoredAddresses.has(address);
     setMonitoringLoading(address);
     try {
-      const res = await fetch("/api/monitoring", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address }),
-      });
-      if (res.ok || res.status === 409) {
-        setMonitoredAddresses((prev) => new Set(prev).add(address));
-        setMonitoringSuccess((prev) => new Set(prev).add(address));
-        if (res.ok) setMonitoredCount((prev) => prev + 1);
+      if (isCurrentlyMonitored) {
+        const res = await fetch(`/api/monitoring?address=${encodeURIComponent(address)}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          setMonitoredAddresses((prev) => { const next = new Set(prev); next.delete(address); return next; });
+          setMonitoredCount((prev) => Math.max(0, prev - 1));
+        }
+      } else {
+        const res = await fetch("/api/monitoring", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address }),
+        });
+        if (res.ok || res.status === 409) {
+          setMonitoredAddresses((prev) => new Set(prev).add(address));
+          setMonitoringSuccess((prev) => new Set(prev).add(address));
+          if (res.ok) setMonitoredCount((prev) => prev + 1);
+        }
       }
     } catch { /* 실패 무시 */ } finally {
       setMonitoringLoading(null);
@@ -153,6 +164,6 @@ export function useDashboardData() {
     monitoringLoading, monitoringSuccess,
     totalAssets, totalValue, avgSafety, avgRisk,
     riskDistribution, assetValueData, addressCountMap,
-    handleDeleteAnalysis, handleCascadeUpdate, handleMonitorRegister,
+    handleDeleteAnalysis, handleCascadeUpdate, handleMonitorToggle,
   };
 }

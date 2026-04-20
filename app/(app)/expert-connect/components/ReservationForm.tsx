@@ -1,7 +1,6 @@
 "use client";
 
 import { CalendarClock } from "lucide-react";
-import { Card, CardContent } from "@/components/common/Card";
 import { RESERVATION_TYPES } from "../constants";
 import type { ReservationFormState } from "../hooks/useExpertConsult";
 
@@ -11,69 +10,73 @@ interface Props {
   onSubmit: (e: React.FormEvent) => void;
 }
 
+const inputStyle: React.CSSProperties = {
+  width: "100%", padding: "11px 14px", borderRadius: "12px",
+  border: "1px solid rgba(0,0,0,0.12)", background: "#fff",
+  fontSize: "13.5px", color: "#1d1d1f", outline: "none",
+  boxSizing: "border-box",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block", fontSize: "13px", fontWeight: 600, color: "#1d1d1f", marginBottom: "6px",
+};
+
 export function ReservationForm({ reservationForm, setReservationForm, onSubmit }: Props) {
   return (
-    <div className="mb-10">
-      <Card>
-        <CardContent>
-          <div className="flex items-center gap-2 mb-1">
-            <CalendarClock className="h-5 w-5 text-indigo-500" />
-            <h2 className="text-lg font-semibold text-[#1d1d1f]">상담 예약</h2>
-          </div>
-          <p className="text-sm text-[#6e6e73] mb-6">원하시는 상담 유형과 일시를 선택하고 예약하세요</p>
+    <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px", marginBottom: "24px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+        <CalendarClock size={18} strokeWidth={1.5} style={{ color: "#0071e3" }} />
+        <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", margin: 0 }}>상담 예약</h2>
+      </div>
+      <p style={{ fontSize: "12px", color: "#6e6e73", margin: "0 0 20px" }}>원하시는 상담 유형과 일시를 선택하고 예약하세요</p>
 
-          <form onSubmit={onSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">
-                상담 유형 <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={reservationForm.consultType}
-                onChange={(e) => setReservationForm((p) => ({ ...p, consultType: e.target.value }))}
-                className="w-full rounded-xl border border-[#e5e5e7] px-4 py-2.5 text-sm text-[#1d1d1f] bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
-              >
-                <option value="">상담 유형을 선택하세요</option>
-                {RESERVATION_TYPES.map((type) => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
+      <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+        <div>
+          <label style={labelStyle}>상담 유형 <span style={{ color: "#ff3b30" }}>*</span></label>
+          <select
+            value={reservationForm.consultType}
+            onChange={(e) => setReservationForm((p) => ({ ...p, consultType: e.target.value }))}
+            style={inputStyle}
+          >
+            <option value="">상담 유형을 선택하세요</option>
+            {RESERVATION_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+          </select>
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">
-                희망 일시 <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="datetime-local"
-                value={reservationForm.preferredDate}
-                onChange={(e) => setReservationForm((p) => ({ ...p, preferredDate: e.target.value }))}
-                className="w-full rounded-xl border border-[#e5e5e7] px-4 py-2.5 text-sm text-[#1d1d1f] bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
-              />
-            </div>
+        <div>
+          <label style={labelStyle}>희망 일시 <span style={{ color: "#ff3b30" }}>*</span></label>
+          <input
+            type="datetime-local"
+            value={reservationForm.preferredDate}
+            onChange={(e) => setReservationForm((p) => ({ ...p, preferredDate: e.target.value }))}
+            style={inputStyle}
+          />
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">
-                문의 내용 <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={reservationForm.inquiry}
-                onChange={(e) => setReservationForm((p) => ({ ...p, inquiry: e.target.value }))}
-                rows={4}
-                placeholder="상담받고 싶은 내용을 자세히 적어주세요"
-                className="w-full rounded-xl border border-[#e5e5e7] px-4 py-2.5 text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
-              />
-            </div>
+        <div>
+          <label style={labelStyle}>문의 내용 <span style={{ color: "#ff3b30" }}>*</span></label>
+          <textarea
+            value={reservationForm.inquiry}
+            onChange={(e) => setReservationForm((p) => ({ ...p, inquiry: e.target.value }))}
+            rows={4}
+            placeholder="상담받고 싶은 내용을 자세히 적어주세요"
+            style={{ ...inputStyle, resize: "none" }}
+          />
+        </div>
 
-            <button
-              type="submit"
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-600 active:bg-indigo-700"
-            >
-              <CalendarClock className="h-4 w-4" />
-              예약하기
-            </button>
-          </form>
-        </CardContent>
-      </Card>
+        <button
+          type="submit"
+          style={{
+            width: "100%", padding: "13px", borderRadius: "13px", border: "none",
+            background: "linear-gradient(148deg, #0071e3, #0058b0)", color: "#fff",
+            fontSize: "14px", fontWeight: 700, cursor: "pointer", display: "flex",
+            alignItems: "center", justifyContent: "center", gap: "8px",
+            boxShadow: "0 4px 16px rgba(0,113,227,0.30)",
+          }}
+        >
+          <CalendarClock size={15} strokeWidth={2} /> 예약하기
+        </button>
+      </form>
     </div>
   );
 }

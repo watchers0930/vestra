@@ -1,4 +1,7 @@
 import type { Expert } from "@/components/expert/ExpertCard";
+import { Scale, BarChart2, Home, Briefcase, type LucideIcon } from "lucide-react";
+
+export type PricingItem = { label: string; price: string; icon: LucideIcon; highlight?: boolean };
 
 export const EXPERTS: Expert[] = [
   {
@@ -76,11 +79,11 @@ export const CONSULT_TYPES = [
   "계약서 검토",
 ];
 
-export const PRICING = [
-  { label: "법무사 상담", price: "50,000", icon: "📜" },
-  { label: "세무사 상담", price: "80,000", icon: "📊" },
-  { label: "공인중개사 상담", price: "30,000", icon: "🏠" },
-  { label: "종합 컨설팅", price: "150,000", icon: "💼", highlight: true },
+export const PRICING: PricingItem[] = [
+  { label: "법무사 상담", price: "50,000", icon: Scale },
+  { label: "세무사 상담", price: "80,000", icon: BarChart2 },
+  { label: "공인중개사 상담", price: "30,000", icon: Home },
+  { label: "종합 컨설팅", price: "150,000", icon: Briefcase, highlight: true },
 ];
 
 export const RESERVATION_TYPES = [
