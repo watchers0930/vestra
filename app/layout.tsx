@@ -113,9 +113,15 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#4F46E5" />
         <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+        {/* Paperlogy 주요 weight preload — 자가 호스팅 */}
+        <link rel="preload" href="/fonts/Paperlogy-4Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/Paperlogy-5Medium.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/Paperlogy-6SemiBold.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/Paperlogy-7Bold.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        {/* Material Symbols — 비동기 로드 (렌더 블로킹 제거) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet" />
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block';document.head.appendChild(l);})();` }} />
         <JsonLd />
       </head>
       <body

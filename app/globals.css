@@ -18,11 +18,11 @@
   vertical-align: middle;
 }
 
-/* Paperlogy Font (실제 사용 weight만 로드) */
-@font-face { font-family: 'Paperlogy'; font-weight: 400; font-display: swap; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2') format('woff2'); }
-@font-face { font-family: 'Paperlogy'; font-weight: 500; font-display: swap; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2') format('woff2'); }
-@font-face { font-family: 'Paperlogy'; font-weight: 600; font-display: swap; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2') format('woff2'); }
-@font-face { font-family: 'Paperlogy'; font-weight: 700; font-display: swap; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2'); }
+/* Paperlogy Font — 자가 호스팅 (CDN 왕복 제거) */
+@font-face { font-family: 'Paperlogy'; font-weight: 400; font-display: swap; src: url('/fonts/Paperlogy-4Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 500; font-display: swap; src: url('/fonts/Paperlogy-5Medium.woff2') format('woff2'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 600; font-display: swap; src: url('/fonts/Paperlogy-6SemiBold.woff2') format('woff2'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 700; font-display: swap; src: url('/fonts/Paperlogy-7Bold.woff2') format('woff2'); }
 
 @theme inline {
   --color-background: #ffffff;
@@ -159,12 +159,12 @@ body {
 .prose li { margin-bottom: 0.25rem; }
 .prose strong { font-weight: 600; }
 
-/* ── Paperlogy additional weights ── */
-@font-face { font-family: 'Paperlogy'; font-weight: 100; font-display: swap; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-1Thin.woff2') format('woff2'); }
-@font-face { font-family: 'Paperlogy'; font-weight: 200; font-display: swap; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-2ExtraLight.woff2') format('woff2'); }
-@font-face { font-family: 'Paperlogy'; font-weight: 300; font-display: swap; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-3Light.woff2') format('woff2'); }
-@font-face { font-family: 'Paperlogy'; font-weight: 800; font-display: swap; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2'); }
-@font-face { font-family: 'Paperlogy'; font-weight: 900; font-display: swap; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-9Black.woff2') format('woff2'); }
+/* ── Paperlogy additional weights — 자가 호스팅 ── */
+@font-face { font-family: 'Paperlogy'; font-weight: 100; font-display: swap; src: url('/fonts/Paperlogy-1Thin.woff2') format('woff2'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 200; font-display: swap; src: url('/fonts/Paperlogy-2ExtraLight.woff2') format('woff2'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 300; font-display: swap; src: url('/fonts/Paperlogy-3Light.woff2') format('woff2'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 800; font-display: swap; src: url('/fonts/Paperlogy-8ExtraBold.woff2') format('woff2'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 900; font-display: swap; src: url('/fonts/Paperlogy-9Black.woff2') format('woff2'); }
 
 /* ── Landing Page Utilities ── */
 .landing-glass-nav {
