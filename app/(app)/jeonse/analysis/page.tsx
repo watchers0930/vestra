@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Shield, ChevronRight } from "lucide-react";
+import { Shield, ChevronRight, ShieldCheck, AlertTriangle, FileText, Lock, type LucideIcon } from "lucide-react";
 import { JeonseInputForm } from "./components/JeonseInputForm";
 import { JeonseResultPanel } from "./components/JeonseResultPanel";
 import { useJeonseAnalysis } from "./hooks/useJeonseAnalysis";
 
-const FEATURE_CHIPS = [
-  { icon: "🛡️", label: "전세권 설정 판단" },
-  { icon: "⚠️", label: "전세사기 위험도" },
-  { icon: "📄", label: "서류 자동 생성" },
-  { icon: "🔒", label: "보증보험 판단" },
+const FEATURE_CHIPS: { icon: LucideIcon; label: string }[] = [
+  { icon: ShieldCheck,    label: "전세권 설정 판단" },
+  { icon: AlertTriangle,  label: "전세사기 위험도"  },
+  { icon: FileText,       label: "서류 자동 생성"  },
+  { icon: Lock,           label: "보증보험 판단"   },
 ];
 
 export default function JeonsePage() {
@@ -71,7 +71,7 @@ export default function JeonsePage() {
             </p>
           </div>
           <div className="hidden md:flex" style={{ flexDirection: "column", gap: "8px", flexShrink: 0 }}>
-            {FEATURE_CHIPS.map(({ icon, label }) => (
+            {FEATURE_CHIPS.map(({ icon: Icon, label }) => (
               <div
                 key={label}
                 style={{
@@ -81,7 +81,7 @@ export default function JeonsePage() {
                   backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", minWidth: "166px",
                 }}
               >
-                <span style={{ fontSize: "15px" }}>{icon}</span>
+                <Icon size={15} strokeWidth={1.6} style={{ color: "rgba(255,255,255,0.65)", flexShrink: 0 }} />
                 <span style={{ fontSize: "12.5px", fontWeight: 500, color: "rgba(255,255,255,0.80)" }}>{label}</span>
               </div>
             ))}

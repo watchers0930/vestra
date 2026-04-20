@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FileSearch, Shield, Calculator, Copy, ShieldCheck, ClipboardCheck } from "lucide-react";
+import { FileSearch, Shield, Calculator, Copy, ShieldCheck, ClipboardCheck, ClipboardList, Scale, Bot, Search, type LucideIcon } from "lucide-react";
 import FeedbackWidget from "@/components/common/FeedbackWidget";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
 import { NerHighlight } from "@/components/common/NerHighlight";
@@ -15,11 +15,11 @@ import { MissingClausesCard } from "./components/MissingClausesCard";
 import { SafetyChecklist } from "./components/SafetyChecklist";
 import { getScoreLabel, riskBadgeLabel } from "./constants";
 
-const FEATURE_CHIPS = [
-  { icon: "📋", label: "조항별 분석"  },
-  { icon: "⚖️", label: "판례 연계"   },
-  { icon: "🤖", label: "AI 종합 의견" },
-  { icon: "🔍", label: "누락 조항 탐지" },
+const FEATURE_CHIPS: { icon: LucideIcon; label: string }[] = [
+  { icon: ClipboardList, label: "조항별 분석"   },
+  { icon: Scale,         label: "판례 연계"    },
+  { icon: Bot,           label: "AI 종합 의견" },
+  { icon: Search,        label: "누락 조항 탐지" },
 ];
 
 export default function ContractReviewPage() {
@@ -72,7 +72,7 @@ export default function ContractReviewPage() {
             </p>
           </div>
           <div className="hidden md:flex" style={{ flexDirection: "column", gap: "8px", flexShrink: 0 }}>
-            {FEATURE_CHIPS.map(({ icon, label }) => (
+            {FEATURE_CHIPS.map(({ icon: Icon, label }) => (
               <div
                 key={label}
                 style={{
@@ -82,7 +82,7 @@ export default function ContractReviewPage() {
                   backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", minWidth: "148px",
                 }}
               >
-                <span style={{ fontSize: "15px" }}>{icon}</span>
+                <Icon size={15} strokeWidth={1.6} style={{ color: "rgba(255,255,255,0.65)", flexShrink: 0 }} />
                 <span style={{ fontSize: "12.5px", fontWeight: 500, color: "rgba(255,255,255,0.80)" }}>{label}</span>
               </div>
             ))}

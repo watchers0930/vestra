@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Shield, FileText, Loader2, ShieldCheck, Home, Calculator, TrendingUp } from "lucide-react";
+import { Shield, FileText, Loader2, ShieldCheck, Home, Calculator, TrendingUp, Layers, BarChart2, Bot, Zap, type LucideIcon } from "lucide-react";
 import { AiDisclaimer } from "@/components/common";
 import FeedbackWidget from "@/components/common/FeedbackWidget";
 import { AnalysisLoader } from "@/components/common/AnalysisLoader";
@@ -17,11 +17,11 @@ const RightsResult = dynamic(
   { loading: () => <div style={{ display: "flex", justifyContent: "center", padding: "48px 0" }}><Loader2 className="h-6 w-6 animate-spin text-primary" /></div> },
 );
 
-const FEATURE_CHIPS = [
-  { icon: "🗂️", label: "갑구·을구 분석" },
-  { icon: "📊", label: "실거래가 연동"  },
-  { icon: "🤖", label: "AI 종합 의견"   },
-  { icon: "⚡",  label: "30초 분석"     },
+const FEATURE_CHIPS: { icon: LucideIcon; label: string }[] = [
+  { icon: Layers,   label: "갑구·을구 분석" },
+  { icon: BarChart2, label: "실거래가 연동" },
+  { icon: Bot,      label: "AI 종합 의견"  },
+  { icon: Zap,      label: "30초 분석"    },
 ];
 
 export default function RightsAnalysisPage() {
@@ -102,7 +102,7 @@ export default function RightsAnalysisPage() {
 
           {/* 우측 — 기능 칩 */}
           <div className="hidden md:flex" style={{ flexDirection: "column", gap: "8px", flexShrink: 0 }}>
-            {FEATURE_CHIPS.map(({ icon, label }) => (
+            {FEATURE_CHIPS.map(({ icon: Icon, label }) => (
               <div
                 key={label}
                 style={{
@@ -118,7 +118,7 @@ export default function RightsAnalysisPage() {
                   minWidth: "148px",
                 }}
               >
-                <span style={{ fontSize: "15px" }}>{icon}</span>
+                <Icon size={15} strokeWidth={1.6} style={{ color: "rgba(255,255,255,0.65)", flexShrink: 0 }} />
                 <span style={{ fontSize: "12.5px", fontWeight: 500, color: "rgba(255,255,255,0.80)" }}>{label}</span>
               </div>
             ))}

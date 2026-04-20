@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Home, Shield, MapPin, Stamp, ShieldCheck, Gavel, FileText, ChevronRight, Users, ArrowRight } from "lucide-react";
+import { Home, Shield, MapPin, Stamp, ShieldCheck, Gavel, FileText, ChevronRight, Users, ArrowRight, ClipboardList, AlertTriangle, type LucideIcon } from "lucide-react";
 
-const FEATURE_CHIPS = [
-  { icon: "🛡️", label: "전세권 안전 분석" },
-  { icon: "📋", label: "필요 서류 안내" },
-  { icon: "🏠", label: "행정 절차 가이드" },
-  { icon: "⚠️", label: "전세사기 탐지" },
+const FEATURE_CHIPS: { icon: LucideIcon; label: string }[] = [
+  { icon: ShieldCheck,   label: "전세권 안전 분석" },
+  { icon: ClipboardList, label: "필요 서류 안내"  },
+  { icon: Home,          label: "행정 절차 가이드" },
+  { icon: AlertTriangle, label: "전세사기 탐지"   },
 ];
 
 const PROCEDURES = [
@@ -103,7 +103,7 @@ export default function JeonseHubPage() {
             </p>
           </div>
           <div className="hidden md:flex" style={{ flexDirection: "column", gap: "8px", flexShrink: 0 }}>
-            {FEATURE_CHIPS.map(({ icon, label }) => (
+            {FEATURE_CHIPS.map(({ icon: Icon, label }) => (
               <div
                 key={label}
                 style={{
@@ -113,7 +113,7 @@ export default function JeonseHubPage() {
                   backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", minWidth: "166px",
                 }}
               >
-                <span style={{ fontSize: "15px" }}>{icon}</span>
+                <Icon size={15} strokeWidth={1.6} style={{ color: "rgba(255,255,255,0.65)", flexShrink: 0 }} />
                 <span style={{ fontSize: "12.5px", fontWeight: 500, color: "rgba(255,255,255,0.80)" }}>{label}</span>
               </div>
             ))}
