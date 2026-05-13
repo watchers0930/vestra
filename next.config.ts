@@ -20,16 +20,18 @@ const securityHeaders = [
 const kakaoDomains = "https://t1.daumcdn.net https://dapi.kakao.com https://postcode.map.kakao.com";
 const kakaoConnect = "https://dapi.kakao.com https://*.daumcdn.net https://*.kakao.com";
 const kakaoImg = "https://*.daumcdn.net https://*.kakao.com https://*.kakao.io";
+const googleTagDomains = "https://www.googletagmanager.com";
+const googleAnalyticsConnect = "https://www.google-analytics.com https://region1.google-analytics.com";
 
 // 기본 CSP (unsafe-eval 없음)
 const baseCSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' ${kakaoDomains}`,
+  `script-src 'self' 'unsafe-inline' ${kakaoDomains} ${googleTagDomains}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   `img-src 'self' data: blob: ${kakaoImg} https://lh3.googleusercontent.com https://images.unsplash.com`,
   "font-src 'self' data: https://fastly.jsdelivr.net https://fonts.gstatic.com",
-  `connect-src 'self' https://api.openai.com https://*.neon.tech ${kakaoConnect} https://api.odcloud.kr https://apis.data.go.kr https://fcm.googleapis.com https://*.push.services.mozilla.com https://*.notify.windows.com`,
-  "frame-src https://postcode.map.kakao.com",
+  `connect-src 'self' https://api.openai.com https://*.neon.tech ${kakaoConnect} ${googleAnalyticsConnect} https://api.odcloud.kr https://apis.data.go.kr https://fcm.googleapis.com https://*.push.services.mozilla.com https://*.notify.windows.com`,
+  `frame-src https://postcode.map.kakao.com ${googleTagDomains}`,
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
@@ -38,8 +40,8 @@ const baseCSP = [
 
 // 지도 페이지 CSP (unsafe-eval 포함 — 카카오맵 SDK 필요)
 const mapCSP = baseCSP.replace(
-  `script-src 'self' 'unsafe-inline' ${kakaoDomains}`,
-  `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${kakaoDomains}`,
+  `script-src 'self' 'unsafe-inline' ${kakaoDomains} ${googleTagDomains}`,
+  `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${kakaoDomains} ${googleTagDomains}`,
 );
 
 const nextConfig: NextConfig = {
