@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import Script from "next/script";
 
 declare global {
   interface Window {
@@ -13,10 +15,14 @@ import "./globals.css";
 import SessionProvider from "@/components/auth/session-provider";
 import { ToastProvider } from "@/components/common/toast";
 
+import AnalyticsTracker from "@/components/common/AnalyticsTracker";
 import KakaoScript from "@/components/common/KakaoScript";
 import JsonLd from "@/components/common/JsonLd";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID?.trim() || "GTM-MCRNTGST";
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -111,6 +117,32 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
+        <Script id="gtm-base" strategy="afterInteractive">
+          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','${GTM_ID}');`}
+        </Script>
+        {GA_MEASUREMENT_ID ? (
+          <>
+            <Script
+              id="ga4-lib"
+              strategy="afterInteractive"
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+            />
+            <Script id="ga4-config" strategy="afterInteractive">
+              {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+window.gtag = window.gtag || gtag;
+gtag('js', new Date());
+gtag('config', '${GA_MEASUREMENT_ID}', {
+  send_page_view: false,
+  anonymize_ip: true
+});`}
+            </Script>
+          </>
+        ) : null}
         <meta name="theme-color" content="#4F46E5" />
         <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
         {/* Paperlogy 주요 weight preload — 자가 호스팅 */}
@@ -127,8 +159,19 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} antialiased`}
       >
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
         <SessionProvider>
           <ToastProvider>
+            <Suspense fallback={null}>
+              <AnalyticsTracker />
+            </Suspense>
             <KakaoScript />
             {children}
           </ToastProvider>

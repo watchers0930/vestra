@@ -27,6 +27,8 @@ const ENV_VARS: EnvVar[] = [
   { key: "KOSIS_API_KEY", required: false, description: "통계청 KOSIS API" },
   { key: "FSS_API_KEY", required: false, description: "금융감독원 금융상품비교 API" },
   { key: "KAKAO_REST_KEY", required: false, description: "카카오 로컬 검색 REST API (서버)" },
+  { key: "NEXT_PUBLIC_GA_MEASUREMENT_ID", required: false, description: "클라이언트 GA4 Measurement ID (G-...)" },
+  { key: "NEXT_PUBLIC_GTM_ID", required: false, description: "Google Tag Manager Container ID (GTM-...)" },
 ];
 
 let validated = false;
