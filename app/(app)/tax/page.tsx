@@ -9,6 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { SliderInput } from "@/components/forms";
 import { InfoRow, ScholarPapers } from "@/components/results";
+import { useHydrated } from "@/lib/use-hydrated";
 import dynamic from "next/dynamic";
 
 const TaxScenarioCompare = dynamic(
@@ -70,21 +71,17 @@ function CheckOption({ checked, onChange, label }: { checked: boolean; onChange:
 }
 
 export default function TaxPage() {
+  const mounted = useHydrated();
   const [activeTab, setActiveTab] = useState<TaxTab>("acquisition");
-  const [contractAnalyses, setContractAnalyses] = useState<AnalysisRecord[]>([]);
+  const [contractAnalyses] = useState<AnalysisRecord[]>(() =>
+    typeof window === "undefined"
+      ? []
+      : getAnalyses().filter((a) => a.type === "contract" || a.type === "rights")
+  );
   const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
-    const all = getAnalyses().filter((a) => a.type === "contract" || a.type === "rights");
-    setContractAnalyses(all);
     localStorage.removeItem("vestra_last_address");
-  }, []);
-
-  const handleImportContract = useCallback((analysis: AnalysisRecord) => {
-    const data = analysis.data as Record<string, unknown>;
-    const price = (data.dealAmount as number) || (data.price as number) || (data.estimatedPrice as number) || 0;
-    if (price > 0) { setAcqPrice(price); setTransAcqPrice(price); }
-    setShowImport(false);
   }, []);
 
   const [acqPrice, setAcqPrice] = useState(850000000);
@@ -102,6 +99,13 @@ export default function TaxPage() {
   const [transLiveYears, setTransLiveYears] = useState(3);
   const [transHouseCount, setTransHouseCount] = useState(1);
   const [transIsAdjusted, setTransIsAdjusted] = useState(false);
+
+  const handleImportContract = useCallback((analysis: AnalysisRecord) => {
+    const data = analysis.data as Record<string, unknown>;
+    const price = (data.dealAmount as number) || (data.price as number) || (data.estimatedPrice as number) || 0;
+    if (price > 0) { setAcqPrice(price); setTransAcqPrice(price); }
+    setShowImport(false);
+  }, []);
 
   const acqResult = calculateAcquisitionTax({ price: acqPrice, houseCount: acqHouseCount, isAdjusted: acqIsAdjusted, isFirstHome: acqIsFirst });
   const holdResult = calculateHoldingTax({ assessedValue: holdAssessed, houseCount: holdHouseCount, isAdjusted: holdIsAdjusted });
@@ -175,17 +179,21 @@ export default function TaxPage() {
         <div style={cardStyle}>
           <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", margin: "0 0 16px" }}>세금 한눈에 비교</h3>
           <div style={{ height: "200px" }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={comparisonData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,0,0,0.05)" />
-                <XAxis type="number" tickFormatter={(v) => `${(v / 10000).toLocaleString()}만`} style={{ fontSize: "11px" }} />
-                <YAxis type="category" dataKey="name" width={80} style={{ fontSize: "12px" }} />
-                <Tooltip formatter={(value) => [formatKRW(Number(value)), "세액"]} contentStyle={{ borderRadius: "10px", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 4px 16px rgba(0,0,0,0.10)" }} />
-                <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-                  {comparisonData.map((entry, index) => <Cell key={index} fill={entry.fill} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            {mounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={comparisonData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,0,0,0.05)" />
+                  <XAxis type="number" tickFormatter={(v) => `${(v / 10000).toLocaleString()}만`} style={{ fontSize: "11px" }} />
+                  <YAxis type="category" dataKey="name" width={80} style={{ fontSize: "12px" }} />
+                  <Tooltip formatter={(value) => [formatKRW(Number(value)), "세액"]} contentStyle={{ borderRadius: "10px", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 4px 16px rgba(0,0,0,0.10)" }} />
+                  <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+                    {comparisonData.map((entry, index) => <Cell key={index} fill={entry.fill} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ height: "100%", width: "100%", borderRadius: "10px", background: "#f5f5f7" }} />
+            )}
           </div>
         </div>
       </div>

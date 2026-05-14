@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, Bell, Plus } from "lucide-react";
+import { Bell, Plus } from "lucide-react";
 import type { Session } from "next-auth";
 
 interface Props {

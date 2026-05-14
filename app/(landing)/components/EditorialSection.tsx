@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ScrollReveal } from "./ScrollReveal";
 
 const EDITORIAL_IMAGE =
@@ -11,9 +12,12 @@ export function EditorialSection() {
         {/* Left — image */}
         <ScrollReveal className="relative">
           <div className="landing-img-overlay h-[580px] rounded-xl shadow-2xl">
-            <img
+            <Image
               src={EDITORIAL_IMAGE}
               alt="Minimalist luxury office interior"
+              width={1200}
+              height={580}
+              sizes="(max-width: 1024px) 100vw, 50vw"
               className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
             />
           </div>

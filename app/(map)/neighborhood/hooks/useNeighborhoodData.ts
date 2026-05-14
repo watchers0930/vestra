@@ -78,7 +78,8 @@ export function useNeighborhoodData() {
   const toggleCat = (key: string) => {
     setExpandedCats((prev) => {
       const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
@@ -215,7 +216,8 @@ export function useNeighborhoodData() {
   const toggleFacility = (key: string) => {
     setVisibleFacilities((prev) => {
       const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };

@@ -442,7 +442,6 @@ export function propagateRisk(
  */
 export function analyzeChains(graph: RightsGraph): ChainAnalysisResult {
   const chains: ChainAnalysisResult["chains"] = [];
-  const visited = new Set<string>();
   let chainId = 0;
 
   // 루트 노드(property)에서 시작하는 모든 체인 추출

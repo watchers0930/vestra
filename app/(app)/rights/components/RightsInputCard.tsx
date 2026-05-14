@@ -9,7 +9,7 @@ import {
   Search,
   FileText,
 } from "lucide-react";
-import { formatKRW, cn } from "@/lib/utils";
+import { formatKRW } from "@/lib/utils";
 import { SliderInput } from "@/components/forms";
 import type { InputMode, AnalysisStep } from "../types";
 

@@ -52,7 +52,7 @@ export function calculateParserConfidence(parsed: ParsedRegistry): StageConfiden
   if (allEntries.length > 0) {
     const completeness = allEntries.reduce((sum, entry) => {
       let filled = 0;
-      let total = 3; // date, purpose, holder
+      const total = 3; // date, purpose, holder
       if (entry.date) filled++;
       if (entry.purpose && entry.purpose !== "기타") filled++;
       if (entry.holder) filled++;

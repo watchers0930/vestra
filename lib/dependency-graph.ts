@@ -159,7 +159,7 @@ export class AnalysisDependencyGraph {
     const adjacency = new Map<string, string[]>();
 
     // 초기화
-    for (const [id, node] of this.nodes) {
+    for (const [id] of this.nodes) {
       inDegree.set(id, 0);
       adjacency.set(id, []);
     }

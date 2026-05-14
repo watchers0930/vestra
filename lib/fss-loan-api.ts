@@ -5,7 +5,6 @@
  * FSS_API_KEY 환경변수 필요 (https://finlife.fss.or.kr 에서 발급)
  */
 
-import { apiCache, APICache } from "./api-cache";
 import { kvCache } from "./kv-cache";
 
 const FSS_BASE = "https://finlife.fss.or.kr/finlifeapi";

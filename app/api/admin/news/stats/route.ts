@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAdminAuth } from "@/lib/with-admin-auth";
 
-export const GET = withAdminAuth(async (_req: NextRequest) => {
+export const GET = withAdminAuth(async () => {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const weekStart = new Date(todayStart);

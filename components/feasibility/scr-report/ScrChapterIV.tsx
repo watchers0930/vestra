@@ -7,7 +7,7 @@ import {
   MapPin, TrendingUp, Home, Scale, MessageSquare,
 } from "lucide-react";
 import {
-  AreaChart, Area, LineChart, Line,
+  AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import type {
@@ -20,6 +20,8 @@ import type {
   ScrSupplyCase,
   ScrPremiumRow,
 } from "@/lib/feasibility/scr-types";
+
+type GeocoderAddressResult = { x: string; y: string };
 
 interface ScrChapterIVProps {
   data: ScrPriceAdequacy;
@@ -435,7 +437,7 @@ function LocationMap({
       OK: string,
     ): Promise<{ lat: number; lng: number } | null> => {
       return new Promise((resolve) => {
-        geocoder.addressSearch(address, (result: any[], statusCode: string) => {
+        geocoder.addressSearch(address, (result: GeocoderAddressResult[], statusCode: string) => {
           if (statusCode === OK && result[0]) {
             resolve({ lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) });
             return;
@@ -443,7 +445,7 @@ function LocationMap({
           // 번지 제거 후 재시도
           const stripped = address.replace(/\s+\d+(-\d+)?$/, "").trim();
           if (stripped !== address) {
-            geocoder.addressSearch(stripped, (r2: any[], s2: string) => {
+            geocoder.addressSearch(stripped, (r2: GeocoderAddressResult[], s2: string) => {
               if (s2 === OK && r2[0]) {
                 resolve({ lat: parseFloat(r2[0].y), lng: parseFloat(r2[0].x) });
               } else {

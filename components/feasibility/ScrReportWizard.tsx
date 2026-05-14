@@ -36,7 +36,6 @@ export function ScrReportWizard({ onComplete }: ScrReportWizardProps) {
   const [categorizedFiles, setCategorizedFiles] = useState<Map<ScrDocumentCategory, File[]>>(new Map());
   const [projectType, setProjectType] = useState<ProjectType>("아파트");
   const [parsedItems, setParsedItems] = useState<ParsedClaimItem[]>([]);
-  const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [requiredWarning, setRequiredWarning] = useState(false);
 
@@ -78,12 +77,11 @@ export function ScrReportWizard({ onComplete }: ScrReportWizardProps) {
 
     setParsedItems([]);
     setStep(1);
-  }, [isRequiredComplete, categorizedFiles]);
+  }, [isRequiredComplete]);
 
   /* Step 2 → 3: 보고서 생성 */
   const handleGenerate = useCallback(async () => {
     setStep(2);
-    setGenerating(true);
     setProgress(0);
 
     // 진행률 시뮬레이션
@@ -109,7 +107,6 @@ export function ScrReportWizard({ onComplete }: ScrReportWizardProps) {
       }, 500);
     } catch {
       clearInterval(timer);
-      setGenerating(false);
     }
   }, [onComplete]);
 
@@ -121,11 +118,6 @@ export function ScrReportWizard({ onComplete }: ScrReportWizardProps) {
     },
     []
   );
-
-  const canNext =
-    step === 0 ? isRequiredComplete :
-    step === 1 ? true :
-    false;
 
   return (
     <div className="space-y-6">

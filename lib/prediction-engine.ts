@@ -240,64 +240,6 @@ function momentumModel(
 
 // ─── 앙상블 결합 ───
 
-function buildEnsemble(
-  currentPrice: number,
-  transactions: RealTransaction[],
-  trend: TrendResult,
-): EnsemblePredictionResult {
-  // 3개 모델 실행
-  const linearPred: ScenarioPredictions = {
-    "1y": compoundGrowth(currentPrice, trend.annualGrowthRate, 1),
-    "5y": compoundGrowth(currentPrice, trend.annualGrowthRate * 0.85, 5),
-    "10y": compoundGrowth(currentPrice, trend.annualGrowthRate * 0.7 + ECONOMIC_DEFAULTS.inflationRate * 0.3, 10),
-  };
-
-  const meanRev = meanReversionModel(currentPrice, transactions);
-  const momentum = momentumModel(currentPrice, transactions, trend);
-
-  const models: ModelResult[] = [
-    { modelName: "linear", prediction: linearPred, r2: trend.r2, weight: 0 },
-    { modelName: "meanReversion", prediction: meanRev.prediction, r2: meanRev.r2, weight: 0 },
-    { modelName: "momentum", prediction: momentum.prediction, r2: momentum.r2, weight: 0 },
-  ];
-
-  // R² 기반 동적 가중치 (최소 가중치 0.1 보장)
-  const minWeight = 0.1;
-  const totalR2 = models.reduce((sum, m) => sum + Math.max(minWeight, m.r2), 0);
-  for (const model of models) {
-    model.weight = Math.max(minWeight, model.r2) / totalR2;
-  }
-
-  // 앙상블 예측 (가중 평균)
-  const ensemble: ScenarioPredictions = {
-    "1y": Math.round(models.reduce((sum, m) => sum + m.prediction["1y"] * m.weight, 0)),
-    "5y": Math.round(models.reduce((sum, m) => sum + m.prediction["5y"] * m.weight, 0)),
-    "10y": Math.round(models.reduce((sum, m) => sum + m.prediction["10y"] * m.weight, 0)),
-  };
-
-  // 지배적 모델
-  const dominant = models.reduce((max, m) => m.weight > max.weight ? m : max);
-
-  // 모델 합의도: 1 - 변동계수 (예측값 분산이 작을수록 합의도 높음)
-  const periods: Array<"1y" | "5y" | "10y"> = ["1y", "5y", "10y"];
-  const cvValues = periods.map((p) => {
-    const preds = models.map((m) => m.prediction[p]);
-    const mean = preds.reduce((a, b) => a + b, 0) / preds.length;
-    if (mean === 0) return 0;
-    const variance = preds.reduce((sum, v) => sum + (v - mean) ** 2, 0) / preds.length;
-    return Math.sqrt(variance) / Math.abs(mean);
-  });
-  const avgCv = cvValues.reduce((a, b) => a + b, 0) / cvValues.length;
-  const modelAgreement = Math.max(0, Math.min(1, 1 - avgCv));
-
-  return {
-    models,
-    ensemble,
-    dominantModel: dominant.modelName,
-    modelAgreement,
-  };
-}
-
 // ─── 시나리오 모델링 ───
 
 /** 복리 성장 적용 */
@@ -519,7 +461,6 @@ export function toMonthlyTimeSeries(transactions: RealTransaction[]): MonthlyTim
 function arimaModel(
   currentPrice: number,
   transactions: RealTransaction[],
-  trend: TrendResult,
 ): { prediction: ScenarioPredictions; r2: number } {
   const series = toMonthlyTimeSeries(transactions);
   if (series.length < 12) {
@@ -602,7 +543,6 @@ function arimaModel(
 function etsModel(
   currentPrice: number,
   transactions: RealTransaction[],
-  trend: TrendResult,
 ): { prediction: ScenarioPredictions; r2: number } {
   const series = toMonthlyTimeSeries(transactions);
   if (series.length < 12) {
@@ -694,8 +634,8 @@ function buildEnsembleV2(
   const momentum = momentumModel(currentPrice, transactions, trend);
 
   // 신규 모델
-  const arima = arimaModel(currentPrice, transactions, trend);
-  const ets = etsModel(currentPrice, transactions, trend);
+  const arima = arimaModel(currentPrice, transactions);
+  const ets = etsModel(currentPrice, transactions);
 
   const models: ModelResult[] = [
     { modelName: "linear", prediction: linearPred, r2: trend.r2, weight: 0 },
@@ -871,10 +811,6 @@ export function predictValue(
   macroFactors?: MacroEconomicFactors,
 ): PredictionResult {
   // 거시경제 데이터가 있으면 ECONOMIC_DEFAULTS 대체
-  const effectiveRate = macroFactors?.dataSource === "live"
-    ? macroFactors.baseRate
-    : ECONOMIC_DEFAULTS.baseInterestRate;
-
   // 추세 분석
   const trend = calculateTrend(transactions);
 

@@ -104,6 +104,12 @@ npm run test         # vitest 테스트
 npm run lint         # ESLint
 ```
 
+## Deployment Rule
+- `vestra`는 바로 운영 배포하지 않는다.
+- 항상 먼저 `t-vestra.vercel.app`으로 테스트 배포한다.
+- 운영 배포(`vestra-plum.vercel.app`)는 사용자 확인 또는 별도 승격 지시가 있을 때만 진행한다.
+- 기본 배포 흐름은 `테스트 배포 -> 사용자 확인/지시 -> 운영 승격`이다.
+
 ## Environment Variables
 - `OPENAI_API_KEY` - OpenAI API 키
 - `DATABASE_URL` - Neon PostgreSQL 연결 문자열

@@ -539,10 +539,7 @@ function assembleReport(
   );
 
   // ── III. 시장 환경 분석 ──
-  const marketAnalysis: ScrMarketAnalysis = buildMarketAnalysis(
-    apiData,
-    address
-  );
+  const marketAnalysis: ScrMarketAnalysis = buildMarketAnalysis(apiData);
 
   // ── IV. 분양가 적정성 검토 ──
   const priceAdequacy: ScrPriceAdequacy = buildPriceAdequacy(
@@ -553,10 +550,7 @@ function assembleReport(
   );
 
   // ── V. 원리금상환가능성 분석 ──
-  const repaymentAnalysis: ScrRepaymentAnalysis = buildRepaymentAnalysis(
-    calcResults,
-    parsedDocs
-  );
+  const repaymentAnalysis: ScrRepaymentAnalysis = buildRepaymentAnalysis(calcResults);
 
   // ── 부록 ──
   const appendices: ScrAppendices = buildAppendices(apiData);
@@ -637,8 +631,7 @@ function buildDeveloperAnalysis(
 }
 
 function buildMarketAnalysis(
-  apiData: ExternalApiData,
-  address: string
+  apiData: ExternalApiData
 ): ScrMarketAnalysis {
   const { staticMarket } = apiData;
   const loanRegs = staticMarket.loanRegulations;
@@ -650,7 +643,6 @@ function buildMarketAnalysis(
 
   // 인구 데이터
   const popTrends = apiData.populationTrends?.trends || [];
-  const moiPop = apiData.moisPopulation?.trends || [];
   const moisAge = apiData.moisAge?.ageGroups || [];
 
   return {
@@ -782,8 +774,7 @@ function buildPriceAdequacy(
 }
 
 function buildRepaymentAnalysis(
-  calcResults: CalcResults,
-  parsedDocs: ParsedDocument[]
+  calcResults: CalcResults
 ): ScrRepaymentAnalysis {
   const { businessIncome, monthlyCashflow, scenarios, sensitivity, bep } =
     calcResults;

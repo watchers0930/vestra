@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { ShieldCheck, Save, History, RotateCcw } from "lucide-react";
 import { Card, Button } from "@/components/common";
 import { FormInput, TabButtons } from "@/components/forms";
-import { cn, formatKRW } from "@/lib/utils";
 import { DEFAULT_GUARANTEE_RULES } from "@/lib/guarantee-insurance";
+import { cn } from "@/lib/utils";
 
 type Provider = "HUG" | "HF" | "SGI";
 
@@ -32,32 +32,41 @@ export function GuaranteeRulesTab() {
   const [history, setHistory] = useState<RuleRecord[]>([]);
   const [editRules, setEditRules] = useState<Record<string, unknown>>({});
   const [changelog, setChangelog] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const fetchRules = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/guarantee-rules");
-      const data = await res.json();
-      setActiveRules(data.activeRules || []);
-      setHistory(data.history || []);
-    } catch { /* ignore */ }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchRules(); }, [fetchRules]);
-
-  // 현재 선택된 기관의 활성 규칙 또는 기본 상수
   useEffect(() => {
-    const active = activeRules.find((r) => r.provider === provider);
-    if (active) {
-      setEditRules(active.rules);
-    } else {
-      setEditRules(DEFAULT_GUARANTEE_RULES[provider] as unknown as Record<string, unknown>);
-    }
+    let cancelled = false;
+
+    const loadRules = async () => {
+      try {
+        const res = await fetch("/api/admin/guarantee-rules");
+        const data = await res.json();
+        if (cancelled) return;
+        const nextActiveRules = data.activeRules || [];
+        setActiveRules(nextActiveRules);
+        setHistory(data.history || []);
+        const active = nextActiveRules.find((r: RuleRecord) => r.provider === provider);
+        setEditRules(active ? active.rules : (DEFAULT_GUARANTEE_RULES[provider] as unknown as Record<string, unknown>));
+        setChangelog("");
+      } catch {
+        // ignore
+      }
+      if (!cancelled) setLoading(false);
+    };
+
+    void loadRules();
+    return () => {
+      cancelled = true;
+    };
+  }, [provider]);
+
+  const handleProviderChange = (nextProvider: Provider) => {
+    setProvider(nextProvider);
+    const active = activeRules.find((r) => r.provider === nextProvider);
+    setEditRules(active ? active.rules : (DEFAULT_GUARANTEE_RULES[nextProvider] as unknown as Record<string, unknown>));
     setChangelog("");
-  }, [provider, activeRules]);
+  };
 
   const handleSave = async () => {
     if (!changelog.trim()) return;
@@ -68,7 +77,13 @@ export function GuaranteeRulesTab() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider, rules: editRules, changelog }),
       });
-      await fetchRules();
+      const res = await fetch("/api/admin/guarantee-rules");
+      const data = await res.json();
+      const nextActiveRules = data.activeRules || [];
+      setActiveRules(nextActiveRules);
+      setHistory(data.history || []);
+      const active = nextActiveRules.find((r: RuleRecord) => r.provider === provider);
+      setEditRules(active ? active.rules : (DEFAULT_GUARANTEE_RULES[provider] as unknown as Record<string, unknown>));
       setChangelog("");
     } catch { /* ignore */ }
     setSaving(false);
@@ -86,7 +101,13 @@ export function GuaranteeRulesTab() {
           changelog: `v${record.version}에서 롤백`,
         }),
       });
-      await fetchRules();
+      const res = await fetch("/api/admin/guarantee-rules");
+      const data = await res.json();
+      const nextActiveRules = data.activeRules || [];
+      setActiveRules(nextActiveRules);
+      setHistory(data.history || []);
+      const active = nextActiveRules.find((r: RuleRecord) => r.provider === provider);
+      setEditRules(active ? active.rules : (DEFAULT_GUARANTEE_RULES[provider] as unknown as Record<string, unknown>));
     } catch { /* ignore */ }
     setSaving(false);
   };
@@ -111,7 +132,7 @@ export function GuaranteeRulesTab() {
       <TabButtons
         options={PROVIDERS.map((p) => ({ value: p.value, label: p.label }))}
         value={provider}
-        onChange={(v) => setProvider(v as Provider)}
+        onChange={(v) => handleProviderChange(v as Provider)}
       />
 
       {loading ? (

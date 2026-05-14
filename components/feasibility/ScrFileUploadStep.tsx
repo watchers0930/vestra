@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   FileText,
@@ -22,7 +22,6 @@ import {
   type ScrDocumentCategory,
   type ScrDocumentSlot,
 } from "@/lib/feasibility/scr-types";
-import { useState } from "react";
 
 const PROJECT_TYPES: { value: ProjectType; label: string }[] = [
   { value: "아파트", label: "아파트" },
@@ -80,7 +79,7 @@ function DocumentSlot({
   variant: "required" | "optional";
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const replaceIndexRef = useRef<number | null>(null);
+  const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
   const Icon = ICON_MAP[slot.icon] ?? FileText;
   const hasFiles = files.length > 0;
   const canAddMore = files.length < MAX_FILES_PER_SLOT;
@@ -92,25 +91,25 @@ function DocumentSlot({
       const fl = e.target.files;
       if (!fl || fl.length === 0) return;
 
-      if (replaceIndexRef.current !== null) {
-        onReplace(replaceIndexRef.current, fl[0]);
-        replaceIndexRef.current = null;
+      if (replaceIndex !== null) {
+        onReplace(replaceIndex, fl[0]);
+        setReplaceIndex(null);
       } else {
         onAdd(fl);
       }
       // reset input
       e.target.value = "";
     },
-    [onAdd, onReplace]
+    [onAdd, onReplace, replaceIndex]
   );
 
   const openFilePicker = () => {
-    replaceIndexRef.current = null;
+    setReplaceIndex(null);
     inputRef.current?.click();
   };
 
   const openReplaceFilePicker = (index: number) => {
-    replaceIndexRef.current = index;
+    setReplaceIndex(index);
     inputRef.current?.click();
   };
 
@@ -129,7 +128,7 @@ function DocumentSlot({
         ref={inputRef}
         type="file"
         accept={acceptString}
-        multiple={!replaceIndexRef.current && canAddMore}
+        multiple={replaceIndex === null && canAddMore}
         onChange={handleInputChange}
         className="hidden"
       />

@@ -3,8 +3,6 @@
 import { useRef } from "react";
 import {
   Shield,
-  FileText,
-  TrendingUp,
   AlertTriangle,
   CheckCircle2,
   XCircle,

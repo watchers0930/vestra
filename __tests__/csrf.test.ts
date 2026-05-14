@@ -33,9 +33,23 @@ describe("validateOrigin", () => {
     expect(validateOrigin(req)).toBeNull();
   });
 
-  it("origin 없는 POST (서버 호출)는 통과", () => {
-    const req = makeRequest("POST");
+  it("preview alias origin은 통과", () => {
+    const req = makeRequest("POST", { origin: "https://t-vestra.vercel.app" });
     expect(validateOrigin(req)).toBeNull();
+  });
+
+  it("origin 없는 POST는 차단", () => {
+    const req = makeRequest("POST");
+    const result = validateOrigin(req);
+    expect(result).not.toBeNull();
+    expect(result!.status).toBe(403);
+  });
+
+  it("유효한 cron bearer 토큰이 있으면 origin 없는 POST도 통과", () => {
+    process.env.CRON_SECRET = "test-cron-secret";
+    const req = makeRequest("POST", { authorization: "Bearer test-cron-secret" });
+    expect(validateOrigin(req)).toBeNull();
+    delete process.env.CRON_SECRET;
   });
 
   it("악의적 origin의 POST는 403", () => {

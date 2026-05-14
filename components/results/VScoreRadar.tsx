@@ -49,10 +49,6 @@ export default function VScoreRadar({
     return polarToCartesian(angle, v * maxRadius);
   });
 
-  const dataPath =
-    dataPoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") +
-    " Z";
-
   // 등급 색상
   function getScoreColor(score: number): string {
     if (score >= 85) return "#22c55e";

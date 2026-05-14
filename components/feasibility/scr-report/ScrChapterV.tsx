@@ -9,7 +9,6 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { CHART_COLORS } from "./scr-shared";
 import type {
   ScrRepaymentAnalysis,
   ScrPeriodSaleRateRow,

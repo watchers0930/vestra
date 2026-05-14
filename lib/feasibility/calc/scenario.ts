@@ -8,7 +8,6 @@
  */
 
 import type { BusinessIncomeResult, BusinessIncomeInput } from "./business-income";
-import { calculateBusinessIncome } from "./business-income";
 
 // ─── 입력 타입 ───
 

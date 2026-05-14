@@ -22,7 +22,6 @@ import {
 } from "recharts";
 import { Card, Alert } from "@/components/common";
 import { SliderInput } from "@/components/forms";
-import { InfoRow } from "@/components/results";
 
 type ScenarioType = "sell_now_vs_later" | "gift_vs_sale" | "custom";
 

@@ -241,7 +241,7 @@ class KCBCreditProvider implements CreditAPIProvider {
     return "KCB";
   }
 
-  async checkCredit(_params: CreditCheckParams): Promise<CreditCheckResult> {
+  async checkCredit(): Promise<CreditCheckResult> {
     // TODO: KCB API 연동
     // https://www.koreacb.com/product/api
     throw new Error(
@@ -263,7 +263,7 @@ class NICECreditProvider implements CreditAPIProvider {
     return "NICE";
   }
 
-  async checkCredit(_params: CreditCheckParams): Promise<CreditCheckResult> {
+  async checkCredit(): Promise<CreditCheckResult> {
     // TODO: NICE 평가정보 API 연동
     // https://www.niceinfo.co.kr
     throw new Error(

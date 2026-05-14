@@ -128,7 +128,7 @@ function adjustPriceByArea(dealAmount: number, txArea: number, targetArea: numbe
 }
 
 /** 층수 프리미엄 보정 */
-function adjustPriceByFloor(price: number, txFloor: number, targetFloor: number, medianFloor: number): number {
+function adjustPriceByFloor(price: number, txFloor: number, targetFloor: number): number {
   if (!targetFloor || targetFloor <= 0) return price;
   const floorDiff = targetFloor - txFloor;
   return Math.round(price * (1 + 0.005 * floorDiff));
@@ -140,9 +140,6 @@ function scoreComparables(
   target: TargetProperty,
   now: Date,
 ): ComparableTransaction[] {
-  const floors = transactions.map((t) => t.floor).sort((a, b) => a - b);
-  const medianFloor = floors.length > 0 ? floors[Math.floor(floors.length / 2)] : 10;
-
   return transactions.map((tx) => {
     const months = monthsAgo(tx, now);
     const wTime = timeWeight(months);
@@ -150,7 +147,7 @@ function scoreComparables(
     const weight = wTime * wArea;
 
     let adjustedPrice = adjustPriceByArea(tx.dealAmount, tx.area, target.area || 0);
-    adjustedPrice = adjustPriceByFloor(adjustedPrice, tx.floor, target.floor || 0, medianFloor);
+    adjustedPrice = adjustPriceByFloor(adjustedPrice, tx.floor, target.floor || 0);
 
     const similarity = Math.min(wTime * 0.6 + wArea * 0.4, 1);
 

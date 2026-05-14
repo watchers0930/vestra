@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { Home } from "lucide-react";
 import { formatKRW, formatNumber, parseNumber } from "@/lib/format";
+import { useHydrated } from "@/lib/use-hydrated";
 import {
   BarChart,
   Bar,
@@ -15,6 +16,7 @@ import {
 } from "recharts";
 
 export default function JeonseComparisonPage() {
+  const mounted = useHydrated();
   const [form, setForm] = useState({
     jeonseDeposit: 300_000_000,
     wolseDeposit: 50_000_000,
@@ -23,16 +25,13 @@ export default function JeonseComparisonPage() {
     period: 2,
     investReturn: 5,
   });
-  const [error, setError] = useState<string | null>(null);
 
   type FormKey = keyof typeof form;
   const update = (key: FormKey, value: number) =>
     setForm((p) => ({ ...p, [key]: value }));
 
-  const result = useMemo(() => {
+  const computation = useMemo(() => {
     try {
-      setError(null);
-
       const {
         jeonseDeposit,
         wolseDeposit,
@@ -43,18 +42,15 @@ export default function JeonseComparisonPage() {
       } = form;
 
       if (jeonseDeposit <= 0 || wolseDeposit < 0 || monthlyRent <= 0) {
-        setError("보증금과 월세 금액은 0보다 커야 합니다.");
-        return null;
+        return { error: "보증금과 월세 금액은 0보다 커야 합니다.", result: null };
       }
 
       if (loanRate < 0 || loanRate > 20) {
-        setError("대출 금리는 0~20% 사이로 입력해주세요.");
-        return null;
+        return { error: "대출 금리는 0~20% 사이로 입력해주세요.", result: null };
       }
 
       if (investReturn < 0 || investReturn > 30) {
-        setError("투자 수익률은 0~30% 사이로 입력해주세요.");
-        return null;
+        return { error: "투자 수익률은 0~30% 사이로 입력해주세요.", result: null };
       }
 
       // 전세 총 비용 = 대출이자 + 기회비용(보증금 × 투자수익률)
@@ -74,20 +70,23 @@ export default function JeonseComparisonPage() {
       const isBetter = jeonseTotalCost <= wolseTotalCost ? "jeonse" : "wolse";
 
       return {
-        jeonseLoanInterest,
-        jeonseOpportunityCost,
-        jeonseTotalCost,
-        wolseTotalRent,
-        wolseOpportunityCost,
-        wolseTotalCost,
-        diff,
-        isBetter,
+        error: null,
+        result: {
+          jeonseLoanInterest,
+          jeonseOpportunityCost,
+          jeonseTotalCost,
+          wolseTotalRent,
+          wolseOpportunityCost,
+          wolseTotalCost,
+          diff,
+          isBetter,
+        },
       };
     } catch {
-      setError("계산 중 오류가 발생했습니다.");
-      return null;
+      return { error: "계산 중 오류가 발생했습니다.", result: null };
     }
   }, [form]);
+  const { error, result } = computation;
 
   const chartData = result
     ? [
@@ -257,29 +256,33 @@ export default function JeonseComparisonPage() {
               비용 비교 차트
             </h3>
             <div className="h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis
-                    type="number"
-                    tickFormatter={(v) =>
-                      `${(v / 10000).toLocaleString()}만`
-                    }
-                  />
-                  <YAxis type="category" dataKey="name" width={100} />
-                  <Tooltip
-                    formatter={(value) => [
-                      formatKRW(Number(value)),
-                      "총 비용",
-                    ]}
-                  />
-                  <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-                    {chartData.map((entry, index) => (
-                      <Cell key={index} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {mounted ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis
+                      type="number"
+                      tickFormatter={(v) =>
+                        `${(v / 10000).toLocaleString()}만`
+                      }
+                    />
+                    <YAxis type="category" dataKey="name" width={100} />
+                    <Tooltip
+                      formatter={(value) => [
+                        formatKRW(Number(value)),
+                        "총 비용",
+                      ]}
+                    />
+                    <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+                      {chartData.map((entry, index) => (
+                        <Cell key={index} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full w-full rounded-lg bg-[#f5f5f7]" />
+              )}
             </div>
           </div>
 

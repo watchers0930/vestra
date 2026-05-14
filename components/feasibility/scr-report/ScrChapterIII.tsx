@@ -3,13 +3,12 @@
 import { cn } from "@/lib/utils";
 import { ScrSection, EmptyDataNotice, thCls, tdCls, tdNumCls } from "./scr-shared";
 import {
-  Users, Home, TrendingDown, Building2, BarChart3, MapPin,
+  Users, Home, TrendingDown, Building2, MapPin,
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { CHART_COLORS } from "./scr-shared";
 import type {
   ScrMarketAnalysis,
   ScrRegulations,
@@ -291,39 +290,40 @@ function SupplyBarChart({ items, label }: { items: ScrSupplyItem[]; label: strin
 }
 
 /* ─── 표25~27: 입주/분양 예정 ─── */
-function SupplySection({ upcoming, planned }: { upcoming: ScrSupplyItem[]; planned: ScrSupplyItem[] }) {
-  function SupplyTable({ items, label }: { items: ScrSupplyItem[]; label: string }) {
-    if (!items.length) return null;
-    return (
-      <div className="mb-5 last:mb-0">
-        <p className="text-xs font-semibold text-[#6e6e73] mb-2">{label}</p>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm whitespace-nowrap">
-            <thead>
-              <tr className="bg-gray-50/80">
-                <th className={cn(thCls, "text-left")}>단지명</th>
-                <th className={cn(thCls, "text-left")}>소재지</th>
-                <th className={cn(thCls, "text-right")}>세대수</th>
-                <th className={cn(thCls, "text-center")}>입주예정</th>
-                <th className={cn(thCls, "text-right")}>분양가(만원/평)</th>
+function SupplyTable({ items, label }: { items: ScrSupplyItem[]; label: string }) {
+  if (!items.length) return null;
+  return (
+    <div className="mb-5 last:mb-0">
+      <p className="text-xs font-semibold text-[#6e6e73] mb-2">{label}</p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm whitespace-nowrap">
+          <thead>
+            <tr className="bg-gray-50/80">
+              <th className={cn(thCls, "text-left")}>단지명</th>
+              <th className={cn(thCls, "text-left")}>소재지</th>
+              <th className={cn(thCls, "text-right")}>세대수</th>
+              <th className={cn(thCls, "text-center")}>입주예정</th>
+              <th className={cn(thCls, "text-right")}>분양가(만원/평)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((r, i) => (
+              <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
+                <td className={tdCls}>{r.complexName}</td>
+                <td className={cn(tdCls, "text-[#6e6e73]")}>{r.location}</td>
+                <td className={tdNumCls}>{r.totalUnits.toLocaleString()}</td>
+                <td className={cn(tdCls, "text-center")}>{r.moveInDate}</td>
+                <td className={tdNumCls}>{r.salePrice ? r.salePrice.toLocaleString() : "-"}</td>
               </tr>
-            </thead>
-            <tbody>
-              {items.map((r, i) => (
-                <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
-                  <td className={tdCls}>{r.complexName}</td>
-                  <td className={cn(tdCls, "text-[#6e6e73]")}>{r.location}</td>
-                  <td className={tdNumCls}>{r.totalUnits.toLocaleString()}</td>
-                  <td className={cn(tdCls, "text-center")}>{r.moveInDate}</td>
-                  <td className={tdNumCls}>{r.salePrice ? r.salePrice.toLocaleString() : "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
-    );
-  }
+    </div>
+  );
+}
+
+function SupplySection({ upcoming, planned }: { upcoming: ScrSupplyItem[]; planned: ScrSupplyItem[] }) {
 
   return (
     <ScrSection icon={Building2} title="표25~27. 입주/분양 예정">

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Shield, FileText, Loader2, ShieldCheck, Home, Calculator, TrendingUp, Layers, BarChart2, Bot, Zap, type LucideIcon } from "lucide-react";
+import { FileText, Loader2, ShieldCheck, Home, Calculator, TrendingUp, Layers, BarChart2, Bot, Zap, type LucideIcon } from "lucide-react";
 import { AiDisclaimer } from "@/components/common";
 import FeedbackWidget from "@/components/common/FeedbackWidget";
 import { AnalysisLoader } from "@/components/common/AnalysisLoader";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ClipboardCheck, Download, RotateCcw, ChevronRight, CheckCircle2, ListChecks, TrendingUp, HardDrive, RefreshCw, Home, Key, FileText, type LucideIcon } from "lucide-react";
 
@@ -183,14 +183,9 @@ export default function ChecklistPage() {
   const [dealType, setDealType] = useState<DealType>("전세");
   const [stage, setStage] = useState<Stage>("계약 전");
   const [items, setItems] = useState<CheckItem[]>([]);
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [checked, setChecked] = useState<Record<string, boolean>>(() => loadChecked());
   const [generated, setGenerated] = useState(false);
-
-  const mounted = useRef(false);
-
-  useEffect(() => { setChecked(loadChecked()); }, []);
   useEffect(() => {
-    if (!mounted.current) { mounted.current = true; return; }
     saveChecked(checked);
   }, [checked]);
 

@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 export type PredictionTabId = "dashboard" | "chart" | "compare" | "backtest" | "anomaly";
 
 interface Tab {

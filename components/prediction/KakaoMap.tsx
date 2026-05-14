@@ -32,6 +32,8 @@ export interface KakaoGeocoderResult {
   } | null;
 }
 
+type GeocoderAddressResult = { x: string; y: string };
+
 // 카카오 Places 키워드 검색 결과 타입
 export interface KakaoPlaceResult {
   address_name: string;
@@ -77,7 +79,7 @@ export function KakaoMap({ address }: KakaoMapProps) {
         };
 
         // 1차: 전체 주소로 검색
-        geocoder.addressSearch(address, (result: any[], statusCode: string) => {
+        geocoder.addressSearch(address, (result: GeocoderAddressResult[], statusCode: string) => {
           if (statusCode === OK && result[0]) {
             createMap(
               new window.kakao.maps.LatLng(parseFloat(result[0].y), parseFloat(result[0].x)),
@@ -88,7 +90,7 @@ export function KakaoMap({ address }: KakaoMapProps) {
 
           // 2차: 번지 제거 후 재시도
           if (addrWithoutNumber !== address) {
-            geocoder.addressSearch(addrWithoutNumber, (result2: any[], status2: string) => {
+            geocoder.addressSearch(addrWithoutNumber, (result2: GeocoderAddressResult[], status2: string) => {
               if (status2 === OK && result2[0]) {
                 createMap(
                   new window.kakao.maps.LatLng(parseFloat(result2[0].y), parseFloat(result2[0].x)),

@@ -61,26 +61,6 @@ function priceToColor(price: number, min: number, max: number): string {
   return `rgb(${r},${g},${b})`;
 }
 
-// 카카오 지오코더로 아파트 실제 좌표 조회
-function geocodeApt(
-  geocoder: unknown,
-  query: string,
-): Promise<[number, number] | null> {
-  return new Promise((resolve) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (geocoder as any).addressSearch(query, (results: any[], status: string) => {
-      if (status === "OK" && results.length > 0) {
-        resolve([parseFloat(results[0].y), parseFloat(results[0].x)]);
-      } else {
-        // keywordSearch 폴백
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (geocoder as any).constructor && resolve(null);
-        resolve(null);
-      }
-    });
-  });
-}
-
 function keywordSearchApt(
   ps: unknown,
   query: string,
@@ -102,17 +82,18 @@ export default function TransactionMap({ transactions, address, center }: Transa
   const mapInstanceRef = useRef<unknown>(null);
 
   useEffect(() => {
-    if (!mapRef.current || transactions.length === 0) return;
+    const mapElement = mapRef.current;
+    if (!mapElement || transactions.length === 0) return;
     let cancelled = false;
 
     const init = async () => {
-      if (!window.kakao?.maps || !mapRef.current) return;
+      if (!window.kakao?.maps) return;
       const kakao = window.kakao;
 
-      if (mapRef.current) mapRef.current.innerHTML = "";
+      mapElement.innerHTML = "";
 
       const fallback = center || getFallbackCoords(address);
-      const map = new kakao.maps.Map(mapRef.current, {
+      const map = new kakao.maps.Map(mapElement, {
         center: new kakao.maps.LatLng(fallback[0], fallback[1]),
         level: 5,
       });
@@ -130,7 +111,6 @@ export default function TransactionMap({ transactions, address, center }: Transa
         aptGroups.get(key)!.txs.push(t);
       }
 
-      const geocoder = new kakao.maps.services.Geocoder();
       const ps = new kakao.maps.services.Places();
       const coordCache = new Map<string, [number, number]>();
 
@@ -228,12 +208,16 @@ export default function TransactionMap({ transactions, address, center }: Transa
       const timer = setInterval(() => {
         if (window.kakao?.maps) { clearInterval(timer); init(); }
       }, 200);
-      setTimeout(() => clearInterval(timer), 10000);
+      const timeoutId = setTimeout(() => clearInterval(timer), 10000);
+      return () => {
+        clearInterval(timer);
+        clearTimeout(timeoutId);
+      };
     }
 
     return () => {
       cancelled = true;
-      if (mapRef.current) mapRef.current.innerHTML = "";
+      mapElement.innerHTML = "";
       mapInstanceRef.current = null;
     };
   }, [transactions, address, center]);

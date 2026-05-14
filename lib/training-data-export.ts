@@ -93,7 +93,6 @@ function findEntityOffset(
 function extractEntitiesFromEntry(
   rawText: string,
   entry: GapguEntry | EulguEntry,
-  section: "갑구" | "을구",
 ): NEREntity[] {
   const entities: NEREntity[] = [];
 
@@ -144,12 +143,12 @@ export function generateNERLabels(
 
   // 갑구 엔티티
   for (const entry of parsed.gapgu) {
-    allEntities.push(...extractEntitiesFromEntry(rawText, entry, "갑구"));
+    allEntities.push(...extractEntitiesFromEntry(rawText, entry));
   }
 
   // 을구 엔티티
   for (const entry of parsed.eulgu) {
-    allEntities.push(...extractEntitiesFromEntry(rawText, entry, "을구"));
+    allEntities.push(...extractEntitiesFromEntry(rawText, entry));
   }
 
   if (allEntities.length === 0) return [];

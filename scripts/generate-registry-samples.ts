@@ -60,16 +60,9 @@ const OFFICETEL_NAMES = [
   "비즈타워", "프라임오피스텔", "센트럴타워", "리버사이드", "파크원",
 ];
 
-const STRUCTURES = [
-  "철근콘크리트조", "철골철근콘크리트조", "철골콘크리트조",
-  "조적조", "경량철골조", "철골조",
-];
-
 const ROOF_TYPES = [
   "지붕슬래브방수", "슬래브지붕", "평지붕", "경사지붕",
 ];
-
-const PURPOSES = ["아파트", "다세대주택", "연립주택", "오피스텔", "다가구주택"];
 
 const LAST_NAMES = [
   "김", "이", "박", "최", "정", "강", "조", "윤", "장", "임",
@@ -113,11 +106,6 @@ function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function pickN<T>(arr: T[], n: number): T[] {
-  const shuffled = [...arr].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, n);
-}
-
 function genDate(yearMin: number, yearMax: number): { y: number; m: number; d: number } {
   const y = rand(yearMin, yearMax);
   const m = rand(1, 12);
@@ -150,22 +138,8 @@ function genCorpNum(): string {
   return `${rand(100000, 999999)}-${String(rand(0, 9999999)).padStart(7, "0")}`;
 }
 
-function genReceiptNo(): string {
-  return `제${rand(10000, 99999)}호`;
-}
-
-function genUniqueNo(gu: string): string {
+function genUniqueNo(): string {
   return `${rand(1100, 9999)}-${rand(2018, 2025)}-${String(rand(1, 999999)).padStart(6, "0")}`;
-}
-
-function fmtAmount(won: number): string {
-  if (won >= 100000000) {
-    const eok = Math.floor(won / 100000000);
-    const man = Math.floor((won % 100000000) / 10000);
-    if (man > 0) return `금 ${eok}억 ${man.toLocaleString()}만원`;
-    return `금 ${eok}억원`;
-  }
-  return `금 ${(won / 10000).toLocaleString()}만원`;
 }
 
 function fmtAmountNum(won: number): string {
@@ -181,7 +155,7 @@ interface RegistryConfig {
   riskLevel: "clean" | "low" | "medium" | "high" | "critical";
 }
 
-function generateRegistry(config: RegistryConfig, index: number): string {
+function generateRegistry(config: RegistryConfig): string {
   const district = pick(DISTRICTS);
   const lotNum = `${rand(1, 999)}-${rand(1, 99)}`;
 
@@ -257,7 +231,7 @@ function generateRegistry(config: RegistryConfig, index: number): string {
   titleSection += `                                                     ${area}㎡                  대지권비율 ${landRatioDenom}.${rand(1, 9)}분의 ${area}\n`;
 
   // ─── 갑구 생성 ───
-  let gapguEntries: string[] = [];
+  const gapguEntries: string[] = [];
   let seqGap = 1;
   let receiptSeq = rand(10000, 20000);
 
@@ -274,7 +248,6 @@ function generateRegistry(config: RegistryConfig, index: number): string {
   // 2) 소유권이전 체인 (1~3회)
   const transferCount = rand(1, 3);
   let currentOwner = "";
-  let currentOwnerRrn = "";
   let lastTransferDate = preserveDate;
 
   for (let t = 0; t < transferCount; t++) {
@@ -292,7 +265,6 @@ function generateRegistry(config: RegistryConfig, index: number): string {
       `                                                            ${addr}`
     );
     currentOwner = owner;
-    currentOwnerRrn = rrn;
     lastTransferDate = regDate;
     seqGap++;
     receiptSeq += rand(100, 2000);
@@ -379,7 +351,7 @@ function generateRegistry(config: RegistryConfig, index: number): string {
   }
 
   // ─── 을구 생성 ───
-  let eulguEntries: string[] = [];
+  const eulguEntries: string[] = [];
   let seqEul = 1;
   let eulReceiptSeq = rand(20000, 40000);
 
@@ -463,7 +435,7 @@ function generateRegistry(config: RegistryConfig, index: number): string {
   }
 
   // ─── 문서 조합 ───
-  const uniqueNo = genUniqueNo(district.gu);
+  const uniqueNo = genUniqueNo();
   const buildingType = config.type === "apt" ? "건물" : config.type === "officetel" ? "집합건물" : "건물";
 
   let doc = `──────────────────────────────────────────────────────\n`;
@@ -503,7 +475,7 @@ configs.sort(() => Math.random() - 0.5);
 const summary: { file: string; type: string; risk: string; gapgu: number; eulgu: number }[] = [];
 
 configs.forEach((config, i) => {
-  const text = generateRegistry(config, i);
+  const text = generateRegistry(config);
   const filename = `registry_${String(i + 1).padStart(3, "0")}_${config.type}_${config.riskLevel}.txt`;
   const filepath = path.join(OUTPUT_DIR, filename);
   writeFileSync(filepath, text, "utf-8");

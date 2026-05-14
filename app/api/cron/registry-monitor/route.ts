@@ -132,14 +132,6 @@ async function fetchRegistryContent(
 }
 
 // ── 계약~전입 기간 체크 ──
-function isInContractGap(contractDate: Date | null, moveInDate: Date | null): boolean {
-  if (!contractDate) return false;
-  const now = new Date();
-  const start = new Date(contractDate);
-  const end = moveInDate ? new Date(moveInDate) : new Date(start.getTime() + 14 * 86400000); // 기본 14일
-  return now >= start && now <= end;
-}
-
 // ── 전입 예정일 지난 물건 자동 모드 전환 ──
 async function autoTransitionExpiredGaps() {
   const now = new Date();

@@ -82,7 +82,7 @@ function getRiskWeight(type: GraphNode["type"]): number {
 }
 
 export function RightsGraphView({ parsed, graphAnalysis }: Props) {
-  const { nodes, edges, chains } = useMemo(() => {
+  const { nodes, chains } = useMemo(() => {
     const nodes: GraphNode[] = [];
     const edges: GraphEdge[] = [];
 
@@ -153,7 +153,7 @@ export function RightsGraphView({ parsed, graphAnalysis }: Props) {
       });
     }
 
-    return { nodes, edges, chains };
+    return { nodes, chains };
   }, [parsed]);
 
   const activeNodes = nodes.filter(n => !n.isCancelled);

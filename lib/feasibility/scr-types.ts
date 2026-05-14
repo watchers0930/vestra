@@ -5,12 +5,6 @@
  * SCR 보고서 I~V장 + 부록(Appendices) 구조를 1:1 매핑합니다.
  */
 
-import type {
-  ExtractedValue,
-  RationalityGrade,
-  FeasibilityScore,
-} from "./feasibility-types";
-
 // ─── 사업유형 ───
 
 export type ProjectType =

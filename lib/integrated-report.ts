@@ -92,47 +92,6 @@ function parseAnalysisData(analysis: StoredAnalysis): Record<string, unknown> {
 
 // ─── 종합 등급 계산 ───
 
-function calculateOverallGrade(report: Partial<IntegratedReportData>): {
-  grade: RiskGrade;
-  score: number;
-} {
-  const scores: number[] = [];
-
-  // 권리분석 점수
-  if (report.registryRisk?.score) {
-    scores.push(report.registryRisk.score.totalScore);
-  }
-
-  // 계약분석 점수 (위험도 역산)
-  if (report.contractRisk) {
-    const riskMap = { low: 90, medium: 60, high: 30 };
-    scores.push(riskMap[report.contractRisk.overallRisk] || 50);
-  }
-
-  // 시세 안정성 점수
-  if (report.priceAnalysis) {
-    const priceStability =
-      report.priceAnalysis.confidence * 100;
-    scores.push(Math.min(100, priceStability));
-  }
-
-  const avgScore =
-    scores.length > 0
-      ? scores.reduce((a, b) => a + b, 0) / scores.length
-      : 50;
-
-  let grade: RiskGrade;
-  if (avgScore >= 85) grade = "A";
-  else if (avgScore >= 70) grade = "B";
-  else if (avgScore >= 50) grade = "C";
-  else if (avgScore >= 30) grade = "D";
-  else grade = "F";
-
-  return { grade, score: Math.round(avgScore) };
-}
-
-// ─── 권고사항 생성 ───
-
 function generateRecommendations(
   report: Partial<IntegratedReportData>
 ): string[] {

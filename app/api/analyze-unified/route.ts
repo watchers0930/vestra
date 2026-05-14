@@ -237,7 +237,7 @@ export async function POST(req: NextRequest) {
     const estimatedPrice = userPrice || priceEstimation.estimatedPrice;
 
     // 3단계: 데이터 검증 엔진 (AI 미사용)
-    const preValidation = validateParsedRegistry(parsed, estimatedPrice);
+    validateParsedRegistry(parsed, estimatedPrice);
 
     // 4단계: 자체 리스크 스코어링 (AI 미사용)
     const riskScore = calculateRiskScore(parsed, estimatedPrice);

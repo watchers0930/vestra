@@ -38,9 +38,8 @@ describe("stripHtml", () => {
     expect(stripHtml('onerror="alert(1)"텍스트')).toBe("텍스트");
   });
 
-  it("HTML 엔티티 디코딩 후 태그 재제거", () => {
-    // &lt;script&gt; → <script> → 태그 제거 → ""
-    expect(stripHtml("&lt;script&gt;")).toBe("");
+  it("HTML 엔티티는 디코딩하지 않고 유지", () => {
+    expect(stripHtml("&lt;script&gt;")).toBe("&lt;script&gt;");
   });
 
   it("null/undefined 입력 처리", () => {

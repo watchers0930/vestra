@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { FileBarChart, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { FileBarChart } from "lucide-react";
 import { PageHeader, EmptyState, Card } from "@/components/common";
 import IntegratedReport from "@/components/results/IntegratedReport";
 import { aggregateReport } from "@/lib/integrated-report";
@@ -18,37 +18,25 @@ interface StoredAnalysisItem {
 }
 
 export default function ReportPage() {
-  const [report, setReport] = useState<IntegratedReportData | null>(null);
-  const [analyses, setAnalyses] = useState<StoredAnalysisItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedAddress, setSelectedAddress] = useState<string>("");
-
-  // localStorage에서 분석 내역 로드
-  useEffect(() => {
+  const [analyses] = useState<StoredAnalysisItem[]>(() => {
+    if (typeof window === "undefined") return [];
     try {
       const stored = localStorage.getItem("analysis-history");
       if (stored) {
-        const parsed: StoredAnalysisItem[] = JSON.parse(stored);
-        setAnalyses(parsed);
-
-        // 주소별 그룹
-        const addresses = [...new Set(parsed.map((a) => a.address).filter(Boolean))];
-        if (addresses.length > 0) {
-          setSelectedAddress(addresses[0]);
-        }
+        return JSON.parse(stored) as StoredAnalysisItem[];
       }
     } catch {
       // ignore
     }
-    setLoading(false);
-  }, []);
-
-  // 선택 주소 변경 시 리포트 재생성
-  useEffect(() => {
-    if (!selectedAddress || analyses.length === 0) {
-      setReport(null);
-      return;
-    }
+    return [];
+  });
+  const uniqueAddresses = useMemo(
+    () => [...new Set(analyses.map((a) => a.address).filter(Boolean))],
+    [analyses]
+  );
+  const [selectedAddress, setSelectedAddress] = useState<string>(() => uniqueAddresses[0] ?? "");
+  const report = useMemo<IntegratedReportData | null>(() => {
+    if (!selectedAddress || analyses.length === 0) return null;
 
     const filtered = analyses
       .filter((a) => a.address === selectedAddress)
@@ -57,24 +45,9 @@ export default function ReportPage() {
         createdAt: new Date(a.createdAt),
       }));
 
-    if (filtered.length === 0) {
-      setReport(null);
-      return;
-    }
-
-    const result = aggregateReport(filtered, selectedAddress);
-    setReport(result);
+    if (filtered.length === 0) return null;
+    return aggregateReport(filtered, selectedAddress);
   }, [selectedAddress, analyses]);
-
-  const uniqueAddresses = [...new Set(analyses.map((a) => a.address).filter(Boolean))];
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="animate-spin text-primary" size={32} />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { signOut } from "next-auth/react";
 import {
   User,
@@ -82,7 +83,7 @@ export default function ProfilePage() {
       <div className="bg-card rounded-2xl border border-border p-6">
         <div className="flex items-center gap-4">
           {user.image ? (
-            <img src={user.image} alt="" className="w-16 h-16 rounded-full" />
+            <Image src={user.image} alt="" width={64} height={64} className="w-16 h-16 rounded-full" />
           ) : (
             <div className="w-16 h-16 rounded-full bg-[#f5f5f7] flex items-center justify-center">
               <User size={28} className="text-[#1d1d1f]" strokeWidth={1.5} />

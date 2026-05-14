@@ -27,14 +27,6 @@ export function SampleReportBody() {
   const min = Math.min(...PRICE_DATA.map((d) => d.price));
   const max = Math.max(...PRICE_DATA.map((d) => d.price));
   const range = max - min;
-  const chartH = 80;
-
-  const points = PRICE_DATA.map((d, i) => {
-    const x = (i / (PRICE_DATA.length - 1)) * 100;
-    const y = chartH - ((d.price - min) / range) * chartH;
-    return `${x},${y}`;
-  }).join(" ");
-
   return (
     <div className="space-y-6">
       {/* 권리관계 분석 */}

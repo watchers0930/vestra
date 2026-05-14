@@ -12,14 +12,13 @@ interface ScholarPapersProps {
 export function ScholarPapers({ keywords }: ScholarPapersProps) {
   const [papers, setPapers] = useState<ScholarPaper[]>([]);
   const [sources, setSources] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => keywords.length > 0);
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
   useEffect(() => {
     if (!keywords.length) return;
 
     let cancelled = false;
-    setLoading(true);
 
     fetch("/api/scholar/search", {
       method: "POST",
@@ -33,7 +32,10 @@ export function ScholarPapers({ keywords }: ScholarPapersProps) {
         setSources(data.sources || []);
       })
       .catch(() => {
-        if (!cancelled) setPapers([]);
+        if (!cancelled) {
+          setPapers([]);
+          setSources([]);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

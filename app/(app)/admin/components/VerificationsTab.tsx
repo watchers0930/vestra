@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { CheckCircle, User, Building2, Crown, XCircle } from "lucide-react";
 import { Card, Button } from "@/components/common";
 import type { UserItem, ConfirmModalState } from "../types";
@@ -27,7 +28,7 @@ export function VerificationsTab({ pending, setConfirmModal, handleVerify }: Pro
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
               {user.image ? (
-                <img src={user.image} alt="" className="w-10 h-10 rounded-full" />
+                <Image src={user.image} alt="" width={40} height={40} className="w-10 h-10 rounded-full" />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
                   <User size={16} strokeWidth={1.5} className="text-gray-500" />

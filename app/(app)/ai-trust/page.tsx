@@ -23,6 +23,7 @@ import {
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent } from "@/components/common/Card";
 import { formatNumber } from "@/lib/format";
+import { useHydrated } from "@/lib/use-hydrated";
 import { useAiTrustData } from "./hooks/useAiTrustData";
 
 // ---------------------------------------------------------------------------
@@ -76,6 +77,7 @@ const CHART_LABELS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 export default function AiTrustPage() {
   const { data, loading, expandedModel, toggleModel } = useAiTrustData();
+  const mounted = useHydrated();
 
   if (loading) {
     return (
@@ -247,53 +249,57 @@ export default function AiTrustPage() {
           </p>
 
           <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trends}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f2" />
-                <XAxis
-                  dataKey="month"
-                  tick={{ fontSize: 12, fill: "#6e6e73" }}
-                  axisLine={{ stroke: "#e5e5e7" }}
-                  tickLine={false}
-                />
-                <YAxis
-                  domain={[80, 100]}
-                  tick={{ fontSize: 12, fill: "#6e6e73" }}
-                  axisLine={{ stroke: "#e5e5e7" }}
-                  tickLine={false}
-                  tickFormatter={(v: number) => `${v}%`}
-                />
-                <Tooltip
-                  formatter={(value, name) => [
-                    `${value}%`,
-                    CHART_LABELS[name as string] || name,
-                  ]}
-                  contentStyle={{
-                    borderRadius: 12,
-                    border: "1px solid #e5e5e7",
-                    boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-                    fontSize: 13,
-                  }}
-                />
-                <Legend
-                  formatter={(value: string) => CHART_LABELS[value] || value}
-                  iconType="circle"
-                  iconSize={8}
-                  wrapperStyle={{ fontSize: 12, color: "#6e6e73" }}
-                />
-                {Object.entries(CHART_COLORS).map(([key, color]) => (
-                  <Line
-                    key={key}
-                    type="monotone"
-                    dataKey={key}
-                    stroke={color}
-                    strokeWidth={2}
-                    dot={{ r: 3, fill: color }}
-                    activeDot={{ r: 5 }}
+            {mounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trends}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f2" />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 12, fill: "#6e6e73" }}
+                    axisLine={{ stroke: "#e5e5e7" }}
+                    tickLine={false}
                   />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
+                  <YAxis
+                    domain={[80, 100]}
+                    tick={{ fontSize: 12, fill: "#6e6e73" }}
+                    axisLine={{ stroke: "#e5e5e7" }}
+                    tickLine={false}
+                    tickFormatter={(v: number) => `${v}%`}
+                  />
+                  <Tooltip
+                    formatter={(value, name) => [
+                      `${value}%`,
+                      CHART_LABELS[name as string] || name,
+                    ]}
+                    contentStyle={{
+                      borderRadius: 12,
+                      border: "1px solid #e5e5e7",
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+                      fontSize: 13,
+                    }}
+                  />
+                  <Legend
+                    formatter={(value: string) => CHART_LABELS[value] || value}
+                    iconType="circle"
+                    iconSize={8}
+                    wrapperStyle={{ fontSize: 12, color: "#6e6e73" }}
+                  />
+                  {Object.entries(CHART_COLORS).map(([key, color]) => (
+                    <Line
+                      key={key}
+                      type="monotone"
+                      dataKey={key}
+                      stroke={color}
+                      strokeWidth={2}
+                      dot={{ r: 3, fill: color }}
+                      activeDot={{ r: 5 }}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full animate-pulse rounded-lg bg-[#f5f5f7]" />
+            )}
           </div>
         </CardContent>
       </Card>

@@ -39,13 +39,15 @@ export function PortfolioOverview({
   );
 
   const segments = useMemo(() => {
-    let accumulated = 0;
-    return riskDistribution.map((d) => {
-      const arcLen = total > 0 ? (d.value / total) * CIRCUMFERENCE : 0;
-      const offset = -accumulated;
-      accumulated += arcLen;
-      return { ...d, arcLen, offset };
-    });
+    return riskDistribution.reduce<Array<RiskItem & { arcLen: number; offset: number }>>(
+      (acc, d) => {
+        const previousArcLen = acc.reduce((sum, segment) => sum + segment.arcLen, 0);
+        const arcLen = total > 0 ? (d.value / total) * CIRCUMFERENCE : 0;
+        acc.push({ ...d, arcLen, offset: -previousArcLen });
+        return acc;
+      },
+      [],
+    );
   }, [riskDistribution, total]);
 
   const maxValue = useMemo(

@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { fetchRecentPrices, fetchRecentRentPrices, LAWD_CODE_MAP } from "@/lib/molit-api";
 // fetchREBMarketData 제거 — 단지별 실거래 데이터만 사용
-import { apiCache, APICache } from "@/lib/api-cache";
+import { APICache } from "@/lib/api-cache";
 import { kvCache } from "@/lib/kv-cache";
 import { AptPrice, SEED_DATA, DONG_CENTER, GU_CENTER, GU_ADDRESS_MAP, REGION_GROUPS } from "@/lib/price-map-data";
 
@@ -15,7 +15,7 @@ import { AptPrice, SEED_DATA, DONG_CENTER, GU_CENTER, GU_ADDRESS_MAP, REGION_GRO
 const GEOCODE_TTL = 7 * 24 * 60 * 60 * 1000; // 7일
 
 // 주거 관련 카테고리 판별
-function isResidentialCategory(cat: string): boolean {
+function isResidentialCategory(cat?: string): boolean {
   return /아파트|주거|빌딩|주택|오피스텔/.test(cat || "");
 }
 
@@ -31,18 +31,6 @@ function haversineDistance(a: { lat: number; lng: number }, b: { lat: number; ln
 }
 
 // 카카오 주소 검색 API — 도로명/지번 주소를 정확한 좌표로 변환
-async function kakaoAddressSearch(kakaoKey: string, query: string): Promise<{ lat: number; lng: number } | null> {
-  try {
-    const url = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(query)}&size=5`;
-    const res = await fetch(url, { headers: { Authorization: `KakaoAK ${kakaoKey}` } });
-    if (!res.ok) return null;
-    const json = await res.json();
-    const docs = json.documents || [];
-    if (docs[0]) return { lat: parseFloat(docs[0].y), lng: parseFloat(docs[0].x) };
-  } catch { /* ignore */ }
-  return null;
-}
-
 // 카카오 키워드 검색 — 아파트 카테고리(AP4) 필터 지원
 async function kakaoKeywordSearch(
   kakaoKey: string,
@@ -64,11 +52,11 @@ async function kakaoKeywordSearch(
     const docs = json.documents || [];
 
     // 1순위: 카테고리에 "아파트" 포함
-    const aptDoc = docs.find((d: any) => d.category_name?.includes("아파트"));
+    const aptDoc = docs.find((d: { category_name?: string }) => d.category_name?.includes("아파트"));
     if (aptDoc) return { lat: parseFloat(aptDoc.y), lng: parseFloat(aptDoc.x) };
 
     // 2순위: 주거 관련 카테고리 (빌딩, 주거, 주택, 오피스텔)
-    const residDoc = docs.find((d: any) => isResidentialCategory(d.category_name));
+    const residDoc = docs.find((d: { category_name?: string }) => isResidentialCategory(d.category_name));
     if (residDoc) return { lat: parseFloat(residDoc.y), lng: parseFloat(residDoc.x) };
 
     // 3순위: 첫 번째 결과 (폴백)
@@ -154,15 +142,6 @@ async function geocodeAll(apartments: { gu: string; dong: string; name: string }
 }
 
 // 폴백: 동 중심 좌표에 산포 (geocode 실패 시)
-function spreadCoord(center: { lat: number; lng: number }, index: number, total: number): { lat: number; lng: number } {
-  const angle = (2 * Math.PI * index) / Math.max(total, 1);
-  const radius = 0.002 + (index % 3) * 0.001;
-  return {
-    lat: center.lat + radius * Math.cos(angle),
-    lng: center.lng + radius * Math.sin(angle),
-  };
-}
-
 // 단지 변동률 — 평당가(₩/㎡) 기반, 면적대별 가중평균
 // 면적을 무시하면 24평→34평 거래 전환 시 가격 상승으로 왜곡됨
 function calcChangeByArea(txs: { amount: number; area: number; dealYear?: number; dealMonth?: number }[]): number {
@@ -326,8 +305,7 @@ export async function GET(req: NextRequest) {
           }
         }
 
-        const totalEntries = entries.length;
-        entries.forEach(([aptName, txs], idx) => {
+        entries.forEach(([aptName, txs]) => {
           const latest = txs[0];
           const seed = seedMap.get(aptName);
           const amount = tradeType === "전세"

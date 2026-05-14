@@ -48,7 +48,6 @@ export async function GET(req: Request) {
       }
 
       const html = await res.text();
-      const contentLength = html.length;
 
       // 간이 변경 감지: 페이지 크기 기반 (정밀 감지는 향후 고도화)
       // 실제로는 이전 스냅샷과 비교하는 방식으로 개선 가능

@@ -1,11 +1,11 @@
 /**
- * Next.js Middleware (경량 버전)
+ * Next.js Proxy (경량 버전)
  *
  * NextAuth v5 JWE 토큰을 직접 복호화하여 경로 보호
  * - auth() 전체를 import하지 않아 Edge Function 크기 최소화
  * - HKDF 키 파생 + jwtDecrypt로 암호화된 JWT 복호화
  *
- * @module middleware
+ * @module proxy
  */
 
 import { NextResponse } from "next/server";
@@ -19,7 +19,7 @@ async function getDerivedEncryptionKey(secret: string, salt: string) {
     secret,
     salt,
     `Auth.js Generated Encryption Key (${salt})`,
-    64 // A256CBC-HS512
+    64
   );
 }
 
@@ -42,9 +42,8 @@ async function getToken(req: NextRequest) {
     });
     return payload as { role?: string; id?: string };
   } catch (err) {
-    // Edge Runtime에서는 Prisma 사용 불가 → console.warn으로 기록
     console.warn(
-      "[Middleware] JWT 복호화 실패:",
+      "[Proxy] JWT 복호화 실패:",
       err instanceof Error ? err.message : "unknown",
       "| IP:",
       req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
@@ -55,10 +54,9 @@ async function getToken(req: NextRequest) {
   }
 }
 
-export default async function middleware(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // 루트("/") 접근 시: 로그인 사용자 → /dashboard 리다이렉트
   if (pathname === "/") {
     const token = await getToken(req);
     if (token) {
@@ -67,10 +65,8 @@ export default async function middleware(req: NextRequest) {
       }
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
-    // 비로그인 → 랜딩 페이지 (그대로 진행)
   }
 
-  // 관리자 경로 보호
   if (pathname.startsWith("/admin")) {
     const token = await getToken(req);
     if (!token || token.role !== "ADMIN") {
@@ -78,7 +74,6 @@ export default async function middleware(req: NextRequest) {
     }
   }
 
-  // 프로필, 대시보드 보호 (로그인 필수)
   if (pathname.startsWith("/profile") || pathname.startsWith("/dashboard")) {
     const token = await getToken(req);
     if (!token) {

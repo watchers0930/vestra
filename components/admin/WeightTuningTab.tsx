@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Sliders, RefreshCw, TrendingUp, BarChart3, Target, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Card, Button } from "@/components/common";
 import { KpiCard } from "@/components/results";
 import {

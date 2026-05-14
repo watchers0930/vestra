@@ -13,21 +13,6 @@ import type {
   RationalityItem,
   FeasibilityScore,
 } from "./feasibility-types";
-import { CLAIM_LABELS, type ClaimKey } from "./feasibility-types";
-
-// ---------------------------------------------------------------------------
-// 합리성 등급 판정
-// ---------------------------------------------------------------------------
-
-// 수익 측 항목: 높을수록 낙관적 (분양가, 분양률, 수익률)
-const REVENUE_CLAIMS = new Set([
-  "planned_sale_price",
-  "expected_sale_rate",
-  "expected_profit_rate",
-  "total_revenue",
-  "rental_income",
-  "operation_income",
-]);
 
 // 비용 측 항목: 낮을수록 낙관적 (공사비, PF금리)
 const COST_CLAIMS = new Set([

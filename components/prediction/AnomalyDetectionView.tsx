@@ -94,7 +94,7 @@ function detectChangePoints(values: number[]) {
   return points;
 }
 
-export function AnomalyDetectionView({ transactions, currentPrice }: Props) {
+export function AnomalyDetectionView({ transactions }: Props) {
   const chartData = useMemo(() => {
     if (!transactions?.length) return { data: [], anomalies: [], changePoints: [] };
 

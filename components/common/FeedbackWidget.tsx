@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,15 +17,11 @@ function getStorageKey(analysisId: string): string {
 }
 
 export default function FeedbackWidget({ analysisId, analysisType = "general", className }: FeedbackWidgetProps) {
-  const [feedback, setFeedback] = useState<FeedbackValue>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const [feedback, setFeedback] = useState<FeedbackValue>(() => {
+    if (typeof window === "undefined") return null;
     const stored = localStorage.getItem(getStorageKey(analysisId));
-    if (stored === "positive" || stored === "negative") {
-      setFeedback(stored);
-    }
-  }, [analysisId]);
+    return stored === "positive" || stored === "negative" ? stored : null;
+  });
 
   const handleFeedback = async (value: FeedbackValue) => {
     if (!value) return;

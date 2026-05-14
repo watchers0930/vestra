@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { formatKRW, formatNumber, parseNumber } from "@/lib/format";
+import { useHydrated } from "@/lib/use-hydrated";
 
 type MovingType = "포장이사" | "반포장이사" | "일반이사";
 type DistanceType = "같은 구" | "같은 시" | "타 시도";
@@ -64,6 +65,7 @@ function getBrokerRateLabel(price: number, dealType: DealType): string {
 }
 
 export default function MovingCostPage() {
+  const mounted = useHydrated();
   const [form, setForm] = useState({
     movingType: "포장이사" as MovingType,
     distance: "같은 구" as DistanceType,
@@ -344,27 +346,31 @@ export default function MovingCostPage() {
               비용 구성 차트
             </h2>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={chartData}
-                  margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                  <YAxis
-                    tick={{ fontSize: 11 }}
-                    tickFormatter={(v: number) => formatKRW(v)}
-                  />
-                  <Tooltip
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    formatter={(value: any) => [
-                      `${formatNumber(Number(value))}원`,
-                      "금액",
-                    ]}
-                  />
-                  <Bar dataKey="금액" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {mounted ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={chartData}
+                    margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(v: number) => formatKRW(v)}
+                    />
+                    <Tooltip
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      formatter={(value: any) => [
+                        `${formatNumber(Number(value))}원`,
+                        "금액",
+                      ]}
+                    />
+                    <Bar dataKey="금액" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full w-full rounded-lg bg-[#f5f5f7]" />
+              )}
             </div>
           </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Shield, ChevronRight, ShieldCheck, AlertTriangle, FileText, Lock, type LucideIcon } from "lucide-react";
+import { ChevronRight, ShieldCheck, AlertTriangle, FileText, Lock, type LucideIcon } from "lucide-react";
 import { JeonseInputForm } from "./components/JeonseInputForm";
 import { JeonseResultPanel } from "./components/JeonseResultPanel";
 import { useJeonseAnalysis } from "./hooks/useJeonseAnalysis";

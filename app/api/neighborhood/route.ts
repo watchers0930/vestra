@@ -84,14 +84,6 @@ interface FacilityItem {
   address: string;
 }
 
-interface CategoryResult {
-  score: number;
-  grade: string;
-  count: number;
-  nearest: number;
-  items: FacilityItem[];
-}
-
 function getGrade(score: number): string {
   if (score >= 90) return "A+";
   if (score >= 80) return "A";

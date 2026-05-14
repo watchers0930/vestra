@@ -6,7 +6,7 @@
  */
 
 import type { RealTransaction } from "./molit-api";
-import { toMonthlyTimeSeries, calculateTrend } from "./prediction-engine";
+import { toMonthlyTimeSeries } from "./prediction-engine";
 import type { BacktestResult } from "./prediction-engine";
 
 interface MonthlyError {
@@ -38,8 +38,6 @@ export function runBacktest(transactions: RealTransaction[]): BacktestResult | n
 
   // 학습 데이터로 추세 계산
   const trainPrices = trainSeries.map((s) => s.avgPrice);
-  const lastTrainPrice = trainPrices[trainPrices.length - 1];
-
   // 단순 추세 기반 예측 (선형 외삽)
   const n = trainPrices.length;
   let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;

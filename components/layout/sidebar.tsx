@@ -7,13 +7,13 @@ import {
   TrendingUp, Home, MessageSquare, Database, ChevronLeft, ChevronRight,
   ChevronDown, Menu, X, Users, CheckCircle, FileText, Megaphone,
   KeyRound, ExternalLink, ClipboardCheck, Brain, SlidersHorizontal,
-  ShieldAlert, Key, Newspaper, MapPin, Banknote, Download,
+  ShieldAlert, Key, Newspaper, MapPin, Download,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import { version } from "../../package.json";
+import packageJson from "../../package.json";
 import UserMenu from "@/components/auth/user-menu";
 import { VestraLogoMark } from "@/components/common/VestraLogo";
 import NotificationBell from "@/components/layout/NotificationBell";
@@ -85,6 +85,7 @@ const ACTIVE_STYLE = {
 } as const;
 
 const ITEM_BASE = "flex items-center gap-3 py-2 rounded-xl text-sm w-full transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/30";
+const APP_VERSION = packageJson.version;
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -93,18 +94,14 @@ export default function Sidebar() {
   const isAdmin = session?.user?.role === "ADMIN";
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [openAccordion, setOpenAccordion] = useState<string | null>(null);
-  const currentTab = searchParams.get("tab");
-  const isAdminPage = pathname.startsWith("/admin");
-
-  useEffect(() => {
+  const [openAccordion, setOpenAccordion] = useState<string | null>(() => {
     const parent = userMenuItems.find(
       (item) => item.children && (pathname.startsWith(item.href) || item.children.some((c) => pathname === c.href))
     );
-    setOpenAccordion(parent ? parent.href : null);
-  }, [pathname]);
-
-  useEffect(() => { setMobileOpen(false); }, [pathname, currentTab]);
+    return parent ? parent.href : null;
+  });
+  const currentTab = searchParams.get("tab");
+  const isAdminPage = pathname.startsWith("/admin");
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
@@ -225,7 +222,7 @@ export default function Sidebar() {
               <div style={{ lineHeight: 1 }}>
                 <p style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "0.15em", color: "#fff", fontFamily: "var(--font-sora)", margin: 0 }}>
                   VESTRA
-                  <span style={{ marginLeft: "6px", fontSize: "8px", fontWeight: 400, color: "rgba(255,255,255,0.30)", verticalAlign: "middle", letterSpacing: "0.05em" }}>v{version}</span>
+                  <span style={{ marginLeft: "6px", fontSize: "8px", fontWeight: 400, color: "rgba(255,255,255,0.30)", verticalAlign: "middle", letterSpacing: "0.05em" }}>v{APP_VERSION}</span>
                 </p>
                 <p style={{ fontSize: "9.5px", color: "rgba(255,255,255,0.28)", margin: "3px 0 0", letterSpacing: "0.04em" }}>
                   {isAdmin && isAdminPage ? "관리자 모드" : "AI 자산관리 플랫폼"}
@@ -346,11 +343,13 @@ export default function Sidebar() {
 
 function PwaInstallButton({ collapsed }: { collapsed: boolean }) {
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
-  const [installed, setInstalled] = useState(false);
+  const [installed, setInstalled] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(display-mode: standalone)").matches;
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (window.matchMedia("(display-mode: standalone)").matches) { setInstalled(true); return; }
     const handler = (e: Event) => { e.preventDefault(); setDeferredPrompt(e); };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);

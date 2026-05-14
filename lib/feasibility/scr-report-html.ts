@@ -8,8 +8,8 @@
 
 import type { ScrReportData } from "./scr-types";
 import { getScrReportCSS } from "./scr-report-css";
-import { renderTable, renderAllTables } from "./scr-report-tables";
-import { renderChart, renderAllCharts } from "./scr-report-charts";
+import { renderTable } from "./scr-report-tables";
+import { renderChart } from "./scr-report-charts";
 
 // ─── 유틸 ───
 

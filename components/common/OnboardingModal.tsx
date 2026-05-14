@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Shield, TrendingUp, Home, Calculator, ArrowRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,16 +30,11 @@ const features = [
 ];
 
 export default function OnboardingModal() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !localStorage.getItem(STORAGE_KEY);
+  });
   const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const done = localStorage.getItem(STORAGE_KEY);
-    if (!done) {
-      setOpen(true);
-    }
-  }, []);
 
   const handleClose = () => {
     localStorage.setItem(STORAGE_KEY, "true");

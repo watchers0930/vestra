@@ -310,7 +310,7 @@ export async function searchCorpCode(
 
   // 기업개황 검색은 corpCode가 필요하므로, corpCode 파일(XML)을 조회하는 대신
   // 공시검색 API를 활용하여 회사명으로 검색
-  const data = await dartFetch("corpCode.xml", {}); // XML이라 별도 처리 필요
+  await dartFetch("corpCode.xml", {}); // XML이라 별도 처리 필요
 
   // 실제로는 DART의 고유번호 파일(zip)을 다운로드하여 매핑해야 함
   // 여기서는 간소화: 직접 매핑 테이블 사용

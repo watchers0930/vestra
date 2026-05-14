@@ -17,7 +17,6 @@ import type {
   ScrProfitabilityRow,
   ScrFinancialStability,
   ScrCashFlowRow,
-  YearlyRow,
 } from "@/lib/feasibility/scr-types";
 
 interface ScrChapterIIProps {

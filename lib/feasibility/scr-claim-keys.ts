@@ -5,7 +5,7 @@
  * SCR 보고서 I~V장의 핵심 파싱 항목을 45개+로 확장합니다.
  */
 
-import { CLAIM_KEYS, type ClaimKey } from "./feasibility-types";
+import { CLAIM_KEYS } from "./feasibility-types";
 
 // ─── SCR 확장 키 (기존 18개 + 신규 29개 = 47개) ───
 

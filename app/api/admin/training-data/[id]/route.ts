@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { withAdminAuth } from "@/lib/with-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { decryptPII } from "@/lib/crypto";
 import { createAuditLog } from "@/lib/audit-log";
 
 /** GET: 개별 학습 데이터 상세 (복호화된 원문 포함) */
-export const GET = withAdminAuth<{ id: string }>(async (_req, { session: _session, params }) => {
+export const GET = withAdminAuth<{ id: string }>(async (_req, { params }) => {
   const { id } = params;
   const item = await prisma.trainingData.findUnique({ where: { id } });
   if (!item) {

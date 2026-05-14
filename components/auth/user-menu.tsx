@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
+import Image from "next/image";
 import Link from "next/link";
 import { User, LogOut, LogIn, Crown, Building2, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -73,9 +74,11 @@ export default function UserMenu({ collapsed }: { collapsed: boolean }) {
         title={collapsed ? session.user.name || "프로필" : undefined}
       >
         {session.user.image ? (
-          <img
+          <Image
             src={session.user.image}
             alt=""
+            width={32}
+            height={32}
             className="w-8 h-8 rounded-full flex-shrink-0 ring-2 ring-white/10"
           />
         ) : (

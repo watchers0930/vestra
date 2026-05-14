@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { formatKRW } from "@/lib/utils";
 import { addAnalysis, addOrUpdateAsset, getLatestAnalysisForAddress } from "@/lib/store";
 import { addNotification } from "@/lib/notification-client";
-import { useToast } from "@/components/common/toast";
 import type { KakaoGeocoderResult, KakaoPlaceResult } from "@/components/prediction/KakaoMap";
 import type { PredictionTabId } from "@/components/prediction/PredictionTabs";
 import type {
@@ -16,7 +15,6 @@ import type {
 } from "../types";
 
 export function usePredictionData() {
-  const { showToast } = useToast();
   const resultRef = useRef<HTMLDivElement>(null);
 
   const [roadResult, setRoadResult] = useState("");

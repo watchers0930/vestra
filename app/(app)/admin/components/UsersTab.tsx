@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { User, Save, X, Edit3, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, Badge } from "@/components/common";
@@ -69,7 +70,7 @@ export function UsersTab({
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {user.image ? (
-                        <img src={user.image} alt="" className="w-8 h-8 rounded-full" />
+                        <Image src={user.image} alt="" width={32} height={32} className="w-8 h-8 rounded-full" />
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
                           <User size={14} strokeWidth={1.5} className="text-gray-500" />

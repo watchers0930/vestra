@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { withAdminAuth } from "@/lib/with-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { decryptPII } from "@/lib/crypto";
@@ -6,7 +6,7 @@ import { generateAllLabels, toJSONL } from "@/lib/training-data-export";
 import type { ParsedRegistry } from "@/lib/registry-parser";
 
 /** GET: 승인된 데이터를 JSONL로 내보내기 */
-export const GET = withAdminAuth(async (_req: NextRequest) => {
+export const GET = withAdminAuth(async () => {
   const approved = await prisma.trainingData.findMany({
     where: { status: "approved" },
     orderBy: { createdAt: "asc" },

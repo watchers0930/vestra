@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAdminAuth } from "@/lib/with-admin-auth";
 import { prisma } from "@/lib/prisma";
-import { validateOrigin } from "@/lib/csrf";
 import { tuneWeights, type FeedbackRecord } from "@/lib/adaptive-weight-tuner";
 import { createAuditLog } from "@/lib/audit-log";
+import { validateOrigin } from "@/lib/csrf";
 
 const DEFAULT_WEIGHTS: Record<string, number> = {
   "등기부 파싱": 0.25,
@@ -25,7 +25,7 @@ const DEFAULT_BETA: Record<string, { alpha: number; beta: number }> = {
  * GET /api/admin/weight-tuning
  * 현재 가중치 설정, 메트릭 히스토리, 캘리브레이션 데이터 조회
  */
-export const GET = withAdminAuth(async (req: NextRequest) => {
+export const GET = withAdminAuth(async () => {
   // 현재 활성 가중치 가져오기
   const activeConfig = await prisma.weightConfig.findFirst({
     where: { isActive: true },

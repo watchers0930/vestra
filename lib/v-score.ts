@@ -481,7 +481,7 @@ export function calculateVScore(input: VScoreInput): VScoreResult {
   });
 
   // Step 3: 기본 V-Score (가중 합산)
-  let baseScore = totalWeight > 0
+  const baseScore = totalWeight > 0
     ? Math.round(weightedSum / totalWeight)
     : 50;
 

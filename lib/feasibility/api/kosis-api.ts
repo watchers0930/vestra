@@ -93,7 +93,7 @@ async function kosisFetch(params: Record<string, string>): Promise<unknown | nul
 
 // ─── 폴백 데이터 ───
 
-function getFallbackPopulationTrends(region: string): PopulationTrend[] {
+function getFallbackPopulationTrends(): PopulationTrend[] {
   // 서울 기준 기본 폴백 데이터 (최근 7년)
   const baseData: PopulationTrend[] = [
     { year: 2019, population: 9729107, households: 4148818, dataSource: "fallback" },
@@ -167,7 +167,7 @@ export async function fetchPopulationTrends(
     console.warn("KOSIS_API_KEY 환경변수가 설정되지 않았습니다. 폴백 데이터를 사용합니다.");
     return {
       region,
-      trends: getFallbackPopulationTrends(region),
+      trends: getFallbackPopulationTrends(),
       ageGroups: getFallbackAgeGroups(),
       dataSource: "fallback",
     };
@@ -190,7 +190,7 @@ export async function fetchPopulationTrends(
   if (!data || !Array.isArray(data)) {
     return {
       region,
-      trends: getFallbackPopulationTrends(region),
+      trends: getFallbackPopulationTrends(),
       ageGroups: getFallbackAgeGroups(),
       dataSource: "fallback",
     };
@@ -205,7 +205,7 @@ export async function fetchPopulationTrends(
     if (filtered.length === 0) {
       return {
         region,
-        trends: getFallbackPopulationTrends(region),
+        trends: getFallbackPopulationTrends(),
         ageGroups: getFallbackAgeGroups(),
         dataSource: "fallback",
       };
@@ -237,7 +237,7 @@ export async function fetchPopulationTrends(
 
     const result: KOSISPopulationResult = {
       region,
-      trends: trends.length > 0 ? trends : getFallbackPopulationTrends(region),
+      trends: trends.length > 0 ? trends : getFallbackPopulationTrends(),
       ageGroups: getFallbackAgeGroups(), // 연령대는 별도 호출 필요, 일단 폴백
       dataSource: trends.length > 0 ? "live" : "fallback",
     };
@@ -248,7 +248,7 @@ export async function fetchPopulationTrends(
     console.warn("KOSIS 인구 데이터 파싱 실패:", error);
     return {
       region,
-      trends: getFallbackPopulationTrends(region),
+      trends: getFallbackPopulationTrends(),
       ageGroups: getFallbackAgeGroups(),
       dataSource: "fallback",
     };

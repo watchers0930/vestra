@@ -198,7 +198,6 @@ function checkConfidenceRiskAlignment(
 
 function generateRecommendation(
   checks: VerificationCheck[],
-  overallConsistency: number,
 ): string {
   const majorCount = checks.filter((c) => c.discrepancyLevel === "major").length;
   const minorCount = checks.filter((c) => c.discrepancyLevel === "minor").length;
@@ -240,7 +239,7 @@ export function selfVerify(
   const discrepancyCount = checks.filter((c) => c.discrepancyLevel !== "none").length;
 
   const finalReliability = overallConsistency * compositeReliability;
-  const recommendation = generateRecommendation(checks, overallConsistency);
+  const recommendation = generateRecommendation(checks);
 
   return {
     checks,

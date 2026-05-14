@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { Card } from "@/components/common";
 import { KpiCard } from "@/components/results";
+import { useHydrated } from "@/lib/use-hydrated";
 import { ROLE_LABELS } from "../constants";
 import type { Stats } from "../types";
 
@@ -20,6 +21,8 @@ interface Props {
 }
 
 export function OverviewTab({ stats }: Props) {
+  const mounted = useHydrated();
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -64,22 +67,26 @@ export function OverviewTab({ stats }: Props) {
             일일 분석 추이 (최근 7일)
           </h3>
           <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.dailyTrend}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11 }}
-                  tickFormatter={(v: string) => v.slice(5)}
-                />
-                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                <Tooltip
-                  formatter={(value) => [`${value}회`, "분석 횟수"]}
-                  labelFormatter={(label) => `날짜: ${label}`}
-                />
-                <Bar dataKey="count" fill="#2563eb" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {mounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats.dailyTrend}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={(v: string) => v.slice(5)}
+                  />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <Tooltip
+                    formatter={(value) => [`${value}회`, "분석 횟수"]}
+                    labelFormatter={(label) => `날짜: ${label}`}
+                  />
+                  <Bar dataKey="count" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full animate-pulse rounded-lg bg-[#f5f5f7]" />
+            )}
           </div>
         </Card>
       )}

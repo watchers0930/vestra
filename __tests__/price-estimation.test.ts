@@ -17,9 +17,8 @@ function makeTx(overrides: Partial<RealTransaction> = {}): RealTransaction {
     dealYear: currentYear,
     dealMonth: currentMonth,
     dealDay: 1,
-    regionCode: "11680",
     buildYear: 2015,
-    roadName: "테헤란로",
+    dong: "역삼동",
     ...overrides,
   };
 }
@@ -39,8 +38,12 @@ const mockSaleData: PriceResult = {
 
 const mockRentData: RentPriceResult = {
   avgDeposit: 500000000,
+  minDeposit: 450000000,
+  maxDeposit: 550000000,
   jeonseCount: 5,
   wolseCount: 2,
+  transactions: [],
+  period: "최근 12개월",
 };
 
 // ─── 테스트 ───

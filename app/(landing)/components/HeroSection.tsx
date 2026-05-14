@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { TICKER_ITEMS } from "../constants";
 import { SampleReportModal } from "./SampleReportModal";
@@ -86,9 +87,13 @@ export function HeroSection() {
           {/* Right — image */}
           <div className="relative">
             <div className="landing-img-overlay h-[640px] rounded-xl shadow-2xl">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80"
                 alt="부동산 자산관리 플랫폼"
+                width={1200}
+                height={640}
+                priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="w-full h-full object-cover"
               />
             </div>

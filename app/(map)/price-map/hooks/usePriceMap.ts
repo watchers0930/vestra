@@ -5,6 +5,12 @@ import { formatPrice, escapeHtml } from "@/lib/format";
 import { analyzeRisk, getAreaColor } from "../lib/analyzeRisk";
 import type { AptData, MapResponse } from "../types";
 
+const LOCAL_TTL = 5 * 60 * 1000; // 5분
+
+function localKey(gu: string, tradeType: "매매" | "전세") {
+  return `pm:${gu}:${tradeType}`;
+}
+
 export function usePriceMap() {
   const mapRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -60,13 +66,10 @@ export function usePriceMap() {
     });
   }, []);
 
-  const LOCAL_TTL = 5 * 60 * 1000; // 5분
-  const localKey = (gu: string) => `pm:${gu}:${tradeType}`;
-
   const fetchData = useCallback(async (gu: string) => {
     // localStorage 캐시 확인 → 있으면 즉시 표시 후 백그라운드 갱신
     try {
-      const raw = localStorage.getItem(localKey(gu));
+      const raw = localStorage.getItem(localKey(gu, tradeType));
       if (raw) {
         const { ts, payload } = JSON.parse(raw) as { ts: number; payload: MapResponse };
         if (Date.now() - ts < LOCAL_TTL) {
@@ -86,7 +89,7 @@ export function usePriceMap() {
       setData(json);
       setSelectedApt(null);
       try {
-        localStorage.setItem(localKey(gu), JSON.stringify({ ts: Date.now(), payload: json }));
+        localStorage.setItem(localKey(gu, tradeType), JSON.stringify({ ts: Date.now(), payload: json }));
       } catch { /* QuotaExceededError 무시 */ }
     } catch (err) {
       console.error("시세 데이터 로드 실패:", err);
@@ -145,7 +148,7 @@ export function usePriceMap() {
       circlesRef.current = [];
       kakaoMapRef.current = null;
     };
-  }, [mapRef]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── useEffect #2: data 변경 시 마커/클러스터만 업데이트 ──
   // 지도 인스턴스(kakaoMapRef)는 이미 초기화된 상태로 공유

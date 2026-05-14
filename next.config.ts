@@ -45,6 +45,20 @@ const mapCSP = baseCSP.replace(
 );
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: process.cwd(),
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
+    ],
+    formats: ["image/avif", "image/webp"],
+  },
   async headers() {
     return [
       // 지도 페이지 — unsafe-eval 허용

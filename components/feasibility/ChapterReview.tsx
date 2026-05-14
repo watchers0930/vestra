@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { ChevronDown, AlertTriangle, CheckCircle2, FileText } from "lucide-react";
+import { ChevronDown, AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { ChapterOpinion } from "@/lib/feasibility/feasibility-types";
 import { RATIONALITY_LABELS, RATIONALITY_COLORS } from "@/lib/feasibility/feasibility-types";
 

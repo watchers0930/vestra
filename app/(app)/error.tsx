@@ -3,7 +3,6 @@
 import { AlertCircle, RefreshCw } from "lucide-react";
 
 export default function AppError({
-  error,
   reset,
 }: {
   error: Error & { digest?: string };

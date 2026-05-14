@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { collectNews } from "@/lib/news-collector";
 import { withAdminAuth } from "@/lib/with-admin-auth";
 
-export const POST = withAdminAuth(async (_req: NextRequest) => {
+export const POST = withAdminAuth(async () => {
   try {
     const result = await collectNews();
     return NextResponse.json({ success: true, ...result });
