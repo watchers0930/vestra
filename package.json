@@ -12,6 +12,8 @@
     "test:watch": "vitest",
     "verify:release": "./scripts/verify-release.sh",
     "smoke": "./scripts/smoke-deployment.sh",
+    "deploy:preview": "./scripts/deploy-vestra.sh preview",
+    "deploy:promote": "./scripts/deploy-vestra.sh promote",
     "seed:fraud": "npx tsx prisma/seed-fraud-cases.ts",
     "seed:training": "npx tsx prisma/seed-training-data.ts"
   },

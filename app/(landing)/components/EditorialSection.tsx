@@ -56,6 +56,16 @@ export function EditorialSection() {
               </div>
             </cite>
           </blockquote>
+          <div className="mb-8 rounded-2xl border border-[#00042a]/10 bg-white/70 p-6 backdrop-blur">
+            <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#00042a]">
+              Patent Narrative
+            </p>
+            <p className="text-[15px] leading-[1.8] text-[#454651]">
+              VESTRA는 권리관계 그래프 분석, 위험도 통합 점수화, 자기검증 루프를 포함한
+              독자 기술 구조를 바탕으로 설계되었습니다. 단순한 UI 서비스가 아니라, 특허화 가능한
+              분석 체계를 전면에 둔 부동산 의사결정 엔진입니다.
+            </p>
+          </div>
           <p className="text-[#454651] leading-[1.9] text-[16px] mb-10">
             전통적인 부동산 시장은 정보의 비대칭성이 가장 큰 장벽이었습니다. VESTRA는 이 장벽을 허물고, 모든 투자자에게 전문적인 통찰력을 제공하기 위해 탄생했습니다.
           </p>

@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## VESTRA
 
-## Getting Started
+AI 기반 부동산 분석 플랫폼입니다. 전세 리스크, 권리분석, 시세/지도, feasibility, 리포트 기능을 포함합니다.
 
-First, run the development server:
+## Local Development
+
+개발 서버 실행:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+정적 검증:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run lint
+npm run test
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deployment
 
-## Learn More
+VESTRA는 직접 운영 배포하지 않습니다.
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run deploy:preview
+npm run deploy:promote
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+배포 규칙:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- 항상 `t-vestra.vercel.app`으로 테스트 배포를 먼저 진행
+- 확인 후 `vestra-plum.vercel.app`으로 승격
+- preview 배포는 `lint`, `test`, `build`, `push`, `smoke`를 자동 수행
 
-## Deploy on Vercel
+자세한 절차는 [docs/deployment-runbook.md](./docs/deployment-runbook.md)를 따릅니다.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Runtime Notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- preview alias도 CSRF 허용 origin에 포함됩니다.
+- `/api/health`는 배포 smoke 검증용 공개 헬스체크 엔드포인트입니다.

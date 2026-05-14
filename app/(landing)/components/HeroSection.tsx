@@ -30,6 +30,15 @@ export function HeroSection() {
               VESTRA는 수만 개의 데이터 포인트를 정밀하게 분석하여<br />전문가의 통찰력을 디지털화합니다.
             </p>
 
+            <div className="mb-12 flex flex-wrap gap-3">
+              <span className="rounded-full border border-[#00042a]/12 bg-white/80 px-4 py-2 text-[11px] font-bold tracking-[0.18em] text-[#00042a] uppercase">
+                Patent-Based Analysis Engine
+              </span>
+              <span className="rounded-full border border-[#00042a]/12 bg-white/80 px-4 py-2 text-[11px] font-bold tracking-[0.18em] text-[#00042a] uppercase">
+                8대 독자 기술 기반
+              </span>
+            </div>
+
             {/* Buttons */}
             <div className="flex flex-wrap gap-5 mb-16">
               <Link
@@ -80,6 +89,9 @@ export function HeroSection() {
                   ))}
                 </div>
                 <p className="text-[10px] font-bold text-[#454651] tracking-wider">12,400+ 분석 완료</p>
+                <p className="mt-1 text-[10px] font-medium text-[#6d6d78] tracking-wide">
+                  특허 출원 기술 구조를 반영한 분석 파이프라인
+                </p>
               </div>
             </div>
           </div>
