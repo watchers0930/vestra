@@ -109,15 +109,15 @@ export function HeroSection() {
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="absolute inset-x-6 bottom-6 rounded-2xl border border-white/20 bg-[#00042a]/78 px-6 py-5 text-white shadow-2xl backdrop-blur-md">
-              <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.22em] text-white/70">
+            <div className="mt-5 rounded-2xl border border-[#00042a]/10 bg-white px-6 py-5 text-[#00042a] shadow-xl">
+              <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.22em] text-[#6d6d78]">
                 Patent Filing
               </p>
               <div className="space-y-1.5">
                 <p className="text-[13px] font-semibold leading-[1.6]">
                   출원명: 부동산 거래 위험도 산출장치 및 방법
                 </p>
-                <p className="text-[12px] text-white/78 leading-[1.6]">
+                <p className="text-[12px] text-[#454651] leading-[1.6]">
                   출원번호: 10-2026-0085160
                 </p>
               </div>
