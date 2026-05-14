@@ -108,7 +108,7 @@ export function HeroSection() {
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="mt-5 rounded-2xl border border-[#00042a]/10 bg-white px-6 py-5 text-[#00042a] shadow-xl">
+            <div className="mt-5 px-1 text-[#00042a]">
               <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.22em] text-[#6d6d78]">
                 Patent Filing
               </p>
