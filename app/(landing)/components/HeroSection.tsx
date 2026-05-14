@@ -69,31 +69,6 @@ export function HeroSection() {
               </button>
             </div>
 
-            {/* Trust badges */}
-            <div className="flex items-center gap-6">
-              <div className="flex -space-x-2">
-                <div className="w-8 h-8 rounded-full bg-[#e4e1e9] border-2 border-white" />
-                <div className="w-8 h-8 rounded-full bg-[#efedf4] border-2 border-white" />
-                <div className="w-8 h-8 rounded-full bg-[#dee0ff] border-2 border-white" />
-              </div>
-              <div>
-                <div className="flex gap-0.5 mb-0.5">
-                  {Array(5).fill(0).map((_, i) => (
-                    <span
-                      key={i}
-                      className="material-symbols-outlined text-xs text-amber-400"
-                      style={{ fontVariationSettings: "'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 24" }}
-                    >
-                      star
-                    </span>
-                  ))}
-                </div>
-                <p className="text-[10px] font-bold text-[#454651] tracking-wider">12,400+ 분석 완료</p>
-                <p className="mt-1 text-[10px] font-medium text-[#6d6d78] tracking-wide">
-                  특허 출원 기술 구조를 반영한 분석 파이프라인
-                </p>
-              </div>
-            </div>
           </div>
 
           {/* Right — image */}
