@@ -4,6 +4,7 @@ import { usePriceMap } from "./hooks/usePriceMap";
 import { LeftPanel } from "./components/LeftPanel";
 import { RiskPopup } from "./components/RiskPopup";
 import { MapOverlay } from "./components/MapOverlay";
+import { PriceLeafletFallback } from "./components/PriceLeafletFallback";
 
 export default function PriceMapPage() {
   const {
@@ -11,7 +12,7 @@ export default function PriceMapPage() {
     selectedApt, loading, showGuDropdown, setShowGuDropdown,
     selectedSido, setSelectedSido, tradeType, setTradeType,
     riskPopup, setRiskPopup,
-    selectAndMoveToApt, topChanges,
+    selectAndMoveToApt, topChanges, mapStatus,
   } = usePriceMap();
 
   return (
@@ -43,7 +44,14 @@ export default function PriceMapPage() {
 
         <div className="relative flex-1" style={{ minHeight: 0 }}>
           <MapOverlay loading={loading} total={data?.total || 0} />
-          <div ref={mapRef} className="absolute inset-0" />
+          {mapStatus === "ready" ? (
+            <div ref={mapRef} className="absolute inset-0" />
+          ) : (
+            <PriceLeafletFallback
+              apartments={data?.apartments || []}
+              center={data?.center}
+            />
+          )}
         </div>
       </div>
     </div>

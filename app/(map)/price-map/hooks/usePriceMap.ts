@@ -13,6 +13,7 @@ function localKey(gu: string, tradeType: "매매" | "전세") {
 
 export function usePriceMap() {
   const mapRef = useRef<HTMLDivElement>(null);
+  const hasKakaoKey = Boolean(process.env.NEXT_PUBLIC_KAKAO_MAP_KEY);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const kakaoMapRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,6 +25,7 @@ export function usePriceMap() {
   const [selectedGu, setSelectedGu] = useState("강남구");
   const [selectedApt, setSelectedApt] = useState<AptData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mapStatus, setMapStatus] = useState<"loading" | "ready" | "fallback">(hasKakaoKey ? "loading" : "fallback");
   const [showGuDropdown, setShowGuDropdown] = useState(false);
   const [selectedSido, setSelectedSido] = useState("서울");
   const [tradeType, setTradeType] = useState<"매매" | "전세">("매매");
@@ -106,8 +108,13 @@ export function usePriceMap() {
   // ── useEffect #1: 마운트 시 카카오 SDK 로드 + 빈 지도 초기화 ──
   // 데이터와 무관하게 컴포넌트 마운트 즉시 실행 → 지도가 먼저 보임
   useEffect(() => {
+    if (!hasKakaoKey) {
+      setMapStatus("fallback");
+      return;
+    }
     if (!mapRef.current) return;
     let cancelled = false;
+    let initialized = false;
 
     const initMap = () => {
       if (cancelled || !mapRef.current) return;
@@ -118,6 +125,8 @@ export function usePriceMap() {
       map.setMinLevel(1);
       map.setMaxLevel(10);
       kakaoMapRef.current = map;
+      initialized = true;
+      setMapStatus("ready");
     };
 
     const tryInit = () => {
@@ -134,13 +143,21 @@ export function usePriceMap() {
       return false;
     };
 
-    let initialized = false;
+    const handleSdkReady = () => {
+      if (!initialized) tryInit();
+    };
+
+    window.addEventListener("kakao-maps-ready", handleSdkReady);
     const pollId = setInterval(() => { if (initialized) return; if (tryInit()) { initialized = true; clearInterval(pollId); } }, 300);
     if (tryInit()) { initialized = true; clearInterval(pollId); }
-    const timeoutId = setTimeout(() => clearInterval(pollId), 15000);
+    const timeoutId = setTimeout(() => {
+      clearInterval(pollId);
+      if (!initialized && !cancelled) setMapStatus("fallback");
+    }, 8000);
 
     return () => {
       cancelled = true;
+      window.removeEventListener("kakao-maps-ready", handleSdkReady);
       clearInterval(pollId);
       clearTimeout(timeoutId);
       if (clustererRef.current) { clustererRef.current.clear(); clustererRef.current = null; }
@@ -148,12 +165,12 @@ export function usePriceMap() {
       circlesRef.current = [];
       kakaoMapRef.current = null;
     };
-  }, []);
+  }, [hasKakaoKey]);
 
   // ── useEffect #2: data 변경 시 마커/클러스터만 업데이트 ──
   // 지도 인스턴스(kakaoMapRef)는 이미 초기화된 상태로 공유
   useEffect(() => {
-    if (!data || !kakaoMapRef.current) return;
+    if (!data || !kakaoMapRef.current || mapStatus !== "ready") return;
     let cancelled = false;
 
     const renderMarkers = () => {
@@ -271,7 +288,7 @@ export function usePriceMap() {
     return () => {
       cancelled = true;
     };
-  }, [data, selectAndMoveToApt]);
+  }, [data, mapStatus, selectAndMoveToApt]);
 
   const topChanges = data?.apartments
     ? [...data.apartments].filter((a) => a.change !== null).sort((a, b) => (b.change as number) - (a.change as number)).slice(0, 5)
@@ -282,6 +299,6 @@ export function usePriceMap() {
     selectedApt, loading, showGuDropdown, setShowGuDropdown,
     selectedSido, setSelectedSido, tradeType, setTradeType,
     riskPopup, setRiskPopup,
-    selectAndMoveToApt, topChanges, analyzeRisk,
+    selectAndMoveToApt, topChanges, analyzeRisk, mapStatus,
   };
 }
