@@ -61,6 +61,11 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      // 나머지 페이지 — unsafe-eval 없음
+      {
+        source: "/(.*)",
+        headers: [...securityHeaders, { key: "Content-Security-Policy", value: baseCSP }],
+      },
       // 지도 페이지 — unsafe-eval 허용
       {
         source: "/price-map",
@@ -81,11 +86,6 @@ const nextConfig: NextConfig = {
       {
         source: "/feasibility",
         headers: [...securityHeaders, { key: "Content-Security-Policy", value: mapCSP }],
-      },
-      // 나머지 페이지 — unsafe-eval 없음
-      {
-        source: "/(.*)",
-        headers: [...securityHeaders, { key: "Content-Security-Policy", value: baseCSP }],
       },
     ];
   },
