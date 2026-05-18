@@ -4,7 +4,6 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { guestIdentifier, rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { fetchRecentPrices, fetchRecentRentPrices, LAWD_CODE_MAP } from "@/lib/molit-api";
 // fetchREBMarketData 제거 — 단지별 실거래 데이터만 사용
 import { APICache } from "@/lib/api-cache";
@@ -245,14 +244,6 @@ export async function GET(req: NextRequest) {
     if (cached) {
       return NextResponse.json(cached);
     }
-  }
-
-  const forwardedFor = req.headers.get("x-forwarded-for") || "anonymous";
-  const ip = forwardedFor.split(",")[0]?.trim() || "anonymous";
-  const ua = req.headers.get("user-agent");
-  const rl = await rateLimit(`price-map:${guestIdentifier(ip, ua)}`, 120);
-  if (!rl.success) {
-    return NextResponse.json({ error: "요청 한도 초과" }, { status: 429, headers: rateLimitHeaders(rl) });
   }
 
   // MOLIT 실거래가 API 시도 → 실패 시 시드 데이터 폴백
