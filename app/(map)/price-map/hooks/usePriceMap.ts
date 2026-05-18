@@ -25,7 +25,7 @@ export function usePriceMap() {
   const [selectedGu, setSelectedGu] = useState("강남구");
   const [selectedApt, setSelectedApt] = useState<AptData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [mapStatus, setMapStatus] = useState<"loading" | "ready" | "fallback">(hasKakaoKey ? "loading" : "fallback");
+  const [mapStatus, setMapStatus] = useState<"loading" | "ready" | "error">(hasKakaoKey ? "loading" : "error");
   const [showGuDropdown, setShowGuDropdown] = useState(false);
   const [selectedSido, setSelectedSido] = useState("서울");
   const [tradeType, setTradeType] = useState<"매매" | "전세">("매매");
@@ -109,7 +109,7 @@ export function usePriceMap() {
   // 데이터와 무관하게 컴포넌트 마운트 즉시 실행 → 지도가 먼저 보임
   useEffect(() => {
     if (!hasKakaoKey) {
-      setMapStatus("fallback");
+      setMapStatus("error");
       return;
     }
     if (!mapRef.current) return;
@@ -152,7 +152,7 @@ export function usePriceMap() {
     if (tryInit()) { initialized = true; clearInterval(pollId); }
     const timeoutId = setTimeout(() => {
       clearInterval(pollId);
-      if (!initialized && !cancelled) setMapStatus("fallback");
+      if (!initialized && !cancelled) setMapStatus("error");
     }, 8000);
 
     return () => {
