@@ -1,10 +1,15 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { usePriceMap } from "./hooks/usePriceMap";
 import { LeftPanel } from "./components/LeftPanel";
 import { RiskPopup } from "./components/RiskPopup";
 import { MapOverlay } from "./components/MapOverlay";
-import { PriceLeafletFallback } from "./components/PriceLeafletFallback";
+
+const PriceLeafletFallback = dynamic(
+  () => import("./components/PriceLeafletFallback").then((mod) => mod.PriceLeafletFallback),
+  { ssr: false }
+);
 
 export default function PriceMapPage() {
   const {
