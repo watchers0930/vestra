@@ -11,7 +11,7 @@ export default function PriceMapPage() {
     selectedApt, loading, showGuDropdown, setShowGuDropdown,
     selectedSido, setSelectedSido, tradeType, setTradeType,
     riskPopup, setRiskPopup,
-    selectAndMoveToApt, topChanges, mapStatus, debugState,
+    selectAndMoveToApt, topChanges, mapStatus,
   } = usePriceMap();
 
   return (
@@ -43,9 +43,6 @@ export default function PriceMapPage() {
 
         <div className="relative flex-1" style={{ minHeight: 0 }}>
           <MapOverlay loading={loading} total={data?.total || 0} />
-          <div className="absolute right-3 top-3 z-30 rounded bg-black/70 px-2 py-1 text-[11px] text-white">
-            {mapStatus} / {debugState}
-          </div>
           <div ref={mapRef} className="absolute inset-0" />
           {mapStatus !== "ready" ? (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 backdrop-blur-sm">
