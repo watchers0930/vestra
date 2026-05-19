@@ -178,6 +178,7 @@ export async function createDynamicAuth() {
   return NextAuth({
     adapter: PrismaAdapter(prisma),
     session: { strategy: "jwt" },
+    secret: normalizeOAuthValue(process.env.AUTH_SECRET),
     providers: buildProviders(settings),
     pages: { signIn: "/login" },
     callbacks: authCallbacks,
@@ -190,6 +191,7 @@ export async function createDynamicAuth() {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
+  secret: normalizeOAuthValue(process.env.AUTH_SECRET),
   providers: buildProviders({}),
   pages: { signIn: "/login" },
   callbacks: authCallbacks,
