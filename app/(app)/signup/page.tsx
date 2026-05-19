@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { clearAll } from "@/lib/store";
@@ -23,12 +23,6 @@ export default function SignupPage() {
     }
   }, [session, status, router]);
 
-  const startSocialSignIn = (provider: "google" | "naver") => {
-    const url = new URL(`/api/social-auth/start/${provider}`, window.location.origin);
-    url.searchParams.set("callbackUrl", `${window.location.origin}/login`);
-    window.location.href = url.toString();
-  };
-
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
       <div className="w-full max-w-md">
@@ -49,7 +43,7 @@ export default function SignupPage() {
           <div className="space-y-3">
             {/* Google */}
             <button
-              onClick={() => startSocialSignIn("google")}
+              onClick={() => signIn("google", { redirectTo: "/login" })}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-border bg-white hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -64,7 +58,7 @@ export default function SignupPage() {
 
             {/* 네이버 */}
             <button
-              onClick={() => startSocialSignIn("naver")}
+              onClick={() => signIn("naver", { redirectTo: "/login" })}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-[#03C75A] hover:bg-[#02B550] transition-colors text-sm font-medium text-white"
             >
               <svg width="18" height="18" viewBox="0 0 24 24">

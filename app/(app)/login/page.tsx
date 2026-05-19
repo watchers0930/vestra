@@ -28,12 +28,6 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const startSocialSignIn = (provider: "google" | "naver") => {
-    const url = new URL(`/api/social-auth/start/${provider}`, window.location.origin);
-    url.searchParams.set("callbackUrl", `${window.location.origin}/login`);
-    window.location.href = url.toString();
-  };
-
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -68,7 +62,7 @@ export default function LoginPage() {
           <div className="space-y-3">
             {/* Google */}
             <button
-              onClick={() => startSocialSignIn("google")}
+              onClick={() => signIn("google", { redirectTo: "/login" })}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-[#e5e5e7] bg-white hover:bg-[#f5f5f7] transition-colors text-sm font-medium text-[#1d1d1f]"
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -83,7 +77,7 @@ export default function LoginPage() {
 
             {/* 네이버 */}
             <button
-              onClick={() => startSocialSignIn("naver")}
+              onClick={() => signIn("naver", { redirectTo: "/login" })}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-[#03C75A] hover:bg-[#02B550] transition-colors text-sm font-medium text-white"
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
