@@ -307,7 +307,7 @@ export async function GET(req: NextRequest) {
 
   // ── 전체 응답 KV 캐시 조회 (가격 필터 없는 요청만 캐시 적용) ──
   const useResponseCache = minPrice === 0 && maxPrice === 9999999;
-  const responseCacheKey = `price-map:v4:${gu}:${tradeType}`;
+  const responseCacheKey = `price-map:v5:${gu}:${tradeType}`;
   if (useResponseCache) {
     const cached = await kvCache.get<object>(responseCacheKey);
     if (cached) {

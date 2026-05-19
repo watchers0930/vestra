@@ -191,9 +191,9 @@ export const SEED_DATA: Record<string, AptPrice[]> = {
     { name: "풍덕천동 래미안", dong: "풍덕천동", price: 85000, area: 25, lat: 37.3230, lng: 127.0940, change: 0.4, year: 2004 },
   ],
   "화성동탄": [
-    { name: "동탄2 시범다은마을", dong: "동탄", price: 78000, area: 34, lat: 37.2040, lng: 127.0730, change: 1.8, year: 2018 },
-    { name: "동탄1 메타폴리스", dong: "동탄", price: 68000, area: 34, lat: 37.2000, lng: 127.0600, change: 0.5, year: 2009 },
-    { name: "동탄2 A90블록", dong: "동탄", price: 72000, area: 25, lat: 37.1990, lng: 127.0850, change: 2.5, year: 2020 },
+    { name: "동탄시범다은마을월드메르디앙반도유보라", dong: "반송동", price: 78000, area: 34, lat: 37.2025, lng: 127.0658, change: 1.8, year: 2007 },
+    { name: "메타폴리스아파트", dong: "반송동", price: 68000, area: 34, lat: 37.2049, lng: 127.0689, change: 0.5, year: 2009 },
+    { name: "동탄역시범호반써밋아파트", dong: "청계동", price: 72000, area: 25, lat: 37.1978, lng: 127.1098, change: 2.5, year: 2018 },
   ],
   "하남시": [
     { name: "미사동 호반써밋", dong: "미사동", price: 105000, area: 34, lat: 37.5640, lng: 127.1900, change: 1.3, year: 2017 },
