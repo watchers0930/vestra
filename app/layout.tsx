@@ -18,6 +18,7 @@ import { ToastProvider } from "@/components/common/toast";
 import AnalyticsTracker from "@/components/common/AnalyticsTracker";
 import KakaoScript from "@/components/common/KakaoScript";
 import JsonLd from "@/components/common/JsonLd";
+import ServiceWorkerReset from "@/components/pwa/ServiceWorkerReset";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -169,6 +170,7 @@ gtag('config', '${GA_MEASUREMENT_ID}', {
         </noscript>
         <SessionProvider>
           <ToastProvider>
+            <ServiceWorkerReset />
             <Suspense fallback={null}>
               <AnalyticsTracker />
             </Suspense>
