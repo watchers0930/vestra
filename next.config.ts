@@ -1,10 +1,4 @@
-import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
-
-const withSerwist = withSerwistInit({
-  swSrc: "app/sw.ts",
-  swDest: "public/sw.js",
-});
 
 // 공통 보안 헤더
 const securityHeaders = [
@@ -91,4 +85,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSerwist(nextConfig);
+export default nextConfig;
