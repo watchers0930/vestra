@@ -85,6 +85,16 @@ function validateDistance(coord: { lat: number; lng: number }, center: { lat: nu
   return haversineDistance(coord, center) <= maxKm;
 }
 
+function getSeedCenter(gu: string): { lat: number; lng: number } | null {
+  const seed = SEED_DATA[gu];
+  if (!seed || seed.length === 0) return null;
+
+  return {
+    lat: seed.reduce((sum, apt) => sum + apt.lat, 0) / seed.length,
+    lng: seed.reduce((sum, apt) => sum + apt.lng, 0) / seed.length,
+  };
+}
+
 async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: string): Promise<{ lat: number; lng: number } | null> {
   const cacheKey = APICache.makeKey("geocode-v2", gu, dong, aptName, jibun || "");
   const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
@@ -93,7 +103,7 @@ async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: str
   const kakaoKey = process.env.KAKAO_REST_KEY;
   if (!kakaoKey) return null;
 
-  const guCenter = GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 }; // 강남 기본값
+  const guCenter = GU_CENTER[gu] || getSeedCenter(gu) || { lat: 37.4979, lng: 127.0276 }; // 강남 기본값
   const center = DONG_CENTER[dong] || guCenter;
   const regionAddress = GU_ADDRESS_MAP[gu] || gu;
   const MAX_DISTANCE_KM = 5; // 구 중심에서 5km 이상이면 부정확한 결과로 판단
@@ -297,7 +307,7 @@ export async function GET(req: NextRequest) {
 
   // ── 전체 응답 KV 캐시 조회 (가격 필터 없는 요청만 캐시 적용) ──
   const useResponseCache = minPrice === 0 && maxPrice === 9999999;
-  const responseCacheKey = `price-map:v3:${gu}:${tradeType}`;
+  const responseCacheKey = `price-map:v4:${gu}:${tradeType}`;
   if (useResponseCache) {
     const cached = await kvCache.get<object>(responseCacheKey);
     if (cached) {
