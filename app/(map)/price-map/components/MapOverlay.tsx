@@ -18,7 +18,7 @@ export function MapOverlay({ loading, total }: Props) {
     <>
       {/* 로딩 오버레이 */}
       {loading && (
-        <div style={{ position: "absolute", inset: 0, zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(245,245,247,0.80)", backdropFilter: "blur(4px)" }}>
+        <div style={{ position: "absolute", top: "12px", left: "50%", transform: "translateX(-50%)", zIndex: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "#fff", padding: "12px 20px", borderRadius: "14px", boxShadow: "0 4px 20px rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.08)" }}>
             <div style={{ width: "16px", height: "16px", borderRadius: "50%", border: "2px solid rgba(0,113,227,0.20)", borderTopColor: "#0071e3", animation: "spin 0.8s linear infinite" }} />
             <span style={{ fontSize: "13px", color: "#3d3d3f", fontWeight: 500 }}>시세 데이터 로딩 중...</span>

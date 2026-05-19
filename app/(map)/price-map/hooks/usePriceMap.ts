@@ -5,7 +5,10 @@ import { formatPrice, escapeHtml } from "@/lib/format";
 import { analyzeRisk, getAreaColor } from "../lib/analyzeRisk";
 import type { AptData, MapResponse } from "../types";
 
-const LOCAL_TTL = 5 * 60 * 1000; // 5분
+const LOCAL_TTL = 30 * 60 * 1000; // 30분 fresh cache
+const LOCAL_MAX_AGE = 24 * 60 * 60 * 1000; // 24시간 stale cache fallback
+const PREF_GU_KEY = "pm:selected-gu";
+const PREF_TRADE_TYPE_KEY = "pm:trade-type";
 
 function localKey(gu: string, tradeType: "매매" | "전세") {
   return `pm:${gu}:${tradeType}`;
@@ -68,22 +71,52 @@ export function usePriceMap() {
     });
   }, []);
 
+  useEffect(() => {
+    try {
+      const cachedGu = localStorage.getItem(PREF_GU_KEY);
+      const cachedTradeType = localStorage.getItem(PREF_TRADE_TYPE_KEY);
+
+      if (cachedGu) setSelectedGu(cachedGu);
+      if (cachedTradeType === "매매" || cachedTradeType === "전세") {
+        setTradeType(cachedTradeType);
+      }
+    } catch {
+      // Ignore localStorage access failures.
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PREF_GU_KEY, selectedGu);
+      localStorage.setItem(PREF_TRADE_TYPE_KEY, tradeType);
+    } catch {
+      // Ignore localStorage access failures.
+    }
+  }, [selectedGu, tradeType]);
+
   const fetchData = useCallback(async (gu: string) => {
-    // localStorage 캐시 확인 → 있으면 즉시 표시 후 백그라운드 갱신
+    let hasUsableCache = false;
+
+    // localStorage 캐시 확인 → 있으면 즉시 표시 후 fresh 여부에 따라 네트워크 생략
     try {
       const raw = localStorage.getItem(localKey(gu, tradeType));
       if (raw) {
         const { ts, payload } = JSON.parse(raw) as { ts: number; payload: MapResponse };
-        if (Date.now() - ts < LOCAL_TTL) {
+        const age = Date.now() - ts;
+        if (age < LOCAL_MAX_AGE) {
           setData(payload);
           setSelectedApt(null);
           setLoading(false);
-          return; // 캐시 유효 → API 호출 생략
+          hasUsableCache = true;
+
+          if (age < LOCAL_TTL) {
+            return; // fresh cache → API 호출 생략
+          }
         }
       }
     } catch { /* localStorage 접근 실패 시 무시 */ }
 
-    setLoading(true);
+    if (!hasUsableCache) setLoading(true);
     try {
       const res = await fetch(`/api/price-map?gu=${encodeURIComponent(gu)}&type=${tradeType}`);
       if (!res.ok) throw new Error(`API ${res.status}`);
@@ -95,7 +128,7 @@ export function usePriceMap() {
       } catch { /* QuotaExceededError 무시 */ }
     } catch (err) {
       console.error("시세 데이터 로드 실패:", err);
-      setData(null);
+      if (!hasUsableCache) setData(null);
     } finally {
       setLoading(false);
     }
