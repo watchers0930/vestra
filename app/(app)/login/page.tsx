@@ -62,7 +62,7 @@ export default function LoginPage() {
           <div className="space-y-3">
             {/* Google */}
             <button
-              onClick={() => signIn("google", { redirectTo: "/login" })}
+              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-[#e5e5e7] bg-white hover:bg-[#f5f5f7] transition-colors text-sm font-medium text-[#1d1d1f]"
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -77,7 +77,7 @@ export default function LoginPage() {
 
             {/* 네이버 */}
             <button
-              onClick={() => signIn("naver", { redirectTo: "/login" })}
+              onClick={() => signIn("naver", { callbackUrl: "/dashboard" })}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-[#03C75A] hover:bg-[#02B550] transition-colors text-sm font-medium text-white"
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
