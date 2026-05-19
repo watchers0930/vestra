@@ -98,6 +98,12 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
   },
 };
 
+const authLogger: NextAuthConfig["logger"] = {
+  error(error) {
+    console.error("[authjs]", error);
+  },
+};
+
 const credentialsProvider = Credentials({
   name: "관리자 로그인",
   credentials: {
@@ -149,15 +155,17 @@ const credentialsProvider = Credentials({
 function buildProviders(settings: Record<string, string>) {
   const providers: NextAuthConfig["providers"] = [];
 
-  const googleId = settings.AUTH_GOOGLE_ID || process.env.AUTH_GOOGLE_ID;
-  const googleSecret = settings.AUTH_GOOGLE_SECRET || process.env.AUTH_GOOGLE_SECRET;
+  const normalizeOAuthValue = (value?: string) => value?.replace(/\\n/g, "").trim();
+
+  const googleId = normalizeOAuthValue(process.env.AUTH_GOOGLE_ID || settings.AUTH_GOOGLE_ID);
+  const googleSecret = normalizeOAuthValue(process.env.AUTH_GOOGLE_SECRET || settings.AUTH_GOOGLE_SECRET);
   if (googleId && googleSecret) {
     providers.push(Google({ clientId: googleId, clientSecret: googleSecret }));
   }
 
 
-  const naverId = settings.NAVER_CLIENT_ID || process.env.NAVER_CLIENT_ID;
-  const naverSecret = settings.NAVER_CLIENT_SECRET || process.env.NAVER_CLIENT_SECRET;
+  const naverId = normalizeOAuthValue(process.env.NAVER_CLIENT_ID || settings.NAVER_CLIENT_ID);
+  const naverSecret = normalizeOAuthValue(process.env.NAVER_CLIENT_SECRET || settings.NAVER_CLIENT_SECRET);
   if (naverId && naverSecret) {
     providers.push(Naver({ clientId: naverId, clientSecret: naverSecret }));
   }
@@ -174,10 +182,12 @@ export async function createDynamicAuth() {
   return NextAuth({
     adapter: PrismaAdapter(prisma),
     session: { strategy: "jwt" },
+    trustHost: true,
     providers: buildProviders(settings),
     pages: { signIn: "/login" },
     callbacks: authCallbacks,
     events: authEvents,
+    logger: authLogger,
   });
 }
 
@@ -186,10 +196,12 @@ export async function createDynamicAuth() {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
+  trustHost: true,
   providers: buildProviders({}),
   pages: { signIn: "/login" },
   callbacks: authCallbacks,
   events: authEvents,
+  logger: authLogger,
 });
 
 // ---------------------------------------------------------------------------
