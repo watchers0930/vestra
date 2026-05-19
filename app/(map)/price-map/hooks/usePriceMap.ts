@@ -222,13 +222,11 @@ export function usePriceMap() {
 
       const CHUNK_SIZE = 20;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const allOverlays: { overlay: any; apt: AptData; position: any }[] = [];
+      const allOverlayEntries: { overlay: any | null; apt: AptData; position: any; content: HTMLDivElement }[] = [];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const allMarkers: any[] = [];
 
-      function createMarkerAndOverlay(apt: AptData) {
-        const position = new maps.LatLng(apt.lat, apt.lng);
-        const marker = new maps.Marker({ position, image: invisibleImage });
+      function createOverlayContent(apt: AptData) {
         const priceText = formatPrice(apt.price);
         const bgColor = getAreaColor(apt.area);
         const changeHtml = apt.change !== null
@@ -238,8 +236,25 @@ export function usePriceMap() {
         content.innerHTML = `<div style="cursor:pointer;padding:4px 10px;border-radius:8px;font-size:13px;font-weight:700;color:#fff;background:${bgColor};box-shadow:0 2px 8px rgba(0,0,0,.25);white-space:nowrap;line-height:1.3;text-align:center;min-width:50px"><div style="font-size:11px;opacity:.85">${escapeHtml(apt.area)}평</div><div>${escapeHtml(priceText)}</div>${changeHtml}</div><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid ${bgColor};margin:0 auto"></div>`;
         content.style.cssText = "display:flex;flex-direction:column;align-items:center";
         content.addEventListener("click", () => selectAndMoveToApt(apt));
-        const overlay = new maps.CustomOverlay({ position, content, yAnchor: 1.1, map: null });
-        allOverlays.push({ overlay, apt, position });
+        return content;
+      }
+
+      function ensureOverlay(entry: { overlay: typeof allOverlayEntries[number]["overlay"]; position: typeof allOverlayEntries[number]["position"]; content: HTMLDivElement }) {
+        if (!entry.overlay) {
+          entry.overlay = new maps.CustomOverlay({
+            position: entry.position,
+            content: entry.content,
+            yAnchor: 1.1,
+            map: null,
+          });
+        }
+        return entry.overlay;
+      }
+
+      function createMarker(apt: AptData) {
+        const position = new maps.LatLng(apt.lat, apt.lng);
+        const marker = new maps.Marker({ position, image: invisibleImage });
+        allOverlayEntries.push({ overlay: null, apt, position, content: createOverlayContent(apt) });
         allMarkers.push(marker);
       }
 
@@ -263,7 +278,7 @@ export function usePriceMap() {
           return;
         }
         const end = Math.min(chunkIdx + CHUNK_SIZE, apartments.length);
-        for (let i = chunkIdx; i < end; i++) createMarkerAndOverlay(apartments[i]);
+        for (let i = chunkIdx; i < end; i++) createMarker(apartments[i]);
         chunkIdx = end;
         requestAnimationFrame(loadNextChunk);
       };
@@ -278,18 +293,25 @@ export function usePriceMap() {
           clusterer.setMap(null);
           const bounds = map.getBounds();
           const newVisible = new Set<number>();
-          allOverlays.forEach(({ overlay, position }, idx) => {
+          allOverlayEntries.forEach((entry, idx) => {
+            const { position } = entry;
             if (bounds.contain(position)) {
-              if (!visibleOverlays.has(idx)) overlay.setMap(map);
+              if (!visibleOverlays.has(idx)) ensureOverlay(entry).setMap(map);
               newVisible.add(idx);
             } else {
-              if (visibleOverlays.has(idx)) overlay.setMap(null);
+              if (visibleOverlays.has(idx) && entry.overlay) entry.overlay.setMap(null);
             }
           });
-          visibleOverlays.forEach((idx) => { if (!newVisible.has(idx)) allOverlays[idx].overlay.setMap(null); });
+          visibleOverlays.forEach((idx) => {
+            if (!newVisible.has(idx) && allOverlayEntries[idx].overlay) {
+              allOverlayEntries[idx].overlay.setMap(null);
+            }
+          });
           visibleOverlays = newVisible;
         } else {
-          visibleOverlays.forEach((idx) => allOverlays[idx].overlay.setMap(null));
+          visibleOverlays.forEach((idx) => {
+            if (allOverlayEntries[idx].overlay) allOverlayEntries[idx].overlay.setMap(null);
+          });
           visibleOverlays = new Set();
           clusterer.setMap(map);
         }
