@@ -15,7 +15,7 @@ const MARKER_CHUNK_SIZE = 12;
 const MARKER_BATCH_DELAY = 40;
 
 function localKey(gu: string, tradeType: "매매" | "전세") {
-  return `pm:${gu}:${tradeType}`;
+  return `pm:v2:${gu}:${tradeType}`;
 }
 
 function readInitialGu() {
@@ -258,9 +258,16 @@ export function usePriceMap() {
       circlesRef.current.forEach((c) => c.setMap(null));
       circlesRef.current = [];
 
-      const invisibleImage = new maps.MarkerImage(
-        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-        new maps.Size(1, 1),
+      const markerSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+          <circle cx="10" cy="10" r="6" fill="#4f46e5" fill-opacity="0.92" />
+          <circle cx="10" cy="10" r="2.5" fill="white" />
+        </svg>
+      `.trim();
+      const markerImage = new maps.MarkerImage(
+        `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(markerSvg)}`,
+        new maps.Size(20, 20),
+        { offset: new maps.Point(10, 10) }
       );
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -298,7 +305,7 @@ export function usePriceMap() {
 
       function createMarker(apt: AptData) {
         const position = new maps.LatLng(apt.lat, apt.lng);
-        const marker = new maps.Marker({ position, image: invisibleImage });
+        const marker = new maps.Marker({ position, image: markerImage });
         allOverlayEntries.push({ overlay: null, apt, position, content: null });
         allMarkers.push(marker);
         return marker;
