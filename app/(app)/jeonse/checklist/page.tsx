@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { ClipboardCheck, Download, RotateCcw, ChevronRight, CheckCircle2, ListChecks, TrendingUp, HardDrive, RefreshCw, Home, Key, FileText, type LucideIcon } from "lucide-react";
+import { CategoryHero } from "@/components/common/CategoryHero";
+import { ClipboardCheck, Download, RotateCcw, CheckCircle2, Home, Key, FileText, type LucideIcon } from "lucide-react";
 
 /* ── 타입 ── */
 
@@ -157,13 +157,6 @@ const DEAL_META: Record<DealType, { color: string; bg: string; icon: LucideIcon 
   월세: { color: "#b86f00", bg: "rgba(255,159,10,0.10)", icon: FileText },
 };
 
-const FEATURE_CHIPS: { icon: LucideIcon; label: string }[] = [
-  { icon: ListChecks,  label: "단계별 체크리스트" },
-  { icon: TrendingUp,  label: "진행률 자동 계산" },
-  { icon: HardDrive,   label: "브라우저 자동 저장" },
-  { icon: RefreshCw,   label: "전세·매매·월세" },
-];
-
 /* ── 스토리지 헬퍼 ── */
 
 const STORAGE_KEY = "vestra-checklist-state";
@@ -221,45 +214,11 @@ export default function ChecklistPage() {
 
   return (
     <div style={{ paddingBottom: "48px" }}>
-
-      {/* ── 히어로 배너 ── */}
-      <section
-        style={{
-          position: "relative", overflow: "hidden", borderRadius: "28px",
-          background: "linear-gradient(148deg, #141820 0%, #0c1527 50%, #0a1020 100%)",
-          marginTop: "10px", marginBottom: "28px",
-        }}
-      >
-        <div style={{ pointerEvents: "none", position: "absolute", top: "-80px", right: "-20px", height: "320px", width: "320px", borderRadius: "50%", background: "radial-gradient(circle, rgba(0,113,227,0.18) 0%, transparent 65%)" }} />
-        <div style={{ pointerEvents: "none", position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)", backgroundSize: "48px 48px" }} />
-
-        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "36px 44px", gap: "24px" }}>
-          <div>
-            <nav style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "12px" }}>
-              <Link href="/jeonse" style={{ fontSize: "11px", color: "rgba(41,151,255,0.80)", textDecoration: "none", fontWeight: 500 }}>전세보호</Link>
-              <ChevronRight size={11} style={{ color: "rgba(255,255,255,0.25)" }} strokeWidth={2} />
-              <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.50)", fontWeight: 500 }}>계약 체크리스트</span>
-            </nav>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 11px", borderRadius: "20px", fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase" as const, color: "#2997ff", background: "rgba(41,151,255,0.10)", border: "1px solid rgba(41,151,255,0.20)", marginBottom: "14px" }}>
-              📋 체크리스트
-            </div>
-            <h1 style={{ fontSize: "clamp(22px, 2.4vw, 32px)", fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.03em", color: "#fff", margin: 0 }}>
-              계약 체크리스트
-            </h1>
-            <p style={{ fontSize: "14px", lineHeight: 1.6, color: "rgba(255,255,255,0.42)", marginTop: "8px", marginBottom: 0 }}>
-              전세·매매·월세 계약 단계별 필수 확인사항을<br />자동으로 생성하고 진행률을 추적합니다.
-            </p>
-          </div>
-          <div className="hidden md:flex" style={{ flexDirection: "column", gap: "8px", flexShrink: 0 }}>
-            {FEATURE_CHIPS.map(({ icon: Icon, label }) => (
-              <div key={label} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px", borderRadius: "12px", background: "rgba(255,255,255,0.055)", border: "1px solid rgba(255,255,255,0.09)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", minWidth: "180px" }}>
-                <Icon size={15} strokeWidth={1.5} style={{ color: "rgba(255,255,255,0.70)", flexShrink: 0 }} />
-                <span style={{ fontSize: "12.5px", fontWeight: 500, color: "rgba(255,255,255,0.80)" }}>{label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <CategoryHero
+        badge="📋 체크리스트"
+        title="계약 체크리스트"
+        description={<>전세·매매·월세 계약 단계별 필수 확인사항을<br />자동으로 생성하고 진행률을 추적합니다.</>}
+      />
 
       {/* ── 필터 카드 ── */}
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px", marginBottom: "16px" }}>

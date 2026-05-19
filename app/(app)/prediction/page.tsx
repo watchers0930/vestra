@@ -2,8 +2,8 @@
 
 import { Suspense } from "react";
 import Link from "next/link";
-import { TrendingUp, BarChart3, Home, Shield, Activity, MapPin, Zap, Bot, Search as SearchIcon } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { TrendingUp, BarChart3, Home, Shield, Activity, MapPin, Zap } from "lucide-react";
+import { CategoryHero } from "@/components/common/CategoryHero";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
 import { ScholarPapers } from "@/components/results";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
@@ -39,13 +39,6 @@ const AnomalyDetectionView = dynamic(
   { ssr: false, loading: () => <div style={{ height: "256px", borderRadius: "14px", background: "#f5f5f7" }} /> }
 );
 
-const FEATURE_CHIPS: Array<{ icon: LucideIcon; label: string }> = [
-  { icon: BarChart3,   label: "실거래 분석" },
-  { icon: Bot,         label: "AI 가격 예측" },
-  { icon: TrendingUp,  label: "시나리오 전망" },
-  { icon: SearchIcon,  label: "이상탐지" },
-];
-
 export default function PredictionPage() {
   const {
     resultRef, roadResult, buildingName, address, loading, result,
@@ -59,58 +52,11 @@ export default function PredictionPage() {
 
   return (
     <div style={{ paddingBottom: "48px" }}>
-      {/* ── 히어로 배너 ── */}
-      <section
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          borderRadius: "28px",
-          background: "linear-gradient(148deg, #141820 0%, #0c1527 50%, #0a1020 100%)",
-          marginTop: "10px",
-          marginBottom: "28px",
-        }}
-      >
-        <div style={{ pointerEvents: "none", position: "absolute", top: "-80px", right: "-20px", height: "320px", width: "320px", borderRadius: "50%", background: "radial-gradient(circle, rgba(0,113,227,0.18) 0%, transparent 65%)" }} />
-        <div style={{ pointerEvents: "none", position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)", backgroundSize: "48px 48px" }} />
-
-        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "36px 44px", gap: "24px" }}>
-          <div>
-            <div
-              style={{
-                display: "inline-flex", alignItems: "center", gap: "5px",
-                padding: "4px 11px", borderRadius: "20px",
-                fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase",
-                color: "#2997ff", background: "rgba(41,151,255,0.10)", border: "1px solid rgba(41,151,255,0.20)",
-                marginBottom: "14px",
-              }}
-            >
-              📈 시세전망
-            </div>
-            <h1 style={{ fontSize: "clamp(22px, 2.4vw, 32px)", fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.03em", color: "#fff", margin: 0 }}>
-              실거래 기반 AI 시세 분석 및 전망
-            </h1>
-            <p style={{ fontSize: "14px", lineHeight: 1.6, color: "rgba(255,255,255,0.42)", marginTop: "8px", marginBottom: 0 }}>
-              실거래 데이터 + AI로 현재 시세를 분석하고<br />미래 가격을 시나리오별로 전망합니다.
-            </p>
-          </div>
-          <div className="hidden md:flex" style={{ flexDirection: "column", gap: "8px", flexShrink: 0 }}>
-            {FEATURE_CHIPS.map(({ icon: Icon, label }) => (
-              <div
-                key={label}
-                style={{
-                  display: "flex", alignItems: "center", gap: "10px",
-                  padding: "10px 16px", borderRadius: "12px",
-                  background: "rgba(255,255,255,0.055)", border: "1px solid rgba(255,255,255,0.09)",
-                  backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", minWidth: "148px",
-                }}
-              >
-                <Icon size={15} strokeWidth={1.5} style={{ color: "rgba(255,255,255,0.80)", flexShrink: 0 }} />
-                <span style={{ fontSize: "12.5px", fontWeight: 500, color: "rgba(255,255,255,0.80)" }}>{label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <CategoryHero
+        badge="📈 시세전망"
+        title="실거래 기반 AI 시세 분석 및 전망"
+        description={<>실거래 데이터 + AI로 현재 시세를 분석하고<br />미래 가격을 시나리오별로 전망합니다.</>}
+      />
 
       {/* 이전 분석 기록 배너 */}
       {previousAnalysis && (

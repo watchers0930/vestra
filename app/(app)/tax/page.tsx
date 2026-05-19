@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
-import { Calculator, Building2, Home, ArrowRightLeft, GitCompareArrows, FileInput, Sparkles } from "lucide-react";
+import { Building2, Home, ArrowRightLeft, GitCompareArrows, FileInput } from "lucide-react";
 import { formatKRW } from "@/lib/utils";
 import { getAnalyses, type AnalysisRecord } from "@/lib/store";
 import { calculateAcquisitionTax, calculateHoldingTax, calculateTransferTax } from "@/lib/tax-calculator";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
+import { CategoryHero } from "@/components/common/CategoryHero";
 import { SliderInput } from "@/components/forms";
 import { InfoRow, ScholarPapers } from "@/components/results";
 import { useHydrated } from "@/lib/use-hydrated";
@@ -130,49 +131,35 @@ export default function TaxPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
 
-      {/* ── 히어로 배너 ── */}
-      <section style={{ position: "relative", overflow: "hidden", borderRadius: "24px", background: "linear-gradient(148deg, #141820 0%, #0c1527 50%, #0a1020 100%)", marginTop: "10px", marginBottom: "20px" }}>
-        <div style={{ pointerEvents: "none", position: "absolute", top: "-60px", right: "-20px", width: "220px", height: "220px", borderRadius: "50%", background: "radial-gradient(circle, rgba(0,113,227,0.20) 0%, transparent 65%)" }} />
-        <div style={{ pointerEvents: "none", position: "absolute", bottom: "-40px", left: "30%", width: "160px", height: "160px", borderRadius: "50%", background: "radial-gradient(circle, rgba(41,151,255,0.10) 0%, transparent 65%)" }} />
-        <div style={{ pointerEvents: "none", position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)", backgroundSize: "40px 40px" }} />
-        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "22px 28px", gap: "16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: "rgba(0,113,227,0.20)", border: "1px solid rgba(0,113,227,0.30)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Calculator size={20} strokeWidth={1.5} style={{ color: "#2997ff" }} />
-            </div>
-            <div>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "2px 8px", borderRadius: "20px", fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#2997ff", background: "rgba(41,151,255,0.10)", border: "1px solid rgba(41,151,255,0.20)", marginBottom: "5px" }}>
-                <Sparkles size={8} strokeWidth={2} /> 세무 계산기
+      <CategoryHero
+        badge="✨ 세무 계산기"
+        title="세무 시뮬레이션"
+        description="취득세 · 보유세 · 양도세 실시간 계산"
+        marginBottom="20px"
+        actions={contractAnalyses.length > 0 ? (
+          <div style={{ position: "relative" }}>
+            <button
+              onClick={() => setShowImport(!showImport)}
+              style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "10px", background: "#f7faff", border: "1px solid rgba(104,144,208,0.18)", cursor: "pointer", fontSize: "12px", fontWeight: 600, color: "#235fb3" }}
+            >
+              <FileInput size={13} strokeWidth={2} /> 불러오기
+            </button>
+            {showImport && (
+              <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", zIndex: 50, background: "#fff", border: "1px solid rgba(0,0,0,0.10)", borderRadius: "14px", boxShadow: "0 8px 32px rgba(0,0,0,0.16)", padding: "12px", minWidth: "240px" }}>
+                <p style={{ fontSize: "11px", color: "#6e6e73", marginBottom: "8px", padding: "0 4px" }}>최근 분석에서 매매가 불러오기</p>
+                {contractAnalyses.slice(0, 5).map((a) => (
+                  <button key={a.id} onClick={() => handleImportContract(a)} style={{ width: "100%", textAlign: "left", padding: "8px 10px", borderRadius: "10px", background: "transparent", border: "none", cursor: "pointer" }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#f5f5f7"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}>
+                    <p style={{ fontSize: "13px", fontWeight: 500, color: "#1d1d1f", margin: 0 }}>{a.address || "주소 미상"}</p>
+                    <p style={{ fontSize: "11px", color: "#6e6e73", margin: "2px 0 0" }}>{a.typeLabel} · {a.date}</p>
+                  </button>
+                ))}
               </div>
-              <h2 style={{ fontSize: "17px", fontWeight: 700, color: "#fff", margin: 0, lineHeight: 1.2, letterSpacing: "-0.02em" }}>세무 시뮬레이션</h2>
-              <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.40)", margin: "3px 0 0", lineHeight: 1.4 }}>취득세 · 보유세 · 양도세 실시간 계산</p>
-            </div>
+            )}
           </div>
-          {contractAnalyses.length > 0 && (
-            <div style={{ position: "relative" }}>
-              <button
-                onClick={() => setShowImport(!showImport)}
-                style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "10px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", cursor: "pointer", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.80)" }}
-              >
-                <FileInput size={13} strokeWidth={2} /> 불러오기
-              </button>
-              {showImport && (
-                <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", zIndex: 50, background: "#fff", border: "1px solid rgba(0,0,0,0.10)", borderRadius: "14px", boxShadow: "0 8px 32px rgba(0,0,0,0.16)", padding: "12px", minWidth: "240px" }}>
-                  <p style={{ fontSize: "11px", color: "#6e6e73", marginBottom: "8px", padding: "0 4px" }}>최근 분석에서 매매가 불러오기</p>
-                  {contractAnalyses.slice(0, 5).map((a) => (
-                    <button key={a.id} onClick={() => handleImportContract(a)} style={{ width: "100%", textAlign: "left", padding: "8px 10px", borderRadius: "10px", background: "transparent", border: "none", cursor: "pointer" }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#f5f5f7"; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}>
-                      <p style={{ fontSize: "13px", fontWeight: 500, color: "#1d1d1f", margin: 0 }}>{a.address || "주소 미상"}</p>
-                      <p style={{ fontSize: "11px", color: "#6e6e73", margin: "2px 0 0" }}>{a.typeLabel} · {a.date}</p>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
+        ) : undefined}
+      />
 
       {/* ── 세금 비교 차트 ── */}
       <div id="tax-result" aria-live="polite" style={sectionGap}>
