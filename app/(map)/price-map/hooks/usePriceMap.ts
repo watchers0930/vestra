@@ -9,9 +9,32 @@ const LOCAL_TTL = 30 * 60 * 1000; // 30분 fresh cache
 const LOCAL_MAX_AGE = 24 * 60 * 60 * 1000; // 24시간 stale cache fallback
 const PREF_GU_KEY = "pm:selected-gu";
 const PREF_TRADE_TYPE_KEY = "pm:trade-type";
+const INITIAL_GU = "강남구";
+const INITIAL_TRADE_TYPE: "매매" | "전세" = "매매";
+const MARKER_CHUNK_SIZE = 12;
+const MARKER_BATCH_DELAY = 40;
 
 function localKey(gu: string, tradeType: "매매" | "전세") {
   return `pm:${gu}:${tradeType}`;
+}
+
+function readInitialGu() {
+  if (typeof window === "undefined") return INITIAL_GU;
+  try {
+    return localStorage.getItem(PREF_GU_KEY) || INITIAL_GU;
+  } catch {
+    return INITIAL_GU;
+  }
+}
+
+function readInitialTradeType(): "매매" | "전세" {
+  if (typeof window === "undefined") return INITIAL_TRADE_TYPE;
+  try {
+    const value = localStorage.getItem(PREF_TRADE_TYPE_KEY);
+    return value === "전세" ? "전세" : INITIAL_TRADE_TYPE;
+  } catch {
+    return INITIAL_TRADE_TYPE;
+  }
 }
 
 export function usePriceMap() {
@@ -25,13 +48,13 @@ export function usePriceMap() {
   const circlesRef = useRef<any[]>([]);
 
   const [data, setData] = useState<MapResponse | null>(null);
-  const [selectedGu, setSelectedGu] = useState("강남구");
+  const [selectedGu, setSelectedGu] = useState(readInitialGu);
   const [selectedApt, setSelectedApt] = useState<AptData | null>(null);
   const [loading, setLoading] = useState(true);
   const [mapStatus, setMapStatus] = useState<"loading" | "ready" | "error">(hasKakaoKey ? "loading" : "error");
   const [showGuDropdown, setShowGuDropdown] = useState(false);
   const [selectedSido, setSelectedSido] = useState("서울");
-  const [tradeType, setTradeType] = useState<"매매" | "전세">("매매");
+  const [tradeType, setTradeType] = useState<"매매" | "전세">(readInitialTradeType);
   const [riskPopup, setRiskPopup] = useState<{ apt: AptData; risk: ReturnType<typeof analyzeRisk> } | null>(null);
 
   const selectAndMoveToApt = useCallback((apt: AptData) => {
@@ -69,20 +92,6 @@ export function usePriceMap() {
       label.setMap(map);
       circlesRef.current.push(label);
     });
-  }, []);
-
-  useEffect(() => {
-    try {
-      const cachedGu = localStorage.getItem(PREF_GU_KEY);
-      const cachedTradeType = localStorage.getItem(PREF_TRADE_TYPE_KEY);
-
-      if (cachedGu) setSelectedGu(cachedGu);
-      if (cachedTradeType === "매매" || cachedTradeType === "전세") {
-        setTradeType(cachedTradeType);
-      }
-    } catch {
-      // Ignore localStorage access failures.
-    }
   }, []);
 
   useEffect(() => {
@@ -228,6 +237,7 @@ export function usePriceMap() {
   useEffect(() => {
     if (!data || !kakaoMapRef.current || mapStatus !== "ready") return;
     let cancelled = false;
+    let chunkTimer: ReturnType<typeof setTimeout> | null = null;
 
     const renderMarkers = () => {
       if (cancelled || !kakaoMapRef.current) return;
@@ -253,9 +263,8 @@ export function usePriceMap() {
         new maps.Size(1, 1),
       );
 
-      const CHUNK_SIZE = 20;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const allOverlayEntries: { overlay: any | null; apt: AptData; position: any; content: HTMLDivElement }[] = [];
+      const allOverlayEntries: { overlay: any | null; apt: AptData; position: any; content: HTMLDivElement | null }[] = [];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const allMarkers: any[] = [];
 
@@ -272,8 +281,11 @@ export function usePriceMap() {
         return content;
       }
 
-      function ensureOverlay(entry: { overlay: typeof allOverlayEntries[number]["overlay"]; position: typeof allOverlayEntries[number]["position"]; content: HTMLDivElement }) {
+      function ensureOverlay(entry: typeof allOverlayEntries[number]) {
         if (!entry.overlay) {
+          if (!entry.content) {
+            entry.content = createOverlayContent(entry.apt);
+          }
           entry.overlay = new maps.CustomOverlay({
             position: entry.position,
             content: entry.content,
@@ -287,8 +299,9 @@ export function usePriceMap() {
       function createMarker(apt: AptData) {
         const position = new maps.LatLng(apt.lat, apt.lng);
         const marker = new maps.Marker({ position, image: invisibleImage });
-        allOverlayEntries.push({ overlay: null, apt, position, content: createOverlayContent(apt) });
+        allOverlayEntries.push({ overlay: null, apt, position, content: null });
         allMarkers.push(marker);
+        return marker;
       }
 
       const clusterer = new maps.MarkerClusterer({
@@ -306,14 +319,20 @@ export function usePriceMap() {
       const apartments = data.apartments;
       const loadNextChunk = () => {
         if (cancelled || chunkIdx >= apartments.length) {
-          clusterer.addMarkers(allMarkers);
           updateOverlays();
           return;
         }
-        const end = Math.min(chunkIdx + CHUNK_SIZE, apartments.length);
-        for (let i = chunkIdx; i < end; i++) createMarker(apartments[i]);
+        const end = Math.min(chunkIdx + MARKER_CHUNK_SIZE, apartments.length);
+        const chunkMarkers = [];
+        for (let i = chunkIdx; i < end; i++) {
+          chunkMarkers.push(createMarker(apartments[i]));
+        }
+        clusterer.addMarkers(chunkMarkers);
         chunkIdx = end;
-        requestAnimationFrame(loadNextChunk);
+        if (chunkIdx <= MARKER_CHUNK_SIZE) {
+          updateOverlays();
+        }
+        chunkTimer = setTimeout(loadNextChunk, MARKER_BATCH_DELAY);
       };
       requestAnimationFrame(loadNextChunk);
 
@@ -365,6 +384,7 @@ export function usePriceMap() {
 
     return () => {
       cancelled = true;
+      if (chunkTimer) clearTimeout(chunkTimer);
     };
   }, [data, mapStatus, selectAndMoveToApt]);
 
