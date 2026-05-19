@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import packageJson from "../../package.json";
 import UserMenu from "@/components/auth/user-menu";
@@ -27,6 +28,11 @@ interface MenuItem {
   children?: { href: string; label: string }[];
 }
 interface MenuGroup { label: string; items: MenuItem[]; }
+interface TooltipState {
+  text: string;
+  top: number;
+  left: number;
+}
 
 const userMenuItems: MenuItem[] = [
   { href: "/dashboard",      icon: LayoutDashboard, label: "대시보드",       description: "보유 자산 현황과 주요 지표를 한눈에 확인합니다" },
@@ -79,12 +85,13 @@ const adminMenuItems: MenuItem[] = [
 
 // ── 공통 스타일 상수 ──
 const ACTIVE_STYLE = {
-  background: "rgba(0,113,227,0.14)",
-  borderLeft: "2px solid #0071e3",
-  paddingLeft: "10px",
+  background: "linear-gradient(135deg, rgba(0,113,227,0.24) 0%, rgba(41,151,255,0.14) 100%)",
+  border: "1px solid rgba(41,151,255,0.22)",
+  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
+  paddingLeft: "11px",
 } as const;
 
-const ITEM_BASE = "flex items-center gap-3 py-2 rounded-xl text-sm w-full transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/30";
+const ITEM_BASE = "flex items-center gap-3.5 rounded-2xl text-sm w-full transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/30";
 const APP_VERSION = packageJson.version;
 
 export default function Sidebar() {
@@ -109,18 +116,50 @@ export default function Sidebar() {
   }, [mobileOpen]);
 
   const showLabel = !collapsed || mobileOpen;
-  const [tooltip, setTooltip] = useState<{ text: string; top: number; left: number } | null>(null);
-  const tooltipTimeout = useRef<ReturnType<typeof setTimeout>>(null);
   const sidebarRef = useRef<HTMLElement>(null);
+  const hideTooltipTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
-  const showTooltip = useCallback((e: React.MouseEvent, description: string) => {
-    if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    tooltipTimeout.current = setTimeout(() => {
-      setTooltip({ text: description, top: rect.top + rect.height / 2, left: sidebarRef.current?.getBoundingClientRect().width ?? 240 });
-    }, 300);
+  const clearHideTooltip = useCallback(() => {
+    if (hideTooltipTimeout.current) {
+      clearTimeout(hideTooltipTimeout.current);
+      hideTooltipTimeout.current = null;
+    }
   }, []);
-  const hideTooltip = useCallback(() => { if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current); setTooltip(null); }, []);
+
+  const openTooltip = useCallback((target: HTMLElement, text: string) => {
+    if (!text) return;
+    clearHideTooltip();
+    const rect = target.getBoundingClientRect();
+    const sidebarRect = sidebarRef.current?.getBoundingClientRect();
+    setTooltip({
+      text,
+      top: rect.top + rect.height / 2,
+      left: Math.max(rect.right, sidebarRect?.right ?? rect.right) + 14,
+    });
+  }, [clearHideTooltip]);
+
+  const openTooltipFromEvent = useCallback((
+    e: React.MouseEvent<HTMLElement> | React.PointerEvent<HTMLElement> | React.FocusEvent<HTMLElement>,
+    text: string,
+  ) => {
+    openTooltip(e.currentTarget, text);
+  }, [openTooltip]);
+
+  const queueCloseTooltip = useCallback(() => {
+    clearHideTooltip();
+    hideTooltipTimeout.current = setTimeout(() => {
+      setTooltip(null);
+    }, 70);
+  }, [clearHideTooltip]);
+
+  useEffect(() => {
+    return () => {
+      if (hideTooltipTimeout.current) {
+        clearTimeout(hideTooltipTimeout.current);
+      }
+    };
+  }, []);
 
   const isAdminItemActive = useCallback((item: MenuItem) => {
     if (!isAdminPage) return false;
@@ -135,40 +174,49 @@ export default function Sidebar() {
 
   const renderMenuItem = (item: MenuItem, isActive: boolean) => {
     const iconEl = (
-      <item.icon size={17} strokeWidth={1.6} style={{ color: isActive ? "#2997ff" : "rgba(255,255,255,0.38)", flexShrink: 0, transition: "color 0.2s" }} />
+      <item.icon size={17} strokeWidth={1.7} style={{ color: isActive ? "#7cc4ff" : "rgba(255,255,255,0.72)", flexShrink: 0, transition: "color 0.2s" }} />
     );
+    const tooltipHandlers = {
+      onMouseOver: (e: React.MouseEvent<HTMLElement>) => openTooltipFromEvent(e, item.description),
+      onMouseMove: (e: React.MouseEvent<HTMLElement>) => openTooltipFromEvent(e, item.description),
+      onMouseOut: queueCloseTooltip,
+      onPointerEnter: (e: React.PointerEvent<HTMLElement>) => openTooltip(e.currentTarget, item.description),
+      onPointerMove: (e: React.PointerEvent<HTMLElement>) => openTooltip(e.currentTarget, item.description),
+      onPointerLeave: queueCloseTooltip,
+      onFocus: (e: React.FocusEvent<HTMLElement>) => openTooltipFromEvent(e, item.description),
+      onBlur: queueCloseTooltip,
+    };
 
     if (item.children) {
       const isOpen = openAccordion === item.href;
       return (
-        <div key={item.href}>
+        <div key={item.href} className="relative">
           <button
             onClick={() => setOpenAccordion(isOpen ? null : item.href)}
-            onMouseEnter={(e) => showTooltip(e, item.description)}
-            onMouseLeave={hideTooltip}
+            {...tooltipHandlers}
             aria-label={item.label} aria-expanded={isOpen} aria-current={isActive ? "page" : undefined}
-            style={isActive ? ACTIVE_STYLE : { paddingLeft: "12px" }}
-            className={cn(ITEM_BASE, "text-left pr-3", isActive ? "text-white font-medium" : "text-white/40 hover:bg-white/[0.05] hover:text-white/75")}
-            title={!showLabel ? item.label : undefined}
+            style={isActive ? { ...ACTIVE_STYLE, paddingTop: "11px", paddingBottom: "11px" } : { paddingLeft: "12px", paddingTop: "11px", paddingBottom: "11px" }}
+            className={cn(ITEM_BASE, "text-left pr-3", isActive ? "text-white font-medium" : "text-white/80 hover:bg-white/[0.06] hover:text-white")}
           >
             {iconEl}
             {showLabel && (
               <>
-                <span className="flex-1 text-[13px]">{item.label}</span>
-                <ChevronDown size={13} style={{ flexShrink: 0, transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", color: "rgba(255,255,255,0.3)" }} />
+                <div className="min-w-0 flex-1 truncate text-[13.5px] font-semibold tracking-[-0.01em]">{item.label}</div>
+                <ChevronDown size={14} style={{ flexShrink: 0, transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", color: isActive ? "rgba(255,255,255,0.78)" : "rgba(255,255,255,0.44)" }} />
               </>
             )}
           </button>
           {showLabel && (
             <div style={{ overflow: "hidden", maxHeight: isOpen ? "600px" : "0", opacity: isOpen ? 1 : 0, transition: "max-height 0.25s ease, opacity 0.2s" }}>
-              <div style={{ marginTop: "2px", paddingBottom: "4px" }}>
+              <div style={{ marginTop: "4px", paddingBottom: "6px", paddingLeft: "8px" }}>
                 {item.children.map((child) => {
                   const isChildActive = pathname === child.href;
                   return (
                     <Link key={child.href} href={child.href} aria-current={isChildActive ? "page" : undefined}
-                      style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "40px", paddingRight: "12px", paddingTop: "6px", paddingBottom: "6px", borderRadius: "10px", fontSize: "12px", textDecoration: "none", color: isChildActive ? "#fff" : "rgba(255,255,255,0.35)", background: isChildActive ? "rgba(255,255,255,0.06)" : "transparent", transition: "all 0.15s", fontWeight: isChildActive ? 500 : 400 }}
+                      style={{ display: "flex", alignItems: "center", gap: "10px", paddingLeft: "36px", paddingRight: "12px", paddingTop: "8px", paddingBottom: "8px", borderRadius: "12px", fontSize: "12.5px", textDecoration: "none", color: isChildActive ? "#ffffff" : "rgba(255,255,255,0.72)", background: isChildActive ? "rgba(255,255,255,0.09)" : "transparent", transition: "all 0.15s", fontWeight: isChildActive ? 600 : 500 }}
+                      className={!isChildActive ? "hover:bg-white/[0.05] hover:text-white" : undefined}
                     >
-                      <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: isChildActive ? "#0071e3" : "rgba(255,255,255,0.2)", flexShrink: 0 }} />
+                      <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: isChildActive ? "#7cc4ff" : "rgba(255,255,255,0.36)", flexShrink: 0 }} />
                       {child.label}
                     </Link>
                   );
@@ -181,16 +229,18 @@ export default function Sidebar() {
     }
 
     return (
-      <Link key={item.href} href={item.href}
-        onMouseEnter={(e) => showTooltip(e, item.description)} onMouseLeave={hideTooltip}
-        aria-label={item.label} aria-current={isActive ? "page" : undefined}
-        style={isActive ? { ...ACTIVE_STYLE, paddingRight: "12px" } : { paddingLeft: "12px", paddingRight: "12px" }}
-        className={cn(ITEM_BASE, isActive ? "text-white font-medium" : "text-white/40 hover:bg-white/[0.05] hover:text-white/75")}
-        title={!showLabel ? item.label : undefined}
-      >
-        {iconEl}
-        {showLabel && <span style={{ fontSize: "13px" }}>{item.label}</span>}
-      </Link>
+      <div key={item.href} className="relative">
+        <Link href={item.href}
+          {...tooltipHandlers}
+          onClick={(e) => openTooltipFromEvent(e, item.description)}
+          aria-label={item.label} aria-current={isActive ? "page" : undefined}
+          style={isActive ? { ...ACTIVE_STYLE, paddingRight: "12px", paddingTop: "11px", paddingBottom: "11px" } : { paddingLeft: "12px", paddingRight: "12px", paddingTop: "11px", paddingBottom: "11px" }}
+          className={cn(ITEM_BASE, isActive ? "text-white font-medium" : "text-white/80 hover:bg-white/[0.06] hover:text-white")}
+        >
+          {iconEl}
+          {showLabel && <div className="min-w-0 flex-1 truncate text-[13.5px] font-semibold tracking-[-0.01em]">{item.label}</div>}
+        </Link>
+      </div>
     );
   };
 
@@ -210,7 +260,7 @@ export default function Sidebar() {
           "fixed left-0 top-0 h-screen bg-sidebar text-white flex flex-col z-50 transition-all duration-300",
           "max-lg:translate-x-[-100%]",
           mobileOpen && "max-lg:translate-x-0",
-          collapsed ? "lg:w-[68px]" : "lg:w-[240px]",
+          collapsed ? "lg:w-[72px]" : "lg:w-[272px]",
           "w-[260px]"
         )}
       >
@@ -222,9 +272,9 @@ export default function Sidebar() {
               <div style={{ lineHeight: 1 }}>
                 <p style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "0.15em", color: "#fff", fontFamily: "var(--font-sora)", margin: 0 }}>
                   VESTRA
-                  <span style={{ marginLeft: "6px", fontSize: "8px", fontWeight: 400, color: "rgba(255,255,255,0.30)", verticalAlign: "middle", letterSpacing: "0.05em" }}>v{APP_VERSION}</span>
+                  <span style={{ marginLeft: "6px", fontSize: "8px", fontWeight: 500, color: "rgba(255,255,255,0.5)", verticalAlign: "middle", letterSpacing: "0.05em" }}>v{APP_VERSION}</span>
                 </p>
-                <p style={{ fontSize: "9.5px", color: "rgba(255,255,255,0.28)", margin: "3px 0 0", letterSpacing: "0.04em" }}>
+                <p style={{ fontSize: "9.5px", color: "rgba(255,255,255,0.46)", margin: "3px 0 0", letterSpacing: "0.04em" }}>
                   {isAdmin && isAdminPage ? "관리자 모드" : "AI 자산관리 플랫폼"}
                 </p>
               </div>
@@ -266,7 +316,7 @@ export default function Sidebar() {
             userMenuGroups.map((group, groupIndex) => (
               <div key={group.label} style={{ marginBottom: "4px" }}>
                 {showLabel ? (
-                  <div style={{ padding: groupIndex === 0 ? "4px 12px 6px" : "16px 12px 6px", fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.22)" }}>
+                  <div style={{ padding: groupIndex === 0 ? "6px 12px 8px" : "18px 12px 8px", fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.48)" }}>
                     {group.label}
                   </div>
                 ) : (
@@ -283,20 +333,36 @@ export default function Sidebar() {
           {isAdmin && (
             <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
               {isAdminPage ? (
-                <Link href="/dashboard" onMouseEnter={(e) => showTooltip(e, "사용자 화면으로 전환")} onMouseLeave={hideTooltip} aria-label="사용자 사이트"
+                <Link href="/dashboard" aria-label="사용자 사이트"
+                  onMouseOver={(e) => openTooltipFromEvent(e, "사용자 화면으로 전환")}
+                  onMouseMove={(e) => openTooltipFromEvent(e, "사용자 화면으로 전환")}
+                  onMouseOut={queueCloseTooltip}
+                  onPointerEnter={(e) => openTooltip(e.currentTarget, "사용자 화면으로 전환")}
+                  onPointerMove={(e) => openTooltip(e.currentTarget, "사용자 화면으로 전환")}
+                  onPointerLeave={queueCloseTooltip}
+                  onFocus={(e) => openTooltipFromEvent(e, "사용자 화면으로 전환")}
+                  onBlur={queueCloseTooltip}
+                  onClick={(e) => openTooltipFromEvent(e, "사용자 화면으로 전환")}
                   style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "10px", fontSize: "13px", color: "rgba(255,255,255,0.35)", textDecoration: "none", transition: "all 0.15s" }}
                   className="hover:bg-white/[0.05] hover:text-white/70"
-                  title={!showLabel ? "사용자 사이트" : undefined}
                 >
                   <ExternalLink size={17} strokeWidth={1.6} style={{ flexShrink: 0 }} />
                   {showLabel && <span>사용자 사이트</span>}
                 </Link>
               ) : (
-                <Link href="/admin" onMouseEnter={(e) => showTooltip(e, "서비스 관리, 회원 관리, 분석 이력을 확인합니다")} onMouseLeave={hideTooltip} aria-label="관리자"
+                <Link href="/admin" aria-label="관리자"
+                  onMouseOver={(e) => openTooltipFromEvent(e, "서비스 관리, 회원 관리, 분석 이력을 확인합니다")}
+                  onMouseMove={(e) => openTooltipFromEvent(e, "서비스 관리, 회원 관리, 분석 이력을 확인합니다")}
+                  onMouseOut={queueCloseTooltip}
+                  onPointerEnter={(e) => openTooltip(e.currentTarget, "서비스 관리, 회원 관리, 분석 이력을 확인합니다")}
+                  onPointerMove={(e) => openTooltip(e.currentTarget, "서비스 관리, 회원 관리, 분석 이력을 확인합니다")}
+                  onPointerLeave={queueCloseTooltip}
+                  onFocus={(e) => openTooltipFromEvent(e, "서비스 관리, 회원 관리, 분석 이력을 확인합니다")}
+                  onBlur={queueCloseTooltip}
+                  onClick={(e) => openTooltipFromEvent(e, "서비스 관리, 회원 관리, 분석 이력을 확인합니다")}
                   style={pathname.startsWith("/admin") ? { ...ACTIVE_STYLE, paddingRight: "12px", display: "flex", alignItems: "center", gap: "10px", borderRadius: "10px", fontSize: "13px", textDecoration: "none", color: "#fff" }
                     : { display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "10px", fontSize: "13px", color: "rgba(255,255,255,0.35)", textDecoration: "none" }}
                   className={cn("transition-all duration-200", !pathname.startsWith("/admin") && "hover:bg-white/[0.05] hover:text-white/70")}
-                  title={!showLabel ? "관리자" : undefined}
                 >
                   <ShieldCheck size={17} strokeWidth={1.6} style={{ flexShrink: 0, color: pathname.startsWith("/admin") ? "#2997ff" : undefined }} />
                   {showLabel && <span>관리자</span>}
@@ -326,17 +392,55 @@ export default function Sidebar() {
         </button>
       </aside>
 
-      {/* 툴팁 */}
-      {tooltip && (
-        <div className="fixed pointer-events-none z-[60]" style={{ left: tooltip.left, top: tooltip.top, transform: "translateY(-50%)" }}>
-          <div style={{ marginLeft: "12px", position: "relative" }}>
-            <div style={{ position: "absolute", left: 0, top: "50%", transform: "translate(-100%, -50%)", width: 0, height: 0, borderTop: "5px solid transparent", borderBottom: "5px solid transparent", borderRight: "5px solid rgba(20,24,32,0.95)" }} />
-            <div style={{ background: "rgba(20,24,32,0.95)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: "12px", padding: "8px 14px", boxShadow: "0 8px 24px rgba(0,0,0,0.4)", width: "210px", backdropFilter: "blur(12px)" }}>
-              <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.75)", lineHeight: 1.6, margin: 0 }}>{tooltip.text}</p>
+      {tooltip && typeof document !== "undefined" ? createPortal(
+        <div
+          className="pointer-events-none fixed"
+          style={{
+            left: tooltip.left,
+            top: tooltip.top,
+            transform: "translateY(-50%)",
+            zIndex: 2147483647,
+          }}
+        >
+          <div style={{ position: "relative" }}>
+            <div
+              style={{
+                position: "absolute",
+                left: -7,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 14,
+                height: 14,
+                background: "rgba(17,24,39,0.98)",
+                borderLeft: "1px solid rgba(255,255,255,0.12)",
+                borderBottom: "1px solid rgba(255,255,255,0.12)",
+                rotate: "45deg",
+                borderBottomLeftRadius: "2px",
+              }}
+            />
+            <div
+              style={{
+                width: 228,
+                borderRadius: "14px",
+                background: "linear-gradient(180deg, rgba(24,29,39,0.98) 0%, rgba(12,16,24,0.98) 100%)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                padding: "10px 14px",
+                boxShadow: "0 18px 48px rgba(0,0,0,0.42)",
+                backdropFilter: "blur(14px)",
+                WebkitBackdropFilter: "blur(14px)",
+              }}
+            >
+              <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(124,196,255,0.78)", margin: "0 0 6px" }}>
+                Menu Guide
+              </p>
+              <p style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.88)", lineHeight: 1.55, margin: 0 }}>
+                {tooltip.text}
+              </p>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      ) : null}
     </>
   );
 }

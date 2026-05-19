@@ -16,11 +16,12 @@ const kakaoConnect = "https://dapi.kakao.com https://*.daumcdn.net https://*.kak
 const kakaoImg = "https://*.daumcdn.net https://*.kakao.com https://*.kakao.io";
 const googleTagDomains = "https://www.googletagmanager.com";
 const googleAnalyticsConnect = "https://www.google-analytics.com https://region1.google-analytics.com";
+const isDev = process.env.NODE_ENV !== "production";
 
 // 기본 CSP (unsafe-eval 없음)
 const baseCSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' ${kakaoDomains} ${googleTagDomains}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${kakaoDomains} ${googleTagDomains}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   `img-src 'self' data: blob: ${kakaoImg} https://lh3.googleusercontent.com https://images.unsplash.com`,
   "font-src 'self' data: https://fastly.jsdelivr.net https://fonts.gstatic.com",
@@ -32,11 +33,13 @@ const baseCSP = [
   "form-action 'self'",
 ].join("; ");
 
-// 지도 페이지 CSP (unsafe-eval 포함 — 카카오맵 SDK 필요)
-const mapCSP = baseCSP.replace(
-  `script-src 'self' 'unsafe-inline' ${kakaoDomains} ${googleTagDomains}`,
-  `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${kakaoDomains} ${googleTagDomains}`,
-);
+// 지도 페이지 CSP (카카오맵 SDK 및 개발 런타임 허용)
+const mapCSP = baseCSP.includes("'unsafe-eval'")
+  ? baseCSP
+  : baseCSP.replace(
+    `script-src 'self' 'unsafe-inline' ${kakaoDomains} ${googleTagDomains}`,
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${kakaoDomains} ${googleTagDomains}`,
+  );
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: process.cwd(),
