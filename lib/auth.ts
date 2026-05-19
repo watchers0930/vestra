@@ -146,18 +146,22 @@ const credentialsProvider = Credentials({
 
 // ─── 동적 프로바이더 빌드 (DB 우선, env 폴백) ───
 
+function normalizeOAuthValue(value?: string) {
+  return value?.replace(/\\n/g, "").trim();
+}
+
 function buildProviders(settings: Record<string, string>) {
   const providers: NextAuthConfig["providers"] = [];
 
-  const googleId = settings.AUTH_GOOGLE_ID || process.env.AUTH_GOOGLE_ID;
-  const googleSecret = settings.AUTH_GOOGLE_SECRET || process.env.AUTH_GOOGLE_SECRET;
+  const googleId = normalizeOAuthValue(settings.AUTH_GOOGLE_ID || process.env.AUTH_GOOGLE_ID);
+  const googleSecret = normalizeOAuthValue(settings.AUTH_GOOGLE_SECRET || process.env.AUTH_GOOGLE_SECRET);
   if (googleId && googleSecret) {
     providers.push(Google({ clientId: googleId, clientSecret: googleSecret }));
   }
 
 
-  const naverId = settings.NAVER_CLIENT_ID || process.env.NAVER_CLIENT_ID;
-  const naverSecret = settings.NAVER_CLIENT_SECRET || process.env.NAVER_CLIENT_SECRET;
+  const naverId = normalizeOAuthValue(settings.NAVER_CLIENT_ID || process.env.NAVER_CLIENT_ID);
+  const naverSecret = normalizeOAuthValue(settings.NAVER_CLIENT_SECRET || process.env.NAVER_CLIENT_SECRET);
   if (naverId && naverSecret) {
     providers.push(Naver({ clientId: naverId, clientSecret: naverSecret }));
   }
