@@ -115,9 +115,12 @@ export function usePriceMap() {
     if (!mapRef.current) return;
     let cancelled = false;
     let initialized = false;
+    let resizeObserver: ResizeObserver | null = null;
 
     const initMap = () => {
       if (cancelled || !mapRef.current) return;
+      const rect = mapRef.current.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
       const maps = window.kakao.maps;
       // 데이터가 없으면 강남구 중심으로 빈 지도 표시
       const defaultCenter = new maps.LatLng(37.4979, 127.0276);
@@ -125,6 +128,23 @@ export function usePriceMap() {
       map.setMinLevel(1);
       map.setMaxLevel(10);
       kakaoMapRef.current = map;
+      resizeObserver = new ResizeObserver(() => {
+        const currentMap = kakaoMapRef.current;
+        const container = mapRef.current;
+        if (!currentMap || !container) return;
+        const nextRect = container.getBoundingClientRect();
+        if (nextRect.width <= 0 || nextRect.height <= 0) return;
+        const center = currentMap.getCenter();
+        currentMap.relayout();
+        if (center) currentMap.setCenter(center);
+      });
+      resizeObserver.observe(mapRef.current);
+      requestAnimationFrame(() => {
+        if (!kakaoMapRef.current) return;
+        const center = kakaoMapRef.current.getCenter();
+        kakaoMapRef.current.relayout();
+        if (center) kakaoMapRef.current.setCenter(center);
+      });
       initialized = true;
       setMapStatus("ready");
     };
@@ -160,6 +180,7 @@ export function usePriceMap() {
       window.removeEventListener("kakao-maps-ready", handleSdkReady);
       clearInterval(pollId);
       clearTimeout(timeoutId);
+      resizeObserver?.disconnect();
       if (clustererRef.current) { clustererRef.current.clear(); clustererRef.current = null; }
       circlesRef.current.forEach((c) => c.setMap(null));
       circlesRef.current = [];
