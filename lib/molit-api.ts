@@ -19,6 +19,7 @@ export interface RealTransaction {
   area: number;          // 전용면적 (㎡)
   floor: number;         // 층
   dong: string;          // 법정동
+  jibun?: string;        // 지번
 }
 
 export interface PriceResult {
@@ -44,6 +45,7 @@ export interface RentTransaction {
   area: number;
   floor: number;
   dong: string;
+  jibun?: string;
 }
 
 export interface RentPriceResult {
@@ -364,6 +366,7 @@ function parseTransactions(xml: string): RealTransaction[] {
       area: parseFloat(extractVal(item, "excluUseAr", "전용면적")) || 0,
       floor: parseInt(extractVal(item, "floor", "층"), 10) || 0,
       dong: extractVal(item, "umdNm", "법정동"),
+      jibun: extractVal(item, "jibun", "지번"),
     });
   }
 
@@ -519,6 +522,7 @@ function parseRentTransactions(xml: string): RentTransaction[] {
       area: parseFloat(extractVal(item, "excluUseAr", "전용면적")) || 0,
       floor: parseInt(extractVal(item, "floor", "층"), 10) || 0,
       dong: extractVal(item, "umdNm", "법정동"),
+      jibun: extractVal(item, "jibun", "지번"),
     });
   }
 
@@ -644,6 +648,7 @@ async function fetchGenericSaleTransactions(
       area: parseFloat(extractVal(item, "excluUseAr", "전용면적")) || parseFloat(extractXmlValue(item, "연면적")) || 0,
       floor: parseInt(extractVal(item, "floor", "층"), 10) || 0,
       dong: extractVal(item, "umdNm", "법정동"),
+      jibun: extractVal(item, "jibun", "지번"),
     });
   }
   return items;

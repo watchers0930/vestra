@@ -64,14 +64,29 @@ async function kakaoKeywordSearch(
   return null;
 }
 
+async function kakaoAddressSearch(kakaoKey: string, query: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const url = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(query)}&size=10`;
+    const res = await fetch(url, { headers: { Authorization: `KakaoAK ${kakaoKey}` } });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const docs = json.documents || [];
+    const doc = docs[0];
+    if (!doc) return null;
+    return { lat: parseFloat(doc.y), lng: parseFloat(doc.x) };
+  } catch {
+    return null;
+  }
+}
+
 // 거리 검증: center에서 maxKm 이내인지 확인
 function validateDistance(coord: { lat: number; lng: number }, center: { lat: number; lng: number } | undefined, maxKm: number): boolean {
   if (!center) return false; // center 없으면 검증 불가 → 거부 (안전 우선)
   return haversineDistance(coord, center) <= maxKm;
 }
 
-async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ lat: number; lng: number } | null> {
-  const cacheKey = APICache.makeKey("geocode", gu, dong, aptName);
+async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: string): Promise<{ lat: number; lng: number } | null> {
+  const cacheKey = APICache.makeKey("geocode-v2", gu, dong, aptName, jibun || "");
   const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
   if (cached) return cached;
 
@@ -80,13 +95,30 @@ async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ 
 
   const guCenter = GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 }; // 강남 기본값
   const center = DONG_CENTER[dong] || guCenter;
+  const regionAddress = GU_ADDRESS_MAP[gu] || gu;
   const MAX_DISTANCE_KM = 5; // 구 중심에서 5km 이상이면 부정확한 결과로 판단
 
   // 아파트명 정제: 괄호/숫자 제거 (예: "신동아(22)" → "신동아")
   const cleanName = aptName.replace(/\(.*?\)/g, "").replace(/\d+$/g, "").trim();
 
+  // ── 0단계: 지번 주소 검색 — 가장 안정적 ──
+  if (jibun) {
+    const addressQueries = [
+      `${regionAddress} ${dong} ${jibun}`,
+      `${gu} ${dong} ${jibun}`,
+    ];
+    for (const q of addressQueries) {
+      const coord = await kakaoAddressSearch(kakaoKey, q);
+      if (coord && validateDistance(coord, center, MAX_DISTANCE_KM)) {
+        await kvCache.set(cacheKey, coord, GEOCODE_TTL);
+        return coord;
+      }
+    }
+  }
+
   // ── 1단계: 카카오 키워드 검색 + 아파트 카테고리 (AP4) — 가장 정확 ──
   const categoryQueries = [
+    `${regionAddress} ${dong} ${cleanName}아파트`,
     `${gu} ${dong} ${cleanName}아파트`,
     `${dong} ${cleanName}아파트`,
     `${gu} ${cleanName}아파트`,
@@ -102,6 +134,7 @@ async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ 
 
   // ── 2단계: 카카오 키워드 검색 (카테고리 필터 없음, 폴백) ──
   const fallbackQueries = [
+    `${regionAddress} ${dong} ${cleanName}아파트`,
     `${gu} ${dong} ${cleanName}아파트`,
     `${dong} ${cleanName}아파트`,
     `${gu} ${cleanName}`,
@@ -118,7 +151,7 @@ async function geocodeApt(gu: string, dong: string, aptName: string): Promise<{ 
 }
 
 // 여러 아파트 좌표를 병렬로 조회 (배치 단위 + 전체 타임아웃)
-async function geocodeAll(apartments: { gu: string; dong: string; name: string }[]): Promise<Map<string, { lat: number; lng: number }>> {
+async function geocodeAll(apartments: { gu: string; dong: string; name: string; jibun?: string }[]): Promise<Map<string, { lat: number; lng: number }>> {
   const results = new Map<string, { lat: number; lng: number }>();
   const BATCH_SIZE = 10;
   const TOTAL_TIMEOUT = 8000; // 전체 geocoding 8초 제한 (Vercel 10초 함수 제한 고려)
@@ -132,8 +165,8 @@ async function geocodeAll(apartments: { gu: string; dong: string; name: string }
     }
     const batch = apartments.slice(i, i + BATCH_SIZE);
     const promises = batch.map(async (apt) => {
-      const coord = await geocodeApt(apt.gu, apt.dong, apt.name);
-      if (coord) results.set(apt.name, coord);
+      const coord = await geocodeApt(apt.gu, apt.dong, apt.name, apt.jibun);
+      if (coord) results.set(`${apt.name}@@${apt.dong}@@${apt.jibun || ""}`, coord);
     });
     await Promise.allSettled(promises);
   }
@@ -238,7 +271,7 @@ export async function GET(req: NextRequest) {
 
   // ── 전체 응답 KV 캐시 조회 (가격 필터 없는 요청만 캐시 적용) ──
   const useResponseCache = minPrice === 0 && maxPrice === 9999999;
-  const responseCacheKey = `price-map:${gu}:${tradeType}`;
+  const responseCacheKey = `price-map:v2:${gu}:${tradeType}`;
   if (useResponseCache) {
     const cached = await kvCache.get<object>(responseCacheKey);
     if (cached) {
@@ -271,36 +304,37 @@ export async function GET(req: NextRequest) {
         }
 
         const seedApts = SEED_DATA[gu] || [];
-        const seedMap = new Map(seedApts.map(s => [s.name, s]));
+        const seedMap = new Map(seedApts.map(s => [`${s.name}@@${s.dong}`, s]));
         const entries = [...grouped.entries()];
 
-        // 좌표 조회: KV캐시 → 시드 데이터 → 카카오 geocode API
+        // 좌표 조회: KV캐시/카카오 geocode API → 시드 데이터 폴백
         const geocoded = new Map<string, { lat: number; lng: number }>();
 
-        // 1단계: 시드 데이터에 없는 아파트만 KV 캐시 확인
-        const needsGeocode: { gu: string; dong: string; name: string }[] = [];
+        // 모든 단지에 대해 정확한 geocode 시도, 실패 시 시드 데이터 폴백
+        const needsGeocode: { gu: string; dong: string; name: string; jibun?: string }[] = [];
         await Promise.allSettled(entries.map(async ([aptName, txs]) => {
-          if (seedMap.has(aptName)) return; // 시드 데이터 있으면 스킵 (좌표 사용)
-          const cacheKey = APICache.makeKey("geocode", gu, txs[0].dong || "", aptName);
+          const latest = txs[0];
+          const key = `${aptName}@@${latest.dong || ""}@@${latest.jibun || ""}`;
+          const cacheKey = APICache.makeKey("geocode-v2", gu, latest.dong || "", aptName, latest.jibun || "");
           const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
           if (cached) {
-            geocoded.set(aptName, cached);
+            geocoded.set(key, cached);
           } else {
-            needsGeocode.push({ gu, dong: txs[0].dong || "", name: aptName });
+            needsGeocode.push({ gu, dong: latest.dong || "", name: aptName, jibun: latest.jibun || "" });
           }
         }));
 
         // 2단계: 캐시 미스 아파트 → 카카오 geocode API 호출 (배치 + 타임아웃)
         if (needsGeocode.length > 0) {
           const freshCoords = await geocodeAll(needsGeocode);
-          for (const [name, coord] of freshCoords) {
-            geocoded.set(name, coord);
+          for (const [key, coord] of freshCoords) {
+            geocoded.set(key, coord);
           }
         }
 
         entries.forEach(([aptName, txs]) => {
           const latest = txs[0];
-          const seed = seedMap.get(aptName);
+          const seed = seedMap.get(`${aptName}@@${latest.dong || ""}`);
           const amount = tradeType === "전세"
             ? (latest as { deposit?: number }).deposit || 0
             : (latest as { dealAmount?: number }).dealAmount || 0;
@@ -316,7 +350,7 @@ export async function GET(req: NextRequest) {
           // 거래 부족(0)이면 null → 프론트에서 변동률 미표시
 
           // 좌표 우선순위: 1) KV캐시 geocode → 2) 시드 데이터 → 정확한 좌표 없으면 제외
-          const coords = geocoded.get(aptName)
+          const coords = geocoded.get(`${aptName}@@${latest.dong || ""}@@${latest.jibun || ""}`)
             || (seed ? { lat: seed.lat, lng: seed.lng } : null);
           if (!coords) return; // geocode 실패 → 지도에 미표시 (가짜 좌표 방지)
 
