@@ -10,7 +10,10 @@ function hasSessionCookie(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  if (!hasSessionCookie(req)) {
+  const pathname = req.nextUrl.pathname;
+  const isSessionRequest = pathname.endsWith("/session");
+
+  if (isSessionRequest && !hasSessionCookie(req)) {
     return Response.json(null, {
       headers: {
         "Cache-Control": "no-store, max-age=0",
