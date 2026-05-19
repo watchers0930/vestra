@@ -255,6 +255,32 @@ export async function DELETE(req: NextRequest) {
 
 const RESPONSE_CACHE_TTL = 6 * 60 * 60 * 1000; // 6시간
 
+async function geocodeSeedApartments(
+  gu: string,
+  apartments: AptPrice[]
+): Promise<AptPrice[]> {
+  if (apartments.length === 0) return apartments;
+
+  const geocoded = await geocodeAll(
+    apartments.map((apt) => ({
+      gu,
+      dong: apt.dong,
+      name: apt.name,
+    }))
+  );
+
+  return apartments.map((apt) => {
+    const coord = geocoded.get(`${apt.name}@@${apt.dong}@@`);
+    if (!coord) return apt;
+
+    return {
+      ...apt,
+      lat: coord.lat,
+      lng: coord.lng,
+    };
+  });
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const gu = searchParams.get("gu") || "강남구";
@@ -271,7 +297,7 @@ export async function GET(req: NextRequest) {
 
   // ── 전체 응답 KV 캐시 조회 (가격 필터 없는 요청만 캐시 적용) ──
   const useResponseCache = minPrice === 0 && maxPrice === 9999999;
-  const responseCacheKey = `price-map:v2:${gu}:${tradeType}`;
+  const responseCacheKey = `price-map:v3:${gu}:${tradeType}`;
   if (useResponseCache) {
     const cached = await kvCache.get<object>(responseCacheKey);
     if (cached) {
@@ -374,7 +400,7 @@ export async function GET(req: NextRequest) {
 
   // MOLIT 실패 or 데이터 없음 → 시드 데이터 폴백
   if (data.length === 0) {
-    data = [...(SEED_DATA[gu] || [])];
+    data = await geocodeSeedApartments(gu, [...(SEED_DATA[gu] || [])]);
     dataSource = "seed";
   }
 
