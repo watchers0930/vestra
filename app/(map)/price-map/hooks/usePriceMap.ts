@@ -30,6 +30,7 @@ export function usePriceMap() {
   const [selectedSido, setSelectedSido] = useState("서울");
   const [tradeType, setTradeType] = useState<"매매" | "전세">("매매");
   const [riskPopup, setRiskPopup] = useState<{ apt: AptData; risk: ReturnType<typeof analyzeRisk> } | null>(null);
+  const [debugState, setDebugState] = useState("boot");
 
   const selectAndMoveToApt = useCallback((apt: AptData) => {
     setSelectedApt(apt);
@@ -85,6 +86,7 @@ export function usePriceMap() {
 
     setLoading(true);
     try {
+      setDebugState(`fetch:${gu}:${tradeType}`);
       const res = await fetch(`/api/price-map?gu=${encodeURIComponent(gu)}&type=${tradeType}`);
       if (!res.ok) throw new Error(`API ${res.status}`);
       const json: MapResponse = await res.json();
@@ -109,6 +111,7 @@ export function usePriceMap() {
   // 데이터와 무관하게 컴포넌트 마운트 즉시 실행 → 지도가 먼저 보임
   useEffect(() => {
     if (!hasKakaoKey) {
+      setDebugState("missing-kakao-key");
       setMapStatus("error");
       return;
     }
@@ -120,7 +123,11 @@ export function usePriceMap() {
     const initMap = () => {
       if (cancelled || !mapRef.current) return;
       const rect = mapRef.current.getBoundingClientRect();
-      if (rect.width <= 0 || rect.height <= 0) return;
+      if (rect.width <= 0 || rect.height <= 0) {
+        setDebugState(`container-zero:${Math.round(rect.width)}x${Math.round(rect.height)}`);
+        return;
+      }
+      setDebugState(`init-map:${Math.round(rect.width)}x${Math.round(rect.height)}`);
       const maps = window.kakao.maps;
       // 데이터가 없으면 강남구 중심으로 빈 지도 표시
       const defaultCenter = new maps.LatLng(37.4979, 127.0276);
@@ -146,20 +153,24 @@ export function usePriceMap() {
         if (center) kakaoMapRef.current.setCenter(center);
       });
       initialized = true;
+      setDebugState("map-ready");
       setMapStatus("ready");
     };
 
     const tryInit = () => {
       if (cancelled || !mapRef.current) return false;
+      setDebugState("try-init");
       if (typeof window.kakao?.maps?.LatLng === "function" && typeof window.kakao?.maps?.MarkerClusterer === "function") {
         initMap(); return true;
       }
       if (window.kakao?.maps?.load) {
+        setDebugState("sdk-load-callback");
         window.kakao.maps.load(() => {
           if (!cancelled && mapRef.current && typeof window.kakao.maps.LatLng === "function") initMap();
         });
         return true;
       }
+      setDebugState("sdk-not-ready");
       return false;
     };
 
@@ -172,7 +183,10 @@ export function usePriceMap() {
     if (tryInit()) { initialized = true; clearInterval(pollId); }
     const timeoutId = setTimeout(() => {
       clearInterval(pollId);
-      if (!initialized && !cancelled) setMapStatus("error");
+      if (!initialized && !cancelled) {
+        setDebugState("init-timeout");
+        setMapStatus("error");
+      }
     }, 8000);
 
     return () => {
@@ -196,6 +210,7 @@ export function usePriceMap() {
 
     const renderMarkers = () => {
       if (cancelled || !kakaoMapRef.current) return;
+      setDebugState(`render-markers:${data.apartments.length}`);
       const maps = window.kakao.maps;
       const map = kakaoMapRef.current;
 
@@ -320,6 +335,6 @@ export function usePriceMap() {
     selectedApt, loading, showGuDropdown, setShowGuDropdown,
     selectedSido, setSelectedSido, tradeType, setTradeType,
     riskPopup, setRiskPopup,
-    selectAndMoveToApt, topChanges, analyzeRisk, mapStatus,
+    selectAndMoveToApt, topChanges, analyzeRisk, mapStatus, debugState,
   };
 }
