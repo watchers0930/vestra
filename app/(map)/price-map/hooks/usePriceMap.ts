@@ -343,7 +343,7 @@ export function usePriceMap() {
       };
       requestAnimationFrame(loadNextChunk);
 
-      const DETAIL_LEVEL = 7;
+      const DETAIL_LEVEL = 4;
       let visibleOverlays = new Set<number>();
 
       const updateOverlays = () => {
