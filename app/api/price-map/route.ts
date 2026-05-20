@@ -3,6 +3,8 @@
  * 서울 25개 구 + 경기 주요 도시 지원
  */
 
+export const maxDuration = 60;
+
 import { NextRequest, NextResponse } from "next/server";
 import { fetchRecentPrices, fetchRecentRentPrices, LAWD_CODE_MAP } from "@/lib/molit-api";
 // fetchREBMarketData 제거 — 단지별 실거래 데이터만 사용
@@ -429,8 +431,8 @@ export async function GET(req: NextRequest) {
     total: data.length,
   };
 
-  // 전체 응답 KV 캐시 저장 (가격 필터 없는 요청만)
-  if (useResponseCache) {
+  // 전체 응답 KV 캐시 저장 (실데이터만 캐시 — seed 폴백은 캐시하지 않음)
+  if (useResponseCache && dataSource === "molit") {
     await kvCache.set(responseCacheKey, responsePayload, RESPONSE_CACHE_TTL);
   }
 
