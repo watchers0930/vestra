@@ -151,6 +151,7 @@ export async function GET() {
           priceHistory: true,
         },
         orderBy: { lastAnalyzedDate: "desc" },
+        take: 100,
       }),
     ]);
 

@@ -258,7 +258,8 @@ export async function DELETE(req: NextRequest) {
       }
       return NextResponse.json({ ok: true, deleted, message: `전체 geocode 캐시 ${deleted}건 삭제` });
     } catch (err) {
-      return NextResponse.json({ error: "KV 삭제 실패", detail: (err as Error).message }, { status: 500 });
+      console.error("[Price-Map] KV 삭제 실패:", err);
+      return NextResponse.json({ error: "KV 삭제 실패" }, { status: 500 });
     }
   }
 

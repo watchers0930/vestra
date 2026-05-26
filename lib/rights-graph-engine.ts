@@ -587,10 +587,12 @@ export function findCriticalPath(
     }
   }
 
-  // 경로 역추적
+  // 경로 역추적 (predecessor에 사이클이 있을 수 있으므로 visited 체크)
   const path: string[] = [];
+  const pathVisited = new Set<string>();
   let current: string | undefined = maxTerminalId;
-  while (current) {
+  while (current && !pathVisited.has(current)) {
+    pathVisited.add(current);
     path.unshift(current);
     current = predecessor.get(current);
   }
@@ -775,18 +777,16 @@ function formatAmount(amount: number): string {
 }
 
 function calculateMaxDepth(graph: RightsGraph): number {
-  const depths = new Map<string, number>();
-
   function dfs(nodeId: string, depth: number, visited: Set<string>): number {
     if (visited.has(nodeId)) return depth;
     visited.add(nodeId);
-    depths.set(nodeId, Math.max(depths.get(nodeId) || 0, depth));
 
     let maxDepth = depth;
     const neighbors = graph.adjacency.get(nodeId) || [];
     for (const edge of neighbors) {
-      maxDepth = Math.max(maxDepth, dfs(edge.target, depth + 1, new Set(visited)));
+      maxDepth = Math.max(maxDepth, dfs(edge.target, depth + 1, visited));
     }
+    visited.delete(nodeId);
     return maxDepth;
   }
 

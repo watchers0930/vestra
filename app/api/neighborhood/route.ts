@@ -254,7 +254,7 @@ export async function POST(req: NextRequest) {
       aiComment,
     });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "분석 중 오류가 발생했습니다.";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("[Neighborhood API]", e);
+    return NextResponse.json({ error: "분석 중 오류가 발생했습니다." }, { status: 500 });
   }
 }

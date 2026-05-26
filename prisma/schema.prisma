@@ -263,6 +263,7 @@ model MonitoredProperty {
   commUniqueNo  String?           // CODEF 고유번호 (등기 조회용)
   baselineData  String?           @db.Text // 계약 시점 등기부 스냅샷 (JSON)
   alerts        MonitoringAlert[]
+  snapshots     RegistrySnapshot[]
   user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
@@ -270,6 +271,24 @@ model MonitoredProperty {
   @@unique([userId, address])
   @@index([status])
   @@index([monitorMode])
+}
+
+model RegistrySnapshot {
+  id                    String            @id @default(cuid())
+  monitoredPropertyId   String
+  sequenceNo            Int
+  merkleRoot            String
+  snapshotHash          String
+  previousSnapshotHash  String?
+  signature             String
+  encryptedData         String            @db.Text
+  sectionHashes         Json
+  timestamp             DateTime          @default(now())
+  monitoredProperty     MonitoredProperty @relation(fields: [monitoredPropertyId], references: [id], onDelete: Cascade)
+
+  @@unique([monitoredPropertyId, sequenceNo])
+  @@index([monitoredPropertyId])
+  @@index([snapshotHash])
 }
 
 model MonitoringAlert {

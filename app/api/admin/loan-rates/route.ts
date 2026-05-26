@@ -11,7 +11,7 @@ import { validateOrigin } from "@/lib/csrf";
 
 async function checkAdmin() {
   const session = await auth();
-  return session?.user?.role === "admin";
+  return session?.user?.role === "ADMIN";
 }
 
 export async function GET() {

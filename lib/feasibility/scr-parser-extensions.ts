@@ -816,7 +816,7 @@ export function parseScrDocument(
   // 1단계: 정규식 패턴 매칭으로 각 키 추출
   for (const [key, patternDef] of Object.entries(SCR_PATTERNS) as [ScrClaimKey, ScrClaimPattern][]) {
     if (!patternDef) continue;
-    if (claims[key]) continue; // 이미 추출된 키는 건너뛰기
+    if (Object.hasOwn(claims, key)) continue; // 이미 추출된 키는 건너뛰기
 
     const { patterns, unit, isText, postProcess } = patternDef;
 

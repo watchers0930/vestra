@@ -17,6 +17,8 @@ import { createHash } from "crypto";
 import { sendNotification } from "@/lib/notification-sender";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { fetchRegistry, isCodefAvailable } from "@/lib/codef-api";
+import { recordRegistrySnapshot } from "@/lib/registry-snapshot-recorder";
+import { getSectionLabel } from "@/lib/registry-blockchain";
 
 const BATCH_SIZE = 50;
 
@@ -198,6 +200,20 @@ export async function GET(req: NextRequest) {
         codefQueries++;
         const newHash = generateContentHash(registry.text);
 
+        // 블록체인 스냅샷 기록 (해시체인 + 머클트리 + 서명 + 암호화)
+        let snapshotResult: { changedSections: string[]; isFirstSnapshot: boolean } | null = null;
+        try {
+          snapshotResult = await recordRegistrySnapshot({
+            propertyId: prop.id,
+            fullText: registry.text,
+          });
+        } catch (snapError) {
+          console.error(
+            `[CRON:MONITOR] 스냅샷 기록 실패 (기존 해시 비교로 폴백): ${prop.address}`,
+            snapError instanceof Error ? snapError.message : snapError
+          );
+        }
+
         // 해시가 동일하면 변동 없음
         if (prop.lastHash === newHash) {
           await prisma.monitoredProperty.update({
@@ -213,6 +229,11 @@ export async function GET(req: NextRequest) {
           ? detectChanges(oldContent, registry.text)
           : [{ changeType: "baseline_set", summary: "기준 스냅샷 저장", detail: "최초 등기부 기준점이 설정되었습니다.", riskLevel: "low" as const }];
 
+        // 섹션 변동 정보 (있으면 알림에 추가)
+        const sectionInfo = snapshotResult?.changedSections?.length
+          ? `\n[변동 섹션: ${snapshotResult.changedSections.map(getSectionLabel).join(", ")}]`
+          : "";
+
         // 알림 생성 + 발송
         for (const change of changes) {
           await prisma.monitoringAlert.create({
@@ -220,7 +241,7 @@ export async function GET(req: NextRequest) {
               monitoredPropertyId: prop.id,
               changeType: change.changeType,
               summary: change.summary,
-              detail: change.detail,
+              detail: change.detail + sectionInfo,
               riskLevel: change.riskLevel,
             },
           });
@@ -240,12 +261,15 @@ export async function GET(req: NextRequest) {
               userId: prop.userId,
               type: "registry_change",
               title: `${prefix} ${change.summary}`,
-              body: `${prop.address}\n${change.detail}${suffix}`,
+              body: `${prop.address}\n${change.detail}${sectionInfo}${suffix}`,
               data: {
                 propertyId: prop.id,
                 changeType: change.changeType,
                 riskLevel: change.riskLevel,
                 monitorMode: prop.monitorMode,
+                ...(snapshotResult?.changedSections?.length
+                  ? { changedSections: snapshotResult.changedSections.join(",") }
+                  : {}),
                 ...(isGap && isUrgent ? { dgonAction: "emergency_lease_registration" } : {}),
               },
             });

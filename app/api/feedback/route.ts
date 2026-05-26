@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { validateOrigin } from "@/lib/csrf";
 import { handleApiError } from "@/lib/api-error-handler";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { createAuditLog } from "@/lib/audit-log";
@@ -41,6 +42,9 @@ const DEFAULT_FRAUD_WEIGHTS: Record<string, number> = {
 const FEEDBACK_THRESHOLD = 10; // 가중치 재계산 트리거 임계치
 
 export async function POST(req: NextRequest) {
+  const csrfError = validateOrigin(req);
+  if (csrfError) return csrfError;
+
   // Rate limit: 10 req/min
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const rl = await rateLimit(`feedback:${ip}`, 10);

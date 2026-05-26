@@ -1,32 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateOrigin } from "@/lib/csrf";
+import { rateLimit } from "@/lib/rate-limit";
 
 // ---------------------------------------------------------------------------
 // Expert Consultation Request API
 // ---------------------------------------------------------------------------
-
-// In-memory rate limiter (per IP, resets daily)
-const requestCounts = new Map<string, { count: number; resetAt: number }>();
-
-const DAILY_LIMIT = 5;
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = requestCounts.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    requestCounts.set(ip, {
-      count: 1,
-      resetAt: now + 24 * 60 * 60 * 1000,
-    });
-    return true;
-  }
-
-  if (entry.count >= DAILY_LIMIT) return false;
-
-  entry.count++;
-  return true;
-}
 
 interface ConsultRequest {
   type: string;
@@ -54,7 +32,8 @@ export async function POST(req: NextRequest) {
       req.headers.get("x-real-ip") ??
       "unknown";
 
-    if (!checkRateLimit(ip)) {
+    const rl = await rateLimit(`expert-req:${ip}`, 5, 86400000);
+    if (!rl.success) {
       return NextResponse.json(
         { error: "일일 상담 요청 한도(5건)를 초과했습니다. 내일 다시 시도해주세요." },
         { status: 429 }
