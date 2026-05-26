@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const messages = sanitizeMessages(body.messages || []);
+    const stream = body.stream === true;
 
     if (!messages || messages.length === 0) {
       return NextResponse.json({ error: "메시지를 입력해주세요." }, { status: 400 });
@@ -73,18 +74,66 @@ export async function POST(req: NextRequest) {
     }
 
     const openai = getOpenAIClient();
-
     const systemPrompt = CHAT_SYSTEM_PROMPT + courtContext + newsContext;
 
+    const openaiMessages = [
+      { role: "system" as const, content: systemPrompt },
+      ...messages.map((m: { role: string; content: string }) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      })),
+    ];
+
+    // ── 스트리밍 응답 ──
+    if (stream) {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: openaiMessages,
+        temperature: 0.5,
+        max_tokens: 2000,
+        stream: true,
+      });
+
+      const encoder = new TextEncoder();
+      const readable = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of completion) {
+              const delta = chunk.choices[0]?.delta?.content;
+              if (delta) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: delta })}\n\n`));
+              }
+            }
+            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+            controller.close();
+          } catch (err) {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ error: "스트리밍 중 오류가 발생했습니다." })}\n\n`)
+            );
+            controller.close();
+            console.error("Streaming error:", err);
+          }
+        },
+      });
+
+      // 뉴스 활용 로그
+      if (newsArticleIds.length > 0) {
+        logNewsUsage(newsArticleIds, "chat").catch(() => {});
+      }
+
+      return new Response(readable, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      });
+    }
+
+    // ── 일반 응답 (하위 호환) ──
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...messages.map((m: { role: string; content: string }) => ({
-          role: m.role as "user" | "assistant",
-          content: m.content,
-        })),
-      ],
+      messages: openaiMessages,
       temperature: 0.5,
       max_tokens: 2000,
     });

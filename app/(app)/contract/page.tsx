@@ -14,6 +14,7 @@ import { ContractInputCard } from "./components/ContractInputCard";
 import { ClauseAnalysisCard } from "./components/ClauseAnalysisCard";
 import { MissingClausesCard } from "./components/MissingClausesCard";
 import { SafetyChecklist } from "./components/SafetyChecklist";
+import { RecommendedTermsCard } from "./components/RecommendedTermsCard";
 import { getScoreLabel, riskBadgeLabel } from "./constants";
 
 export default function ContractReviewPage() {
@@ -139,6 +140,12 @@ export default function ContractReviewPage() {
 
           <ClauseAnalysisCard clauses={result.clauses} />
           <MissingClausesCard missingClauses={result.missingClauses} />
+
+          {/* 맞춤 특약 추천 */}
+          {result.recommendedTerms && result.recommendedTerms.terms.length > 0 && (
+            <RecommendedTermsCard recommendedTerms={result.recommendedTerms} />
+          )}
+
           <SafetyChecklist />
 
           {/* 무결성 배지 */}

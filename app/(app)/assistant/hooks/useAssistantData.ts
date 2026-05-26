@@ -11,11 +11,21 @@ export interface Message {
   timestamp: string;
 }
 
+export interface AnalysisHistoryEntry {
+  type: "contract" | "rights" | "jeonse" | "tax";
+  timestamp: string;
+  summary: string;
+  safetyScore?: number;
+  address?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Helpers (localStorage utils — no side effects at module level)
 // ---------------------------------------------------------------------------
 const STORAGE_KEY = "vestra_assistant_messages";
+const HISTORY_KEY = "vestra_analysis_history";
 const MAX_STORED_MESSAGES = 100;
+const MAX_HISTORY_ENTRIES = 3;
 
 function loadMessages(): Message[] {
   if (typeof window === "undefined") return [];
@@ -37,17 +47,48 @@ function saveMessages(messages: Message[]) {
   }
 }
 
+function loadAnalysisHistory(): AnalysisHistoryEntry[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(HISTORY_KEY);
+    if (!stored) return [];
+    return (JSON.parse(stored) as AnalysisHistoryEntry[]).slice(-MAX_HISTORY_ENTRIES);
+  } catch {
+    return [];
+  }
+}
+
 function getContextPrefix(): string {
   if (typeof window === "undefined") return "";
+  const parts: string[] = [];
+
+  // 최근 분석 주소
   try {
     const lastAddress = localStorage.getItem("vestra_last_address");
     if (lastAddress) {
-      return `[사용자 컨텍스트] 최근 분석한 주소: ${lastAddress}\n\n`;
+      parts.push(`최근 분석한 주소: ${lastAddress}`);
     }
   } catch {
     // ignore
   }
-  return "";
+
+  // 분석 히스토리
+  const history = loadAnalysisHistory();
+  if (history.length > 0) {
+    const typeLabels: Record<string, string> = {
+      contract: "계약검토", rights: "권리분석", jeonse: "전세분석", tax: "세금계산",
+    };
+    const summaries = history.map((h) => {
+      const label = typeLabels[h.type] || h.type;
+      const score = h.safetyScore !== undefined ? ` (안전점수 ${h.safetyScore}점)` : "";
+      const addr = h.address ? ` - ${h.address}` : "";
+      return `${label}${addr}${score}: ${h.summary}`;
+    });
+    parts.push(`최근 분석 이력:\n${summaries.join("\n")}`);
+  }
+
+  if (parts.length === 0) return "";
+  return `[사용자 컨텍스트]\n${parts.join("\n")}\n\n`;
 }
 
 // ---------------------------------------------------------------------------
@@ -59,6 +100,7 @@ export function useAssistantData() {
   const [loading, setLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [streamingContent, setStreamingContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Restore messages from localStorage on mount
@@ -76,7 +118,7 @@ export function useAssistantData() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, streamingContent]);
 
   const clearConversation = useCallback(() => {
     setMessages([]);
@@ -102,6 +144,7 @@ export function useAssistantData() {
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
+    setStreamingContent("");
 
     try {
       const contextPrefix = getContextPrefix();
@@ -124,19 +167,59 @@ export function useAssistantData() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: allMessages }),
+        body: JSON.stringify({ messages: allMessages, stream: true }),
       });
 
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      // 스트리밍 응답 처리
+      if (res.headers.get("content-type")?.includes("text/event-stream") && res.body) {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = "";
 
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: data.content,
-        timestamp: new Date().toISOString(),
-      };
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-      setMessages((prev) => [...prev, assistantMessage]);
+          const text = decoder.decode(value, { stream: true });
+          const lines = text.split("\n");
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const data = line.slice(6).trim();
+            if (data === "[DONE]") break;
+
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.error) throw new Error(parsed.error);
+              if (parsed.content) {
+                fullContent += parsed.content;
+                setStreamingContent(fullContent);
+              }
+            } catch {
+              // 개별 청크 파싱 실패 무시
+            }
+          }
+        }
+
+        const assistantMessage: Message = {
+          role: "assistant",
+          content: fullContent || "응답을 받지 못했습니다.",
+          timestamp: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+        setStreamingContent("");
+      } else {
+        // 일반 JSON 응답 (폴백)
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        const assistantMessage: Message = {
+          role: "assistant",
+          content: data.content,
+          timestamp: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      }
     } catch {
       const errorMessage: Message = {
         role: "assistant",
@@ -144,6 +227,7 @@ export function useAssistantData() {
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, errorMessage]);
+      setStreamingContent("");
     } finally {
       setLoading(false);
     }
@@ -155,6 +239,7 @@ export function useAssistantData() {
     setInput,
     loading,
     copiedIdx,
+    streamingContent,
     messagesEndRef,
     clearConversation,
     handleCopy,

@@ -1,22 +1,42 @@
 "use client";
 
-import { Send, Bot, User, Sparkles, Trash2, Copy, Check, TrendingUp, FileText, Shield, Calculator } from "lucide-react";
+import Link from "next/link";
+import { Send, Bot, User, Sparkles, Trash2, Copy, Check, TrendingUp, FileText, Shield, Calculator, ArrowRight } from "lucide-react";
 import { CategoryHero } from "@/components/common/CategoryHero";
 import { useAssistantData } from "./hooks/useAssistantData";
 
 const EXAMPLE_QUESTIONS = [
   { icon: Shield,     text: "전세 계약 시 주의할 점은?" },
   { icon: Calculator, text: "1세대 1주택 양도세 비과세 요건" },
-  { icon: FileText,   text: "근저당 70% 초과 시 위험도는?" },
+  { icon: FileText,   text: "계약서에 꼭 넣어야 할 특약은?" },
   { icon: TrendingUp, text: "2026년 부동산 시장 전망" },
-  { icon: Calculator, text: "종합부동산세 계산 방법" },
   { icon: Shield,     text: "전세 보증보험 가입 요건은?" },
+  { icon: FileText,   text: "근저당 70% 초과 시 위험도는?" },
 ];
+
+// 분석 페이지 바로가기 패턴
+const ANALYSIS_LINKS: { pattern: RegExp; href: string; label: string }[] = [
+  { pattern: /전세\s*분석|전세분석|\/jeonse\/analysis/i, href: "/jeonse/analysis", label: "전세분석" },
+  { pattern: /계약서\s*분석|계약\s*분석|\/contract/i,     href: "/contract",        label: "계약검토" },
+  { pattern: /권리\s*분석|권리분석|\/rights/i,            href: "/rights",          label: "권리분석" },
+  { pattern: /세금\s*계산|세금계산기|\/tax/i,             href: "/tax",             label: "세금계산" },
+  { pattern: /시세\s*전망|시세전망|\/prediction/i,        href: "/prediction",      label: "시세전망" },
+];
+
+function getLinkedPages(content: string): { href: string; label: string }[] {
+  const found: { href: string; label: string }[] = [];
+  for (const { pattern, href, label } of ANALYSIS_LINKS) {
+    if (pattern.test(content)) {
+      found.push({ href, label });
+    }
+  }
+  return found;
+}
 
 export default function AssistantPage() {
   const {
     messages, input, setInput, loading, copiedIdx,
-    messagesEndRef, clearConversation, handleCopy, sendMessage,
+    streamingContent, messagesEndRef, clearConversation, handleCopy, sendMessage,
   } = useAssistantData();
 
   return (
@@ -76,62 +96,112 @@ export default function AssistantPage() {
           )}
 
           {/* 메시지 */}
-          {messages.map((msg, i) => (
-            <div key={i} style={{ display: "flex", gap: "10px", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
-              {msg.role === "assistant" && (
-                <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: "linear-gradient(148deg, #0c1527, #141820)", border: "1px solid rgba(0,113,227,0.20)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 2px 8px rgba(0,113,227,0.12)" }}>
-                  <Bot size={16} strokeWidth={1.5} style={{ color: "#2997ff" }} />
-                </div>
-              )}
+          {messages.map((msg, i) => {
+            const linkedPages = msg.role === "assistant" ? getLinkedPages(msg.content) : [];
+            return (
+              <div key={i} style={{ display: "flex", gap: "10px", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                {msg.role === "assistant" && (
+                  <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: "linear-gradient(148deg, #0c1527, #141820)", border: "1px solid rgba(0,113,227,0.20)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 2px 8px rgba(0,113,227,0.12)" }}>
+                    <Bot size={16} strokeWidth={1.5} style={{ color: "#2997ff" }} />
+                  </div>
+                )}
 
-              <div style={{ maxWidth: "78%", position: "relative" }} className="group/msg">
+                <div style={{ maxWidth: "78%", position: "relative" }} className="group/msg">
+                  <div style={{
+                    padding: "12px 16px",
+                    borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "4px 18px 18px 18px",
+                    background: msg.role === "user"
+                      ? "linear-gradient(148deg, #0071e3, #0058b0)"
+                      : "#f5f5f7",
+                    border: msg.role === "user" ? "none" : "1px solid rgba(0,0,0,0.07)",
+                    boxShadow: msg.role === "user"
+                      ? "0 4px 16px rgba(0,113,227,0.25)"
+                      : "0 1px 4px rgba(0,0,0,0.05)",
+                    fontSize: "13.5px",
+                    lineHeight: "1.65",
+                    color: msg.role === "user" ? "#fff" : "#1d1d1f",
+                    whiteSpace: "pre-wrap",
+                  }}>
+                    {msg.content}
+                  </div>
+
+                  {/* 분석 페이지 바로가기 버튼 */}
+                  {linkedPages.length > 0 && (
+                    <div style={{ display: "flex", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
+                      {linkedPages.map(({ href, label }) => (
+                        <Link
+                          key={href}
+                          href={href}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: "5px",
+                            padding: "6px 12px", borderRadius: "10px",
+                            background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.15)",
+                            fontSize: "11.5px", fontWeight: 600, color: "#0071e3",
+                            textDecoration: "none", transition: "all 0.15s",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,113,227,0.12)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,113,227,0.06)"; }}
+                        >
+                          {label} 바로가기
+                          <ArrowRight size={11} strokeWidth={2} />
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "4px", paddingLeft: msg.role === "user" ? 0 : "2px", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                    <span style={{ fontSize: "10px", color: "#aeaeb2" }}>
+                      {new Date(msg.timestamp).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                    {msg.role === "assistant" && (
+                      <button
+                        onClick={() => handleCopy(msg.content, i)}
+                        aria-label="메시지 복사"
+                        style={{ display: "flex", alignItems: "center", padding: "2px 6px", borderRadius: "6px", background: "rgba(0,0,0,0.05)", border: "none", cursor: "pointer", opacity: 0, transition: "opacity 0.15s" }}
+                        className="group-hover/msg:opacity-100"
+                      >
+                        {copiedIdx === i
+                          ? <Check size={11} strokeWidth={2} style={{ color: "#1a9e45" }} />
+                          : <Copy size={11} strokeWidth={1.5} style={{ color: "#aeaeb2" }} />}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {msg.role === "user" && (
+                  <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: "#e5e5e7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <User size={16} strokeWidth={1.5} style={{ color: "#6e6e73" }} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* 스트리밍 중 */}
+          {loading && streamingContent && (
+            <div style={{ display: "flex", gap: "10px" }}>
+              <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: "linear-gradient(148deg, #0c1527, #141820)", border: "1px solid rgba(0,113,227,0.20)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Bot size={16} strokeWidth={1.5} style={{ color: "#2997ff" }} />
+              </div>
+              <div style={{ maxWidth: "78%" }}>
                 <div style={{
                   padding: "12px 16px",
-                  borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "4px 18px 18px 18px",
-                  background: msg.role === "user"
-                    ? "linear-gradient(148deg, #0071e3, #0058b0)"
-                    : "#f5f5f7",
-                  border: msg.role === "user" ? "none" : "1px solid rgba(0,0,0,0.07)",
-                  boxShadow: msg.role === "user"
-                    ? "0 4px 16px rgba(0,113,227,0.25)"
-                    : "0 1px 4px rgba(0,0,0,0.05)",
-                  fontSize: "13.5px",
-                  lineHeight: "1.65",
-                  color: msg.role === "user" ? "#fff" : "#1d1d1f",
+                  borderRadius: "4px 18px 18px 18px",
+                  background: "#f5f5f7",
+                  border: "1px solid rgba(0,0,0,0.07)",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+                  fontSize: "13.5px", lineHeight: "1.65", color: "#1d1d1f",
                   whiteSpace: "pre-wrap",
                 }}>
-                  {msg.content}
-                </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "4px", paddingLeft: msg.role === "user" ? 0 : "2px", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
-                  <span style={{ fontSize: "10px", color: "#aeaeb2" }}>
-                    {new Date(msg.timestamp).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                  {msg.role === "assistant" && (
-                    <button
-                      onClick={() => handleCopy(msg.content, i)}
-                      aria-label="메시지 복사"
-                      style={{ display: "flex", alignItems: "center", padding: "2px 6px", borderRadius: "6px", background: "rgba(0,0,0,0.05)", border: "none", cursor: "pointer", opacity: 0, transition: "opacity 0.15s" }}
-                      className="group-hover/msg:opacity-100"
-                    >
-                      {copiedIdx === i
-                        ? <Check size={11} strokeWidth={2} style={{ color: "#1a9e45" }} />
-                        : <Copy size={11} strokeWidth={1.5} style={{ color: "#aeaeb2" }} />}
-                    </button>
-                  )}
+                  {streamingContent}
+                  <span style={{ display: "inline-block", width: "6px", height: "16px", background: "#0071e3", marginLeft: "2px", animation: "blink 0.8s step-end infinite", verticalAlign: "text-bottom" }} />
                 </div>
               </div>
-
-              {msg.role === "user" && (
-                <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: "#e5e5e7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <User size={16} strokeWidth={1.5} style={{ color: "#6e6e73" }} />
-                </div>
-              )}
             </div>
-          ))}
+          )}
 
-          {/* 로딩 */}
-          {loading && (
+          {/* 로딩 (아직 스트리밍 시작 전) */}
+          {loading && !streamingContent && (
             <div aria-busy="true" style={{ display: "flex", gap: "10px" }}>
               <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: "linear-gradient(148deg, #0c1527, #141820)", border: "1px solid rgba(0,113,227,0.20)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <Bot size={16} strokeWidth={1.5} style={{ color: "#2997ff" }} />
@@ -183,6 +253,9 @@ export default function AssistantPage() {
         @keyframes bounce {
           0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
           40% { transform: translateY(-6px); opacity: 1; }
+        }
+        @keyframes blink {
+          50% { opacity: 0; }
         }
         .group\\/msg:hover .group-hover\\/msg\\:opacity-100 { opacity: 1 !important; }
       `}</style>

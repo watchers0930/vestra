@@ -121,6 +121,21 @@ export function useContractAnalysis() {
       });
       addNotification(`계약검토 완료: ${fileName || "직접 입력 계약서"}`);
       setAnalysisId(`contract_${Date.now()}`);
+
+      // 분석 히스토리 저장 (어시스턴트 컨텍스트용)
+      try {
+        const HISTORY_KEY = "vestra_analysis_history";
+        const existing = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+        const termsCount = data.recommendedTerms?.terms?.length || 0;
+        existing.push({
+          type: "contract",
+          timestamp: new Date().toISOString(),
+          summary: `안전점수 ${data.safetyScore}점, ${data.clauses?.length || 0}개 조항, 특약 ${termsCount}건 추천`,
+          safetyScore: data.safetyScore,
+          address: fileName || "직접 입력 계약서",
+        });
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(existing.slice(-3)));
+      } catch { /* storage unavailable */ }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "분석 중 오류가 발생했습니다.");
     } finally {

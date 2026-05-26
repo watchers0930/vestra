@@ -6,6 +6,7 @@ import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { stripHtml, truncateInput } from "@/lib/sanitize";
 import { searchCourtCases } from "@/lib/court-api";
 import { analyzeContract } from "@/lib/contract-analyzer";
+import { recommendSpecialTerms } from "@/lib/special-terms-recommender";
 import { buildPolicyContext, logNewsUsage } from "@/lib/news-query";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
@@ -125,11 +126,19 @@ export async function POST(req: NextRequest) {
       logNewsUsage(policyArticleIds, "contract").catch(() => {});
     }
 
+    // 4단계: 맞춤 특약 추천
+    const recommendedTerms = recommendSpecialTerms(
+      engineResult.clauses,
+      engineResult.missingClauses,
+      engineResult.safetyScore,
+    );
+
     return NextResponse.json({
       clauses: engineResult.clauses,
       missingClauses: engineResult.missingClauses,
       safetyScore: engineResult.safetyScore,
       aiOpinion,
+      recommendedTerms,
     });
   } catch (error: unknown) {
     return handleApiError(error, "계약서 분석");
