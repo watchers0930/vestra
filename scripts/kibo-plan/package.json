@@ -1,0 +1,9 @@
+{
+  "name": "kibo-plan-generator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "docx": "^9.6.1"
+  }
+}

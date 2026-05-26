@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VESTRA 플랫폼 기술 보고서</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/nicejmp1/paperlogy/css/paperlogy.css">
+<style>
+  @page {
+    size: A4;
+    margin: 25mm 20mm 30mm 20mm;
+    @bottom-center {
+      content: counter(page);
+      font-family: 'Paperlogy', sans-serif;
+      font-size: 9pt;
+      color: #666;
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Paperlogy', 'Pretendard', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.75;
+    color: #1a1a1a;
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── 표지 ── */
+  .cover {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    page-break-after: always;
+    position: relative;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #1e3a5f, #2c5f8a, #1e3a5f);
+  }
+  .cover-badge {
+    display: inline-block;
+    border: 2px solid #1e3a5f;
+    color: #1e3a5f;
+    font-size: 9pt;
+    font-weight: 600;
+    letter-spacing: 4px;
+    padding: 6px 24px;
+    margin-bottom: 40px;
+  }
+  .cover h1 {
+    font-size: 28pt;
+    font-weight: 800;
+    color: #1e3a5f;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .cover h2 {
+    font-size: 14pt;
+    font-weight: 400;
+    color: #444;
+    margin-bottom: 60px;
+  }
+  .cover-meta {
+    font-size: 10pt;
+    color: #666;
+    line-height: 2.2;
+  }
+  .cover-meta strong { color: #1a1a1a; font-weight: 600; }
+  .cover-line {
+    width: 60px;
+    height: 2px;
+    background: #1e3a5f;
+    margin: 30px auto;
+  }
+
+  /* ── 목차 ── */
+  .toc {
+    page-break-after: always;
+    padding-top: 40px;
+  }
+  .toc h2 {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #1e3a5f;
+    border-bottom: 2px solid #1e3a5f;
+    padding-bottom: 8px;
+    margin-bottom: 24px;
+  }
+  .toc-list { list-style: none; }
+  .toc-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 6px 0;
+    border-bottom: 1px dotted #ccc;
+    font-size: 10.5pt;
+  }
+  .toc-list li.section {
+    font-weight: 700;
+    color: #1e3a5f;
+    margin-top: 12px;
+    border-bottom: none;
+    font-size: 11pt;
+  }
+  .toc-list li.sub { padding-left: 20px; font-size: 10pt; color: #444; }
+
+  /* ── 본문 ── */
+  .page { page-break-after: always; padding-top: 10px; }
+  .page:last-child { page-break-after: auto; }
+
+  h2.section-title {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #1e3a5f;
+    border-bottom: 2px solid #1e3a5f;
+    padding-bottom: 6px;
+    margin: 30px 0 16px 0;
+    break-after: avoid;
+  }
+  h3.subsection-title {
+    font-size: 12pt;
+    font-weight: 700;
+    color: #2c5f8a;
+    margin: 20px 0 10px 0;
+    padding-left: 10px;
+    border-left: 3px solid #2c5f8a;
+    break-after: avoid;
+  }
+  h4 {
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: #333;
+    margin: 14px 0 6px 0;
+  }
+
+  p { margin: 6px 0; text-align: justify; }
+
+  /* ── 테이블 ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 16px 0;
+    font-size: 9.5pt;
+  }
+  thead th {
+    background: #1e3a5f;
+    color: #fff;
+    font-weight: 600;
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 9pt;
+  }
+  tbody td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #e0e0e0;
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) { background: #f8f9fb; }
+  tbody tr:hover { background: #eef3f9; }
+  td.mono { font-family: 'SF Mono', 'Consolas', monospace; font-size: 8.5pt; color: #555; }
+
+  /* ── 박스 ── */
+  .info-box {
+    background: #f0f4f8;
+    border: 1px solid #d0d8e0;
+    border-left: 4px solid #1e3a5f;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 9.5pt;
+    border-radius: 0 4px 4px 0;
+  }
+  .info-box .label {
+    font-weight: 700;
+    color: #1e3a5f;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .formula-box {
+    background: #fafafa;
+    border: 1px solid #ddd;
+    padding: 10px 16px;
+    margin: 10px 0;
+    font-family: 'SF Mono', 'Consolas', monospace;
+    font-size: 9pt;
+    text-align: center;
+    color: #333;
+    border-radius: 4px;
+  }
+
+  /* ── 리스트 ── */
+  ul.feature-list {
+    list-style: none;
+    margin: 8px 0;
+    padding: 0;
+  }
+  ul.feature-list li {
+    padding: 3px 0 3px 18px;
+    position: relative;
+    font-size: 10pt;
+  }
+  ul.feature-list li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: #2c5f8a;
+    font-weight: 700;
+  }
+
+  /* ── 태그 ── */
+  .tag {
+    display: inline-block;
+    background: #e8eef4;
+    color: #1e3a5f;
+    font-size: 8pt;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin: 1px 2px;
+  }
+  .tag.green { background: #e6f4ea; color: #1a7431; }
+  .tag.orange { background: #fef3e0; color: #b36b00; }
+  .tag.red { background: #fce8e8; color: #a31515; }
+
+  /* ── 푸터 ── */
+  .page-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 8pt;
+    color: #999;
+    padding: 10px;
+  }
+
+  /* ── 인쇄 최적화 ── */
+  @media print {
+    body { font-size: 10pt; }
+    .cover { height: 100vh; }
+    .no-print { display: none; }
+    table { page-break-inside: avoid; }
+    h3.subsection-title { page-break-after: avoid; }
+  }
+
+  /* ── 수식 ── */
+  .eq { font-style: italic; }
+  sub, sup { font-size: 70%; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--                    표 지                        -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-badge">CONFIDENTIAL</div>
+  <h1>VESTRA</h1>
+  <h2>AI 자산관리 플랫폼 기술 보고서</h2>
+  <div class="cover-line"></div>
+  <div class="cover-meta">
+    <strong>문서 분류</strong> &nbsp;|&nbsp; 기술 백서 (Technical White Paper)<br>
+    <strong>플랫폼 버전</strong> &nbsp;|&nbsp; v5.13.4<br>
+    <strong>작성일</strong> &nbsp;|&nbsp; 2026년 5월 26일<br>
+    <strong>보안 등급</strong> &nbsp;|&nbsp; 대외비
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--                    목 차                        -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="toc">
+  <h2>목차</h2>
+  <ul class="toc-list">
+    <li class="section"><span>1. 플랫폼 개요</span></li>
+    <li class="sub"><span>1.1 시스템 아키텍처</span></li>
+    <li class="sub"><span>1.2 기술 스택 요약</span></li>
+    <li class="section"><span>2. 인공지능 및 데이터 분석</span></li>
+    <li class="sub"><span>2.1 사기 위험도 예측 모델</span></li>
+    <li class="sub"><span>2.2 시계열 이상 탐지 엔진</span></li>
+    <li class="sub"><span>2.3 자연어 처리(NLP) 파이프라인</span></li>
+    <li class="sub"><span>2.4 시세 예측 엔진</span></li>
+    <li class="sub"><span>2.5 적응형 가중치 튜닝</span></li>
+    <li class="sub"><span>2.6 신뢰도 전파 엔진</span></li>
+    <li class="section"><span>3. 개인정보 보호</span></li>
+    <li class="sub"><span>3.1 PII 암호화 (AES-256-GCM)</span></li>
+    <li class="section"><span>4. 블록체인 암호화 기법 적용</span></li>
+    <li class="sub"><span>4.1 머클 트리 무결성 검증</span></li>
+    <li class="sub"><span>4.2 등기 스냅샷 해시 체인</span></li>
+    <li class="section"><span>5. 위험도 분석 알고리즘</span></li>
+    <li class="sub"><span>5.1 권리관계 위험도 평가</span></li>
+    <li class="sub"><span>5.2 권리 그래프 분석 엔진</span></li>
+    <li class="sub"><span>5.3 계약서 위험 분석</span></li>
+    <li class="sub"><span>5.4 유효성 검증 엔진</span></li>
+    <li class="section"><span>6. 사업성 분석 모듈 (SCR)</span></li>
+    <li class="sub"><span>6.1 재무 계산 엔진</span></li>
+    <li class="sub"><span>6.2 외부 데이터 연동</span></li>
+    <li class="sub"><span>6.3 보고서 생성 시스템</span></li>
+    <li class="section"><span>7. 외부 API 연동 현황</span></li>
+    <li class="section"><span>8. 보안 체계</span></li>
+    <li class="sub"><span>8.1 접근 제어 및 인증</span></li>
+    <li class="sub"><span>8.2 요청 보안</span></li>
+    <li class="sub"><span>8.3 감사 추적</span></li>
+    <li class="section"><span>9. 데이터베이스 설계</span></li>
+    <li class="section"><span>10. 프론트엔드 기술</span></li>
+    <li class="section"><span>11. 인프라 및 배포</span></li>
+    <li class="section"><span>12. 품질 보증 체계</span></li>
+    <li class="section"><span>13. 알고리즘 총괄표</span></li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--              1. 플랫폼 개요                      -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">1. 플랫폼 개요</h2>
+
+  <p>VESTRA는 LLM(Large Language Model) 기반 통합 AI 부동산 자산관리 플랫폼으로, 전세 안전성 분석, 등기부등본 권리분석, 계약서 위험도 평가, 세금 계산, 시세 전망, 사업성 분석(SCR) 등 부동산 의사결정에 필요한 전 영역을 AI로 자동화합니다.</p>
+
+  <h3 class="subsection-title">1.1 시스템 아키텍처</h3>
+
+  <div class="info-box">
+    <div class="label">Architecture Pattern</div>
+    Next.js 16 App Router 기반 풀스택 아키텍처. 서버 컴포넌트(RSC)로 초기 렌더링 최적화, API Route Handler로 서버사이드 AI 연산 처리, PostgreSQL(Neon)로 영속 데이터 관리.
+  </div>
+
+  <p>클라이언트 요청은 Vercel Edge Network를 통해 수신되며, 미들웨어에서 인증 상태를 확인한 후 적절한 핸들러로 라우팅됩니다. AI 분석 요청은 서버사이드에서 처리되어 API 키 노출 없이 OpenAI GPT-4o 및 자체 분석 엔진을 호출합니다.</p>
+
+  <h3 class="subsection-title">1.2 기술 스택 요약</h3>
+
+  <table>
+    <thead>
+      <tr><th>계층</th><th>기술</th><th>버전</th><th>용도</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>프레임워크</td><td>Next.js (App Router)</td><td>16.1.6</td><td>풀스택 웹 프레임워크</td></tr>
+      <tr><td>언어</td><td>TypeScript</td><td>5.x</td><td>정적 타입 안전성</td></tr>
+      <tr><td>런타임</td><td>React</td><td>19.2.3</td><td>서버/클라이언트 컴포넌트</td></tr>
+      <tr><td>스타일링</td><td>Tailwind CSS</td><td>v4</td><td>유틸리티 기반 CSS</td></tr>
+      <tr><td>데이터베이스</td><td>PostgreSQL (Neon)</td><td>-</td><td>서버리스 관계형 DB</td></tr>
+      <tr><td>ORM</td><td>Prisma</td><td>6.19.2</td><td>타입 안전 DB 접근</td></tr>
+      <tr><td>인증</td><td>NextAuth v5</td><td>5.0.0-beta.30</td><td>OAuth + JWT 세션</td></tr>
+      <tr><td>AI</td><td>OpenAI API</td><td>6.23.0</td><td>GPT-4o 분석/생성</td></tr>
+      <tr><td>지도</td><td>Kakao Maps SDK + Leaflet</td><td>1.9.4</td><td>부동산 위치 시각화</td></tr>
+      <tr><td>차트</td><td>Recharts</td><td>3.7.0</td><td>데이터 시각화</td></tr>
+      <tr><td>캐싱</td><td>Vercel KV (Redis)</td><td>3.0.0</td><td>API 응답 캐싱</td></tr>
+      <tr><td>PWA</td><td>Serwist</td><td>9.5.7</td><td>서비스 워커, 푸시 알림</td></tr>
+      <tr><td>문서 파싱</td><td>pdfjs-dist, mammoth, xlsx</td><td>-</td><td>PDF/DOCX/Excel 파싱</td></tr>
+      <tr><td>PDF 생성</td><td>html2canvas + jsPDF</td><td>-</td><td>보고서 PDF 출력</td></tr>
+      <tr><td>배포</td><td>Vercel</td><td>-</td><td>서버리스 호스팅 + CDN</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--         2. 인공지능 및 데이터 분석                 -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">2. 인공지능 및 데이터 분석</h2>
+
+  <p>VESTRA의 AI 엔진은 외부 ML 라이브러리에 의존하지 않고, 순수 TypeScript로 구현된 자체 알고리즘을 사용합니다. 이는 모델의 판단 근거를 투명하게 제공하기 위한 설계 결정으로, 모든 분석 결과에 대해 요인별 기여도와 판단 사유를 설명할 수 있습니다.</p>
+
+  <h3 class="subsection-title">2.1 사기 위험도 예측 모델</h3>
+  <p><span class="tag">lib/fraud-risk-model.ts</span></p>
+
+  <p>15개 특성 변수를 기반으로 전세 사기 위험도를 0~100 점수로 예측하는 앙상블 모델입니다. Gradient Boosting을 시뮬레이션한 규칙 기반 앙상블 구조로, SHAP(Shapley Additive Explanations) 방식의 기여도 분석을 제공합니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>특성 그룹</th><th>변수명</th><th>기본 가중치</th><th>설명</th></tr>
+    </thead>
+    <tbody>
+      <tr><td rowspan="3">등기 관계</td><td>mortgage_ratio</td><td>0.12</td><td>근저당 비율</td></tr>
+      <tr><td>seizure_present</td><td>0.10</td><td>압류 존재 여부</td></tr>
+      <tr><td>priority_claim_ratio</td><td>0.08</td><td>선순위 채권 비율</td></tr>
+      <tr><td rowspan="2">시장 상황</td><td>jeonse_ratio</td><td>0.14</td><td>전세가율</td></tr>
+      <tr><td>price_volatility</td><td>0.06</td><td>가격 변동성</td></tr>
+      <tr><td rowspan="2">임대인 프로필</td><td>multi_home_owner</td><td>0.06</td><td>다주택 여부</td></tr>
+      <tr><td>tax_delinquency</td><td>0.08</td><td>세금 체납 여부</td></tr>
+      <tr><td rowspan="2">지역 위험</td><td>region_fraud_rate</td><td>0.08</td><td>지역별 사기 발생률</td></tr>
+      <tr><td>auction_rate</td><td>0.05</td><td>경매 전환율</td></tr>
+      <tr><td rowspan="2">계약 안전성</td><td>contract_safety</td><td>0.06</td><td>계약 조건 안전도</td></tr>
+      <tr><td>deposit_insurance</td><td>0.03</td><td>보증보험 가입 여부</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box">
+    <div class="label">Leave-One-Out 기여도 분석</div>
+    각 특성 변수를 제거한 상태에서 모델을 재실행하여 결과 변동폭을 측정합니다. 이를 통해 "근저당 비율이 전체 위험도의 23%를 차지"와 같은 설명 가능한 결과를 생성합니다.
+  </div>
+
+  <h3 class="subsection-title">2.2 시계열 이상 탐지 엔진</h3>
+  <p><span class="tag">lib/anomaly-detector.ts</span></p>
+
+  <p>부동산 시세 데이터에서 비정상적 가격 변동을 자동 탐지하는 다중 신호 합의(Multi-Signal Consensus) 엔진입니다. 5개의 독립적 탐지 기법을 동시에 적용하고, 2개 이상의 기법에서 이상 신호가 감지될 때 경보를 발생시킵니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>기법</th><th>알고리즘</th><th>수식</th><th>용도</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Holt 이중 지수평활</td>
+        <td>Double Exponential Smoothing</td>
+        <td class="mono">ŷ<sub>t+h</sub> = l<sub>t</sub> + h · b<sub>t</sub></td>
+        <td>추세 기반 예측값 이탈 탐지</td>
+      </tr>
+      <tr>
+        <td>적응형 볼린저 밴드</td>
+        <td>Adaptive Bollinger Bands</td>
+        <td class="mono">width = base × (1 + CV)</td>
+        <td>변동성 적응 상한/하한 이탈</td>
+      </tr>
+      <tr>
+        <td>CUSUM 변화점 탐지</td>
+        <td>Cumulative Sum Control Chart</td>
+        <td class="mono">S<sub>t</sub><sup>+</sup> = max(0, S<sub>t-1</sub><sup>+</sup> + x<sub>t</sub> - μ - k)</td>
+        <td>구조적 수준 변화 감지</td>
+      </tr>
+      <tr>
+        <td>계절 분해</td>
+        <td>Additive Decomposition</td>
+        <td class="mono">Y<sub>t</sub> = T<sub>t</sub> + S<sub>t</sub> + R<sub>t</sub></td>
+        <td>계절성 제거 후 잔차 이상 탐지</td>
+      </tr>
+      <tr>
+        <td>로버스트 Z-Score</td>
+        <td>MAD 기반 Modified Z-Score</td>
+        <td class="mono">MZ = 0.6745 × (x<sub>i</sub> - median) / MAD</td>
+        <td>이상치에 강건한 편차 탐지</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection-title">2.3 자연어 처리(NLP) 파이프라인</h3>
+  <p><span class="tag">lib/nlp-ner-pipeline.ts</span></p>
+
+  <p>한국어 부동산 문서에 특화된 도메인 NLP 파이프라인으로, 등기부등본·임대차계약서·사업계획서에서 구조화된 데이터를 자동 추출합니다.</p>
+
+  <h4>처리 단계</h4>
+  <ul class="feature-list">
+    <li><strong>토큰화</strong> — 한글 형태소 분리, 조사(을/를/이/가) 분리, POS 태깅 근사</li>
+    <li><strong>개체명 인식(NER)</strong> — 18개 엔티티 타입, 26개 이상 정규식 패턴, 신뢰도 점수(0.75~0.95)</li>
+    <li><strong>관계 추출</strong> — 6개 관계 패턴 (예: 인물 → 금액, "보증금" 컨텍스트 키워드 기반)</li>
+    <li><strong>문서 분절</strong> — 섹션 분류(헤더, 조항, 표, 서명, 부록) 후 섹션별 개체 추출</li>
+  </ul>
+
+  <table>
+    <thead>
+      <tr><th>엔티티 타입</th><th>예시</th><th>정규화</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>MONEY</td><td>3억 5천만원</td><td>350,000,000 (원)</td></tr>
+      <tr><td>AREA</td><td>84.5㎡, 25.5평</td><td>84.5 (㎡ 통일)</td></tr>
+      <tr><td>DATE</td><td>2026.05.26</td><td>2026-05-26 (ISO 8601)</td></tr>
+      <tr><td>ADDRESS</td><td>서울시 강남구 역삼동 123-4</td><td>정규화된 주소 문자열</td></tr>
+      <tr><td>PERSON</td><td>홍길동</td><td>인명 식별</td></tr>
+      <tr><td>ORGANIZATION</td><td>국민은행</td><td>기관명 식별</td></tr>
+      <tr><td>RIGHT_TYPE</td><td>근저당권설정</td><td>권리 유형 분류</td></tr>
+      <tr><td>LEGAL_REF</td><td>민법 제621조</td><td>법률 조문 참조</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page">
+  <h3 class="subsection-title">2.4 시세 예측 엔진</h3>
+  <p><span class="tag">lib/prediction-engine.ts</span> <span class="tag">lib/backtesting.ts</span></p>
+
+  <p>실거래가 데이터의 월별 시계열에 선형 회귀를 적용하여 12개월 미래 시세를 예측합니다. 잔차 표준편차 기반 신뢰 구간을 함께 산출합니다.</p>
+
+  <div class="formula-box">
+    slope = (n·ΣXY − ΣX·ΣY) / (n·ΣX² − (ΣX)²) &nbsp;&nbsp;|&nbsp;&nbsp; ŷ = intercept + slope × t
+  </div>
+
+  <h4>백테스팅 검증</h4>
+  <ul class="feature-list">
+    <li>롤링 윈도우: 24개월 학습 → 12개월 검증</li>
+    <li>성능 지표: MAPE(평균 절대 백분율 오차), RMSE(제곱근 평균 제곱 오차)</li>
+    <li>12개월 적중률(실제값이 신뢰구간 내 포함된 비율) 산출</li>
+  </ul>
+
+  <h3 class="subsection-title">2.5 적응형 가중치 튜닝</h3>
+  <p><span class="tag">lib/adaptive-weight-tuner.ts</span></p>
+
+  <p>사용자 피드백(실제 결과)을 수집하여 모델 가중치를 자동 최적화하는 베이지안 최적화 시스템입니다.</p>
+
+  <ul class="feature-list">
+    <li><strong>Thompson Sampling</strong> — Beta 분포에서 확률적 가중치 샘플링</li>
+    <li><strong>Brier Score</strong> — 확률 보정 품질 측정 (0이 최적)</li>
+    <li><strong>Log Loss</strong> — 엔트로피 기반 손실 함수</li>
+    <li><strong>ECE</strong> — 기대 보정 오차 (Expected Calibration Error)</li>
+    <li><strong>피드백 루프</strong> — 실제 결과 수집 → 가중치 신뢰구간 갱신 → 개선 시 DB 반영</li>
+  </ul>
+
+  <h3 class="subsection-title">2.6 신뢰도 전파 엔진</h3>
+  <p><span class="tag">lib/confidence-engine.ts</span></p>
+
+  <p>분석 파이프라인 각 단계의 신뢰도를 독립적으로 산출하고, 가중 기하 평균으로 최종 신뢰도를 합산합니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>단계</th><th>가중치</th><th>측정 기준</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>파서 신뢰도</td><td>0.25</td><td>섹션 탐지율(0.35) + 필드 완전성(0.35) + 항목 파싱율(0.30)</td></tr>
+      <tr><td>위험도 신뢰도</td><td>0.30</td><td>데이터 가용성 + 시세 존재 여부 + 요인 다양성</td></tr>
+      <tr><td>시세 신뢰도</td><td>0.25</td><td>과거 데이터 깊이 + 변동성 정규화</td></tr>
+      <tr><td>검증 신뢰도</td><td>0.20</td><td>오류/경고 심각도 가중 점수</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box">
+    <div class="label">데이터 품질 분류</div>
+    최종 신뢰도 ≥ 0.7 → <span class="tag green">HIGH</span> &nbsp;
+    ≥ 0.4 → <span class="tag orange">MEDIUM</span> &nbsp;
+    &lt; 0.4 → <span class="tag red">LOW</span><br>
+    병목 단계를 자동 식별하여 "시세 데이터 부족이 전체 신뢰도를 낮추고 있습니다" 등의 가이드를 제공합니다.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--         3. 개인정보 보호                          -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">3. 개인정보 보호</h2>
+
+  <h3 class="subsection-title">3.1 PII 암호화 (AES-256-GCM)</h3>
+  <p><span class="tag">lib/crypto.ts</span></p>
+
+  <p>개인식별정보(PII)는 NIST 승인 인증 암호화 알고리즘인 AES-256-GCM으로 암호화하여 저장합니다. 이는 블록체인 기술과 별개인 범용 대칭키 암호화 표준으로, 데이터 기밀성과 무결성을 동시에 보장합니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>항목</th><th>사양</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>암호화 알고리즘</td><td>AES-256-GCM (Galois/Counter Mode)</td></tr>
+      <tr><td>키 파생</td><td>SCRYPT (N=16384, r=8, p=1)</td></tr>
+      <tr><td>키 입력</td><td>AUTH_SECRET + PII_SALT → 32바이트 키</td></tr>
+      <tr><td>초기화 벡터</td><td>16바이트 랜덤 IV (매 암호화마다 새로 생성)</td></tr>
+      <tr><td>인증 태그</td><td>16바이트 (변조 탐지)</td></tr>
+      <tr><td>저장 형식</td><td>Base64(IV + AuthTag + Ciphertext)</td></tr>
+      <tr><td>검색 지원</td><td>HMAC-SHA256 해시 인덱스 (암호화 필드 조회용)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box">
+    <div class="label">동일 평문 → 다른 암호문</div>
+    매 암호화마다 랜덤 IV를 생성하므로, 동일한 개인정보를 암호화해도 매번 다른 암호문이 생성됩니다. 이는 패턴 분석을 통한 평문 추론 공격을 원천 차단합니다.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--         4. 블록체인 암호화 기법 적용                -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">4. 블록체인 암호화 기법 적용</h2>
+
+  <p>VESTRA는 분산 원장(Distributed Ledger)이 아닌, 블록체인의 핵심 암호화 기법을 부동산 등기 데이터의 무결성 검증에 선별적으로 적용합니다. 비트코인의 머클 트리(Merkle Tree)와 블록 해시 체인(Hash Chain) 구조를 차용하여, 분석 파이프라인과 등기 변동 이력의 위변조를 원천 탐지합니다.</p>
+
+  <div class="info-box">
+    <div class="label">블록체인 기법 vs. 블록체인</div>
+    본 플랫폼은 분산 합의(Consensus), 채굴(Mining), 토큰 경제를 사용하지 않습니다. 블록체인의 암호학적 자료구조(머클 트리, 해시 체인, 디지털 서명)만을 활용하여, 중앙 서버 환경에서도 데이터 무결성을 수학적으로 증명할 수 있는 구조를 구현합니다.
+  </div>
+
+  <h3 class="subsection-title">4.1 머클 트리 무결성 검증</h3>
+  <p><span class="tag">lib/integrity-chain.ts</span> <span class="tag">블록체인 핵심 자료구조</span></p>
+
+  <p>비트코인이 트랜잭션 검증에 사용하는 것과 동일한 머클 트리(Merkle Tree) 구조를 적용합니다. 분석 파이프라인의 각 단계(파싱 → 위험도 산정 → 검증)를 SHA-256 해시 트리로 연결하여, 어느 단계에서든 데이터 변조가 발생하면 루트 해시 불일치로 즉시 탐지합니다.</p>
+
+  <h4>구현 구조</h4>
+  <ul class="feature-list">
+    <li><strong>리프 해시</strong> — SHA-256('leaf:' + data) — 각 분석 단계의 입출력 데이터</li>
+    <li><strong>노드 해시</strong> — SHA-256('node:' + leftHash + ':' + rightHash) — 상위 노드 결합</li>
+    <li><strong>균형 트리</strong> — 홀수 리프 시 마지막 노드 복제 (비트코인과 동일 방식)</li>
+    <li><strong>머클 증명(Merkle Proof)</strong> — 리프 인덱스 + 형제 경로로 루트까지 검증. 전체 데이터 없이도 특정 항목의 포함 여부를 O(log n)으로 증명</li>
+  </ul>
+
+  <div class="formula-box">
+    Leaf₁ → SHA-256 ─┐<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├→ Node₁₂ ─┐<br>
+    Leaf₂ → SHA-256 ─┘&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├→ <strong>Merkle Root</strong> (불변 증거)<br>
+    Leaf₃ → SHA-256 ─┐&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├→ Node₃₄ ─┘<br>
+    Leaf₄ → SHA-256 ─┘
+  </div>
+
+  <h3 class="subsection-title">4.2 등기 스냅샷 해시 체인</h3>
+  <p><span class="tag">lib/registry-blockchain.ts</span> <span class="tag">블록체인 블록 구조</span></p>
+
+  <p>블록체인에서 각 블록이 이전 블록의 해시를 포함하는 것과 동일한 원리로, 등기부등본의 시점별 스냅샷을 해시 체인으로 연결합니다. 체인의 어느 한 지점이라도 변조되면 이후 모든 해시가 불일치하여 탐지됩니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>필드</th><th>타입</th><th>블록체인 대응 개념</th><th>설명</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>sequenceNo</td><td>Int</td><td>Block Height</td><td>스냅샷 순번 (시간순 정렬)</td></tr>
+      <tr><td>merkleRoot</td><td>String</td><td>Tx Merkle Root</td><td>섹션별 해시의 머클 트리 루트</td></tr>
+      <tr><td>snapshotHash</td><td>String</td><td>Block Hash</td><td>현재 스냅샷 전체 SHA-256 해시</td></tr>
+      <tr><td>previousSnapshotHash</td><td>String</td><td>Previous Block Hash</td><td>이전 스냅샷 해시 (체인 연결)</td></tr>
+      <tr><td>signature</td><td>String</td><td>Block Signature</td><td>Ed25519 디지털 서명 (진위 검증)</td></tr>
+      <tr><td>encryptedData</td><td>String</td><td>-</td><td>AES-256-GCM 암호화된 등기 전문</td></tr>
+      <tr><td>sectionHashes</td><td>JSON</td><td>Tx Hashes</td><td>갑구/을구/표제부 개별 해시</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box">
+    <div class="label">변동 탐지 프로세스</div>
+    ① 등기부등본 원문을 섹션(표제부/갑구/을구)별로 분리 →
+    ② 각 섹션을 SHA-256으로 해싱 →
+    ③ 섹션 해시들로 머클 트리 구성 →
+    ④ 이전 스냅샷 해시 + 현재 머클 루트로 체인 해시 생성 →
+    ⑤ Ed25519 서명으로 진위 봉인<br><br>
+    이후 검증 시, 체인의 임의 지점에서 해시를 재계산하여 저장된 값과 비교합니다. 불일치 발생 시 정확히 어느 섹션이 변경되었는지까지 식별 가능합니다.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--         4. 위험도 분석 알고리즘                    -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">5. 위험도 분석 알고리즘</h2>
+
+  <h3 class="subsection-title">5.1 권리관계 위험도 평가</h3>
+  <p><span class="tag">lib/risk-scoring.ts</span></p>
+
+  <p>100점 감점 모델로, 등기부등본의 13개 위험 요인을 평가합니다. 100점에서 시작하여 위험 요인마다 감점하고, 요인 간 상호작용 페널티를 비선형으로 증폭합니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>위험 요인</th><th>감점 범위</th><th>기준</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>근저당 비율</td><td>0~30점</td><td>0~30%: 0점 → 120%+: 30점</td></tr>
+      <tr><td>압류/가압류</td><td>건당 25점</td><td>존재 시 즉시 고위험</td></tr>
+      <tr><td>경매개시결정</td><td>30점</td><td>최고 위험 단일 요인</td></tr>
+      <tr><td>가처분/가등기</td><td>10~15점</td><td>소유권 분쟁 가능성</td></tr>
+      <tr><td>신탁등기</td><td>15점</td><td>수익자 확인 필요</td></tr>
+      <tr><td>소유권 변동 빈도</td><td>10~15점</td><td>60개월 내 4회 이상</td></tr>
+      <tr><td>총채권 비율</td><td>5~25점</td><td>근저당+보증금 합산 vs 시세</td></tr>
+      <tr><td>임차권등기</td><td>20점</td><td>미회수 보증금 존재</td></tr>
+    </tbody>
+  </table>
+
+  <h4>상호작용 증폭 규칙 (6개)</h4>
+  <p>단순 합산이 아닌, 위험 요인이 동시에 존재할 때 비선형적으로 위험도가 증폭됩니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>조합</th><th>증폭 계수</th><th>의미</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>압류 + 경매</td><td>×1.5</td><td>보증금 미회수 가능성 극대</td></tr>
+      <tr><td>고비율 근저당 + 압류</td><td>×1.7</td><td>채무 초과 + 강제 집행</td></tr>
+      <tr><td>근저당 + 신탁</td><td>×1.3</td><td>권리 관계 복잡</td></tr>
+      <tr><td>다수 근저당 + 가압류</td><td>×1.4</td><td>연쇄 채무 위험</td></tr>
+      <tr><td>소유권 빈번 변동 + 압류</td><td>×1.5</td><td>투기성 거래 + 강제 집행</td></tr>
+      <tr><td>임차권 + 경매</td><td>×1.6</td><td>기존 세입자 보증금 미회수 이력</td></tr>
+    </tbody>
+  </table>
+
+  <h4>시간 패턴 탐지 (8개 패턴)</h4>
+  <ul class="feature-list">
+    <li>60개월 내 소유권 4회 이상 이전 (투기성 거래)</li>
+    <li>압류 전 6개월 내 근저당 설정 (사전 채무 적재)</li>
+    <li>12개월 내 압류 2건 이상 (채권 가속)</li>
+    <li>3개월 내 근저당 2건 이상 (근저당 적재)</li>
+    <li>설정 후 6개월 이상 경과 말소 (의심스러운 말소)</li>
+    <li>매매 직전 1개월 내 말소 (매매 목적 말소)</li>
+  </ul>
+
+  <h4>등급 체계</h4>
+  <table>
+    <thead>
+      <tr><th>등급</th><th>점수 범위</th><th>판정</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="tag green">A</span></td><td>85~100</td><td>안전</td></tr>
+      <tr><td><span class="tag green">B</span></td><td>70~84</td><td>양호</td></tr>
+      <tr><td><span class="tag orange">C</span></td><td>50~69</td><td>주의</td></tr>
+      <tr><td><span class="tag red">D</span></td><td>30~49</td><td>위험</td></tr>
+      <tr><td><span class="tag red">F</span></td><td>0~29</td><td>매우 위험</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page">
+  <h3 class="subsection-title">5.2 권리 그래프 분석 엔진</h3>
+  <p><span class="tag">lib/rights-graph-engine.ts</span></p>
+
+  <p>등기부등본의 권리관계를 방향성 그래프(Directed Graph)로 모델링하여 구조적 위험을 분석합니다. 부동산을 루트 노드로, 각 권리(소유권, 근저당, 압류 등)를 노드로, 권리 간 관계를 엣지로 표현합니다.</p>
+
+  <h4>분석 기능</h4>
+  <ul class="feature-list">
+    <li><strong>그래프 구축</strong> — 갑구/을구 항목을 노드와 엣지로 변환, 말소된 항목 자동 제외</li>
+    <li><strong>순환 탐지</strong> — DFS 기반 사이클 감지 (권리 간 순환 참조 경고)</li>
+    <li><strong>체인 분석</strong> — 루트에서 말단까지 경로 추적, 권리 체인 식별</li>
+    <li><strong>위험 전파</strong> — 상위 권리의 위험이 하위 권리로 전파되는 시뮬레이션</li>
+    <li><strong>크리티컬 패스</strong> — 최대 손실 경로 식별 및 최대 손실 금액 산출</li>
+  </ul>
+
+  <h3 class="subsection-title">5.3 계약서 위험 분석</h3>
+  <p><span class="tag">lib/contract-analyzer.ts</span></p>
+
+  <p>임대차계약서를 9개 차원에서 위험도를 평가합니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>평가 차원</th><th>핵심 기준</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>보증보험</td><td>HUG/HF/SGI 가입 적격 여부</td></tr>
+      <tr><td>2</td><td>보증금 적정성</td><td>시세 대비 전세가율 합리성</td></tr>
+      <tr><td>3</td><td>계약 기간</td><td>표준 2년 기준 이탈 여부</td></tr>
+      <tr><td>4</td><td>조항 유효성</td><td>대출 동의, 수선 의무, 해지 조건</td></tr>
+      <tr><td>5</td><td>특약 사항</td><td>중개사 관여, 확정일자 약정</td></tr>
+      <tr><td>6</td><td>임대인 식별</td><td>신분 확인 완전성</td></tr>
+      <tr><td>7</td><td>물건 기재</td><td>주소/면적/용도 정확성</td></tr>
+      <tr><td>8</td><td>일정 합리성</td><td>계약~입주 기간, 잔금 일정</td></tr>
+      <tr><td>9</td><td>비용 분석</td><td>이자/수수료/관리비 적정성</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection-title">5.4 유효성 검증 엔진</h3>
+  <p><span class="tag">lib/validation-engine.ts</span></p>
+
+  <p>등기부등본 데이터의 4단계 교차 검증을 수행합니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>단계</th><th>검증 내용</th><th>예시</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1단계: 형식 검증</td><td>날짜 형식, 숫자 범위, 필수 필드</td><td>접수일자 YYYY.MM.DD 형식</td></tr>
+      <tr><td>2단계: 산술 검증</td><td>합계 일관성, 금액 합리성</td><td>채권액 5천만~5천억 원 범위</td></tr>
+      <tr><td>3단계: 규칙 검증</td><td>등기 순서 논리, 시간 순서</td><td>말소일이 설정일보다 이후</td></tr>
+      <tr><td>4단계: 교차 검증</td><td>섹션 간 금액 일치, 중복 탐지</td><td>갑구/을구 간 금액 정합성</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--         5. 사업성 분석 모듈 (SCR)                 -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">6. 사업성 분석 모듈 (SCR)</h2>
+
+  <p>SCR(Smart Compatibility Report)은 부동산 개발 사업의 타당성을 다각도로 분석하는 독립 모듈입니다. 문서 파싱 → 외부 데이터 수집 → 재무 계산 → 벤치마크 검증 → 보고서 생성의 파이프라인으로 구성됩니다.</p>
+
+  <div class="info-box">
+    <div class="label">모듈 규모</div>
+    34개 파일 / 11,923줄 — calc(계산 엔진 7개), api(외부 API 4개), report(보고서 생성 6개), validator(검증 5개)
+  </div>
+
+  <h3 class="subsection-title">6.1 재무 계산 엔진</h3>
+  <p><span class="tag">lib/feasibility/calc/</span></p>
+
+  <table>
+    <thead>
+      <tr><th>엔진</th><th>파일</th><th>기능</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>사업수지 분석</td><td class="mono">business-income.ts</td><td>수입/지출 모델링, 순이익률 산출</td></tr>
+      <tr><td>손익분기점(BEP)</td><td class="mono">bep.ts</td><td>단위별/프로젝트별 BEP 분양률 계산</td></tr>
+      <tr><td>DSCR</td><td class="mono">dscr.ts</td><td>채무상환능력비율 (≥1.2 적격 기준)</td></tr>
+      <tr><td>월별 자금수지</td><td class="mono">monthly-cashflow.ts</td><td>시간대별 현금흐름, 적자 구간 추적</td></tr>
+      <tr><td>시세 예측</td><td class="mono">price-forecast.ts</td><td>5년 예측 + 프리미엄율 산출</td></tr>
+      <tr><td>시나리오 분석</td><td class="mono">scenario.ts</td><td>분양률별 다중 시나리오 시뮬레이션</td></tr>
+      <tr><td>민감도 분석</td><td class="mono">sensitivity.ts</td><td>변수별 변동 영향도 측정</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection-title">6.2 외부 데이터 연동</h3>
+  <p><span class="tag">lib/feasibility/api/</span></p>
+
+  <table>
+    <thead>
+      <tr><th>데이터 소스</th><th>제공 기관</th><th>수집 데이터</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>KOSIS API</td><td>통계청</td><td>인구 동향, 연령별 인구, 산업 현황, 주택 공급</td></tr>
+      <tr><td>DART API</td><td>금융감독원</td><td>법인정보, 재무제표(손익/재무상태표), 종목 코드</td></tr>
+      <tr><td>REPS API</td><td>한국부동산원</td><td>매매가 지수, 전세가 지수</td></tr>
+      <tr><td>MOIS API</td><td>행정안전부</td><td>주민등록 인구, 연령대별 인구 구조</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection-title">6.3 보고서 생성 시스템</h3>
+
+  <p>SCR 보고서는 8개 챕터 구성의 HTML 문서로 생성되며, 인쇄 최적화 CSS(A4 페이지네이션)와 차트(선형/막대/파이/영역)를 포함합니다.</p>
+
+  <ul class="feature-list">
+    <li>Chapter 1: 요약 (Executive Summary)</li>
+    <li>Chapter 2: 사업 개요 (Project Context)</li>
+    <li>Chapter 3: 재무 모델 검증 (Financial Verification)</li>
+    <li>Chapter 4: 자금 흐름 분석 (Cash Flow Analysis)</li>
+    <li>Chapter 5: 위험도 평가 (Risk Assessment)</li>
+    <li>Chapter 6: 민감도 분석 결과 (Sensitivity Results)</li>
+    <li>Chapter 7: 종합 의견 및 권고 (Recommendations)</li>
+    <li>Chapter 8: 부록 — 상세 테이블 (Appendix)</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--         6. 외부 API 연동 현황                     -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">7. 외부 API 연동 현황</h2>
+
+  <table>
+    <thead>
+      <tr><th>API</th><th>제공 기관</th><th>용도</th><th>캐시 TTL</th><th>구현 파일</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>실거래가 조회</td><td>국토교통부 (MOLIT)</td><td>아파트/다세대/오피스텔 실거래가</td><td>24시간</td><td class="mono">molit-api.ts</td></tr>
+      <tr><td>건축물대장</td><td>국토교통부</td><td>건물 기본정보, 면적, 용도</td><td>24시간</td><td class="mono">building-api.ts</td></tr>
+      <tr><td>기준금리</td><td>한국은행 (BOK)</td><td>기준금리 조회 (ECOS)</td><td>24시간</td><td class="mono">bok-api.ts</td></tr>
+      <tr><td>판례 검색</td><td>대법원</td><td>부동산 관련 판례 검색</td><td>7일</td><td class="mono">court-api.ts</td></tr>
+      <tr><td>서울 통계</td><td>서울 열린데이터광장</td><td>서울 지역 부동산 통계</td><td>30일</td><td class="mono">seoul-data-api.ts</td></tr>
+      <tr><td>등기부등본 자동 발급</td><td>CODEF</td><td>OAuth 2.0 등기부 자동 조회</td><td>1시간</td><td class="mono">codef-api.ts</td></tr>
+      <tr><td>금융상품 비교</td><td>금융감독원 (FSS)</td><td>대출 상품 금리 비교</td><td>7일</td><td class="mono">fss-loan-api.ts</td></tr>
+      <tr><td>부동산원 지수</td><td>한국부동산원 (REB)</td><td>매매/전세 가격 지수</td><td>24시간</td><td class="mono">reb-api.ts</td></tr>
+      <tr><td>통계청</td><td>KOSIS</td><td>인구, 산업, 주택 공급 통계</td><td>30일</td><td class="mono">kosis-api.ts</td></tr>
+      <tr><td>전자공시</td><td>DART (금감원)</td><td>법인정보, 재무제표</td><td>24시간</td><td class="mono">dart-api.ts</td></tr>
+      <tr><td>인구 통계</td><td>행정안전부 (MOIS)</td><td>주민등록 인구/연령 구조</td><td>30일</td><td class="mono">mois-api.ts</td></tr>
+      <tr><td>OpenAI</td><td>OpenAI Inc.</td><td>GPT-4o 기반 분석/생성</td><td>-</td><td class="mono">openai.ts</td></tr>
+      <tr><td>카카오 지도</td><td>카카오</td><td>지도 시각화, 지오코딩</td><td>-</td><td class="mono">카카오 SDK</td></tr>
+      <tr><td>웹 푸시</td><td>VAPID</td><td>P-256 ECDH + AES-128-GCM</td><td>-</td><td class="mono">web-push</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box">
+    <div class="label">API 장애 대응 (Graceful Degradation)</div>
+    모든 외부 API 호출은 타임아웃(10초)과 폴백 값을 갖습니다. API 키 미설정 시 해당 기능만 비활성화되며, 네트워크 오류 시 캐시된 이전 응답 또는 기본값으로 대체합니다. 어떤 외부 API 장애도 플랫폼 전체를 중단시키지 않습니다.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--              7. 보안 체계                         -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">8. 보안 체계</h2>
+
+  <h3 class="subsection-title">8.1 접근 제어 및 인증</h3>
+
+  <table>
+    <thead>
+      <tr><th>항목</th><th>구현</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>인증 프레임워크</td><td>NextAuth v5 (JWT 세션 전략)</td></tr>
+      <tr><td>소셜 로그인</td><td>Google, 네이버, 카카오 OAuth 2.0</td></tr>
+      <tr><td>관리자 인증</td><td>이메일 + bcrypt 비밀번호 해싱</td></tr>
+      <tr><td>역할 기반 접근 제어</td><td>GUEST / PERSONAL / BUSINESS / REALESTATE / ADMIN</td></tr>
+      <tr><td>일일 사용 제한</td><td>역할별 차등 (GUEST: 2회, PERSONAL: 10회, ADMIN: 무제한)</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection-title">8.2 요청 보안</h3>
+
+  <table>
+    <thead>
+      <tr><th>방어 기법</th><th>구현 위치</th><th>상세</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>CSRF 방어</td><td class="mono">lib/csrf.ts</td><td>Origin 헤더 허용 목록 검증, 불일치 시 403 반환</td></tr>
+      <tr><td>Rate Limiting</td><td class="mono">lib/rate-limit.ts</td><td>DB 기반 분당/일일 제한, 장애 시 Fail-Closed</td></tr>
+      <tr><td>입력 검증</td><td class="mono">lib/sanitize.ts</td><td>HTML 이스케이프, 주소 정규화, XSS 방지</td></tr>
+      <tr><td>SQL Injection 방지</td><td>Prisma ORM</td><td>매개변수화 쿼리 자동 적용</td></tr>
+      <tr><td>CSP 헤더</td><td class="mono">next.config.ts</td><td>Content Security Policy (unsafe-eval 지도 페이지만 허용)</td></tr>
+      <tr><td>비용 보호</td><td>API Route</td><td>OpenAI 호출 일일 한도 (DB 기반, 메모리 폴백)</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection-title">8.3 감사 추적</h3>
+  <p><span class="tag">lib/audit-log.ts</span></p>
+
+  <p>20개 이상의 액션 타입에 대한 포괄적 감사 로그를 기록합니다. 모든 로그에 userId, action, target, detail(JSON), ipAddress, userAgent, timestamp가 포함됩니다.</p>
+
+  <ul class="feature-list">
+    <li>민감 필드 자동 마스킹 (password, apiKey, token → ****)</li>
+    <li>User-Agent 500자 제한 (DoS 방어)</li>
+    <li>Prisma 장애 시에도 에러 없이 무음 처리 (서비스 연속성 보장)</li>
+    <li>인덱스: (userId, action, createdAt) — 분석용 빠른 조회</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--         8. 데이터베이스 설계                       -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">9. 데이터베이스 설계</h2>
+
+  <p>Neon PostgreSQL(서버리스)에 Prisma ORM으로 접근합니다. 20개 이상 모델, 30개 이상 전략적 인덱스로 설계되어 있습니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>모델</th><th>용도</th><th>주요 필드</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>User</td><td>사용자 관리</td><td>role, dailyLimit, verifyStatus</td></tr>
+      <tr><td>Analysis</td><td>분석 결과 저장</td><td>type(4종), status, result(JSON)</td></tr>
+      <tr><td>Asset</td><td>자산 추적</td><td>address, price, safetyScore, riskGrade</td></tr>
+      <tr><td>AuditLog</td><td>감사 추적</td><td>action, target, detail, ipAddress</td></tr>
+      <tr><td>SystemSetting</td><td>시스템 설정</td><td>key, value(AES-256-GCM 암호화), category</td></tr>
+      <tr><td>MonitoredProperty</td><td>등기 변동 감시</td><td>address, registryId, lastChecked</td></tr>
+      <tr><td>RegistrySnapshot</td><td>등기 스냅샷 체인</td><td>merkleRoot, snapshotHash, signature</td></tr>
+      <tr><td>FraudCase</td><td>사기 사례 DB</td><td>caseType, featureVector, outcome</td></tr>
+      <tr><td>WeightConfig</td><td>가중치 버전 관리</td><td>weights, brierScore, improvement</td></tr>
+      <tr><td>WeightFeedback</td><td>피드백 수집</td><td>predictedRisk, actualOutcome, featureValues</td></tr>
+      <tr><td>FeasibilityReport</td><td>사업성 보고서</td><td>projectType, scrData(JSON), status</td></tr>
+      <tr><td>NewsArticle</td><td>뉴스/정책 태깅</td><td>policyType, keywords, publishedAt</td></tr>
+      <tr><td>DomainVocabulary</td><td>NER 커스텀 사전</td><td>term, entityType, confidence</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box">
+    <div class="label">데이터 보안</div>
+    민감 테이블에 PostgreSQL Row-Level Security(RLS) 적용. OAuth 키, 사업자번호 등은 AES-256-GCM 암호화 후 저장. 모든 삭제는 Cascade 설정으로 고아 레코드 방지.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--         9. 프론트엔드 기술                        -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">10. 프론트엔드 기술</h2>
+
+  <h3 class="subsection-title">10.1 UI 프레임워크</h3>
+
+  <p>React 19 서버/클라이언트 컴포넌트 아키텍처로, 초기 렌더링은 서버에서 처리하고 인터랙션만 클라이언트에서 수행합니다. Tailwind CSS v4로 유틸리티 기반 스타일링을 적용합니다.</p>
+
+  <h3 class="subsection-title">10.2 데이터 시각화</h3>
+
+  <table>
+    <thead>
+      <tr><th>차트 유형</th><th>라이브러리</th><th>용도</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>LineChart</td><td>Recharts</td><td>시세 추이, 예측 곡선</td></tr>
+      <tr><td>BarChart</td><td>Recharts</td><td>월별 거래량, 지역 비교</td></tr>
+      <tr><td>PieChart</td><td>Recharts</td><td>비율 구성 (근저당 비율 등)</td></tr>
+      <tr><td>ComposedChart</td><td>Recharts</td><td>다축 차트 (가격+거래량)</td></tr>
+      <tr><td>ScoreGauge</td><td>자체 컴포넌트</td><td>위험도/안전성 게이지</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection-title">10.3 지도 시각화</h3>
+
+  <ul class="feature-list">
+    <li><strong>Kakao Maps SDK</strong> — 기본 지도 UX (한국 지도 데이터 최적화)</li>
+    <li><strong>Leaflet</strong> — OpenStreetMap 기반 보조 지도</li>
+    <li><strong>레이어</strong> — 시세 분포 오버레이, 사기 사례 히트맵, 사용자 자산 마커</li>
+  </ul>
+
+  <h3 class="subsection-title">10.4 문서 처리</h3>
+
+  <table>
+    <thead>
+      <tr><th>형식</th><th>라이브러리</th><th>용도</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>PDF 파싱</td><td>pdfjs-dist (Mozilla)</td><td>등기부등본 PDF 텍스트 추출</td></tr>
+      <tr><td>DOCX 파싱</td><td>mammoth</td><td>Word 문서 텍스트 추출</td></tr>
+      <tr><td>Excel 파싱</td><td>xlsx</td><td>사업계획서 스프레드시트 처리</td></tr>
+      <tr><td>PDF 생성</td><td>html2canvas + jsPDF</td><td>분석 보고서 PDF 출력</td></tr>
+      <tr><td>이미지 OCR</td><td>OpenAI Vision API</td><td>스캔 문서/사진 텍스트 인식</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection-title">10.5 PWA 및 푸시 알림</h3>
+  <ul class="feature-list">
+    <li><strong>서비스 워커</strong> — Serwist(@serwist/next)로 오프라인 지원</li>
+    <li><strong>웹 푸시</strong> — VAPID 키 기반, P-256 ECDH + AES-128-GCM 암호화</li>
+    <li><strong>구독 관리</strong> — Prisma PushSubscription 모델로 엔드포인트 저장</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--         10. 인프라 및 배포                        -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">11. 인프라 및 배포</h2>
+
+  <table>
+    <thead>
+      <tr><th>항목</th><th>기술</th><th>상세</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>호스팅</td><td>Vercel</td><td>서버리스 함수 + Edge CDN</td></tr>
+      <tr><td>운영 도메인</td><td>vestra-plum.vercel.app</td><td>프로덕션 환경</td></tr>
+      <tr><td>테스트 도메인</td><td>t-vestra.vercel.app</td><td>배포 전 검증 환경</td></tr>
+      <tr><td>데이터베이스</td><td>Neon PostgreSQL</td><td>서버리스, 커넥션 풀링</td></tr>
+      <tr><td>캐시</td><td>Vercel KV (Redis)</td><td>API 응답 캐싱, 세션</td></tr>
+      <tr><td>분석</td><td>Vercel Analytics</td><td>Core Web Vitals 모니터링</td></tr>
+      <tr><td>성능</td><td>Vercel Speed Insights</td><td>실시간 성능 추적</td></tr>
+      <tr><td>환경 변수</td><td>18개 관리</td><td>필수 5개 + 선택 13개</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection-title">11.1 배포 프로세스</h3>
+
+  <div class="info-box">
+    <div class="label">배포 흐름</div>
+    테스트 배포 (t-vestra) → Smoke Check (/, /login, /api/health) → 사용자 확인 → 운영 승격 (동일 deployment 승격, 재빌드 없음)
+  </div>
+
+  <ul class="feature-list">
+    <li>배포 전 필수 통과: lint + test + build</li>
+    <li>커밋되지 않은 변경이 있으면 배포 차단</li>
+    <li>main 브랜치와 origin/main 불일치 시 배포 차단</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--         11. 품질 보증 체계                        -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">12. 품질 보증 체계</h2>
+
+  <h3 class="subsection-title">12.1 테스트 현황</h3>
+
+  <table>
+    <thead>
+      <tr><th>항목</th><th>수치</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>테스트 프레임워크</td><td>Vitest (Jest 호환)</td></tr>
+      <tr><td>테스트 파일</td><td>33개</td></tr>
+      <tr><td>테스트 케이스</td><td>1,030개</td></tr>
+      <tr><td>Statement Coverage</td><td>52.78%</td></tr>
+      <tr><td>Branch Coverage</td><td>41.61%</td></tr>
+      <tr><td>Function Coverage</td><td>64.31%</td></tr>
+      <tr><td>Line Coverage</td><td>53.54%</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection-title">12.2 테스트 유형</h3>
+
+  <table>
+    <thead>
+      <tr><th>유형</th><th>대상</th><th>파일 수</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>단위 테스트</td><td>알고리즘, 계산 엔진, 유틸리티</td><td>20개</td></tr>
+      <tr><td>통합 테스트</td><td>API 라우트 (모킹 기반)</td><td>7개</td></tr>
+      <tr><td>모듈 테스트</td><td>외부 API 클라이언트, 보고서 생성</td><td>6개</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection-title">12.3 코드 품질 기준</h3>
+
+  <ul class="feature-list">
+    <li><strong>500줄 제한</strong> — 모든 페이지 컴포넌트 500줄 이하 (초과 시 즉시 분리)</li>
+    <li><strong>단일 책임</strong> — UI/상태/로직/API 호출 파일 분리</li>
+    <li><strong>ESLint</strong> — Next.js 권장 규칙 + 보안 검사</li>
+    <li><strong>TypeScript Strict Mode</strong> — 정적 타입 안전성 보장</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--         12. 알고리즘 총괄표                       -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">13. 알고리즘 총괄표</h2>
+
+  <table>
+    <thead>
+      <tr><th>알고리즘</th><th>분류</th><th>구현 파일</th><th>용도</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Holt 이중 지수평활</td><td>시계열</td><td class="mono">anomaly-detector.ts</td><td>추세 기반 예측</td></tr>
+      <tr><td>CUSUM 변화점 탐지</td><td>통계</td><td class="mono">anomaly-detector.ts</td><td>구조적 변화 감지</td></tr>
+      <tr><td>계절 분해 (가법)</td><td>시계열</td><td class="mono">anomaly-detector.ts</td><td>계절성 분리</td></tr>
+      <tr><td>로버스트 Z-Score (MAD)</td><td>통계</td><td class="mono">anomaly-detector.ts</td><td>강건한 이상치 탐지</td></tr>
+      <tr><td>적응형 볼린저 밴드</td><td>통계</td><td class="mono">anomaly-detector.ts</td><td>변동성 적응 임계값</td></tr>
+      <tr><td>규칙 기반 앙상블</td><td>AI/ML</td><td class="mono">fraud-risk-model.ts</td><td>사기 위험도 예측</td></tr>
+      <tr><td>Leave-One-Out 기여도</td><td>설명AI</td><td class="mono">fraud-risk-model.ts</td><td>SHAP 유사 설명</td></tr>
+      <tr><td>Thompson Sampling</td><td>베이지안</td><td class="mono">adaptive-weight-tuner.ts</td><td>가중치 최적화</td></tr>
+      <tr><td>확률 보정 (PAVA)</td><td>통계</td><td class="mono">adaptive-weight-tuner.ts</td><td>단조성 보정</td></tr>
+      <tr><td>규칙 기반 NER</td><td>NLP</td><td class="mono">nlp-ner-pipeline.ts</td><td>개체명 인식</td></tr>
+      <tr><td>근접 기반 관계 추출</td><td>NLP</td><td class="mono">nlp-ner-pipeline.ts</td><td>개체 간 관계 식별</td></tr>
+      <tr><td>머클 트리</td><td>암호학</td><td class="mono">integrity-chain.ts</td><td>데이터 무결성 검증</td></tr>
+      <tr><td>SHA-256 해시 체인</td><td>암호학</td><td class="mono">integrity-chain.ts</td><td>파이프라인 무결성</td></tr>
+      <tr><td>AES-256-GCM</td><td>암호학</td><td class="mono">crypto.ts</td><td>PII 암호화</td></tr>
+      <tr><td>SCRYPT 키 파생</td><td>암호학</td><td class="mono">crypto.ts</td><td>암호화 키 생성</td></tr>
+      <tr><td>HMAC-SHA256</td><td>암호학</td><td class="mono">crypto.ts</td><td>검색용 해시 인덱스</td></tr>
+      <tr><td>Ed25519 서명</td><td>암호학</td><td class="mono">registry-blockchain.ts</td><td>스냅샷 진위 검증</td></tr>
+      <tr><td>100점 감점 모델</td><td>리스크</td><td class="mono">risk-scoring.ts</td><td>권리관계 위험도</td></tr>
+      <tr><td>비선형 상호작용 증폭</td><td>리스크</td><td class="mono">risk-scoring.ts</td><td>복합 위험 평가</td></tr>
+      <tr><td>DFS 순환 탐지</td><td>그래프</td><td class="mono">rights-graph-engine.ts</td><td>권리 순환 참조</td></tr>
+      <tr><td>크리티컬 패스 분석</td><td>그래프</td><td class="mono">rights-graph-engine.ts</td><td>최대 손실 경로</td></tr>
+      <tr><td>선형 회귀</td><td>통계</td><td class="mono">prediction-engine.ts</td><td>시세 예측</td></tr>
+      <tr><td>BEP 분석</td><td>재무</td><td class="mono">calc/bep.ts</td><td>손익분기점 산출</td></tr>
+      <tr><td>DSCR 산출</td><td>재무</td><td class="mono">calc/dscr.ts</td><td>채무상환능력</td></tr>
+      <tr><td>민감도 분석</td><td>재무</td><td class="mono">calc/sensitivity.ts</td><td>변수 영향도</td></tr>
+      <tr><td>P-256 ECDH</td><td>암호학</td><td class="mono">web-push</td><td>푸시 알림 암호화</td></tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top: 40px; text-align: center; color: #999; font-size: 9pt; border-top: 1px solid #ddd; padding-top: 16px;">
+    본 문서는 VESTRA 플랫폼(v5.13.4)의 기술 구현 현황을 기록한 대외비 기술 백서입니다.<br>
+    작성일: 2026년 5월 26일 &nbsp;|&nbsp; 문서 분류: 대외비 (CONFIDENTIAL)
+  </div>
+</div>
+
+</body>
+</html>

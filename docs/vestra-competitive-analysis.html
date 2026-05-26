@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VESTRA 경쟁사 비교 분석 보고서</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/nicejmp1/paperlogy/css/paperlogy.css">
+<style>
+  @page {
+    size: A4;
+    margin: 25mm 20mm 30mm 20mm;
+    @bottom-center {
+      content: counter(page);
+      font-family: 'Paperlogy', sans-serif;
+      font-size: 9pt;
+      color: #666;
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Paperlogy', 'Pretendard', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.75;
+    color: #1a1a1a;
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── 표지 ── */
+  .cover {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    page-break-after: always;
+    position: relative;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #1e3a5f, #2c5f8a, #1e3a5f);
+  }
+  .cover-badge {
+    display: inline-block;
+    border: 2px solid #1e3a5f;
+    color: #1e3a5f;
+    font-size: 9pt;
+    font-weight: 600;
+    letter-spacing: 4px;
+    padding: 6px 24px;
+    margin-bottom: 40px;
+  }
+  .cover h1 {
+    font-size: 26pt;
+    font-weight: 800;
+    color: #1e3a5f;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .cover h2 {
+    font-size: 14pt;
+    font-weight: 400;
+    color: #444;
+    margin-bottom: 60px;
+  }
+  .cover-meta {
+    font-size: 10pt;
+    color: #666;
+    line-height: 2.2;
+  }
+  .cover-meta strong { color: #1a1a1a; font-weight: 600; }
+  .cover-line {
+    width: 60px;
+    height: 2px;
+    background: #1e3a5f;
+    margin: 30px auto;
+  }
+
+  /* ── 목차 ── */
+  .toc {
+    page-break-after: always;
+    padding-top: 40px;
+  }
+  .toc h2 {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #1e3a5f;
+    border-bottom: 2px solid #1e3a5f;
+    padding-bottom: 8px;
+    margin-bottom: 24px;
+  }
+  .toc-list { list-style: none; }
+  .toc-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 6px 0;
+    border-bottom: 1px dotted #ccc;
+    font-size: 10.5pt;
+  }
+  .toc-list li.section {
+    font-weight: 700;
+    color: #1e3a5f;
+    margin-top: 12px;
+    border-bottom: none;
+    font-size: 11pt;
+  }
+  .toc-list li.sub { padding-left: 20px; font-size: 10pt; color: #444; }
+
+  /* ── 본문 ── */
+  .page { page-break-after: always; padding-top: 10px; }
+  .page:last-child { page-break-after: auto; }
+
+  h2.section-title {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #1e3a5f;
+    border-bottom: 2px solid #1e3a5f;
+    padding-bottom: 6px;
+    margin: 30px 0 16px 0;
+    break-after: avoid;
+  }
+  h3.subsection-title {
+    font-size: 12pt;
+    font-weight: 700;
+    color: #2c5f8a;
+    margin: 20px 0 10px 0;
+    padding-left: 10px;
+    border-left: 3px solid #2c5f8a;
+    break-after: avoid;
+  }
+  h4 {
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: #333;
+    margin: 14px 0 6px 0;
+  }
+
+  p { margin: 6px 0; text-align: justify; }
+
+  /* ── 테이블 ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 16px 0;
+    font-size: 9.5pt;
+  }
+  thead th {
+    background: #1e3a5f;
+    color: #fff;
+    font-weight: 600;
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 9pt;
+  }
+  tbody td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #e0e0e0;
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) { background: #f8f9fb; }
+  td.mono { font-family: 'SF Mono', 'Consolas', monospace; font-size: 8.5pt; color: #555; }
+
+  /* ── 비교 테이블 전용 ── */
+  .cmp-table thead th:first-child { width: 20%; }
+  .cmp-table .has { color: #16a34a; font-weight: 600; }
+  .cmp-table .no { color: #b0b0b0; }
+  .cmp-table .partial { color: #d97706; font-weight: 500; }
+  .cmp-table .best { background: #eef7ee; }
+
+  /* ── 박스 ── */
+  .info-box {
+    background: #f0f4f8;
+    border: 1px solid #d0d8e0;
+    border-left: 4px solid #1e3a5f;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 9.5pt;
+    border-radius: 0 4px 4px 0;
+  }
+  .info-box .label {
+    font-weight: 700;
+    color: #1e3a5f;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .highlight-box {
+    background: #fef9e7;
+    border: 1px solid #f0d060;
+    border-left: 4px solid #d4a017;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 9.5pt;
+    border-radius: 0 4px 4px 0;
+  }
+  .highlight-box .label {
+    font-weight: 700;
+    color: #d4a017;
+    font-size: 9pt;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .strength-box {
+    background: #eef7ee;
+    border: 1px solid #b0d8b0;
+    border-left: 4px solid #16a34a;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 9.5pt;
+    border-radius: 0 4px 4px 0;
+  }
+  .strength-box .label {
+    font-weight: 700;
+    color: #16a34a;
+    font-size: 9pt;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .weakness-box {
+    background: #fef2f2;
+    border: 1px solid #e0b0b0;
+    border-left: 4px solid #dc2626;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 9.5pt;
+    border-radius: 0 4px 4px 0;
+  }
+  .weakness-box .label {
+    font-weight: 700;
+    color: #dc2626;
+    font-size: 9pt;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  /* ── 리스트 ── */
+  ul.feature-list {
+    list-style: none;
+    margin: 8px 0;
+    padding: 0;
+  }
+  ul.feature-list li {
+    padding: 3px 0 3px 18px;
+    position: relative;
+    font-size: 10pt;
+  }
+  ul.feature-list li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: #2c5f8a;
+    font-weight: 700;
+  }
+
+  /* ── 태그 ── */
+  .tag {
+    display: inline-block;
+    background: #e8edf2;
+    color: #1e3a5f;
+    font-size: 8pt;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: 'SF Mono', 'Consolas', monospace;
+  }
+
+  /* ── 레이더 차트 (CSS) ── */
+  .radar-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+  }
+  .score-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .score-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 9.5pt;
+  }
+  .score-label {
+    width: 100px;
+    font-weight: 600;
+    color: #333;
+    text-align: right;
+  }
+  .score-bar {
+    flex: 1;
+    height: 18px;
+    background: #eee;
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+  }
+  .score-fill {
+    height: 100%;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 6px;
+    font-size: 8pt;
+    font-weight: 700;
+    color: #fff;
+  }
+  .fill-vestra { background: #1e3a5f; }
+  .fill-zigbang { background: #ff6b35; }
+  .fill-hogang { background: #7c3aed; }
+  .fill-naver { background: #03c75a; }
+  .fill-bigvalue { background: #0ea5e9; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--                    표지                         -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-badge">COMPETITIVE ANALYSIS</div>
+  <h1>VESTRA 경쟁사 비교 분석</h1>
+  <h2>국내 프롭테크 시장 내 포지셔닝 및 차별화 전략</h2>
+  <div class="cover-line"></div>
+  <div class="cover-meta">
+    <strong>플랫폼</strong> &nbsp; VESTRA v5.13.4<br>
+    <strong>분석 기준일</strong> &nbsp; 2026년 5월 26일<br>
+    <strong>비교 대상</strong> &nbsp; 직방 지킴진단 · 호갱노노 · 네이버부동산 · 빅밸류<br>
+    <strong>문서 분류</strong> &nbsp; 내부 전략 자료
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--                    목차                         -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="toc">
+  <h2>목 차</h2>
+  <ul class="toc-list">
+    <li class="section"><span>1. 분석 개요</span></li>
+    <li class="sub"><span>1.1 분석 목적 및 범위</span></li>
+    <li class="sub"><span>1.2 비교 대상 플랫폼 프로필</span></li>
+
+    <li class="section"><span>2. 기능 비교 매트릭스</span></li>
+    <li class="sub"><span>2.1 핵심 기능 비교표</span></li>
+    <li class="sub"><span>2.2 AI/알고리즘 기술 비교</span></li>
+    <li class="sub"><span>2.3 데이터 소스 및 캐싱 전략</span></li>
+
+    <li class="section"><span>3. 직접 경쟁 심층 분석</span></li>
+    <li class="sub"><span>3.1 직방 지킴진단 vs VESTRA</span></li>
+    <li class="sub"><span>3.2 호갱노노 AI중개사 vs VESTRA</span></li>
+
+    <li class="section"><span>4. 간접 경쟁 분석</span></li>
+    <li class="sub"><span>4.1 네이버부동산</span></li>
+    <li class="sub"><span>4.2 빅밸류 AVM</span></li>
+
+    <li class="section"><span>5. 영역별 역량 평가</span></li>
+    <li class="sub"><span>5.1 플랫폼별 역량 점수</span></li>
+    <li class="sub"><span>5.2 강점·약점 종합</span></li>
+
+    <li class="section"><span>6. 포지셔닝 전략 및 시사점</span></li>
+    <li class="sub"><span>6.1 시장 포지셔닝</span></li>
+    <li class="sub"><span>6.2 차별화 유지 전략</span></li>
+    <li class="sub"><span>6.3 기능 확장 로드맵 제안</span></li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--              1. 분석 개요                        -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">1. 분석 개요</h2>
+
+  <h3 class="subsection-title">1.1 분석 목적 및 범위</h3>
+  <p>본 보고서는 VESTRA 플랫폼이 국내 프롭테크 시장에서 차지하는 위치를 객관적으로 평가하고, 경쟁 서비스 대비 강점과 약점을 식별하여 향후 전략 수립에 활용하기 위해 작성되었습니다.</p>
+
+  <div class="info-box">
+    <div class="label">분석 기준</div>
+    <strong>기능 범위</strong> — 전세 안전성 분석, 권리분석, 시세 조회, AI 분석, 사업성 분석, 보안/무결성<br>
+    <strong>기술 수준</strong> — AI/ML 알고리즘 깊이, 데이터 학습량, 자체 기술 보유 여부<br>
+    <strong>시장 접근성</strong> — 사용자 규모, 타겟 시장, 브랜드 인지도<br>
+    <strong>데이터 기반</strong> — 데이터 소스 다양성, 실시간성, 독점 데이터 보유 여부
+  </div>
+
+  <h3 class="subsection-title">1.2 비교 대상 플랫폼 프로필</h3>
+
+  <table>
+    <thead>
+      <tr><th>플랫폼</th><th>운영사</th><th>핵심 영역</th><th>설립/출시</th><th>타겟 사용자</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>VESTRA</strong></td><td>BMI C&S</td><td>AI 종합 자산관리</td><td>2024</td><td>전문가 · 기관 · 투자자</td></tr>
+      <tr><td><strong>직방 지킴진단</strong></td><td>직방</td><td>전세사기 예방 AI</td><td>2026.04</td><td>일반 임차인</td></tr>
+      <tr><td><strong>호갱노노</strong></td><td>직방 (인수)</td><td>아파트 시세/호가 분석</td><td>2015</td><td>아파트 매수자</td></tr>
+      <tr><td><strong>네이버부동산</strong></td><td>네이버</td><td>매물 정보 종합</td><td>2007</td><td>전 국민</td></tr>
+      <tr><td><strong>빅밸류</strong></td><td>빅밸류</td><td>AVM 자동가치산정</td><td>2017</td><td>금융권 · 중개사</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--           2. 기능 비교 매트릭스                    -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">2. 기능 비교 매트릭스</h2>
+
+  <h3 class="subsection-title">2.1 핵심 기능 비교표</h3>
+
+  <table class="cmp-table">
+    <thead>
+      <tr><th>기능</th><th>VESTRA</th><th>직방 지킴진단</th><th>호갱노노</th><th>네이버부동산</th><th>빅밸류</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>전세 안전성 분석</strong></td>
+        <td class="has best">13개 위험요인 감점 모델</td>
+        <td class="has">6대 항목 AI 진단</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+      </tr>
+      <tr>
+        <td><strong>사기 위험도 예측</strong></td>
+        <td class="has best">앙상블 모델 + SHAP 설명</td>
+        <td class="has">판례 기반 AI 분석</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+      </tr>
+      <tr>
+        <td><strong>계약서 분석</strong></td>
+        <td class="has">NLP 위험 조항 탐지</td>
+        <td class="has best">맞춤 특약 문구 제안</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+      </tr>
+      <tr>
+        <td><strong>권리관계 분석</strong></td>
+        <td class="has best">그래프 엔진 + DFS 순환 탐지</td>
+        <td class="has">등기부 자동 해석</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+      </tr>
+      <tr>
+        <td><strong>시세 조회/지도</strong></td>
+        <td class="has">MOLIT 실거래 + 시세지도</td>
+        <td class="partial">시세 비교 (제한적)</td>
+        <td class="has best">실거래 + 호가 적정성 AI</td>
+        <td class="has">실거래 + 매물 통합</td>
+        <td class="has best">딥러닝 AVM 자동산정</td>
+      </tr>
+      <tr>
+        <td><strong>사업성 분석 (SCR)</strong></td>
+        <td class="has best">BEP · DSCR · 민감도 · IRR</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+        <td class="partial">상업용 부동산 데이터</td>
+      </tr>
+      <tr>
+        <td><strong>세금 계산</strong></td>
+        <td class="has best">취득세 · 양도세 · 종부세</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+        <td class="partial">간이 계산기</td>
+        <td class="no">미제공</td>
+      </tr>
+      <tr>
+        <td><strong>치안/생활 분석</strong></td>
+        <td class="no">미제공</td>
+        <td class="has best">범죄이력 · 성범죄자 · CCTV</td>
+        <td class="no">미제공</td>
+        <td class="partial">학군 · 교통</td>
+        <td class="no">미제공</td>
+      </tr>
+      <tr>
+        <td><strong>데이터 무결성 검증</strong></td>
+        <td class="has best">머클트리 + 해시체인 + Ed25519</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+      </tr>
+      <tr>
+        <td><strong>대화형 AI</strong></td>
+        <td class="no">미제공</td>
+        <td class="partial">제한적</td>
+        <td class="has best">AI 중개사 대화형 추천</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="info-box">
+    <div class="label">범례</div>
+    <span class="has">■ 제공</span> &nbsp;&nbsp;
+    <span class="partial">■ 부분 제공</span> &nbsp;&nbsp;
+    <span class="no">■ 미제공</span> &nbsp;&nbsp;
+    음영 셀은 해당 기능에서 가장 우수한 플랫폼
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h3 class="subsection-title">2.2 AI/알고리즘 기술 비교</h3>
+
+  <table class="cmp-table">
+    <thead>
+      <tr><th>기술 영역</th><th>VESTRA</th><th>직방</th><th>호갱노노</th><th>빅밸류</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>자체 알고리즘 수</strong></td>
+        <td class="has best">26종</td>
+        <td class="has">비공개 (다수 추정)</td>
+        <td class="has">비공개</td>
+        <td class="has">비공개 (AVM 특화)</td>
+      </tr>
+      <tr>
+        <td><strong>리스크 모델링</strong></td>
+        <td class="has best">100점 감점 + 비선형 상호작용 증폭</td>
+        <td class="has">판례 학습 기반</td>
+        <td class="no">해당 없음</td>
+        <td class="no">해당 없음</td>
+      </tr>
+      <tr>
+        <td><strong>이상 탐지</strong></td>
+        <td class="has best">Holt 지수평활 + CUSUM + 로버스트 Z-Score</td>
+        <td class="partial">제한적</td>
+        <td class="no">미제공</td>
+        <td class="partial">시세 이상 탐지</td>
+      </tr>
+      <tr>
+        <td><strong>자연어 처리</strong></td>
+        <td class="has">규칙 기반 NER + 관계 추출</td>
+        <td class="has best">LLM 기반 (계약서 수만 건 학습)</td>
+        <td class="has">LLM 기반 AI 중개사</td>
+        <td class="no">미제공</td>
+      </tr>
+      <tr>
+        <td><strong>시세 예측</strong></td>
+        <td class="has">선형 회귀 + 시계열</td>
+        <td class="partial">시세 비교</td>
+        <td class="has">호가 적정성 AI</td>
+        <td class="has best">딥러닝 AVM (비주택 포함)</td>
+      </tr>
+      <tr>
+        <td><strong>그래프 분석</strong></td>
+        <td class="has best">DFS 순환 탐지 + 크리티컬 패스</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+      </tr>
+      <tr>
+        <td><strong>암호학/블록체인</strong></td>
+        <td class="has best">AES-256 + 머클트리 + 해시체인 + Ed25519</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+      </tr>
+      <tr>
+        <td><strong>재무 분석</strong></td>
+        <td class="has best">BEP + DSCR + NPV + IRR + 민감도</td>
+        <td class="no">미제공</td>
+        <td class="no">미제공</td>
+        <td class="partial">수익률 추정</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection-title">2.3 데이터 소스 및 캐싱 전략</h3>
+
+  <table class="cmp-table">
+    <thead>
+      <tr><th>항목</th><th>VESTRA</th><th>직방</th><th>호갱노노</th><th>네이버부동산</th><th>빅밸류</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>공공 데이터</strong></td>
+        <td class="has">MOLIT · 건축물대장 · 대법원</td>
+        <td class="has">등기부 · 건축물대장 · 치안</td>
+        <td class="has">실거래가</td>
+        <td class="has">실거래가 · 학군</td>
+        <td class="has">공시지가 · 실거래</td>
+      </tr>
+      <tr>
+        <td><strong>독점 데이터</strong></td>
+        <td class="no">없음</td>
+        <td class="has best">수만 건 계약서 + 중단 사례 + 판례</td>
+        <td class="has">입주민 리뷰 · 커뮤니티</td>
+        <td class="has best">중개사 매물 DB (최다)</td>
+        <td class="has">금융권 감정 평가 데이터</td>
+      </tr>
+      <tr>
+        <td><strong>캐싱 전략</strong></td>
+        <td class="has best">3계층 (localStorage + KV + 인메모리)</td>
+        <td class="has">서버 캐시 (추정)</td>
+        <td class="has">CDN 캐시</td>
+        <td class="has best">대규모 CDN + 엣지</td>
+        <td class="has">서버 캐시</td>
+      </tr>
+      <tr>
+        <td><strong>실시간 갱신</strong></td>
+        <td class="partial">API 호출 시 갱신 (30분 TTL)</td>
+        <td class="has">실시간</td>
+        <td class="has">실시간</td>
+        <td class="has best">실시간 매물 연동</td>
+        <td class="has">일 1회 배치</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--           3. 직접 경쟁 심층 분석                   -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">3. 직접 경쟁 심층 분석</h2>
+
+  <h3 class="subsection-title">3.1 직방 지킴진단 vs VESTRA</h3>
+  <p>직방은 2026년 4월 '지킴진단' 서비스를 출시하며 전세사기 예방 AI 시장에 본격 진입했습니다. VESTRA와 기능 영역이 가장 많이 겹치는 직접 경쟁자입니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>비교 항목</th><th>VESTRA</th><th>직방 지킴진단</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>진단 방식</strong></td>
+        <td>100점 감점 모델 (13개 위험요인)<br>비선형 상호작용 증폭<br>SHAP 유사 기여도 설명</td>
+        <td>6가지 핵심 항목 종합 진단<br>(매물·집주인·시세·대출·특약·치안)</td>
+      </tr>
+      <tr>
+        <td><strong>학습 데이터</strong></td>
+        <td>공공 API + 규칙 기반 전문가 시스템</td>
+        <td>수만 건 실제 계약서<br>중단 사례 + 관련 판례 학습</td>
+      </tr>
+      <tr>
+        <td><strong>결과물</strong></td>
+        <td>위험도 점수 + 요인별 기여도<br>권리 그래프 시각화</td>
+        <td>종합 리포트 + 맞춤 특약 문구<br>치안 지도 시각화</td>
+      </tr>
+      <tr>
+        <td><strong>사업성 분석</strong></td>
+        <td>SCR 모듈 (BEP, DSCR, NPV, IRR)</td>
+        <td>미제공</td>
+      </tr>
+      <tr>
+        <td><strong>데이터 무결성</strong></td>
+        <td>머클트리 + 해시체인 + Ed25519</td>
+        <td>미제공</td>
+      </tr>
+      <tr>
+        <td><strong>향후 계획</strong></td>
+        <td>dgon 등기 연계 (기획 완료)</td>
+        <td>'지킴 진단 트윈스' — AI 변호사 × AI 전문가 교차 검증</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="strength-box">
+    <div class="label">VESTRA 우위</div>
+    알고리즘 투명성(감점 모델 + SHAP 설명), 사업성 분석(SCR), 데이터 무결성 검증, 권리 그래프 분석 깊이
+  </div>
+  <div class="weakness-box">
+    <div class="label">직방 우위</div>
+    압도적 학습 데이터(실제 계약서 + 판례), 치안/생활 분석, 맞춤 특약 제안, 수백만 사용자 기반
+  </div>
+
+  <h3 class="subsection-title">3.2 호갱노노 AI중개사 vs VESTRA</h3>
+  <p>호갱노노(직방 인수)는 2025년 11월부터 'AI중개사' 서비스를 제공하며, 대화형 매물 추천이라는 새로운 UX를 선보이고 있습니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>비교 항목</th><th>VESTRA</th><th>호갱노노 AI중개사</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>사용자 경험</strong></td>
+        <td>대시보드 + 분석 결과 시각화</td>
+        <td>대화형 자연어 매물 추천<br>"애 키우기 좋은 아파트 찾아줘"</td>
+      </tr>
+      <tr>
+        <td><strong>데이터 기반</strong></td>
+        <td>공공 API 실거래 데이터</td>
+        <td>실거래 + 입주민 리뷰 + 커뮤니티<br>수만 건 분석 기반 실시간 추천</td>
+      </tr>
+      <tr>
+        <td><strong>분석 깊이</strong></td>
+        <td>26종 알고리즘 기반 정량 분석</td>
+        <td>호가 적정성 AI + 단지 비교</td>
+      </tr>
+      <tr>
+        <td><strong>타겟</strong></td>
+        <td>전문가/기관 의사결정 지원</td>
+        <td>일반 소비자 매물 탐색</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="info-box">
+    <div class="label">경쟁 성격</div>
+    호갱노노는 "매물 탐색" 단계의 플랫폼으로, VESTRA의 "분석·의사결정" 단계와는 사용자 여정(User Journey)상 다른 지점에 위치합니다. 직접 경쟁보다는 <strong>보완 관계</strong>에 가깝습니다.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--           4. 간접 경쟁 분석                       -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">4. 간접 경쟁 분석</h2>
+
+  <h3 class="subsection-title">4.1 네이버부동산</h3>
+  <p>네이버부동산은 국내 부동산 정보 플랫폼 중 최대 트래픽을 보유하고 있으며, 매물 검색부터 실거래가, 학군, 교통 인프라까지 종합 정보를 제공합니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>구분</th><th>네이버부동산</th><th>VESTRA와의 관계</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>강점</strong></td>
+        <td>최다 매물 DB, 압도적 사용자 기반<br>학군·교통·인프라 종합 정보<br>네이버 생태계 연동 (지도, 검색)</td>
+        <td>매물 탐색 영역은 경쟁 불가<br>VESTRA는 "분석" 특화로 차별화</td>
+      </tr>
+      <tr>
+        <td><strong>약점</strong></td>
+        <td>AI 분석 기능 부재<br>전세사기 예방 기능 없음<br>사업성/권리 분석 미제공</td>
+        <td>VESTRA가 보완하는 영역</td>
+      </tr>
+      <tr>
+        <td><strong>경쟁 수준</strong></td>
+        <td colspan="2">간접 경쟁 — 사용자 여정 초기(매물 탐색) vs 후기(분석·의사결정)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection-title">4.2 빅밸류 AVM</h3>
+  <p>빅밸류는 자동가치산정모델(AVM) 분야에서 국내 선두 기업으로, 주택에서 상업용 부동산까지 딥러닝 기반 시세 산정을 제공합니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>구분</th><th>빅밸류</th><th>VESTRA와의 관계</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>강점</strong></td>
+        <td>딥러닝 AVM (비주택 포함)<br>금융권 파트너십 (담보 평가)<br>AI 데이터 분석 도구 11종</td>
+        <td>시세 산정 정확도는 빅밸류 우위<br>VESTRA는 "리스크 분석" 특화</td>
+      </tr>
+      <tr>
+        <td><strong>약점</strong></td>
+        <td>일반 소비자 접근성 낮음<br>전세 안전성/계약서 분석 없음<br>사업성 분석 제한적</td>
+        <td>타겟 시장이 다름 (B2B 금융 vs B2B 전문가)</td>
+      </tr>
+      <tr>
+        <td><strong>경쟁 수준</strong></td>
+        <td colspan="2">간접 경쟁 — 시세 산정(빅밸류) vs 종합 리스크 분석(VESTRA)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box">
+    <div class="label">시장 구도 요약</div>
+    <strong>직접 경쟁</strong>: 직방 지킴진단 (전세사기 예방 AI 영역 중첩)<br>
+    <strong>보완 관계</strong>: 호갱노노 (매물 탐색 → VESTRA 분석으로 연결 가능)<br>
+    <strong>간접 경쟁</strong>: 네이버부동산 (정보 종합), 빅밸류 (시세 산정)
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--           5. 영역별 역량 평가                      -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">5. 영역별 역량 평가</h2>
+
+  <h3 class="subsection-title">5.1 플랫폼별 역량 점수</h3>
+  <p>8개 핵심 영역에 대해 10점 만점으로 각 플랫폼의 역량을 평가했습니다. 평가 기준은 기능 완성도, 기술 깊이, 데이터 품질을 종합한 것입니다.</p>
+
+  <table>
+    <thead>
+      <tr><th>평가 영역</th><th>VESTRA</th><th>직방 지킴진단</th><th>호갱노노</th><th>네이버부동산</th><th>빅밸류</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>전세 안전성 분석</strong></td>
+        <td class="best"><strong>9</strong></td>
+        <td>8</td>
+        <td>0</td>
+        <td>0</td>
+        <td>0</td>
+      </tr>
+      <tr>
+        <td><strong>AI/알고리즘 깊이</strong></td>
+        <td class="best"><strong>9</strong></td>
+        <td>7</td>
+        <td>6</td>
+        <td>3</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td><strong>시세 분석 정확도</strong></td>
+        <td>5</td>
+        <td>5</td>
+        <td>7</td>
+        <td>6</td>
+        <td class="best"><strong>9</strong></td>
+      </tr>
+      <tr>
+        <td><strong>사업성 분석</strong></td>
+        <td class="best"><strong>9</strong></td>
+        <td>0</td>
+        <td>0</td>
+        <td>0</td>
+        <td>3</td>
+      </tr>
+      <tr>
+        <td><strong>데이터 학습량</strong></td>
+        <td>3</td>
+        <td class="best"><strong>9</strong></td>
+        <td>7</td>
+        <td>8</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td><strong>보안/무결성</strong></td>
+        <td class="best"><strong>9</strong></td>
+        <td>5</td>
+        <td>4</td>
+        <td>6</td>
+        <td>5</td>
+      </tr>
+      <tr>
+        <td><strong>사용자 접근성</strong></td>
+        <td>4</td>
+        <td>8</td>
+        <td>8</td>
+        <td class="best"><strong>10</strong></td>
+        <td>5</td>
+      </tr>
+      <tr>
+        <td><strong>기능 범위 (올인원)</strong></td>
+        <td class="best"><strong>9</strong></td>
+        <td>6</td>
+        <td>5</td>
+        <td>7</td>
+        <td>4</td>
+      </tr>
+      <tr style="background: #f0f4f8; font-weight: 700;">
+        <td><strong>합계 (80점 만점)</strong></td>
+        <td class="best"><strong>57</strong></td>
+        <td>48</td>
+        <td>37</td>
+        <td>40</td>
+        <td>42</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="info-box">
+    <div class="label">평가 기준 참고</div>
+    합계 점수는 단순 참고 지표이며, 각 플랫폼의 타겟 시장과 목적이 다르기 때문에 직접 순위 비교는 적절하지 않습니다. VESTRA는 기술 깊이와 기능 범위에서 높은 점수를 받았으나, 데이터 학습량과 사용자 접근성에서는 열위에 있습니다.
+  </div>
+
+  <h3 class="subsection-title">5.2 강점·약점 종합</h3>
+
+  <div class="strength-box">
+    <div class="label">VESTRA 핵심 강점</div>
+    <strong>1. 알고리즘 커버리지</strong> — 26종 자체 알고리즘은 국내 프롭테크 중 가장 넓은 기술 범위<br>
+    <strong>2. 유일한 사업성 분석</strong> — BEP, DSCR, NPV, IRR, 민감도 분석을 갖춘 플랫폼은 VESTRA뿐<br>
+    <strong>3. 데이터 무결성</strong> — 블록체인 기법(머클트리 + 해시체인)으로 분석 결과 위변조 방지<br>
+    <strong>4. 올인원 구조</strong> — 전세 분석·권리·계약서·시세·세금·사업성을 하나의 플랫폼에서 제공
+  </div>
+
+  <div class="weakness-box">
+    <div class="label">VESTRA 핵심 약점</div>
+    <strong>1. 학습 데이터 부족</strong> — 규칙 기반 시스템으로, 직방의 수만 건 실제 계약서 학습 대비 열위<br>
+    <strong>2. 사용자 기반 부재</strong> — 신규 플랫폼으로 인지도와 MAU에서 기존 플랫폼 대비 현격한 차이<br>
+    <strong>3. 생활 정보 미제공</strong> — 치안, 학군, 교통 등 생활 밀착형 데이터 부재<br>
+    <strong>4. 대화형 AI 부재</strong> — AI 중개사와 같은 인터랙티브 자연어 인터페이스 미구현
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--           6. 포지셔닝 전략                        -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="page">
+  <h2 class="section-title">6. 포지셔닝 전략 및 시사점</h2>
+
+  <h3 class="subsection-title">6.1 시장 포지셔닝</h3>
+
+  <table>
+    <thead>
+      <tr><th></th><th>B2C (일반 소비자)</th><th>B2B (전문가/기관)</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>매물 탐색</strong></td>
+        <td>네이버부동산, 호갱노노, 직방</td>
+        <td>빅밸류 (중개사 데이터)</td>
+      </tr>
+      <tr>
+        <td><strong>리스크 분석</strong></td>
+        <td>직방 지킴진단</td>
+        <td class="best"><strong>VESTRA</strong></td>
+      </tr>
+      <tr>
+        <td><strong>사업성 평가</strong></td>
+        <td>(시장 공백)</td>
+        <td class="best"><strong>VESTRA (유일)</strong></td>
+      </tr>
+      <tr>
+        <td><strong>시세 산정</strong></td>
+        <td>호갱노노</td>
+        <td>빅밸류 AVM</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box">
+    <div class="label">핵심 시사점</div>
+    VESTRA의 최적 포지션은 <strong>"B2B 전문가/기관용 종합 리스크 분석 + 사업성 평가 플랫폼"</strong>입니다.<br>
+    일반 소비자 시장에서 직방·네이버와 정면 경쟁하기보다, 이들 플랫폼이 커버하지 못하는 <strong>전문 분석 영역</strong>에 집중하는 것이 현실적입니다.
+  </div>
+
+  <h3 class="subsection-title">6.2 차별화 유지 전략</h3>
+
+  <table>
+    <thead>
+      <tr><th>전략</th><th>내용</th><th>기대 효과</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>알고리즘 투명성 강화</strong></td>
+        <td>모든 분석 결과에 산출 근거와 알고리즘 설명을 첨부하여 기관 제출용 보고서로 활용 가능하도록 함</td>
+        <td>직방 대비 "블랙박스가 아닌 설명 가능한 AI"로 차별화</td>
+      </tr>
+      <tr>
+        <td><strong>사업성 분석 독점 유지</strong></td>
+        <td>SCR 모듈을 지속 고도화 (시나리오 비교, 포트폴리오 분석 등)</td>
+        <td>경쟁사가 진입하지 않은 사업성 분석 영역에서 선점 효과 극대화</td>
+      </tr>
+      <tr>
+        <td><strong>무결성 검증 인증화</strong></td>
+        <td>머클트리 + 해시체인 기반 분석 결과에 대한 무결성 인증서 발급 체계 구축</td>
+        <td>기관/법률 분야에서 "검증 가능한 분석"이라는 고유 가치 제공</td>
+      </tr>
+      <tr>
+        <td><strong>dgon 등기 연계 실현</strong></td>
+        <td>실시간 등기부 변동 모니터링 및 자동 알림 체계</td>
+        <td>정적 분석(1회성)에서 동적 모니터링(지속적)으로 전환하여 경쟁사와 근본적 차별화</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsection-title">6.3 기능 확장 로드맵 제안</h3>
+
+  <table>
+    <thead>
+      <tr><th>우선순위</th><th>기능</th><th>근거</th><th>경쟁 효과</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1순위</strong></td>
+        <td>맞춤 특약 문구 제안</td>
+        <td>직방 지킴진단의 핵심 차별점 — 현재 VESTRA에 없는 기능</td>
+        <td>직방과의 기능 격차 해소</td>
+      </tr>
+      <tr>
+        <td><strong>2순위</strong></td>
+        <td>dgon 등기 실시간 연계</td>
+        <td>기획 완료 상태 — 구현 시 경쟁사 대비 유일한 실시간 모니터링</td>
+        <td>근본적 차별화 (경쟁사 부재 영역)</td>
+      </tr>
+      <tr>
+        <td><strong>3순위</strong></td>
+        <td>대화형 AI 어시스턴트 고도화</td>
+        <td>호갱노노 AI중개사 트렌드 — 자연어 질의 기반 분석 요청</td>
+        <td>사용자 접근성 개선</td>
+      </tr>
+      <tr>
+        <td><strong>4순위</strong></td>
+        <td>치안/생활 데이터 통합</td>
+        <td>직방 지킴진단의 범죄이력·CCTV 분석 대응</td>
+        <td>B2C 확장 기반 마련</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top: 40px; text-align: center; color: #999; font-size: 9pt; border-top: 1px solid #ddd; padding-top: 16px;">
+    본 문서는 VESTRA 플랫폼(v5.13.4)의 경쟁 환경을 분석한 내부 전략 자료입니다.<br>
+    작성일: 2026년 5월 26일 &nbsp;|&nbsp; 문서 분류: 내부 전략 자료 (INTERNAL)
+  </div>
+</div>
+
+</body>
+</html>
