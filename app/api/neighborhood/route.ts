@@ -299,13 +299,7 @@ export async function POST(req: NextRequest) {
       totalScore,
       totalGrade,
       aiComment,
-      kaptInfo: kaptInfo ? {
-        constructorName: kaptInfo.constructorName,
-        corridorType: kaptInfo.corridorType,
-        cctvCount: kaptInfo.cctvCount,
-        parkingTotal: kaptInfo.parkingTotal,
-        elevatorCount: kaptInfo.elevatorCount,
-      } : null,
+      kaptInfo: kaptInfo ?? null,
     });
   } catch (e) {
     console.error("[Neighborhood API]", e);
