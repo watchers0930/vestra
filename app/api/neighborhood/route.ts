@@ -14,7 +14,7 @@ import { fetchKaptInfoByAddress } from "@/lib/kapt-api";
 
 // ── 카카오 API ──────────────────────────────────
 
-async function kakaoGeocode(key: string, address: string): Promise<{ lat: number; lng: number; buildingName?: string } | null> {
+async function kakaoGeocode(key: string, address: string): Promise<{ lat: number; lng: number; buildingName?: string; fullAddress?: string } | null> {
   try {
     const res = await fetch(
       `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(address)}&size=1`,
@@ -24,8 +24,11 @@ async function kakaoGeocode(key: string, address: string): Promise<{ lat: number
     const json = await res.json();
     const doc = json.documents?.[0];
     if (!doc) return null;
-    const buildingName = doc.road_address?.building_name || undefined;
-    return { lat: parseFloat(doc.y), lng: parseFloat(doc.x), buildingName };
+    const ra = doc.road_address;
+    const buildingName = ra?.building_name || undefined;
+    // 카카오가 정규화한 전체 주소 (시군구 포함)
+    const fullAddress = ra?.address_name || doc.address?.address_name || undefined;
+    return { lat: parseFloat(doc.y), lng: parseFloat(doc.x), buildingName, fullAddress };
   } catch {
     return null;
   }
@@ -210,7 +213,7 @@ export async function POST(req: NextRequest) {
       kakaoCategorySearch(kakaoKey, coord, "CS2"),
       kakaoKeywordSearch(kakaoKey, "공원", coord, ""),
       kakaoCategorySearch(kakaoKey, coord, "BK9"),
-      fetchKaptInfoByAddress(address, coord.buildingName).catch(() => null),
+      fetchKaptInfoByAddress(coord.fullAddress || address, coord.buildingName).catch(() => null),
     ]);
 
     // 시설별 개별 데이터
