@@ -147,20 +147,24 @@ export default function NeighborhoodMapPage() {
 
                 {/* K-apt 단지정보 요약 */}
                 {result.kaptInfo && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px", borderRadius: "12px", background: "rgba(110,62,232,0.05)", border: "1px solid rgba(110,62,232,0.12)", marginBottom: "10px", flexWrap: "wrap" }}>
-                    <Building2 size={12} strokeWidth={1.5} style={{ color: "#6e3de8", flexShrink: 0 }} />
-                    <span style={{ fontSize: "11px", fontWeight: 600, color: "#6e3de8" }}>단지정보</span>
-                    {[
-                      result.kaptInfo.constructorName && `시공 ${result.kaptInfo.constructorName}`,
-                      result.kaptInfo.cctvCount && `CCTV ${result.kaptInfo.cctvCount}대`,
-                      result.kaptInfo.parkingTotal && `주차 ${result.kaptInfo.parkingTotal}대`,
-                      result.kaptInfo.elevatorCount && `승강기 ${result.kaptInfo.elevatorCount}대`,
-                    ].filter(Boolean).map((text, i) => (
-                      <span key={i} style={{ fontSize: "10.5px", color: "#3d3d3f" }}>
-                        {i > 0 && <span style={{ color: "#d1d1d6", margin: "0 2px" }}>·</span>}
-                        {text}
-                      </span>
-                    ))}
+                  <div style={{ padding: "10px 14px", borderRadius: "12px", background: "rgba(110,62,232,0.05)", border: "1px solid rgba(110,62,232,0.12)", marginBottom: "10px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "6px" }}>
+                      <Building2 size={12} strokeWidth={1.5} style={{ color: "#6e3de8", flexShrink: 0 }} />
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: "#6e3de8" }}>단지정보</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", paddingLeft: "17px" }}>
+                      {[
+                        result.kaptInfo.constructorName && `시공 ${result.kaptInfo.constructorName}`,
+                        result.kaptInfo.cctvCount && `CCTV ${result.kaptInfo.cctvCount}대`,
+                        result.kaptInfo.parkingTotal && `주차 ${result.kaptInfo.parkingTotal}대`,
+                        result.kaptInfo.elevatorCount && `승강기 ${result.kaptInfo.elevatorCount}대`,
+                      ].filter(Boolean).map((text, i) => (
+                        <span key={i} style={{ fontSize: "10.5px", color: "#3d3d3f" }}>
+                          {i > 0 && <span style={{ color: "#d1d1d6", margin: "0 2px" }}>·</span>}
+                          {text}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
 
