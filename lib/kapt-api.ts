@@ -262,9 +262,10 @@ export async function fetchKaptInfo(
  * 3) 주소/아파트명으로 가장 유사한 단지 매칭
  */
 export async function findKaptCode(
-  address: string
+  address: string,
+  buildingName?: string
 ): Promise<string | null> {
-  const cacheKey = APICache.makeKey("kapt-find", address);
+  const cacheKey = APICache.makeKey("kapt-find", address + (buildingName || ""));
   const cached = apiCache.get<string>(cacheKey);
   if (cached) return cached;
 
@@ -274,7 +275,21 @@ export async function findKaptCode(
   const aptList = await fetchKaptAptList(lawdCode);
   if (aptList.length === 0) return null;
 
-  // 주소에서 단지명 힌트 추출
+  // 1) 건물명 힌트가 있으면 우선 매칭 (카카오 지오코딩 building_name)
+  if (buildingName) {
+    const clean = buildingName.replace(/아파트|APT|apt|단지|\s/gi, "");
+    if (clean.length >= 1) {
+      for (const apt of aptList) {
+        const name = apt.kaptName.replace(/\s/g, "");
+        if (name === clean || name.includes(clean) || clean.includes(name)) {
+          apiCache.set(cacheKey, apt.kaptCode, TTL_24H);
+          return apt.kaptCode;
+        }
+      }
+    }
+  }
+
+  // 2) 주소에서 단지명 힌트 추출 (기존 로직)
   const tokens = address.trim().split(/\s+/);
   let aptHintTokens: string[] = [];
   for (let i = 0; i < tokens.length; i++) {
@@ -324,10 +339,11 @@ export async function findKaptCode(
  * findKaptCode → fetchKaptInfo 순차 호출
  */
 export async function fetchKaptInfoByAddress(
-  address: string
+  address: string,
+  buildingName?: string
 ): Promise<KaptInfo | null> {
   try {
-    const kaptCode = await findKaptCode(address);
+    const kaptCode = await findKaptCode(address, buildingName);
     if (!kaptCode) return null;
     return await fetchKaptInfo(kaptCode);
   } catch {
