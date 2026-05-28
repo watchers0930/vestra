@@ -155,7 +155,7 @@ export async function fetchBuildingInfo(
   bun: string = "",
   ji: string = ""
 ): Promise<BuildingInfo | null> {
-  const serviceKey = process.env.MOLIT_API_KEY;
+  const serviceKey = process.env.KAPT_API_KEY || process.env.MOLIT_API_KEY;
   if (!serviceKey) return null;
 
   const cacheKey = APICache.makeKey("building", sigunguCd, bjdongCd, bun, ji);

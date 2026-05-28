@@ -12,6 +12,7 @@ import { fetchBaseRate } from "@/lib/bok-api";
 import { fetchSupplyVolume } from "@/lib/supply-api";
 import { fetchREBMarketData } from "@/lib/reb-api";
 import { fetchBuildingInfoByAddress } from "@/lib/building-api";
+import { fetchKaptInfoByAddress } from "@/lib/kapt-api";
 import { fetchSeoulTransactions, crossValidatePrice } from "@/lib/seoul-data-api";
 import { runBacktest } from "@/lib/backtesting";
 import { detectAnomalies, type AnomalyDetectionReport, type TimeSeriesPoint } from "@/lib/anomaly-detector";
@@ -67,8 +68,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "주소를 입력해주세요." }, { status: 400 });
     }
 
-    // 1단계: 종합 데이터 병렬 조회 (5개 소스)
-    const [comprehensive, bokData, supplyData, rebData, buildingInfo, seoulData] = await Promise.all([
+    // 1단계: 종합 데이터 병렬 조회 (6개 소스)
+    const [comprehensive, bokData, supplyData, rebData, buildingInfo, seoulData, kaptInfo] = await Promise.all([
       fetchComprehensivePrices(address, 36).catch((e) => {
         console.warn("MOLIT API 종합 조회 실패:", e);
         return null;
@@ -80,6 +81,7 @@ export async function POST(req: NextRequest) {
       fetchREBMarketData().catch(() => null),
       fetchBuildingInfoByAddress(address).catch(() => null),
       fetchSeoulTransactions(address).catch(() => null),
+      fetchKaptInfoByAddress(address).catch(() => null),
     ]);
 
     // 서울시 데이터 교차 검증
@@ -103,6 +105,10 @@ export async function POST(req: NextRequest) {
       buildingAge: buildingInfo?.buildYear ? currentYear - buildingInfo.buildYear : undefined,
       buildingFloors: buildingInfo?.floors,
       buildingHouseholds: buildingInfo?.households,
+      // K-apt 단지정보
+      constructorName: kaptInfo?.constructorName,
+      corridorType: kaptInfo?.corridorType,
+      cctvCount: kaptInfo?.cctvCount,
       // 교차 검증
       crossValidation,
     };
@@ -263,6 +269,13 @@ export async function POST(req: NextRequest) {
               regionTransactionCount: comprehensive?.sale?.transactionCount ?? 0,
               jeonseRatio: filteredJeonseRatio,
               policyContext: policyContext || "관련 정책 없음",
+              kaptSummary: kaptInfo ? {
+                constructorName: kaptInfo.constructorName,
+                corridorType: kaptInfo.corridorType,
+                cctvCount: kaptInfo.cctvCount,
+                parkingTotal: kaptInfo.parkingTotal,
+                elevatorCount: kaptInfo.elevatorCount,
+              } : null,
             }),
           },
         ],
@@ -346,6 +359,21 @@ export async function POST(req: NextRequest) {
       calculatedJeonseRatio: filteredJeonseRatio,
       // v2.5: 추가 데이터 소스
       buildingInfo: buildingInfo ?? null,
+      kaptInfo: kaptInfo ? {
+        kaptCode: kaptInfo.kaptCode,
+        kaptName: kaptInfo.kaptName,
+        constructorName: kaptInfo.constructorName,
+        corridorType: kaptInfo.corridorType,
+        heatingType: kaptInfo.heatingType,
+        cctvCount: kaptInfo.cctvCount,
+        parkingTotal: kaptInfo.parkingTotal,
+        elevatorCount: kaptInfo.elevatorCount,
+        evChargerCount: kaptInfo.evChargerCount,
+        facilities: kaptInfo.facilities,
+        convFacilities: kaptInfo.convFacilities,
+        eduFacilities: kaptInfo.eduFacilities,
+        unitsByArea: kaptInfo.unitsByArea,
+      } : null,
       rebMarketData: rebData ? {
         saleChangeRate: rebData.saleChangeRate,
         jeonseChangeRate: rebData.jeonseChangeRate,
@@ -364,6 +392,7 @@ export async function POST(req: NextRequest) {
         bokData.dataSource === "live" ? "한국은행 기준금리" : null,
         rebData?.dataSource === "live" ? "한국부동산원 가격지수" : null,
         buildingInfo ? "건축물대장" : null,
+        kaptInfo ? "K-apt 단지정보" : null,
         seoulData?.dataSource === "live" ? "서울시 실거래가" : null,
         anomalyReport ? "시계열 이상탐지" : null,
       ].filter(Boolean),

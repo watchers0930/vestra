@@ -42,6 +42,10 @@ export interface MacroEconomicFactors {
   buildingAge?: number;         // 건물 연식 (년)
   buildingFloors?: number;      // 층수
   buildingHouseholds?: number;  // 세대수
+  // K-apt 단지정보
+  constructorName?: string;   // 시공사
+  corridorType?: string;      // 복도유형
+  cctvCount?: number;         // CCTV 대수
   // 교차 검증 (v2.5)
   crossValidation?: {
     confidence: "high" | "medium" | "low";

@@ -534,7 +534,7 @@ export async function fetchAptRentTransactions(
   lawdCd: string,
   dealYmd: string
 ): Promise<RentTransaction[]> {
-  const serviceKey = process.env.MOLIT_API_KEY;
+  const serviceKey = process.env.KAPT_API_KEY || process.env.MOLIT_API_KEY;
   if (!serviceKey) return [];
 
   const baseUrl =
@@ -616,7 +616,7 @@ async function fetchGenericSaleTransactions(
   lawdCd: string,
   dealYmd: string
 ): Promise<RealTransaction[]> {
-  const serviceKey = process.env.MOLIT_API_KEY;
+  const serviceKey = process.env.KAPT_API_KEY || process.env.MOLIT_API_KEY;
   if (!serviceKey) return [];
 
   const params = new URLSearchParams({

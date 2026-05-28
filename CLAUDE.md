@@ -148,4 +148,5 @@ npm run lint         # ESLint
 - `DIRECT_URL` - Neon 직접 연결 (마이그레이션용)
 - `AUTH_SECRET` - NextAuth 시크릿
 - `NEXT_PUBLIC_KAKAO_MAP_KEY` - 카카오 지도 API 키
-- `MOLIT_API_KEY` - 국토교통부 공공데이터 API 키
+- `MOLIT_API_KEY` - 국토교통부 실거래가 API 키 (data.go.kr 계정 A)
+- `KAPT_API_KEY` - K-apt 단지목록/기본정보/상세정보 + 건축물대장 API 키 (data.go.kr 계정 B)
