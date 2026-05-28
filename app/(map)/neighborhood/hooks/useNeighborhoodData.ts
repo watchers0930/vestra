@@ -91,17 +91,19 @@ export function useNeighborhoodData() {
     });
   };
 
-  const handleAnalyze = async () => {
-    if (!address.trim()) return;
+  const handleAnalyze = async (overrideAddress?: string) => {
+    const target = overrideAddress ?? address;
+    if (!target.trim()) return;
+    if (overrideAddress) setAddress(overrideAddress);
     setLoading(true);
     setError("");
     setResult(null);
     try {
-      localStorage.setItem("vestra_last_address", address);
+      localStorage.setItem("vestra_last_address", target);
       const res = await fetch("/api/neighborhood", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address }),
+        body: JSON.stringify({ address: target }),
       });
       const json = await res.json();
       if (!res.ok) {

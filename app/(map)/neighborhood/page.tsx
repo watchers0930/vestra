@@ -3,9 +3,10 @@
 import {
   MapPin, Train, GraduationCap, ShoppingCart, Building2,
   ChevronDown, ChevronRight, Loader2, Sparkles, Navigation,
-  Search, Heart, Eye, EyeOff,
+  Heart, Eye, EyeOff,
 } from "lucide-react";
 import { useNeighborhoodData, type FacilityGroup } from "./hooks/useNeighborhoodData";
+import AddressAutocomplete, { type AddressResult } from "@/components/common/AddressAutocomplete";
 
 const CATEGORY_META = [
   { key: "transport"   as const, label: "교통", icon: Train,         color: "#0071e3", weight: "25%" },
@@ -78,18 +79,16 @@ export default function NeighborhoodMapPage() {
           {/* 검색 영역 */}
           <div style={{ padding: "14px 14px 10px", background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
             <div style={{ display: "flex", gap: "8px" }}>
-              <div style={{ position: "relative", flex: 1 }}>
-                <Search size={13} strokeWidth={1.5} style={{ position: "absolute", left: "11px", top: "50%", transform: "translateY(-50%)", color: "#aeaeb2" }} />
-                <input
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleAnalyze(); }}
-                  placeholder="주소 입력 (예: 서울 강남구 역삼동)"
-                  style={{ width: "100%", paddingLeft: "32px", paddingRight: "12px", paddingTop: "9px", paddingBottom: "9px", borderRadius: "10px", border: "1px solid rgba(0,0,0,0.12)", fontSize: "12.5px", outline: "none", background: "#f5f5f7", color: "#1d1d1f", boxSizing: "border-box" as const }}
-                />
-              </div>
+              <AddressAutocomplete
+                value={address}
+                onChange={setAddress}
+                onSelect={(r: AddressResult) => {
+                  handleAnalyze(r.roadAddress || r.address);
+                }}
+                onSubmit={handleAnalyze}
+              />
               <button
-                onClick={handleAnalyze}
+                onClick={() => handleAnalyze()}
                 disabled={loading || !address.trim()}
                 style={{ padding: "9px 16px", borderRadius: "10px", border: "none", background: loading || !address.trim() ? "rgba(0,113,227,0.35)" : "#0071e3", color: "#fff", fontSize: "12.5px", fontWeight: 600, cursor: loading || !address.trim() ? "not-allowed" : "pointer", flexShrink: 0, display: "flex", alignItems: "center", transition: "all 0.15s" }}
               >
