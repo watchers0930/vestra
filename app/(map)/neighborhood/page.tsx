@@ -154,6 +154,7 @@ export default function NeighborhoodMapPage() {
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", paddingLeft: "17px" }}>
                       {[
+                        result.kaptInfo.households && `${result.kaptInfo.households}세대`,
                         result.kaptInfo.constructorName && `시공 ${result.kaptInfo.constructorName}`,
                         result.kaptInfo.cctvCount && `CCTV ${result.kaptInfo.cctvCount}대`,
                         result.kaptInfo.parkingTotal && `주차 ${result.kaptInfo.parkingTotal}대`,

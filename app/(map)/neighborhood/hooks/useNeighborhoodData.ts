@@ -47,6 +47,7 @@ export interface AnalysisResult {
   kaptInfo?: {
     constructorName: string;
     corridorType: string;
+    households: number;
     cctvCount: number;
     parkingTotal: number;
     elevatorCount: number;
