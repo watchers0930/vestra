@@ -75,6 +75,52 @@ async function kakaoCategorySearch(
   }
 }
 
+// ── TAGO 버스정류장 조회 (좌표 기반) ─────────────
+
+async function fetchNearbyBusStops(
+  center: { lat: number; lng: number },
+  radius: number = 1000
+): Promise<KakaoPlace[]> {
+  const serviceKey = process.env.KAPT_API_KEY || process.env.MOLIT_API_KEY;
+  if (!serviceKey) return [];
+  try {
+    const url = `https://apis.data.go.kr/1613000/BusSttnInfoInqireService/getCrdntPrxmtSttnList?serviceKey=${encodeURIComponent(serviceKey)}&gpsLati=${center.lat}&gpsLong=${center.lng}&_type=json&numOfRows=15`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const json = await res.json();
+    const items = json?.response?.body?.items?.item;
+    if (!items) return [];
+    const arr = Array.isArray(items) ? items : [items];
+    return arr
+      .map((item: { stationNm?: string; stationId?: string; gpslati?: number; gpslong?: number }) => {
+        const lat = Number(item.gpslati);
+        const lng = Number(item.gpslong);
+        // 하버사인으로 거리 계산
+        const R = 6371000;
+        const dLat = ((lat - center.lat) * Math.PI) / 180;
+        const dLng = ((lng - center.lng) * Math.PI) / 180;
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos((center.lat * Math.PI) / 180) *
+            Math.cos((lat * Math.PI) / 180) *
+            Math.sin(dLng / 2) ** 2;
+        const dist = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+        return {
+          place_name: item.stationNm || "버스정류장",
+          category_group_name: "버스정류장",
+          distance: String(dist),
+          x: String(lng),
+          y: String(lat),
+          road_address_name: "",
+        } as KakaoPlace;
+      })
+      .filter((p: KakaoPlace) => parseInt(p.distance) <= radius)
+      .sort((a: KakaoPlace, b: KakaoPlace) => parseInt(a.distance) - parseInt(b.distance));
+  } catch {
+    return [];
+  }
+}
+
 // ── 점수 계산 ──────────────────────────────────
 
 interface FacilityItem {
@@ -154,7 +200,7 @@ export async function POST(req: NextRequest) {
     // 2. 시설별 주변 검색 + K-apt 단지정보 (병렬)
     const [subway, bus, school, academy, kindergarten, mart, pharmacy, hospital, convenience, park, bank, kaptInfo] = await Promise.all([
       kakaoCategorySearch(kakaoKey, coord, "SW8"),
-      kakaoKeywordSearch(kakaoKey, "버스정류장", coord, ""),
+      fetchNearbyBusStops(coord),
       kakaoCategorySearch(kakaoKey, coord, "SC4"),
       kakaoCategorySearch(kakaoKey, coord, "AC5"),
       kakaoKeywordSearch(kakaoKey, "유치원 어린이집", coord, ""),

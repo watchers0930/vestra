@@ -11,6 +11,7 @@ import { ScholarPapers } from "@/components/results";
 import { AnalysisLoader } from "@/components/common/AnalysisLoader";
 import FraudRiskCard from "@/components/results/FraudRiskCard";
 import { GuaranteeInsuranceCard } from "@/components/results";
+import { KaptInfoCard, type KaptInfoData } from "@/components/common/KaptInfoCard";
 import LandlordTracker from "@/components/landlord/LandlordTracker";
 import { needsLabel, riskLabel } from "../constants";
 import type { JeonseAnalysis, GeneratedDocument, JeonseFormData } from "../types";
@@ -25,6 +26,7 @@ interface Props {
   generatedDoc: GeneratedDocument | null;
   activeDocType: "jeonse" | "lease";
   guaranteeResult: GuaranteeInsuranceResult | null;
+  kaptInfo: KaptInfoData | null;
   checklist: Record<string, boolean>;
   setChecklist: (v: Record<string, boolean>) => void;
   resultRef: RefObject<HTMLDivElement | null>;
@@ -51,6 +53,7 @@ export function JeonseResultPanel({
   fraudRisk, fraudLoading,
   generatedDoc, activeDocType,
   guaranteeResult,
+  kaptInfo,
   checklist, setChecklist,
   resultRef, formData,
   docLoading, onGenerateDoc, onCopy,
@@ -87,6 +90,9 @@ export function JeonseResultPanel({
             <AiDisclaimer compact />
             <PdfDownloadButton targetRef={resultRef} filename="vestra-jeonse-analysis.pdf" title="VESTRA 전세분석 리포트" />
           </div>
+
+          {/* K-apt 단지정보 */}
+          {kaptInfo && <KaptInfoCard kaptInfo={kaptInfo} />}
 
           {/* 전세권 설정 판단 */}
           <div

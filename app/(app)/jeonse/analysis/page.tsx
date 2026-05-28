@@ -13,6 +13,7 @@ export default function JeonsePage() {
     docLoading, generatedDoc,
     activeDocType,
     guaranteeResult,
+    kaptInfo,
     checklist, setChecklist,
     resultRef,
     handleAnalyze, handleGenerateDoc, copyToClipboard,
@@ -41,6 +42,7 @@ export default function JeonsePage() {
           generatedDoc={generatedDoc}
           activeDocType={activeDocType}
           guaranteeResult={guaranteeResult}
+          kaptInfo={kaptInfo}
           checklist={checklist}
           setChecklist={setChecklist}
           resultRef={resultRef}

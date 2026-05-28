@@ -1,10 +1,23 @@
 "use client";
 
 import { Building2 } from "lucide-react";
-import type { PredictionResult } from "../types";
+
+export interface KaptInfoData {
+  kaptName?: string;
+  constructorName?: string;
+  corridorType?: string;
+  heatingType?: string;
+  cctvCount?: number;
+  parkingTotal?: number;
+  elevatorCount?: number;
+  evChargerCount?: number;
+  convFacilities?: string;
+  eduFacilities?: string;
+  unitsByArea?: string;
+}
 
 interface Props {
-  kaptInfo: NonNullable<PredictionResult["kaptInfo"]>;
+  kaptInfo: KaptInfoData;
 }
 
 function InfoItem({ label, value }: { label: string; value: string | number | undefined }) {

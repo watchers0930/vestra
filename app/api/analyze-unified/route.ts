@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
     // 주소 결정: 파싱된 주소 > 사용자 입력 주소
     const address = parsed.title.address || userAddress || "";
 
-    // 2단계: MOLIT 실거래 데이터 조회 (선택적)
+    // 2단계: MOLIT 실거래 데이터 + K-apt 단지정보 조회 (선택적)
     let marketData: {
       sale: PriceResult | null;
       rent: RentPriceResult | null;
@@ -206,20 +206,27 @@ export async function POST(req: NextRequest) {
       districtSale?: PriceResult | null;
     } | null = null;
     let marketDataFiltered = false;
+    let kaptInfo: Awaited<ReturnType<typeof fetchKaptInfoByAddress>> | null = null;
 
     if (address) {
-      try {
-        const comprehensive = await fetchComprehensivePrices(address, 12);
-        if (comprehensive) {
-          marketData = {
-            sale: comprehensive.sale,
-            rent: comprehensive.rent,
-            jeonseRatio: comprehensive.jeonseRatio,
-          };
-        }
-      } catch (e) {
-        console.warn("MOLIT API 조회 실패:", e);
+      const [comprehensive, kaptResult] = await Promise.all([
+        fetchComprehensivePrices(address, 12).catch((e) => {
+          console.warn("MOLIT API 조회 실패:", e);
+          return null;
+        }),
+        fetchKaptInfoByAddress(address).catch((e) => {
+          console.warn("K-apt 단지정보 조회 실패:", e);
+          return null;
+        }),
+      ]);
+      if (comprehensive) {
+        marketData = {
+          sale: comprehensive.sale,
+          rent: comprehensive.rent,
+          jeonseRatio: comprehensive.jeonseRatio,
+        };
       }
+      kaptInfo = kaptResult;
     }
 
     // 2-1단계: 매매가 추정 엔진으로 비교매물 분석
@@ -471,6 +478,19 @@ export async function POST(req: NextRequest) {
       checklist,
       checklistByCategory,
       eventLog: eventBus.getHistory(),
+      kaptInfo: kaptInfo ? {
+        kaptName: kaptInfo.kaptName,
+        constructorName: kaptInfo.constructorName,
+        corridorType: kaptInfo.corridorType,
+        heatingType: kaptInfo.heatingType,
+        cctvCount: kaptInfo.cctvCount,
+        parkingTotal: kaptInfo.parkingTotal,
+        elevatorCount: kaptInfo.elevatorCount,
+        evChargerCount: kaptInfo.evChargerCount,
+        convFacilities: kaptInfo.convFacilities,
+        eduFacilities: kaptInfo.eduFacilities,
+        unitsByArea: kaptInfo.unitsByArea,
+      } : null,
       dataSource: {
         registryParsed: true,
         molitAvailable: !!marketData,

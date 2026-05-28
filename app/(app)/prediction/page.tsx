@@ -21,7 +21,7 @@ import { TransactionFilter } from "./components/TransactionFilter";
 import { TransactionTrendChart } from "./components/TransactionTrendChart";
 import { ChartTab } from "./components/ChartTab";
 import { TransactionTable } from "./components/TransactionTable";
-import { KaptInfoCard } from "./components/KaptInfoCard";
+import { KaptInfoCard } from "@/components/common/KaptInfoCard";
 
 const TransactionMap = dynamic(
   () => import("@/components/prediction/TransactionMap"),

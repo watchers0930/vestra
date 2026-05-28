@@ -27,6 +27,7 @@ import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
 import { NerHighlight } from "@/components/common/NerHighlight";
 import { ScoreGauge, ScholarPapers } from "@/components/results";
+import { KaptInfoCard, type KaptInfoData } from "@/components/common/KaptInfoCard";
 import dynamic from "next/dynamic";
 
 const RightsGraphView = dynamic(
@@ -93,6 +94,7 @@ export interface UnifiedResult {
   };
   checklist?: import("@/lib/checklist-generator").ChecklistItem[];
   checklistByCategory?: Record<string, import("@/lib/checklist-generator").ChecklistItem[]>;
+  kaptInfo?: KaptInfoData | null;
   dataSource: {
     registryParsed: boolean;
     molitAvailable: boolean;
@@ -292,6 +294,8 @@ export function RightsResult({ result, rawText }: RightsResultProps) {
           </div>
         </div>
       </Card>
+
+      {result.kaptInfo && <KaptInfoCard kaptInfo={result.kaptInfo} />}
 
       <IntegrityBadge />
 

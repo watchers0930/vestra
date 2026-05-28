@@ -7,6 +7,7 @@ import { checkGuaranteeInsurance } from "@/lib/guarantee-insurance";
 import { useToast } from "@/components/common/toast";
 import type { FraudRiskResult } from "@/lib/patent-types";
 import type { GuaranteeInsuranceResult } from "@/lib/guarantee-insurance";
+import type { KaptInfoData } from "@/components/common/KaptInfoCard";
 import type { JeonseFormData, JeonseAnalysis, GeneratedDocument } from "../types";
 
 const DEFAULT_FORM: JeonseFormData = {
@@ -35,6 +36,7 @@ export function useJeonseAnalysis() {
   const [generatedDoc, setGeneratedDoc] = useState<GeneratedDocument | null>(null);
   const [activeDocType, setActiveDocType] = useState<"jeonse" | "lease">("jeonse");
   const [guaranteeResult, setGuaranteeResult] = useState<GuaranteeInsuranceResult | null>(null);
+  const [kaptInfo, setKaptInfo] = useState<KaptInfoData | null>(null);
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const resultRef = useRef<HTMLDivElement>(null);
 
@@ -52,8 +54,17 @@ export function useJeonseAnalysis() {
     setAnalysis(null);
     setFraudRisk(null);
     setGuaranteeResult(null);
+    setKaptInfo(null);
 
     try {
+      // K-apt 단지정보 병렬 조회 (실패 무시)
+      if (formData.propertyAddress) {
+        fetch(`/api/kapt?address=${encodeURIComponent(formData.propertyAddress)}`)
+          .then((r) => r.json())
+          .then((d) => { if (!d.error) setKaptInfo(d); })
+          .catch(() => {});
+      }
+
       const res = await fetch("/api/generate-document", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -141,6 +152,7 @@ export function useJeonseAnalysis() {
     docLoading, generatedDoc,
     activeDocType,
     guaranteeResult,
+    kaptInfo,
     checklist, setChecklist,
     resultRef,
     handleAnalyze, handleGenerateDoc, copyToClipboard,
