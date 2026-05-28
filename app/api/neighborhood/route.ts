@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOpenAIClient } from "@/lib/openai";
 import { validateOrigin } from "@/lib/csrf";
+import { fetchKaptInfoByAddress } from "@/lib/kapt-api";
 
 // ── 카카오 API ──────────────────────────────────
 
@@ -150,8 +151,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "주소를 찾을 수 없습니다. 정확한 주소를 입력해주세요." }, { status: 400 });
     }
 
-    // 2. 시설별 주변 검색 (병렬)
-    const [subway, bus, school, academy, kindergarten, mart, pharmacy, hospital, convenience, park, bank] = await Promise.all([
+    // 2. 시설별 주변 검색 + K-apt 단지정보 (병렬)
+    const [subway, bus, school, academy, kindergarten, mart, pharmacy, hospital, convenience, park, bank, kaptInfo] = await Promise.all([
       kakaoCategorySearch(kakaoKey, coord, "SW8"),
       kakaoKeywordSearch(kakaoKey, "버스정류장", coord, ""),
       kakaoCategorySearch(kakaoKey, coord, "SC4"),
@@ -163,6 +164,7 @@ export async function POST(req: NextRequest) {
       kakaoCategorySearch(kakaoKey, coord, "CS2"),
       kakaoKeywordSearch(kakaoKey, "공원", coord, ""),
       kakaoCategorySearch(kakaoKey, coord, "BK9"),
+      fetchKaptInfoByAddress(address).catch(() => null),
     ]);
 
     // 시설별 개별 데이터
@@ -252,6 +254,13 @@ export async function POST(req: NextRequest) {
       totalScore,
       totalGrade,
       aiComment,
+      kaptInfo: kaptInfo ? {
+        constructorName: kaptInfo.constructorName,
+        corridorType: kaptInfo.corridorType,
+        cctvCount: kaptInfo.cctvCount,
+        parkingTotal: kaptInfo.parkingTotal,
+        elevatorCount: kaptInfo.elevatorCount,
+      } : null,
     });
   } catch (e) {
     console.error("[Neighborhood API]", e);

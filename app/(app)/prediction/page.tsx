@@ -21,6 +21,7 @@ import { TransactionFilter } from "./components/TransactionFilter";
 import { TransactionTrendChart } from "./components/TransactionTrendChart";
 import { ChartTab } from "./components/ChartTab";
 import { TransactionTable } from "./components/TransactionTable";
+import { KaptInfoCard } from "./components/KaptInfoCard";
 
 const TransactionMap = dynamic(
   () => import("@/components/prediction/TransactionMap"),
@@ -112,6 +113,8 @@ export default function PredictionPage() {
         buildingName={buildingName}
         selectedApt={selectedApt}
       />
+
+      {result?.kaptInfo && <KaptInfoCard kaptInfo={result.kaptInfo} />}
 
       {/* 분석 로딩 */}
       {loading && (

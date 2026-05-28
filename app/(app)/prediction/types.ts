@@ -61,6 +61,21 @@ export interface PredictionResult {
     isValid: boolean;
     stages: { name: string; hash: string }[];
   };
+  kaptInfo?: {
+    kaptCode: string;
+    kaptName: string;
+    constructorName: string;
+    corridorType: string;
+    heatingType: string;
+    cctvCount: number;
+    parkingTotal: number;
+    elevatorCount: number;
+    evChargerCount: number;
+    facilities: string;
+    convFacilities: string;
+    eduFacilities: string;
+    unitsByArea: string;
+  } | null;
 }
 
 export type AddressTab = "admin" | "jibun" | "road";

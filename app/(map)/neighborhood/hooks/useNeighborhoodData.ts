@@ -44,6 +44,13 @@ export interface AnalysisResult {
   totalScore: number;
   totalGrade: string;
   aiComment: string;
+  kaptInfo?: {
+    constructorName: string;
+    corridorType: string;
+    cctvCount: number;
+    parkingTotal: number;
+    elevatorCount: number;
+  } | null;
 }
 
 // ---------------------------------------------------------------------------
