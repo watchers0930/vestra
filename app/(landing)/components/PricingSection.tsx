@@ -13,13 +13,13 @@ export function PricingSection() {
             <div className="landing-accent-line" />
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#00042a] mb-5 tracking-tight">비즈니스에 최적화된 플랜</h2>
-          <p className="text-[#454651] text-lg">자산 규모와 목적에 맞는<br />최적의 분석도구를 선택하세요.</p>
+          <p className="text-[#454651] text-lg">자산 규모와 목적에 맞는 최적의 분석 도구를 선택하세요.</p>
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           {PLANS.map((plan, i) => (
             <ScrollReveal key={plan.name} delay={i * 0.1}>
-              <div className={`landing-pricing-card rounded-xl p-10 flex flex-col relative overflow-hidden ${
+              <div className={`landing-pricing-card rounded-xl p-10 flex flex-col relative ${
                 plan.highlight
                   ? "bg-[#00042a] landing-pricing-featured"
                   : "bg-[#f5f2fa]"
@@ -27,10 +27,8 @@ export function PricingSection() {
                 {plan.highlight && (
                   <>
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32" />
-                    <div className="flex justify-center mb-6 relative z-10">
-                      <span className="bg-white text-[#00042a] px-5 py-1.5 text-[9px] font-extrabold tracking-widest uppercase rounded-full shadow-lg">
-                        Most Popular
-                      </span>
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white text-[#00042a] px-5 py-1.5 text-[9px] font-extrabold tracking-widest uppercase rounded-full shadow-lg z-10">
+                      Most Popular
                     </div>
                   </>
                 )}
