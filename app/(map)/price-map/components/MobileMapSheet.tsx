@@ -50,8 +50,8 @@ export function MobileMapSheet({
 
   return (
     <div
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-30 flex flex-col bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out"
-      style={{ height: expanded ? `${EXPANDED_HEIGHT_VH}vh` : `${PEEK_HEIGHT}px` }}
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-[9999] flex flex-col bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out"
+      style={{ height: expanded ? `${EXPANDED_HEIGHT_VH}vh` : `${PEEK_HEIGHT}px`, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       {/* 핸들 바 + 요약 */}
       <div
