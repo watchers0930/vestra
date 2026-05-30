@@ -39,7 +39,7 @@ export function JeonseInputForm({ formData, setFormData, loading, onAnalyze }: P
         계약 정보 입력
       </h3>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <FormInput
           label="임대인 (집주인)"
           value={formData.landlordName}
@@ -138,7 +138,7 @@ export function JeonseInputForm({ formData, setFormData, loading, onAnalyze }: P
         placeholder="0"
       />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <FormInput
           label="계약 시작일"
           type="date"

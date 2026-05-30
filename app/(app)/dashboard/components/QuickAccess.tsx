@@ -13,7 +13,7 @@ const ITEMS: { href: string; Icon: LucideIcon; label: string; bg: string; color:
 
 export function QuickAccess() {
   return (
-    <div className="grid grid-cols-3 gap-[12px] sm:grid-cols-6">
+    <div className="grid grid-cols-2 gap-[10px] sm:grid-cols-3 md:grid-cols-6">
       {ITEMS.map(({ href, Icon, label, bg, color }) => (
         <Link
           key={href}

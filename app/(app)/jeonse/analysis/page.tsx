@@ -27,7 +27,7 @@ export default function JeonsePage() {
         description={<>계약 정보를 입력하면 전세권 설정 필요성과<br />사기 위험도를 AI가 자동 분석합니다.</>}
       />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }} className="grid-cols-1 lg:grid-cols-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <JeonseInputForm
           formData={formData}
           setFormData={setFormData}

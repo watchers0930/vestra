@@ -44,7 +44,7 @@ export default function DashboardPage() {
       <DashboardTopbar monitoredCount={monitoredCount} session={session} />
 
       {/* ── Body ── */}
-      <div className="px-9 pb-20">
+      <div className="px-4 sm:px-6 lg:px-9 pb-20">
 
         {/* Hero */}
         <div className="mt-[18px] mb-7">
@@ -78,7 +78,7 @@ export default function DashboardPage() {
         </div>
 
         {/* KPI Cards */}
-        <div className="mb-7 grid grid-cols-2 gap-[14px] xl:grid-cols-4">
+        <div className="mb-7 grid grid-cols-1 sm:grid-cols-2 gap-[14px] xl:grid-cols-4">
           <DashboardKpiCard
             label="관리 자산"
             value={mounted ? `${totalAssets}건` : "-"}
@@ -125,7 +125,7 @@ export default function DashboardPage() {
         {mounted && assets.length > 0 && (
           <div className="mb-7">
             <div className="mb-4 flex items-baseline justify-between">
-              <div className="text-[20px] font-bold tracking-[-0.02em] text-[#1d1d1f]">
+              <div className="text-base sm:text-[20px] font-bold tracking-[-0.02em] text-[#1d1d1f]">
                 포트폴리오 현황
               </div>
               <span className="text-[12.5px] font-medium text-[#0071e3] cursor-pointer">전체 보기 →</span>
@@ -159,7 +159,7 @@ export default function DashboardPage() {
         {mounted && assets.length > 0 && (
           <div className="mb-7">
             <div className="mb-4 flex items-baseline justify-between">
-              <div className="text-[20px] font-bold tracking-[-0.02em] text-[#1d1d1f]">
+              <div className="text-base sm:text-[20px] font-bold tracking-[-0.02em] text-[#1d1d1f]">
                 등록 자산
               </div>
               <span className="text-[12.5px] font-medium text-[#0071e3] cursor-pointer">관리하기 →</span>
@@ -178,7 +178,7 @@ export default function DashboardPage() {
         {mounted && analyses.length > 0 && (
           <div className="mb-7">
             <div className="mb-4 flex items-baseline justify-between">
-              <div className="text-[20px] font-bold tracking-[-0.02em] text-[#1d1d1f]">
+              <div className="text-base sm:text-[20px] font-bold tracking-[-0.02em] text-[#1d1d1f]">
                 최근 분석 이력
               </div>
               <span className="text-[12.5px] font-medium text-[#0071e3] cursor-pointer">전체 보기 →</span>

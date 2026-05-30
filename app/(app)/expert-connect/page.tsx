@@ -31,7 +31,7 @@ export default function ExpertConnectPage() {
       <div style={{ marginBottom: "24px" }}>
         <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", margin: "0 0 4px" }}>전문가 목록</h2>
         <p style={{ fontSize: "13px", color: "#6e6e73", margin: "0 0 16px" }}>분야별 검증된 전문가를 선택하고 상담을 요청하세요</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px" }} className="expert-grid">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[14px]">
           {EXPERTS.map((expert) => (
             <ExpertCard key={expert.id} expert={expert} onConsult={handleConsult} />
           ))}
@@ -41,18 +41,12 @@ export default function ExpertConnectPage() {
       <PricingSection />
 
       {/* ── 상담예약 + 상담요청 2칼럼 ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }} className="form-grid">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
         <ReservationForm reservationForm={reservationForm} setReservationForm={setReservationForm} onSubmit={handleReservationSubmit} />
         <ConsultForm selectedExpert={selectedExpert} formState={formState} setFormState={setFormState} submitting={submitting} submitted={submitted} error={error} onSubmit={handleSubmit} onReset={resetConsultForm} />
       </div>
 
       <ProcessInfographic />
-
-      <style>{`
-        @media (max-width: 900px) { .expert-grid { grid-template-columns: repeat(2, 1fr) !important; } }
-        @media (max-width: 560px) { .expert-grid { grid-template-columns: 1fr !important; } }
-        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr !important; } }
-      `}</style>
     </div>
   );
 }

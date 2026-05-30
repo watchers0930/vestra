@@ -283,8 +283,8 @@ export default function Sidebar() {
           <div className="flex items-center gap-0 flex-shrink-0">
             <PushSubscriber />
             <NotificationBell collapsed={collapsed && !mobileOpen} />
-            <button onClick={() => setMobileOpen(false)} className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/[0.06] transition-colors" aria-label="메뉴 닫기">
-              <X size={17} />
+            <button onClick={() => setMobileOpen(false)} className="lg:hidden flex h-11 w-11 items-center justify-center rounded-lg hover:bg-white/[0.06] transition-colors" aria-label="메뉴 닫기">
+              <X size={20} />
             </button>
           </div>
         </div>

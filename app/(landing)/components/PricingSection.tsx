@@ -4,7 +4,7 @@ import { PLANS } from "../constants";
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-40 px-12 bg-[#fbf8ff]">
+    <section id="pricing" className="py-20 sm:py-28 lg:py-40 px-4 sm:px-8 lg:px-12 bg-[#fbf8ff]">
       <div className="max-w-[1440px] mx-auto">
         <ScrollReveal className="text-center mb-24">
           <div className="flex items-center justify-center gap-3 mb-5">
@@ -12,7 +12,7 @@ export function PricingSection() {
             <span className="landing-section-label">Pricing</span>
             <div className="landing-accent-line" />
           </div>
-          <h2 className="text-5xl font-extrabold text-[#00042a] mb-5 tracking-tight">비즈니스에 최적화된 플랜</h2>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#00042a] mb-5 tracking-tight">비즈니스에 최적화된 플랜</h2>
           <p className="text-[#454651] text-lg">자산 규모와 목적에 맞는 최적의 분석 도구를 선택하세요.</p>
         </ScrollReveal>
 

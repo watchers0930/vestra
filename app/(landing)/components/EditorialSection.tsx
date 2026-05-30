@@ -6,8 +6,8 @@ const EDITORIAL_IMAGE =
 
 export function EditorialSection() {
   return (
-    <section className="bg-[#f5f2fa] py-40 px-12">
-      <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-28 items-center">
+    <section className="bg-[#f5f2fa] py-20 sm:py-28 lg:py-40 px-4 sm:px-8 lg:px-12">
+      <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-20 lg:gap-28 items-center">
 
         {/* Left — image */}
         <ScrollReveal className="relative">
@@ -41,7 +41,7 @@ export function EditorialSection() {
             <span className="landing-section-label">Editorial Note</span>
           </div>
           <blockquote className="mb-10">
-            <p className="text-[32px] font-thin text-[#00042a] leading-[1.5] italic mb-8">
+            <p className="text-xl sm:text-2xl lg:text-[32px] font-thin text-[#00042a] leading-[1.5] italic mb-8">
               &ldquo;VESTRA는 단순한 알고리즘을 넘어선<br />&lsquo;디지털 큐레이터&rsquo;입니다. 데이터 속에<br />숨겨진 이야기를 가장 먼저 감지합니다.&rdquo;
             </p>
             <cite className="not-italic flex items-center gap-4">

@@ -20,7 +20,7 @@ const TESTIMONIALS_DATA = [
 
 export function TestimonialsSection() {
   return (
-    <section className="py-32 px-12 bg-[#f5f2fa]">
+    <section className="py-16 sm:py-24 lg:py-32 px-4 sm:px-8 lg:px-12 bg-[#f5f2fa]">
       <div className="max-w-[1440px] mx-auto">
         <ScrollReveal className="flex items-center gap-3 mb-16">
           <div className="landing-accent-line" />

@@ -51,7 +51,7 @@ export function ConsultForm({ selectedExpert, formState, setFormState, submittin
           {/* 상담 유형 */}
           <div>
             <label style={labelStyle}>상담 유형 <span style={{ color: "#ff3b30" }}>*</span></label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }} className="consult-type-grid">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {CONSULT_TYPES.map((type) => (
                 <button
                   key={type}
@@ -93,7 +93,7 @@ export function ConsultForm({ selectedExpert, formState, setFormState, submittin
           </label>
 
           {/* 연락처 */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }} className="contact-grid">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label style={labelStyle}><Phone size={12} style={{ display: "inline", marginRight: "4px" }} />연락처 (전화번호)</label>
               <input type="tel" value={formState.contactPhone} onChange={(e) => setFormState((p) => ({ ...p, contactPhone: e.target.value }))} placeholder="010-0000-0000" style={inputStyle} />
@@ -130,10 +130,6 @@ export function ConsultForm({ selectedExpert, formState, setFormState, submittin
       )}
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 560px) {
-          .consult-type-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .contact-grid { grid-template-columns: 1fr !important; }
-        }
       `}</style>
     </div>
   );

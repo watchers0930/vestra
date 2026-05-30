@@ -70,9 +70,11 @@ export function AssetList({
 
   return (
     <div
-      className="overflow-hidden rounded-[18px] bg-white"
+      className="rounded-[18px] bg-white"
       style={{ border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
     >
+      <div className="overflow-x-auto">
+      <div className="min-w-[680px]">
       {/* 테이블 헤더 */}
       <div
         className="grid items-center gap-[12px] px-[22px] py-[13px] text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[#6e6e73]"
@@ -247,6 +249,8 @@ export function AssetList({
           )}
         </button>
       )}
+      </div>
+      </div>
     </div>
   );
 }
