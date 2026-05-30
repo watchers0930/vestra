@@ -99,7 +99,7 @@ export function HeroSection() {
 
           {/* Right — image */}
           <div className="relative">
-            <div className="landing-img-overlay h-[160px] sm:h-[420px] lg:h-[640px] rounded-xl shadow-2xl">
+            <div className="landing-img-overlay rounded-xl shadow-2xl h-40 sm:h-[420px] lg:h-[640px]">
               <Image
                 src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80"
                 alt="부동산 권리분석 플랫폼"
