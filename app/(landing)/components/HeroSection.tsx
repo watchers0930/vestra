@@ -13,7 +13,7 @@ export function HeroSection() {
     <>
       {/* Hero */}
       <section className="relative min-h-screen flex flex-col justify-center px-4 sm:px-8 lg:px-12 bg-[#fbf8ff] overflow-hidden">
-        <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-16 lg:gap-24 items-center pt-6 sm:pt-10">
+        <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-16 lg:gap-24 items-center pt-20 sm:pt-10">
 
           {/* Left */}
           <div className="z-10">
