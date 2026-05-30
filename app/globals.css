@@ -169,6 +169,22 @@ body {
 /* ── Landing Mobile Utilities ── */
 @media (max-width: 639px) {
   .mobile-hide { display: none !important; }
+  .hero-section { padding-left: 1rem !important; padding-right: 1rem !important; }
+  .hero-section .grid { gap: 2rem !important; }
+  .hero-title { font-size: 30px !important; }
+  .hero-subtitle { font-size: 18px !important; }
+  .hero-image { height: 220px !important; }
+  .cta-section { padding-left: 1rem !important; padding-right: 1rem !important; }
+  .cta-title { font-size: 30px !important; }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .hero-section { padding-left: 2rem !important; padding-right: 2rem !important; }
+  .hero-section .grid { gap: 4rem !important; }
+  .hero-title { font-size: 48px !important; }
+  .hero-subtitle { font-size: 24px !important; }
+  .hero-image { height: 420px !important; }
+  .cta-section { padding-left: 2rem !important; padding-right: 2rem !important; }
+  .cta-title { font-size: 36px !important; }
 }
 
 /* ── Landing Page Utilities ── */

@@ -12,8 +12,8 @@ export function HeroSection() {
   return (
     <>
       {/* Hero */}
-      <section className="relative min-h-screen flex flex-col justify-center px-4 sm:px-8 lg:px-12 bg-[#fbf8ff] overflow-hidden">
-        <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16 lg:gap-24 items-center pt-10">
+      <section className="relative min-h-screen flex flex-col justify-center px-12 bg-[#fbf8ff] overflow-hidden hero-section">
+        <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-24 items-center pt-10">
 
           {/* Left */}
           <div className="z-10">
@@ -21,8 +21,8 @@ export function HeroSection() {
               <div className="landing-accent-line" />
               <span className="landing-section-label">AI-Powered Real Estate Curation</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl md:text-[48px] lg:text-[55px] xl:text-[65px] font-extrabold text-[#00042a] tracking-tight mb-8">
-              <span className="block text-lg sm:text-xl md:text-2xl lg:text-[30px] font-bold leading-[1.3] mb-1.5">보이지 않는 위험까지 감지하는</span>
+            <h1 className="hero-title text-[55px] lg:text-[65px] font-extrabold text-[#00042a] tracking-tight mb-8">
+              <span className="hero-subtitle" style={{ display: "block", fontSize: "30px", fontWeight: 700, lineHeight: 1.3, marginBottom: "6px" }}>보이지 않는 위험까지 감지하는</span>
               <span style={{ display: "block", lineHeight: 1.1 }}>부동산 권리분석 플랫폼</span>
               <span style={{ display: "block", fontWeight: 100, fontStyle: "italic", lineHeight: 1.2 }}>베스트라</span>
             </h1>
@@ -97,7 +97,7 @@ export function HeroSection() {
 
           {/* Right — image */}
           <div className="relative">
-            <div className="landing-img-overlay h-[320px] sm:h-[420px] lg:h-[640px] rounded-xl shadow-2xl">
+            <div className="landing-img-overlay hero-image h-[640px] rounded-xl shadow-2xl">
               <Image
                 src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80"
                 alt="부동산 권리분석 플랫폼"
