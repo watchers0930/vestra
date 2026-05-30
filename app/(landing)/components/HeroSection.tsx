@@ -12,7 +12,9 @@ export function HeroSection() {
   return (
     <>
       {/* Hero */}
-      <section className="relative lg:min-h-screen flex flex-col pt-32 pb-10 lg:pt-0 lg:pb-0 lg:justify-center px-4 sm:px-8 lg:px-12 bg-[#fbf8ff] overflow-hidden">
+      <section className="relative lg:min-h-screen flex flex-col pb-10 lg:pb-0 lg:justify-center px-4 sm:px-8 lg:px-12 bg-[#fbf8ff] overflow-hidden">
+        {/* 모바일 헤더 높이 확보 */}
+        <div className="h-24 lg:hidden flex-shrink-0" />
         <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-16 lg:gap-24 items-center sm:pt-10">
 
           {/* Left */}
