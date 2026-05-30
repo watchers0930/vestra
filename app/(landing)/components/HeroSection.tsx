@@ -12,27 +12,25 @@ export function HeroSection() {
   return (
     <>
       {/* Hero */}
-      <section className="relative lg:min-h-screen flex flex-col pb-10 lg:pb-0 lg:justify-center px-4 sm:px-8 lg:px-12 bg-[#fbf8ff] overflow-hidden">
-        {/* 모바일 헤더 높이 확보 */}
-        <div className="h-24 lg:hidden flex-shrink-0" />
-        <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-16 lg:gap-24 items-center sm:pt-10">
+      <section className="relative min-h-screen flex flex-col justify-center px-4 sm:px-8 lg:px-12 bg-[#fbf8ff] overflow-hidden">
+        <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16 lg:gap-24 items-center pt-10">
 
           {/* Left */}
           <div className="z-10">
-            <div className="hidden sm:flex items-center gap-3 mb-10">
+            <div className="flex items-center gap-3 mb-10 mobile-hide">
               <div className="landing-accent-line" />
               <span className="landing-section-label">AI-Powered Real Estate Curation</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl md:text-[48px] lg:text-[55px] xl:text-[65px] font-extrabold text-[#00042a] tracking-tight mb-3 sm:mb-8">
-              <span className="block text-base sm:text-xl md:text-2xl lg:text-[30px] font-bold leading-[1.3] mb-1">보이지 않는 위험까지 감지하는</span>
+            <h1 className="text-3xl sm:text-4xl md:text-[48px] lg:text-[55px] xl:text-[65px] font-extrabold text-[#00042a] tracking-tight mb-8">
+              <span className="block text-lg sm:text-xl md:text-2xl lg:text-[30px] font-bold leading-[1.3] mb-1.5">보이지 않는 위험까지 감지하는</span>
               <span style={{ display: "block", lineHeight: 1.1 }}>부동산 권리분석 플랫폼</span>
               <span style={{ display: "block", fontWeight: 100, fontStyle: "italic", lineHeight: 1.2 }}>베스트라</span>
             </h1>
-            <p className="text-[14px] sm:text-lg text-[#454651] max-w-md mb-6 sm:mb-14 leading-relaxed sm:leading-[1.8]">
+            <p className="text-lg text-[#454651] max-w-md mb-14 leading-[1.8]">
               VESTRA는 수만 개의 데이터 포인트를 정밀하게 분석하여<br />전문가의 통찰력을 디지털화합니다.
             </p>
 
-            <div className="hidden sm:flex flex-wrap gap-3 mb-12">
+            <div className="mb-12 flex flex-wrap gap-3 mobile-hide">
               <span className="rounded-full border border-[#00042a]/12 bg-white/80 px-4 py-2 text-[11px] font-bold tracking-[0.18em] text-[#00042a] uppercase">
                 Patent-Based Analysis Engine
               </span>
@@ -42,10 +40,10 @@ export function HeroSection() {
             </div>
 
             {/* Buttons */}
-            <div className="flex flex-wrap items-center gap-3 sm:gap-5 mb-6 sm:mb-16">
+            <div className="flex flex-wrap gap-5 mb-16">
               <Link
                 href="/login"
-                className="landing-grad-btn text-white px-7 py-3 sm:px-10 sm:py-4 rounded font-bold text-[11px] tracking-widest uppercase flex items-center gap-2 group"
+                className="landing-grad-btn text-white px-10 py-4 rounded font-bold text-[11px] tracking-widest uppercase flex items-center gap-2 group"
               >
                 지금 분석 시작하기
                 <span
@@ -57,10 +55,10 @@ export function HeroSection() {
               </Link>
               <button
                 onClick={() => setModalOpen(true)}
-                className="text-[#00042a] font-bold text-[10px] sm:text-[11px] tracking-widest uppercase flex items-center gap-2 group relative"
+                className="text-[#00042a] font-bold text-[11px] tracking-widest uppercase flex items-center gap-2 group relative"
               >
                 <span className="border-b border-[#00042a]/30 pb-0.5 group-hover:border-[#00042a] transition-colors">
-                  샘플 보기
+                  심층 보고서 샘플 보기
                 </span>
                 <span
                   className="material-symbols-outlined text-sm"
@@ -71,7 +69,7 @@ export function HeroSection() {
               </button>
             </div>
 
-            <div className="hidden sm:flex items-center gap-6">
+            <div className="flex items-center gap-6 mobile-hide">
               <div className="flex -space-x-2">
                 <div className="w-8 h-8 rounded-full bg-[#e4e1e9] border-2 border-white" />
                 <div className="w-8 h-8 rounded-full bg-[#efedf4] border-2 border-white" />
@@ -99,7 +97,7 @@ export function HeroSection() {
 
           {/* Right — image */}
           <div className="relative">
-            <div className="landing-img-overlay rounded-xl shadow-2xl h-40 sm:h-[420px] lg:h-[640px]">
+            <div className="landing-img-overlay h-[320px] sm:h-[420px] lg:h-[640px] rounded-xl shadow-2xl">
               <Image
                 src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80"
                 alt="부동산 권리분석 플랫폼"
@@ -110,7 +108,7 @@ export function HeroSection() {
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="hidden sm:block mt-5 px-1 text-[#00042a]">
+            <div className="mt-5 px-1 text-[#00042a] mobile-hide">
               <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.22em] text-[#6d6d78]">
                 Patent Filing
               </p>
