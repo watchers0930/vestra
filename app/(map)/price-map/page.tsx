@@ -2,6 +2,7 @@
 
 import { usePriceMap } from "./hooks/usePriceMap";
 import { LeftPanel } from "./components/LeftPanel";
+import { MobileMapSheet } from "./components/MobileMapSheet";
 import { RiskPopup } from "./components/RiskPopup";
 import { MapOverlay } from "./components/MapOverlay";
 
@@ -60,6 +61,22 @@ export default function PriceMapPage() {
           ) : null}
         </div>
       </div>
+
+      <MobileMapSheet
+        selectedGu={selectedGu}
+        setSelectedGu={setSelectedGu}
+        selectedApt={selectedApt}
+        loading={loading}
+        showGuDropdown={showGuDropdown}
+        setShowGuDropdown={setShowGuDropdown}
+        selectedSido={selectedSido}
+        setSelectedSido={setSelectedSido}
+        tradeType={tradeType}
+        setTradeType={setTradeType}
+        topChanges={topChanges}
+        selectAndMoveToApt={selectAndMoveToApt}
+        setRiskPopup={setRiskPopup}
+      />
     </div>
   );
 }

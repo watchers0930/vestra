@@ -30,7 +30,7 @@ export function LeftPanel({
   tradeType, setTradeType, topChanges, selectAndMoveToApt, setRiskPopup,
 }: Props) {
   return (
-    <div style={{ height: "100%", width: "300px", flexShrink: 0, display: "flex", flexDirection: "column", background: "#f5f5f7", borderRight: "1px solid rgba(0,0,0,0.08)" }}>
+    <div className="hidden lg:flex" style={{ height: "100%", width: "300px", flexShrink: 0, flexDirection: "column", background: "#f5f5f7", borderRight: "1px solid rgba(0,0,0,0.08)" }}>
 
       {/* ── 다크 헤더 ── */}
       <div style={{ position: "relative", overflow: "hidden", background: "linear-gradient(148deg, #141820 0%, #0c1527 50%, #0a1020 100%)", flexShrink: 0 }}>
