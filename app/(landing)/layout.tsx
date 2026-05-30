@@ -6,7 +6,7 @@ export default function LandingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <div className="overflow-x-hidden">
       {/* ─── Glass Nav ─── */}
       <header className="fixed top-0 left-0 right-0 z-50 landing-glass-nav">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-5 flex items-center justify-between">
@@ -90,6 +90,6 @@ export default function LandingLayout({
           </div>
         </div>
       </footer>
-    </>
+    </div>
   );
 }

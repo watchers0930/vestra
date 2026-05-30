@@ -6,7 +6,7 @@ const EDITORIAL_IMAGE =
 
 export function EditorialSection() {
   return (
-    <section className="bg-[#f5f2fa] py-20 sm:py-28 lg:py-40 px-4 sm:px-8 lg:px-12">
+    <section className="bg-[#f5f2fa] py-20 sm:py-28 lg:py-40 px-4 sm:px-8 lg:px-12 overflow-hidden">
       <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-20 lg:gap-28 items-center">
 
         {/* Left — image */}

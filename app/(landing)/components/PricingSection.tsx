@@ -19,7 +19,7 @@ export function PricingSection() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           {PLANS.map((plan, i) => (
             <ScrollReveal key={plan.name} delay={i * 0.1}>
-              <div className={`landing-pricing-card rounded-xl p-10 flex flex-col relative ${
+              <div className={`landing-pricing-card rounded-xl p-10 flex flex-col relative overflow-hidden ${
                 plan.highlight
                   ? "bg-[#00042a] landing-pricing-featured"
                   : "bg-[#f5f2fa]"
