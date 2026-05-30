@@ -56,17 +56,17 @@ export function FeaturesSection() {
   const visible = expanded ? FEATURES_DATA : FEATURES_DATA.slice(0, 3);
 
   return (
-    <section id="features" className="py-20 sm:py-28 lg:py-40 px-4 sm:px-8 lg:px-12 bg-[#fbf8ff]">
+    <section id="features" className="py-40 px-12 bg-[#fbf8ff]">
       <div className="max-w-[1440px] mx-auto">
 
         {/* Header */}
-        <ScrollReveal className="flex items-end justify-between mb-10 sm:mb-24">
+        <ScrollReveal className="flex items-end justify-between mb-24">
           <div>
             <div className="flex items-center gap-3 mb-5">
               <div className="landing-accent-line" />
               <span className="landing-section-label">Core Services</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#00042a] leading-tight tracking-tight">
+            <h2 className="text-5xl font-extrabold text-[#00042a] leading-tight tracking-tight">
               전문가의 시각을<br />AI로 구현했습니다
             </h2>
           </div>

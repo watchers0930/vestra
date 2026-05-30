@@ -166,11 +166,6 @@ body {
 @font-face { font-family: 'Paperlogy'; font-weight: 800; font-display: swap; src: url('/fonts/Paperlogy-8ExtraBold.woff2') format('woff2'); }
 @font-face { font-family: 'Paperlogy'; font-weight: 900; font-display: swap; src: url('/fonts/Paperlogy-9Black.woff2') format('woff2'); }
 
-/* ── Landing Mobile Utilities ── */
-@media (max-width: 639px) {
-  .mobile-hide { display: none !important; }
-}
-
 /* ── Landing Page Utilities ── */
 .landing-glass-nav {
   background: rgba(251,248,255,0.72);

@@ -6,10 +6,10 @@ export default function LandingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-x-hidden">
+    <>
       {/* ─── Glass Nav ─── */}
       <header className="fixed top-0 left-0 right-0 z-50 landing-glass-nav">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-5 flex items-center justify-between">
+        <div className="max-w-[1440px] mx-auto px-12 py-5 flex items-center justify-between">
           <Link href="/" className="text-xl font-thin tracking-[0.25em] text-[#00042a]">
             VESTRA
           </Link>
@@ -17,13 +17,13 @@ export default function LandingLayout({
           <div className="flex items-center gap-4">
             <Link
               href="/login"
-              className="landing-ghost-btn text-[11px] font-bold tracking-widest uppercase px-3 sm:px-6 py-2.5 rounded"
+              className="landing-ghost-btn text-[11px] font-bold tracking-widest uppercase px-6 py-2.5 rounded"
             >
               로그인
             </Link>
             <Link
               href="/login"
-              className="landing-grad-btn text-white text-[11px] font-bold tracking-widest uppercase px-4 sm:px-7 py-2.5 rounded"
+              className="landing-grad-btn text-white text-[11px] font-bold tracking-widest uppercase px-7 py-2.5 rounded"
             >
               Get Started
             </Link>
@@ -32,10 +32,10 @@ export default function LandingLayout({
       </header>
 
       {/* Content */}
-      <main className="pt-[14px] overflow-x-hidden">{children}</main>
+      <main className="pt-[14px]">{children}</main>
 
       {/* ─── Dark Footer ─── */}
-      <footer className="text-white px-4 sm:px-8 lg:px-12 py-16 sm:py-20" style={{ backgroundColor: '#222222' }}>
+      <footer className="text-white px-12 py-20" style={{ backgroundColor: '#222222' }}>
         <div className="max-w-[1440px] mx-auto">
           <div className="flex flex-col md:flex-row justify-between gap-16 mb-16">
             {/* Company */}
@@ -90,6 +90,6 @@ export default function LandingLayout({
           </div>
         </div>
       </footer>
-    </div>
+    </>
   );
 }
