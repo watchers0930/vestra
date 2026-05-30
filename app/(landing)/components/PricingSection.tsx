@@ -6,14 +6,14 @@ export function PricingSection() {
   return (
     <section id="pricing" className="py-20 sm:py-28 lg:py-40 px-4 sm:px-8 lg:px-12 bg-[#fbf8ff]">
       <div className="max-w-[1440px] mx-auto">
-        <ScrollReveal className="text-center mb-24">
+        <ScrollReveal className="text-center mb-10 sm:mb-24">
           <div className="flex items-center justify-center gap-3 mb-5">
             <div className="landing-accent-line" />
             <span className="landing-section-label">Pricing</span>
             <div className="landing-accent-line" />
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#00042a] mb-5 tracking-tight">비즈니스에 최적화된 플랜</h2>
-          <p className="text-[#454651] text-lg">자산 규모와 목적에 맞는 최적의 분석 도구를 선택하세요.</p>
+          <p className="text-[#454651] text-lg">자산 규모와 목적에 맞는<br />최적의 분석도구를 선택하세요.</p>
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
@@ -27,8 +27,10 @@ export function PricingSection() {
                 {plan.highlight && (
                   <>
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32" />
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white text-[#00042a] px-5 py-1.5 text-[9px] font-extrabold tracking-widest uppercase rounded-full shadow-lg z-10">
-                      Most Popular
+                    <div className="flex justify-center mb-6 relative z-10">
+                      <span className="bg-white text-[#00042a] px-5 py-1.5 text-[9px] font-extrabold tracking-widest uppercase rounded-full shadow-lg">
+                        Most Popular
+                      </span>
                     </div>
                   </>
                 )}

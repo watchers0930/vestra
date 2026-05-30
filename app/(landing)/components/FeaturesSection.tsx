@@ -60,7 +60,7 @@ export function FeaturesSection() {
       <div className="max-w-[1440px] mx-auto">
 
         {/* Header */}
-        <ScrollReveal className="flex items-end justify-between mb-24">
+        <ScrollReveal className="flex items-end justify-between mb-10 sm:mb-24">
           <div>
             <div className="flex items-center gap-3 mb-5">
               <div className="landing-accent-line" />
