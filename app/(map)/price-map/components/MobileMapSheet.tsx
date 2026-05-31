@@ -25,6 +25,7 @@ interface Props {
 
 const RANK_COLORS = ["#0071e3", "#1a9e45", "#b86f00"];
 const PEEK_HEIGHT = 64;
+const PEEK_HEIGHT_WITH_APT = 88;
 const EXPANDED_HEIGHT_VH = 55;
 
 export function MobileMapSheet({
@@ -35,6 +36,8 @@ export function MobileMapSheet({
   const [expanded, setExpanded] = useState(false);
   const startY = useRef(0);
   const startExpanded = useRef(false);
+
+  const peekHeight = selectedApt ? PEEK_HEIGHT_WITH_APT : PEEK_HEIGHT;
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     startY.current = e.touches[0].clientY;
@@ -51,7 +54,7 @@ export function MobileMapSheet({
   return (
     <div
       className="lg:hidden fixed bottom-0 left-0 right-0 z-[9999] flex flex-col bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out"
-      style={{ height: expanded ? `${EXPANDED_HEIGHT_VH}vh` : `${PEEK_HEIGHT}px`, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      style={{ height: expanded ? `${EXPANDED_HEIGHT_VH}vh` : `${peekHeight}px`, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       {/* 핸들 바 + 요약 */}
       <div
@@ -74,6 +77,23 @@ export function MobileMapSheet({
             : <ChevronUp size={16} className="text-[#aeaeb2]" />
           }
         </div>
+        {/* 접힌 상태: 선택된 아파트 요약 */}
+        {!expanded && selectedApt && (
+          <div className="flex items-center justify-between px-4 pb-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-[12px] font-bold text-[#0071e3] truncate">{selectedApt.name}</span>
+              <span className="text-[11px] text-[#6e6e73]">{selectedApt.area}평</span>
+            </div>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <span className="text-[12px] font-bold text-[#1d1d1f]">{formatPrice(selectedApt.price)}</span>
+              {selectedApt.change !== null && (
+                <span className="text-[10px] font-bold" style={{ color: (selectedApt.change ?? 0) >= 0 ? "#ff3b30" : "#0071e3" }}>
+                  {(selectedApt.change ?? 0) >= 0 ? "+" : ""}{selectedApt.change}%
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 펼쳐진 내용 */}
@@ -155,7 +175,7 @@ export function MobileMapSheet({
                   return (
                     <button
                       key={apt.name}
-                      onClick={() => { selectAndMoveToApt(apt); setExpanded(false); }}
+                      onClick={() => { selectAndMoveToApt(apt); }}
                       className="flex items-center gap-2.5 rounded-xl p-2.5 text-left border-none"
                       style={{ background: isSelected ? "rgba(0,113,227,0.05)" : "#f5f5f7", border: isSelected ? "1.5px solid rgba(0,113,227,0.25)" : "1.5px solid transparent" }}
                     >
