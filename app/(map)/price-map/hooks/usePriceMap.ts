@@ -64,8 +64,15 @@ export function usePriceMap() {
 
     const maps = window.kakao.maps;
     const pos = new maps.LatLng(apt.lat, apt.lng);
+    const isMobile = window.innerWidth < 1024;
+
     map.setCenter(pos);
-    map.setLevel(2);
+    map.setLevel(isMobile ? 1 : 2);
+
+    // 모바일: 마커를 화면 상단 1/3 중앙에 배치 (하단 바텀시트 고려)
+    if (isMobile) {
+      map.panBy(0, Math.round(window.innerHeight / 3));
+    }
 
     circlesRef.current.forEach((c) => c.setMap(null));
     circlesRef.current = [];
