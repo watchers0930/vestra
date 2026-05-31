@@ -6,7 +6,7 @@ export default function LandingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <div className="overflow-x-hidden">
       {/* ─── Glass Nav ─── */}
       <header className="fixed top-0 left-0 right-0 z-50 landing-glass-nav">
         <div className="max-w-[1440px] mx-auto px-5 py-3.5 lg:px-12 lg:py-5 flex items-center justify-between">
@@ -32,7 +32,7 @@ export default function LandingLayout({
       </header>
 
       {/* Content */}
-      <main className="pt-[14px] overflow-x-hidden">{children}</main>
+      <main className="pt-[14px]">{children}</main>
 
       {/* ─── Dark Footer ─── */}
       <footer className="text-white px-5 py-12 lg:px-12 lg:py-20" style={{ backgroundColor: '#222222' }}>
@@ -90,6 +90,6 @@ export default function LandingLayout({
           </div>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
