@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ margin: "0 -24px 0", paddingTop: "52px" }}>
+    <div className="-mx-4 lg:-mx-6 pt-[52px]">
       {children}
     </div>
   );

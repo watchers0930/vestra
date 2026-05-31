@@ -50,6 +50,13 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Mobile safe-area padding — PC에서는 적용하지 않음 */
+@media (max-width: 1023px) {
+  .mobile-safe-top {
+    padding-top: max(38px, env(safe-area-inset-top, 38px)) !important;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
