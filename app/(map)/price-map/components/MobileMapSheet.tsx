@@ -99,6 +99,47 @@ export function MobileMapSheet({
       {/* 펼쳐진 내용 */}
       {expanded && (
         <div className="flex-1 overflow-y-auto overscroll-contain">
+          {/* 선택된 아파트 상세 (TOP 목록보다 위에 배치) */}
+          {selectedApt && (() => {
+            const isUp = (selectedApt.change ?? 0) >= 0;
+            return (
+              <div className="mx-4 mt-1 mb-3 rounded-2xl p-3.5" style={{ background: "#fff", border: "1px solid rgba(0,113,227,0.18)", boxShadow: "0 2px 12px rgba(0,113,227,0.08)" }}>
+                <div className="flex items-start justify-between mb-2.5 gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-[13px] font-bold text-[#1d1d1f] m-0 truncate">{selectedApt.name}</h4>
+                    <p className="text-[11px] text-[#6e6e73] m-0 mt-0.5">{selectedApt.dong}</p>
+                  </div>
+                  {selectedApt.change !== null ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold flex-shrink-0" style={{ background: isUp ? "rgba(255,59,48,0.08)" : "rgba(0,113,227,0.08)", color: isUp ? "#ff3b30" : "#0071e3" }}>
+                      {isUp ? <TrendingUp size={11} strokeWidth={2} /> : <TrendingDown size={11} strokeWidth={2} />}
+                      {isUp ? "+" : ""}{selectedApt.change}%
+                    </span>
+                  ) : null}
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 mb-3">
+                  {[
+                    { label: "시세", value: formatPrice(selectedApt.price) },
+                    { label: "면적", value: `${selectedApt.area}평` },
+                    { label: "건축", value: `${selectedApt.year}년` },
+                    { label: "법정동", value: selectedApt.dong },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="rounded-[10px] bg-[#f5f5f7] px-2.5 py-2">
+                      <p className="text-[10px] text-[#aeaeb2] m-0">{label}</p>
+                      <p className="text-[12px] font-bold text-[#1d1d1f] m-0 mt-0.5 truncate">{value}</p>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setRiskPopup({ apt: selectedApt, risk: analyzeRisk(selectedApt) })}
+                  className="block w-full rounded-[10px] bg-[#0071e3] py-2.5 text-center text-[12px] font-semibold text-white border-none"
+                  style={{ boxShadow: "0 2px 10px rgba(0,113,227,0.30)" }}
+                >
+                  위험도 분석 →
+                </button>
+              </div>
+            );
+          })()}
+
           {/* 필터 */}
           <div className="flex items-center gap-2 px-4 pb-3 border-b border-black/[0.06]">
             <div className="relative flex-1">
@@ -198,47 +239,6 @@ export function MobileMapSheet({
               </div>
             )}
           </div>
-
-          {/* 선택된 아파트 */}
-          {selectedApt && (() => {
-            const isUp = (selectedApt.change ?? 0) >= 0;
-            return (
-              <div className="mx-4 mb-4 rounded-2xl p-3.5" style={{ background: "#fff", border: "1px solid rgba(0,113,227,0.18)", boxShadow: "0 2px 12px rgba(0,113,227,0.08)" }}>
-                <div className="flex items-start justify-between mb-2.5 gap-2">
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-[13px] font-bold text-[#1d1d1f] m-0 truncate">{selectedApt.name}</h4>
-                    <p className="text-[11px] text-[#6e6e73] m-0 mt-0.5">{selectedApt.dong}</p>
-                  </div>
-                  {selectedApt.change !== null ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold flex-shrink-0" style={{ background: isUp ? "rgba(255,59,48,0.08)" : "rgba(0,113,227,0.08)", color: isUp ? "#ff3b30" : "#0071e3" }}>
-                      {isUp ? <TrendingUp size={11} strokeWidth={2} /> : <TrendingDown size={11} strokeWidth={2} />}
-                      {isUp ? "+" : ""}{selectedApt.change}%
-                    </span>
-                  ) : null}
-                </div>
-                <div className="grid grid-cols-2 gap-1.5 mb-3">
-                  {[
-                    { label: "시세", value: formatPrice(selectedApt.price) },
-                    { label: "면적", value: `${selectedApt.area}평` },
-                    { label: "건축", value: `${selectedApt.year}년` },
-                    { label: "법정동", value: selectedApt.dong },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="rounded-[10px] bg-[#f5f5f7] px-2.5 py-2">
-                      <p className="text-[10px] text-[#aeaeb2] m-0">{label}</p>
-                      <p className="text-[12px] font-bold text-[#1d1d1f] m-0 mt-0.5 truncate">{value}</p>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  onClick={() => setRiskPopup({ apt: selectedApt, risk: analyzeRisk(selectedApt) })}
-                  className="block w-full rounded-[10px] bg-[#0071e3] py-2.5 text-center text-[12px] font-semibold text-white border-none"
-                  style={{ boxShadow: "0 2px 10px rgba(0,113,227,0.30)" }}
-                >
-                  위험도 분석 →
-                </button>
-              </div>
-            );
-          })()}
         </div>
       )}
     </div>

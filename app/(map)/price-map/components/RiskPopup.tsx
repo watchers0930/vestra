@@ -23,7 +23,7 @@ export function RiskPopup({ popup, selectedGu, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        style={{ width: "440px", maxHeight: "90vh", overflowY: "auto", borderRadius: "24px", background: "#fff", boxShadow: "0 24px 64px rgba(0,0,0,0.22)", border: "1px solid rgba(0,0,0,0.08)" }}
+        style={{ width: "440px", maxWidth: "calc(100vw - 32px)", maxHeight: "90vh", overflowY: "auto", borderRadius: "24px", background: "#fff", boxShadow: "0 24px 64px rgba(0,0,0,0.22)", border: "1px solid rgba(0,0,0,0.08)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 다크 헤더 */}
