@@ -67,7 +67,7 @@ export function usePriceMap() {
     const isMobile = window.innerWidth < 1024;
 
     map.setCenter(pos);
-    map.setLevel(isMobile ? 5 : 2);
+    map.setLevel(isMobile ? 7 : 2);
 
     // 모바일: 마커를 화면 상단 1/3 중앙에 배치 (하단 바텀시트 고려)
     if (isMobile) {
