@@ -93,7 +93,7 @@ export function MobileMapSheet({
                 <ChevronDown size={13} className="text-[#aeaeb2]" />
               </button>
               {showGuDropdown && (
-                <div className="absolute z-20 bottom-full mb-1 left-0 right-0 flex rounded-[14px] border border-black/10 bg-white shadow-lg overflow-hidden" style={{ maxHeight: "260px" }}>
+                <div className="absolute z-20 top-full mt-1 left-0 right-0 flex rounded-[14px] border border-black/10 bg-white shadow-lg overflow-hidden" style={{ maxHeight: "260px" }}>
                   <div className="w-[100px] flex-shrink-0 border-r border-black/[0.06] overflow-y-auto">
                     <p className="sticky top-0 bg-[#f5f5f7] px-2.5 py-1.5 text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider">시도</p>
                     {Object.keys(SIDO_MAP).map((sido) => (
