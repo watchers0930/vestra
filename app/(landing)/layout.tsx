@@ -8,7 +8,7 @@ export default function LandingLayout({
   return (
     <div className="overflow-x-hidden">
       {/* ─── Glass Nav ─── */}
-      <header className="fixed top-0 left-0 right-0 z-50 landing-glass-nav">
+      <header className="fixed top-0 left-0 right-0 z-50 landing-glass-nav w-full overflow-hidden">
         <div className="max-w-[1440px] mx-auto px-5 py-3.5 lg:px-12 lg:py-5 flex items-center justify-between">
           <Link href="/" className="text-xl font-thin tracking-[0.25em] text-[#00042a]">
             VESTRA
