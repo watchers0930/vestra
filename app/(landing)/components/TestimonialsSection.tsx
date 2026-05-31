@@ -20,9 +20,9 @@ const TESTIMONIALS_DATA = [
 
 export function TestimonialsSection() {
   return (
-    <section className="py-32 px-12 bg-[#f5f2fa]">
+    <section className="py-16 px-5 lg:py-32 lg:px-12 bg-[#f5f2fa]">
       <div className="max-w-[1440px] mx-auto">
-        <ScrollReveal className="flex items-center gap-3 mb-16">
+        <ScrollReveal className="flex items-center gap-3 mb-10 lg:mb-16">
           <div className="landing-accent-line" />
           <span className="landing-section-label">고객 후기</span>
         </ScrollReveal>
@@ -30,7 +30,7 @@ export function TestimonialsSection() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {TESTIMONIALS_DATA.map((t, i) => (
             <ScrollReveal key={t.name} delay={(i + 1) * 0.1}>
-              <div className="landing-testimonial-card rounded-xl p-8">
+              <div className="landing-testimonial-card rounded-xl p-6 lg:p-8">
                 <div className="flex gap-0.5 mb-5">
                   {Array(5).fill(0).map((_, j) => (
                     <span

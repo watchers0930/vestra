@@ -12,25 +12,25 @@ export function HeroSection() {
   return (
     <>
       {/* Hero */}
-      <section className="relative min-h-screen flex flex-col justify-center px-12 bg-[#fbf8ff] overflow-hidden">
-        <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-24 items-center pt-10">
+      <section className="relative min-h-screen flex flex-col justify-center px-5 lg:px-12 bg-[#fbf8ff] overflow-hidden">
+        <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-24 items-center pt-20 lg:pt-10">
 
           {/* Left */}
           <div className="z-10">
-            <div className="flex items-center gap-3 mb-10">
+            <div className="flex items-center gap-3 mb-6 lg:mb-10">
               <div className="landing-accent-line" />
               <span className="landing-section-label">AI-Powered Real Estate Curation</span>
             </div>
-            <h1 className="text-[55px] lg:text-[65px] font-extrabold text-[#00042a] tracking-tight mb-8">
-              <span style={{ display: "block", fontSize: "30px", fontWeight: 700, lineHeight: 1.3, marginBottom: "6px" }}>보이지 않는 위험까지 감지하는</span>
-              <span style={{ display: "block", lineHeight: 1.1 }}>부동산 자산관리 플랫폼</span>
-              <span style={{ display: "block", fontWeight: 100, fontStyle: "italic", lineHeight: 1.2 }}>베스트라</span>
+            <h1 className="text-[32px] lg:text-[55px] xl:text-[65px] font-extrabold text-[#00042a] tracking-tight mb-5 lg:mb-8">
+              <span className="block text-[18px] lg:text-[30px] font-bold leading-[1.3] mb-1.5">보이지 않는 위험까지 감지하는</span>
+              <span className="block leading-[1.1]">부동산 자산관리 플랫폼</span>
+              <span className="block font-thin italic leading-[1.2]">베스트라</span>
             </h1>
-            <p className="text-lg text-[#454651] max-w-md mb-14 leading-[1.8]">
-              VESTRA는 수만 개의 데이터 포인트를 정밀하게 분석하여<br />전문가의 통찰력을 디지털화합니다.
+            <p className="text-base lg:text-lg text-[#454651] max-w-md mb-8 lg:mb-14 leading-[1.8]">
+              VESTRA는 수만 개의 데이터 포인트를 정밀하게 분석하여<br className="hidden lg:block" />전문가의 통찰력을 디지털화합니다.
             </p>
 
-            <div className="mb-12 flex flex-wrap gap-3">
+            <div className="mb-8 lg:mb-12 flex flex-wrap gap-3">
               <span className="rounded-full border border-[#00042a]/12 bg-white/80 px-4 py-2 text-[11px] font-bold tracking-[0.18em] text-[#00042a] uppercase">
                 Patent-Based Analysis Engine
               </span>
@@ -40,7 +40,7 @@ export function HeroSection() {
             </div>
 
             {/* Buttons */}
-            <div className="flex flex-wrap gap-5 mb-16">
+            <div className="flex flex-wrap gap-4 lg:gap-5 mb-10 lg:mb-16">
               <Link
                 href="/login"
                 className="landing-grad-btn text-white px-10 py-4 rounded font-bold text-[11px] tracking-widest uppercase flex items-center gap-2 group"
@@ -97,7 +97,7 @@ export function HeroSection() {
 
           {/* Right — image */}
           <div className="relative">
-            <div className="landing-img-overlay h-[640px] rounded-xl shadow-2xl">
+            <div className="landing-img-overlay h-[280px] lg:h-[640px] rounded-xl shadow-2xl">
               <Image
                 src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80"
                 alt="부동산 자산관리 플랫폼"

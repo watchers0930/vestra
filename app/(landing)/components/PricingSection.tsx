@@ -4,22 +4,22 @@ import { PLANS } from "../constants";
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-40 px-12 bg-[#fbf8ff]">
+    <section id="pricing" className="py-16 px-5 lg:py-40 lg:px-12 bg-[#fbf8ff]">
       <div className="max-w-[1440px] mx-auto">
-        <ScrollReveal className="text-center mb-24">
-          <div className="flex items-center justify-center gap-3 mb-5">
+        <ScrollReveal className="text-center mb-10 lg:mb-24">
+          <div className="flex items-center justify-center gap-3 mb-4 lg:mb-5">
             <div className="landing-accent-line" />
             <span className="landing-section-label">Pricing</span>
             <div className="landing-accent-line" />
           </div>
-          <h2 className="text-5xl font-extrabold text-[#00042a] mb-5 tracking-tight">비즈니스에 최적화된 플랜</h2>
+          <h2 className="text-3xl lg:text-5xl font-extrabold text-[#00042a] mb-4 lg:mb-5 tracking-tight">비즈니스에 최적화된 플랜</h2>
           <p className="text-[#454651] text-lg">자산 규모와 목적에 맞는 최적의 분석 도구를 선택하세요.</p>
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           {PLANS.map((plan, i) => (
             <ScrollReveal key={plan.name} delay={i * 0.1}>
-              <div className={`landing-pricing-card rounded-xl p-10 flex flex-col relative ${
+              <div className={`landing-pricing-card rounded-xl p-6 lg:p-10 flex flex-col relative ${
                 plan.highlight
                   ? "bg-[#00042a] landing-pricing-featured"
                   : "bg-[#f5f2fa]"
@@ -32,7 +32,7 @@ export function PricingSection() {
                     </div>
                   </>
                 )}
-                <div className="mb-10 relative z-10">
+                <div className="mb-6 lg:mb-10 relative z-10">
                   <p className={`landing-section-label mb-5 ${plan.highlight ? "text-white/50" : ""}`}>{plan.name}</p>
                   <div className="flex items-baseline gap-1 mb-2">
                     <span className={`text-4xl font-extrabold ${plan.highlight ? "text-white" : "text-[#00042a]"}`}>
@@ -44,7 +44,7 @@ export function PricingSection() {
                   </div>
                   <p className={`text-xs ${plan.highlight ? "text-white/60" : "text-[#454651]"}`}>{plan.description}</p>
                 </div>
-                <ul className="space-y-4 mb-12 flex-grow relative z-10">
+                <ul className="space-y-3 lg:space-y-4 mb-8 lg:mb-12 flex-grow relative z-10">
                   {plan.features.map((f) => (
                     <li key={f} className={`flex items-start gap-3 text-sm ${plan.highlight ? "text-white/80" : "text-[#454651]"}`}>
                       <span

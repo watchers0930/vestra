@@ -6,12 +6,12 @@ const EDITORIAL_IMAGE =
 
 export function EditorialSection() {
   return (
-    <section className="bg-[#f5f2fa] py-40 px-12">
-      <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-28 items-center">
+    <section className="bg-[#f5f2fa] py-16 px-5 lg:py-40 lg:px-12">
+      <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-28 items-center">
 
         {/* Left — image */}
         <ScrollReveal className="relative">
-          <div className="landing-img-overlay h-[580px] rounded-xl shadow-2xl">
+          <div className="landing-img-overlay h-[280px] lg:h-[580px] rounded-xl shadow-2xl">
             <Image
               src={EDITORIAL_IMAGE}
               alt="Minimalist luxury office interior"
@@ -22,7 +22,7 @@ export function EditorialSection() {
             />
           </div>
           {/* Floating result card */}
-          <div className="absolute -bottom-10 -right-10 bg-white p-8 max-w-[260px] shadow-2xl rounded-xl z-10">
+          <div className="absolute -bottom-6 -right-2 lg:-bottom-10 lg:-right-10 bg-white p-5 lg:p-8 max-w-[220px] lg:max-w-[260px] shadow-2xl rounded-xl z-10">
             <p className="landing-section-label mb-3">The Result</p>
             <p className="text-lg font-extrabold text-[#00042a] leading-snug">
               의사결정 시간 85% 단축, 자산 포트폴리오 안정성 증대.
@@ -36,12 +36,12 @@ export function EditorialSection() {
 
         {/* Right — quote */}
         <ScrollReveal>
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3 mb-5 lg:mb-8">
             <div className="landing-accent-line" />
             <span className="landing-section-label">Editorial Note</span>
           </div>
-          <blockquote className="mb-10">
-            <p className="text-[32px] font-thin text-[#00042a] leading-[1.5] italic mb-8">
+          <blockquote className="mb-8 lg:mb-10">
+            <p className="text-[22px] lg:text-[32px] font-thin text-[#00042a] leading-[1.5] italic mb-5 lg:mb-8">
               &ldquo;VESTRA는 단순한 알고리즘을 넘어선<br />&lsquo;디지털 큐레이터&rsquo;입니다. 데이터 속에<br />숨겨진 이야기를 가장 먼저 감지합니다.&rdquo;
             </p>
             <cite className="not-italic flex items-center gap-4">
@@ -66,7 +66,7 @@ export function EditorialSection() {
               분석 체계를 전면에 둔 부동산 의사결정 엔진입니다.
             </p>
           </div>
-          <p className="text-[#454651] leading-[1.9] text-[16px] mb-10">
+          <p className="text-[#454651] leading-[1.9] text-[14px] lg:text-[16px] mb-8 lg:mb-10">
             전통적인 부동산 시장은 정보의 비대칭성이 가장 큰 장벽이었습니다. VESTRA는 이 장벽을 허물고, 모든 투자자에게 전문적인 통찰력을 제공하기 위해 탄생했습니다.
           </p>
           <button className="flex items-center gap-2 text-[11px] font-bold text-[#00042a] tracking-widest uppercase group">

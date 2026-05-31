@@ -56,17 +56,17 @@ export function FeaturesSection() {
   const visible = expanded ? FEATURES_DATA : FEATURES_DATA.slice(0, 3);
 
   return (
-    <section id="features" className="py-40 px-12 bg-[#fbf8ff]">
+    <section id="features" className="py-16 px-5 lg:py-40 lg:px-12 bg-[#fbf8ff]">
       <div className="max-w-[1440px] mx-auto">
 
         {/* Header */}
-        <ScrollReveal className="flex items-end justify-between mb-24">
+        <ScrollReveal className="flex items-end justify-between mb-10 lg:mb-24">
           <div>
-            <div className="flex items-center gap-3 mb-5">
+            <div className="flex items-center gap-3 mb-4 lg:mb-5">
               <div className="landing-accent-line" />
               <span className="landing-section-label">Core Services</span>
             </div>
-            <h2 className="text-5xl font-extrabold text-[#00042a] leading-tight tracking-tight">
+            <h2 className="text-3xl lg:text-5xl font-extrabold text-[#00042a] leading-tight tracking-tight">
               전문가의 시각을<br />AI로 구현했습니다
             </h2>
           </div>
@@ -90,10 +90,10 @@ export function FeaturesSection() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {visible.map((f, i) => (
             <ScrollReveal key={f.title} delay={(i + 1) * 0.1}>
-              <div className="landing-feature-card rounded-xl p-10 bg-white cursor-default h-full">
+              <div className="landing-feature-card rounded-xl p-6 lg:p-10 bg-white cursor-default h-full">
 
                 {/* Icon */}
-                <div className="w-14 h-14 flex items-center justify-center bg-[#f5f2fa] rounded-xl mb-8">
+                <div className="w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center bg-[#f5f2fa] rounded-xl mb-5 lg:mb-8">
                   <span className="material-symbols-outlined text-2xl text-[#00042a]" style={iconStyle}>
                     {f.icon}
                   </span>
@@ -109,7 +109,7 @@ export function FeaturesSection() {
                 <p className="text-[#454651] font-normal leading-[1.8] text-[15px]">{f.desc}</p>
 
                 {/* Link */}
-                <div className="mt-8 flex items-center gap-2 text-[#00042a] font-bold text-[11px] tracking-widest uppercase group cursor-pointer">
+                <div className="mt-5 lg:mt-8 flex items-center gap-2 text-[#00042a] font-bold text-[11px] tracking-widest uppercase group cursor-pointer">
                   자세히 보기
                   <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform" style={iconStyle}>
                     arrow_forward

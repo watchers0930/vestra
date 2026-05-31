@@ -9,7 +9,7 @@ export default function LandingLayout({
     <>
       {/* ─── Glass Nav ─── */}
       <header className="fixed top-0 left-0 right-0 z-50 landing-glass-nav">
-        <div className="max-w-[1440px] mx-auto px-12 py-5 flex items-center justify-between">
+        <div className="max-w-[1440px] mx-auto px-5 py-3.5 lg:px-12 lg:py-5 flex items-center justify-between">
           <Link href="/" className="text-xl font-thin tracking-[0.25em] text-[#00042a]">
             VESTRA
           </Link>
@@ -35,9 +35,9 @@ export default function LandingLayout({
       <main className="pt-[14px]">{children}</main>
 
       {/* ─── Dark Footer ─── */}
-      <footer className="text-white px-12 py-20" style={{ backgroundColor: '#222222' }}>
+      <footer className="text-white px-5 py-12 lg:px-12 lg:py-20" style={{ backgroundColor: '#222222' }}>
         <div className="max-w-[1440px] mx-auto">
-          <div className="flex flex-col md:flex-row justify-between gap-16 mb-16">
+          <div className="flex flex-col md:flex-row justify-between gap-8 lg:gap-16 mb-10 lg:mb-16">
             {/* Company */}
             <div className="max-w-xs">
               <div className="text-2xl font-thin tracking-[0.25em] mb-6 text-white">VESTRA</div>
