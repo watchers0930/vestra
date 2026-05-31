@@ -1,12 +1,7 @@
-"use client";
-import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { TICKER_ITEMS } from "../constants";
-import { SampleReportModal } from "./SampleReportModal";
 
 export function HeroSection() {
-  const [modalOpen, setModalOpen] = useState(false);
   const tickerList = [...TICKER_ITEMS, ...TICKER_ITEMS];
 
   return (
@@ -21,52 +16,19 @@ export function HeroSection() {
               <div className="landing-accent-line" />
               <span className="landing-section-label">AI-Powered Real Estate Curation</span>
             </div>
-            <h1 className="text-[32px] lg:text-[55px] xl:text-[65px] font-extrabold text-[#00042a] tracking-tight mb-5 lg:mb-8">
-              <span className="block text-[18px] lg:text-[30px] font-bold leading-[1.3] mb-1.5">보이지 않는 위험까지 감지하는</span>
-              <span className="block leading-[1.1]">부동산 자산관리 플랫폼</span>
+            <h1 className="text-[28px] lg:text-[55px] xl:text-[65px] font-extrabold text-[#00042a] tracking-tight mb-5 lg:mb-8">
+              <span className="block text-[15px] lg:text-[30px] font-bold leading-[1.3] mb-1">보이지 않는 위험까지 감지하는</span>
+              <span className="block leading-[1.1]">부동산 권리분석 플랫폼</span>
               <span className="block font-thin italic leading-[1.2]">베스트라</span>
             </h1>
-            <p className="text-base lg:text-lg text-[#454651] max-w-md mb-8 lg:mb-14 leading-[1.8]">
-              VESTRA는 수만 개의 데이터 포인트를 정밀하게 분석하여<br className="hidden lg:block" />전문가의 통찰력을 디지털화합니다.
+            <p className="text-xs lg:text-base text-[#454651] max-w-md mb-8 lg:mb-14 leading-[1.8]">
+              VESTRA는 수만 개의 데이터 포인트를 정밀하게 분석하여<br />전문가의 통찰력을 디지털화합니다.
             </p>
 
             <div className="mb-8 lg:mb-12 flex flex-wrap gap-3">
               <span className="rounded-full border border-[#00042a]/12 bg-white/80 px-4 py-2 text-[11px] font-bold tracking-[0.18em] text-[#00042a] uppercase">
-                Patent-Based Analysis Engine
-              </span>
-              <span className="rounded-full border border-[#00042a]/12 bg-white/80 px-4 py-2 text-[11px] font-bold tracking-[0.18em] text-[#00042a] uppercase">
                 8대 독자 기술 기반
               </span>
-            </div>
-
-            {/* Buttons */}
-            <div className="flex flex-wrap gap-4 lg:gap-5 mb-10 lg:mb-16">
-              <Link
-                href="/login"
-                className="landing-grad-btn text-white px-10 py-4 rounded font-bold text-[11px] tracking-widest uppercase flex items-center gap-2 group"
-              >
-                지금 분석 시작하기
-                <span
-                  className="material-symbols-outlined text-base"
-                  style={{ fontVariationSettings: "'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24" }}
-                >
-                  arrow_forward
-                </span>
-              </Link>
-              <button
-                onClick={() => setModalOpen(true)}
-                className="text-[#00042a] font-bold text-[11px] tracking-widest uppercase flex items-center gap-2 group relative"
-              >
-                <span className="border-b border-[#00042a]/30 pb-0.5 group-hover:border-[#00042a] transition-colors">
-                  심층 보고서 샘플 보기
-                </span>
-                <span
-                  className="material-symbols-outlined text-sm"
-                  style={{ fontVariationSettings: "'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24" }}
-                >
-                  arrow_outward
-                </span>
-              </button>
             </div>
 
             <div className="flex items-center gap-6">
@@ -112,13 +74,14 @@ export function HeroSection() {
               <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.22em] text-[#6d6d78]">
                 Patent Filing
               </p>
-              <div className="space-y-1.5">
-                <p className="text-[13px] font-semibold leading-[1.6]">
+              <div className="space-y-0.5">
+                <p className="text-[13px] font-semibold leading-[1.3]">
                   출원명: 부동산 거래 위험도 산출장치 및 방법
                 </p>
-                <p className="text-[12px] text-[#454651] leading-[1.6]">
+                <p className="text-[12px] text-[#454651] leading-[1.3]">
                   출원번호: 10-2026-0085160
                 </p>
+                <div className="h-[20px]" />
               </div>
             </div>
           </div>
@@ -128,8 +91,6 @@ export function HeroSection() {
         <div className="absolute -right-40 top-20 w-[600px] h-[600px] bg-[#001466]/4 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute -left-40 bottom-0 w-[500px] h-[500px] bg-[#4a58a7]/4 rounded-full blur-[100px] pointer-events-none" />
       </section>
-
-      {modalOpen && <SampleReportModal onClose={() => setModalOpen(false)} />}
 
       {/* Ticker */}
       <div className="bg-[#00042a] py-4 overflow-hidden">

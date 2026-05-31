@@ -13,15 +13,15 @@ export function PricingSection() {
             <div className="landing-accent-line" />
           </div>
           <h2 className="text-3xl lg:text-5xl font-extrabold text-[#00042a] mb-4 lg:mb-5 tracking-tight">비즈니스에 최적화된 플랜</h2>
-          <p className="text-[#454651] text-lg">자산 규모와 목적에 맞는 최적의 분석 도구를 선택하세요.</p>
+          <p className="text-[#454651] text-lg">자산 규모와 목적에 맞는 최적의 분석 도구를<br />선택하세요.</p>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start pt-[20px]">
           {PLANS.map((plan, i) => (
             <ScrollReveal key={plan.name} delay={i * 0.1}>
               <div className={`landing-pricing-card rounded-xl p-6 lg:p-10 flex flex-col relative ${
                 plan.highlight
-                  ? "bg-[#00042a] landing-pricing-featured"
+                  ? "bg-[#00042a] landing-pricing-featured mt-6"
                   : "bg-[#f5f2fa]"
               }`}>
                 {plan.highlight && (

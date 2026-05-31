@@ -24,7 +24,7 @@ export function EditorialSection() {
           {/* Floating result card */}
           <div className="absolute -bottom-6 -right-2 lg:-bottom-10 lg:-right-10 bg-white p-5 lg:p-8 max-w-[220px] lg:max-w-[260px] shadow-2xl rounded-xl z-10">
             <p className="landing-section-label mb-3">The Result</p>
-            <p className="text-lg font-extrabold text-[#00042a] leading-snug">
+            <p className="text-sm lg:text-lg font-extrabold text-[#00042a] leading-snug">
               의사결정 시간 85% 단축, 자산 포트폴리오 안정성 증대.
             </p>
             <div className="mt-4 flex items-center gap-2">

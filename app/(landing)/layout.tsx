@@ -14,25 +14,25 @@ export default function LandingLayout({
             VESTRA
           </Link>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 lg:gap-4">
             <Link
               href="/login"
-              className="landing-ghost-btn text-[11px] font-bold tracking-widest uppercase px-6 py-2.5 rounded"
+              className="hidden lg:block landing-ghost-btn text-[11px] font-bold tracking-widest uppercase px-6 py-2.5 rounded"
             >
               로그인
             </Link>
             <Link
               href="/login"
-              className="landing-grad-btn text-white text-[11px] font-bold tracking-widest uppercase px-7 py-2.5 rounded"
+              className="landing-grad-btn text-white text-[10px] lg:text-[11px] font-bold tracking-widest uppercase px-5 py-2 lg:px-7 lg:py-2.5 rounded"
             >
-              Get Started
+              시작하기
             </Link>
           </div>
         </div>
       </header>
 
       {/* Content */}
-      <main className="pt-[14px]">{children}</main>
+      <main className="pt-[14px] overflow-x-hidden">{children}</main>
 
       {/* ─── Dark Footer ─── */}
       <footer className="text-white px-5 py-12 lg:px-12 lg:py-20" style={{ backgroundColor: '#222222' }}>
