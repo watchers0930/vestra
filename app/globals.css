@@ -224,6 +224,7 @@ body {
 
 /* Ticker */
 @keyframes landing-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.landing-ticker-wrap { overflow: hidden; max-width: 100vw; position: relative; }
 .landing-ticker-inner { display: flex; width: max-content; animation: landing-ticker 30s linear infinite; }
 .landing-ticker-inner:hover { animation-play-state: paused; }
 

@@ -93,7 +93,7 @@ export function HeroSection() {
       </section>
 
       {/* Ticker */}
-      <div className="bg-[#00042a] py-4 overflow-hidden">
+      <div className="bg-[#00042a] py-4 landing-ticker-wrap">
         <div className="landing-ticker-inner">
           <div className="flex items-center gap-12 px-6" style={{ whiteSpace: "nowrap" }}>
             {tickerList.map((item, i) => (
