@@ -37,7 +37,7 @@ function formatDistance(m: number) {
   return `${(m / 1000).toFixed(1)}km`;
 }
 
-const PEEK_HEIGHT = 100;
+const PEEK_HEIGHT = 120;
 const EXPANDED_HEIGHT_VH = 55;
 
 interface Props {
@@ -81,7 +81,7 @@ export function MobileNeighborhoodSheet({
       className="lg:hidden fixed bottom-0 left-0 right-0 z-[9999] flex flex-col bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out"
       style={{ height: expanded ? `${EXPANDED_HEIGHT_VH}vh` : `${PEEK_HEIGHT}px`, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      {/* 핸들 바 + 요약 (접힌 상태) */}
+      {/* 핸들 바 */}
       <div
         className="flex-shrink-0 cursor-pointer select-none"
         onClick={() => setExpanded(!expanded)}
@@ -91,7 +91,7 @@ export function MobileNeighborhoodSheet({
         <div className="flex justify-center pt-2.5 pb-1">
           <div className="w-9 h-1 rounded-full bg-black/15" />
         </div>
-        <div className="flex items-center justify-between px-4 pb-2">
+        <div className="flex items-center justify-between px-4 pb-1.5">
           <div className="flex items-center gap-2">
             <MapPin size={14} strokeWidth={1.5} style={{ color: "#0071e3" }} />
             <span className="text-[13px] font-bold text-[#1d1d1f]">주변환경 분석</span>
@@ -106,48 +106,39 @@ export function MobileNeighborhoodSheet({
             : <ChevronUp size={16} className="text-[#aeaeb2]" />
           }
         </div>
-        {/* 접힌 상태: 카테고리 점수 요약 칩 */}
-        {!expanded && result && (
-          <div className="flex gap-1.5 px-4 pb-2 overflow-x-auto">
-            {CATEGORY_META.map((c) => {
-              const cat = result.categories[c.key];
-              return (
-                <span key={c.key} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap" style={{ background: `${c.color}14`, color: c.color }}>
-                  <c.icon size={9} strokeWidth={1.5} />
-                  {c.label} {cat.score}
-                </span>
-              );
-            })}
-          </div>
-        )}
       </div>
+
+      {/* 검색바 — 항상 표시 */}
+      <div className="flex-shrink-0 flex gap-2 px-4 pb-2.5" onClick={(e) => e.stopPropagation()}>
+        <AddressAutocomplete
+          value={address}
+          onChange={setAddress}
+          onSelect={(r: AddressResult) => {
+            handleAnalyze(r.roadAddress || r.address);
+            setExpanded(true);
+          }}
+          onSubmit={(addr?: string) => {
+            handleAnalyze(addr);
+            setExpanded(true);
+          }}
+        />
+        <button
+          onClick={() => { handleAnalyze(); setExpanded(true); }}
+          disabled={loading || !address.trim()}
+          className="flex-shrink-0 flex items-center rounded-[10px] border-none px-4 py-[9px] text-[12.5px] font-semibold text-white transition-all duration-150"
+          style={{
+            background: loading || !address.trim() ? "rgba(0,113,227,0.35)" : "#0071e3",
+            cursor: loading || !address.trim() ? "not-allowed" : "pointer",
+          }}
+        >
+          {loading ? <Loader2 size={14} className="animate-spin" /> : "분석"}
+        </button>
+      </div>
+      {error && <p className="px-4 text-[11px] text-[#ff3b30]">{error}</p>}
 
       {/* 펼쳐진 내용 */}
       {expanded && (
         <div className="flex-1 overflow-y-auto overscroll-contain">
-          {/* 검색 */}
-          <div className="flex gap-2 px-4 pb-3 border-b border-black/[0.06]">
-            <AddressAutocomplete
-              value={address}
-              onChange={setAddress}
-              onSelect={(r: AddressResult) => {
-                handleAnalyze(r.roadAddress || r.address);
-              }}
-              onSubmit={handleAnalyze}
-            />
-            <button
-              onClick={() => handleAnalyze()}
-              disabled={loading || !address.trim()}
-              className="flex-shrink-0 flex items-center rounded-[10px] border-none px-4 py-[9px] text-[12.5px] font-semibold text-white transition-all duration-150"
-              style={{
-                background: loading || !address.trim() ? "rgba(0,113,227,0.35)" : "#0071e3",
-                cursor: loading || !address.trim() ? "not-allowed" : "pointer",
-              }}
-            >
-              {loading ? <Loader2 size={14} className="animate-spin" /> : "분석"}
-            </button>
-          </div>
-          {error && <p className="px-4 mt-2 text-[11px] text-[#ff3b30]">{error}</p>}
 
           {/* 로딩 */}
           {loading && (
