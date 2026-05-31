@@ -25,12 +25,6 @@ export function HeroSection() {
               VESTRA는 수만 개의 데이터 포인트를 정밀하게 분석하여<br />전문가의 통찰력을 디지털화합니다.
             </p>
 
-            <div className="mb-8 lg:mb-12 flex flex-wrap gap-3">
-              <span className="rounded-full border border-[#00042a]/12 bg-white/80 px-4 py-2 text-[11px] font-bold tracking-[0.18em] text-[#00042a] uppercase">
-                8대 독자 기술 기반
-              </span>
-            </div>
-
             <div className="flex items-center gap-6">
               <div className="flex -space-x-2">
                 <div className="w-8 h-8 rounded-full bg-[#e4e1e9] border-2 border-white" />
