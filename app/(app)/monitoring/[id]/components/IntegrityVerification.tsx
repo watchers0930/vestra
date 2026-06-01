@@ -28,7 +28,7 @@ export function IntegrityVerification({ result, verifying, onVerify }: Props) {
       <CardHeader
         title="무결성 검증"
         description="해시체인·서명·머클루트 3중 검증"
-        className="px-5 pt-5"
+        className="px-5 pt-4"
       >
         <Button
           variant="primary"
