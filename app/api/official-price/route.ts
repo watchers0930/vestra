@@ -1,6 +1,7 @@
 /**
  * 공시가격 조회 API
  * GET /api/official-price?address=서울 강남구 역삼동 123-4&year=2025
+ * GET /api/official-price?address=강남구 세곡동&lat=37.47&lng=127.05  (좌표 폴백)
  *
  * 주소 → Kakao 지오코딩(법정동코드) → PNU 생성 → 3가지 공시가격 API 병렬 호출
  */
@@ -11,6 +12,8 @@ import { fetchOfficialPrices } from "@/lib/official-price-api";
 export async function GET(req: NextRequest) {
   const address = req.nextUrl.searchParams.get("address")?.trim() ?? "";
   const yearParam = req.nextUrl.searchParams.get("year");
+  const latParam = req.nextUrl.searchParams.get("lat");
+  const lngParam = req.nextUrl.searchParams.get("lng");
 
   if (address.length < 3) {
     return NextResponse.json(
@@ -27,8 +30,12 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const coord = latParam && lngParam
+    ? { lat: parseFloat(latParam), lng: parseFloat(lngParam) }
+    : undefined;
+
   try {
-    const result = await fetchOfficialPrices(address, year);
+    const result = await fetchOfficialPrices(address, year, coord);
 
     if (!result) {
       return NextResponse.json(

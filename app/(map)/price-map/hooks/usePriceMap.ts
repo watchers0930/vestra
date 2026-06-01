@@ -65,7 +65,7 @@ export function usePriceMap() {
     let cancelled = false;
     setOfficialPriceLabel("조회중...");
     const addr = `${selectedGu} ${selectedApt.dong} ${selectedApt.name}`;
-    fetch(`/api/official-price?address=${encodeURIComponent(addr)}`)
+    fetch(`/api/official-price?address=${encodeURIComponent(addr)}&lat=${selectedApt.lat}&lng=${selectedApt.lng}`)
       .then((r) => r.ok ? r.json() as Promise<OfficialPriceResult> : null)
       .then((data) => {
         if (cancelled) return;

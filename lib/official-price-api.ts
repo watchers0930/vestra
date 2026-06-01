@@ -134,6 +134,51 @@ export async function getAddressDetail(address: string): Promise<{
 }
 
 /**
+ * 좌표(lat/lng)로 법정동코드 + 지번 상세 조회 (역지오코딩)
+ */
+export async function getAddressDetailByCoord(lat: number, lng: number): Promise<{
+  bCode: string;
+  mainNo: string;
+  subNo: string;
+  mountainYn: boolean;
+} | null> {
+  const kakaoKey = process.env.KAKAO_REST_KEY;
+  if (!kakaoKey) return null;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    const res = await fetch(
+      `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lng}&y=${lat}&input_coord=WGS84`,
+      {
+        headers: { Authorization: `KakaoAK ${kakaoKey}` },
+        signal: controller.signal,
+      },
+    );
+    clearTimeout(timeout);
+
+    if (!res.ok) return null;
+
+    const json = await res.json();
+    const doc = json.documents?.[0];
+    if (!doc?.address) return null;
+
+    const addr = doc.address;
+    const bCode = addr.b_code || "";
+    const mainNo = addr.main_address_no || "";
+    const subNo = addr.sub_address_no || "";
+    const mountainYn = addr.mountain_yn === "Y";
+
+    if (!bCode || bCode.length !== 10 || !mainNo) return null;
+
+    return { bCode, mainNo, subNo, mountainYn };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * PNU 코드 생성 (19자리)
  * 법정동코드(10) + 필지구분(1) + 본번(4) + 부번(4)
  */
@@ -323,11 +368,13 @@ export async function fetchHousePrice(
 export async function fetchOfficialPrices(
   address: string,
   year?: number,
+  coord?: { lat: number; lng: number },
 ): Promise<OfficialPriceResult | null> {
   const stdrYear = year || new Date().getFullYear();
 
-  // 카카오 API로 주소 상세 조회
-  const detail = await getAddressDetail(address);
+  // 카카오 API로 주소 상세 조회 (주소 → 좌표 역지오코딩 폴백)
+  const detail = await getAddressDetail(address)
+    ?? (coord ? await getAddressDetailByCoord(coord.lat, coord.lng) : null);
   if (!detail) return null;
 
   const pnu = buildPnu(detail.bCode, detail.mainNo, detail.subNo, detail.mountainYn);
