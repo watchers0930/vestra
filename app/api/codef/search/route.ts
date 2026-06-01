@@ -37,11 +37,6 @@ export async function GET(req: NextRequest) {
       query: address,
     });
   } catch (error: unknown) {
-    const detail = error instanceof Error ? error.message : String(error);
-    console.error(`[CODEF 주소 검색] ${detail}`);
-    return NextResponse.json(
-      { error: "CODEF 주소 검색 중 오류가 발생했습니다.", detail },
-      { status: 500 },
-    );
+    return handleApiError(error, "CODEF 주소 검색");
   }
 }

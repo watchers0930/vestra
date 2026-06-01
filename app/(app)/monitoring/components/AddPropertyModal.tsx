@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, MapPin, Building2, X } from "lucide-react";
+import { Search, MapPin, Building2, X, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { FormInput } from "@/components/forms/FormInput";
 
@@ -35,6 +35,9 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
+  // CODEF 서비스 상태
+  const [codefUnavailable, setCodefUnavailable] = useState(false);
+
   async function handleSearch() {
     if (query.trim().length < 2) {
       setSearchError("주소를 2자 이상 입력해주세요.");
@@ -51,6 +54,9 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
       const data = await res.json();
 
       if (!res.ok) {
+        if (res.status === 503 || res.status === 500) {
+          setCodefUnavailable(true);
+        }
         setSearchError(data.error || "검색에 실패했습니다.");
         return;
       }
@@ -120,6 +126,19 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
 
         {/* 본문 */}
         <div className="px-6 py-5 overflow-y-auto flex-1 space-y-5">
+          {/* CODEF 서비스 불가 안내 */}
+          {codefUnavailable && (
+            <div className="flex items-start gap-2.5 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
+              <AlertTriangle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-amber-800">등기부 검색 서비스 점검 중</p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  CODEF 연동 서비스가 일시적으로 이용 불가합니다. 잠시 후 다시 시도해주세요.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* 주소 검색 */}
           <div>
             <label className="block text-sm font-medium mb-1.5">주소 검색</label>
