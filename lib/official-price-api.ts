@@ -305,9 +305,9 @@ export async function fetchAptPrice(
 
   const result: AptPriceItem = {
     pnu,
-    price: price * 10000, // 만원 → 원
-    area: parseFloat(item.exclusAr) || 0,
-    complexName: item.hsmpNm || "",
+    price,  // VWorld는 원 단위로 반환
+    area: parseFloat(item.prvuseAr || item.exclusAr) || 0,
+    complexName: item.aphusNm || item.hsmpNm || "",
     dong: item.dongNm || "",
     ho: item.hoNm || "",
     year,
