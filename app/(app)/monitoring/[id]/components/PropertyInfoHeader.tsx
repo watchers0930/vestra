@@ -7,6 +7,7 @@ import type { PropertyDetail } from "../hooks/usePropertyDetail";
 
 interface Props {
   property: PropertyDetail;
+  monitorDays: number;
 }
 
 const MODE_LABEL: Record<string, string> = {
@@ -23,11 +24,7 @@ function formatDate(dateStr: string | null): string {
   });
 }
 
-export function PropertyInfoHeader({ property }: Props) {
-  const monitorDays = Math.floor(
-    (Date.now() - new Date(property.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-  );
-
+export function PropertyInfoHeader({ property, monitorDays }: Props) {
   return (
     <Card>
       <CardContent>

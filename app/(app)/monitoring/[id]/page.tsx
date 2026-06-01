@@ -20,6 +20,7 @@ export default function MonitoringDetailPage({ params }: Props) {
   const {
     property,
     snapshots,
+    monitorDays,
     loading,
     integrityResult,
     verifying,
@@ -96,7 +97,7 @@ export default function MonitoringDetailPage({ params }: Props) {
 
       {/* 콘텐츠 */}
       <div className="space-y-6">
-        <PropertyInfoHeader property={property} />
+        <PropertyInfoHeader property={property} monitorDays={monitorDays} />
         <AlertTimeline alerts={property.alerts} onMarkRead={markAlertRead} />
         <SnapshotChainView snapshots={snapshots} />
         <IntegrityVerification

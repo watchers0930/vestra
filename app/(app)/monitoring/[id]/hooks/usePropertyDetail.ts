@@ -47,6 +47,7 @@ export function usePropertyDetail(propertyId: string) {
   const { data: session } = useSession();
   const [property, setProperty] = useState<PropertyDetail | null>(null);
   const [snapshots, setSnapshots] = useState<SnapshotItem[]>([]);
+  const [monitorDays, setMonitorDays] = useState(0);
   const [loading, setLoading] = useState(true);
   const [integrityResult, setIntegrityResult] = useState<IntegrityResult | null>(null);
   const [verifying, setVerifying] = useState(false);
@@ -67,6 +68,9 @@ export function usePropertyDetail(propertyId: string) {
         if (propRes.ok) {
           const propData = await propRes.json();
           setProperty(propData.property);
+          if (propData.property?.createdAt) {
+            setMonitorDays(Math.floor((Date.now() - new Date(propData.property.createdAt).getTime()) / (1000 * 60 * 60 * 24)));
+          }
         }
         if (snapRes.ok) {
           const snapData = await snapRes.json();
@@ -123,6 +127,7 @@ export function usePropertyDetail(propertyId: string) {
   return {
     property,
     snapshots,
+    monitorDays,
     loading,
     integrityResult,
     verifying,
