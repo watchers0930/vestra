@@ -55,14 +55,13 @@ export default function PredictionPage() {
   const [officialPrice, setOfficialPrice] = useState<OfficialPriceResult | null>(null);
 
   useEffect(() => {
-    if (!result || !address) { setOfficialPrice(null); return; }
+    if (!result || !address) return;
     let cancelled = false;
-    setOfficialPrice(null);
     fetch(`/api/official-price?address=${encodeURIComponent(address)}`)
       .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (!cancelled) setOfficialPrice(data); })
+      .then((data) => { if (!cancelled) setOfficialPrice(data ?? null); })
       .catch(() => { if (!cancelled) setOfficialPrice(null); });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; setOfficialPrice(null); };
   }, [result, address]);
 
   return (
