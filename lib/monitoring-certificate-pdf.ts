@@ -82,6 +82,15 @@ const MODE_LABEL: Record<string, string> = {
   contract_gap: "Contract-Gap Intensive",
 };
 
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  const chunks: string[] = [];
+  for (let i = 0; i < bytes.length; i += 8192) {
+    chunks.push(String.fromCharCode(...bytes.subarray(i, i + 8192)));
+  }
+  return btoa(chunks.join(""));
+}
+
 export async function exportMonitoringCertificatePdf({
   property,
   snapshots,
@@ -89,6 +98,23 @@ export async function exportMonitoringCertificatePdf({
 }: CertificateOptions): Promise<void> {
   const { default: jsPDF } = await import("jspdf");
   const pdf = new jsPDF("p", "mm", "a4");
+
+  // 한글 폰트 로드
+  let defaultFont = "helvetica";
+  try {
+    const fontRes = await fetch("/fonts/NanumGothic-Regular.ttf");
+    if (fontRes.ok) {
+      const fontBuffer = await fontRes.arrayBuffer();
+      const fontBase64 = arrayBufferToBase64(fontBuffer);
+      pdf.addFileToVFS("NanumGothic-Regular.ttf", fontBase64);
+      pdf.addFont("NanumGothic-Regular.ttf", "NanumGothic", "normal");
+      pdf.setFont("NanumGothic");
+      defaultFont = "NanumGothic";
+    }
+  } catch {
+    // 폰트 로드 실패 시 기본 Helvetica 사용
+  }
+
   let y = MARGIN;
 
   const certId = `CERT-${property.id.slice(-8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
@@ -307,7 +333,7 @@ export async function exportMonitoringCertificatePdf({
       pdf.setFont("courier", "normal");
       pdf.text(snap.snapshotHash.slice(0, 32) + "...", MARGIN + 50, y);
       pdf.text(snap.signature.slice(0, 24) + "...", MARGIN + 120, y);
-      pdf.setFont("helvetica", "normal");
+      pdf.setFont(defaultFont, "normal");
       y += 4;
     }
 
@@ -336,7 +362,7 @@ export async function exportMonitoringCertificatePdf({
       pdf.text(line, MARGIN + 2, y);
       y += 3.5;
     }
-    pdf.setFont("helvetica", "normal");
+    pdf.setFont(defaultFont, "normal");
 
     y += 3;
     drawLine();

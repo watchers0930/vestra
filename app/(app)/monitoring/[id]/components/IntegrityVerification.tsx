@@ -28,6 +28,7 @@ export function IntegrityVerification({ result, verifying, onVerify }: Props) {
       <CardHeader
         title="무결성 검증"
         description="해시체인·서명·머클루트 3중 검증"
+        className="px-5 pt-5"
       >
         <Button
           variant="primary"
@@ -39,7 +40,7 @@ export function IntegrityVerification({ result, verifying, onVerify }: Props) {
           검증 실행
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-5 pb-5 pt-0">
         {!result && !verifying && (
           <p className="text-center text-[13px] text-[#86868b] py-6">
             검증 버튼을 눌러 스냅샷 체인의 무결성을 확인하세요.

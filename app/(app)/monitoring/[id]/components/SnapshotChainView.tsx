@@ -49,8 +49,8 @@ export function SnapshotChainView({ snapshots }: Props) {
   if (snapshots.length === 0) {
     return (
       <Card>
-        <CardHeader title="스냅샷 체인" description="등기부 해시체인 기록" />
-        <CardContent>
+        <CardHeader title="스냅샷 체인" description="등기부 해시체인 기록" className="px-5 pt-5" />
+        <CardContent className="px-5 pb-5 pt-0">
           <p className="text-center text-[13px] text-[#86868b] py-8">
             기록된 스냅샷이 없습니다.
           </p>
@@ -64,8 +64,9 @@ export function SnapshotChainView({ snapshots }: Props) {
       <CardHeader
         title="스냅샷 체인"
         description={`${snapshots.length}개의 블록이 SHA-256 해시로 연결됨`}
+        className="px-5 pt-5"
       />
-      <CardContent>
+      <CardContent className="px-5 pb-5 pt-0">
         <div className="overflow-x-auto pb-2">
           <div className="flex items-start gap-2 min-w-max">
             {snapshots.map((snap, idx) => {

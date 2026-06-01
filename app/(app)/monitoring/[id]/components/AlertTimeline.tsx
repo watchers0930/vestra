@@ -49,8 +49,8 @@ export function AlertTimeline({ alerts, onMarkRead }: Props) {
   if (alerts.length === 0) {
     return (
       <Card>
-        <CardHeader title="변동 알림" description="감시 기간 중 감지된 등기 변동 이력" />
-        <CardContent>
+        <CardHeader title="변동 알림" description="감시 기간 중 감지된 등기 변동 이력" className="px-5 pt-5" />
+        <CardContent className="px-5 pb-5 pt-0">
           <p className="text-center text-[13px] text-[#86868b] py-8">
             감지된 변동 사항이 없습니다.
           </p>
@@ -61,8 +61,8 @@ export function AlertTimeline({ alerts, onMarkRead }: Props) {
 
   return (
     <Card>
-      <CardHeader title="변동 알림" description={`총 ${alerts.length}건의 변동 감지`} />
-      <CardContent>
+      <CardHeader title="변동 알림" description={`총 ${alerts.length}건의 변동 감지`} className="px-5 pt-5" />
+      <CardContent className="px-5 pb-5 pt-0">
         <div className="relative">
           {/* 타임라인 세로선 */}
           <div className="absolute left-[11px] top-2 bottom-2 w-px bg-[#e5e5e7]" />

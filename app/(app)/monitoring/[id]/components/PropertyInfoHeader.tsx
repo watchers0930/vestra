@@ -27,7 +27,7 @@ function formatDate(dateStr: string | null): string {
 export function PropertyInfoHeader({ property, monitorDays }: Props) {
   return (
     <Card>
-      <CardContent>
+      <CardContent className="p-5">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           {/* 좌측: 물건 정보 */}
           <div className="space-y-3">
