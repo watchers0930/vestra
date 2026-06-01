@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { formatPrice, escapeHtml } from "@/lib/format";
+import { formatPrice, formatKRW, escapeHtml } from "@/lib/format";
 import { analyzeRisk, getAreaColor } from "../lib/analyzeRisk";
 import type { AptData, MapResponse } from "../types";
+import type { OfficialPriceResult } from "@/lib/official-price-api";
 
 const LOCAL_TTL = 30 * 60 * 1000; // 30분 fresh cache
 const LOCAL_MAX_AGE = 24 * 60 * 60 * 1000; // 24시간 stale cache fallback
@@ -56,6 +57,25 @@ export function usePriceMap() {
   const [selectedSido, setSelectedSido] = useState("서울");
   const [tradeType, setTradeType] = useState<"매매" | "전세">(readInitialTradeType);
   const [riskPopup, setRiskPopup] = useState<{ apt: AptData; risk: ReturnType<typeof analyzeRisk> } | null>(null);
+  const [officialPriceLabel, setOfficialPriceLabel] = useState<string>("");
+
+  // 선택된 아파트 변경 시 공시지가 조회
+  useEffect(() => {
+    if (!selectedApt) { setOfficialPriceLabel(""); return; }
+    let cancelled = false;
+    setOfficialPriceLabel("조회중...");
+    const addr = `${selectedApt.dong} ${selectedApt.name}`;
+    fetch(`/api/official-price?address=${encodeURIComponent(addr)}`)
+      .then((r) => r.ok ? r.json() as Promise<OfficialPriceResult> : null)
+      .then((data) => {
+        if (cancelled) return;
+        if (!data) { setOfficialPriceLabel("데이터 없음"); return; }
+        const price = data.aptPrice?.price ?? data.housePrice?.price ?? data.landPrice?.totalPrice;
+        setOfficialPriceLabel(price ? formatKRW(price) : "데이터 없음");
+      })
+      .catch(() => { if (!cancelled) setOfficialPriceLabel("데이터 없음"); });
+    return () => { cancelled = true; };
+  }, [selectedApt]);
 
   const selectAndMoveToApt = useCallback((apt: AptData) => {
     setSelectedApt(apt);
@@ -412,5 +432,6 @@ export function usePriceMap() {
     selectedSido, setSelectedSido, tradeType, setTradeType,
     riskPopup, setRiskPopup,
     selectAndMoveToApt, topChanges, analyzeRisk, mapStatus,
+    officialPriceLabel,
   };
 }

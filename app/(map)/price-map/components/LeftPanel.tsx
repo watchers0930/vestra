@@ -20,6 +20,7 @@ interface Props {
   topChanges: AptData[];
   selectAndMoveToApt: (apt: AptData) => void;
   setRiskPopup: (v: { apt: AptData; risk: ReturnType<typeof analyzeRisk> } | null) => void;
+  officialPriceLabel?: string;
 }
 
 const RANK_COLORS = ["#0071e3", "#1a9e45", "#b86f00"];
@@ -28,6 +29,7 @@ export function LeftPanel({
   selectedGu, setSelectedGu, selectedApt, loading,
   showGuDropdown, setShowGuDropdown, selectedSido, setSelectedSido,
   tradeType, setTradeType, topChanges, selectAndMoveToApt, setRiskPopup,
+  officialPriceLabel,
 }: Props) {
   return (
     <div className="hidden lg:flex" style={{ height: "100%", width: "300px", flexShrink: 0, flexDirection: "column", background: "#f5f5f7", borderRight: "1px solid rgba(0,0,0,0.08)" }}>
@@ -194,7 +196,7 @@ export function LeftPanel({
                   { label: "시세", value: formatPrice(selectedApt.price) },
                   { label: "면적", value: `${selectedApt.area}평` },
                   { label: "건축", value: `${selectedApt.year}년` },
-                  { label: "법정동", value: selectedApt.dong },
+                  { label: "공시지가", value: officialPriceLabel || "데이터 없음" },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ borderRadius: "10px", background: "#f5f5f7", padding: "8px 10px" }}>
                     <p style={{ fontSize: "10px", color: "#aeaeb2", margin: 0 }}>{label}</p>

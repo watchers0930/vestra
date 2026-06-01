@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
+import type { OfficialPriceResult } from "@/lib/official-price-api";
 import { TrendingUp, BarChart3, Home, Shield, Activity, MapPin, Zap } from "lucide-react";
 import { CategoryHero } from "@/components/common/CategoryHero";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
@@ -50,6 +51,19 @@ export default function PredictionPage() {
     filteredTransactions, filteredStats, scenarios, disabledTabs,
     getChartData, getHistoricalData, getMonthlyTrendData,
   } = usePredictionData();
+
+  const [officialPrice, setOfficialPrice] = useState<OfficialPriceResult | null>(null);
+
+  useEffect(() => {
+    if (!result || !address) { setOfficialPrice(null); return; }
+    let cancelled = false;
+    setOfficialPrice(null);
+    fetch(`/api/official-price?address=${encodeURIComponent(address)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (!cancelled) setOfficialPrice(data); })
+      .catch(() => { if (!cancelled) setOfficialPrice(null); });
+    return () => { cancelled = true; };
+  }, [result, address]);
 
   return (
     <div style={{ paddingBottom: "48px" }}>
@@ -257,6 +271,7 @@ export default function PredictionPage() {
             filteredTransactions={filteredTransactions}
             priceStats={result.priceStats}
             selectedArea={selectedArea}
+            officialPrice={officialPrice}
           />
 
           {/* AI 분석 의견 */}

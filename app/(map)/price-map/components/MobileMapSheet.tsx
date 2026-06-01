@@ -21,6 +21,7 @@ interface Props {
   topChanges: AptData[];
   selectAndMoveToApt: (apt: AptData) => void;
   setRiskPopup: (v: { apt: AptData; risk: ReturnType<typeof analyzeRisk> } | null) => void;
+  officialPriceLabel?: string;
 }
 
 const RANK_COLORS = ["#0071e3", "#1a9e45", "#b86f00"];
@@ -32,6 +33,7 @@ export function MobileMapSheet({
   selectedGu, setSelectedGu, selectedApt, loading,
   showGuDropdown, setShowGuDropdown, selectedSido, setSelectedSido,
   tradeType, setTradeType, topChanges, selectAndMoveToApt, setRiskPopup,
+  officialPriceLabel,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const startY = useRef(0);
@@ -121,7 +123,7 @@ export function MobileMapSheet({
                     { label: "시세", value: formatPrice(selectedApt.price) },
                     { label: "면적", value: `${selectedApt.area}평` },
                     { label: "건축", value: `${selectedApt.year}년` },
-                    { label: "법정동", value: selectedApt.dong },
+                    { label: "공시지가", value: officialPriceLabel || "데이터 없음" },
                   ].map(({ label, value }) => (
                     <div key={label} className="rounded-[10px] bg-[#f5f5f7] px-2.5 py-2">
                       <p className="text-[10px] text-[#aeaeb2] m-0">{label}</p>

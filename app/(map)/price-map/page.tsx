@@ -13,6 +13,7 @@ export default function PriceMapPage() {
     selectedSido, setSelectedSido, tradeType, setTradeType,
     riskPopup, setRiskPopup,
     selectAndMoveToApt, topChanges, mapStatus,
+    officialPriceLabel,
   } = usePriceMap();
 
   return (
@@ -32,6 +33,7 @@ export default function PriceMapPage() {
           topChanges={topChanges}
           selectAndMoveToApt={selectAndMoveToApt}
           setRiskPopup={setRiskPopup}
+          officialPriceLabel={officialPriceLabel}
         />
 
         {riskPopup && (
@@ -76,6 +78,7 @@ export default function PriceMapPage() {
         topChanges={topChanges}
         selectAndMoveToApt={selectAndMoveToApt}
         setRiskPopup={setRiskPopup}
+        officialPriceLabel={officialPriceLabel}
       />
     </div>
   );
