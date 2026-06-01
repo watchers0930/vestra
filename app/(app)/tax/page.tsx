@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
-import { Building2, Home, ArrowRightLeft, GitCompareArrows, FileInput } from "lucide-react";
+import { Building2, Home, ArrowRightLeft, GitCompareArrows, FileInput, Loader2 } from "lucide-react";
 import { formatKRW } from "@/lib/utils";
 import { getAnalyses, type AnalysisRecord } from "@/lib/store";
 import { calculateAcquisitionTax, calculateHoldingTax, calculateTransferTax } from "@/lib/tax-calculator";
@@ -11,6 +11,7 @@ import { CategoryHero } from "@/components/common/CategoryHero";
 import { SliderInput } from "@/components/forms";
 import { InfoRow, ScholarPapers } from "@/components/results";
 import { useHydrated } from "@/lib/use-hydrated";
+import AddressAutocomplete, { type AddressResult } from "@/components/common/AddressAutocomplete";
 import dynamic from "next/dynamic";
 
 const TaxScenarioCompare = dynamic(
@@ -73,7 +74,11 @@ function CheckOption({ checked, onChange, label }: { checked: boolean; onChange:
 
 export default function TaxPage() {
   const mounted = useHydrated();
-  const [activeTab, setActiveTab] = useState<TaxTab>("acquisition");
+  const [activeTab, setActiveTab] = useState<TaxTab>(() => {
+    if (typeof window === "undefined") return "acquisition";
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    return (tab === "holding" || tab === "transfer" || tab === "scenario") ? tab : "acquisition";
+  });
   const [contractAnalyses] = useState<AnalysisRecord[]>(() =>
     typeof window === "undefined"
       ? []
@@ -90,9 +95,37 @@ export default function TaxPage() {
   const [acqIsAdjusted, setAcqIsAdjusted] = useState(false);
   const [acqIsFirst, setAcqIsFirst] = useState(false);
 
-  const [holdAssessed, setHoldAssessed] = useState(600000000);
+  const [holdAssessed, setHoldAssessed] = useState(() => {
+    if (typeof window === "undefined") return 600000000;
+    const v = parseInt(new URLSearchParams(window.location.search).get("assessed") || "", 10);
+    return v > 0 ? v : 600000000;
+  });
   const [holdHouseCount, setHoldHouseCount] = useState(1);
   const [holdIsAdjusted, setHoldIsAdjusted] = useState(false);
+  const [holdAddress, setHoldAddress] = useState("");
+  const [holdPriceLoading, setHoldPriceLoading] = useState(false);
+  const [holdPriceLabel, setHoldPriceLabel] = useState<string | null>(null);
+
+  const handleHoldAddressSelect = useCallback(async (item: AddressResult) => {
+    const addr = item.address || item.roadAddress;
+    setHoldAddress(addr);
+    setHoldPriceLoading(true);
+    setHoldPriceLabel(null);
+    try {
+      const res = await fetch(`/api/official-price?address=${encodeURIComponent(addr)}`);
+      if (res.ok) {
+        const data = await res.json();
+        const price = data.aptPrice?.price || data.housePrice?.price || data.landPrice?.totalPrice || 0;
+        if (price > 0) {
+          setHoldAssessed(price);
+          setHoldPriceLabel(`${data.year}년 공시가격 자동 적용`);
+        } else {
+          setHoldPriceLabel("공시가격을 찾을 수 없습니다");
+        }
+      }
+    } catch { /* graceful fallback */ }
+    setHoldPriceLoading(false);
+  }, []);
 
   const [transAcqPrice, setTransAcqPrice] = useState(600000000);
   const [transTransPrice, setTransTransPrice] = useState(900000000);
@@ -258,6 +291,24 @@ export default function TaxPage() {
               <Home size={18} strokeWidth={1.5} style={{ color: TAB_COLORS.holding }} /> 보유세 계산
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              {/* 공시가격 자동 조회 */}
+              <div>
+                <p style={{ fontSize: "13px", fontWeight: 500, color: "#1d1d1f", marginBottom: "8px" }}>주소로 공시가격 조회</p>
+                <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                  <AddressAutocomplete
+                    value={holdAddress}
+                    onChange={setHoldAddress}
+                    onSelect={handleHoldAddressSelect}
+                    placeholder="지번 주소 입력 시 공시가격 자동 적용"
+                  />
+                  {holdPriceLoading && <Loader2 size={16} className="animate-spin" style={{ color: "#10b981", marginTop: "10px", flexShrink: 0 }} />}
+                </div>
+                {holdPriceLabel && (
+                  <p style={{ fontSize: "11px", color: holdPriceLabel.includes("찾을 수 없") ? "#dc2626" : "#059669", marginTop: "6px", marginBottom: 0 }}>
+                    {holdPriceLabel}
+                  </p>
+                )}
+              </div>
               <SliderInput label="공시가격" value={holdAssessed} onChange={setHoldAssessed} min={50000000} max={5000000000} step={10000000} />
               <div>
                 <p style={{ fontSize: "13px", fontWeight: 500, color: "#1d1d1f", marginBottom: "8px" }}>보유 주택수</p>

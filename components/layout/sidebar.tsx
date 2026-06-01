@@ -7,7 +7,7 @@ import {
   TrendingUp, Home, MessageSquare, Database, ChevronLeft, ChevronRight,
   ChevronDown, Menu, X, Users, CheckCircle, FileText, Megaphone,
   KeyRound, ExternalLink, ClipboardCheck, Brain, SlidersHorizontal,
-  ShieldAlert, Key, Newspaper, MapPin, Download,
+  ShieldAlert, Key, Newspaper, MapPin, Download, Landmark,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -39,6 +39,7 @@ const userMenuItems: MenuItem[] = [
   { href: "/rights",         icon: Shield,          label: "권리분석",       description: "등기부등본을 업로드하면 갑구·을구 권리관계를 AI가 종합 분석합니다" },
   { href: "/contract",       icon: FileSearch,      label: "계약검토",       description: "매매·임대차 계약서를 AI가 검토하고 위험 조항을 알려드립니다" },
   { href: "/tax",            icon: Calculator,      label: "세금계산",       description: "취득세·양도세·종부세 등 부동산 세금을 시나리오별로 계산합니다" },
+  { href: "/official-price", icon: Landmark,        label: "공시가격 조회",  description: "개별공시지가·공동주택가격·개별주택가격을 통합 조회합니다" },
   { href: "/prediction",     icon: TrendingUp,      label: "시세전망",       description: "실거래가 데이터 기반으로 시세 추이와 향후 전망을 분석합니다" },
   { href: "/price-map",      icon: MapPin,          label: "시세지도",       description: "지도 위에서 아파트별 실거래가와 시세 변동을 한눈에 확인합니다" },
   {
@@ -63,9 +64,9 @@ const userMenuItems: MenuItem[] = [
 
 const userMenuGroups: MenuGroup[] = [
   { label: "메인",     items: [userMenuItems[0]] },
-  { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[2], userMenuItems[4], userMenuItems[6], userMenuItems[5]] },
-  { label: "도구",     items: [userMenuItems[8], userMenuItems[3], userMenuItems[7]] },
-  { label: "전문가",   items: [userMenuItems[9]] },
+  { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[2], userMenuItems[5], userMenuItems[7], userMenuItems[6]] },
+  { label: "도구",     items: [userMenuItems[9], userMenuItems[3], userMenuItems[4], userMenuItems[8]] },
+  { label: "전문가",   items: [userMenuItems[10]] },
 ];
 
 const adminMenuItems: MenuItem[] = [
