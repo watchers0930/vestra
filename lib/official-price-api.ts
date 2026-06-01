@@ -135,6 +135,7 @@ export async function getAddressDetail(address: string): Promise<{
 
 /**
  * 좌표(lat/lng)로 법정동코드 + 지번 상세 조회 (역지오코딩)
+ * coord2address(지번) + coord2regioncode(법정동코드) 병렬 호출
  */
 export async function getAddressDetailByCoord(lat: number, lng: number): Promise<{
   bCode: string;
@@ -148,24 +149,27 @@ export async function getAddressDetailByCoord(lat: number, lng: number): Promise
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
+    const headers = { Authorization: `KakaoAK ${kakaoKey}` };
+    const opts = { headers, signal: controller.signal };
 
-    const res = await fetch(
-      `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lng}&y=${lat}&input_coord=WGS84`,
-      {
-        headers: { Authorization: `KakaoAK ${kakaoKey}` },
-        signal: controller.signal,
-      },
-    );
+    const [addrRes, regionRes] = await Promise.all([
+      fetch(`https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lng}&y=${lat}&input_coord=WGS84`, opts),
+      fetch(`https://dapi.kakao.com/v2/local/geo/coord2regioncode.json?x=${lng}&y=${lat}&input_coord=WGS84`, opts),
+    ]);
     clearTimeout(timeout);
 
-    if (!res.ok) return null;
+    if (!addrRes.ok || !regionRes.ok) return null;
 
-    const json = await res.json();
-    const doc = json.documents?.[0];
-    if (!doc?.address) return null;
+    const [addrJson, regionJson] = await Promise.all([addrRes.json(), regionRes.json()]);
 
-    const addr = doc.address;
-    const bCode = addr.b_code || "";
+    const addrDoc = addrJson.documents?.[0];
+    if (!addrDoc?.address) return null;
+
+    // coord2regioncode에서 법정동(B) 코드 추출
+    const bDoc = regionJson.documents?.find((d: { region_type: string }) => d.region_type === "B");
+    const bCode = bDoc?.code || "";
+
+    const addr = addrDoc.address;
     const mainNo = addr.main_address_no || "";
     const subNo = addr.sub_address_no || "";
     const mountainYn = addr.mountain_yn === "Y";
