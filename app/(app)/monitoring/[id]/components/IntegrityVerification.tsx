@@ -84,7 +84,7 @@ export function IntegrityVerification({ result, verifying, onVerify }: Props) {
                 <StatusIcon ok={result.hashChainValid} />
                 <div>
                   <div className="text-[12px] font-semibold text-[#1d1d1f]">기록 연결 확인</div>
-                  <div className="text-[10.5px] text-[#86868b]">SHA-256 해시체인</div>
+                  <div className="text-[10.5px] text-[#86868b]">암호화 연결 검증</div>
                 </div>
               </div>
 

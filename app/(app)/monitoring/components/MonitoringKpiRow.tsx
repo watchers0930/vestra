@@ -35,9 +35,9 @@ export function MonitoringKpiRow({ activeCount, unreadAlertCount, highRiskCount,
         colorAccent={highRiskCount > 0 ? "red" : "green"}
       />
       <DashboardKpiCard
-        label="무결성 보증"
-        value="SHA-256"
-        description="해시체인 + Ed25519 서명"
+        label="기록 보호"
+        value="위변조 방지"
+        description="모든 기록을 암호화로 안전하게 보관"
         icon={ShieldCheck}
         colorAccent="green"
       />
