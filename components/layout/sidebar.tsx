@@ -65,8 +65,8 @@ const userMenuItems: MenuItem[] = [
 
 const userMenuGroups: MenuGroup[] = [
   { label: "메인",     items: [userMenuItems[0]] },
-  { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[2], userMenuItems[5], userMenuItems[7], userMenuItems[6]] },
-  { label: "도구",     items: [userMenuItems[9], userMenuItems[3], userMenuItems[4], userMenuItems[8], userMenuItems[11]] },
+  { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[2], userMenuItems[5], userMenuItems[7], userMenuItems[11], userMenuItems[6]] },
+  { label: "도구",     items: [userMenuItems[9], userMenuItems[3], userMenuItems[4], userMenuItems[8]] },
   { label: "전문가",   items: [userMenuItems[10]] },
 ];
 
