@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useReducer } from "react";
 import { useSession } from "next-auth/react";
 
 export interface MonitoredProperty {
@@ -29,50 +29,50 @@ export function useMonitoringData() {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-
-  const fetchData = useCallback(async () => {
-    if (!session?.user) {
-      setMounted(true);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const [propRes, alertRes] = await Promise.all([
-        fetch("/api/monitoring"),
-        fetch("/api/monitoring/alerts?page=1"),
-      ]);
-
-      if (propRes.ok) {
-        const propData = await propRes.json();
-        setProperties(propData.properties || []);
-      }
-      if (alertRes.ok) {
-        const alertData = await alertRes.json();
-        setAlerts(
-          (alertData.alerts || []).map((a: AlertSummary & { monitoredPropertyId: string }) => ({
-            monitoredPropertyId: a.monitoredPropertyId,
-            riskLevel: a.riskLevel,
-            isRead: a.isRead,
-          }))
-        );
-      }
-    } catch {
-      /* 조회 실패 무시 */
-    }
-
-    setMounted(true);
-    setLoading(false);
-  }, [session]);
+  const [refreshKey, forceRefresh] = useReducer((c: number) => c + 1, 0);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    async function load() {
+      if (!session?.user) {
+        setMounted(true);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const [propRes, alertRes] = await Promise.all([
+          fetch("/api/monitoring"),
+          fetch("/api/monitoring/alerts?page=1"),
+        ]);
+
+        if (propRes.ok) {
+          const propData = await propRes.json();
+          setProperties(propData.properties || []);
+        }
+        if (alertRes.ok) {
+          const alertData = await alertRes.json();
+          setAlerts(
+            (alertData.alerts || []).map((a: AlertSummary & { monitoredPropertyId: string }) => ({
+              monitoredPropertyId: a.monitoredPropertyId,
+              riskLevel: a.riskLevel,
+              isRead: a.isRead,
+            }))
+          );
+        }
+      } catch {
+        /* 조회 실패 무시 */
+      }
+
+      setMounted(true);
+      setLoading(false);
+    }
+    load();
+  }, [session, refreshKey]);
 
   const refresh = useCallback(() => {
     setLoading(true);
-    fetchData();
-  }, [fetchData]);
+    forceRefresh();
+  }, []);
 
   // KPI 계산
   const activeCount = useMemo(
