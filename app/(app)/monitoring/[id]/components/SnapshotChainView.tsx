@@ -49,7 +49,7 @@ export function SnapshotChainView({ snapshots }: Props) {
   if (snapshots.length === 0) {
     return (
       <Card>
-        <CardHeader title="스냅샷 체인" description="등기부 해시체인 기록" className="px-5 pt-4" />
+        <CardHeader title="등기부 기록 이력" description="변동 감시 중 저장된 등기부 사본" className="px-5 pt-4" />
         <CardContent className="px-5 pb-5 pt-0">
           <p className="text-center text-[13px] text-[#86868b] py-8">
             기록된 스냅샷이 없습니다.
@@ -62,8 +62,8 @@ export function SnapshotChainView({ snapshots }: Props) {
   return (
     <Card>
       <CardHeader
-        title="스냅샷 체인"
-        description={`${snapshots.length}개의 블록이 SHA-256 해시로 연결됨`}
+        title="등기부 기록 이력"
+        description={`총 ${snapshots.length}건의 등기부 사본이 안전하게 보관됨`}
         className="px-5 pt-4"
       />
       <CardContent className="px-5 pb-5 pt-0">
@@ -116,7 +116,7 @@ export function SnapshotChainView({ snapshots }: Props) {
                       </span>
                       {idx === 0 && (
                         <span className="text-[8px] font-medium text-[#0071e3]">
-                          GENESIS
+                          최초 기록
                         </span>
                       )}
                     </div>
@@ -128,7 +128,7 @@ export function SnapshotChainView({ snapshots }: Props) {
 
                     {/* 해시 */}
                     <div className="space-y-1">
-                      <div className="text-[9px] text-[#aeaeb2]">Hash</div>
+                      <div className="text-[9px] text-[#aeaeb2]">디지털 지문</div>
                       <div
                         className="text-[10px] font-mono text-[#1d1d1f] bg-white/60 px-1.5 py-1 rounded truncate"
                         title={snap.snapshotHash}
