@@ -28,12 +28,14 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const unreadOnly = searchParams.get("unread") === "true";
+    const propertyId = searchParams.get("propertyId");
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const pageSize = 20;
 
     const where = {
       monitoredProperty: { userId: session.user.id },
       ...(unreadOnly ? { isRead: false } : {}),
+      ...(propertyId ? { monitoredPropertyId: propertyId } : {}),
     };
 
     const [alerts, total] = await Promise.all([

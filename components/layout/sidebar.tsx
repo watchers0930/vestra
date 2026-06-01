@@ -7,7 +7,7 @@ import {
   TrendingUp, Home, MessageSquare, Database, ChevronLeft, ChevronRight,
   ChevronDown, Menu, X, Users, CheckCircle, FileText, Megaphone,
   KeyRound, ExternalLink, ClipboardCheck, Brain, SlidersHorizontal,
-  ShieldAlert, Key, Newspaper, MapPin, Download, Landmark,
+  ShieldAlert, Key, Newspaper, MapPin, Download, Landmark, Eye,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -59,13 +59,14 @@ const userMenuItems: MenuItem[] = [
   { href: "/feasibility",    icon: ClipboardCheck,  label: "사업성분석 보고서", description: "다중 문서 기반 SCR 수준 사업성 검증 보고서를 생성합니다" },
   { href: "/assistant",      icon: MessageSquare,   label: "AI 어시스턴트",  description: "부동산 관련 궁금한 점을 AI에게 자유롭게 질문할 수 있습니다" },
   { href: "/expert-connect", icon: Users,           label: "전문가 연결",    description: "AI 분석 결과를 전문가가 직접 검증하고 상담해드립니다" },
+  { href: "/monitoring",     icon: Eye,             label: "등기감시",       description: "등기부등본 변동을 실시간 감시하고 무결성 검증 증명서를 발급합니다" },
   { href: "/api-hub",        icon: Database,        label: "API 데이터 허브", description: "국토교통부·법원 등 공공 API 연동 현황과 데이터를 조회합니다" },
 ];
 
 const userMenuGroups: MenuGroup[] = [
   { label: "메인",     items: [userMenuItems[0]] },
   { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[2], userMenuItems[5], userMenuItems[7], userMenuItems[6]] },
-  { label: "도구",     items: [userMenuItems[9], userMenuItems[3], userMenuItems[4], userMenuItems[8]] },
+  { label: "도구",     items: [userMenuItems[9], userMenuItems[3], userMenuItems[4], userMenuItems[8], userMenuItems[11]] },
   { label: "전문가",   items: [userMenuItems[10]] },
 ];
 
