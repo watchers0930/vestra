@@ -1,7 +1,7 @@
 /**
  * VESTRA 공시가격 조회 API 클라이언트
  * ─────────────────────────────────────────
- * data.go.kr NSDI 공시가격 API 호출 유틸.
+ * VWorld NED 공시가격 API 호출 유틸.
  * - 개별공시지가 (토지)
  * - 공동주택가격 (아파트)
  * - 개별주택가격 (단독주택)
@@ -202,10 +202,11 @@ export function buildPnu(
 
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7일 (공시가격은 연 1회 변동)
 
+const VWORLD_BASE = "https://api.vworld.kr/ned/data";
 const ENDPOINTS = {
-  land: "https://apis.data.go.kr/1611000/nsdi/IndvdLandPriceService/attr/getIndvdLandPriceAttr",
-  apt: "https://apis.data.go.kr/1611000/nsdi/ApartHousingPriceService/attr/getApartHousingPriceAttr",
-  house: "https://apis.data.go.kr/1611000/nsdi/IndvdHousingPriceService/attr/getIndvdHousingPriceAttr",
+  land: `${VWORLD_BASE}/getIndvdLandPriceAttr`,
+  apt: `${VWORLD_BASE}/getApartHousingPriceAttr`,
+  house: `${VWORLD_BASE}/getIndvdHousingPriceAttr`,
 } as const;
 
 async function officialPriceFetch(url: string): Promise<unknown | null> {
@@ -224,6 +225,21 @@ async function officialPriceFetch(url: string): Promise<unknown | null> {
   }
 }
 
+/** VWorld API 공통 파라미터 생성 */
+function vworldParams(pnu: string, year: number): URLSearchParams {
+  const key = process.env.VWORLD_API_KEY;
+  if (!key) return new URLSearchParams();
+  return new URLSearchParams({
+    key,
+    pnu,
+    stdrYear: String(year),
+    format: "json",
+    numOfRows: "10",
+    pageNo: "1",
+    domain: "vestra-plum.vercel.app",
+  });
+}
+
 /** 개별공시지가 조회 */
 export async function fetchLandPrice(
   pnu: string,
@@ -233,18 +249,9 @@ export async function fetchLandPrice(
   const cached = apiCache.get<LandPriceItem>(cacheKey);
   if (cached) return cached;
 
-  const serviceKey = process.env.MOLIT_API_KEY;
-  if (!serviceKey) return null;
+  if (!process.env.VWORLD_API_KEY) return null;
 
-  const params = new URLSearchParams({
-    serviceKey,
-    pnu,
-    stdrYear: String(year),
-    format: "json",
-    numOfRows: "10",
-    pageNo: "1",
-  });
-
+  const params = vworldParams(pnu, year);
   const data = await officialPriceFetch(`${ENDPOINTS.land}?${params}`);
   if (!data) return null;
 
@@ -280,23 +287,15 @@ export async function fetchAptPrice(
   const cached = apiCache.get<AptPriceItem>(cacheKey);
   if (cached) return cached;
 
-  const serviceKey = process.env.MOLIT_API_KEY;
-  if (!serviceKey) return null;
+  if (!process.env.VWORLD_API_KEY) return null;
 
-  const params = new URLSearchParams({
-    serviceKey,
-    pnu,
-    stdrYear: String(year),
-    format: "json",
-    numOfRows: "10",
-    pageNo: "1",
-  });
-
+  const params = vworldParams(pnu, year);
   const data = await officialPriceFetch(`${ENDPOINTS.apt}?${params}`);
   if (!data) return null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const items = (data as any)?.apartHousingPrices?.field;
+  const resp = (data as any)?.response ?? (data as any)?.apartHousingPrices;
+  const items = resp?.field;
   if (!items || !Array.isArray(items) || items.length === 0) return null;
 
   const item = items[0];
@@ -327,18 +326,9 @@ export async function fetchHousePrice(
   const cached = apiCache.get<HousePriceItem>(cacheKey);
   if (cached) return cached;
 
-  const serviceKey = process.env.MOLIT_API_KEY;
-  if (!serviceKey) return null;
+  if (!process.env.VWORLD_API_KEY) return null;
 
-  const params = new URLSearchParams({
-    serviceKey,
-    pnu,
-    stdrYear: String(year),
-    format: "json",
-    numOfRows: "10",
-    pageNo: "1",
-  });
-
+  const params = vworldParams(pnu, year);
   const data = await officialPriceFetch(`${ENDPOINTS.house}?${params}`);
   if (!data) return null;
 
@@ -353,9 +343,9 @@ export async function fetchHousePrice(
 
   const result: HousePriceItem = {
     pnu,
-    price: price * 10000, // 만원 → 원
-    area: parseFloat(item.pltAr) || 0,
-    buildingArea: parseFloat(item.archArea) || 0,
+    price,  // VWorld는 원 단위로 반환
+    area: parseFloat(item.ladRegstrAr || item.pltAr) || 0,
+    buildingArea: parseFloat(item.buldCalcTotAr || item.archArea) || 0,
     year,
   };
 

@@ -150,3 +150,4 @@ npm run lint         # ESLint
 - `NEXT_PUBLIC_KAKAO_MAP_KEY` - 카카오 지도 API 키
 - `MOLIT_API_KEY` - 국토교통부 실거래가 API 키 (data.go.kr 계정 A)
 - `KAPT_API_KEY` - K-apt 단지목록/기본정보/상세정보 + 건축물대장 API 키 (data.go.kr 계정 B)
+- `VWORLD_API_KEY` - VWorld NED 공시가격 API 키 (개별공시지가/공동주택/개별주택)
