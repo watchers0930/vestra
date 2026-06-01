@@ -64,7 +64,7 @@ export function usePriceMap() {
     if (!selectedApt) { setOfficialPriceLabel(""); return; }
     let cancelled = false;
     setOfficialPriceLabel("조회중...");
-    const addr = `${selectedApt.dong} ${selectedApt.name}`;
+    const addr = `${selectedGu} ${selectedApt.dong} ${selectedApt.name}`;
     fetch(`/api/official-price?address=${encodeURIComponent(addr)}`)
       .then((r) => r.ok ? r.json() as Promise<OfficialPriceResult> : null)
       .then((data) => {
@@ -75,7 +75,7 @@ export function usePriceMap() {
       })
       .catch(() => { if (!cancelled) setOfficialPriceLabel("데이터 없음"); });
     return () => { cancelled = true; };
-  }, [selectedApt]);
+  }, [selectedApt, selectedGu]);
 
   const selectAndMoveToApt = useCallback((apt: AptData) => {
     setSelectedApt(apt);
