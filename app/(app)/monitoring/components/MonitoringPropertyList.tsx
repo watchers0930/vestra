@@ -31,10 +31,7 @@ export function MonitoringPropertyList({
       <EmptyState
         icon={Eye}
         title="감시 중인 물건이 없습니다"
-        description="대시보드에서 보유 자산에 등기감시를 등록해보세요."
-        actions={[
-          { href: "/dashboard", label: "대시보드로 이동", variant: "primary" },
-        ]}
+        description="상단의 물건 추가 버튼으로 감시를 시작하세요."
       />
     );
   }
