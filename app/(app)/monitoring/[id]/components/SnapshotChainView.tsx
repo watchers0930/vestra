@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
+import { ArrowDown, Lock } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/common/Card";
 import type { SnapshotItem } from "../hooks/usePropertyDetail";
 
@@ -16,14 +16,15 @@ const SECTION_LABEL: Record<string, string> = {
 };
 
 function truncHash(hash: string): string {
-  if (hash.length <= 12) return hash;
-  return `${hash.slice(0, 6)}...${hash.slice(-6)}`;
+  if (hash.length <= 16) return hash;
+  return `${hash.slice(0, 8)}···${hash.slice(-8)}`;
 }
 
 function formatTimestamp(dateStr: string): string {
   const d = new Date(dateStr);
   return d.toLocaleDateString("ko-KR", {
-    month: "short",
+    year: "numeric",
+    month: "long",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
@@ -67,82 +68,84 @@ export function SnapshotChainView({ snapshots }: Props) {
         className="px-5 pt-4"
       />
       <CardContent className="px-5 pb-5 pt-0">
-        <div className="overflow-x-auto pb-2">
-          <div className="flex items-start gap-2 min-w-max">
-            {snapshots.map((snap, idx) => {
-              const changed = idx > 0 ? getChangedSections(snapshots[idx - 1], snap) : [];
+        <div className="space-y-0">
+          {snapshots.map((snap, idx) => {
+            const changed = idx > 0 ? getChangedSections(snapshots[idx - 1], snap) : [];
+            const isFirst = idx === 0;
 
-              return (
-                <div key={snap.id} className="flex items-start gap-2">
-                  {/* 변동 표시 (이전 → 현재 사이) */}
-                  {idx > 0 && (
-                    <div className="flex flex-col items-center justify-center pt-6 gap-1">
-                      <ArrowRight size={16} className="text-[#c7c7cc]" />
-                      {changed.length > 0 && (
-                        <div className="flex flex-wrap gap-0.5 max-w-[60px] justify-center">
-                          {changed.map((s) => (
-                            <span
-                              key={s}
-                              className="text-[8px] px-1 py-0.5 rounded bg-[#fff3cd] text-[#856404] font-medium whitespace-nowrap"
-                            >
-                              {SECTION_LABEL[s] || s}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
+            return (
+              <div key={snap.id}>
+                {/* 변동 화살표 (이전 → 현재 사이) */}
+                {idx > 0 && (
+                  <div className="flex items-center gap-2 py-2 pl-4">
+                    <ArrowDown size={14} className="text-[#c7c7cc]" />
+                    {changed.length > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-[#aeaeb2]">변동:</span>
+                        {changed.map((s) => (
+                          <span
+                            key={s}
+                            className="text-[11px] px-1.5 py-0.5 rounded bg-[#fff3cd] text-[#856404] font-medium"
+                          >
+                            {SECTION_LABEL[s] || s}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                  {/* 스냅샷 블록 */}
-                  <div
-                    className="w-[140px] rounded-xl p-3 flex-shrink-0"
-                    style={{
-                      background: idx === 0 ? "rgba(0,113,227,0.06)" : "#f9fafb",
-                      border: idx === 0
-                        ? "1px solid rgba(0,113,227,0.15)"
-                        : "1px solid #e5e5e7",
-                    }}
-                  >
-                    {/* 시퀀스 번호 */}
-                    <div className="flex items-center justify-between mb-2">
+                {/* 스냅샷 카드 */}
+                <div
+                  className="rounded-xl p-4"
+                  style={{
+                    background: isFirst ? "rgba(0,113,227,0.05)" : "#f9fafb",
+                    border: isFirst
+                      ? "1px solid rgba(0,113,227,0.15)"
+                      : "1px solid #e5e5e7",
+                  }}
+                >
+                  {/* 상단: 시퀀스 + 시간 */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
                       <span
-                        className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                        className="text-[12px] font-bold px-2 py-0.5 rounded"
                         style={{
-                          background: idx === 0 ? "rgba(0,113,227,0.1)" : "rgba(0,0,0,0.05)",
-                          color: idx === 0 ? "#0071e3" : "#6e6e73",
+                          background: isFirst ? "rgba(0,113,227,0.1)" : "rgba(0,0,0,0.05)",
+                          color: isFirst ? "#0071e3" : "#6e6e73",
                         }}
                       >
                         #{snap.sequenceNo}
                       </span>
-                      {idx === 0 && (
-                        <span className="text-[8px] font-medium text-[#0071e3]">
+                      {isFirst && (
+                        <span className="text-[11px] font-medium text-[#0071e3]">
                           최초 기록
                         </span>
                       )}
                     </div>
-
-                    {/* 시간 */}
-                    <div className="text-[10px] text-[#86868b] mb-2">
+                    <span className="text-[12px] text-[#86868b]">
                       {formatTimestamp(snap.timestamp)}
-                    </div>
+                    </span>
+                  </div>
 
-                    {/* 해시 */}
-                    <div className="space-y-1">
-                      <div className="text-[9px] text-[#aeaeb2]">디지털 지문</div>
-                      <div
-                        className="text-[10px] font-mono text-[#1d1d1f] bg-white/60 px-1.5 py-1 rounded truncate"
+                  {/* 하단: 해시 + 섹션 */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Lock size={12} className="text-[#aeaeb2] flex-shrink-0" />
+                      <span className="text-[11px] text-[#aeaeb2] flex-shrink-0">디지털 지문</span>
+                      <code
+                        className="text-[11px] font-mono text-[#1d1d1f] bg-white/60 px-1.5 py-0.5 rounded truncate"
                         title={snap.snapshotHash}
                       >
                         {truncHash(snap.snapshotHash)}
-                      </div>
+                      </code>
                     </div>
 
-                    {/* 섹션 배지 */}
-                    <div className="flex flex-wrap gap-1 mt-2">
+                    <div className="flex gap-1 flex-shrink-0">
                       {(snap.sectionHashes || []).map((s) => (
                         <span
                           key={s.section}
-                          className="text-[8px] px-1 py-0.5 rounded bg-[#f5f5f7] text-[#6e6e73]"
+                          className="text-[11px] px-1.5 py-0.5 rounded bg-white/80 text-[#6e6e73] border border-[#e5e5e7]"
                         >
                           {SECTION_LABEL[s.section] || s.section}
                         </span>
@@ -150,9 +153,9 @@ export function SnapshotChainView({ snapshots }: Props) {
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
