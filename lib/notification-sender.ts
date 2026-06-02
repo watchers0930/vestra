@@ -1,12 +1,13 @@
 /**
  * VESTRA 알림 발송 모듈
  * ──────────────────────
- * KakaoTalk 알림톡, 이메일 등 멀티채널 알림 발송.
- * KAKAO_ALIMTALK_API_KEY가 없으면 mock 모드(로그만 기록).
+ * 웹 푸시 → 카카오 알림톡(Solapi) → SMS(Solapi) 멀티채널 알림 발송.
+ * NotificationSetting이 없으면 자동 생성 (fallback).
  */
 
 import { prisma } from "./prisma";
 import { sendPushToUser } from "./push-subscriptions";
+import { sendAlimtalk, sendSms } from "./solapi-client";
 
 // ─── 타입 정의 ───
 
@@ -32,64 +33,17 @@ interface SendResult {
   error?: string;
 }
 
-// ─── 카카오 알림톡 ───
+// ─── 알림톡 템플릿 매핑 ───
 
-async function sendKakaoAlimtalk(
-  phoneNumber: string,
-  title: string,
-  body: string
-): Promise<SendResult> {
-  const apiKey = process.env.KAKAO_ALIMTALK_API_KEY;
-  const senderKey = process.env.KAKAO_ALIMTALK_SENDER_KEY;
+function getKakaoTemplateId(type: NotificationType): string {
+  const registryTemplate = process.env.SOLAPI_TEMPLATE_REGISTRY;
+  const defaultTemplate = process.env.SOLAPI_TEMPLATE_DEFAULT || "VESTRA_DEFAULT";
 
-  if (!apiKey || !senderKey) {
-    // Mock 모드
-    console.info(
-      `[NOTIFICATION:KAKAO:MOCK] To=${phoneNumber} Title="${title}" Body="${body.slice(0, 100)}"`
-    );
-    return { channel: "kakao_mock", success: true };
-  }
-
-  try {
-    // 실제 Bizm/NHN Cloud 알림톡 API 호출
-    const response = await fetch(
-      "https://alimtalk-api.bizmsg.kr/v2/sender/send",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "userId": apiKey,
-        },
-        body: JSON.stringify({
-          senderKey,
-          templateCode: "VESTRA_ALERT",
-          recipientList: [
-            {
-              recipientNo: phoneNumber,
-              templateParameter: {
-                title,
-                body: body.slice(0, 1000), // 알림톡 본문 제한
-              },
-            },
-          ],
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      return {
-        channel: "kakao",
-        success: false,
-        error: `HTTP ${response.status}: ${errorText}`,
-      };
-    }
-
-    return { channel: "kakao", success: true };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    console.error(`[NOTIFICATION:KAKAO:ERROR] ${message}`);
-    return { channel: "kakao", success: false, error: message };
+  switch (type) {
+    case "registry_change":
+      return registryTemplate || defaultTemplate;
+    default:
+      return defaultTemplate;
   }
 }
 
@@ -111,7 +65,8 @@ async function sendEmail(
 
 /**
  * 사용자에게 알림을 발송한다.
- * NotificationSetting에 따라 활성화된 채널로만 발송.
+ * NotificationSetting이 없으면 자동 생성하여 기본값으로 발송.
+ * 활성화된 채널로만 발송.
  */
 export async function sendNotification(
   payload: NotificationPayload
@@ -119,17 +74,20 @@ export async function sendNotification(
   const results: SendResult[] = [];
 
   try {
-    // 사용자 알림 설정 조회
-    const setting = await prisma.notificationSetting.findUnique({
+    // 사용자 알림 설정 조회 (없으면 자동 생성)
+    let setting = await prisma.notificationSetting.findUnique({
       where: { userId: payload.userId },
       include: { user: { select: { email: true } } },
     });
 
     if (!setting) {
       console.info(
-        `[NOTIFICATION:SKIP] userId=${payload.userId} — 알림 설정 없음`
+        `[NOTIFICATION:AUTO_CREATE] userId=${payload.userId} — 알림 설정 자동 생성`
       );
-      return results;
+      setting = await prisma.notificationSetting.create({
+        data: { userId: payload.userId },
+        include: { user: { select: { email: true } } },
+      });
     }
 
     // 알림 타입별 활성 여부 확인
@@ -141,14 +99,45 @@ export async function sendNotification(
       return results;
     }
 
-    // 카카오 알림톡
+    // Web Push (webPushEnabled 토글 체크)
+    if (setting.webPushEnabled) {
+      try {
+        const pushResult = await sendPushToUser(payload.userId, {
+          title: payload.title,
+          body: payload.body,
+          url: payload.data?.propertyId
+            ? `/monitoring/alerts/${payload.data.propertyId}`
+            : undefined,
+        });
+        if (pushResult.sent > 0) {
+          results.push({ channel: "web_push", success: true });
+        }
+      } catch (pushErr) {
+        console.error(
+          `[NOTIFICATION:PUSH:ERROR] userId=${payload.userId}`,
+          pushErr instanceof Error ? pushErr.message : pushErr
+        );
+      }
+    }
+
+    // 카카오 알림톡 (Solapi)
     if (setting.kakaoEnabled && setting.kakaoPhoneNumber) {
-      const kakaoResult = await sendKakaoAlimtalk(
+      const templateId = getKakaoTemplateId(payload.type);
+      const kakaoResult = await sendAlimtalk(
         setting.kakaoPhoneNumber,
-        payload.title,
-        payload.body
+        templateId,
+        { title: payload.title, body: payload.body.slice(0, 1000) }
       );
       results.push(kakaoResult);
+    }
+
+    // SMS (Solapi)
+    if (setting.smsEnabled && setting.smsPhoneNumber) {
+      const smsResult = await sendSms(
+        setting.smsPhoneNumber,
+        `[VESTRA] ${payload.title}\n${payload.body}`.slice(0, 90)
+      );
+      results.push(smsResult);
     }
 
     // 이메일
@@ -159,25 +148,6 @@ export async function sendNotification(
         payload.body
       );
       results.push(emailResult);
-    }
-
-    // Web Push (항상 시도 — 구독이 없으면 자동 스킵)
-    try {
-      const pushResult = await sendPushToUser(payload.userId, {
-        title: payload.title,
-        body: payload.body,
-        url: payload.data?.propertyId
-          ? `/monitoring/alerts/${payload.data.propertyId}`
-          : undefined,
-      });
-      if (pushResult.sent > 0) {
-        results.push({ channel: "web_push", success: true });
-      }
-    } catch (pushErr) {
-      console.error(
-        `[NOTIFICATION:PUSH:ERROR] userId=${payload.userId}`,
-        pushErr instanceof Error ? pushErr.message : pushErr
-      );
     }
   } catch (error) {
     console.error(
@@ -196,9 +166,11 @@ export async function sendNotification(
 
 /**
  * 알림 타입별 활성 여부 확인
+ * registry_change는 독립 토글(registryChangeAlert)로 제어
  */
 function checkTypeEnabled(
   setting: {
+    registryChangeAlert: boolean;
     priceAlert: boolean;
     analysisReport: boolean;
     systemNotice: boolean;
@@ -207,6 +179,7 @@ function checkTypeEnabled(
 ): boolean {
   switch (type) {
     case "registry_change":
+      return setting.registryChangeAlert;
     case "price_alert":
       return setting.priceAlert;
     case "analysis_complete":

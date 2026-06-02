@@ -14,6 +14,9 @@ import DocumentChecklist from "@/components/jeonse/DocumentChecklist";
 import VScoreRadar from "@/components/results/VScoreRadar";
 import FraudRiskCard from "@/components/results/FraudRiskCard";
 import CrossAnalysisCard from "@/components/results/CrossAnalysisCard";
+import SafetyDiagnosisCard from "@/components/results/SafetyDiagnosisCard";
+import TitleInsuranceCard from "@/components/results/TitleInsuranceCard";
+import ContractClauseCard from "@/components/results/ContractClauseCard";
 import type { IntegratedReportData } from "@/lib/integrated-report";
 
 // ─── 등급 컬러/라벨 ───
@@ -193,6 +196,21 @@ export default function IntegratedReport({ data }: IntegratedReportProps) {
         {/* ─── 1.7. 크로스 기능 교차 분석 ─── */}
         {data.crossAnalysis && (
           <CrossAnalysisCard result={data.crossAnalysis} />
+        )}
+
+        {/* ─── 1.8. 8대 안전진단 ─── */}
+        {data.safetyDiagnosis && (
+          <SafetyDiagnosisCard result={data.safetyDiagnosis} />
+        )}
+
+        {/* ─── 1.9. 권원보험 안내 ─── */}
+        {data.titleInsurance && (
+          <TitleInsuranceCard result={data.titleInsurance} />
+        )}
+
+        {/* ─── 1.10. 매매계약 특약 ─── */}
+        {data.contractClauses && (
+          <ContractClauseCard result={data.contractClauses} />
         )}
 
         {/* ─── 2. 권리분석 ─── */}

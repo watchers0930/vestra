@@ -9,6 +9,9 @@ import type { RiskScore, RiskGrade } from "./risk-scoring";
 import { generateChecklist, type ChecklistItem } from "./checklist-generator";
 import type { VScoreResult, FraudRiskResult, CrossAnalysisResult } from "./patent-types";
 import { calculateVScore, type VScoreInput } from "./v-score";
+import type { SafetyDiagnosisResult } from "./safety-diagnosis";
+import type { TitleInsuranceResult } from "./title-insurance";
+import type { ContractClauseResult } from "./contract-clause-generator";
 
 // ─── 타입 정의 ───
 
@@ -62,6 +65,15 @@ export interface IntegratedReportData {
 
   /** 크로스 기능 교차 분석 */
   crossAnalysis?: CrossAnalysisResult;
+
+  /** 8대 안전진단 */
+  safetyDiagnosis?: SafetyDiagnosisResult;
+
+  /** 권원보험 */
+  titleInsurance?: TitleInsuranceResult;
+
+  /** 매매계약 특약 */
+  contractClauses?: ContractClauseResult;
 
   /** 종합 등급 */
   overallGrade: RiskGrade;

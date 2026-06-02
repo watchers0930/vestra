@@ -25,6 +25,9 @@ import { generateChecklist, groupChecklistByCategory } from "@/lib/checklist-gen
 import { formatKRW } from "@/lib/utils";
 import { validateOrigin } from "@/lib/csrf";
 import { fetchKaptInfoByAddress } from "@/lib/kapt-api";
+import { runSafetyDiagnosis } from "@/lib/safety-diagnosis";
+import { evaluateTitleInsurance } from "@/lib/title-insurance";
+import { generateContractClauses } from "@/lib/contract-clause-generator";
 
 // ─── GET: 주소 기반 원스톱 통합 데이터 조회 ───
 // 단일 주소를 받아 시세/금리/건물정보/공급량을 병렬 조회 후 통합 반환
@@ -208,14 +211,20 @@ export async function POST(req: NextRequest) {
     let marketDataFiltered = false;
     let kaptInfo: Awaited<ReturnType<typeof fetchKaptInfoByAddress>> | null = null;
 
+    let buildingResult: Awaited<ReturnType<typeof fetchBuildingInfoByAddress>> | null = null;
+
     if (address) {
-      const [comprehensive, kaptResult] = await Promise.all([
+      const [comprehensive, kaptResult, buildingInfo] = await Promise.all([
         fetchComprehensivePrices(address, 12).catch((e) => {
           console.warn("MOLIT API 조회 실패:", e);
           return null;
         }),
         fetchKaptInfoByAddress(address).catch((e) => {
           console.warn("K-apt 단지정보 조회 실패:", e);
+          return null;
+        }),
+        fetchBuildingInfoByAddress(address).catch((e) => {
+          console.warn("건축물대장 조회 실패:", e);
           return null;
         }),
       ]);
@@ -227,6 +236,7 @@ export async function POST(req: NextRequest) {
         };
       }
       kaptInfo = kaptResult;
+      buildingResult = buildingInfo;
     }
 
     // 2-1단계: 매매가 추정 엔진으로 비교매물 분석
@@ -274,6 +284,14 @@ export async function POST(req: NextRequest) {
     // 4-2단계: 동적 체크리스트 생성
     const checklist = generateChecklist(riskScore);
     const checklistByCategory = groupChecklistByCategory(checklist);
+
+    // 4-3단계: 8대 안전진단 + 권원보험 + 매매계약 특약
+    const buildingPurpose = buildingResult?.mainPurpose || undefined;
+    const safetyDiagnosis = runSafetyDiagnosis(parsed, riskScore, estimatedPrice, buildingPurpose);
+    const titleInsurance = estimatedPrice > 0
+      ? evaluateTitleInsurance(estimatedPrice, riskScore)
+      : null;
+    const contractClauses = generateContractClauses(riskScore, parsed);
 
     // 5단계: 통합 PropertyInfo 생성
     const propertyInfo = {
@@ -477,6 +495,9 @@ export async function POST(req: NextRequest) {
       fraudRisk,
       checklist,
       checklistByCategory,
+      safetyDiagnosis,
+      titleInsurance,
+      contractClauses,
       eventLog: eventBus.getHistory(),
       kaptInfo: kaptInfo ? {
         kaptName: kaptInfo.kaptName,

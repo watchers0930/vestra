@@ -189,18 +189,22 @@ model Payment {
 // ---------------------------------------------------------------------------
 
 model NotificationSetting {
-  id               String  @id @default(cuid())
-  userId           String  @unique
-  emailEnabled     Boolean @default(true)
-  kakaoEnabled     Boolean @default(false)
-  kakaoPhoneNumber String? // 카카오 알림톡 수신 전화번호
-  priceAlert       Boolean @default(true)
-  analysisReport   Boolean @default(true)
-  systemNotice     Boolean @default(true)
-  marketingEmail   Boolean @default(false)
-  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  emailEnabled         Boolean  @default(true)
+  kakaoEnabled         Boolean  @default(false)
+  kakaoPhoneNumber     String?  // 카카오 알림톡 수신 전화번호
+  smsEnabled           Boolean  @default(false)
+  smsPhoneNumber       String?  // SMS 수신 전화번호
+  webPushEnabled       Boolean  @default(true)
+  registryChangeAlert  Boolean  @default(true)  // 등기 변동 알림 (독립 토글)
+  priceAlert           Boolean  @default(true)
+  analysisReport       Boolean  @default(true)
+  systemNotice         Boolean  @default(true)
+  marketingEmail       Boolean  @default(false)
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
 
 // ---------------------------------------------------------------------------

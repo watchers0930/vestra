@@ -28,6 +28,9 @@ import { IntegrityBadge } from "@/components/common/IntegrityBadge";
 import { NerHighlight } from "@/components/common/NerHighlight";
 import { ScoreGauge, ScholarPapers } from "@/components/results";
 import { KaptInfoCard, type KaptInfoData } from "@/components/common/KaptInfoCard";
+import SafetyDiagnosisCard from "@/components/results/SafetyDiagnosisCard";
+import TitleInsuranceCard from "@/components/results/TitleInsuranceCard";
+import ContractClauseCard from "@/components/results/ContractClauseCard";
 import dynamic from "next/dynamic";
 
 const RightsGraphView = dynamic(
@@ -95,6 +98,9 @@ export interface UnifiedResult {
   checklist?: import("@/lib/checklist-generator").ChecklistItem[];
   checklistByCategory?: Record<string, import("@/lib/checklist-generator").ChecklistItem[]>;
   kaptInfo?: KaptInfoData | null;
+  safetyDiagnosis?: import("@/lib/safety-diagnosis").SafetyDiagnosisResult;
+  titleInsurance?: import("@/lib/title-insurance").TitleInsuranceResult | null;
+  contractClauses?: import("@/lib/contract-clause-generator").ContractClauseResult;
   dataSource: {
     registryParsed: boolean;
     molitAvailable: boolean;
@@ -238,6 +244,21 @@ export function RightsResult({ result, rawText }: RightsResultProps) {
           </div>
         </Card>
       </div>
+
+      {/* 8대 안전진단 */}
+      {result.safetyDiagnosis && (
+        <SafetyDiagnosisCard result={result.safetyDiagnosis} />
+      )}
+
+      {/* 권원보험 안내 */}
+      {result.titleInsurance && (
+        <TitleInsuranceCard result={result.titleInsurance} />
+      )}
+
+      {/* 매매계약 특약 */}
+      {result.contractClauses && (
+        <ContractClauseCard result={result.contractClauses} />
+      )}
 
       {/* 맞춤 준비 체크리스트 */}
       {result.checklistByCategory && Object.keys(result.checklistByCategory).length > 0 && (

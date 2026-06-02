@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 
+const PHONE_REGEX = /^01[016789]-?\d{3,4}-?\d{4}$/;
+
 /** GET: 알림 설정 조회 */
 export async function GET() {
   const session = await auth();
@@ -35,20 +37,48 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = await req.json();
-  const allowed = [
+
+  // 허용된 boolean 필드
+  const booleanFields = [
     "emailEnabled",
     "kakaoEnabled",
+    "smsEnabled",
+    "webPushEnabled",
+    "registryChangeAlert",
     "priceAlert",
     "analysisReport",
     "systemNotice",
     "marketingEmail",
   ];
 
-  // 허용된 필드만 필터
-  const data: Record<string, boolean> = {};
-  for (const key of allowed) {
+  // 허용된 string(전화번호) 필드
+  const phoneFields = ["kakaoPhoneNumber", "smsPhoneNumber"];
+
+  const data: Record<string, boolean | string | null> = {};
+
+  // boolean 필드 처리
+  for (const key of booleanFields) {
     if (typeof body[key] === "boolean") {
       data[key] = body[key];
+    }
+  }
+
+  // 전화번호 필드 처리 (서버 검증)
+  for (const key of phoneFields) {
+    if (key in body) {
+      const value = body[key];
+      if (value === null || value === "") {
+        data[key] = null;
+      } else if (typeof value === "string") {
+        const cleaned = value.trim();
+        if (!PHONE_REGEX.test(cleaned)) {
+          return NextResponse.json(
+            { error: `올바른 전화번호 형식이 아닙니다: ${key}` },
+            { status: 400 }
+          );
+        }
+        data[key] = cleaned;
+      }
     }
   }
 

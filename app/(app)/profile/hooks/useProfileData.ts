@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/common/toast";
 
@@ -32,8 +32,9 @@ export function useProfileData() {
   const [upgradeMessage, setUpgradeMessage] = useState("");
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
-  const [notifications, setNotifications] = useState<Record<string, boolean> | null>(null);
+  const [notifications, setNotifications] = useState<Record<string, boolean | string | null> | null>(null);
   const [notifLoading, setNotifLoading] = useState(false);
+  const [phoneSaving, setPhoneSaving] = useState(false);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -111,6 +112,39 @@ export function useProfileData() {
     setNotifLoading(false);
   };
 
+  const handlePhoneChange = useCallback(
+    (field: "kakaoPhoneNumber" | "smsPhoneNumber", value: string) => {
+      if (!notifications) return;
+      setNotifications((prev) => (prev ? { ...prev, [field]: value } : prev));
+    },
+    [notifications]
+  );
+
+  const handlePhoneSave = useCallback(
+    async (field: "kakaoPhoneNumber" | "smsPhoneNumber") => {
+      if (!notifications) return;
+      const value = (notifications[field] as string) || "";
+      setPhoneSaving(true);
+      try {
+        const res = await fetch("/api/user/notifications", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ [field]: value || null }),
+        });
+        if (res.ok) {
+          showToast("전화번호가 저장되었습니다.");
+        } else {
+          const data = await res.json();
+          showToast(data.error || "전화번호 저장에 실패했습니다.");
+        }
+      } catch {
+        showToast("네트워크 오류가 발생했습니다.");
+      }
+      setPhoneSaving(false);
+    },
+    [notifications, showToast]
+  );
+
   return {
     session,
     usage,
@@ -124,9 +158,12 @@ export function useProfileData() {
     cancelLoading,
     notifications,
     notifLoading,
+    phoneSaving,
     handleUpgrade,
     handleCancelSubscription,
     handleToggleNotification,
+    handlePhoneChange,
+    handlePhoneSave,
     showToast,
   };
 }

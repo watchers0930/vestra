@@ -22,6 +22,9 @@ import {
   FileText,
   Megaphone,
   Gift,
+  Smartphone,
+  BellRing,
+  Phone,
 } from "lucide-react";
 import { useProfileData } from "./hooks/useProfileData";
 
@@ -54,9 +57,12 @@ export default function ProfilePage() {
     cancelLoading,
     notifications,
     notifLoading,
+    phoneSaving,
     handleUpgrade,
     handleCancelSubscription,
     handleToggleNotification,
+    handlePhoneChange,
+    handlePhoneSave,
     showToast,
   } = useProfileData();
 
@@ -310,10 +316,69 @@ export default function ProfilePage() {
           <h3 className="font-semibold">알림 설정</h3>
         </div>
         {notifications ? (
-          <div className="space-y-3">
-            {[
+          <div className="space-y-1">
+            {/* 알림 채널 */}
+            <p className="text-xs font-semibold text-[#6e6e73] uppercase tracking-wider pt-1 pb-2">채널</p>
+            {([
+              { key: "webPushEnabled", label: "웹 푸시", desc: "브라우저 푸시 알림 수신", icon: BellRing },
               { key: "emailEnabled", label: "이메일 알림", desc: "분석 결과 및 중요 알림을 이메일로 받기", icon: Mail },
-              { key: "kakaoEnabled", label: "카카오 알림톡", desc: "카카오톡으로 알림 받기 (준비 중)", icon: MessageSquare },
+              { key: "kakaoEnabled", label: "카카오 알림톡", desc: "카카오톡으로 알림 받기", icon: MessageSquare, phone: "kakaoPhoneNumber" as const },
+              { key: "smsEnabled", label: "SMS 알림", desc: "문자 메시지로 알림 받기 (준비 중)", icon: Smartphone, phone: "smsPhoneNumber" as const, badge: "준비 중" },
+            ] as const).map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.key}>
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-3">
+                      <Icon size={16} className="text-[#6e6e73] flex-shrink-0" strokeWidth={1.5} />
+                      <div>
+                        <p className="text-sm font-medium text-[#1d1d1f]">
+                          {item.label}
+                          {"badge" in item && item.badge && (
+                            <span className="ml-1.5 inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium bg-amber-50 text-amber-700 border-amber-100">
+                              {item.badge}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-[#6e6e73]">{item.desc}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleToggleNotification(item.key)}
+                      disabled={notifLoading}
+                      className={`relative w-10 h-5.5 rounded-full transition-colors ${
+                        notifications[item.key] ? "bg-primary" : "bg-[#e5e5e7]"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 w-4.5 h-4.5 rounded-full bg-white shadow transition-transform ${
+                          notifications[item.key] ? "translate-x-[18px]" : ""
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  {"phone" in item && item.phone && notifications[item.key] && (
+                    <div className="flex items-center gap-2 ml-7 mb-2">
+                      <Phone size={14} className="text-[#6e6e73] flex-shrink-0" strokeWidth={1.5} />
+                      <input
+                        type="tel"
+                        placeholder="010-0000-0000"
+                        value={(notifications[item.phone] as string) || ""}
+                        onChange={(e) => handlePhoneChange(item.phone!, e.target.value)}
+                        onBlur={() => handlePhoneSave(item.phone!)}
+                        disabled={phoneSaving}
+                        className="flex-1 px-3 py-1.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* 알림 유형 */}
+            <p className="text-xs font-semibold text-[#6e6e73] uppercase tracking-wider pt-4 pb-2">알림 유형</p>
+            {[
+              { key: "registryChangeAlert", label: "등기 변동 알림", desc: "감시 중인 부동산의 등기 변동 감지 시 알림", icon: FileText },
               { key: "priceAlert", label: "시세 변동 알림", desc: "등록 자산의 가격 변동 시 알림", icon: TrendingUp },
               { key: "analysisReport", label: "주간 분석 리포트", desc: "매주 자산 현황 요약 리포트", icon: FileText },
               { key: "systemNotice", label: "공지사항 알림", desc: "서비스 공지 및 업데이트", icon: Megaphone },

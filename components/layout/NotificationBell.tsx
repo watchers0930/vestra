@@ -55,14 +55,14 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
       const dbNotifs: Notification[] = (data.alerts ?? []).map(
         (alert: {
           id: string;
-          message: string;
+          summary: string;
           createdAt: string;
-          read: boolean;
+          isRead: boolean;
         }) => ({
           id: alert.id,
-          message: alert.message,
+          message: alert.summary,
           date: alert.createdAt,
-          read: alert.read,
+          read: alert.isRead,
           source: "db" as const,
           alertId: alert.id,
         })
