@@ -50,22 +50,20 @@ prisma/                # Prisma 스키마
 docs/                  # PDCA 문서
 ```
 
-## 리팩터링 작업 규칙 (파일 분리 진행 중)
+## 리팩터링 작업 규칙
 
-> 브랜치: `refactor/file-split` — main은 절대 직접 수정하지 않는다
-
-### 500줄 초과 파일 목록 (우선순위 순)
-| 파일 | 현재 줄 수 | 상태 |
-|------|-----------|------|
-| `app/(app)/admin/page.tsx` | 1,099줄 | 작업 대기 |
-| `app/(app)/prediction/page.tsx` | 950줄 | 작업 대기 |
-| `app/(app)/contract/page.tsx` | 882줄 | 작업 대기 |
-| `app/(app)/dashboard/page.tsx` | 664줄 | 작업 대기 |
-| `app/(app)/expert-connect/page.tsx` | 621줄 | 작업 대기 |
-| `app/(map)/price-map/page.tsx` | 616줄 | 작업 대기 |
-| `app/(app)/rights/page.tsx` | 597줄 | 작업 대기 |
-| `app/(app)/jeonse/analysis/page.tsx` | 518줄 | 작업 대기 |
-| `app/(app)/feasibility/page.tsx` | 508줄 | 작업 대기 |
+### 500줄 초과 파일 — 전체 분리 완료 (2026-06 확인)
+| 파일 | 분리 전 | 분리 후 | 상태 |
+|------|--------|--------|------|
+| `app/(app)/admin/page.tsx` | 1,099줄 | 173줄 | ✅ 완료 |
+| `app/(app)/prediction/page.tsx` | 950줄 | 432줄 | ✅ 완료 |
+| `app/(app)/contract/page.tsx` | 882줄 | 232줄 | ✅ 완료 |
+| `app/(app)/dashboard/page.tsx` | 664줄 | 222줄 | ✅ 완료 |
+| `app/(app)/expert-connect/page.tsx` | 621줄 | 52줄 | ✅ 완료 |
+| `app/(map)/price-map/page.tsx` | 616줄 | 85줄 | ✅ 완료 |
+| `app/(app)/rights/page.tsx` | 597줄 | 236줄 | ✅ 완료 |
+| `app/(app)/jeonse/analysis/page.tsx` | 518줄 | 57줄 | ✅ 완료 |
+| `app/(app)/feasibility/page.tsx` | 508줄 | 87줄 | ✅ 완료 |
 
 ### 분리 원칙
 - 분리된 컴포넌트는 해당 라우트 아래 `components/` 폴더에 배치
