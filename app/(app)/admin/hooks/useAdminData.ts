@@ -135,8 +135,13 @@ export function useAdminData() {
       setPwMsg({ type: "error", text: "새 비밀번호가 일치하지 않습니다" });
       return;
     }
-    if (newPw.length < 4) {
-      setPwMsg({ type: "error", text: "비밀번호는 4자 이상이어야 합니다" });
+    if (newPw.length < 8) {
+      setPwMsg({ type: "error", text: "비밀번호는 8자 이상이어야 합니다" });
+      return;
+    }
+    const checks = [/[A-Z]/, /[a-z]/, /[0-9]/, /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/];
+    if (checks.filter((re) => re.test(newPw)).length < 3) {
+      setPwMsg({ type: "error", text: "대문자, 소문자, 숫자, 특수문자 중 3종 이상 포함해야 합니다" });
       return;
     }
     setPwLoading(true);
