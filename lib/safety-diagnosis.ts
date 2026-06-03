@@ -13,7 +13,7 @@ import type { RiskScore } from "./risk-scoring";
 export interface DiagnosisItem {
   id: string;
   label: string;
-  status: "pass" | "warn" | "fail" | "unknown";
+  status: "pass" | "warn" | "fail" | "unknown" | "info";
   severity: "critical" | "high" | "medium" | "low";
   description: string;
   action: string;
@@ -26,6 +26,7 @@ export interface SafetyDiagnosisResult {
   warnCount: number;
   failCount: number;
   unknownCount: number;
+  infoCount: number;
   overallStatus: "safe" | "caution" | "danger";
 }
 
@@ -73,6 +74,7 @@ function diagnoseCancellationHistory(
 function diagnosePurposeMismatch(
   parsed: ParsedRegistry,
   buildingPurpose?: string,
+  rawText?: string,
 ): DiagnosisItem {
   const registryPurpose = parsed.title?.purpose || "";
 
@@ -98,6 +100,32 @@ function diagnosePurposeMismatch(
       description: `등기부상 용도가 '${registryPurpose}'입니다. 주택임대차보호법 미적용 위험이 있습니다.`,
       action: "건축물대장을 발급하여 실제 용도와 등기부 용도가 일치하는지 확인하세요. 비주거용 건물은 전입신고·확정일자가 불가합니다.",
       evidence: [`등기부 용도: ${registryPurpose}`],
+    };
+  }
+
+  // 집합건물(아파트) false positive 방지:
+  // 등기부가 아파트/공동주택 계열인데 건축물대장이 "단독주택" 반환 → 매칭 오류
+  const isCollectiveBuilding =
+    rawText?.includes("[집합건물]") ||
+    /아파트|공동주택|연립주택|다세대주택/.test(registryPurpose);
+
+  if (
+    buildingPurpose &&
+    buildingPurpose !== registryPurpose &&
+    isCollectiveBuilding &&
+    /단독주택/.test(buildingPurpose)
+  ) {
+    return {
+      id: "purpose_check",
+      label: "표제부 용도 확인",
+      status: "pass",
+      severity: "low",
+      description: "집합건물(아파트)로 확인. 건축물대장 데이터 불일치는 오래된 단지에서 발생하는 매칭 오류입니다.",
+      action: "추가 확인 불필요",
+      evidence: [
+        `등기부 용도: ${registryPurpose}`,
+        `건축물대장 용도: ${buildingPurpose} (매칭 오류)`,
+      ],
     };
   }
 
@@ -313,8 +341,8 @@ function diagnoseTaxDelinquency(): DiagnosisItem {
   return {
     id: "tax_delinquency",
     label: "세금 체납 확인",
-    status: "warn",
-    severity: "medium",
+    status: "info",
+    severity: "low",
     description: "매도인의 세금 체납 여부는 등기부만으로 확인할 수 없습니다.",
     action: "정부24(gov.kr)에서 '지방세 납세증명서'와 '국세 납세증명서'를 요청하세요. 체납 시 매매 후에도 압류가 발생할 수 있습니다.",
   };
@@ -353,10 +381,11 @@ export function runSafetyDiagnosis(
   riskScore: RiskScore,
   estimatedPrice: number,
   buildingPurpose?: string,
+  rawText?: string,
 ): SafetyDiagnosisResult {
   const items: DiagnosisItem[] = [
     diagnoseCancellationHistory(riskScore),
-    diagnosePurposeMismatch(parsed, buildingPurpose),
+    diagnosePurposeMismatch(parsed, buildingPurpose, rawText),
     diagnoseOwnerVerification(parsed),
     diagnoseDangerKeywords(parsed),
     diagnoseMortgageOverload(parsed, riskScore, estimatedPrice),
@@ -369,10 +398,11 @@ export function runSafetyDiagnosis(
   const warnCount = items.filter((i) => i.status === "warn").length;
   const failCount = items.filter((i) => i.status === "fail").length;
   const unknownCount = items.filter((i) => i.status === "unknown").length;
+  const infoCount = items.filter((i) => i.status === "info").length;
 
   let overallStatus: "safe" | "caution" | "danger" = "safe";
   if (failCount > 0) overallStatus = "danger";
   else if (warnCount > 0 || unknownCount > 0) overallStatus = "caution";
 
-  return { items, passCount, warnCount, failCount, unknownCount, overallStatus };
+  return { items, passCount, warnCount, failCount, unknownCount, infoCount, overallStatus };
 }

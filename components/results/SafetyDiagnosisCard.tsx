@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   XCircle,
   HelpCircle,
+  Info,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -43,6 +44,12 @@ const STATUS_CONFIG: Record<
     bgColor: "bg-gray-50",
     label: "확인필요",
   },
+  info: {
+    icon: Info,
+    color: "text-blue-500",
+    bgColor: "bg-blue-50",
+    label: "안내",
+  },
 };
 
 const OVERALL_CONFIG = {
@@ -72,7 +79,7 @@ function DiagnosisRow({ item }: { item: DiagnosisItem }) {
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium truncate">{item.label}</span>
             <Badge
-              variant={item.status === "pass" ? "success" : item.status === "fail" ? "danger" : item.status === "warn" ? "warning" : "neutral"}
+              variant={item.status === "pass" ? "success" : item.status === "fail" ? "danger" : item.status === "warn" ? "warning" : item.status === "info" ? "info" : "neutral"}
               size="sm"
             >
               {config.label}
@@ -161,6 +168,12 @@ export default function SafetyDiagnosisCard({ result }: SafetyDiagnosisCardProps
                 <span className="text-gray-600 font-medium">{result.unknownCount}건 확인필요</span>
               </div>
             )}
+            {result.infoCount > 0 && (
+              <div className="flex items-center gap-1.5">
+                <Info size={14} className="text-blue-500" />
+                <span className="text-blue-600 font-medium">{result.infoCount}건 안내</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -168,7 +181,7 @@ export default function SafetyDiagnosisCard({ result }: SafetyDiagnosisCardProps
         <div className="space-y-2">
           {result.items
             .sort((a, b) => {
-              const order = { fail: 0, warn: 1, unknown: 2, pass: 3 };
+              const order: Record<string, number> = { fail: 0, warn: 1, unknown: 2, info: 3, pass: 4 };
               return order[a.status] - order[b.status];
             })
             .map((item) => (

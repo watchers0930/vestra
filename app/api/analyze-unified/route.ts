@@ -287,7 +287,7 @@ export async function POST(req: NextRequest) {
 
     // 4-3단계: 8대 안전진단 + 권원보험 + 매매계약 특약
     const buildingPurpose = buildingResult?.mainPurpose || undefined;
-    const safetyDiagnosis = runSafetyDiagnosis(parsed, riskScore, estimatedPrice, buildingPurpose);
+    const safetyDiagnosis = runSafetyDiagnosis(parsed, riskScore, estimatedPrice, buildingPurpose, rawText);
     const titleInsurance = estimatedPrice > 0
       ? evaluateTitleInsurance(estimatedPrice, riskScore)
       : null;
