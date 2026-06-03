@@ -418,10 +418,18 @@ function parseApartmentTitle(raw: string, result: TitleSection): TitleSection {
 
   // ── 전유부분의 건물의 표시 ──
 
-  // 동호수: 제108동 제14층 제1403호
-  const unitMatch = unitBlock.match(/제?\s*(\d+)\s*동\s*제?\s*(\d+)\s*층\s*제?\s*(\d+)\s*호/);
-  if (unitMatch) {
-    result.unitNumber = `제${unitMatch[1]}동 제${unitMatch[2]}층 제${unitMatch[3]}호`;
+  // 동호수: "제108동 제14층 제1403호" (전체) 또는 "제14층 제1403호" (동 없이)
+  const unitFullMatch = unitBlock.match(/제?\s*(\d+)\s*동\s*제?\s*(\d+)\s*층\s*제?\s*(\d+)\s*호/);
+  if (unitFullMatch) {
+    result.unitNumber = `제${unitFullMatch[1]}동 제${unitFullMatch[2]}층 제${unitFullMatch[3]}호`;
+  } else {
+    // 전유부분에는 "제N층 제N호"만 있고, 동은 buildingBlock에서 추출
+    const floorUnitMatch = unitBlock.match(/제?\s*(\d+)\s*층\s*제?\s*(\d+)\s*호/);
+    const dongMatch = buildingBlock.match(/제?\s*(\d+)\s*동/);
+    if (floorUnitMatch) {
+      const dong = dongMatch ? `제${dongMatch[1]}동 ` : "";
+      result.unitNumber = `${dong}제${floorUnitMatch[1]}층 제${floorUnitMatch[2]}호`;
+    }
   }
 
   // 전유면적: 전유부분 블록에서 첫 번째 ㎡
@@ -665,10 +673,31 @@ function buildSummary(gapgu: GapguEntry[], eulgu: EulguEntry[]): ParseSummary {
   };
 }
 
+// ─── 줄바꿈 정규화 ───
+
+/** 줄바꿈 없는 등기부등본 텍스트에 논리적 줄바꿈 삽입 */
+function normalizeRegistryNewlines(text: string): string {
+  let r = text;
+  // 섹션 헤더 앞에 줄바꿈: 【표제부】【갑구】【을구】
+  r = r.replace(/(【\s*[표갑을])/g, "\n$1");
+  // 순위번호/등기목적 헤더 앞에 줄바꿈
+  r = r.replace(/\s+(순위번호\s)/g, "\n$1");
+  // 갑구/을구 항목 시작: "숫자 + 소유권/가압류 등 키워드" 앞에 줄바꿈
+  r = r.replace(/\s+(\d+\s+(?:소유권보존|소유권이전|가압류|압류|가처분|경매개시결정|임의경매|강제경매|신탁|가등기|예고등기|환매등기|근저당권설정|저당권설정|전세권설정|임차권등기|임차권설정|근저당권이전|근저당권변경|전세권이전))/g, "\n$1");
+  // 말소 항목: "N번근저당권말소" 등
+  r = r.replace(/\s+(\d+번[가-힣]*말소)/g, "\n$1");
+  // 표제부 서브섹션: (전유부분, (1동, (대지권
+  r = r.replace(/\s+(\(\s*(?:전유부분|1동|대지권))/g, "\n$1");
+  // 표시번호 앞 줄바꿈
+  r = r.replace(/\s+(표시번호\s)/g, "\n$1");
+  return r;
+}
+
 // ─── 메인 파싱 함수 ───
 
 export function parseRegistry(rawText: string): ParsedRegistry {
-  const { titleRaw, gapguRaw, eulguRaw } = splitSections(rawText);
+  const normalized = normalizeRegistryNewlines(rawText);
+  const { titleRaw, gapguRaw, eulguRaw } = splitSections(normalized);
 
   const title = parseTitle(titleRaw);
   const gapgu = parseGapgu(gapguRaw);
