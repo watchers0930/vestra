@@ -24,9 +24,102 @@ function PurposeBadge({ purpose, isCancelled }: { purpose: string; isCancelled: 
   );
 }
 
-// ─── 표제부 섹션 ───
+// ─── 테이블 행 렌더러 ───
 
-function TitleSection({ parsed }: { parsed: ParsedRegistry }) {
+function InfoRow({ label, value, idx }: { label: string; value: string; idx: number }) {
+  return (
+    <tr className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+      <td className="px-3 py-2 font-medium text-gray-500 w-24 whitespace-nowrap border-r border-gray-100">
+        {label}
+      </td>
+      <td className="px-3 py-2 text-gray-900">{value}</td>
+    </tr>
+  );
+}
+
+// ─── 표제부 섹션 (집합건물 3단 구조) ───
+
+function ApartmentTitleSection({ parsed }: { parsed: ParsedRegistry }) {
+  const { title } = parsed;
+
+  const buildingRows = [
+    { label: "소재지번", value: title.address },
+    { label: "건물명칭", value: title.buildingName },
+    { label: "구  조", value: title.structure },
+    { label: "층  수", value: title.totalFloors },
+    { label: "용  도", value: title.purpose },
+  ].filter((r) => r.value);
+
+  const unitRows = [
+    { label: "건물번호", value: title.unitNumber },
+    { label: "전용면적", value: title.exclusiveArea || title.area },
+  ].filter((r) => r.value);
+
+  const landRows = [
+    { label: "대지권비율", value: title.landRightRatio },
+  ].filter((r) => r.value);
+
+  return (
+    <div className="space-y-3">
+      <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+        <span className="w-1.5 h-4 bg-gray-900 rounded-full" />
+        표제부
+      </h4>
+
+      {/* 1동의 건물의 표시 */}
+      {buildingRows.length > 0 && (
+        <div>
+          <p className="text-[11px] font-medium text-gray-400 mb-1 pl-1">1동의 건물의 표시</p>
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <table className="w-full text-xs">
+              <tbody>
+                {buildingRows.map((row, i) => (
+                  <InfoRow key={i} label={row.label} value={row.value} idx={i} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 전유부분의 건물의 표시 */}
+      {unitRows.length > 0 && (
+        <div>
+          <p className="text-[11px] font-medium text-gray-400 mb-1 pl-1">전유부분의 건물의 표시</p>
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <table className="w-full text-xs">
+              <tbody>
+                {unitRows.map((row, i) => (
+                  <InfoRow key={i} label={row.label} value={row.value} idx={i} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 대지권의 표시 */}
+      {landRows.length > 0 && (
+        <div>
+          <p className="text-[11px] font-medium text-gray-400 mb-1 pl-1">대지권의 표시</p>
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <table className="w-full text-xs">
+              <tbody>
+                {landRows.map((row, i) => (
+                  <InfoRow key={i} label={row.label} value={row.value} idx={i} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── 표제부 섹션 (일반 건물) ───
+
+function SimpleTitleSection({ parsed }: { parsed: ParsedRegistry }) {
   const { title } = parsed;
 
   const rows = [
@@ -48,12 +141,7 @@ function TitleSection({ parsed }: { parsed: ParsedRegistry }) {
         <table className="w-full text-xs">
           <tbody>
             {rows.map((row, i) => (
-              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                <td className="px-3 py-2 font-medium text-gray-500 w-24 whitespace-nowrap border-r border-gray-100">
-                  {row.label}
-                </td>
-                <td className="px-3 py-2 text-gray-900">{row.value}</td>
-              </tr>
+              <InfoRow key={i} label={row.label} value={row.value} idx={i} />
             ))}
           </tbody>
         </table>
@@ -195,9 +283,15 @@ interface StructuredRegistryViewProps {
 }
 
 export function StructuredRegistryView({ parsed }: StructuredRegistryViewProps) {
+  const isApartment = parsed.title.isApartment;
+
   return (
     <div className="space-y-5">
-      <TitleSection parsed={parsed} />
+      {isApartment ? (
+        <ApartmentTitleSection parsed={parsed} />
+      ) : (
+        <SimpleTitleSection parsed={parsed} />
+      )}
       <GapguSection parsed={parsed} />
       <EulguSection parsed={parsed} />
     </div>

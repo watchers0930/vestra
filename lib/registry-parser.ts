@@ -16,6 +16,12 @@ export interface TitleSection {
   structure: string;
   purpose: string;
   landRightRatio: string;
+  /** 집합건물 (아파트) 추가 필드 */
+  buildingName: string;
+  unitNumber: string;
+  exclusiveArea: string;
+  totalFloors: string;
+  isApartment: boolean;
 }
 
 export interface GapguEntry {
@@ -174,6 +180,19 @@ function isCancelled(text: string): boolean {
   return /말소|말소기준등기|말소회복/.test(text);
 }
 
+/** 집합건물의 반복적인 층별 면적 데이터를 압축하여 truncation 방지 */
+export function compressFloorData(text: string): string {
+  // "1층 635.713㎡ 2층 620.064㎡ ... 25층 413.376㎡" → "[1층~25층 면적정보 25개층]"
+  return text.replace(
+    /((?:(?:지하?\d*|\d+)층\s*[\d,.]+\s*㎡[\s,]*){5,})/g,
+    (match) => {
+      const floors = match.match(/(?:지하?\d*|\d+)층/g) || [];
+      if (floors.length < 5) return match;
+      return `[${floors[0]}~${floors[floors.length - 1]} 면적정보 ${floors.length}개층] `;
+    },
+  );
+}
+
 /** 면적 추출 */
 function extractArea(text: string): string {
   const m = text.match(/([\d.]+)\s*㎡/);
@@ -240,21 +259,7 @@ function splitSections(text: string): RawSections {
     .replace(/\r\n/g, "\n")
     .replace(/\t/g, " ");
 
-  // 섹션 헤더 패턴 (다양한 포맷 대응)
-  const titlePattern = /【\s*표\s*제\s*부\s*】/;
-  const gapguPattern = /【\s*갑\s*구\s*】/;
-  const eulguPattern = /【\s*을\s*구\s*】/;
-
-  // 대체 패턴 (괄호 형식)
-  const titlePatternAlt = /\[\s*표\s*제\s*부\s*\]/;
-  const gapguPatternAlt = /\[\s*갑\s*구\s*\]/;
-  const eulguPatternAlt = /\[\s*을\s*구\s*\]/;
-
-  // 일반 텍스트 패턴
-  const titlePatternText = /표\s*제\s*부/;
-  const gapguPatternText = /갑\s*구/;
-  const eulguPatternText = /을\s*구/;
-
+  // 섹션 헤더 패턴 — 설명 텍스트 포함 구체적 패턴 우선, 브래킷 패턴, 일반 텍스트 순
   function findIndex(patterns: RegExp[]): number {
     for (const p of patterns) {
       const m = normalized.search(p);
@@ -263,9 +268,32 @@ function splitSections(text: string): RawSections {
     return -1;
   }
 
-  const titleIdx = findIndex([titlePattern, titlePatternAlt, titlePatternText]);
-  const gapguIdx = findIndex([gapguPattern, gapguPatternAlt, gapguPatternText]);
-  const eulguIdx = findIndex([eulguPattern, eulguPatternAlt, eulguPatternText]);
+  const titleIdx = findIndex([
+    /【\s*표\s*제\s*부\s*】/,
+    /\[\s*표\s*제\s*부\s*\]/,
+    /표\s*제\s*부\s*[】\]（(]/,
+    /표\s*제\s*부/,
+  ]);
+
+  // 갑구: 설명 포함 패턴 우선 (집합건물에서 표제부 내 오탐 방지)
+  const gapguIdx = findIndex([
+    /【\s*갑\s*구\s*】\s*[（(]\s*소유권에/,
+    /\[\s*갑\s*구\s*\]\s*[（(]\s*소유권에/,
+    /【\s*갑\s*구\s*】/,
+    /\[\s*갑\s*구\s*\]/,
+    /갑\s*구\s*[（(]\s*소유권에/,
+    /갑\s*구/,
+  ]);
+
+  // 을구: 설명 포함 패턴 우선
+  const eulguIdx = findIndex([
+    /【\s*을\s*구\s*】\s*[（(]\s*소유권\s*이외/,
+    /\[\s*을\s*구\s*\]\s*[（(]\s*소유권\s*이외/,
+    /【\s*을\s*구\s*】/,
+    /\[\s*을\s*구\s*\]/,
+    /을\s*구\s*[（(]\s*소유권\s*이외/,
+    /을\s*구/,
+  ]);
 
   const titleRaw = titleIdx !== -1 && gapguIdx !== -1
     ? normalized.slice(titleIdx, gapguIdx)
@@ -294,9 +322,20 @@ function parseTitle(raw: string): TitleSection {
     structure: "",
     purpose: "",
     landRightRatio: "",
+    buildingName: "",
+    unitNumber: "",
+    exclusiveArea: "",
+    totalFloors: "",
+    isApartment: false,
   };
 
   if (!raw) return result;
+
+  // 집합건물 감지: 전유부분 표제부가 있으면 아파트/집합건물
+  if (/전유부분/.test(raw)) {
+    result.isApartment = true;
+    return parseApartmentTitle(raw, result);
+  }
 
   const lines = raw.split("\n").map((l) => l.trim()).filter(Boolean);
 
@@ -325,7 +364,7 @@ function parseTitle(raw: string): TitleSection {
 
     // 대지권 비율
     if (/대지권\s*비율|대지권비율/.test(line)) {
-      const ratioMatch = line.match(/([\d.]+분의\s*[\d.]+|[\d.]+\/[\d.]+)/);
+      const ratioMatch = line.match(/([\d,.]+분의\s*[\d,.]+|[\d.]+\/[\d.]+)/);
       if (ratioMatch) result.landRightRatio = ratioMatch[1];
     }
 
@@ -334,6 +373,89 @@ function parseTitle(raw: string): TitleSection {
       result.buildingDetail = line.replace(/^[\d\s|]+/, "").trim();
     }
   }
+
+  return result;
+}
+
+/** 집합건물(아파트) 전용 표제부 파싱 */
+function parseApartmentTitle(raw: string, result: TitleSection): TitleSection {
+  // 전유부분 기준으로 1동 건물 블록과 전유부분 블록 분리
+  const jyuIdx = raw.search(/전유부분/);
+  const buildingBlock = jyuIdx > 0 ? raw.slice(0, jyuIdx) : "";
+  const unitBlock = jyuIdx >= 0 ? raw.slice(jyuIdx) : raw;
+
+  // ── 1동 건물의 표시 ──
+
+  // 소재지번 (동/번지까지)
+  const addrMatch = buildingBlock.match(
+    /([가-힣]+(?:특별시|광역시|특별자치시|도)\s+[가-힣]+(?:시|군|구)[\s가-힣]*(?:동|읍|면|리|가|로)\s*[\d\-]*)/,
+  );
+  if (addrMatch) result.address = addrMatch[1].replace(/\s+/g, " ").trim();
+
+  // 건물명칭
+  const nameMatch = raw.match(
+    /([가-힣A-Za-z0-9]+(?:아파트|오피스텔|빌라|타운|타워|하이츠|빌|팰리스|캐슬|파크|힐스|센트럴|레미안|자이|래미안|푸르지오|e편한세상|더샵|롯데캐슬|SK뷰|힐스테이트|아이파크|트레비앙|한신|현대|삼성|우성|쌍용|주공|LG|대림|벽산|두산위브|리슈빌|센텀|시티|스카이뷰|포레|파인|가든|맨션|주상복합))/,
+  );
+  if (nameMatch) result.buildingName = nameMatch[1].trim();
+
+  // 구조 (1동 건물)
+  const structMatch = buildingBlock.match(
+    /((?:철근콘크리트|철골철근콘크리트|철골|벽돌|목조|경량철골|조적)[가-힣\s]*(?:구조|조))/,
+  );
+  if (structMatch) result.structure = structMatch[1];
+
+  // 층수
+  const floorMatch = buildingBlock.match(/(\d+)\s*층\s*(?:아파트|건물|$)/);
+  if (floorMatch) result.totalFloors = `지상 ${floorMatch[1]}층`;
+  if (!result.totalFloors) {
+    // "25층 아파트" 또는 순수 층수 패턴
+    const allFloors = [...buildingBlock.matchAll(/(\d+)층/g)].map((m) => parseInt(m[1], 10));
+    if (allFloors.length > 0) {
+      const maxFloor = Math.max(...allFloors);
+      if (maxFloor >= 3) result.totalFloors = `지상 ${maxFloor}층`;
+    }
+  }
+
+  // ── 전유부분의 건물의 표시 ──
+
+  // 동호수: 제108동 제14층 제1403호
+  const unitMatch = unitBlock.match(/제?\s*(\d+)\s*동\s*제?\s*(\d+)\s*층\s*제?\s*(\d+)\s*호/);
+  if (unitMatch) {
+    result.unitNumber = `제${unitMatch[1]}동 제${unitMatch[2]}층 제${unitMatch[3]}호`;
+  }
+
+  // 전유면적: 전유부분 블록에서 첫 번째 ㎡
+  const unitAreaMatch = unitBlock.match(/([\d.]+)\s*㎡/);
+  if (unitAreaMatch) {
+    result.exclusiveArea = `${unitAreaMatch[1]}㎡`;
+    result.area = result.exclusiveArea;
+  }
+
+  // 전유부분 구조
+  const unitStructMatch = unitBlock.match(
+    /((?:철근콘크리트|철골철근콘크리트|철골)[가-힣\s]*)/,
+  );
+  if (unitStructMatch) {
+    const s = unitStructMatch[1].trim();
+    if (s.length >= 4) result.structure = s;
+  }
+
+  // 용도
+  if (/아파트/.test(raw)) result.purpose = "아파트";
+  else if (/오피스텔/.test(raw)) result.purpose = "오피스텔";
+  else if (/다세대/.test(raw)) result.purpose = "다세대주택";
+  else if (/공동주택/.test(raw)) result.purpose = "공동주택";
+
+  // 대지권비율 (전체 텍스트에서)
+  const ratioMatch = raw.match(/([\d,.]+)\s*분의\s*([\d,.]+)/);
+  if (ratioMatch) result.landRightRatio = `${ratioMatch[1]}분의 ${ratioMatch[2]}`;
+
+  // buildingDetail: 전유부분 요약 (원문 전체 대신)
+  result.buildingDetail = [
+    result.unitNumber,
+    result.structure,
+    result.exclusiveArea,
+  ].filter(Boolean).join(" / ");
 
   return result;
 }

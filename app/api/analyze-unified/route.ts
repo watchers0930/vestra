@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
 import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
 import { UNIFIED_ANALYSIS_PROMPT } from "@/lib/prompts";
-import { parseRegistry } from "@/lib/registry-parser";
+import { parseRegistry, compressFloorData } from "@/lib/registry-parser";
 import { calculateRiskScore } from "@/lib/risk-scoring";
 import { validateParsedRegistry } from "@/lib/validation-engine";
 import { fetchComprehensivePrices, type PriceResult, type RentPriceResult } from "@/lib/molit-api";
@@ -185,8 +185,13 @@ export async function POST(req: NextRequest) {
 
     const { rawText: rawInput, estimatedPrice: userPrice, address: userAddress, source: inputSource } = await req.json();
 
-    // Input sanitization
-    const rawText = truncateInput(stripHtml(rawInput || ""), 50000);
+    // Input sanitization — HTML 줄바꿈 보존 + 집합건물 층별 면적 압축
+    let sanitized = (rawInput || "");
+    sanitized = sanitized.replace(/<br\s*\/?>/gi, "\n");
+    sanitized = sanitized.replace(/<\/(?:p|div|tr|li|td|th)>/gi, "\n");
+    sanitized = stripHtml(sanitized);
+    sanitized = compressFloorData(sanitized);
+    const rawText = truncateInput(sanitized, 50000);
 
     if (!rawText || rawText.trim().length < 20) {
       return NextResponse.json(
