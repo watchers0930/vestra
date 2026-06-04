@@ -121,10 +121,20 @@ export async function checkDailyUsage(
     return { success: true, remaining: 9999, reset: tomorrow.getTime() };
   }
   // 명시적으로 RATE_LIMIT_BYPASS=true 설정 시에만 바이패스 (로컬 개발용)
+  // 통계용 카운트는 기록하되, 제한은 적용하지 않음
   if (process.env.RATE_LIMIT_BYPASS === "true") {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
+    const today = new Date().toISOString().slice(0, 10);
+    const id = `daily:${userId}:${today}`;
+    try {
+      await prisma.dailyUsage.upsert({
+        where: { id },
+        update: { count: { increment: 1 } },
+        create: { id, date: today, count: 1 },
+      });
+    } catch { /* 통계 실패는 무시 */ }
     return { success: true, remaining: dailyLimit, reset: tomorrow.getTime() };
   }
 
