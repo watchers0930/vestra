@@ -58,9 +58,11 @@ export function useAgentData() {
 
   // 데이터 로드
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       if (!session?.user) {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
         return;
       }
 
@@ -72,6 +74,8 @@ export function useAgentData() {
           fetch("/api/agent/stats"),
           fetch(`/api/agent/clients?${params}`),
         ]);
+
+        if (cancelled) return;
 
         if (statsRes.ok) {
           const data = await statsRes.json();
@@ -86,11 +90,11 @@ export function useAgentData() {
         /* 조회 실패 무시 */
       }
 
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     }
 
-    setLoading(true);
     load();
+    return () => { cancelled = true; };
   }, [session, page, debouncedSearch, refreshKey]);
 
   const refresh = useCallback(() => {

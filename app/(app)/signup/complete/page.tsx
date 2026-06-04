@@ -9,7 +9,7 @@ import { VestraLogoMark } from "@/components/common/VestraLogo";
 function SignupCompleteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const intendedRole = searchParams.get("intendedRole");
 
   // 미로그인 상태면 signup으로 리다이렉트
