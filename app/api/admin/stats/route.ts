@@ -5,28 +5,22 @@ import { withAdminAuth } from "@/lib/with-admin-auth";
 export const GET = withAdminAuth(async () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().slice(0, 10);
 
   const [
     totalUsers,
     roleBreakdown,
     pendingVerifications,
-    todayUsageRecords,
+    todayAnalyses,
     totalAnalyses,
     totalAssets,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.groupBy({ by: ["role"], _count: { role: true } }),
     prisma.user.count({ where: { verifyStatus: "pending" } }),
-    prisma.dailyUsage.findMany({
-      where: { id: { startsWith: `daily:` }, date: todayStr },
-      select: { count: true },
-    }),
+    prisma.analysis.count({ where: { createdAt: { gte: today } } }),
     prisma.analysis.count(),
     prisma.asset.count(),
   ]);
-
-  const todayAnalyses = todayUsageRecords.reduce((sum, r) => sum + r.count, 0);
 
   const roles: Record<string, number> = {};
   for (const r of roleBreakdown) {
@@ -38,11 +32,9 @@ export const GET = withAdminAuth(async () => {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
   sevenDaysAgo.setHours(0, 0, 0, 0);
 
-  const usageRecords = await prisma.dailyUsage.findMany({
-    where: {
-      id: { startsWith: "daily:" },
-      date: { gte: sevenDaysAgo.toISOString().slice(0, 10) },
-    },
+  const recentAnalyses = await prisma.analysis.findMany({
+    where: { createdAt: { gte: sevenDaysAgo } },
+    select: { createdAt: true },
   });
 
   const trendMap: Record<string, number> = {};
@@ -51,9 +43,10 @@ export const GET = withAdminAuth(async () => {
     d.setDate(d.getDate() - (6 - i));
     trendMap[d.toISOString().slice(0, 10)] = 0;
   }
-  for (const r of usageRecords) {
-    if (trendMap[r.date] !== undefined) {
-      trendMap[r.date] += r.count;
+  for (const r of recentAnalyses) {
+    const dateKey = r.createdAt.toISOString().slice(0, 10);
+    if (trendMap[dateKey] !== undefined) {
+      trendMap[dateKey] += 1;
     }
   }
   const dailyTrend = Object.entries(trendMap).map(([date, count]) => ({ date, count }));

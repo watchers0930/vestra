@@ -20,7 +20,7 @@ export default function AppLayout({
       <Suspense><Sidebar /></Suspense>
       <OnboardingModal />
       <div className="min-h-screen lg:ml-[272px] transition-all duration-300">
-        <main id="main-content" className="mobile-safe-top p-4 pt-5 lg:pt-5 lg:px-6 lg:pb-6">
+        <main id="main-content" className="mobile-safe-top px-4 pt-5 pb-4 lg:pt-5 lg:px-6 lg:pb-6">
           <ErrorBoundary>
             {children}
           </ErrorBoundary>
