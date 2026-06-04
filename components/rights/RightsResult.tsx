@@ -105,6 +105,15 @@ export interface UnifiedResult {
     molitAvailable: boolean;
     estimatedPriceSource: string;
   };
+  // 임시 디버그
+  _debug?: {
+    sectionLengths?: { title: number; gapgu: number; eulgu: number };
+    eulguRawPreview?: string;
+    eulguEntries?: Array<{ order: number; purpose: string; isCancelled: boolean; amount: number; detailPreview: string }>;
+    inputLength?: number;
+    inputFirst200?: string;
+    hasHtmlMarker?: boolean;
+  };
 }
 
 // ─── 스타일 상수 ───
@@ -486,6 +495,37 @@ export function RightsResult({ result, rawText }: RightsResultProps) {
         등기부등본의 정확성은 원본 문서와 대조해 확인하시기 바랍니다.
         부동산 거래 결정 시 반드시 법무사, 공인중개사 등 전문가와 상담하세요.
       </Alert>
+
+      {/* 임시 디버그 패널 — 파싱 진단용 (추후 제거) */}
+      {result._debug && (
+        <details className="mt-4 border border-gray-200 rounded-lg text-xs">
+          <summary className="px-3 py-2 bg-gray-50 cursor-pointer font-mono text-gray-500">
+            [DEV] 파싱 디버그 (클릭하여 펼치기)
+          </summary>
+          <div className="p-3 space-y-2 font-mono text-gray-600 overflow-auto max-h-96">
+            <p><strong>입력 길이:</strong> {result._debug.inputLength}자 | HTML 말소 마커: {result._debug.hasHtmlMarker ? "있음" : "없음"}</p>
+            <p><strong>섹션:</strong> 표제부={result._debug.sectionLengths?.title} | 갑구={result._debug.sectionLengths?.gapgu} | 을구={result._debug.sectionLengths?.eulgu}</p>
+            <div>
+              <strong>을구 항목 ({result._debug.eulguEntries?.length || 0}건):</strong>
+              {result._debug.eulguEntries?.map((e, i) => (
+                <div key={i} className={`mt-1 p-1.5 rounded ${e.isCancelled ? "bg-green-50" : "bg-red-50"}`}>
+                  #{e.order} {e.purpose} | {e.isCancelled ? "말소" : "활성"} | {e.amount.toLocaleString()}원
+                  <br />
+                  <span className="text-gray-400">{e.detailPreview}</span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <strong>을구 원문 (첫 800자):</strong>
+              <pre className="mt-1 p-2 bg-gray-100 rounded whitespace-pre-wrap text-[10px]">{result._debug.eulguRawPreview || "(없음)"}</pre>
+            </div>
+            <div>
+              <strong>입력 텍스트 (첫 200자):</strong>
+              <pre className="mt-1 p-2 bg-gray-100 rounded whitespace-pre-wrap text-[10px]">{result._debug.inputFirst200}</pre>
+            </div>
+          </div>
+        </details>
+      )}
     </div>
   );
 }

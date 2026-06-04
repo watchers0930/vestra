@@ -185,8 +185,14 @@ export async function POST(req: NextRequest) {
 
     const { rawText: rawInput, estimatedPrice: userPrice, address: userAddress, source: inputSource } = await req.json();
 
-    // Input sanitization — HTML 줄바꿈 보존 + 집합건물 층별 면적 압축
+    // Input sanitization — HTML 줄바꿈 보존 + 취소선 감지 + 집합건물 층별 면적 압축
     let sanitized = (rawInput || "");
+
+    // 0단계: HTML 취소선 태그 감지 → 【말소】 마커 삽입 (stripHtml 전에 처리)
+    // 인터넷등기소에서 복사 시 <del>, <s>, line-through CSS로 말소 표시될 수 있음
+    sanitized = sanitized.replace(/<(?:del|s|strike)\b[^>]*>([\s\S]*?)<\/(?:del|s|strike)>/gi, "【말소】$1");
+    sanitized = sanitized.replace(/<[^>]*(?:text-decoration\s*:\s*line-through|class\s*=\s*["'][^"']*(?:cancel|deleted|strikethrough|malso)[^"']*["'])[^>]*>([\s\S]*?)<\/[^>]+>/gi, "【말소】$1");
+
     sanitized = sanitized.replace(/<br\s*\/?>/gi, "\n");
     sanitized = sanitized.replace(/<\/(?:p|div|tr|li|td|th)>/gi, "\n");
     sanitized = stripHtml(sanitized);
@@ -532,6 +538,21 @@ export async function POST(req: NextRequest) {
         molitFiltered: marketDataFiltered,
         estimatedPriceSource: userPrice ? "user" : marketData?.sale?.avgPrice ? "molit" : "none",
         inputSource: inputSource || "manual",
+      },
+      // 임시 디버그: 을구 파싱 진단용 (추후 제거)
+      _debug: {
+        sectionLengths: parsed._sectionLengths,
+        eulguRawPreview: parsed._eulguRawPreview,
+        eulguEntries: parsed.eulgu.map((e) => ({
+          order: e.order,
+          purpose: e.purpose,
+          isCancelled: e.isCancelled,
+          amount: e.amount,
+          detailPreview: e.detail.slice(0, 150),
+        })),
+        inputLength: rawText.length,
+        inputFirst200: rawText.slice(0, 200),
+        hasHtmlMarker: rawText.includes("【말소】"),
       },
     });
   } catch (error: unknown) {

@@ -74,6 +74,9 @@ export interface ParsedRegistry {
   eulgu: EulguEntry[];
   summary: ParseSummary;
   rawText: string;
+  /** 디버그: 섹션 분리 결과 (임시) */
+  _sectionLengths?: { title: number; gapgu: number; eulgu: number };
+  _eulguRawPreview?: string;
 }
 
 // ─── 상수 ───
@@ -187,7 +190,7 @@ function classifyRightType(text: string, riskMap: Record<string, RiskType>): { t
 
 /** 말소 여부 판별 */
 function isCancelled(text: string): boolean {
-  return /말소|말소기준등기|말소회복/.test(text);
+  return /말소|말소기준등기|말소회복|【말소】/.test(text);
 }
 
 /** "N번근저당권말소" 등 다른 항목 참조 말소인지 여부 */
@@ -818,7 +821,11 @@ export function parseRegistry(rawText: string): ParsedRegistry {
   const eulgu = resolveCancellations(parseEulgu(eulguRaw));
   const summary = buildSummary(gapgu, eulgu);
 
-  return { title, gapgu, eulgu, summary, rawText };
+  return {
+    title, gapgu, eulgu, summary, rawText,
+    _sectionLengths: { title: titleRaw.length, gapgu: gapguRaw.length, eulgu: eulguRaw.length },
+    _eulguRawPreview: eulguRaw.slice(0, 800),
+  };
 }
 
 // ─── 샘플 데이터 (테스트/데모용) ───
