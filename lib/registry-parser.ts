@@ -552,10 +552,17 @@ function parseGapgu(raw: string): GapguEntry[] {
           currentEntry.riskType = currentEntry.isCancelled ? "info" : risk;
         }
       }
-      // "N번...말소"는 다른 항목 참조 → 현재 항목 말소가 아님
-      if (isCancelled(line) && !isRefCancellation(line)) {
-        currentEntry.isCancelled = true;
-        currentEntry.riskType = "info";
+      if (isCancelled(line)) {
+        if (!isRefCancellation(line)) {
+          currentEntry.isCancelled = true;
+          currentEntry.riskType = "info";
+        } else {
+          const refMatch = line.match(/(\d+)번\s*[가-힣]*말소/);
+          if (refMatch && currentEntry.order === parseInt(refMatch[1], 10)) {
+            currentEntry.isCancelled = true;
+            currentEntry.riskType = "info";
+          }
+        }
       }
     }
   }
@@ -639,10 +646,19 @@ function parseEulgu(raw: string): EulguEntry[] {
           currentEntry.riskType = currentEntry.isCancelled ? "info" : risk;
         }
       }
-      // "N번...말소"는 다른 항목 참조 → 현재 항목 말소가 아님
-      if (isCancelled(line) && !isRefCancellation(line)) {
-        currentEntry.isCancelled = true;
-        currentEntry.riskType = "info";
+      if (isCancelled(line)) {
+        if (!isRefCancellation(line)) {
+          // 직접 말소 (단순 "말소" 키워드)
+          currentEntry.isCancelled = true;
+          currentEntry.riskType = "info";
+        } else {
+          // "N번...말소" → N이 현재 항목 번호이면 자기 말소
+          const refMatch = line.match(/(\d+)번\s*[가-힣]*말소/);
+          if (refMatch && currentEntry.order === parseInt(refMatch[1], 10)) {
+            currentEntry.isCancelled = true;
+            currentEntry.riskType = "info";
+          }
+        }
       }
     }
   }
@@ -675,8 +691,9 @@ function resolveCancellations<T extends { order: number; detail: string; purpose
         const m = ref.match(/(\d+)/);
         if (!m) continue;
         const refOrder = parseInt(m[1], 10);
-        const target = entries.find((e) => e.order === refOrder && e !== entry);
-        if (target) {
+        // 자기 자신 포함 — "3번근저당권말소"가 #3 항목 자체에 붙는 경우 대응
+        const targets = entries.filter((e) => e.order === refOrder);
+        for (const target of targets) {
           target.isCancelled = true;
           target.riskType = "info";
         }
