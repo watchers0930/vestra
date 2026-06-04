@@ -307,6 +307,60 @@ describe("연번 말소 — '3번4번근저당권말소' 형식", () => {
   });
 });
 
+describe("기말소 형식 — 'N번근저당권설정 기말소' 형식 (인터넷등기소 실제)", () => {
+  // 실제 인터넷등기소에서 나오는 "기말소" 형식
+  // "N번근저당권설정 YYYY년MM월DD일 YYYY년MM월DD일 기말소 제XXXXX호 해지"
+  const giMalsoText = `
+【 을 구 】 ( 소유권 이외의 권리에 관한 사항 )
+순위번호 등 기 목 적 접 수 등 기 원 인 권리자 및 기타사항
+1 근저당권설정 2002년10월7일 2002년10월7일 채권최고액 금96,000,000원 제73043호 설정계약 채무자 조ㅇㅇ 근저당권자 주식회사조흥은행 （ 광화문지점 ） 2 1번근저당권설정 2004년3월16일 2004년3월11일 기말소 제12650호 해지
+3 근저당권설정 2004년11월26일 2004년11월26일 채권최고액 금13,000,000원 제55906호 설정계약 채무자 신ㅇㅇ 근저당권자 주식회사국민은행 （ 철산지점 ）
+4 근저당권설정 2008년4월10일 2008년4월10일 채권최고액 금48,000,000원 제20388호 설정계약 채무자 신ㅇㅇ 근저당권자 주식회사국민은행 （ 철산지점 ）
+5 근저당권설정 2012년5월14일 2012년5월14일 채권최고액 금14,400,000원 제16275호 설정계약 채무자 신ㅇㅇ 근저당권자 주식회사국민은행
+5 3번근저당권설정 2012년5월14일 2012년5월10일 기말소 제16274호 해지
+5 4번근저당권설정 2012년5월14일 2012년5월10일 기말소 제16274호 해지
+6 5번근저당권설정 2018년9월11일 2018년9월10일 기말소 제33056호 해지
+7 근저당권설정 2014년7월11일 2014년7월11일 채권최고액 금48,000,000원 제25347호 설정계약 채무자 신ㅇㅇ 근저당권자 농협은행주식회사
+7 7번근저당권설정 2020년3월15일 2020년3월14일 기말소 제5678호 해지
+`.trim();
+
+  const parsed = parseRegistry(giMalsoText);
+
+  it("1번근저당권설정 기말소로 1번이 말소된다", () => {
+    const entry1 = parsed.eulgu.find(e => e.order === 1 && e.purpose === "근저당권설정" && e.amount > 0);
+    expect(entry1).toBeDefined();
+    expect(entry1!.isCancelled).toBe(true);
+  });
+
+  it("3번근저당권설정 기말소로 3번이 말소된다 (2자리 월일 날짜)", () => {
+    const entry3 = parsed.eulgu.find(e => e.order === 3 && e.purpose === "근저당권설정");
+    expect(entry3).toBeDefined();
+    expect(entry3!.isCancelled).toBe(true);
+  });
+
+  it("4번근저당권설정 기말소로 4번이 말소된다", () => {
+    const entry4 = parsed.eulgu.find(e => e.order === 4 && e.purpose === "근저당권설정");
+    expect(entry4).toBeDefined();
+    expect(entry4!.isCancelled).toBe(true);
+  });
+
+  it("5번근저당권설정 기말소로 5번이 말소된다", () => {
+    const entry5 = parsed.eulgu.find(e => e.order === 5 && e.purpose === "근저당권설정" && e.amount > 0);
+    expect(entry5).toBeDefined();
+    expect(entry5!.isCancelled).toBe(true);
+  });
+
+  it("7번근저당권설정 기말소로 7번이 말소된다 (같은 순위번호)", () => {
+    const entry7 = parsed.eulgu.find(e => e.order === 7 && e.purpose === "근저당권설정" && e.amount > 0);
+    expect(entry7).toBeDefined();
+    expect(entry7!.isCancelled).toBe(true);
+  });
+
+  it("활성 근저당 금액이 0원이다", () => {
+    expect(parsed.summary.totalMortgageAmount).toBe(0);
+  });
+});
+
 describe("extractAmount", () => {
   it("금 480,000,000원 → 480000000", () => {
     expect(extractAmount("채권최고액 금 480,000,000원")).toBe(480000000);

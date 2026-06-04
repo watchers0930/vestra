@@ -193,10 +193,10 @@ function isCancelled(text: string): boolean {
   return /말소|말소기준등기|말소회복|【말소】/.test(text);
 }
 
-/** "N번근저당권말소" 등 다른 항목 참조 말소인지 여부 */
+/** "N번근저당권말소", "N번근저당권설정 기말소" 등 다른 항목 참조 말소인지 여부 */
 function isRefCancellation(text: string): boolean {
-  // [가-힣\s\d,·]{0,30} — 한국어+공백+숫자+쉼표 허용, "3번4번근저당권말소" 대응
-  return /\d+\s*번[가-힣\s\d,·]{0,30}말소/.test(text) || /제\s*\d+\s*호[가-힣\s\d,·]{0,30}말소/.test(text);
+  // {0,80} — "N번근저당권설정 YYYY년MM월DD일 YYYY년MM월DD일 기말소" 형식 대응
+  return /\d+\s*번[가-힣\s\d,·()（）]{0,80}말소/.test(text) || /제\s*\d+\s*호[가-힣\s\d,·()（）]{0,80}말소/.test(text);
 }
 
 /** 집합건물의 반복적인 층별 면적 데이터를 압축하여 truncation 방지 */
@@ -696,9 +696,9 @@ function resolveCancellations<T extends { order: number; detail: string; purpose
       entry.riskType = "info";
     }
 
-    // ── 패턴 A: "N번근저당권말소", "N번4번근저당권말소", "N번 근저당권 말소" ──
-    // [가-힣\s\d,·]{0,30} → 한국어+공백+숫자+쉼표 허용 ("3번4번근저당권말소" 대응)
-    const patternA = /(\d+)\s*번[가-힣\s\d,·]{0,30}말소/g;
+    // ── 패턴 A: "N번근저당권말소", "N번근저당권설정 기말소", "N번4번근저당권말소" ──
+    // {0,80} — "N번근저당권설정 YYYY년MM월DD일 YYYY년MM월DD일 기말소" 형식 대응
+    const patternA = /(\d+)\s*번[가-힣\s\d,·()（）]{0,80}말소/g;
     let m: RegExpExecArray | null;
     while ((m = patternA.exec(text)) !== null) {
       const refOrder = parseInt(m[1], 10);
@@ -713,7 +713,7 @@ function resolveCancellations<T extends { order: number; detail: string; purpose
     }
 
     // ── 패턴 B: "제N호 근저당권 말소" ──
-    const patternB = /제\s*(\d+)\s*호[가-힣\s\d,·]{0,30}말소/g;
+    const patternB = /제\s*(\d+)\s*호[가-힣\s\d,·()（）]{0,80}말소/g;
     while ((m = patternB.exec(text)) !== null) {
       const refOrder = parseInt(m[1], 10);
       if (refOrder >= 1 && refOrder <= 50) {
@@ -744,7 +744,27 @@ function resolveCancellations<T extends { order: number; detail: string; purpose
     }
 
     // ── 패턴 D: "N번" + "해제/해지" ──
-    const patternD = /(\d+)\s*번[가-힣\s\d,·]{0,30}(?:해제|해지)/g;
+    const patternD = /(\d+)\s*번[가-힣\s\d,·()（）]{0,80}(?:해제|해지)/g;
+
+    // ── 패턴 E: "기말소" 키워드 — "이미 말소됨"의 확정적 의미 ──
+    // "N번근저당권설정 YYYY년 YYYY년 기말소 해지" 형식 대응
+    if (/기말소/.test(text)) {
+      entry.isCancelled = true;
+      entry.riskType = "info";
+
+      const allRefs = [...text.matchAll(/(\d+)\s*번/g)];
+      for (const ref of allRefs) {
+        const refOrder = parseInt(ref[1], 10);
+        if (refOrder >= 1 && refOrder <= 50) {
+          for (const target of entries) {
+            if (target.order === refOrder) {
+              target.isCancelled = true;
+              target.riskType = "info";
+            }
+          }
+        }
+      }
+    }
     while ((m = patternD.exec(text)) !== null) {
       const refOrder = parseInt(m[1], 10);
       if (refOrder >= 1 && refOrder <= 50) {
@@ -808,10 +828,11 @@ function normalizeRegistryNewlines(text: string): string {
   // 갑구/을구 항목 시작: "숫자 + 소유권/가압류 등 키워드" 앞에 줄바꿈
   r = r.replace(/\s+(\d+\s+(?:소유권보존|소유권이전|가압류|압류|가처분|경매개시결정|임의경매|강제경매|신탁|가등기|예고등기|환매등기|근저당권설정|저당권설정|전세권설정|임차권등기|임차권설정|근저당권이전|근저당권변경|전세권이전))/g, "\n$1");
   // 말소 항목: "N번근저당권말소", "N번4번근저당권말소", "N번 근저당권 말소" 등
-  // [가-힣\s\d,·]{0,20} — 숫자 허용으로 "3번4번근저당권말소" 대응
-  r = r.replace(/\s+(\d+\s*번[가-힣\s\d,·]{0,20}말소)/g, "\n$1");
+  r = r.replace(/\s+(\d+\s*번[가-힣\s\d,·()（）]{0,20}말소)/g, "\n$1");
   // 말소 항목 (별도 순위): "N 근저당권말소", "N 전세권말소", "N N번근저당권말소" 등
-  r = r.replace(/\s+(\d+\s+(?:근저당권말소|저당권말소|전세권말소|가압류말소|압류말소|가처분말소|가등기말소|\d+\s*번[가-힣\s\d,·]{0,20}말소))/g, "\n$1");
+  r = r.replace(/\s+(\d+\s+(?:근저당권말소|저당권말소|전세권말소|가압류말소|압류말소|가처분말소|가등기말소|\d+\s*번[가-힣\s\d,·()（）]{0,20}말소))/g, "\n$1");
+  // 기말소 항목: "N번근저당권설정 ... 기말소" → "N번" 앞에 줄바꿈
+  r = r.replace(/\s+(\d+\s*번[가-힣\s\d,·()（）]*기말소)/g, "\n$1");
   // 표제부 서브섹션: (전유부분, (1동, (대지권
   r = r.replace(/\s+(\(\s*(?:전유부분|1동|대지권))/g, "\n$1");
   // 표시번호 앞 줄바꿈
