@@ -72,18 +72,29 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
   async jwt({ token, user, trigger, session }) {
     if (user) {
       token.id = user.id;
-      const dbUser = await prisma.user.findUnique({
-        where: { id: user.id as string },
-        select: { role: true, dailyLimit: true, verifyStatus: true },
-      });
-      token.role = dbUser?.role || "PERSONAL";
-      token.dailyLimit = dbUser?.dailyLimit || ROLE_LIMITS.PERSONAL;
-      token.verifyStatus = dbUser?.verifyStatus || "none";
     }
+
+    // DB에서 최신 role/verifyStatus 동기화 (로그인 시 + 5분 간격)
+    const now = Date.now();
+    const REFRESH_MS = 5 * 60 * 1000;
+    if (user || !token.refreshedAt || now - (token.refreshedAt as number) > REFRESH_MS) {
+      if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true, dailyLimit: true, verifyStatus: true },
+        });
+        token.role = dbUser?.role || "PERSONAL";
+        token.dailyLimit = dbUser?.dailyLimit || ROLE_LIMITS.PERSONAL;
+        token.verifyStatus = dbUser?.verifyStatus || "none";
+      }
+      token.refreshedAt = now;
+    }
+
     if (trigger === "update" && session) {
       if (session.role) token.role = session.role;
       if (session.dailyLimit) token.dailyLimit = session.dailyLimit;
       if (session.verifyStatus) token.verifyStatus = session.verifyStatus;
+      token.refreshedAt = now;
     }
     return token;
   },
@@ -230,5 +241,6 @@ declare module "@auth/core/jwt" {
     role?: string;
     dailyLimit?: number;
     verifyStatus?: string;
+    refreshedAt?: number;
   }
 }
