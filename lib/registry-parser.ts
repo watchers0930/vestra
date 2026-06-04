@@ -180,6 +180,11 @@ function isCancelled(text: string): boolean {
   return /말소|말소기준등기|말소회복/.test(text);
 }
 
+/** "N번근저당권말소" 등 다른 항목 참조 말소인지 여부 */
+function isRefCancellation(text: string): boolean {
+  return /\d+번[가-힣]*말소/.test(text);
+}
+
 /** 집합건물의 반복적인 층별 면적 데이터를 압축하여 truncation 방지 */
 export function compressFloorData(text: string): string {
   // "1층 635.713㎡ 2층 620.064㎡ ... 25층 413.376㎡" → "[1층~25층 면적정보 25개층]"
@@ -537,7 +542,8 @@ function parseGapgu(raw: string): GapguEntry[] {
           currentEntry.riskType = currentEntry.isCancelled ? "info" : risk;
         }
       }
-      if (isCancelled(line)) {
+      // "N번...말소"는 다른 항목 참조 → 현재 항목 말소가 아님
+      if (isCancelled(line) && !isRefCancellation(line)) {
         currentEntry.isCancelled = true;
         currentEntry.riskType = "info";
       }
@@ -623,7 +629,8 @@ function parseEulgu(raw: string): EulguEntry[] {
           currentEntry.riskType = currentEntry.isCancelled ? "info" : risk;
         }
       }
-      if (isCancelled(line)) {
+      // "N번...말소"는 다른 항목 참조 → 현재 항목 말소가 아님
+      if (isCancelled(line) && !isRefCancellation(line)) {
         currentEntry.isCancelled = true;
         currentEntry.riskType = "info";
       }
@@ -634,6 +641,30 @@ function parseEulgu(raw: string): EulguEntry[] {
     entries.push(currentEntry as EulguEntry);
   }
 
+  return entries;
+}
+
+// ─── 말소 역추적 ───
+
+/** "N번근저당권말소" 등의 항목에서 참조된 원래 항목을 말소 처리 */
+function resolveCancellations<T extends { order: number; detail: string; isCancelled: boolean; riskType: RiskType }>(
+  entries: T[],
+): T[] {
+  for (const entry of entries) {
+    // "3번근저당권말소", "4번가압류말소" 등의 패턴
+    const refs = entry.detail.match(/(\d+)번[가-힣]*말소/g);
+    if (!refs) continue;
+    for (const ref of refs) {
+      const m = ref.match(/^(\d+)번/);
+      if (!m) continue;
+      const refOrder = parseInt(m[1], 10);
+      const target = entries.find((e) => e.order === refOrder && e !== entry);
+      if (target) {
+        target.isCancelled = true;
+        target.riskType = "info";
+      }
+    }
+  }
   return entries;
 }
 
@@ -700,8 +731,8 @@ export function parseRegistry(rawText: string): ParsedRegistry {
   const { titleRaw, gapguRaw, eulguRaw } = splitSections(normalized);
 
   const title = parseTitle(titleRaw);
-  const gapgu = parseGapgu(gapguRaw);
-  const eulgu = parseEulgu(eulguRaw);
+  const gapgu = resolveCancellations(parseGapgu(gapguRaw));
+  const eulgu = resolveCancellations(parseEulgu(eulguRaw));
   const summary = buildSummary(gapgu, eulgu);
 
   return { title, gapgu, eulgu, summary, rawText };
