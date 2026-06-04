@@ -539,21 +539,6 @@ export async function POST(req: NextRequest) {
         estimatedPriceSource: userPrice ? "user" : marketData?.sale?.avgPrice ? "molit" : "none",
         inputSource: inputSource || "manual",
       },
-      // 임시 디버그: 을구 파싱 진단용 (추후 제거)
-      _debug: {
-        sectionLengths: parsed._sectionLengths,
-        eulguRawPreview: parsed._eulguRawPreview,
-        eulguEntries: parsed.eulgu.map((e) => ({
-          order: e.order,
-          purpose: e.purpose,
-          isCancelled: e.isCancelled,
-          amount: e.amount,
-          detailPreview: e.detail.slice(0, 150),
-        })),
-        inputLength: rawText.length,
-        inputFirst200: rawText.slice(0, 200),
-        hasHtmlMarker: rawText.includes("【말소】"),
-      },
     });
   } catch (error: unknown) {
     return handleApiError(error, "통합 분석");

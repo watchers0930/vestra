@@ -74,9 +74,6 @@ export interface ParsedRegistry {
   eulgu: EulguEntry[];
   summary: ParseSummary;
   rawText: string;
-  /** 디버그: 섹션 분리 결과 (임시) */
-  _sectionLengths?: { title: number; gapgu: number; eulgu: number };
-  _eulguRawPreview?: string;
 }
 
 // ─── 상수 ───
@@ -853,8 +850,6 @@ export function parseRegistry(rawText: string): ParsedRegistry {
 
   return {
     title, gapgu, eulgu, summary, rawText,
-    _sectionLengths: { title: titleRaw.length, gapgu: gapguRaw.length, eulgu: eulguRaw.length },
-    _eulguRawPreview: eulguRaw.slice(0, 800),
   };
 }
 
