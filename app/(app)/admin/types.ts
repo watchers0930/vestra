@@ -32,6 +32,8 @@ export interface UserItem {
   verifyStatus: string;
   dailyLimit: number;
   businessNumber: string | null;
+  companyName: string | null;
+  representName: string | null;
   createdAt: string;
 }
 

@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   }
 
-  const { role, businessNumber } = await req.json();
+  const { role, businessNumber, companyName, representName } = await req.json();
 
   // 유효한 업그레이드 역할만 허용
   if (!["BUSINESS", "REALESTATE"].includes(role)) {
@@ -23,6 +23,16 @@ export async function POST(req: NextRequest) {
   // 사업자등록번호 필수
   if (!businessNumber || typeof businessNumber !== "string" || businessNumber.trim().length < 10) {
     return NextResponse.json({ error: "사업자등록번호를 입력해주세요" }, { status: 400 });
+  }
+
+  // 회사명 검증 (BUSINESS/REALESTATE 역할일 때 필수, 2~50자)
+  if (!companyName || typeof companyName !== "string" || companyName.trim().length < 2 || companyName.trim().length > 50) {
+    return NextResponse.json({ error: "회사명을 입력해주세요 (2~50자)" }, { status: 400 });
+  }
+
+  // 대표자명 검증 (BUSINESS/REALESTATE 역할일 때 필수, 2~20자)
+  if (!representName || typeof representName !== "string" || representName.trim().length < 2 || representName.trim().length > 20) {
+    return NextResponse.json({ error: "대표자명을 입력해주세요 (2~20자)" }, { status: 400 });
   }
 
   // 현재 사용자 상태 확인
@@ -49,6 +59,8 @@ export async function POST(req: NextRequest) {
     where: { id: session.user.id },
     data: {
       businessNumber: businessNumber.trim(),
+      companyName: companyName.trim(),
+      representName: representName.trim(),
       verifyStatus: "pending",
     },
   });
@@ -57,7 +69,7 @@ export async function POST(req: NextRequest) {
   await logAuditWithRequest({
     userId: session.user.id,
     action: "ROLE_CHANGE",
-    detail: { requestedRole: role, status: "pending" },
+    detail: { requestedRole: role, companyName: companyName.trim(), representName: representName.trim(), status: "pending" },
   });
 
   return NextResponse.json({ message: "인증 신청이 접수되었습니다. 관리자 승인 후 반영됩니다." });

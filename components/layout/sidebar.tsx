@@ -8,6 +8,7 @@ import {
   ChevronDown, Menu, X, Users, CheckCircle, FileText, Megaphone,
   KeyRound, ExternalLink, ClipboardCheck, Brain, SlidersHorizontal,
   ShieldAlert, Key, Newspaper, MapPin, Download, Landmark, Eye,
+  Handshake,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -61,6 +62,7 @@ const userMenuItems: MenuItem[] = [
   { href: "/expert-connect", icon: Users,           label: "전문가 연결",    description: "AI 분석 결과를 전문가가 직접 검증하고 상담해드립니다" },
   { href: "/monitoring",     icon: Eye,             label: "등기감시",       description: "등기부등본 변동을 실시간 감시하고 무결성 검증 증명서를 발급합니다" },
   { href: "/api-hub",        icon: Database,        label: "API 데이터 허브", description: "국토교통부·법원 등 공공 API 연동 현황과 데이터를 조회합니다" },
+  { href: "/agent",          icon: Handshake,       label: "중개관리",       description: "부동산 중개 고객을 관리하고 물건 모니터링을 설정합니다" },
 ];
 
 const userMenuGroups: MenuGroup[] = [
@@ -315,20 +317,36 @@ export default function Sidebar() {
               {adminMenuItems.map((item) => renderMenuItem(item, isAdminItemActive(item)))}
             </div>
           ) : (
-            userMenuGroups.map((group, groupIndex) => (
-              <div key={group.label} style={{ marginBottom: "4px" }}>
-                {showLabel ? (
-                  <div style={{ padding: groupIndex === 0 ? "6px 12px 8px" : "18px 12px 8px", fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.48)" }}>
-                    {group.label}
+            <>
+              {userMenuGroups.map((group, groupIndex) => (
+                <div key={group.label} style={{ marginBottom: "4px" }}>
+                  {showLabel ? (
+                    <div style={{ padding: groupIndex === 0 ? "6px 12px 8px" : "18px 12px 8px", fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.48)" }}>
+                      {group.label}
+                    </div>
+                  ) : (
+                    groupIndex > 0 && <div style={{ margin: "8px 10px", borderTop: "1px solid rgba(255,255,255,0.06)" }} />
+                  )}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    {group.items.map((item) => renderMenuItem(item, isUserItemActive(item)))}
                   </div>
-                ) : (
-                  groupIndex > 0 && <div style={{ margin: "8px 10px", borderTop: "1px solid rgba(255,255,255,0.06)" }} />
-                )}
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  {group.items.map((item) => renderMenuItem(item, isUserItemActive(item)))}
                 </div>
-              </div>
-            ))
+              ))}
+              {session?.user?.role === "REALESTATE" && session?.user?.verifyStatus === "verified" && (
+                <div style={{ marginBottom: "4px" }}>
+                  {showLabel ? (
+                    <div style={{ padding: "18px 12px 8px", fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.48)" }}>
+                      중개 서비스
+                    </div>
+                  ) : (
+                    <div style={{ margin: "8px 10px", borderTop: "1px solid rgba(255,255,255,0.06)" }} />
+                  )}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    {renderMenuItem(userMenuItems[userMenuItems.length - 1], isUserItemActive(userMenuItems[userMenuItems.length - 1]))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* 관리자 전환 링크 */}

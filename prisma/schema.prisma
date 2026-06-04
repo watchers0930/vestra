@@ -67,6 +67,8 @@ model User {
   // 회원 등급
   role           String    @default("PERSONAL") // GUEST | PERSONAL | BUSINESS | REALESTATE | ADMIN
   businessNumber String?                        // 사업자등록번호 (기업/부동산)
+  companyName    String?                        // 회사명
+  representName  String?                        // 대표자명
   verifyStatus   String    @default("none")     // none | pending | verified | rejected
   dailyLimit     Int       @default(5)          // 일일 분석 횟수
 
@@ -91,6 +93,10 @@ model User {
 
   // Web Push
   pushSubscriptions PushSubscription[]
+
+  // 중개관리 (부동산 회원)
+  agentClients   AgentClient[] @relation("AgentClients")
+  clientAgent    AgentClient?  @relation("ClientAgent")
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -266,11 +272,12 @@ model MonitoredProperty {
   deposit       Int?              // 보증금 (만원 단위)
   commUniqueNo  String?           // CODEF 고유번호 (등기 조회용)
   baselineData  String?           @db.Text // 계약 시점 등기부 스냅샷 (JSON)
-  alerts        MonitoringAlert[]
-  snapshots     RegistrySnapshot[]
-  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  alerts              MonitoringAlert[]
+  snapshots           RegistrySnapshot[]
+  agentClientProperties AgentClientProperty[]
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 
   @@unique([userId, address])
   @@index([status])
@@ -600,4 +607,50 @@ model GuaranteeRule {
 
   @@unique([provider, version])
   @@index([provider, isActive])
+}
+
+// ---------------------------------------------------------------------------
+// 중개관리 (부동산 중개사 CRM)
+// ---------------------------------------------------------------------------
+
+model AgentClient {
+  id              String    @id @default(cuid())
+  agentId         String                          // 중개사 User.id
+  clientName      String                          // 고객명
+  clientPhone     String?                         // 전화번호 (AES 암호화)
+  clientEmail     String?                         // 이메일
+  clientUserId    String?   @unique               // VESTRA 가입 시 연결
+  status          String    @default("active")    // active | inactive | invited
+  inviteToken     String?   @unique               // 초대 링크 토큰
+  inviteExpires   DateTime?
+  memo            String?   @db.Text
+  contractDate    DateTime?                       // 거래 계약일
+  propertyAddress String?                         // 거래 물건 주소
+  agent           User      @relation("AgentClients", fields: [agentId], references: [id], onDelete: Cascade)
+  clientUser      User?     @relation("ClientAgent", fields: [clientUserId], references: [id], onDelete: SetNull)
+  properties      AgentClientProperty[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([agentId, clientEmail])
+  @@index([agentId])
+  @@index([status])
+}
+
+model AgentClientProperty {
+  id                  String             @id @default(cuid())
+  agentClientId       String
+  monitoredPropertyId String?                        // 기존 모니터링과 연결
+  address             String
+  status              String             @default("active") // active | inactive
+  startDate           DateTime           @default(now())
+  endDate             DateTime?
+  agentClient         AgentClient        @relation(fields: [agentClientId], references: [id], onDelete: Cascade)
+  monitoredProperty   MonitoredProperty? @relation(fields: [monitoredPropertyId], references: [id], onDelete: SetNull)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@unique([agentClientId, address])
+  @@index([agentClientId])
+  @@index([monitoredPropertyId])
 }

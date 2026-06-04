@@ -40,6 +40,12 @@ export function VerificationsTab({ pending, setConfirmModal, handleVerify }: Pro
                 {user.businessNumber && (
                   <p className="text-xs text-gray-500 mt-1">사업자번호: {user.businessNumber}</p>
                 )}
+                {user.companyName && (
+                  <p className="text-xs text-gray-500 mt-0.5">회사명: {user.companyName}</p>
+                )}
+                {user.representName && (
+                  <p className="text-xs text-gray-500 mt-0.5">대표자: {user.representName}</p>
+                )}
                 <p className="text-xs text-gray-400 mt-0.5">
                   신청일: {new Date(user.createdAt).toLocaleDateString("ko-KR")}
                 </p>
