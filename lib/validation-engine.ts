@@ -68,18 +68,55 @@ const MAX_DATE_YEAR = 2035;
 
 // ─── A1. 포맷 및 타입 검증 ───
 
+// ─── 필드명 → 사용자 친화적 라벨 변환 ───
+
+function humanField(field: string): string {
+  return field
+    .replace(/갑구\[(\d+)\]\.date/, "갑구 $1번 접수일자")
+    .replace(/갑구\[(\d+)\]\.holder/, "갑구 $1번 권리자")
+    .replace(/갑구\[(\d+)\]\.riskType/, "갑구 $1번 위험유형")
+    .replace(/을구\[(\d+)\]\.date/, "을구 $1번 접수일자")
+    .replace(/을구\[(\d+)\]\.holder/, "을구 $1번 권리자")
+    .replace(/을구\[(\d+)\]\.amount/, "을구 $1번 채권액")
+    .replace(/을구\[(\d+)\]\.riskType/, "을구 $1번 위험유형")
+    .replace(/갑구\[(\d+)\]/, "갑구 $1번")
+    .replace(/을구\[(\d+)\]/, "을구 $1번")
+    .replace(/갑구\.order/, "갑구 순위번호")
+    .replace(/을구\.order/, "을구 순위번호")
+    .replace(/title\.address/, "표제부 소재지")
+    .replace(/summary\.totalMortgageAmount/, "근저당 합계")
+    .replace(/summary\.totalJeonseAmount/, "전세권 합계")
+    .replace(/summary\.totalClaimsAmount/, "총채권액")
+    .replace(/summary\.activeGapguEntries/, "갑구 활성건수")
+    .replace(/summary\.activeEulguEntries/, "을구 활성건수")
+    .replace(/summary\.totalGapguEntries/, "갑구 전체건수")
+    .replace(/summary\.totalEulguEntries/, "을구 전체건수")
+    .replace(/summary\.ownershipTransferCount/, "소유권이전 횟수")
+    .replace(/summary\.has\w+/, "요약 플래그")
+    .replace(/riskScore\.mortgageRatio/, "근저당비율")
+    .replace(/riskScore\.totalDeduction/, "총감점")
+    .replace(/riskScore\.totalScore/, "위험 점수")
+    .replace(/riskScore\.factors\.\w+/, "위험 요인")
+    .replace(/riskScore\.factors/, "위험 요인")
+    .replace(/estimatedPrice/, "추정가격")
+    .replace(/aiOpinion/, "AI 의견")
+    .replace(/^gapgu$/, "갑구")
+    .replace(/^eulgu$/, "을구");
+}
+
 /** 날짜 형식 검증 (YYYY.MM.DD, 합리적 범위) */
 function validateDateFormat(
   date: string,
   field: string
 ): ValidationIssue | null {
+  const label = humanField(field);
   if (!date || date === "") {
     return {
       id: "FMT_DATE_EMPTY",
       category: "format",
       severity: "warning",
-      field,
-      message: `${field}: 날짜가 비어 있습니다.`,
+      field: label,
+      message: `${label}의 날짜가 비어 있습니다.`,
       expected: "YYYY.MM.DD 형식",
       actual: "(빈 값)",
     };
@@ -91,8 +128,8 @@ function validateDateFormat(
       id: "FMT_DATE_PATTERN",
       category: "format",
       severity: "error",
-      field,
-      message: `${field}: 날짜 형식이 올바르지 않습니다.`,
+      field: label,
+      message: `${label}의 날짜 형식이 올바르지 않습니다.`,
       expected: "YYYY.MM.DD",
       actual: date,
     };
@@ -107,8 +144,8 @@ function validateDateFormat(
       id: "FMT_DATE_YEAR",
       category: "format",
       severity: "error",
-      field,
-      message: `${field}: 연도(${year})가 합리적 범위(${MIN_DATE_YEAR}~${MAX_DATE_YEAR}) 밖입니다.`,
+      field: label,
+      message: `${label}의 연도(${year})가 합리적 범위(${MIN_DATE_YEAR}~${MAX_DATE_YEAR}) 밖입니다.`,
       expected: `${MIN_DATE_YEAR}~${MAX_DATE_YEAR}`,
       actual: String(year),
     };
@@ -119,8 +156,8 @@ function validateDateFormat(
       id: "FMT_DATE_MONTH",
       category: "format",
       severity: "error",
-      field,
-      message: `${field}: 월(${month})이 유효하지 않습니다.`,
+      field: label,
+      message: `${label}의 월(${month})이 유효하지 않습니다.`,
       expected: "01~12",
       actual: String(month),
     };
@@ -131,8 +168,8 @@ function validateDateFormat(
       id: "FMT_DATE_DAY",
       category: "format",
       severity: "error",
-      field,
-      message: `${field}: 일(${day})이 유효하지 않습니다.`,
+      field: label,
+      message: `${label}의 일(${day})이 유효하지 않습니다.`,
       expected: "01~31",
       actual: String(day),
     };
@@ -146,6 +183,7 @@ function validateAmountFormat(
   amount: number,
   field: string
 ): ValidationIssue | null {
+  const label = humanField(field);
   if (amount === 0) return null; // 0은 미설정으로 허용
 
   if (amount < 0) {
@@ -153,8 +191,8 @@ function validateAmountFormat(
       id: "FMT_AMOUNT_NEGATIVE",
       category: "format",
       severity: "error",
-      field,
-      message: `${field}: 금액이 음수(${amount.toLocaleString()}원)입니다.`,
+      field: label,
+      message: `${label}의 금액이 음수(${amount.toLocaleString()}원)입니다.`,
       expected: "0 이상",
       actual: String(amount),
     };
@@ -165,8 +203,8 @@ function validateAmountFormat(
       id: "FMT_AMOUNT_TOO_LOW",
       category: "format",
       severity: "warning",
-      field,
-      message: `${field}: 금액(${amount.toLocaleString()}원)이 부동산 등기로서 비정상적으로 낮습니다.`,
+      field: label,
+      message: `${label}의 금액(${amount.toLocaleString()}원)이 비정상적으로 낮습니다.`,
       expected: `${MIN_REASONABLE_AMOUNT.toLocaleString()}원 이상`,
       actual: `${amount.toLocaleString()}원`,
     };
@@ -177,8 +215,8 @@ function validateAmountFormat(
       id: "FMT_AMOUNT_TOO_HIGH",
       category: "format",
       severity: "warning",
-      field,
-      message: `${field}: 금액(${(amount / 100_000_000).toFixed(1)}억원)이 비정상적으로 높습니다.`,
+      field: label,
+      message: `${label}의 금액(${(amount / 100_000_000).toFixed(1)}억원)이 비정상적으로 높습니다.`,
       expected: `${(MAX_REASONABLE_AMOUNT / 100_000_000).toFixed(0)}억원 이하`,
       actual: `${(amount / 100_000_000).toFixed(1)}억원`,
     };
@@ -205,8 +243,8 @@ function validateEntryOrder(
         id: "FMT_ORDER_DUPLICATE",
         category: "format",
         severity: "warning",
-        field: `${section}.order`,
-        message: `${section}: 순위번호 ${order}이(가) 중복됩니다.`,
+        field: `${section} 순위번호`,
+        message: `${section}에서 순위번호 ${order}번이 중복되었습니다.`,
         expected: "고유한 순위번호",
         actual: `${order} (중복)`,
       });
@@ -221,8 +259,8 @@ function validateEntryOrder(
         id: "FMT_ORDER_INVALID",
         category: "format",
         severity: "error",
-        field: `${section}.order`,
-        message: `${section}: 순위번호(${order})가 유효하지 않습니다.`,
+        field: `${section} 순위번호`,
+        message: `${section}의 순위번호(${order})가 유효하지 않습니다.`,
         expected: "1 이상 양수",
         actual: String(order),
       });
@@ -237,13 +275,14 @@ function validateHolderName(
   holder: string,
   field: string
 ): ValidationIssue | null {
+  const label = humanField(field);
   if (!holder || holder === "") {
     return {
       id: "FMT_HOLDER_EMPTY",
       category: "format",
       severity: "info",
-      field,
-      message: `${field}: 권리자명이 추출되지 않았습니다.`,
+      field: label,
+      message: `${label} 정보가 추출되지 않았습니다.`,
     };
   }
 
@@ -252,8 +291,8 @@ function validateHolderName(
       id: "FMT_HOLDER_SHORT",
       category: "format",
       severity: "warning",
-      field,
-      message: `${field}: 권리자명(${holder})이 너무 짧습니다.`,
+      field: label,
+      message: `${label}의 이름(${holder})이 너무 짧습니다.`,
       expected: "2자 이상",
       actual: `${holder.length}자`,
     };
@@ -264,8 +303,8 @@ function validateHolderName(
       id: "FMT_HOLDER_LONG",
       category: "format",
       severity: "warning",
-      field,
-      message: `${field}: 권리자명이 비정상적으로 깁니다 (${holder.length}자).`,
+      field: label,
+      message: `${label}의 이름이 비정상적으로 깁니다 (${holder.length}자).`,
       expected: "30자 이내",
       actual: `${holder.length}자`,
     };
@@ -279,13 +318,14 @@ function validateRiskType(
   riskType: RiskType,
   field: string
 ): ValidationIssue | null {
+  const label = humanField(field);
   if (!VALID_RISK_TYPES.includes(riskType)) {
     return {
       id: "FMT_RISKTYPE_INVALID",
       category: "format",
       severity: "error",
-      field,
-      message: `${field}: 위험유형(${riskType})이 유효하지 않습니다.`,
+      field: label,
+      message: `${label} 분류(${riskType})가 유효하지 않습니다.`,
       expected: VALID_RISK_TYPES.join(" | "),
       actual: String(riskType),
     };
@@ -305,7 +345,7 @@ function validateSectionCompleteness(
       id: "FMT_SECTION_NO_ADDRESS",
       category: "format",
       severity: "warning",
-      field: "title.address",
+      field: "표제부 소재지",
       message: "표제부에서 소재지 주소를 추출하지 못했습니다.",
     });
   }
@@ -316,7 +356,7 @@ function validateSectionCompleteness(
       id: "FMT_SECTION_NO_GAPGU",
       category: "format",
       severity: "warning",
-      field: "gapgu",
+      field: "갑구",
       message: "갑구(소유권) 항목이 없습니다. 파싱이 실패했을 수 있습니다.",
     });
   }
@@ -339,8 +379,8 @@ function validateMortgageSum(parsed: ParsedRegistry): ValidationIssue[] {
       id: "ARITH_MORTGAGE_SUM",
       category: "arithmetic",
       severity: "error",
-      field: "summary.totalMortgageAmount",
-      message: `근저당 합계 불일치: 요약값(${parsed.summary.totalMortgageAmount.toLocaleString()}) ≠ 재계산값(${recalculated.toLocaleString()})`,
+      field: "근저당 합계",
+      message: `근저당 합계가 일치하지 않습니다. (요약: ${parsed.summary.totalMortgageAmount.toLocaleString()}원, 재계산: ${recalculated.toLocaleString()}원)`,
       expected: recalculated.toLocaleString(),
       actual: parsed.summary.totalMortgageAmount.toLocaleString(),
     });
@@ -362,8 +402,8 @@ function validateJeonseSum(parsed: ParsedRegistry): ValidationIssue[] {
       id: "ARITH_JEONSE_SUM",
       category: "arithmetic",
       severity: "error",
-      field: "summary.totalJeonseAmount",
-      message: `전세권 합계 불일치: 요약값(${parsed.summary.totalJeonseAmount.toLocaleString()}) ≠ 재계산값(${recalculated.toLocaleString()})`,
+      field: "전세권 합계",
+      message: `전세권 합계가 일치하지 않습니다. (요약: ${parsed.summary.totalJeonseAmount.toLocaleString()}원, 재계산: ${recalculated.toLocaleString()}원)`,
       expected: recalculated.toLocaleString(),
       actual: parsed.summary.totalJeonseAmount.toLocaleString(),
     });
@@ -383,8 +423,8 @@ function validateTotalClaims(parsed: ParsedRegistry): ValidationIssue[] {
       id: "ARITH_TOTAL_CLAIMS",
       category: "arithmetic",
       severity: "error",
-      field: "summary.totalClaimsAmount",
-      message: `총채권액 불일치: 요약값(${parsed.summary.totalClaimsAmount.toLocaleString()}) ≠ 근저당(${parsed.summary.totalMortgageAmount.toLocaleString()}) + 전세(${parsed.summary.totalJeonseAmount.toLocaleString()})`,
+      field: "총채권액",
+      message: `총채권액이 일치하지 않습니다. (요약: ${parsed.summary.totalClaimsAmount.toLocaleString()}원, 근저당+전세: ${expected.toLocaleString()}원)`,
       expected: expected.toLocaleString(),
       actual: parsed.summary.totalClaimsAmount.toLocaleString(),
     });
@@ -411,8 +451,8 @@ function validateMortgageRatio(
       id: "ARITH_MORTGAGE_RATIO",
       category: "arithmetic",
       severity: "warning",
-      field: "riskScore.mortgageRatio",
-      message: `근저당비율 불일치: 스코어링값(${riskScore.mortgageRatio.toFixed(1)}%) ≠ 재계산값(${recalcRatio.toFixed(1)}%)`,
+      field: "근저당비율",
+      message: `근저당비율이 일치하지 않습니다. (스코어링: ${riskScore.mortgageRatio.toFixed(1)}%, 재계산: ${recalcRatio.toFixed(1)}%)`,
       expected: `${recalcRatio.toFixed(1)}%`,
       actual: `${riskScore.mortgageRatio.toFixed(1)}%`,
     });
@@ -434,8 +474,8 @@ function validateActiveEntryCounts(
       id: "ARITH_ACTIVE_GAPGU",
       category: "arithmetic",
       severity: "error",
-      field: "summary.activeGapguEntries",
-      message: `갑구 활성건수 불일치: 요약값(${parsed.summary.activeGapguEntries}) ≠ 재계산값(${recalcActiveGapgu})`,
+      field: "갑구 활성건수",
+      message: `갑구 활성건수가 일치하지 않습니다. (요약: ${parsed.summary.activeGapguEntries}건, 재계산: ${recalcActiveGapgu}건)`,
       expected: String(recalcActiveGapgu),
       actual: String(parsed.summary.activeGapguEntries),
     });
@@ -448,8 +488,8 @@ function validateActiveEntryCounts(
       id: "ARITH_ACTIVE_EULGU",
       category: "arithmetic",
       severity: "error",
-      field: "summary.activeEulguEntries",
-      message: `을구 활성건수 불일치: 요약값(${parsed.summary.activeEulguEntries}) ≠ 재계산값(${recalcActiveEulgu})`,
+      field: "을구 활성건수",
+      message: `을구 활성건수가 일치하지 않습니다. (요약: ${parsed.summary.activeEulguEntries}건, 재계산: ${recalcActiveEulgu}건)`,
       expected: String(recalcActiveEulgu),
       actual: String(parsed.summary.activeEulguEntries),
     });
@@ -461,8 +501,8 @@ function validateActiveEntryCounts(
       id: "ARITH_TOTAL_GAPGU",
       category: "arithmetic",
       severity: "error",
-      field: "summary.totalGapguEntries",
-      message: `갑구 전체건수 불일치: 요약값(${parsed.summary.totalGapguEntries}) ≠ 배열길이(${parsed.gapgu.length})`,
+      field: "갑구 전체건수",
+      message: `갑구 전체건수가 일치하지 않습니다. (요약: ${parsed.summary.totalGapguEntries}건, 실제: ${parsed.gapgu.length}건)`,
       expected: String(parsed.gapgu.length),
       actual: String(parsed.summary.totalGapguEntries),
     });
@@ -473,8 +513,8 @@ function validateActiveEntryCounts(
       id: "ARITH_TOTAL_EULGU",
       category: "arithmetic",
       severity: "error",
-      field: "summary.totalEulguEntries",
-      message: `을구 전체건수 불일치: 요약값(${parsed.summary.totalEulguEntries}) ≠ 배열길이(${parsed.eulgu.length})`,
+      field: "을구 전체건수",
+      message: `을구 전체건수가 일치하지 않습니다. (요약: ${parsed.summary.totalEulguEntries}건, 실제: ${parsed.eulgu.length}건)`,
       expected: String(parsed.eulgu.length),
       actual: String(parsed.summary.totalEulguEntries),
     });
@@ -498,8 +538,8 @@ function validateOwnershipTransferCount(
       id: "ARITH_OWNERSHIP_COUNT",
       category: "arithmetic",
       severity: "error",
-      field: "summary.ownershipTransferCount",
-      message: `소유권이전 횟수 불일치: 요약값(${parsed.summary.ownershipTransferCount}) ≠ 재계산값(${recalculated})`,
+      field: "소유권이전 횟수",
+      message: `소유권이전 횟수가 일치하지 않습니다. (요약: ${parsed.summary.ownershipTransferCount}회, 재계산: ${recalculated}회)`,
       expected: String(recalculated),
       actual: String(parsed.summary.ownershipTransferCount),
     });
@@ -525,7 +565,7 @@ function validateChronologicalOrder(
         id: "CTX_CHRONOLOGICAL",
         category: "context",
         severity: "warning",
-        field: `${section}[${dated[i].order}].date`,
+        field: `${section} ${dated[i].order}번 접수일자`,
         message: `${section} ${dated[i].order}번 항목(${dated[i].date})이 이전 항목(${dated[i - 1].date})보다 앞선 날짜입니다.`,
         expected: `${dated[i - 1].date} 이후`,
         actual: dated[i].date,
@@ -555,7 +595,7 @@ function validateCancellationLogic(
             id: "CTX_CANCEL_NO_ORIGINAL",
             category: "context",
             severity: "warning",
-            field: `을구[${entry.order}]`,
+            field: `을구 ${entry.order}번`,
             message: `을구 ${entry.order}번 말소등기가 참조하는 ${refOrder}번 원본 항목을 찾을 수 없습니다.`,
             expected: `을구 ${refOrder}번 항목 존재`,
             actual: "미발견",
@@ -579,7 +619,7 @@ function validateCancellationLogic(
             id: "CTX_CANCEL_NO_ORIGINAL",
             category: "context",
             severity: "info",
-            field: `갑구[${entry.order}]`,
+            field: `갑구 ${entry.order}번`,
             message: `갑구 ${entry.order}번 말소등기가 참조하는 ${refOrder}번 원본을 찾을 수 없습니다.`,
           });
         }
@@ -608,7 +648,7 @@ function validateOwnershipChain(parsed: ParsedRegistry): ValidationIssue[] {
       id: "CTX_NO_OWNER",
       category: "context",
       severity: "error",
-      field: "gapgu",
+      field: "갑구 소유권",
       message: "활성 소유권(보존/이전) 항목이 없습니다. 현재 소유자를 확인할 수 없습니다.",
     });
   }
@@ -650,7 +690,7 @@ function validateMortgageAfterSeizure(
       id: "CTX_MORTGAGE_AFTER_SEIZURE",
       category: "context",
       severity: "warning",
-      field: `을구[${mortgage.order}]`,
+      field: `을구 ${mortgage.order}번`,
       message: `을구 ${mortgage.order}번 근저당(${mortgage.date})이 압류(${earliestSeizure}) 이후에 설정되었습니다. 비정상적 거래 패턴입니다.`,
       expected: `압류(${earliestSeizure}) 이전`,
       actual: mortgage.date,
@@ -689,7 +729,7 @@ function validateTrustMortgageConflict(
       id: "CTX_TRUST_MORTGAGE_CONFLICT",
       category: "context",
       severity: "warning",
-      field: `을구[${mortgage.order}]`,
+      field: `을구 ${mortgage.order}번`,
       message: `을구 ${mortgage.order}번 근저당(${mortgage.date})이 신탁등기(${trustDate}) 이후에 설정되었습니다. 수탁자 동의 여부를 확인하세요.`,
       expected: "신탁 이전 또는 수탁자 동의",
       actual: `신탁(${trustDate}) 후 근저당(${mortgage.date})`,
@@ -714,7 +754,7 @@ function validateFirstEntryRule(parsed: ParsedRegistry): ValidationIssue[] {
       id: "CTX_FIRST_ENTRY",
       category: "context",
       severity: "warning",
-      field: "갑구[1]",
+      field: "갑구 1번",
       message: `갑구 1번 항목이 '${first.purpose}'입니다. 일반적으로 '소유권보존' 또는 '소유권이전'이어야 합니다.`,
       expected: "소유권보존 또는 소유권이전",
       actual: first.purpose,
@@ -743,7 +783,7 @@ function validateEulguWithoutOwnership(
       id: "CTX_EULGU_NO_OWNER",
       category: "context",
       severity: "error",
-      field: "을구",
+      field: "을구 구조",
       message:
         "활성 소유권 항목이 없는데 을구(권리) 항목이 존재합니다. 등기부 구조가 비정상적입니다.",
     });
@@ -832,8 +872,8 @@ function validateSummaryFlags(parsed: ParsedRegistry): ValidationIssue[] {
         id: `XCHK_FLAG_${String(check.flag).toUpperCase()}`,
         category: "crosscheck",
         severity: "error",
-        field: `summary.${String(check.flag)}`,
-        message: `${check.label} 플래그 불일치: 요약값(${check.actual}) ≠ 실제 엔트리 기반(${check.expected})`,
+        field: `${check.label} 감지`,
+        message: `${check.label} 감지 상태가 일치하지 않습니다. (요약: ${check.actual ? "있음" : "없음"}, 실제: ${check.expected ? "있음" : "없음"})`,
         expected: String(check.expected),
         actual: String(check.actual),
       });
@@ -856,8 +896,8 @@ function validateEstimatedPriceSanity(
       id: "XCHK_PRICE_SANITY",
       category: "crosscheck",
       severity: "error",
-      field: "estimatedPrice",
-      message: `추정가격(${(estimatedPrice / 10000).toLocaleString()}만원)이 한국 부동산으로서 비정상적으로 낮습니다.`,
+      field: "추정가격",
+      message: `추정가격(${(estimatedPrice / 10000).toLocaleString()}만원)이 비정상적으로 낮습니다.`,
       expected: `${(MIN_REASONABLE_PRICE / 100_000_000).toFixed(1)}억원 이상`,
       actual: `${(estimatedPrice / 100_000_000).toFixed(2)}억원`,
     });
@@ -868,7 +908,7 @@ function validateEstimatedPriceSanity(
       id: "XCHK_PRICE_SANITY",
       category: "crosscheck",
       severity: "warning",
-      field: "estimatedPrice",
+      field: "추정가격",
       message: `추정가격(${(estimatedPrice / 100_000_000).toFixed(0)}억원)이 비정상적으로 높습니다.`,
       expected: `${(MAX_REASONABLE_PRICE / 100_000_000).toFixed(0)}억원 이하`,
       actual: `${(estimatedPrice / 100_000_000).toFixed(0)}억원`,
@@ -936,10 +976,10 @@ function validateRiskScoreConsistency(
         id: `XCHK_FACTOR_${map.factorId.toUpperCase()}`,
         category: "crosscheck",
         severity: "error",
-        field: `riskScore.factors.${map.factorId}`,
-        message: `${map.label} 리스크 팩터가 존재하지만 파싱 요약에서는 false입니다.`,
-        expected: `summary.${String(map.flagKey)} === true`,
-        actual: "false",
+        field: `${map.label} 위험 요인`,
+        message: `${map.label} 위험 요인이 감지되었으나 파싱 결과와 일치하지 않습니다.`,
+        expected: "감지됨",
+        actual: "미감지",
       });
     }
 
@@ -949,8 +989,8 @@ function validateRiskScoreConsistency(
         id: `XCHK_MISSING_FACTOR_${map.factorId.toUpperCase()}`,
         category: "crosscheck",
         severity: "info",
-        field: `riskScore.factors`,
-        message: `${map.label}이(가) 파싱에서 감지되었으나 리스크 팩터에 포함되지 않았습니다.`,
+        field: `${map.label} 위험 요인`,
+        message: `${map.label}이(가) 감지되었으나 위험 점수 계산에 반영되지 않았습니다.`,
       });
     }
   }
@@ -965,8 +1005,8 @@ function validateRiskScoreConsistency(
       id: "XCHK_DEDUCTION_SUM",
       category: "crosscheck",
       severity: "error",
-      field: "riskScore.totalDeduction",
-      message: `총감점 불일치: 기록값(${riskScore.totalDeduction}) ≠ 팩터합산(${recalcDeduction})`,
+      field: "총감점",
+      message: `총감점이 일치하지 않습니다. (기록: ${riskScore.totalDeduction}점, 합산: ${recalcDeduction}점)`,
       expected: String(recalcDeduction),
       actual: String(riskScore.totalDeduction),
     });
@@ -979,8 +1019,8 @@ function validateRiskScoreConsistency(
       id: "XCHK_SCORE_CALC",
       category: "crosscheck",
       severity: "error",
-      field: "riskScore.totalScore",
-      message: `점수 계산 불일치: 기록값(${riskScore.totalScore}) ≠ max(0, 100-${riskScore.totalDeduction})=${expectedScore}`,
+      field: "위험 점수",
+      message: `위험 점수 계산이 일치하지 않습니다. (기록: ${riskScore.totalScore}점, 계산: ${expectedScore}점)`,
       expected: String(expectedScore),
       actual: String(riskScore.totalScore),
     });
@@ -1032,8 +1072,8 @@ function validateAiOpinionRelevance(
           id: `XCHK_AI_MISSING_${check.label}`,
           category: "crosscheck",
           severity: "info",
-          field: "aiOpinion",
-          message: `AI 의견에서 '${check.label}' 관련 위험이 언급되지 않았습니다. (감지됨: ${check.label})`,
+          field: "AI 의견",
+          message: `AI 의견에서 '${check.label}' 관련 위험이 언급되지 않았습니다.`,
         });
       }
     }
