@@ -69,33 +69,23 @@ const authEvents: NextAuthConfig["events"] = {
 // ─── 공통 콜백 + 페이지 설정 ───
 
 const authCallbacks: NextAuthConfig["callbacks"] = {
-  async jwt({ token, user, trigger, session }) {
+  async jwt({ token, user }) {
     if (user) {
       token.id = user.id;
     }
 
-    // DB에서 최신 role/verifyStatus 동기화 (로그인 시 + 5분 간격)
-    const now = Date.now();
-    const REFRESH_MS = 5 * 60 * 1000;
-    if (user || !token.refreshedAt || now - (token.refreshedAt as number) > REFRESH_MS) {
-      if (token.id) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { role: true, dailyLimit: true, verifyStatus: true },
-        });
-        token.role = dbUser?.role || "PERSONAL";
-        token.dailyLimit = dbUser?.dailyLimit || ROLE_LIMITS.PERSONAL;
-        token.verifyStatus = dbUser?.verifyStatus || "none";
-      }
-      token.refreshedAt = now;
+    // 매 요청마다 DB에서 최신 role/verifyStatus 동기화
+    // (어드민 승인 즉시 반영을 위해 캐시 없음 — PK SELECT 3컬럼, ~1ms)
+    if (token.id) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: token.id as string },
+        select: { role: true, dailyLimit: true, verifyStatus: true },
+      });
+      token.role = dbUser?.role || "PERSONAL";
+      token.dailyLimit = dbUser?.dailyLimit || ROLE_LIMITS.PERSONAL;
+      token.verifyStatus = dbUser?.verifyStatus || "none";
     }
 
-    if (trigger === "update" && session) {
-      if (session.role) token.role = session.role;
-      if (session.dailyLimit) token.dailyLimit = session.dailyLimit;
-      if (session.verifyStatus) token.verifyStatus = session.verifyStatus;
-      token.refreshedAt = now;
-    }
     return token;
   },
   async session({ session, token }) {
@@ -241,6 +231,5 @@ declare module "@auth/core/jwt" {
     role?: string;
     dailyLimit?: number;
     verifyStatus?: string;
-    refreshedAt?: number;
   }
 }
