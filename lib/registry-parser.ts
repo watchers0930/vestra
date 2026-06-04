@@ -94,6 +94,10 @@ const GAPGU_RISK_MAP: Record<string, RiskType> = {
   소유권이전청구권가등기: "warning",
   환매등기: "warning",
   예고등기: "warning",
+  가압류말소: "info",
+  압류말소: "info",
+  가처분말소: "info",
+  가등기말소: "info",
 };
 
 /** 을구 권리 유형 → 위험도 매핑 */
@@ -111,6 +115,12 @@ const EULGU_RISK_MAP: Record<string, RiskType> = {
   전세권이전: "info",
   근저당권이전: "warning",
   근저당권변경: "warning",
+  근저당권말소: "info",
+  저당권말소: "info",
+  전세권말소: "info",
+  가압류말소: "info",
+  압류말소: "info",
+  가등기말소: "info",
 };
 
 // ─── 유틸리티 함수 ───
@@ -182,7 +192,7 @@ function isCancelled(text: string): boolean {
 
 /** "N번근저당권말소" 등 다른 항목 참조 말소인지 여부 */
 function isRefCancellation(text: string): boolean {
-  return /\d+번[가-힣]*말소/.test(text);
+  return /\d+번\s*[가-힣]*말소/.test(text) || /제\s*\d+\s*호\s*[가-힣]*\s*말소/.test(text);
 }
 
 /** 집합건물의 반복적인 층별 면적 데이터를 압축하여 truncation 방지 */
@@ -647,22 +657,37 @@ function parseEulgu(raw: string): EulguEntry[] {
 // ─── 말소 역추적 ───
 
 /** "N번근저당권말소" 등의 항목에서 참조된 원래 항목을 말소 처리 */
-function resolveCancellations<T extends { order: number; detail: string; isCancelled: boolean; riskType: RiskType }>(
+function resolveCancellations<T extends { order: number; detail: string; purpose?: string; isCancelled: boolean; riskType: RiskType }>(
   entries: T[],
 ): T[] {
   for (const entry of entries) {
-    // "3번근저당권말소", "4번가압류말소" 등의 패턴
-    const refs = entry.detail.match(/(\d+)번[가-힣]*말소/g);
-    if (!refs) continue;
-    for (const ref of refs) {
-      const m = ref.match(/^(\d+)번/);
-      if (!m) continue;
-      const refOrder = parseInt(m[1], 10);
-      const target = entries.find((e) => e.order === refOrder && e !== entry);
-      if (target) {
-        target.isCancelled = true;
-        target.riskType = "info";
+    // 패턴 1: "3번근저당권말소", "4번가압류말소"
+    // 패턴 2: "제3호 근저당권 말소", "제4호 가압류 말소"
+    // 패턴 3: "3번 근저당권 말소" (공백 포함)
+    const patterns = [
+      /(\d+)번\s*[가-힣]*말소/g,
+      /제\s*(\d+)\s*호\s*[가-힣]*\s*말소/g,
+    ];
+    for (const pattern of patterns) {
+      const refs = entry.detail.match(pattern);
+      if (!refs) continue;
+      for (const ref of refs) {
+        const m = ref.match(/(\d+)/);
+        if (!m) continue;
+        const refOrder = parseInt(m[1], 10);
+        const target = entries.find((e) => e.order === refOrder && e !== entry);
+        if (target) {
+          target.isCancelled = true;
+          target.riskType = "info";
+        }
       }
+    }
+
+    // 패턴 4: 항목 자체의 purpose가 "근저당권말소", "전세권말소" 등인 경우
+    // 해당 항목이 말소 행위 자체이므로, 자신도 info 처리
+    if (entry.purpose && /말소/.test(entry.purpose)) {
+      entry.isCancelled = true;
+      entry.riskType = "info";
     }
   }
   return entries;
@@ -715,8 +740,10 @@ function normalizeRegistryNewlines(text: string): string {
   r = r.replace(/\s+(순위번호\s)/g, "\n$1");
   // 갑구/을구 항목 시작: "숫자 + 소유권/가압류 등 키워드" 앞에 줄바꿈
   r = r.replace(/\s+(\d+\s+(?:소유권보존|소유권이전|가압류|압류|가처분|경매개시결정|임의경매|강제경매|신탁|가등기|예고등기|환매등기|근저당권설정|저당권설정|전세권설정|임차권등기|임차권설정|근저당권이전|근저당권변경|전세권이전))/g, "\n$1");
-  // 말소 항목: "N번근저당권말소" 등
-  r = r.replace(/\s+(\d+번[가-힣]*말소)/g, "\n$1");
+  // 말소 항목: "N번근저당권말소", "N번 근저당권 말소" 등
+  r = r.replace(/\s+(\d+번\s*[가-힣]*말소)/g, "\n$1");
+  // 말소 항목 (별도 순위): "N 근저당권말소", "N 전세권말소" 등
+  r = r.replace(/\s+(\d+\s+(?:근저당권말소|저당권말소|전세권말소|가압류말소|압류말소|가처분말소|가등기말소))/g, "\n$1");
   // 표제부 서브섹션: (전유부분, (1동, (대지권
   r = r.replace(/\s+(\(\s*(?:전유부분|1동|대지권))/g, "\n$1");
   // 표시번호 앞 줄바꿈

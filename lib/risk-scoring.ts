@@ -246,27 +246,43 @@ function evaluateTrust(parsed: ParsedRegistry): RiskFactor[] {
 
 function evaluateOwnershipFrequency(parsed: ParsedRegistry): RiskFactor[] {
   const factors: RiskFactor[] = [];
-  const { ownershipTransferCount } = parsed.summary;
 
-  if (ownershipTransferCount >= 4) {
+  // 소유권이전 날짜 기반으로 연평균 빈도 계산
+  const transfers = parsed.gapgu
+    .filter((e) => e.purpose === "소유권이전" && !e.isCancelled && e.date)
+    .sort((a, b) => dateToMonths(a.date) - dateToMonths(b.date));
+
+  const count = transfers.length;
+  if (count < 2) return factors;
+
+  // 첫 이전~마지막 이전 기간(년)
+  const spanMonths = monthsBetween(transfers[0].date, transfers[count - 1].date);
+  const spanYears = Math.max(spanMonths / 12, 1);
+  const avgPerYear = count / spanYears;
+
+  // 연평균 1회 이상 (5년 내 5회+) → 매우 높음
+  if (avgPerYear >= 1) {
     factors.push({
       id: "ownership_freq_high",
       category: "소유권",
       description: "소유권 이전 빈도 매우 높음",
       deduction: 15,
       severity: "high",
-      detail: `소유권이 ${ownershipTransferCount}회 이전되었습니다. 잦은 거래는 투기 또는 하자 물건의 징후일 수 있습니다.`,
+      detail: `${Math.round(spanYears)}년간 소유권이 ${count}회 이전(연평균 ${avgPerYear.toFixed(1)}회)되었습니다. 잦은 거래는 투기 또는 하자 물건의 징후일 수 있습니다.`,
     });
-  } else if (ownershipTransferCount >= 3) {
+  }
+  // 연평균 0.5회 이상 (10년 내 5회+) → 높음
+  else if (avgPerYear >= 0.5) {
     factors.push({
       id: "ownership_freq",
       category: "소유권",
       description: "소유권 이전 빈도 높음",
       deduction: 10,
       severity: "medium",
-      detail: `소유권이 ${ownershipTransferCount}회 이전되었습니다. 평균 이상의 거래 빈도로 주의가 필요합니다.`,
+      detail: `${Math.round(spanYears)}년간 소유권이 ${count}회 이전(연평균 ${avgPerYear.toFixed(1)}회)되었습니다. 평균 이상의 거래 빈도로 주의가 필요합니다.`,
     });
   }
+  // 연평균 0.5 미만 (예: 33년간 4회 = 0.12회/년) → 정상 → 플래그 없음
 
   return factors;
 }
