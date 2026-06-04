@@ -51,15 +51,15 @@ export default function AgentPage() {
         {/* 검색바 */}
         <div className="relative">
           <Search
-            size={16}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#86868b]"
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#86868b] pointer-events-none"
           />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="고객명, 전화번호, 주소로 검색..."
-            className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-[#e5e5e7] text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white"
+            className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-[#e5e5e7] text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white"
           />
         </div>
 
