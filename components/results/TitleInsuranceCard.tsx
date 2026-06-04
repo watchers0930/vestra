@@ -36,6 +36,7 @@ export default function TitleInsuranceCard({ result }: TitleInsuranceCardProps) 
 
   return (
     <Card>
+      <div className="h-5" />
       <CardHeader title="권원보험 안내">
         <Badge variant={recConfig.variant} size="md">
           {recConfig.label}

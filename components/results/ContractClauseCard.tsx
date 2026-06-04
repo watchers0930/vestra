@@ -112,6 +112,7 @@ interface ContractClauseCardProps {
 export default function ContractClauseCard({ result }: ContractClauseCardProps) {
   return (
     <Card>
+      <div className="h-5" />
       <CardHeader title="매매계약 특약 자동 생성">
         <div className="flex items-center gap-2">
           <Badge variant="neutral" size="sm">

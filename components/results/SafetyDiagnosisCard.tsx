@@ -137,6 +137,7 @@ export default function SafetyDiagnosisCard({ result }: SafetyDiagnosisCardProps
 
   return (
     <Card>
+      <div className="h-5" />
       <CardHeader title="8대 안전진단">
         <Badge variant={overall.variant} size="md">
           {overall.label}

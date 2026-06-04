@@ -31,7 +31,7 @@ interface CardHeaderProps {
 
 export function CardHeader({ title, description, children, className }: CardHeaderProps) {
   return (
-    <div className={cn("flex items-center justify-between mb-5 px-5 pt-5", className)}>
+    <div className={cn("flex items-center justify-between mb-5 px-5", className)}>
       <div>
         <h2 className="text-lg font-semibold text-[#1d1d1f]">{title}</h2>
         {description && (
