@@ -5,9 +5,11 @@
  * NotificationSetting이 없으면 자동 생성 (fallback).
  */
 
+import { Resend } from "resend";
 import { prisma } from "./prisma";
 import { sendPushToUser } from "./push-subscriptions";
 import { sendAlimtalk, sendSms } from "./solapi-client";
+import { getNotificationSettingOrEnv } from "./system-settings";
 
 // ─── 타입 정의 ───
 
@@ -47,18 +49,43 @@ function getKakaoTemplateId(type: NotificationType): string {
   }
 }
 
-// ─── 이메일 (추후 확장) ───
+// ─── 이메일 (Resend) ───
 
 async function sendEmail(
   email: string,
   title: string,
   body: string
 ): Promise<SendResult> {
-  // TODO: 실제 이메일 발송 (Resend, SendGrid 등)
-  console.info(
-    `[NOTIFICATION:EMAIL:MOCK] To=${email} Title="${title}" Body="${body.slice(0, 100)}"`
-  );
-  return { channel: "email_mock", success: true };
+  const apiKey = await getNotificationSettingOrEnv("RESEND_API_KEY");
+  const fromEmail = await getNotificationSettingOrEnv("RESEND_FROM_EMAIL");
+
+  if (!apiKey || !fromEmail) {
+    console.info(
+      `[NOTIFICATION:EMAIL:MOCK] To=${email} Title="${title}" Body="${body.slice(0, 100)}"`
+    );
+    return { channel: "email_mock", success: true };
+  }
+
+  try {
+    const resend = new Resend(apiKey);
+    await resend.emails.send({
+      from: fromEmail,
+      to: email,
+      subject: title,
+      text: body,
+    });
+    return { channel: "email", success: true };
+  } catch (err) {
+    console.error(
+      "[NOTIFICATION:EMAIL:ERROR]",
+      err instanceof Error ? err.message : err
+    );
+    return {
+      channel: "email",
+      success: false,
+      error: err instanceof Error ? err.message : "이메일 발송 실패",
+    };
+  }
 }
 
 // ─── 메인 발송 함수 ───

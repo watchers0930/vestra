@@ -319,33 +319,35 @@ export default function Sidebar() {
           ) : (
             <>
               {userMenuGroups.map((group, groupIndex) => (
-                <div key={group.label} style={{ marginBottom: "4px" }}>
-                  {showLabel ? (
-                    <div style={{ padding: groupIndex === 0 ? "6px 12px 8px" : "18px 12px 8px", fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.48)" }}>
-                      {group.label}
+                <div key={group.label}>
+                  <div style={{ marginBottom: "4px" }}>
+                    {showLabel ? (
+                      <div style={{ padding: groupIndex === 0 ? "6px 12px 8px" : "18px 12px 8px", fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.48)" }}>
+                        {group.label}
+                      </div>
+                    ) : (
+                      groupIndex > 0 && <div style={{ margin: "8px 10px", borderTop: "1px solid rgba(255,255,255,0.06)" }} />
+                    )}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                      {group.items.map((item) => renderMenuItem(item, isUserItemActive(item)))}
                     </div>
-                  ) : (
-                    groupIndex > 0 && <div style={{ margin: "8px 10px", borderTop: "1px solid rgba(255,255,255,0.06)" }} />
-                  )}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                    {group.items.map((item) => renderMenuItem(item, isUserItemActive(item)))}
                   </div>
+                  {groupIndex === 0 && session?.user?.role === "REALESTATE" && session?.user?.verifyStatus === "verified" && (
+                    <div style={{ marginBottom: "4px" }}>
+                      {showLabel ? (
+                        <div style={{ padding: "18px 12px 8px", fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.48)" }}>
+                          중개 서비스
+                        </div>
+                      ) : (
+                        <div style={{ margin: "8px 10px", borderTop: "1px solid rgba(255,255,255,0.06)" }} />
+                      )}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                        {renderMenuItem(userMenuItems[userMenuItems.length - 1], isUserItemActive(userMenuItems[userMenuItems.length - 1]))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
-              {session?.user?.role === "REALESTATE" && session?.user?.verifyStatus === "verified" && (
-                <div style={{ marginBottom: "4px" }}>
-                  {showLabel ? (
-                    <div style={{ padding: "18px 12px 8px", fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.48)" }}>
-                      중개 서비스
-                    </div>
-                  ) : (
-                    <div style={{ margin: "8px 10px", borderTop: "1px solid rgba(255,255,255,0.06)" }} />
-                  )}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                    {renderMenuItem(userMenuItems[userMenuItems.length - 1], isUserItemActive(userMenuItems[userMenuItems.length - 1]))}
-                  </div>
-                </div>
-              )}
             </>
           )}
 

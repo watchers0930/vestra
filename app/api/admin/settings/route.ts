@@ -12,10 +12,14 @@ import {
   getScholarSettings,
   setScholarSetting,
   deleteScholarSetting,
+  getNotificationSettings,
+  setNotificationSetting,
+  deleteNotificationSetting,
   maskValue,
   OAUTH_PROVIDERS,
   PG_PROVIDERS,
   SCHOLAR_PROVIDERS,
+  NOTIFICATION_PROVIDERS,
 } from "@/lib/system-settings";
 
 /**
@@ -28,10 +32,11 @@ export async function GET() {
     return NextResponse.json({ error: "관리자 권한 필요" }, { status: 403 });
   }
 
-  const [dbOAuth, dbPG, dbScholar] = await Promise.all([
+  const [dbOAuth, dbPG, dbScholar, dbNotification] = await Promise.all([
     getOAuthSettings(),
     getPGSettings(),
     getScholarSettings(),
+    getNotificationSettings(),
   ]);
 
   // OAuth 프로바이더
@@ -123,7 +128,36 @@ export async function GET() {
     };
   }
 
-  return NextResponse.json({ providers, pgProviders, scholarProviders });
+  // Notification 프로바이더
+  const notificationProviders: Record<string, {
+    label: string;
+    keys: Record<string, { label: string; value: string; configured: boolean; source: "db" | "env" | "none" }>;
+    description: string;
+  }> = {};
+
+  for (const p of NOTIFICATION_PROVIDERS) {
+    const keys: Record<string, { label: string; value: string; configured: boolean; source: "db" | "env" | "none" }> = {};
+    for (const k of p.keys) {
+      const dbVal = dbNotification[k.name];
+      const envVal = process.env[k.name];
+      const hasDb = !!dbVal;
+      const hasEnv = !!envVal;
+
+      keys[k.name] = {
+        label: k.label,
+        value: hasDb ? maskValue(dbVal) : hasEnv ? maskValue(envVal) : "",
+        configured: hasDb || hasEnv,
+        source: hasDb ? "db" : hasEnv ? "env" : "none",
+      };
+    }
+    notificationProviders[p.provider] = {
+      label: p.label,
+      keys,
+      description: p.description,
+    };
+  }
+
+  return NextResponse.json({ providers, pgProviders, scholarProviders, notificationProviders });
 }
 
 /**
@@ -142,6 +176,56 @@ export async function PUT(req: NextRequest) {
 
   const body = await req.json();
   const { category = "oauth", provider } = body;
+
+  // Notification 설정
+  if (category === "notification") {
+    const { keys } = body as { keys?: Record<string, string> };
+    const config = NOTIFICATION_PROVIDERS.find((p) => p.provider === provider);
+    if (!config) {
+      return NextResponse.json({ error: "지원하지 않는 알림 서비스" }, { status: 400 });
+    }
+
+    // 초기화: keys가 없거나 모든 값이 비어있으면
+    if (!keys || Object.values(keys).every((v) => !v)) {
+      for (const k of config.keys) {
+        await deleteNotificationSetting(k.name);
+      }
+      createAuditLog({
+        req,
+        userId: session.user.id,
+        action: "admin:reset-settings",
+        target: `notification:${provider}`,
+        detail: { category: "notification", provider, description: "알림 서비스 설정 초기화" },
+      });
+      return NextResponse.json({ message: `${config.label} 설정이 초기화되었습니다.` });
+    }
+
+    // 필수 키 검증 (API Key, API Secret은 필수)
+    const requiredKeys = config.keys.filter((k) => k.required);
+    for (const rk of requiredKeys) {
+      if (!keys[rk.name]) {
+        return NextResponse.json(
+          { error: `${rk.label}은(는) 필수 입력입니다.` },
+          { status: 400 },
+        );
+      }
+    }
+
+    // 저장
+    for (const k of config.keys) {
+      if (keys[k.name]) {
+        await setNotificationSetting(k.name, keys[k.name]);
+      }
+    }
+    createAuditLog({
+      req,
+      userId: session.user.id,
+      action: "admin:update-settings",
+      target: `notification:${provider}`,
+      detail: { category: "notification", provider, description: "알림 서비스 설정 저장" },
+    });
+    return NextResponse.json({ message: `${config.label} 설정이 저장되었습니다.` });
+  }
 
   // Scholar 설정
   if (category === "scholar") {

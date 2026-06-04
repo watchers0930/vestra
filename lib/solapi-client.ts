@@ -2,27 +2,45 @@
  * Solapi 클라이언트 모듈
  * ──────────────────────
  * 카카오 알림톡(ATA) / SMS 발송을 Solapi SDK로 통합 처리.
- * API 키가 없으면 mock 모드(로그만 기록).
+ * DB 설정 우선, 미설정 시 환경변수 폴백. 둘 다 없으면 mock 모드.
  */
 
 import { SolapiMessageService } from "solapi";
+import { getNotificationSettingOrEnv, invalidateNotificationCache } from "./system-settings";
 
-// ─── Lazy Init ───
+// ─── Lazy Init (DB 설정 변경 시 재생성) ───
 
 let client: SolapiMessageService | null = null;
+let cachedApiKey: string | null = null;
+let cachedApiSecret: string | null = null;
 
-function getClient(): SolapiMessageService | null {
-  if (client) return client;
-
-  const apiKey = process.env.SOLAPI_API_KEY;
-  const apiSecret = process.env.SOLAPI_API_SECRET;
+async function getClient(): Promise<SolapiMessageService | null> {
+  const apiKey = await getNotificationSettingOrEnv("SOLAPI_API_KEY");
+  const apiSecret = await getNotificationSettingOrEnv("SOLAPI_API_SECRET");
 
   if (!apiKey || !apiSecret) {
     return null;
   }
 
+  // DB/env 값이 바뀌면 클라이언트 재생성
+  if (client && cachedApiKey === apiKey && cachedApiSecret === apiSecret) {
+    return client;
+  }
+
   client = new SolapiMessageService(apiKey, apiSecret);
+  cachedApiKey = apiKey;
+  cachedApiSecret = apiSecret;
   return client;
+}
+
+/**
+ * 설정 변경 시 클라이언트 캐시 초기화
+ */
+export function resetSolapiClient() {
+  client = null;
+  cachedApiKey = null;
+  cachedApiSecret = null;
+  invalidateNotificationCache();
 }
 
 // ─── 카카오 알림톡 ───
@@ -41,9 +59,9 @@ export async function sendAlimtalk(
   templateId: string,
   variables: Record<string, string>
 ): Promise<AlimtalkResult> {
-  const solapi = getClient();
-  const pfId = process.env.SOLAPI_KAKAO_PF_ID;
-  const from = process.env.SOLAPI_SENDER_PHONE;
+  const solapi = await getClient();
+  const pfId = await getNotificationSettingOrEnv("SOLAPI_KAKAO_PF_ID");
+  const from = await getNotificationSettingOrEnv("SOLAPI_SENDER_PHONE");
 
   if (!solapi || !pfId || !from) {
     console.info(
@@ -77,14 +95,14 @@ export async function sendAlimtalk(
 // ─── SMS ───
 
 /**
- * Solapi를 통해 SMS 발송 (인프라 준비 — 대장님 API 키 전달 후 활성화)
+ * Solapi를 통해 SMS 발송
  */
 export async function sendSms(
   phone: string,
   text: string
 ): Promise<AlimtalkResult> {
-  const solapi = getClient();
-  const from = process.env.SOLAPI_SENDER_PHONE;
+  const solapi = await getClient();
+  const from = await getNotificationSettingOrEnv("SOLAPI_SENDER_PHONE");
 
   if (!solapi || !from) {
     console.info(

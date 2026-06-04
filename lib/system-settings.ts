@@ -301,3 +301,102 @@ export async function setScholarSetting(key: string, value: string): Promise<voi
 export async function deleteScholarSetting(key: string): Promise<void> {
   await prisma.systemSetting.deleteMany({ where: { key } });
 }
+
+// ─── Notification(알림톡/SMS) 프로바이더 설정 구조 ───
+
+export interface NotificationProviderConfig {
+  provider: string;
+  label: string;
+  keys: { name: string; label: string; secret: boolean; required?: boolean }[];
+  description: string;
+}
+
+export const NOTIFICATION_PROVIDERS: NotificationProviderConfig[] = [
+  {
+    provider: "solapi",
+    label: "Solapi (카카오 알림톡/SMS)",
+    keys: [
+      { name: "SOLAPI_API_KEY", label: "API Key", secret: false, required: true },
+      { name: "SOLAPI_API_SECRET", label: "API Secret", secret: true, required: true },
+      { name: "SOLAPI_KAKAO_PF_ID", label: "카카오 PF ID", secret: false },
+      { name: "SOLAPI_SENDER_PHONE", label: "발신번호", secret: false },
+    ],
+    description: "카카오 알림톡 및 SMS 발송 서비스",
+  },
+  {
+    provider: "resend",
+    label: "Resend (이메일)",
+    keys: [
+      { name: "RESEND_API_KEY", label: "API Key", secret: true, required: true },
+      { name: "RESEND_FROM_EMAIL", label: "발신 이메일", secret: false, required: true },
+    ],
+    description: "이메일 알림 발송 서비스",
+  },
+];
+
+// ─── Notification 캐시 ───
+
+let notificationCache: Record<string, string> | null = null;
+let notificationCacheTimestamp = 0;
+
+export function invalidateNotificationCache() {
+  notificationCache = null;
+  notificationCacheTimestamp = 0;
+}
+
+/**
+ * DB에서 notification 카테고리 설정을 읽고 복호화하여 반환.
+ */
+export async function getNotificationSettings(): Promise<Record<string, string>> {
+  if (notificationCache && Date.now() - notificationCacheTimestamp < CACHE_TTL) {
+    return notificationCache;
+  }
+
+  try {
+    const rows = await prisma.systemSetting.findMany({
+      where: { category: "notification" },
+    });
+    const settings: Record<string, string> = {};
+    for (const row of rows) {
+      try {
+        settings[row.key] = decrypt(row.value);
+      } catch {
+        // 복호화 실패 시 무시
+      }
+    }
+    notificationCache = settings;
+    notificationCacheTimestamp = Date.now();
+    return settings;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * DB 값 우선, 없으면 env 폴백 (notification).
+ */
+export async function getNotificationSettingOrEnv(key: string): Promise<string | undefined> {
+  const settings = await getNotificationSettings();
+  return settings[key] || process.env[key] || undefined;
+}
+
+/**
+ * Notification 설정 값을 암호화하여 DB에 저장.
+ */
+export async function setNotificationSetting(key: string, value: string): Promise<void> {
+  const encrypted = encrypt(value);
+  await prisma.systemSetting.upsert({
+    where: { key },
+    update: { value: encrypted, category: "notification" },
+    create: { key, value: encrypted, category: "notification" },
+  });
+  invalidateNotificationCache();
+}
+
+/**
+ * Notification 설정 삭제.
+ */
+export async function deleteNotificationSetting(key: string): Promise<void> {
+  await prisma.systemSetting.deleteMany({ where: { key } });
+  invalidateNotificationCache();
+}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Card, Badge, Button } from "@/components/common";
+import { NotificationSettingsTab } from "./NotificationSettingsTab";
 
 interface SocialProvider {
   label: string;
@@ -39,14 +40,18 @@ interface ProviderMsg {
   text: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type NotificationProviders = Record<string, any>;
+
 interface ApiKeyTabProps {
   initialSocialProviders: Record<string, SocialProvider>;
   initialPgProviders: Record<string, PGProvider>;
   initialScholarProviders: Record<string, ScholarProvider>;
+  initialNotificationProviders: NotificationProviders;
 }
 
-export function ApiKeyTab({ initialSocialProviders, initialPgProviders, initialScholarProviders }: ApiKeyTabProps) {
-  const [apiSubTab, setApiSubTab] = useState<"social" | "pg" | "scholar">("social");
+export function ApiKeyTab({ initialSocialProviders, initialPgProviders, initialScholarProviders, initialNotificationProviders }: ApiKeyTabProps) {
+  const [apiSubTab, setApiSubTab] = useState<"social" | "pg" | "scholar" | "notification">("social");
 
   const [socialProviders, setSocialProviders] = useState(initialSocialProviders);
   const [socialForms, setSocialForms] = useState<Record<string, { clientId: string; clientSecret: string }>>({});
@@ -218,6 +223,7 @@ export function ApiKeyTab({ initialSocialProviders, initialPgProviders, initialS
           { key: "social" as const, label: "간편로그인설정" },
           { key: "pg" as const, label: "PG설정" },
           { key: "scholar" as const, label: "논문검색설정" },
+          { key: "notification" as const, label: "알림톡설정" },
         ] as const).map((st) => (
           <button
             key={st.key}
@@ -436,6 +442,10 @@ export function ApiKeyTab({ initialSocialProviders, initialPgProviders, initialS
             <Card className="p-8 text-center text-gray-500 text-sm">논문검색 서비스 설정을 불러오는 중...</Card>
           )}
         </div>
+      )}
+
+      {apiSubTab === "notification" && (
+        <NotificationSettingsTab initialProviders={initialNotificationProviders} />
       )}
     </div>
   );

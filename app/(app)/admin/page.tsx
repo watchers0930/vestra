@@ -135,6 +135,7 @@ function AdminContent() {
               initialSocialProviders={data.apiKeyInitData.providers}
               initialPgProviders={data.apiKeyInitData.pgProviders}
               initialScholarProviders={data.apiKeyInitData.scholarProviders}
+              initialNotificationProviders={data.apiKeyInitData.notificationProviders}
             />
           )}
 

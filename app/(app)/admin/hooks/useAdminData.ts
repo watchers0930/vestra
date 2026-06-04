@@ -44,10 +44,11 @@ export function useAdminData() {
   const [confirmModal, setConfirmModal] = useState<ConfirmModalState | null>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [apiKeyInitData, setApiKeyInitData] = useState<{ providers: Record<string, any>; pgProviders: Record<string, any>; scholarProviders: Record<string, any> }>({
+  const [apiKeyInitData, setApiKeyInitData] = useState<{ providers: Record<string, any>; pgProviders: Record<string, any>; scholarProviders: Record<string, any>; notificationProviders: Record<string, any> }>({
     providers: {},
     pgProviders: {},
     scholarProviders: {},
+    notificationProviders: {},
   });
 
   const fetchData = useCallback(async () => {
@@ -75,6 +76,7 @@ export function useAdminData() {
           providers: data.providers || {},
           pgProviders: data.pgProviders || {},
           scholarProviders: data.scholarProviders || {},
+          notificationProviders: data.notificationProviders || {},
         });
       }
     } catch (e) {
