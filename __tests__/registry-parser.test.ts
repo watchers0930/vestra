@@ -138,6 +138,90 @@ describe("parseRegistry", () => {
   });
 });
 
+describe("인터넷등기소 실제 형식 — 말소 감지", () => {
+  // 인터넷등기소에서 복사/붙여넣기 시 공백 포함 형식
+  const irosText = `
+【 표 제 부 】 (건물의 표시)
+표시번호  접  수  소재지번 및 건물번호  건물내역
+1  경기도 광명시 철산동 367 철산한신아파트 제108동 제14층 제1403호 84.94㎡ 아파트
+전유부분 건물번호 제14층 제1403호 84.94㎡
+
+【 갑 구 】 (소유권에 관한 사항)
+순위번호 등기목적 접수 등기원인 권리자 및 기타사항
+1 소유권보존 1992년12월15일 제12345호 1992년12월10일 보존등기 소유자 김ㅇㅇ
+2 소유권이전 2003년3월20일 제23456호 2003년3월18일 매매 소유자 이ㅇㅇ
+3 소유권이전 2005년7월10일 제34567호 2005년7월8일 매매 소유자 박ㅇㅇ
+4 소유권이전 2016년8월15일 제45678호 2016년8월12일 매매 소유자 최ㅇㅇ
+
+【 을 구 】 (소유권 이외의 권리에 관한 사항)
+순위번호 등기목적 접수 등기원인 권리자 및 기타사항
+1 근저당권설정 2003년3월25일 제23460호 2003년3월20일 설정계약 채권최고액 금 52,000,000원 근저당권자 주식회사국민은행 채무자 이ㅇㅇ
+2 1번근저당권말소 2005년7월12일 제34570호 2005년7월10일 해제
+3 근저당권설정 2011년1월28일 제3038호 2011년1월27일 설정계약 채권최고액 금 13,000,000원 근저당권자 주식회사국민은행 채무자 박ㅇㅇ
+3 3번근저당권말소 2016년10월14일 제14567호 2016년10월13일 해제
+4 근저당권설정 2016년8월20일 제45680호 2016년8월18일 설정계약 채권최고액 금 48,000,000원 근저당권자 주식회사하나은행 채무자 최ㅇㅇ
+4 4번근저당권말소 2020년3월15일 제5678호 2020년3월14일 해제
+`.trim();
+
+  const parsed = parseRegistry(irosText);
+
+  it("을구 항목을 파싱한다", () => {
+    expect(parsed.eulgu.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("1번근저당권말소로 1번 항목이 말소 처리된다", () => {
+    const entry1 = parsed.eulgu.find(e => e.order === 1 && e.purpose === "근저당권설정");
+    expect(entry1).toBeDefined();
+    expect(entry1!.isCancelled).toBe(true);
+  });
+
+  it("3번근저당권말소로 3번 항목이 말소 처리된다", () => {
+    const entry3 = parsed.eulgu.find(e => e.order === 3 && e.purpose === "근저당권설정");
+    expect(entry3).toBeDefined();
+    expect(entry3!.isCancelled).toBe(true);
+  });
+
+  it("4번근저당권말소로 4번 항목이 말소 처리된다", () => {
+    const entry4 = parsed.eulgu.find(e => e.order === 4 && e.purpose === "근저당권설정");
+    expect(entry4).toBeDefined();
+    expect(entry4!.isCancelled).toBe(true);
+  });
+
+  it("활성 근저당 금액이 0원이다", () => {
+    expect(parsed.summary.totalMortgageAmount).toBe(0);
+  });
+
+  it("모든 을구 항목이 말소 상태이다", () => {
+    const activeEulgu = parsed.eulgu.filter(e => !e.isCancelled);
+    expect(activeEulgu).toHaveLength(0);
+  });
+
+  // 공백 포함 형식 테스트: "3번 근저당권 말소"
+  const spacedText = `
+【 을 구 】 (소유권 이외의 권리에 관한 사항)
+순위번호 등기목적 접수 등기원인 권리자 및 기타사항
+1 근저당권설정 2011년1월28일 설정계약 채권최고액 금 13,000,000원 근저당권자 국민은행
+2 1번 근저당권 말소 2016년10월14일 해제
+`.trim();
+
+  it("공백 포함 '1번 근저당권 말소'로 1번이 말소된다", () => {
+    const spacedParsed = parseRegistry(spacedText);
+    const entry1 = spacedParsed.eulgu.find(e => e.order === 1 && e.purpose === "근저당권설정");
+    expect(entry1).toBeDefined();
+    expect(entry1!.isCancelled).toBe(true);
+  });
+
+  // 줄바꿈 없는 연속 텍스트 (인터넷등기소 복사 시 발생)
+  const noNewlineText = `【 을 구 】 (소유권 이외의 권리에 관한 사항) 순위번호 등기목적 접수 등기원인 권리자 및 기타사항 1 근저당권설정 2011년1월28일 제3038호 설정계약 채권최고액 금 13,000,000원 근저당권자 국민은행 채무자 박ㅇㅇ 1번근저당권말소 2016년10월14일 제14567호 해제 2 근저당권설정 2016년8월20일 제45680호 설정계약 채권최고액 금 48,000,000원 근저당권자 하나은행 채무자 최ㅇㅇ 2번근저당권말소 2020년3월15일 제5678호 해제`;
+
+  it("줄바꿈 없는 텍스트에서도 말소를 감지한다", () => {
+    const noNLParsed = parseRegistry(noNewlineText);
+    const activeMortgage = noNLParsed.eulgu.filter(e => !e.isCancelled && /근저당/.test(e.purpose));
+    expect(activeMortgage).toHaveLength(0);
+    expect(noNLParsed.summary.totalMortgageAmount).toBe(0);
+  });
+});
+
 describe("extractAmount", () => {
   it("금 480,000,000원 → 480000000", () => {
     expect(extractAmount("채권최고액 금 480,000,000원")).toBe(480000000);

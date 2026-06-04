@@ -203,6 +203,15 @@ export async function POST(req: NextRequest) {
     // 1단계: 자체 파싱 엔진 (AI 미사용)
     const parsed = parseRegistry(rawText);
 
+    // 디버그: 을구 말소 상태 로그
+    if (parsed.eulgu.length > 0) {
+      console.log("[DEBUG] 을구 파싱 결과:");
+      for (const e of parsed.eulgu) {
+        console.log(`  #${e.order} ${e.purpose} | 말소=${e.isCancelled} | 금액=${e.amount} | detail(50)="${e.detail.slice(0, 50)}"`);
+      }
+      console.log(`[DEBUG] 활성 근저당 합계: ${parsed.eulgu.filter(e => !e.isCancelled && /근저당|저당/.test(e.purpose)).reduce((s, e) => s + e.amount, 0)}`);
+    }
+
     // 주소 결정: 파싱된 주소 > 사용자 입력 주소
     const address = parsed.title.address || userAddress || "";
 
