@@ -222,6 +222,91 @@ describe("인터넷등기소 실제 형식 — 말소 감지", () => {
   });
 });
 
+describe("연번 말소 — '3번4번근저당권말소' 형식", () => {
+  // 하나의 말소 항목이 여러 순위번호를 참조하는 경우
+  const multiRefText = `
+【 을 구 】 (소유권 이외의 권리에 관한 사항)
+순위번호 등기목적 접수 등기원인 권리자 및 기타사항
+1 근저당권설정 2003년3월25일 제23460호 설정계약 채권최고액 금 96,000,000원 근저당권자 국민은행
+2 1번근저당권말소 2005년7월12일 제34570호 해제
+3 근저당권설정 2011년1월28일 제3038호 설정계약 채권최고액 금 13,000,000원 근저당권자 국민은행
+4 근저당권설정 2016년8월20일 제45680호 설정계약 채권최고액 금 48,000,000원 근저당권자 하나은행
+5 근저당권설정 2018년3월15일 제5555호 설정계약 채권최고액 금 14,400,000원 근저당권자 신한은행
+6 3번4번근저당권말소 2020년5월10일 제6666호 해제
+7 5번근저당권말소 2022년1월20일 제7777호 해제
+8 근저당권설정 2022년6월1일 제8888호 설정계약 채권최고액 금 48,000,000원 근저당권자 우리은행
+8 8번근저당권말소 2024년3월15일 제9999호 해제
+`.trim();
+
+  const parsed = parseRegistry(multiRefText);
+
+  it("을구 항목을 파싱한다", () => {
+    expect(parsed.eulgu.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("1번근저당권말소로 1번이 말소된다", () => {
+    const entry1 = parsed.eulgu.find(e => e.order === 1 && e.purpose === "근저당권설정");
+    expect(entry1).toBeDefined();
+    expect(entry1!.isCancelled).toBe(true);
+  });
+
+  it("3번4번근저당권말소로 3번이 말소된다", () => {
+    const entry3 = parsed.eulgu.find(e => e.order === 3 && e.purpose === "근저당권설정");
+    expect(entry3).toBeDefined();
+    expect(entry3!.isCancelled).toBe(true);
+  });
+
+  it("3번4번근저당권말소로 4번이 말소된다", () => {
+    const entry4 = parsed.eulgu.find(e => e.order === 4 && e.purpose === "근저당권설정");
+    expect(entry4).toBeDefined();
+    expect(entry4!.isCancelled).toBe(true);
+  });
+
+  it("5번근저당권말소로 5번이 말소된다", () => {
+    const entry5 = parsed.eulgu.find(e => e.order === 5 && e.purpose === "근저당권설정");
+    expect(entry5).toBeDefined();
+    expect(entry5!.isCancelled).toBe(true);
+  });
+
+  it("같은 순위번호 8번근저당권말소로 8번이 말소된다", () => {
+    const entry8 = parsed.eulgu.find(e => e.order === 8 && e.purpose === "근저당권설정");
+    expect(entry8).toBeDefined();
+    expect(entry8!.isCancelled).toBe(true);
+  });
+
+  it("활성 근저당 금액이 0원이다", () => {
+    expect(parsed.summary.totalMortgageAmount).toBe(0);
+  });
+
+  // 쉼표 구분: "3번,4번 근저당권 말소"
+  const commaRefText = `
+【 을 구 】 (소유권 이외의 권리에 관한 사항)
+순위번호 등기목적 접수 등기원인 권리자 및 기타사항
+1 근저당권설정 2011년1월28일 설정계약 채권최고액 금 13,000,000원 근저당권자 국민은행
+2 근저당권설정 2016년8월20일 설정계약 채권최고액 금 48,000,000원 근저당권자 하나은행
+3 1번,2번 근저당권 말소 2020년5월10일 해제
+`.trim();
+
+  it("쉼표 구분 '1번,2번 근저당권 말소'로 1번과 2번 모두 말소된다", () => {
+    const commaParsed = parseRegistry(commaRefText);
+    const entry1 = commaParsed.eulgu.find(e => e.order === 1 && e.purpose === "근저당권설정");
+    const entry2 = commaParsed.eulgu.find(e => e.order === 2 && e.purpose === "근저당권설정");
+    expect(entry1!.isCancelled).toBe(true);
+    expect(entry2!.isCancelled).toBe(true);
+    expect(commaParsed.summary.totalMortgageAmount).toBe(0);
+  });
+
+  // 줄바꿈 없는 연속 텍스트에서 연번 말소
+  const noNLMultiRef = `【 을 구 】 (소유권 이외의 권리에 관한 사항) 순위번호 등기목적 접수 등기원인 권리자 및 기타사항 1 근저당권설정 2011년1월28일 설정계약 채권최고액 금 13,000,000원 근저당권자 국민은행 2 근저당권설정 2016년8월20일 설정계약 채권최고액 금 48,000,000원 근저당권자 하나은행 3 1번2번근저당권말소 2020년5월10일 해제`;
+
+  it("줄바꿈 없는 텍스트에서 1번2번근저당권말소로 양쪽 모두 말소된다", () => {
+    const noNLParsed = parseRegistry(noNLMultiRef);
+    const activeMortgage = noNLParsed.eulgu.filter(e => !e.isCancelled && /근저당/.test(e.purpose));
+    expect(activeMortgage).toHaveLength(0);
+    expect(noNLParsed.summary.totalMortgageAmount).toBe(0);
+  });
+});
+
 describe("extractAmount", () => {
   it("금 480,000,000원 → 480000000", () => {
     expect(extractAmount("채권최고액 금 480,000,000원")).toBe(480000000);
