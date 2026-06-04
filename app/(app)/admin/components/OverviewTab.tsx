@@ -33,6 +33,7 @@ export function OverviewTab({ stats }: Props) {
           icon={Users}
           iconBg="bg-[#f5f5f7]"
           iconColor="text-[#1d1d1f]"
+          href="/admin?tab=users"
         />
         <KpiCard
           label="대기 인증"
@@ -41,6 +42,7 @@ export function OverviewTab({ stats }: Props) {
           icon={Clock}
           iconBg="bg-[#f5f5f7]"
           iconColor="text-[#1d1d1f]"
+          href="/admin?tab=verifications"
         />
         <KpiCard
           label="오늘 분석"
@@ -49,6 +51,7 @@ export function OverviewTab({ stats }: Props) {
           icon={BarChart3}
           iconBg="bg-[#f5f5f7]"
           iconColor="text-[#1d1d1f]"
+          href="/admin?tab=analyses"
         />
         <KpiCard
           label="등록 자산"
@@ -57,6 +60,7 @@ export function OverviewTab({ stats }: Props) {
           icon={Home}
           iconBg="bg-[#f5f5f7]"
           iconColor="text-[#1d1d1f]"
+          href="/admin?tab=analyses"
         />
       </div>
 
