@@ -294,7 +294,7 @@ export function RightsGraphView({ parsed, graphAnalysis }: Props) {
           <Card className="p-4">
             <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-3">
               <Activity size={14} />
-              시스템 위험도
+              종합 위험도
             </h4>
             <div className="flex items-center gap-4">
               <div
@@ -322,7 +322,7 @@ export function RightsGraphView({ parsed, graphAnalysis }: Props) {
               </div>
               <div className="flex-1 space-y-1.5">
                 <p className="text-xs text-gray-500">
-                  PageRank 변형 위험 전파 알고리즘 결과 (0-100)
+                  등기부 권리관계 종합 위험 점수 (0-100)
                 </p>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
@@ -339,13 +339,13 @@ export function RightsGraphView({ parsed, graphAnalysis }: Props) {
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-xs text-gray-500 mt-2">
                   <div>
-                    <span className="font-medium text-gray-700">{graphAnalysis.graph.nodeCount}</span> 노드
+                    <span className="font-medium text-gray-700">{graphAnalysis.graph.nodeCount}</span> 항목
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">{graphAnalysis.graph.edgeCount}</span> 엣지
+                    <span className="font-medium text-gray-700">{graphAnalysis.graph.edgeCount}</span> 연결
                   </div>
                   <div>
-                    깊이 <span className="font-medium text-gray-700">{graphAnalysis.graph.maxDepth}</span>
+                    단계 <span className="font-medium text-gray-700">{graphAnalysis.graph.maxDepth}</span>
                   </div>
                 </div>
               </div>
@@ -378,40 +378,57 @@ export function RightsGraphView({ parsed, graphAnalysis }: Props) {
             <Card className="p-4">
               <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-3">
                 <Route size={14} />
-                최대 위험 경로 (Critical Path)
+                주요 권리 연결 경로
               </h4>
               <div className="flex items-center gap-1.5 flex-wrap mb-3">
-                {graphAnalysis.criticalPath.path.map((nodeId, i) => (
-                  <span key={nodeId} className="flex items-center gap-1">
-                    {i > 0 && <span className="text-gray-400 text-xs">→</span>}
-                    <span
-                      className={cn(
-                        "px-2 py-1 rounded text-xs font-medium",
-                        i === 0
-                          ? "bg-blue-100 text-blue-800"
-                          : i === graphAnalysis.criticalPath.path.length - 1
-                          ? "bg-red-100 text-red-800"
-                          : "bg-gray-100 text-gray-700"
-                      )}
-                    >
-                      {nodeId.replace(/_/g, " ")}
+                {graphAnalysis.criticalPath.path.map((nodeId, i) => {
+                  const friendlyLabel = nodeId
+                    .replace(/^property[_ ]?root$/, "부동산")
+                    .replace(/^gapgu[_ ]?(\d+)$/, "갑구 $1번")
+                    .replace(/^eulgu[_ ]?(\d+)$/, "을구 $1번")
+                    .replace(/_/g, " ");
+                  return (
+                    <span key={nodeId} className="flex items-center gap-1">
+                      {i > 0 && <span className="text-gray-400 text-xs">→</span>}
+                      <span
+                        className={cn(
+                          "px-2 py-1 rounded text-xs font-medium",
+                          i === 0
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-700"
+                        )}
+                      >
+                        {friendlyLabel}
+                      </span>
                     </span>
-                  </span>
-                ))}
+                  );
+                })}
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-2 bg-red-50 rounded-lg text-center">
-                  <p className="text-[10px] text-red-600">경로 위험도</p>
-                  <p className="text-lg font-bold text-red-700">{graphAnalysis.criticalPath.totalRisk}</p>
-                </div>
-                <div className="p-2 bg-orange-50 rounded-lg text-center">
-                  <p className="text-[10px] text-orange-600">최대 피해 금액</p>
-                  <p className="text-lg font-bold text-orange-700">
-                    {graphAnalysis.criticalPath.maxLossAmount > 0
-                      ? formatKRW(graphAnalysis.criticalPath.maxLossAmount)
-                      : "-"}
-                  </p>
-                </div>
+                {(() => {
+                  const sysRisk = graphAnalysis.riskPropagation.totalSystemRisk;
+                  const isHigh = sysRisk >= 70;
+                  const isMid = sysRisk >= 40;
+                  const bg = isHigh ? "bg-red-50" : isMid ? "bg-amber-50" : "bg-gray-50";
+                  const labelColor = isHigh ? "text-red-600" : isMid ? "text-amber-600" : "text-gray-500";
+                  const valueColor = isHigh ? "text-red-700" : isMid ? "text-amber-700" : "text-gray-700";
+                  return (
+                    <>
+                      <div className={`p-2 ${bg} rounded-lg text-center`}>
+                        <p className={`text-[10px] ${labelColor}`}>경로 위험도</p>
+                        <p className={`text-lg font-bold ${valueColor}`}>{graphAnalysis.criticalPath.totalRisk}</p>
+                      </div>
+                      <div className={`p-2 ${bg} rounded-lg text-center`}>
+                        <p className={`text-[10px] ${labelColor}`}>최대 관련 금액</p>
+                        <p className={`text-lg font-bold ${valueColor}`}>
+                          {graphAnalysis.criticalPath.maxLossAmount > 0
+                            ? formatKRW(graphAnalysis.criticalPath.maxLossAmount)
+                            : "-"}
+                        </p>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </Card>
           )}
@@ -421,16 +438,18 @@ export function RightsGraphView({ parsed, graphAnalysis }: Props) {
             <Card className="p-4">
               <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-3">
                 <BarChart3 size={14} />
-                노드별 위험 전파 점수
+                항목별 위험도 점수
               </h4>
               <div className="h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={Object.entries(graphAnalysis.riskPropagation.nodeRisks)
                       .map(([id, risk]) => ({
-                        name: id.replace(/_/g, " ").replace(/^(gapgu|eulgu) /, (m) =>
-                          m.includes("gapgu") ? "갑 " : "을 "
-                        ),
+                        name: id
+                          .replace(/^property[_ ]?root$/, "부동산")
+                          .replace(/^gapgu[_ ]?(\d+)$/, "갑구$1")
+                          .replace(/^eulgu[_ ]?(\d+)$/, "을구$1")
+                          .replace(/_/g, " "),
                         risk: Math.round(Number(risk) * 100),
                       }))
                       .sort((a, b) => b.risk - a.risk)}
@@ -456,14 +475,20 @@ export function RightsGraphView({ parsed, graphAnalysis }: Props) {
                     <Bar
                       dataKey="risk"
                       radius={[4, 4, 0, 0]}
-                      fill="#ef4444"
+                      fill={
+                        graphAnalysis.riskPropagation.totalSystemRisk >= 70
+                          ? "#ef4444"
+                          : graphAnalysis.riskPropagation.totalSystemRisk >= 40
+                          ? "#f59e0b"
+                          : "#6b7280"
+                      }
                       fillOpacity={0.8}
                     />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
               <p className="text-[10px] text-gray-400 mt-2 text-center">
-                수정 PageRank 알고리즘 기반 위험 전파 시뮬레이션 ({graphAnalysis.riskPropagation.convergenceIterations}회 반복 수렴)
+                등기 항목 간 위험도 연관 분석 결과
               </p>
             </Card>
           )}
