@@ -14,6 +14,7 @@ interface Notification {
   source?: "local" | "db";
   alertId?: string;
   monitoredPropertyId?: string;
+  address?: string;
 }
 
 const STORAGE_KEY = "vestra_notifications";
@@ -40,6 +41,7 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
   const ref = useRef<HTMLDivElement>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const seenAlertIdsRef = useRef<Set<string>>(new Set());
+  const isFirstLoadRef = useRef(true);
 
   const fetchAndMerge = useCallback(async () => {
     const localNotifs = getNotifications().map((n) => ({
@@ -63,6 +65,7 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
           createdAt: string;
           isRead: boolean;
           monitoredPropertyId?: string;
+          monitoredProperty?: { address?: string };
         }) => ({
           id: alert.id,
           message: alert.summary,
@@ -71,20 +74,25 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
           source: "db" as const,
           alertId: alert.id,
           monitoredPropertyId: alert.monitoredPropertyId,
+          address: alert.monitoredProperty?.address,
         })
       );
 
       // 새 알림 토스트 팝업
-      const RECENT_MS = 5 * 60 * 1000; // 5분
-      const now = Date.now();
+      const isFirstLoad = isFirstLoadRef.current;
+      isFirstLoadRef.current = false;
+
+      const unreadNew = dbNotifs.filter((n) => !n.read && !seenAlertIdsRef.current.has(n.id));
+      // 첫 로드: 최대 3개, 이후: 모든 새 알림
+      const toShow = isFirstLoad ? unreadNew.slice(0, 3) : unreadNew;
+
+      for (const n of toShow) {
+        const link = n.monitoredPropertyId ? `/monitoring/${n.monitoredPropertyId}` : undefined;
+        const title = n.address || undefined;
+        showToast(n.message, "warning", link, title);
+      }
+
       for (const n of dbNotifs) {
-        if (!n.read && !seenAlertIdsRef.current.has(n.id)) {
-          const age = now - new Date(n.date).getTime();
-          if (age < RECENT_MS) {
-            const link = n.monitoredPropertyId ? `/monitoring/${n.monitoredPropertyId}` : undefined;
-            showToast(n.message, "warning", link);
-          }
-        }
         seenAlertIdsRef.current.add(n.id);
       }
 

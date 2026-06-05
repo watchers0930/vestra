@@ -89,6 +89,22 @@ body {
   background: #94a3b8;
 }
 
+/* Toast slide-in animation */
+@keyframes toast-slide-in {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes toast-slide-out {
+  from { transform: translateX(0); opacity: 1; max-height: 200px; margin-bottom: 8px; }
+  to { transform: translateX(120%); opacity: 0; max-height: 0; margin-bottom: 0; }
+}
+.toast-enter {
+  animation: toast-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.toast-exit {
+  animation: toast-slide-out 0.3s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+}
+
 /* Gauge animation */
 @keyframes gauge-fill {
   from { stroke-dashoffset: 283; }
