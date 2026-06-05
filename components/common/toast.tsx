@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
+import { useState, useCallback, createContext, useContext, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { X, AlertCircle, CheckCircle2, Info, AlertTriangle } from "lucide-react";
 
@@ -52,10 +52,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) => void }) {
   const router = useRouter();
 
-  useEffect(() => {
-    const timer = setTimeout(() => onRemove(toast.id), toast.link ? 6000 : 4000);
-    return () => clearTimeout(timer);
-  }, [toast.id, toast.link, onRemove]);
+  // 자동 사라짐 없음 — X 버튼으로만 닫기
 
   const iconMap = { error: AlertCircle, success: CheckCircle2, warning: AlertTriangle, info: Info };
   const Icon = iconMap[toast.type];
