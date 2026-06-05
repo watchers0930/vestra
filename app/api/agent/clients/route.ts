@@ -25,7 +25,7 @@ export const GET = withAgentAuth(async (req, { session }) => {
 
     const where = {
       agentId: session.user.id,
-      ...(status ? { status } : {}),
+      ...(status ? { status } : { status: { not: "inactive" } }),
       ...(search
         ? {
             OR: [
