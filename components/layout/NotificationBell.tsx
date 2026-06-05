@@ -39,7 +39,6 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
   const ref = useRef<HTMLDivElement>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const seenAlertIdsRef = useRef<Set<string>>(new Set());
-  const initialLoadRef = useRef(true);
 
   const fetchAndMerge = useCallback(async () => {
     const localNotifs = getNotifications().map((n) => ({
@@ -73,18 +72,16 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
       );
 
       // 새 알림 토스트 팝업
-      if (initialLoadRef.current) {
-        // 최초 로드: 기존 알림 ID만 기록 (토스트 안 띄움)
-        for (const n of dbNotifs) seenAlertIdsRef.current.add(n.id);
-        initialLoadRef.current = false;
-      } else {
-        // 이후 폴링: 새 미읽은 알림만 토스트
-        for (const n of dbNotifs) {
-          if (!n.read && !seenAlertIdsRef.current.has(n.id)) {
+      const RECENT_MS = 5 * 60 * 1000; // 5분
+      const now = Date.now();
+      for (const n of dbNotifs) {
+        if (!n.read && !seenAlertIdsRef.current.has(n.id)) {
+          const age = now - new Date(n.date).getTime();
+          if (age < RECENT_MS) {
             showToast(n.message, "warning");
           }
-          seenAlertIdsRef.current.add(n.id);
         }
+        seenAlertIdsRef.current.add(n.id);
       }
 
       const merged = [...dbNotifs, ...localNotifs].sort(
