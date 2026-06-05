@@ -111,11 +111,48 @@ function detectChanges(oldContent: string | null, newContent: string): ChangeDet
   return changes;
 }
 
+// ── 시뮬레이션용 등기부 생성 ──
+const SIMULATED_CHANGE_TEXT: Record<string, string> = {
+  mortgage_added: "을구 제3호 근저당권설정 채권최고액 금4억8,000만원 (시뮬레이션)",
+  seizure_added: "을구 제4호 가압류 서울중앙지방법원 (시뮬레이션)",
+  ownership_changed: "갑구 제5호 소유권이전 (시뮬레이션)",
+  auction_started: "갑구 제6호 경매개시결정 (시뮬레이션)",
+};
+
+function generateSimulatedRegistry(
+  baselineData: string | null,
+  changeType: string
+): string {
+  const injectedText = SIMULATED_CHANGE_TEXT[changeType] || SIMULATED_CHANGE_TEXT.mortgage_added;
+
+  if (baselineData) {
+    return `${baselineData}\n${injectedText}`;
+  }
+
+  // 최소 더미 등기부
+  return [
+    "[표제부] 서울특별시 강남구 테헤란로 123 아파트 101동 1001호",
+    "[갑구] 제1호 소유권보존 홍길동",
+    "[을구] 제1호 근저당권설정 채권최고액 금2억원",
+    injectedText,
+  ].join("\n");
+}
+
 // ── CODEF로 등기부 조회 (유료 전환 대비) ──
 async function fetchRegistryContent(
   address: string,
-  commUniqueNo: string | null
+  commUniqueNo: string | null,
+  options?: { simulate?: boolean; changeType?: string; baselineData?: string | null }
 ): Promise<{ text: string; raw?: Record<string, unknown> } | null> {
+  // 시뮬레이션 모드: CODEF 호출 없이 가짜 등기부 반환
+  if (options?.simulate) {
+    const text = generateSimulatedRegistry(
+      options.baselineData ?? null,
+      options.changeType || "mortgage_added"
+    );
+    return { text };
+  }
+
   // CODEF API 사용 가능하고 고유번호가 있는 경우
   if (isCodefAvailable() && commUniqueNo) {
     try {
@@ -129,8 +166,7 @@ async function fetchRegistryContent(
     }
   }
 
-  // 폴백: CODEF 미사용 시 시뮬레이션 (유료 전환 전까지)
-  // 실제 데이터가 없으므로 null 반환 → 변동 감지 skip
+  // 폴백: CODEF 미사용 시 null 반환 → 변동 감지 skip
   return null;
 }
 
@@ -154,19 +190,39 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // 시뮬레이션 모드 파라미터 파싱
+    const url = new URL(req.url);
+    const simulate = url.searchParams.get("simulate") === "true";
+    const changeType = url.searchParams.get("changeType") || "mortgage_added";
+    const propertyIdFilter = url.searchParams.get("propertyId");
+
+    if (simulate) {
+      console.log(`[CRON:MONITOR] 시뮬레이션 모드 — changeType=${changeType}, propertyId=${propertyIdFilter || "전체"}`);
+    }
+
     // 전입일 지난 계약감시 → 일반 모드로 자동 전환
     await autoTransitionExpiredGaps();
 
+    // 시뮬레이션에서 propertyId 지정 시 해당 물건만 조회
+    const propertyFilter = {
+      status: "active" as const,
+      ...(propertyIdFilter ? { id: propertyIdFilter } : {}),
+    };
+
     // contract_gap 모드 우선 처리
-    const gapProperties = await prisma.monitoredProperty.findMany({
-      where: { status: "active", monitorMode: "contract_gap" },
-      take: Math.floor(BATCH_SIZE / 2),
-      orderBy: { lastCheckedAt: "asc" },
-      include: { user: { select: { id: true, email: true } } },
-    });
+    const gapProperties = propertyIdFilter
+      ? []
+      : await prisma.monitoredProperty.findMany({
+          where: { ...propertyFilter, monitorMode: "contract_gap" },
+          take: Math.floor(BATCH_SIZE / 2),
+          orderBy: { lastCheckedAt: "asc" },
+          include: { user: { select: { id: true, email: true } } },
+        });
 
     const standardProperties = await prisma.monitoredProperty.findMany({
-      where: { status: "active", monitorMode: "standard" },
+      where: propertyIdFilter
+        ? propertyFilter
+        : { ...propertyFilter, monitorMode: "standard" },
       take: BATCH_SIZE - gapProperties.length,
       orderBy: { lastCheckedAt: "asc" },
       include: { user: { select: { id: true, email: true } } },
@@ -185,8 +241,11 @@ export async function GET(req: NextRequest) {
 
     for (const prop of allProperties) {
       try {
-        // CODEF로 등기부 조회
-        const registry = await fetchRegistryContent(prop.address, prop.commUniqueNo);
+        // CODEF로 등기부 조회 (시뮬레이션 시 가짜 등기부 반환)
+        const registry = await fetchRegistryContent(prop.address, prop.commUniqueNo, simulate
+          ? { simulate: true, changeType, baselineData: prop.baselineData }
+          : undefined
+        );
 
         if (!registry) {
           skipped++;
@@ -229,6 +288,13 @@ export async function GET(req: NextRequest) {
         const changes = prop.lastHash
           ? detectChanges(oldContent, registry.text)
           : [{ changeType: "baseline_set", summary: "기준 스냅샷 저장", detail: "최초 등기부 기준점이 설정되었습니다.", riskLevel: "low" as const }];
+
+        // 시뮬레이션 모드: detail에 접두사 추가
+        if (simulate) {
+          for (const change of changes) {
+            change.detail = `[시뮬레이션] ${change.detail}`;
+          }
+        }
 
         // 섹션 변동 정보 (있으면 알림에 추가)
         const sectionInfo = snapshotResult?.changedSections?.length
@@ -301,6 +367,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       message: "모니터링 완료",
+      ...(simulate ? { simulation: true, changeType } : {}),
       processed: allProperties.length,
       gapMode: gapProperties.length,
       standardMode: standardProperties.length,
