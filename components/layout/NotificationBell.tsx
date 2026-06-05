@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/common/toast";
 
 interface Notification {
   id: string;
@@ -32,10 +33,13 @@ function saveNotifications(items: Notification[]) {
 
 export default function NotificationBell({ collapsed }: { collapsed?: boolean }) {
   const { data: session } = useSession();
+  const { showToast } = useToast();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const ref = useRef<HTMLDivElement>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const seenAlertIdsRef = useRef<Set<string>>(new Set());
+  const initialLoadRef = useRef(true);
 
   const fetchAndMerge = useCallback(async () => {
     const localNotifs = getNotifications().map((n) => ({
@@ -67,6 +71,22 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
           alertId: alert.id,
         })
       );
+
+      // 새 알림 토스트 팝업
+      if (initialLoadRef.current) {
+        // 최초 로드: 기존 알림 ID만 기록 (토스트 안 띄움)
+        for (const n of dbNotifs) seenAlertIdsRef.current.add(n.id);
+        initialLoadRef.current = false;
+      } else {
+        // 이후 폴링: 새 미읽은 알림만 토스트
+        for (const n of dbNotifs) {
+          if (!n.read && !seenAlertIdsRef.current.has(n.id)) {
+            showToast(n.message, "warning");
+          }
+          seenAlertIdsRef.current.add(n.id);
+        }
+      }
+
       const merged = [...dbNotifs, ...localNotifs].sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
@@ -74,7 +94,7 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
     } catch {
       setNotifications(localNotifs);
     }
-  }, [session?.user]);
+  }, [session?.user, showToast]);
 
   useEffect(() => {
     fetchAndMerge();
@@ -83,7 +103,7 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
   // 인증된 사용자: 60초 폴링
   useEffect(() => {
     if (!session?.user) return;
-    pollingRef.current = setInterval(fetchAndMerge, 60_000);
+    pollingRef.current = setInterval(fetchAndMerge, 30_000);
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };

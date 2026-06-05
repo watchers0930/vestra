@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
-import { X, AlertCircle, CheckCircle2, Info } from "lucide-react";
+import { X, AlertCircle, CheckCircle2, Info, AlertTriangle } from "lucide-react";
 
-type ToastType = "error" | "success" | "info";
+type ToastType = "error" | "success" | "info" | "warning";
 
 interface Toast {
   id: number;
@@ -53,10 +53,12 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
     return () => clearTimeout(timer);
   }, [toast.id, onRemove]);
 
-  const Icon = toast.type === "error" ? AlertCircle : toast.type === "success" ? CheckCircle2 : Info;
+  const iconMap = { error: AlertCircle, success: CheckCircle2, warning: AlertTriangle, info: Info };
+  const Icon = iconMap[toast.type];
   const colors = {
     error: "bg-red-50 border-red-200 text-red-800",
     success: "bg-emerald-50 border-emerald-200 text-emerald-800",
+    warning: "bg-amber-50 border-amber-200 text-amber-800",
     info: "bg-blue-50 border-blue-200 text-blue-800",
   };
 
