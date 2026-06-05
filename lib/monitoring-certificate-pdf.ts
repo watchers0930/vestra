@@ -134,9 +134,10 @@ export async function exportMonitoringCertificatePdf({
   }
 
   function drawLine() {
+    y += 5;
     pdf.setDrawColor(220);
     pdf.line(MARGIN, y, PAGE_W - MARGIN, y);
-    y += 4;
+    y += 5;
   }
 
   function sectionTitle(title: string) {
@@ -204,7 +205,6 @@ export async function exportMonitoringCertificatePdf({
     infoRow("입주일:", new Date(property.moveInDate).toLocaleDateString("ko-KR"));
   }
 
-  y += 2;
   drawLine();
 
   // ══════════════════════════════════════════
@@ -265,7 +265,6 @@ export async function exportMonitoringCertificatePdf({
     y += 5;
   }
 
-  y += 2;
   drawLine();
 
   // ══════════════════════════════════════════
@@ -303,7 +302,6 @@ export async function exportMonitoringCertificatePdf({
     y += 5;
   }
 
-  y += 2;
   drawLine();
 
   // ══════════════════════════════════════════
@@ -352,7 +350,6 @@ export async function exportMonitoringCertificatePdf({
     }
   }
 
-  y += 2;
   drawLine();
 
   // ══════════════════════════════════════════
