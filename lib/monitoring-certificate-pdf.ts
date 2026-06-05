@@ -137,7 +137,7 @@ export async function exportMonitoringCertificatePdf({
     y += 5;
     pdf.setDrawColor(220);
     pdf.line(MARGIN, y, PAGE_W - MARGIN, y);
-    y += 5;
+    y += 7;
   }
 
   function sectionTitle(title: string) {
