@@ -170,8 +170,7 @@ export async function exportMonitoringCertificatePdf({
   pdf.setTextColor(30);
   pdf.text("등기 모니터링 증명서", MARGIN, y);
   if (defaultFont === "Paperlogy") pdf.setFont("Paperlogy", "normal");
-  y += 5;
-  drawLine();
+  y += 8;
 
   pdf.setFontSize(8);
   pdf.setTextColor(120);
@@ -180,7 +179,8 @@ export async function exportMonitoringCertificatePdf({
     MARGIN,
     y
   );
-  y += 8;
+  y += 3;
+  drawLine();
 
   // ══════════════════════════════════════════
   // 2. 물건 정보
