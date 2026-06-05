@@ -83,8 +83,8 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
       isFirstLoadRef.current = false;
 
       const unreadNew = dbNotifs.filter((n) => !n.read && !seenAlertIdsRef.current.has(n.id));
-      // 첫 로드: 최대 3개, 이후: 모든 새 알림
-      const toShow = isFirstLoad ? unreadNew.slice(0, 3) : unreadNew;
+      // 첫 로드: 최대 2개, 이후: 새 알림 1개씩
+      const toShow = isFirstLoad ? unreadNew.slice(0, 2) : unreadNew.slice(0, 1);
 
       for (const n of toShow) {
         const link = n.monitoredPropertyId ? `/monitoring/${n.monitoredPropertyId}` : undefined;
