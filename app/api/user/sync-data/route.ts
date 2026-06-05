@@ -122,9 +122,22 @@ export async function GET() {
   const userId = session.user.id;
 
   try {
+    // 에이전트(REALESTATE) 계정이면 고객 userId 목록 수집
+    let userIds = [userId];
+    if (session.user.role === "REALESTATE") {
+      const clients = await prisma.agentClient.findMany({
+        where: { agentId: userId, status: "active", clientUserId: { not: null } },
+        select: { clientUserId: true },
+      });
+      const clientUserIds = clients
+        .map((c) => c.clientUserId)
+        .filter((id): id is string => id !== null);
+      userIds = [userId, ...clientUserIds];
+    }
+
     const [analyses, assets] = await Promise.all([
       prisma.analysis.findMany({
-        where: { userId },
+        where: { userId: { in: userIds } },
         select: {
           id: true,
           type: true,
@@ -138,7 +151,7 @@ export async function GET() {
         take: 50,
       }),
       prisma.asset.findMany({
-        where: { userId },
+        where: { userId: { in: userIds } },
         select: {
           id: true,
           address: true,
