@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createHash } from "crypto";
 import { sendNotification } from "@/lib/notification-sender";
+import { getNotificationRecipients } from "@/lib/monitoring-recipients";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { fetchRegistry, isCodefAvailable } from "@/lib/codef-api";
 import { recordRegistrySnapshot } from "@/lib/registry-snapshot-recorder";
@@ -257,23 +258,26 @@ export async function GET(req: NextRequest) {
               ? "\n\n⚠️ 계약~전입 기간 중 등기 변동입니다. 즉시 확인하세요.\n💡 dgon에서 긴급 전세권 설정 등기를 진행할 수 있습니다."
               : "";
 
-            await sendNotification({
-              userId: prop.userId,
-              type: "registry_change",
-              title: `${prefix} ${change.summary}`,
-              body: `${prop.address}\n${change.detail}${sectionInfo}${suffix}`,
-              data: {
-                propertyId: prop.id,
-                changeType: change.changeType,
-                riskLevel: change.riskLevel,
-                monitorMode: prop.monitorMode,
-                ...(snapshotResult?.changedSections?.length
-                  ? { changedSections: snapshotResult.changedSections.join(",") }
-                  : {}),
-                ...(isGap && isUrgent ? { dgonAction: "emergency_lease_registration" } : {}),
-              },
-            });
-            notificationsSent++;
+            const recipients = await getNotificationRecipients(prop.id, prop.userId);
+            for (const recipientId of recipients) {
+              await sendNotification({
+                userId: recipientId,
+                type: "registry_change",
+                title: `${prefix} ${change.summary}`,
+                body: `${prop.address}\n${change.detail}${sectionInfo}${suffix}`,
+                data: {
+                  propertyId: prop.id,
+                  changeType: change.changeType,
+                  riskLevel: change.riskLevel,
+                  monitorMode: prop.monitorMode,
+                  ...(snapshotResult?.changedSections?.length
+                    ? { changedSections: snapshotResult.changedSections.join(",") }
+                    : {}),
+                  ...(isGap && isUrgent ? { dgonAction: "emergency_lease_registration" } : {}),
+                },
+              });
+              notificationsSent++;
+            }
           }
         }
 
