@@ -120,10 +120,14 @@ export function useAgentData() {
 
   // 고객 삭제(비활성화)
   const deleteClient = useCallback(async (id: string) => {
+    // 즉시 목록에서 제거 (낙관적 업데이트)
+    setClients((prev) => prev.filter((c) => c.id !== id));
+
     const res = await fetch(`/api/agent/clients/${id}`, { method: "DELETE" });
 
     if (!res.ok) {
       const data = await res.json();
+      refresh(); // 실패 시 원래 목록으로 복구
       throw new Error(data.error || "삭제에 실패했습니다.");
     }
 

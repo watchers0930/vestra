@@ -61,11 +61,21 @@ export const POST = withAgentAuth<{ id: string }>(
         );
       }
 
+      // monitoredPropertyId 미지정 시 주소로 자동 매칭
+      let resolvedMonitorId = monitoredPropertyId || null;
+      if (!resolvedMonitorId) {
+        const matched = await prisma.monitoredProperty.findFirst({
+          where: { address: address.trim(), status: "active" },
+          select: { id: true },
+        });
+        if (matched) resolvedMonitorId = matched.id;
+      }
+
       const property = await prisma.agentClientProperty.create({
         data: {
           agentClientId: params.id,
           address: address.trim(),
-          ...(monitoredPropertyId ? { monitoredPropertyId } : {}),
+          ...(resolvedMonitorId ? { monitoredPropertyId: resolvedMonitorId } : {}),
         },
       });
 
