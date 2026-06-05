@@ -62,11 +62,11 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
   const iconMap = { error: AlertCircle, success: CheckCircle2, warning: AlertTriangle, info: Info };
   const Icon = iconMap[toast.type];
 
-  const styles: Record<ToastType, { bg: string; border: string; iconColor: string; titleColor: string }> = {
-    error: { bg: "#f5f5f7", border: "rgba(0,0,0,0.1)", iconColor: "#ff3b30", titleColor: "#c0392b" },
-    success: { bg: "#f5f5f7", border: "rgba(0,0,0,0.1)", iconColor: "#30d158", titleColor: "#1a9e45" },
-    warning: { bg: "#f5f5f7", border: "rgba(0,0,0,0.1)", iconColor: "#ff9f0a", titleColor: "#b86f00" },
-    info: { bg: "#f5f5f7", border: "rgba(0,0,0,0.1)", iconColor: "#0071e3", titleColor: "#0058b0" },
+  const styles: Record<ToastType, { bg: string; border: string; iconColor: string; titleColor: string; labelColor: string }> = {
+    error: { bg: "#f5f5f7", border: "rgba(0,0,0,0.1)", iconColor: "#ff3b30", titleColor: "#1d1d1f", labelColor: "#ff3b30" },
+    success: { bg: "#f5f5f7", border: "rgba(0,0,0,0.1)", iconColor: "#30d158", titleColor: "#1d1d1f", labelColor: "#30d158" },
+    warning: { bg: "#f5f5f7", border: "rgba(0,0,0,0.1)", iconColor: "#ff9f0a", titleColor: "#1d1d1f", labelColor: "#ff9f0a" },
+    info: { bg: "#f5f5f7", border: "rgba(0,0,0,0.1)", iconColor: "#0071e3", titleColor: "#1d1d1f", labelColor: "#0071e3" },
   };
   const s = styles[toast.type];
 
@@ -84,16 +84,16 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
       onClick={handleClick}
     >
       <div
-        className="rounded-2xl overflow-hidden transition-shadow duration-200 hover:shadow-xl"
+        className="flex flex-col justify-center rounded-2xl overflow-hidden transition-shadow duration-200 hover:shadow-xl"
         style={{
           background: s.bg,
           border: `1.5px solid ${s.border}`,
           boxShadow: "0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
-          minHeight: 200,
+          minHeight: 180,
         }}
       >
-        {/* 상단 아이콘 바 */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-0">
+        {/* 라벨 + X */}
+        <div className="flex items-center justify-between px-5">
           <div className="flex items-center gap-2.5">
             <div
               className="flex h-8 w-8 items-center justify-center rounded-lg"
@@ -101,7 +101,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
             >
               <Icon size={16} strokeWidth={2} style={{ color: s.iconColor }} />
             </div>
-            <span className="text-[12px] font-semibold tracking-wide uppercase" style={{ color: s.iconColor }}>
+            <span className="text-[12px] font-semibold tracking-wide uppercase" style={{ color: s.labelColor }}>
               {toast.type === "warning" ? "모니터링 알림" : toast.type === "error" ? "오류" : toast.type === "success" ? "완료" : "알림"}
             </span>
           </div>
@@ -114,19 +114,19 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
         </div>
 
         {/* 본문 */}
-        <div className="px-5 pt-3 pb-5">
+        <div className="px-5 mt-3">
           {toast.title && (
             <div className="text-[14px] font-bold leading-snug mb-1.5" style={{ color: s.titleColor }}>
               {toast.title}
             </div>
           )}
-          <div className="text-[13px] leading-relaxed text-[#1d1d1f]">
+          <div className="text-[13px] leading-relaxed text-[#6e6e73]">
             {toast.message}
           </div>
           {toast.link && (
             <div
               className="mt-3 flex items-center gap-1 text-[12px] font-semibold"
-              style={{ color: s.iconColor }}
+              style={{ color: s.labelColor }}
             >
               <span>상세보기</span>
               <ChevronRight size={13} strokeWidth={2.5} />
