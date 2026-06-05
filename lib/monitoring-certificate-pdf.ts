@@ -220,10 +220,10 @@ export async function exportMonitoringCertificatePdf({
     pdf.text("유형", MARGIN + 35, y);
     pdf.text("위험도", MARGIN + 75, y);
     pdf.text("내용", MARGIN + 92, y);
-    y += 2;
+    y += 3;
     pdf.setDrawColor(200);
     pdf.line(MARGIN, y, PAGE_W - MARGIN, y);
-    y += 3;
+    y += 5;
 
     pdf.setFontSize(7.5);
     for (const alert of property.alerts.slice(0, 30)) {
