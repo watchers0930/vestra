@@ -27,7 +27,7 @@ export function IntegrityVerification({ result, verifying, onVerify }: Props) {
     <Card>
       <CardHeader
         title="위변조 검사"
-        description="기록이 변조되지 않았는지 확인합니다"
+        description="블록체인 암호화 기반으로 기록 변조 여부를 검증합니다"
         className="px-5 pt-4"
       >
         <Button
@@ -43,7 +43,7 @@ export function IntegrityVerification({ result, verifying, onVerify }: Props) {
       <CardContent className="px-5 pb-5 pt-0">
         {!result && !verifying && (
           <p className="text-center text-[13px] text-[#86868b] py-6">
-            검증 버튼을 눌러 등기부 기록이 변조되지 않았는지 확인하세요.
+            검증 버튼을 눌러 블록체인 암호화 기반으로 등기부 기록의 무결성을 확인하세요.
           </p>
         )}
 
@@ -72,8 +72,8 @@ export function IntegrityVerification({ result, verifying, onVerify }: Props) {
                   {result.isValid ? "위변조 없음 확인" : "위변조 의심 — 확인 필요"}
                 </div>
                 <div className="text-[11.5px] text-[#6e6e73]">
-                  전체 {result.totalSnapshots}건의 기록을 검사했습니다
-                  {result.brokenAt !== null && ` (${result.brokenAt}번째 기록에서 이상 감지)`}
+                  전체 {result.totalSnapshots ?? 0}건의 기록을 검사했습니다
+                  {result.brokenAt != null && ` (${result.brokenAt}번째 기록에서 이상 감지)`}
                 </div>
               </div>
             </div>
@@ -83,8 +83,8 @@ export function IntegrityVerification({ result, verifying, onVerify }: Props) {
               <div className="flex items-center gap-2.5 p-3 rounded-xl bg-[#f9fafb] border border-[#e5e5e7]">
                 <StatusIcon ok={result.hashChainValid} />
                 <div>
-                  <div className="text-[12px] font-semibold text-[#1d1d1f]">기록 연결 확인</div>
-                  <div className="text-[10.5px] text-[#86868b]">암호화 연결 검증</div>
+                  <div className="text-[12px] font-semibold text-[#1d1d1f]">해시 체인 검증</div>
+                  <div className="text-[10.5px] text-[#86868b]">블록체인 연결 무결성</div>
                 </div>
               </div>
 
