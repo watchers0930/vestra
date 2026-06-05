@@ -32,8 +32,29 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const pageSize = 20;
 
+    // 에이전트로 연결된 고객 물건 ID 수집
+    const agentLinks = await prisma.agentClientProperty.findMany({
+      where: {
+        agentClient: { agentId: session.user.id },
+        monitoredPropertyId: { not: null },
+        status: "active",
+      },
+      select: { monitoredPropertyId: true },
+    });
+    const agentPropertyIds = agentLinks
+      .map((l) => l.monitoredPropertyId)
+      .filter((id): id is string => id !== null);
+
+    // 본인 물건 + 에이전트 연결 물건
+    const ownershipFilter = agentPropertyIds.length > 0
+      ? { OR: [
+          { monitoredProperty: { userId: session.user.id } },
+          { monitoredPropertyId: { in: agentPropertyIds } },
+        ] }
+      : { monitoredProperty: { userId: session.user.id } };
+
     const where = {
-      monitoredProperty: { userId: session.user.id },
+      ...ownershipFilter,
       ...(unreadOnly ? { isRead: false } : {}),
       ...(propertyId ? { monitoredPropertyId: propertyId } : {}),
     };
@@ -55,7 +76,7 @@ export async function GET(req: NextRequest) {
 
     const unreadCount = await prisma.monitoringAlert.count({
       where: {
-        monitoredProperty: { userId: session.user.id },
+        ...ownershipFilter,
         isRead: false,
       },
     });
@@ -86,13 +107,29 @@ export async function PATCH(req: NextRequest) {
 
     const { alertIds, markAll } = await req.json();
 
+    // 에이전트 연결 물건 포함
+    const agentLinks = await prisma.agentClientProperty.findMany({
+      where: {
+        agentClient: { agentId: session.user.id },
+        monitoredPropertyId: { not: null },
+        status: "active",
+      },
+      select: { monitoredPropertyId: true },
+    });
+    const agentPropertyIds = agentLinks
+      .map((l) => l.monitoredPropertyId)
+      .filter((id): id is string => id !== null);
+
+    const ownershipFilter = agentPropertyIds.length > 0
+      ? { OR: [
+          { monitoredProperty: { userId: session.user.id } },
+          { monitoredPropertyId: { in: agentPropertyIds } },
+        ] }
+      : { monitoredProperty: { userId: session.user.id } };
+
     if (markAll) {
-      // 모든 읽지 않은 알림 읽음 처리
       const result = await prisma.monitoringAlert.updateMany({
-        where: {
-          monitoredProperty: { userId: session.user.id },
-          isRead: false,
-        },
+        where: { ...ownershipFilter, isRead: false },
         data: { isRead: true },
       });
       return NextResponse.json({ updated: result.count });
@@ -105,11 +142,11 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // 소유권 확인 후 읽음 처리
+    // 소유권 + 에이전트 확인 후 읽음 처리
     const result = await prisma.monitoringAlert.updateMany({
       where: {
         id: { in: alertIds },
-        monitoredProperty: { userId: session.user.id },
+        ...ownershipFilter,
       },
       data: { isRead: true },
     });
