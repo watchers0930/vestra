@@ -56,10 +56,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {/* 팝업 오버레이 */}
       {toasts.length > 0 && (
         <div
-          className={`fixed inset-0 z-[9998] flex items-center justify-center transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+          className={`fixed inset-0 z-[99999] flex items-center justify-center transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
           {/* 배경 딤 */}
-          <div className="absolute inset-0 bg-black/30" onClick={closeAll} />
+          <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.35)" }} onClick={closeAll} />
 
           {/* 알림 패널 */}
           <div
