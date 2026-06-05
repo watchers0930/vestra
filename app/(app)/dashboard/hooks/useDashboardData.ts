@@ -17,6 +17,7 @@ export function useDashboardData() {
   const [monitoredAddresses, setMonitoredAddresses] = useState<Set<string>>(new Set());
   const [monitoringLoading, setMonitoringLoading] = useState<string | null>(null);
   const [monitoringSuccess, setMonitoringSuccess] = useState<Set<string>>(new Set());
+  const [alertAddressMap, setAlertAddressMap] = useState<Record<string, { monitoredPropertyId: string; summary: string; riskLevel: string }>>({});
 
   useEffect(() => {
     async function loadData() {
@@ -36,7 +37,10 @@ export function useDashboardData() {
           setAnalyses(getAnalyses());
         }
         try {
-          const monRes = await fetch("/api/monitoring");
+          const [monRes, alertRes] = await Promise.all([
+            fetch("/api/monitoring"),
+            fetch("/api/monitoring/alerts?unread=true"),
+          ]);
           if (monRes.ok) {
             const monData = await monRes.json();
             setMonitoredCount(monData.total || 0);
@@ -44,6 +48,17 @@ export function useDashboardData() {
               (monData.properties || []).map((p: { address: string }) => p.address)
             );
             setMonitoredAddresses(addrs);
+          }
+          if (alertRes.ok) {
+            const alertData = await alertRes.json();
+            const map: Record<string, { monitoredPropertyId: string; summary: string; riskLevel: string }> = {};
+            for (const a of alertData.alerts ?? []) {
+              const addr = a.monitoredProperty?.address;
+              if (addr) {
+                map[addr] = { monitoredPropertyId: a.monitoredPropertyId, summary: a.summary, riskLevel: a.riskLevel ?? "medium" };
+              }
+            }
+            setAlertAddressMap(map);
           }
         } catch { /* 모니터링 조회 실패 무시 */ }
       } else {
@@ -161,7 +176,7 @@ export function useDashboardData() {
   return {
     session, assets, analyses, mounted, loading,
     cascadeLoading, monitoredCount, monitoredAddresses,
-    monitoringLoading, monitoringSuccess,
+    monitoringLoading, monitoringSuccess, alertAddressMap,
     totalAssets, totalValue, avgSafety, avgRisk,
     riskDistribution, assetValueData, addressCountMap,
     handleDeleteAnalysis, handleCascadeUpdate, handleMonitorToggle,

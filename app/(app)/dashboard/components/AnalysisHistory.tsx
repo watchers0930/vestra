@@ -59,6 +59,7 @@ interface Props {
   cascadeLoading: string | null;
   handleCascadeUpdate: (address: string) => void;
   handleDeleteAnalysis: (id: string) => void;
+  alertAddressMap?: Record<string, { monitoredPropertyId: string; summary: string; riskLevel: string }>;
 }
 
 export function AnalysisHistory({
@@ -66,6 +67,7 @@ export function AnalysisHistory({
   addressCountMap,
   cascadeLoading,
   handleCascadeUpdate,
+  alertAddressMap = {},
 }: Props) {
   if (analyses.length === 0) return null;
 
@@ -81,13 +83,16 @@ export function AnalysisHistory({
         const addr     = formatAddress(item.address);
         const isCascading = cascadeLoading === item.address;
         const canCascade  = addressCountMap[item.address] >= 2;
+        const alert = alertAddressMap[item.address];
+        const alertBorder = alert
+          ? (alert.riskLevel === "high" || alert.riskLevel === "critical") ? "border-red-400" : "border-amber-300"
+          : "";
 
-        return (
+        const cardContent = (
           <div
-            key={item.id}
-            className="group rounded-[18px] bg-white p-[20px] transition-all duration-200 hover:-translate-y-[2px]"
+            className={`group relative rounded-[18px] bg-white p-[20px] transition-all duration-200 hover:-translate-y-[2px] ${alert ? `border-2 ${alertBorder}` : ""}`}
             style={{
-              border: "1px solid rgba(0,0,0,0.08)",
+              ...(!alert ? { border: "1px solid rgba(0,0,0,0.08)" } : {}),
               boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
             }}
             onMouseEnter={(e) => {
@@ -97,8 +102,15 @@ export function AnalysisHistory({
               (e.currentTarget as HTMLDivElement).style.boxShadow = "0 2px 12px rgba(0,0,0,0.06)";
             }}
           >
+            {/* 경고 뱃지 */}
+            {alert && (
+              <span className="absolute top-[10px] left-[10px] rounded-full bg-amber-100 px-[7px] py-[1px] text-[10px] font-semibold text-amber-700">
+                ⚠ 변동감지
+              </span>
+            )}
+
             {/* 상단 — 아이콘 + 날짜 + 액션 */}
-            <div className="mb-[13px] flex items-start justify-between">
+            <div className={`mb-[13px] flex items-start justify-between ${alert ? "mt-[14px]" : ""}`}>
               <div
                 className="flex h-[38px] w-[38px] items-center justify-center rounded-[11px]"
                 style={{ background: iconBg }}
@@ -111,7 +123,7 @@ export function AnalysisHistory({
                 </span>
                 {canCascade && (
                   <button
-                    onClick={() => handleCascadeUpdate(item.address)}
+                    onClick={(e) => { e.preventDefault(); handleCascadeUpdate(item.address); }}
                     disabled={isCascading}
                     className="flex h-[22px] w-[22px] items-center justify-center rounded-full transition-all hover:bg-[#f5f5f7]"
                     style={{ color: "#6e6e73" }}
@@ -152,6 +164,14 @@ export function AnalysisHistory({
               </div>
             </div>
           </div>
+        );
+
+        return alert ? (
+          <Link key={item.id} href={`/monitoring/${alert.monitoredPropertyId}`}>
+            {cardContent}
+          </Link>
+        ) : (
+          <div key={item.id}>{cardContent}</div>
         );
       })}
 

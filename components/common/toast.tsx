@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { X, AlertCircle, CheckCircle2, Info, AlertTriangle } from "lucide-react";
 
 type ToastType = "error" | "success" | "info" | "warning";
@@ -9,10 +10,11 @@ interface Toast {
   id: number;
   message: string;
   type: ToastType;
+  link?: string;
 }
 
 interface ToastContextValue {
-  showToast: (message: string, type?: ToastType) => void;
+  showToast: (message: string, type?: ToastType, link?: string) => void;
 }
 
 const ToastContext = createContext<ToastContextValue>({ showToast: () => {} });
@@ -26,9 +28,9 @@ let nextId = 0;
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = useCallback((message: string, type: ToastType = "error") => {
+  const showToast = useCallback((message: string, type: ToastType = "error", link?: string) => {
     const id = ++nextId;
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => [...prev, { id, message, type, link }]);
   }, []);
 
   const remove = useCallback((id: number) => {
@@ -38,7 +40,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext value={{ showToast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 max-w-sm">
+      <div className="fixed top-20 right-4 z-[9999] flex flex-col gap-2 max-w-md">
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onRemove={remove} />
         ))}
@@ -48,10 +50,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) => void }) {
+  const router = useRouter();
+
   useEffect(() => {
-    const timer = setTimeout(() => onRemove(toast.id), 4000);
+    const timer = setTimeout(() => onRemove(toast.id), toast.link ? 6000 : 4000);
     return () => clearTimeout(timer);
-  }, [toast.id, onRemove]);
+  }, [toast.id, toast.link, onRemove]);
 
   const iconMap = { error: AlertCircle, success: CheckCircle2, warning: AlertTriangle, info: Info };
   const Icon = iconMap[toast.type];
@@ -62,11 +66,26 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
     info: "bg-blue-50 border-blue-200 text-blue-800",
   };
 
+  const handleClick = () => {
+    if (toast.link) {
+      onRemove(toast.id);
+      router.push(toast.link);
+    }
+  };
+
   return (
-    <div className={`flex items-start gap-2 px-4 py-3 rounded-xl border shadow-lg text-sm animate-in slide-in-from-right ${colors[toast.type]}`}>
-      <Icon size={16} className="flex-shrink-0 mt-0.5" />
-      <span className="flex-1">{toast.message}</span>
-      <button onClick={() => onRemove(toast.id)} className="flex-shrink-0 opacity-50 hover:opacity-100">
+    <div
+      className={`flex items-start gap-2 px-5 py-4 rounded-xl border shadow-lg text-sm animate-in slide-in-from-right ${colors[toast.type]} ${toast.link ? "cursor-pointer hover:brightness-95" : ""}`}
+      onClick={handleClick}
+    >
+      <Icon size={18} className="flex-shrink-0 mt-0.5" />
+      <div className="flex-1">
+        <span>{toast.message}</span>
+        {toast.link && (
+          <span className="block mt-1 text-xs font-medium opacity-70">상세보기 ›</span>
+        )}
+      </div>
+      <button onClick={(e) => { e.stopPropagation(); onRemove(toast.id); }} className="flex-shrink-0 opacity-50 hover:opacity-100">
         <X size={14} />
       </button>
     </div>

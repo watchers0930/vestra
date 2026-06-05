@@ -16,7 +16,7 @@ import { AnalysisHistory } from "./components/AnalysisHistory";
 export default function DashboardPage() {
   const {
     session, assets, analyses, mounted, loading,
-    cascadeLoading, monitoredCount, monitoredAddresses, monitoringLoading,
+    cascadeLoading, monitoredCount, monitoredAddresses, monitoringLoading, alertAddressMap,
     totalAssets, totalValue, avgSafety, avgRisk,
     riskDistribution, assetValueData, addressCountMap,
     handleDeleteAnalysis, handleCascadeUpdate, handleMonitorToggle,
@@ -189,6 +189,7 @@ export default function DashboardPage() {
               cascadeLoading={cascadeLoading}
               handleCascadeUpdate={handleCascadeUpdate}
               handleDeleteAnalysis={handleDeleteAnalysis}
+              alertAddressMap={alertAddressMap}
             />
           </div>
         )}

@@ -13,6 +13,7 @@ interface Notification {
   read: boolean;
   source?: "local" | "db";
   alertId?: string;
+  monitoredPropertyId?: string;
 }
 
 const STORAGE_KEY = "vestra_notifications";
@@ -61,6 +62,7 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
           summary: string;
           createdAt: string;
           isRead: boolean;
+          monitoredPropertyId?: string;
         }) => ({
           id: alert.id,
           message: alert.summary,
@@ -68,6 +70,7 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
           read: alert.isRead,
           source: "db" as const,
           alertId: alert.id,
+          monitoredPropertyId: alert.monitoredPropertyId,
         })
       );
 
@@ -78,7 +81,8 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
         if (!n.read && !seenAlertIdsRef.current.has(n.id)) {
           const age = now - new Date(n.date).getTime();
           if (age < RECENT_MS) {
-            showToast(n.message, "warning");
+            const link = n.monitoredPropertyId ? `/monitoring/${n.monitoredPropertyId}` : undefined;
+            showToast(n.message, "warning", link);
           }
         }
         seenAlertIdsRef.current.add(n.id);
