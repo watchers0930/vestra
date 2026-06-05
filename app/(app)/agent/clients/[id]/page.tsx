@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, User, Phone, Mail, MapPin, Calendar,
-  Link2, Plus, Copy, Check, FileText,
+  Plus, FileText,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/common/Card";
 import { Badge } from "@/components/common/Badge";
@@ -56,11 +56,6 @@ export default function ClientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // 초대 링크
-  const [inviteLink, setInviteLink] = useState("");
-  const [inviting, setInviting] = useState(false);
-  const [copied, setCopied] = useState(false);
-
   // 물건 추가
   const [newAddress, setNewAddress] = useState("");
   const [addingProperty, setAddingProperty] = useState(false);
@@ -86,30 +81,6 @@ export default function ClientDetailPage() {
   useEffect(() => {
     loadClient();
   }, [loadClient]);
-
-  // 초대 링크 생성
-  async function handleInvite() {
-    setInviting(true);
-    try {
-      const res = await fetch(`/api/agent/clients/${id}/invite`, { method: "POST" });
-      if (res.ok) {
-        const data = await res.json();
-        setInviteLink(data.inviteUrl || "");
-      }
-    } catch {
-      /* 무시 */
-    } finally {
-      setInviting(false);
-    }
-  }
-
-  // 링크 복사
-  async function handleCopy() {
-    if (!inviteLink) return;
-    await navigator.clipboard.writeText(inviteLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
 
   // 물건 추가
   async function handleAddProperty(e: React.FormEvent) {
@@ -222,41 +193,6 @@ export default function ClientDetailPage() {
                 <p className="text-xs font-medium text-[#86868b] mb-1">메모</p>
                 {client.memo}
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* 초대 링크 */}
-        <Card>
-          <CardContent>
-            <div className="flex items-center gap-2 mb-4">
-              <Link2 size={16} className="text-[#6e6e73]" />
-              <h2 className="text-sm font-semibold text-[#1d1d1f]">초대 링크</h2>
-            </div>
-
-            {inviteLink ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={inviteLink}
-                  className="flex-1 px-3 py-2 rounded-lg border border-[#e5e5e7] text-sm bg-[#f5f5f7] text-[#424245]"
-                />
-                <Button variant="secondary" size="sm" onClick={handleCopy}>
-                  {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
-                  {copied ? "복사됨" : "복사"}
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="secondary"
-                size="sm"
-                icon={Link2}
-                loading={inviting}
-                onClick={handleInvite}
-              >
-                초대 링크 생성
-              </Button>
             )}
           </CardContent>
         </Card>
