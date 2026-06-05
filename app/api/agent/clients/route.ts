@@ -77,9 +77,11 @@ export const POST = withAgentAuth(async (req, { session }) => {
       clientName,
       clientPhone,
       clientEmail,
+      clientUserId,
       memo,
       contractDate,
       propertyAddress,
+      monitoredPropertyIds,
     } = body;
 
     // --- 서버 검증 ---
@@ -123,17 +125,53 @@ export const POST = withAgentAuth(async (req, { session }) => {
       }
     }
 
+    // clientUserId 중복 체크
+    if (clientUserId) {
+      const existingByUser = await prisma.agentClient.findFirst({
+        where: {
+          agentId: session.user.id,
+          clientUserId,
+          status: { not: "inactive" },
+        },
+      });
+      if (existingByUser) {
+        return NextResponse.json(
+          { error: "이미 등록된 고객입니다." },
+          { status: 409 }
+        );
+      }
+    }
+
     const client = await prisma.agentClient.create({
       data: {
         agentId: session.user.id,
         clientName: clientName.trim(),
         ...(clientPhone ? { clientPhone: clientPhone.trim() } : {}),
         ...(clientEmail ? { clientEmail: clientEmail.trim() } : {}),
+        ...(clientUserId ? { clientUserId } : {}),
         ...(memo ? { memo } : {}),
         ...(contractDate ? { contractDate: new Date(contractDate) } : {}),
         ...(propertyAddress ? { propertyAddress: propertyAddress.trim() } : {}),
       },
     });
+
+    // 감시 물건 자동 연결
+    if (Array.isArray(monitoredPropertyIds) && monitoredPropertyIds.length > 0) {
+      const monitoredProps = await prisma.monitoredProperty.findMany({
+        where: { id: { in: monitoredPropertyIds }, status: "active" },
+        select: { id: true, address: true },
+      });
+
+      for (const prop of monitoredProps) {
+        await prisma.agentClientProperty.create({
+          data: {
+            agentClientId: client.id,
+            address: prop.address,
+            monitoredPropertyId: prop.id,
+          },
+        });
+      }
+    }
 
     return NextResponse.json({ client }, { status: 201 });
   } catch (error) {

@@ -26,9 +26,11 @@ interface AddClientPayload {
   clientName: string;
   clientPhone?: string;
   clientEmail?: string;
+  clientUserId?: string;
   memo?: string;
   contractDate?: string;
   propertyAddress?: string;
+  monitoredPropertyIds?: string[];
 }
 
 export function useAgentData() {

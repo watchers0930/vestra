@@ -1,33 +1,45 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { X } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { X, Search, User, MapPin, Eye, Check } from "lucide-react";
 import { Button } from "@/components/common/Button";
-import { FormInput } from "@/components/forms/FormInput";
 import { TextAreaInput } from "@/components/forms/FormInput";
+
+interface MonitoredProp {
+  id: string;
+  address: string;
+  monitorMode: string;
+}
+
+interface SearchedUser {
+  id: string;
+  name: string | null;
+  email: string | null;
+  monitoredProperties: MonitoredProp[];
+}
 
 interface AddClientModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: {
     clientName: string;
-    clientPhone?: string;
     clientEmail?: string;
+    clientUserId?: string;
     memo?: string;
-    contractDate?: string;
     propertyAddress?: string;
+    monitoredPropertyIds?: string[];
   }) => Promise<void>;
 }
 
 export function AddClientModal({ open, onClose, onSubmit }: AddClientModalProps) {
-  const [clientName, setClientName] = useState("");
-  const [clientPhone, setClientPhone] = useState("");
-  const [clientEmail, setClientEmail] = useState("");
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchedUser[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selected, setSelected] = useState<SearchedUser | null>(null);
   const [memo, setMemo] = useState("");
-  const [contractDate, setContractDate] = useState("");
-  const [propertyAddress, setPropertyAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ESC 키로 닫기
   const handleKeyDown = useCallback(
@@ -47,37 +59,60 @@ export function AddClientModal({ open, onClose, onSubmit }: AddClientModalProps)
   // 모달 닫힐 때 폼 초기화
   useEffect(() => {
     if (!open) {
-      setClientName("");
-      setClientPhone("");
-      setClientEmail("");
+      setQuery("");
+      setResults([]);
+      setSelected(null);
       setMemo("");
-      setContractDate("");
-      setPropertyAddress("");
       setError("");
     }
   }, [open]);
 
-  if (!open) return null;
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
-    if (!clientName.trim()) {
-      setError("고객명은 필수 항목입니다.");
+  // 디바운스 검색
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (query.trim().length < 2) {
+      setResults([]);
       return;
     }
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(`/api/agent/user-search?q=${encodeURIComponent(query.trim())}`);
+        if (res.ok) {
+          const data = await res.json();
+          setResults(data.users || []);
+        }
+      } catch {
+        /* 무시 */
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query]);
+
+  if (!open) return null;
+
+  async function handleSubmit() {
+    if (!selected) return;
 
     setSubmitting(true);
     setError("");
 
     try {
       await onSubmit({
-        clientName: clientName.trim(),
-        ...(clientPhone.trim() && { clientPhone: clientPhone.trim() }),
-        ...(clientEmail.trim() && { clientEmail: clientEmail.trim() }),
-        ...(memo.trim() && { memo: memo.trim() }),
-        ...(contractDate && { contractDate }),
-        ...(propertyAddress.trim() && { propertyAddress: propertyAddress.trim() }),
+        clientName: selected.name || "미입력",
+        ...(selected.email ? { clientEmail: selected.email } : {}),
+        clientUserId: selected.id,
+        ...(memo.trim() ? { memo: memo.trim() } : {}),
+        ...(selected.monitoredProperties.length > 0
+          ? {
+              propertyAddress: selected.monitoredProperties[0].address,
+              monitoredPropertyIds: selected.monitoredProperties.map((p) => p.id),
+            }
+          : {}),
       });
       onClose();
     } catch (err) {
@@ -107,76 +142,166 @@ export function AddClientModal({ open, onClose, onSubmit }: AddClientModalProps)
         </div>
 
         {/* 본문 */}
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <div className="px-6 py-5 overflow-y-auto flex-1 space-y-4">
-            <FormInput
-              label="고객명 *"
-              placeholder="홍길동"
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              required
-            />
+        <div className="px-6 py-5 overflow-y-auto flex-1 space-y-5">
+          {/* 회원 검색 */}
+          {!selected ? (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">
+                  회원 검색
+                </label>
+                <div className="relative">
+                  <Search
+                    size={16}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[#86868b] pointer-events-none"
+                  />
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="이름 또는 이메일로 검색"
+                    autoFocus
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#e5e5e7] text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  />
+                </div>
+                {searching && (
+                  <p className="mt-1.5 text-xs text-[#86868b]">검색 중...</p>
+                )}
+              </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <FormInput
-                label="전화번호"
-                type="tel"
-                placeholder="010-1234-5678"
-                value={clientPhone}
-                onChange={(e) => setClientPhone(e.target.value)}
+              {/* 검색 결과 */}
+              {results.length > 0 && (
+                <div className="border border-[#e5e5e7] rounded-xl divide-y divide-gray-100 max-h-60 overflow-y-auto">
+                  {results.map((user) => (
+                    <button
+                      key={user.id}
+                      onClick={() => setSelected(user)}
+                      className="w-full text-left px-4 py-3 hover:bg-[#f5f5f7] transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f5f5f7] shrink-0">
+                          <User size={14} className="text-[#6e6e73]" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-[#1d1d1f] truncate">
+                            {user.name || "이름 없음"}
+                          </p>
+                          <p className="text-xs text-[#86868b] truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                        {user.monitoredProperties.length > 0 && (
+                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-[11px] text-blue-600 font-medium shrink-0">
+                            <Eye size={11} />
+                            감시 {user.monitoredProperties.length}건
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {query.trim().length >= 2 && !searching && results.length === 0 && (
+                <p className="text-sm text-[#86868b] text-center py-4">
+                  검색 결과가 없습니다
+                </p>
+              )}
+            </>
+          ) : (
+            /* 선택된 회원 확인 */
+            <>
+              {/* 선택 해제 */}
+              <button
+                onClick={() => setSelected(null)}
+                className="text-xs text-primary hover:underline"
+              >
+                &larr; 다른 회원 검색
+              </button>
+
+              {/* 회원 정보 */}
+              <div className="p-4 rounded-xl bg-[#f5f5f7] space-y-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white">
+                    <User size={16} className="text-[#6e6e73]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#1d1d1f]">
+                      {selected.name || "이름 없음"}
+                    </p>
+                    <p className="text-xs text-[#86868b]">{selected.email}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 감시 물건 목록 */}
+              {selected.monitoredProperties.length > 0 ? (
+                <div>
+                  <p className="text-sm font-medium text-[#1d1d1f] mb-2">
+                    등기감시 물건 ({selected.monitoredProperties.length}건)
+                  </p>
+                  <div className="space-y-2">
+                    {selected.monitoredProperties.map((prop) => (
+                      <div
+                        key={prop.id}
+                        className="flex items-center gap-2.5 p-3 rounded-lg border border-[#e5e5e7] bg-white"
+                      >
+                        <MapPin size={14} className="text-[#86868b] shrink-0" />
+                        <span className="text-sm text-[#1d1d1f] flex-1 truncate">
+                          {prop.address}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          {prop.monitorMode === "contract_gap" && (
+                            <span className="px-1.5 py-0.5 rounded bg-amber-50 text-[10px] text-amber-700 font-medium">
+                              계약감시
+                            </span>
+                          )}
+                          <Check size={14} className="text-emerald-500" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-1.5 text-[11px] text-[#86868b]">
+                    위 물건이 고객에 자동 연결됩니다
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-3">
+                  <p className="text-sm text-[#86868b]">
+                    등기감시 중인 물건이 없습니다
+                  </p>
+                </div>
+              )}
+
+              {/* 메모 */}
+              <TextAreaInput
+                label="메모 (선택)"
+                placeholder="고객 관련 메모를 입력하세요"
+                rows={2}
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
               />
-              <FormInput
-                label="이메일"
-                type="email"
-                placeholder="email@example.com"
-                value={clientEmail}
-                onChange={(e) => setClientEmail(e.target.value)}
-              />
-            </div>
 
-            <FormInput
-              label="물건 주소"
-              placeholder="서울 강남구 역삼동 123"
-              value={propertyAddress}
-              onChange={(e) => setPropertyAddress(e.target.value)}
-            />
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </>
+          )}
+        </div>
 
-            <FormInput
-              label="계약일"
-              type="date"
-              value={contractDate}
-              onChange={(e) => setContractDate(e.target.value)}
-            />
-
-            <TextAreaInput
-              label="메모"
-              placeholder="고객 관련 메모를 입력하세요"
-              rows={3}
-              value={memo}
-              onChange={(e) => setMemo(e.target.value)}
-            />
-
-            {error && (
-              <p className="text-xs text-red-500">{error}</p>
-            )}
-          </div>
-
-          {/* 하단 버튼 */}
-          <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-100">
-            <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-              취소
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              loading={submitting}
-              disabled={!clientName.trim()}
-            >
-              등록
-            </Button>
-          </div>
-        </form>
+        {/* 하단 버튼 */}
+        <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-100">
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            취소
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!selected}
+            loading={submitting}
+            onClick={handleSubmit}
+          >
+            등록
+          </Button>
+        </div>
       </div>
     </div>
   );
