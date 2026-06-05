@@ -11,6 +11,7 @@ import { ErrorRetry } from "@/components/common/ErrorRetry";
 import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { AnalysisStepIndicator } from "./components/AnalysisStepIndicator";
 import { RightsInputCard } from "./components/RightsInputCard";
+import { MonitoringRegisterButton } from "./components/MonitoringRegisterButton";
 import { useRightsAnalysis } from "./hooks/useRightsAnalysis";
 
 const RightsResult = dynamic(
@@ -188,6 +189,11 @@ export default function RightsAnalysisPage() {
               이 물건으로 추가 분석
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              {(result.parsed?.title?.address || result.propertyInfo?.address) && (
+                <MonitoringRegisterButton
+                  address={result.parsed?.title?.address || result.propertyInfo?.address}
+                />
+              )}
               {[
                 { href: "/jeonse/analysis", icon: Home,       label: "전세 안전 진단" },
                 { href: "/tax",             icon: Calculator,  label: "세금 시뮬레이션" },
