@@ -28,9 +28,29 @@ export async function GET(
     }
 
     const { id } = await params;
+    const uid = session.user.id;
 
+    // 소유자 또는 알림 수신자(중개사↔고객 연결)인 경우 모두 조회 허용
     const property = await prisma.monitoredProperty.findFirst({
-      where: { id, userId: session.user.id },
+      where: {
+        id,
+        OR: [
+          { userId: uid },
+          {
+            agentClientProperties: {
+              some: {
+                status: "active",
+                agentClient: {
+                  OR: [
+                    { agentId: uid },
+                    { clientUserId: uid },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      },
       include: {
         alerts: {
           orderBy: { createdAt: "desc" },

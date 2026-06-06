@@ -40,11 +40,24 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // 본인 물건 확인
+    // 소유자 또는 알림 수신자(중개사↔고객 연결) 확인
+    const uid = session.user.id;
     const property = await prisma.monitoredProperty.findFirst({
       where: {
         id: propertyId,
-        userId: session.user.id,
+        OR: [
+          { userId: uid },
+          {
+            agentClientProperties: {
+              some: {
+                status: "active",
+                agentClient: {
+                  OR: [{ agentId: uid }, { clientUserId: uid }],
+                },
+              },
+            },
+          },
+        ],
       },
       select: { id: true, address: true },
     });
