@@ -32,24 +32,29 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const pageSize = 20;
 
-    // 에이전트로 연결된 고객 물건 ID 수집
-    const agentLinks = await prisma.agentClientProperty.findMany({
+    // 에이전트 또는 고객으로 연결된 물건 ID 수집
+    const linkedProps = await prisma.agentClientProperty.findMany({
       where: {
-        agentClient: { agentId: session.user.id },
+        agentClient: {
+          OR: [
+            { agentId: session.user.id },
+            { clientUserId: session.user.id },
+          ],
+        },
         monitoredPropertyId: { not: null },
         status: "active",
       },
       select: { monitoredPropertyId: true },
     });
-    const agentPropertyIds = agentLinks
+    const linkedPropertyIds = linkedProps
       .map((l) => l.monitoredPropertyId)
       .filter((id): id is string => id !== null);
 
-    // 본인 물건 + 에이전트 연결 물건
-    const ownershipFilter = agentPropertyIds.length > 0
+    // 본인 물건 + 에이전트/고객 연결 물건
+    const ownershipFilter = linkedPropertyIds.length > 0
       ? { OR: [
           { monitoredProperty: { userId: session.user.id } },
-          { monitoredPropertyId: { in: agentPropertyIds } },
+          { monitoredPropertyId: { in: linkedPropertyIds } },
         ] }
       : { monitoredProperty: { userId: session.user.id } };
 
@@ -107,23 +112,28 @@ export async function PATCH(req: NextRequest) {
 
     const { alertIds, markAll } = await req.json();
 
-    // 에이전트 연결 물건 포함
-    const agentLinks = await prisma.agentClientProperty.findMany({
+    // 에이전트 또는 고객 연결 물건 포함
+    const linkedProps = await prisma.agentClientProperty.findMany({
       where: {
-        agentClient: { agentId: session.user.id },
+        agentClient: {
+          OR: [
+            { agentId: session.user.id },
+            { clientUserId: session.user.id },
+          ],
+        },
         monitoredPropertyId: { not: null },
         status: "active",
       },
       select: { monitoredPropertyId: true },
     });
-    const agentPropertyIds = agentLinks
+    const linkedPropertyIds = linkedProps
       .map((l) => l.monitoredPropertyId)
       .filter((id): id is string => id !== null);
 
-    const ownershipFilter = agentPropertyIds.length > 0
+    const ownershipFilter = linkedPropertyIds.length > 0
       ? { OR: [
           { monitoredProperty: { userId: session.user.id } },
-          { monitoredPropertyId: { in: agentPropertyIds } },
+          { monitoredPropertyId: { in: linkedPropertyIds } },
         ] }
       : { monitoredProperty: { userId: session.user.id } };
 
