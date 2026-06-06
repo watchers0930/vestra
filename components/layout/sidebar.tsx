@@ -3,13 +3,8 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
-  LayoutDashboard, Shield, ShieldCheck, FileSearch, Calculator,
-  TrendingUp, Home, MessageSquare, Database, ChevronLeft, ChevronRight,
-  ChevronDown, Menu, X, Users, CheckCircle, FileText, Megaphone,
-  KeyRound, ExternalLink, ClipboardCheck, Brain, SlidersHorizontal,
-  ShieldAlert, Key, Newspaper, MapPin, Download, Landmark, Eye,
-  Handshake,
-  type LucideIcon,
+  ShieldCheck, ChevronLeft, ChevronRight,
+  ChevronDown, Menu, X, ExternalLink, Download,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
@@ -20,82 +15,19 @@ import UserMenu from "@/components/auth/user-menu";
 import { VestraLogoMark } from "@/components/common/VestraLogo";
 import NotificationBell from "@/components/layout/NotificationBell";
 import PushSubscriber from "@/components/pwa/PushSubscriber";
+import PwaInstallButton from "@/components/layout/PwaInstallButton";
+import { useNewMemberBadge } from "@/hooks/useNewMemberBadge";
+import {
+  type MenuItem, userMenuItems, userMenuGroups, adminMenuItems,
+  ACTIVE_STYLE, ITEM_BASE,
+} from "./sidebar-menu-data";
 
-interface MenuItem {
-  href: string;
-  icon: LucideIcon;
-  label: string;
-  description: string;
-  children?: { href: string; label: string }[];
-}
-interface MenuGroup { label: string; items: MenuItem[]; }
 interface TooltipState {
   text: string;
   top: number;
   left: number;
 }
 
-const userMenuItems: MenuItem[] = [
-  { href: "/dashboard",      icon: LayoutDashboard, label: "대시보드",       description: "보유 자산 현황과 주요 지표를 한눈에 확인합니다" },
-  { href: "/rights",         icon: Shield,          label: "권리분석",       description: "등기부등본을 업로드하면 갑구·을구 권리관계를 AI가 종합 분석합니다" },
-  { href: "/contract",       icon: FileSearch,      label: "계약검토",       description: "매매·임대차 계약서를 AI가 검토하고 위험 조항을 알려드립니다" },
-  { href: "/tax",            icon: Calculator,      label: "세금계산",       description: "취득세·양도세·종부세 등 부동산 세금을 시나리오별로 계산합니다" },
-  { href: "/official-price", icon: Landmark,        label: "공시가격 조회",  description: "개별공시지가·공동주택가격·개별주택가격을 통합 조회합니다" },
-  { href: "/prediction",     icon: TrendingUp,      label: "시세전망",       description: "실거래가 데이터 기반으로 시세 추이와 향후 전망을 분석합니다" },
-  { href: "/price-map",      icon: MapPin,          label: "시세지도",       description: "지도 위에서 아파트별 실거래가와 시세 변동을 한눈에 확인합니다" },
-  {
-    href: "/jeonse", icon: Home, label: "전세보호", description: "전세 안전 진단부터 전입신고·확정일자까지 보호 절차를 안내합니다",
-    children: [
-      { href: "/jeonse",                    label: "절차 안내" },
-      { href: "/jeonse/analysis",           label: "전세 안전 분석" },
-      { href: "/jeonse/transfer",           label: "전입신고" },
-      { href: "/jeonse/fixed-date",         label: "확정일자" },
-      { href: "/jeonse/jeonse-right",       label: "전세권설정등기" },
-      { href: "/jeonse/lease-registration", label: "임차권등기명령" },
-      { href: "/jeonse/lease-report",       label: "주택임대차 신고" },
-      { href: "/jeonse/checklist",          label: "계약 체크리스트" },
-      { href: "/neighborhood",              label: "주변 환경 분석" },
-    ],
-  },
-  { href: "/feasibility",    icon: ClipboardCheck,  label: "사업성분석 보고서", description: "다중 문서 기반 SCR 수준 사업성 검증 보고서를 생성합니다" },
-  { href: "/assistant",      icon: MessageSquare,   label: "AI 어시스턴트",  description: "부동산 관련 궁금한 점을 AI에게 자유롭게 질문할 수 있습니다" },
-  { href: "/expert-connect", icon: Users,           label: "전문가 연결",    description: "AI 분석 결과를 전문가가 직접 검증하고 상담해드립니다" },
-  { href: "/monitoring",     icon: Eye,             label: "등기감시",       description: "등기부등본 변동을 실시간 감시하고 무결성 검증 증명서를 발급합니다" },
-  { href: "/api-hub",        icon: Database,        label: "API 데이터 허브", description: "국토교통부·법원 등 공공 API 연동 현황과 데이터를 조회합니다" },
-  { href: "/agent",          icon: Handshake,       label: "중개관리",       description: "부동산 중개 고객을 관리하고 물건 모니터링을 설정합니다" },
-];
-
-const userMenuGroups: MenuGroup[] = [
-  { label: "메인",     items: [userMenuItems[0]] },
-  { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[2], userMenuItems[5], userMenuItems[7], userMenuItems[11], userMenuItems[6]] },
-  { label: "도구",     items: [userMenuItems[9], userMenuItems[10], userMenuItems[3], userMenuItems[4]] },
-  { label: "보고서",   items: [userMenuItems[8]] },
-];
-
-const adminMenuItems: MenuItem[] = [
-  { href: "/admin",                         icon: LayoutDashboard,  label: "개요",         description: "서비스 통계, 사용량, 시스템 상태를 한눈에 확인합니다" },
-  { href: "/admin?tab=users",               icon: Users,            label: "회원 관리",     description: "회원 목록 조회, 역할 변경, 사용 한도를 관리합니다" },
-  { href: "/admin?tab=verifications",       icon: CheckCircle,      label: "인증 관리",     description: "전문가 인증 요청을 검토하고 승인·거부합니다" },
-  { href: "/admin?tab=analyses",            icon: FileText,         label: "분석 이력",     description: "전체 사용자의 분석 요청 기록을 조회합니다" },
-  { href: "/admin?tab=announcements",       icon: Megaphone,        label: "공지사항",      description: "서비스 공지사항을 작성하고 관리합니다" },
-  { href: "/admin?tab=ml-training",         icon: Brain,            label: "ML 학습관리",   description: "ML 학습 데이터를 관리하고 검수합니다" },
-  { href: "/admin?tab=weight-tuning",       icon: SlidersHorizontal,label: "가중치 튜닝",   description: "분석 모델의 가중치를 조정합니다" },
-  { href: "/admin?tab=integrity-audit",     icon: ShieldAlert,      label: "무결성 감사",   description: "분석 결과의 무결성을 검증합니다" },
-  { href: "/admin?tab=apikey",              icon: Key,              label: "API KEY",      description: "외부 API 키를 관리합니다" },
-  { href: "/admin?tab=news",                icon: Newspaper,        label: "뉴스·정책",     description: "부동산 뉴스/정책 수집 현황을 확인합니다" },
-  { href: "/admin?tab=guarantee-rules",     icon: ShieldCheck,      label: "보증보험 규칙", description: "보증보험 가입조건 규칙을 관리합니다" },
-  { href: "/admin?tab=account",             icon: KeyRound,         label: "계정 설정",     description: "관리자 비밀번호 변경 및 계정 설정을 관리합니다" },
-];
-
-// ── 공통 스타일 상수 ──
-const ACTIVE_STYLE = {
-  background: "linear-gradient(135deg, rgba(0,113,227,0.24) 0%, rgba(41,151,255,0.14) 100%)",
-  border: "1px solid rgba(41,151,255,0.22)",
-  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
-  paddingLeft: "11px",
-} as const;
-
-const ITEM_BASE = "flex items-center gap-3.5 rounded-2xl text-sm w-full transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/30";
 const APP_VERSION = packageJson.version;
 
 export default function Sidebar() {
@@ -103,6 +35,8 @@ export default function Sidebar() {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "ADMIN";
+  const userRole = session?.user?.role;
+  const isBusiness = userRole === "BUSINESS";
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<string | null>(() => {
@@ -113,6 +47,13 @@ export default function Sidebar() {
   });
   const currentTab = searchParams.get("tab");
   const isAdminPage = pathname.startsWith("/admin");
+  const { count: newMemberCount, markSeen } = useNewMemberBadge(isAdmin);
+
+  useEffect(() => {
+    if (isAdminPage && currentTab === "users") {
+      markSeen();
+    }
+  }, [isAdminPage, currentTab, markSeen]);
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
@@ -176,7 +117,7 @@ export default function Sidebar() {
     return pathname === item.href || pathname.startsWith(item.href + "/");
   }, [pathname]);
 
-  const renderMenuItem = (item: MenuItem, isActive: boolean) => {
+  const renderMenuItem = (item: MenuItem, isActive: boolean, badgeCount?: number) => {
     const iconEl = (
       <item.icon size={17} strokeWidth={1.7} style={{ color: isActive ? "#7cc4ff" : "rgba(255,255,255,0.72)", flexShrink: 0, transition: "color 0.2s" }} />
     );
@@ -243,6 +184,11 @@ export default function Sidebar() {
         >
           {iconEl}
           {showLabel && <div className="min-w-0 flex-1 truncate text-[13.5px] font-semibold tracking-[-0.01em]">{item.label}</div>}
+          {badgeCount != null && badgeCount > 0 && (
+            <span className="bg-red-500 rounded-full text-[9px] text-white" style={{ minWidth: "16px", height: "16px", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", fontWeight: 700, flexShrink: 0 }}>
+              {badgeCount > 99 ? "99+" : badgeCount}
+            </span>
+          )}
         </Link>
       </div>
     );
@@ -314,11 +260,20 @@ export default function Sidebar() {
           {/* 관리자 메뉴 */}
           {isAdmin && isAdminPage ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              {adminMenuItems.map((item) => renderMenuItem(item, isAdminItemActive(item)))}
+              {adminMenuItems.map((item) => {
+                const badge = item.href === "/admin?tab=users" ? newMemberCount : undefined;
+                return renderMenuItem(item, isAdminItemActive(item), badge);
+              })}
             </div>
           ) : (
             <>
-              {userMenuGroups.map((group, groupIndex) => (
+              {userMenuGroups.map((group, groupIndex) => {
+                // BUSINESS가 아니면 사업성분석(feasibility)을 그룹에서 제외
+                const filteredItems = isBusiness
+                  ? group.items
+                  : group.items.filter((item) => item.href !== "/feasibility");
+                if (filteredItems.length === 0) return null;
+                return (
                 <div key={group.label}>
                   <div style={{ marginBottom: "4px" }}>
                     {showLabel ? (
@@ -329,7 +284,7 @@ export default function Sidebar() {
                       groupIndex > 0 && <div style={{ margin: "8px 10px", borderTop: "1px solid rgba(255,255,255,0.06)" }} />
                     )}
                     <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                      {group.items.map((item) => renderMenuItem(item, isUserItemActive(item)))}
+                      {filteredItems.map((item) => renderMenuItem(item, isUserItemActive(item)))}
                     </div>
                   </div>
                   {groupIndex === 0 && session?.user?.role === "REALESTATE" && session?.user?.verifyStatus === "verified" && (
@@ -346,8 +301,23 @@ export default function Sidebar() {
                       </div>
                     </div>
                   )}
+                  {groupIndex === 0 && isBusiness && (
+                    <div style={{ marginBottom: "4px" }}>
+                      {showLabel ? (
+                        <div style={{ padding: "18px 12px 8px", fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.48)" }}>
+                          기업 서비스
+                        </div>
+                      ) : (
+                        <div style={{ margin: "8px 10px", borderTop: "1px solid rgba(255,255,255,0.06)" }} />
+                      )}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                        {renderMenuItem(userMenuItems[8], isUserItemActive(userMenuItems[8]))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
             </>
           )}
 
@@ -464,36 +434,5 @@ export default function Sidebar() {
         document.body
       ) : null}
     </>
-  );
-}
-
-function PwaInstallButton({ collapsed }: { collapsed: boolean }) {
-  const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
-  const [installed, setInstalled] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(display-mode: standalone)").matches;
-  });
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const handler = (e: Event) => { e.preventDefault(); setDeferredPrompt(e); };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
-
-  if (installed || !deferredPrompt) return null;
-
-  const handleInstall = async () => {
-    const prompt = deferredPrompt as Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
-    await prompt.prompt();
-    const { outcome } = await prompt.userChoice;
-    if (outcome === "accepted") { setInstalled(true); setDeferredPrompt(null); }
-  };
-
-  return (
-    <button onClick={handleInstall} style={{ margin: "0 10px 8px", display: "flex", alignItems: "center", gap: "8px", borderRadius: "12px", border: "1px solid rgba(0,113,227,0.25)", background: "rgba(0,113,227,0.08)", padding: "8px 12px", fontSize: "12px", fontWeight: 500, color: "#2997ff", cursor: "pointer", transition: "all 0.15s" }}>
-      <Download size={14} />
-      {!collapsed && <span>앱 설치하기</span>}
-    </button>
   );
 }
