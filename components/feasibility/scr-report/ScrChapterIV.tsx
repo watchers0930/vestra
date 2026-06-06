@@ -2,24 +2,17 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { ScrSection, EmptyDataNotice, thCls, tdCls, tdNumCls } from "./scr-shared";
-import {
-  MapPin, TrendingUp, Home, Scale, MessageSquare,
-} from "lucide-react";
-import {
-  AreaChart, Area,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-} from "recharts";
+import { ScrSection, EmptyDataNotice, thCls } from "./scr-shared";
+import { MapPin, TrendingUp, Home } from "lucide-react";
 import type {
   ScrPriceAdequacy,
   ScrLocationAnalysis,
   ScrNearbyDevelopmentRow,
-  ScrPriceReview,
-  ScrAdequacyOpinion,
   ScrSalesCase,
   ScrSupplyCase,
-  ScrPremiumRow,
 } from "@/lib/feasibility/scr-types";
+import { RegionalTrendChart, SalesCasesTable, SupplyCasesTable } from "./ScrChapterIV-supply";
+import { PremiumTable, AdequacyOpinionSection } from "./ScrChapterIV-adequacy";
 
 type GeocoderAddressResult = { x: string; y: string };
 
@@ -28,7 +21,6 @@ interface ScrChapterIVProps {
   /** 사업지 주소 (위치도 지도 표시용) */
   siteAddress?: string;
 }
-
 
 /* ─── 표30: 입지여건 ─── */
 function LocationSection({ data }: { data: ScrLocationAnalysis }) {
@@ -90,10 +82,10 @@ function NearbyDevelopmentTable({ rows }: { rows: ScrNearbyDevelopmentRow[] }) {
           <tbody>
             {rows.map((r, i) => (
               <tr key={i} className="border-b border-gray-50 last:border-0">
-                <td className={tdCls}>{r.planName}</td>
-                <td className={cn(tdCls, "text-[#6e6e73] max-w-[240px]")}>{r.description}</td>
-                <td className={cn(tdCls, "text-center")}>{r.expectedCompletion || "-"}</td>
-                <td className={cn(tdCls, "text-center")}>
+                <td className="py-2 px-4 text-sm text-[#1d1d1f]">{r.planName}</td>
+                <td className={cn("py-2 px-4 text-sm text-[#1d1d1f]", "text-[#6e6e73] max-w-[240px]")}>{r.description}</td>
+                <td className="py-2 px-4 text-sm text-[#1d1d1f] text-center">{r.expectedCompletion || "-"}</td>
+                <td className="py-2 px-4 text-sm text-[#1d1d1f] text-center">
                   <span className={cn("px-2 py-0.5 rounded-full text-[11px] font-semibold", impactColor[r.impact])}>
                     {r.impact}
                   </span>
@@ -107,276 +99,14 @@ function NearbyDevelopmentTable({ rows }: { rows: ScrNearbyDevelopmentRow[] }) {
   );
 }
 
-/* ─── 표32: 시세추이 7년 차트 ─── */
-function RegionalTrendChart({ data }: { data: ScrPriceReview["regionalTrend"] }) {
-  if (!data.length) return null;
-
-  const chartData = data.map((r) => ({
-    year: `${r.year}`,
-    시세: r.avgMarketPrice,
-    분양가: r.avgSalePrice,
-    프리미엄률: r.premiumRate,
-  }));
-
-  return (
-    <ScrSection icon={TrendingUp} title="표32. 지역 평균 시세 및 분양가 추이" sub="최근 7년">
-      <div className="h-64 mb-5 print:hidden">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="year" tick={{ fontSize: 11, fill: "#6e6e73" }} />
-            <YAxis tick={{ fontSize: 11, fill: "#6e6e73" }} tickFormatter={(v: number) => `${v.toLocaleString()}`} />
-            <Tooltip
-              contentStyle={{ borderRadius: 12, border: "1px solid #e5e5e5", fontSize: 12 }}
-              formatter={(value, name) =>
-                name === "프리미엄률" ? `${Number(value).toFixed(1)}%` : `${Number(value).toLocaleString()} 만원/평`
-              }
-            />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Area type="monotone" dataKey="시세" stroke="#3b82f6" fill="#3b82f640" strokeWidth={2} />
-            <Area type="monotone" dataKey="분양가" stroke="#10b981" fill="#10b98140" strokeWidth={2} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-50/80">
-              <th className={cn(thCls, "text-left")}>연도</th>
-              <th className={cn(thCls, "text-right")}>평균 시세(만원/평)</th>
-              <th className={cn(thCls, "text-right")}>평균 분양가(만원/평)</th>
-              <th className={cn(thCls, "text-right")}>프리미엄률</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((r, i) => (
-              <tr key={i} className="border-b border-gray-50 last:border-0">
-                <td className={tdCls}>{r.year}</td>
-                <td className={tdNumCls}>{r.avgMarketPrice.toLocaleString()}</td>
-                <td className={tdNumCls}>{r.avgSalePrice.toLocaleString()}</td>
-                <td className={cn(tdNumCls, r.premiumRate > 0 ? "text-emerald-600" : "text-red-500")}>
-                  {r.premiumRate > 0 ? "+" : ""}{r.premiumRate.toFixed(1)}%
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </ScrSection>
-  );
-}
-
-/* ─── 표33,34: 매매사례 ─── */
-function SalesCasesTable({ cases }: { cases: ScrSalesCase[] }) {
-  if (!cases.length) return null;
-
-  return (
-    <ScrSection icon={Home} title="표33~34. 인근 매매사례">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm whitespace-nowrap">
-          <thead>
-            <tr className="bg-gray-50/80">
-              <th className={cn(thCls, "text-left")}>단지명</th>
-              <th className={cn(thCls, "text-right")}>전용(m²)</th>
-              <th className={cn(thCls, "text-right")}>거래가(만원)</th>
-              <th className={cn(thCls, "text-right")}>전용 평당가</th>
-              <th className={cn(thCls, "text-center")}>거래일</th>
-              <th className={cn(thCls, "text-right")}>층</th>
-              <th className={cn(thCls, "text-right")}>건축년</th>
-              <th className={cn(thCls, "text-right")}>거리(km)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cases.map((r, i) => (
-              <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
-                <td className={tdCls}>
-                  <div>
-                    <p className="font-medium">{r.complexName}</p>
-                    <p className="text-[10px] text-[#86868b]">{r.address}</p>
-                  </div>
-                </td>
-                <td className={tdNumCls}>{r.exclusiveArea.toFixed(2)}</td>
-                <td className={tdNumCls}>{r.transactionPrice.toLocaleString()}</td>
-                <td className={tdNumCls}>{r.pricePerExclusivePyeong.toLocaleString()}</td>
-                <td className={cn(tdCls, "text-center")}>{r.transactionDate}</td>
-                <td className={tdNumCls}>{r.floor}</td>
-                <td className={tdNumCls}>{r.buildYear}</td>
-                <td className={tdNumCls}>{r.distanceKm.toFixed(1)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </ScrSection>
-  );
-}
-
-/* ─── 표35,36: 분양사례 ─── */
-function SupplyCasesTable({ cases }: { cases: ScrSupplyCase[] }) {
-  if (!cases.length) return null;
-
-  return (
-    <ScrSection icon={Home} title="표35~36. 인근 분양사례">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm whitespace-nowrap">
-          <thead>
-            <tr className="bg-gray-50/80">
-              <th className={cn(thCls, "text-left")}>단지명</th>
-              <th className={cn(thCls, "text-left")}>시공사</th>
-              <th className={cn(thCls, "text-right")}>세대수</th>
-              <th className={cn(thCls, "text-right")}>전용(m²)</th>
-              <th className={cn(thCls, "text-right")}>분양가(만원/평)</th>
-              <th className={cn(thCls, "text-right")}>현재시세</th>
-              <th className={cn(thCls, "text-right")}>프리미엄</th>
-              <th className={cn(thCls, "text-right")}>분양률</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cases.map((r, i) => (
-              <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
-                <td className={tdCls}>
-                  <div>
-                    <p className="font-medium">{r.complexName}</p>
-                    <p className="text-[10px] text-[#86868b]">{r.address}</p>
-                  </div>
-                </td>
-                <td className={cn(tdCls, "text-[#6e6e73]")}>{r.constructor}</td>
-                <td className={tdNumCls}>{r.totalUnits.toLocaleString()}</td>
-                <td className={tdNumCls}>{r.exclusiveArea.toFixed(2)}</td>
-                <td className={tdNumCls}>{r.salePricePerPyeong.toLocaleString()}</td>
-                <td className={tdNumCls}>{r.currentMarketPrice ? r.currentMarketPrice.toLocaleString() : "-"}</td>
-                <td className={cn(tdNumCls, (r.premiumRate ?? 0) > 0 ? "text-emerald-600" : "text-red-500")}>
-                  {r.premiumRate != null ? `${r.premiumRate > 0 ? "+" : ""}${r.premiumRate.toFixed(1)}%` : "-"}
-                </td>
-                <td className={tdNumCls}>{r.saleRate != null ? `${r.saleRate.toFixed(1)}%` : "-"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </ScrSection>
-  );
-}
-
-/* ─── 표37: 프리미엄 분석 ─── */
-function PremiumTable({ rows }: { rows: ScrPremiumRow[] }) {
-  if (!rows.length) return null;
-
-  return (
-    <div className="mb-5">
-      <p className="text-xs font-semibold text-[#6e6e73] mb-2">표37. 분양사례 프리미엄</p>
-      <div className="overflow-x-auto rounded-xl border border-gray-100">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-50/80">
-              <th className={cn(thCls, "text-left")}>단지명</th>
-              <th className={cn(thCls, "text-right")}>분양가(만원/평)</th>
-              <th className={cn(thCls, "text-right")}>현재가(만원/평)</th>
-              <th className={cn(thCls, "text-right")}>프리미엄(만원/평)</th>
-              <th className={cn(thCls, "text-right")}>프리미엄률</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={i} className="border-b border-gray-50 last:border-0">
-                <td className={tdCls}>{r.complexName}</td>
-                <td className={tdNumCls}>{r.salePricePerPyeong.toLocaleString()}</td>
-                <td className={tdNumCls}>{r.currentPricePerPyeong.toLocaleString()}</td>
-                <td className={cn(tdNumCls, r.premiumAmount > 0 ? "text-emerald-600" : "text-red-500")}>
-                  {r.premiumAmount > 0 ? "+" : ""}{r.premiumAmount.toLocaleString()}
-                </td>
-                <td className={cn(tdNumCls, r.premiumRate > 0 ? "text-emerald-600" : "text-red-500")}>
-                  {r.premiumRate > 0 ? "+" : ""}{r.premiumRate.toFixed(1)}%
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-/* ─── 표38,39: 적정성 의견 ─── */
-function AdequacyOpinionSection({ data }: { data: ScrAdequacyOpinion }) {
-  return (
-    <ScrSection icon={Scale} title="표38~39. 분양가 적정성 의견">
-      {/* 계획 분양가 */}
-      <p className="text-xs font-semibold text-[#6e6e73] mb-2">본건 계획 분양가</p>
-      <div className="overflow-x-auto mb-5">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-50/80">
-              <th className={cn(thCls, "text-left")}>타입</th>
-              <th className={cn(thCls, "text-right")}>평당가(만원)</th>
-              <th className={cn(thCls, "text-right")}>총분양가(만원)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.plannedPrice.map((r, i) => (
-              <tr key={i} className="border-b border-gray-50 last:border-0">
-                <td className={tdCls}>{r.type}</td>
-                <td className={tdNumCls}>{r.pricePerPyeong.toLocaleString()}</td>
-                <td className={tdNumCls}>{r.totalPrice.toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* 비교대상 */}
-      <p className="text-xs font-semibold text-[#6e6e73] mb-2">주요 비교대상</p>
-      <div className="overflow-x-auto mb-5">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-50/80">
-              <th className={cn(thCls, "text-left")}>비교대상</th>
-              <th className={cn(thCls, "text-right")}>평당가(만원)</th>
-              <th className={cn(thCls, "text-right")}>차이(만원/평)</th>
-              <th className={cn(thCls, "text-right")}>차이율</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.comparison.map((r, i) => (
-              <tr key={i} className="border-b border-gray-50 last:border-0">
-                <td className={tdCls}>{r.target}</td>
-                <td className={tdNumCls}>{r.pricePerPyeong.toLocaleString()}</td>
-                <td className={cn(tdNumCls, r.gap > 0 ? "text-red-500" : "text-emerald-600")}>
-                  {r.gap > 0 ? "+" : ""}{r.gap.toLocaleString()}
-                </td>
-                <td className={cn(tdNumCls, r.gapRate > 0 ? "text-red-500" : "text-emerald-600")}>
-                  {r.gapRate > 0 ? "+" : ""}{r.gapRate.toFixed(1)}%
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* 종합 의견 */}
-      <div className="rounded-xl bg-blue-50/80 border border-blue-100 p-4">
-        <div className="flex items-center gap-1.5 mb-2">
-          <MessageSquare size={13} className="text-blue-500" />
-          <span className="text-[11px] font-bold text-[#1d1d1f] uppercase tracking-wider">적정성 종합 의견</span>
-        </div>
-        <p className="text-sm text-[#424245] leading-relaxed">{data.conclusion}</p>
-      </div>
-    </ScrSection>
-  );
-}
-
 /* ─── 그림14: 위치도 (Kakao Maps JS SDK) ─── */
 
-/** 마커 데이터 */
 interface MapMarker {
   label: string;
   address: string;
-  /** 마커 색상 구분: site=사업지, sales=매매사례, supply=분양사례 */
   type: "site" | "sales" | "supply";
 }
 
-/** 위치도 자리표시자 (API 키 없거나 오류 시 폴백) */
 function LocationMapFallback({ summary }: { summary?: string }) {
   return (
     <div className="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 flex flex-col items-center justify-center py-12 px-6">
@@ -396,7 +126,6 @@ function LocationMapFallback({ summary }: { summary?: string }) {
   );
 }
 
-/** Kakao Maps JS SDK 기반 위치도 */
 function LocationMap({
   siteAddress,
   summary,
@@ -414,10 +143,8 @@ function LocationMap({
     hasKakaoKey ? "loading" : "fallback"
   );
 
-  // 표시할 주소 결정: siteAddress 우선, 없으면 summary 사용
   const primaryAddress = siteAddress || summary || "";
 
-  // 마커 목록 구성
   const markers: MapMarker[] = [];
   if (primaryAddress) {
     markers.push({ label: "사업지", address: primaryAddress, type: "site" });
@@ -429,7 +156,6 @@ function LocationMap({
     if (c.address) markers.push({ label: c.complexName, address: c.address, type: "supply" });
   });
 
-  /** Kakao Geocoder로 주소 → 좌표 변환 (번지 제거 폴백 포함) */
   const geocode = useCallback(
     (
       geocoder: InstanceType<typeof window.kakao.maps.services.Geocoder>,
@@ -442,7 +168,6 @@ function LocationMap({
             resolve({ lat: parseFloat(result[0].y), lng: parseFloat(result[0].x) });
             return;
           }
-          // 번지 제거 후 재시도
           const stripped = address.replace(/\s+\d+(-\d+)?$/, "").trim();
           if (stripped !== address) {
             geocoder.addressSearch(stripped, (r2: GeocoderAddressResult[], s2: string) => {
@@ -474,7 +199,6 @@ function LocationMap({
         const geocoder = new window.kakao.maps.services.Geocoder();
         const OK = window.kakao.maps.services.Status.OK;
 
-        // 사업지 좌표 변환
         const siteCoord = await geocode(geocoder, primaryAddress, OK);
         if (!siteCoord) {
           setStatus("fallback");
@@ -487,10 +211,8 @@ function LocationMap({
           level: 5,
         });
 
-        // 사업지 마커 (기본 마커)
         new window.kakao.maps.Marker({ map, position: center });
 
-        // 매매/분양사례 마커 비동기 추가
         const caseMarkers = markers.filter((m) => m.type !== "site");
         for (const marker of caseMarkers) {
           const coord = await geocode(geocoder, marker.address, OK);
@@ -504,7 +226,6 @@ function LocationMap({
 
         setStatus("ready");
 
-        // 타일 로드 실패 감지 (기존 KakaoMap 패턴 동일)
         setTimeout(() => {
           const tiles = mapRef.current?.querySelectorAll("img");
           const hasLoadedTile = tiles && Array.from(tiles).some(
@@ -515,7 +236,6 @@ function LocationMap({
       });
     };
 
-    // SDK 로드 여부에 따라 즉시 또는 대기 후 초기화
     if (window.kakao?.maps) {
       initMap();
     } else {
@@ -531,7 +251,6 @@ function LocationMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [primaryAddress, hasKakaoKey, salesCases.length, supplyCases.length]);
 
-  // 폴백: 자리표시자 표시
   if (status === "fallback") {
     return (
       <ScrSection icon={MapPin} title="그림14. 위치도">
@@ -540,19 +259,16 @@ function LocationMap({
     );
   }
 
-  // 범례
   const hasAnyCases = salesCases.length > 0 || supplyCases.length > 0;
 
   return (
     <ScrSection icon={MapPin} title="그림14. 위치도">
       <div className="relative rounded-xl overflow-hidden border border-gray-100">
-        {/* 로딩 오버레이 */}
         {status === "loading" && (
           <div className="absolute inset-0 z-10 animate-pulse bg-gray-100 rounded-xl" />
         )}
         <div ref={mapRef} className="h-[360px] w-full" />
       </div>
-      {/* 범례 */}
       {hasAnyCases && status === "ready" && (
         <div className="flex items-center gap-4 mt-2 text-[11px] text-[#6e6e73]">
           <span className="flex items-center gap-1">
@@ -573,7 +289,6 @@ function LocationMap({
           )}
         </div>
       )}
-      {/* 주소 표시 */}
       {primaryAddress && (
         <p className="text-[11px] text-[#86868b] mt-1">주소: {primaryAddress}</p>
       )}

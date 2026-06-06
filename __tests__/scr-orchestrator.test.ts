@@ -1009,10 +1009,13 @@ describe("SCR Orchestrator — generateScrReport", () => {
   // ── 26. debtRatio 계산 (totalAssets 0인 경우) ──
   it("totalAssets가 0이면 debtRatio가 0이 된다", async () => {
     vi.mocked(fetchFinancials).mockResolvedValueOnce({
+      corpCode: "00000000",
+      corpName: "테스트기업",
       incomeStatements: [],
       balanceSheets: [
-        { year: 2023, totalAssets: 0, totalLiabilities: 0 },
+        { year: 2023, totalAssets: 0, totalLiabilities: 0, totalEquity: 0, totalDebt: 0, debtRatio: 0 },
       ],
+      dataSource: "fallback",
     });
 
     const input: ScrReportInput = {
@@ -1169,8 +1172,10 @@ describe("SCR Orchestrator — generateScrReport", () => {
   // ── 35. households가 0인 경우 personsPerHousehold 0 처리 ──
   it("세대수가 0이면 세대당 인구가 0이 된다", async () => {
     vi.mocked(fetchPopulationTrends).mockResolvedValueOnce({
-      district: "서울특별시 강남구",
-      trends: [{ year: 2023, population: 100, households: 0 }],
+      region: "서울특별시 강남구",
+      trends: [{ year: 2023, population: 100, households: 0, dataSource: "fallback" as const }],
+      ageGroups: [],
+      dataSource: "fallback",
     });
 
     const input: ScrReportInput = {

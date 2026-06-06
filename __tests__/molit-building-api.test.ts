@@ -520,7 +520,7 @@ describe("molit-api", () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
         async (url: string) => {
           callCount++;
-          const urlStr = typeof url === "string" ? url : url.toString();
+          const urlStr = String(url);
           const isRent = urlStr.includes("AptRent");
           return {
             ok: true,

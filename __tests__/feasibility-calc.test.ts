@@ -886,7 +886,6 @@ describe("analyzeSensitivity (시나리오별 민감도)", () => {
     // 수입 = 30,000 + 자본 1,000 + 유보 1,000 = 32,000
     // PF 원리금 = 55,000 → 신용보강 = 23,000
     expect(result.scenarios[0].creditEnhancement).toBeGreaterThan(0);
-    expect(result.scenarios[0].isAdequate).toBeFalsy(); // not in type but DSCR < 1
     expect(result.scenarios[0].cumulativeDscr).toBeLessThan(1);
   });
 

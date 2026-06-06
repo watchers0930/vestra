@@ -14,6 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import type { ScrReportData } from "@/lib/feasibility/scr-types";
+import type { ScrSupplyItem } from "@/lib/feasibility/scr-types-analysis";
 import type { FeasibilityReport } from "@/lib/feasibility/feasibility-types";
 
 // ─── 최소 ScrReportData 목 데이터 팩토리 ───
@@ -283,7 +284,7 @@ function createMinimalScrReportData(
             location: "서울시 서초구",
             totalUnits: 800,
             moveInDate: "2028-03-31",
-          },
+          } as ScrSupplyItem,
         ],
         unsoldTrend: [
           { yearMonth: "2024-01", totalUnsold: 500, afterCompletion: 100 },
