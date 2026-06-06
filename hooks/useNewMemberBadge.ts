@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
 const STORAGE_KEY = "vestra-admin-users-last-seen";
 const POLL_INTERVAL = 60_000; // 60초
 
 export function useNewMemberBadge(isAdmin: boolean) {
-  const [count, setCount] = useState(0);
+  const initialCount = useMemo(() => (isAdmin ? 0 : 0), [isAdmin]);
+  const [count, setCount] = useState(initialCount);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchCount = useCallback(async () => {
@@ -29,10 +30,7 @@ export function useNewMemberBadge(isAdmin: boolean) {
   }, []);
 
   useEffect(() => {
-    if (!isAdmin) {
-      setCount(0);
-      return;
-    }
+    if (!isAdmin) return;
 
     fetchCount();
     intervalRef.current = setInterval(fetchCount, POLL_INTERVAL);

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   ShieldCheck, ChevronLeft, ChevronRight,
-  ChevronDown, Menu, X, ExternalLink, Download,
+  ChevronDown, Menu, X, ExternalLink,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
