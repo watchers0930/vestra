@@ -235,8 +235,10 @@ export function useFeasibilityAnalysis() {
     setError(null);
   };
 
+  const clearError = useCallback(() => setError(null), []);
+
   return {
-    step, loading, error,
+    step, loading, error, clearError,
     files, categorizedFiles, projectType, setProjectType,
     context, conflicts, parsedInfo,
     verifications, rationalityItems,

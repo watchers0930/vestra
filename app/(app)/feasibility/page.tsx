@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
 import { CategoryHero } from "@/components/common/CategoryHero";
 import { StepIndicator } from "@/components/loading/StepIndicator";
 import { UploadStep } from "./components/UploadStep";
@@ -16,7 +16,7 @@ function stepToIndex(step: "upload" | "verify" | "report"): number {
 
 export default function FeasibilityPage() {
   const {
-    step, loading, error,
+    step, loading, error, clearError,
     categorizedFiles, projectType, setProjectType,
     conflicts, parsedInfo,
     verifications, rationalityItems,
@@ -44,10 +44,13 @@ export default function FeasibilityPage() {
       {error && (
         <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 18px", borderRadius: "14px", background: "rgba(255,59,48,0.06)", border: "1px solid rgba(255,59,48,0.18)", marginBottom: "16px" }}>
           <AlertCircle size={18} style={{ color: "#ff3b30", flexShrink: 0, marginTop: "1px" }} />
-          <div>
+          <div style={{ flex: 1 }}>
             <p style={{ fontSize: "13px", fontWeight: 600, color: "#c0392b", margin: "0 0 2px" }}>오류가 발생했습니다</p>
             <p style={{ fontSize: "12px", color: "#e74c3c", margin: 0 }}>{error}</p>
           </div>
+          <button onClick={clearError} style={{ padding: "4px", borderRadius: "8px", border: "none", background: "transparent", cursor: "pointer", flexShrink: 0 }}>
+            <X size={16} style={{ color: "#c0392b" }} />
+          </button>
         </div>
       )}
 
