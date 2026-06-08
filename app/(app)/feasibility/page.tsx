@@ -31,12 +31,19 @@ export default function FeasibilityPage() {
       <CategoryHero
         badge="✨ 수익성 분석"
         title="사업성 분석 보고서"
-        description="다중 문서 기반 사업성 검증 보고서"
+        description="다중 문서 기반 SCR 수준 사업성 검증 보고서를 자동 생성합니다"
         marginBottom="20px"
       />
 
       {/* ── 단계 표시 ── */}
-      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "20px 24px", marginBottom: "20px" }}>
+      <div style={{
+        background: "linear-gradient(135deg, #fafbff 0%, #f0f4ff 100%)",
+        border: "1px solid rgba(0,113,227,0.10)",
+        borderRadius: "20px",
+        boxShadow: "0 2px 16px rgba(0,113,227,0.06)",
+        padding: "24px 28px",
+        marginBottom: "20px",
+      }}>
         <StepIndicator steps={STEPS} currentStep={stepToIndex(step)} />
       </div>
 

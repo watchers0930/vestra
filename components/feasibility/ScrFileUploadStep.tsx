@@ -340,49 +340,71 @@ export function ScrFileUploadStep({
 
   return (
     <div className="space-y-6">
-      {/* 사업 유형 선택 */}
+      {/* 사업 유형 선택 — 필 버튼 */}
       <div>
-        <label className="block text-xs font-semibold text-[#6e6e73] mb-2">
+        <p className="text-[10px] font-bold text-[#6e6e73] mb-3 uppercase tracking-[0.12em]">
           사업 유형
-        </label>
-        <select
-          value={projectType}
-          onChange={(e) =>
-            onProjectTypeChange(e.target.value as ProjectType)
-          }
-          className="w-full max-w-xs px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 focus:border-[#0071e3] transition-all"
-        >
+        </p>
+        <div className="flex flex-wrap gap-2">
           {PROJECT_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>
+            <button
+              key={t.value}
+              onClick={() => onProjectTypeChange(t.value)}
+              className={cn(
+                "px-4 py-2 rounded-xl text-[13px] font-semibold border transition-all duration-200",
+                projectType === t.value
+                  ? "bg-[#0071e3] text-white border-[#0071e3] shadow-[0_2px_8px_rgba(0,113,227,0.25)]"
+                  : "bg-white text-[#424245] border-gray-200 hover:border-[#0071e3]/40 hover:bg-[#0071e3]/[0.03]"
+              )}
+            >
               {t.label}
-            </option>
+            </button>
           ))}
-        </select>
+        </div>
       </div>
 
       {/* 서류 충족도 프로그레스 */}
-      <div className="rounded-2xl border border-gray-100 bg-[#f5f5f7] p-4">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-[#1d1d1f]">
-            서류 충족도
-          </p>
-          <p className="text-xs font-bold tabular-nums text-[#0071e3]">
-            {requiredFilledCount}/{requiredTotal}
-          </p>
+      <div className={cn(
+        "rounded-2xl border p-5 transition-all duration-500",
+        requiredFilledCount === requiredTotal
+          ? "border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-green-50/40"
+          : "border-gray-100 bg-gradient-to-br from-[#f0f4ff] to-[#f5f5f7]"
+      )}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2.5">
+            <div className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center",
+              requiredFilledCount === requiredTotal ? "bg-emerald-100" : "bg-[#0071e3]/10"
+            )}>
+              <CheckCircle2 size={16} className={requiredFilledCount === requiredTotal ? "text-emerald-600" : "text-[#0071e3]"} />
+            </div>
+            <p className="text-sm font-bold text-[#1d1d1f]">서류 충족도</p>
+          </div>
+          <div className={cn(
+            "px-3 py-1.5 rounded-lg text-sm font-bold tabular-nums",
+            requiredFilledCount === requiredTotal
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-[#0071e3]/10 text-[#0071e3]"
+          )}>
+            {requiredFilledCount} / {requiredTotal}
+          </div>
         </div>
-        <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+        <div className="h-2.5 rounded-full bg-white/80 overflow-hidden shadow-inner">
           <div
             className={cn(
-              "h-full rounded-full transition-all duration-500",
+              "h-full rounded-full transition-all duration-700 ease-out",
               requiredFilledCount === requiredTotal
-                ? "bg-emerald-500"
-                : "bg-[#0071e3]"
+                ? "bg-gradient-to-r from-emerald-400 to-emerald-500"
+                : "bg-gradient-to-r from-[#0071e3] to-[#2997ff]"
             )}
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <p className="text-[10px] text-[#86868b] mt-1.5">
-          필수 서류 {requiredTotal}종 중 {requiredFilledCount}종 제출 완료
+        <p className="text-[11px] text-[#6e6e73] mt-2">
+          {requiredFilledCount === requiredTotal
+            ? "모든 필수 서류가 제출되었습니다. 분석을 시작할 수 있습니다."
+            : `필수 서류 ${requiredTotal}종 중 ${requiredFilledCount}종 제출 완료`
+          }
         </p>
       </div>
 
@@ -402,9 +424,15 @@ export function ScrFileUploadStep({
 
       {/* 필수 서류 섹션 */}
       <div>
-        <p className="text-xs font-bold text-[#1d1d1f] mb-3 uppercase tracking-wide">
-          필수 서류 ({requiredTotal}종)
-        </p>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-1.5 h-5 rounded-full bg-[#0071e3]" />
+          <p className="text-[13px] font-bold text-[#1d1d1f]">
+            필수 서류
+          </p>
+          <span className="text-[11px] font-semibold text-[#6e6e73] bg-gray-100 px-2 py-0.5 rounded-md">
+            {requiredTotal}종
+          </span>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {requiredSlots.map((slot) => (
             <DocumentSlot
@@ -426,18 +454,22 @@ export function ScrFileUploadStep({
       <div>
         <button
           onClick={() => setOptionalOpen((v) => !v)}
-          className="flex items-center gap-2 mb-3 group"
+          className="flex items-center gap-2 mb-4 group"
         >
+          <div className="w-1.5 h-5 rounded-full bg-gray-300" />
+          <p className="text-[13px] font-bold text-[#6e6e73] group-hover:text-[#1d1d1f] transition-colors">
+            선택 서류
+          </p>
+          <span className="text-[11px] font-semibold text-[#86868b] bg-gray-100 px-2 py-0.5 rounded-md">
+            {optionalSlots.length}종
+          </span>
           <ChevronDown
             size={14}
             className={cn(
-              "text-[#6e6e73] transition-transform",
+              "text-[#6e6e73] transition-transform duration-200",
               !optionalOpen && "-rotate-90"
             )}
           />
-          <p className="text-xs font-bold text-[#6e6e73] uppercase tracking-wide group-hover:text-[#1d1d1f] transition-colors">
-            선택 서류 ({optionalSlots.length}종)
-          </p>
         </button>
         {optionalOpen && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -459,12 +491,8 @@ export function ScrFileUploadStep({
       </div>
 
       {/* 하단 안내 */}
-      <div className="rounded-xl bg-[#f5f5f7] p-4">
-        <p className="text-xs text-[#6e6e73] leading-relaxed">
-          필수 서류 {requiredTotal}종을 모두 제출해야 보고서 생성이 가능합니다.
-          각 슬롯에 최대 {MAX_FILES_PER_SLOT}개 파일, 개당 {MAX_FILE_SIZE_MB}
-          MB까지 업로드할 수 있습니다.
-        </p>
+      <div className="rounded-xl bg-gradient-to-r from-[#f5f5f7] to-[#f0f2f5] p-4 border border-gray-100/60">
+        <p className="text-[11px] text-[#6e6e73] leading-relaxed"><span className="font-semibold text-[#424245]">안내</span> · 필수 서류 {requiredTotal}종을 모두 제출해야 보고서 생성이 가능합니다. 각 슬롯에 최대 {MAX_FILES_PER_SLOT}개 파일, 개당 {MAX_FILE_SIZE_MB}MB까지 업로드할 수 있습니다.</p>
       </div>
     </div>
   );
