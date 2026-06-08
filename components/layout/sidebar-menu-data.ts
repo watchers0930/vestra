@@ -4,7 +4,7 @@ import {
   Users, CheckCircle, FileText, Megaphone,
   KeyRound, ClipboardCheck, Brain, SlidersHorizontal,
   ShieldAlert, Key, Newspaper, MapPin, Landmark, Eye,
-  Handshake, BarChart3,
+  Handshake,
   type LucideIcon,
 } from "lucide-react";
 
@@ -49,13 +49,12 @@ export const userMenuItems: MenuItem[] = [
   { href: "/monitoring",     icon: Eye,             label: "등기감시",       description: "등기부등본 변동을 실시간 감시하고 무결성 검증 증명서를 발급합니다", tier: "AUTH_REQUIRED" },
   { href: "/api-hub",        icon: Database,        label: "API 데이터 허브", description: "국토교통부·법원 등 공공 API 연동 현황과 데이터를 조회합니다", tier: "AUTH_REQUIRED" },
   { href: "/agent",          icon: Handshake,       label: "중개관리",       description: "부동산 중개 고객을 관리하고 물건 모니터링을 설정합니다", tier: "AUTH_REQUIRED" },
-  { href: "/competitive-analysis", icon: BarChart3, label: "경쟁력 분석", description: "경쟁사 대비 포지셔닝과 사업계획서용 비교표를 PDF로 정리합니다", tier: "AUTH_REQUIRED" },
 ];
 
 export const userMenuGroups: MenuGroup[] = [
   { label: "메인",     items: [userMenuItems[0]] },
   { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[2], userMenuItems[5], userMenuItems[7], userMenuItems[11], userMenuItems[6], userMenuItems[8]] },
-  { label: "도구",     items: [userMenuItems[9], userMenuItems[10], userMenuItems[3], userMenuItems[4], userMenuItems[15]] },
+  { label: "도구",     items: [userMenuItems[9], userMenuItems[10], userMenuItems[3], userMenuItems[4]] },
 ];
 
 export const adminMenuItems: MenuItem[] = [
