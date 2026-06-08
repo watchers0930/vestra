@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import { ScrSection, thCls, tdCls, tdNumCls } from "./scr-shared";
 import { Activity, Target } from "lucide-react";
 import {
-  BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  BarChart, Bar, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine,
 } from "recharts";
 import type {
   ScrScenarioAnalysis,
@@ -249,6 +249,61 @@ export function BepSection({ data }: { data: ScrBepAnalysis }) {
           </div>
         ))}
       </div>
+
+      {/* BEP 분양률 시각화 */}
+      {data.scenarioBep.length > 0 && (
+        <>
+          <p className="text-xs font-semibold text-[#6e6e73] mt-5 mb-2">그림20. BEP 분양률 vs 기준선</p>
+          <div className="h-52 print:hidden">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={data.scenarioBep.map((r) => ({
+                  시나리오: r.scenario,
+                  BEP: r.bepSaleRate,
+                  margin: r.margin,
+                }))}
+                layout="vertical"
+                margin={{ top: 5, right: 30, bottom: 5, left: 50 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                <XAxis
+                  type="number"
+                  domain={[0, 110]}
+                  tick={{ fontSize: 11, fill: "#6e6e73" }}
+                  tickFormatter={(v: number) => `${v}%`}
+                />
+                <YAxis type="category" dataKey="시나리오" tick={{ fontSize: 12, fill: "#1d1d1f", fontWeight: 600 }} width={50} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 12, border: "1px solid #e5e5e5", fontSize: 12 }}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(value: any, _: any, props: any) => {
+                    const v = Number(value);
+                    const m = props?.payload?.margin ?? 0;
+                    return [`${v.toFixed(1)}% (여유 ${m > 0 ? "+" : ""}${m.toFixed(1)}%p)`, "BEP 분양률"];
+                  }}
+                />
+                <ReferenceLine x={100} stroke="#ef4444" strokeDasharray="4 4" strokeWidth={1.5} />
+                <Bar dataKey="BEP" radius={[0, 4, 4, 0]}>
+                  {data.scenarioBep.map((r, i) => (
+                    <Cell key={i} fill={r.margin >= 10 ? "#10b981" : r.margin >= 0 ? "#f59e0b" : "#ef4444"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {/* 인쇄용 대체 */}
+          <div className="hidden print:block mt-3">
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              {data.scenarioBep.map((r) => (
+                <div key={r.scenario} className="flex items-center justify-between border-b border-gray-100 py-1">
+                  <span className="text-[#6e6e73]">{r.scenario}</span>
+                  <span className="font-medium tabular-nums">{r.bepSaleRate.toFixed(1)}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </ScrSection>
   );
 }

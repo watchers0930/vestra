@@ -3,6 +3,10 @@
 import { cn } from "@/lib/utils";
 import { ScrSection, thCls, tdCls, tdNumCls } from "./scr-shared";
 import { Scale, MessageSquare } from "lucide-react";
+import {
+  BarChart, Bar, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
+} from "recharts";
 import type {
   ScrAdequacyOpinion,
   ScrPremiumRow,
@@ -102,6 +106,48 @@ export function AdequacyOpinionSection({ data }: { data: ScrAdequacyOpinion }) {
           </tbody>
         </table>
       </div>
+
+      {/* 비교가격 바차트 */}
+      {data.comparison.length > 0 && data.plannedPrice.length > 0 && (
+        <>
+          <p className="text-xs font-semibold text-[#6e6e73] mb-2">그림16. 분양가 비교</p>
+          <div className="h-52 mb-5 print:hidden">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={[
+                  { name: "본건", price: data.plannedPrice[0].pricePerPyeong },
+                  ...data.comparison.map((c) => ({ name: c.target, price: c.pricePerPyeong })),
+                ]}
+                layout="vertical"
+                margin={{ top: 5, right: 20, bottom: 5, left: 80 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 11, fill: "#6e6e73" }}
+                  tickFormatter={(v: number) => v.toLocaleString()}
+                />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#6e6e73" }} width={80} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 12, border: "1px solid #e5e5e5", fontSize: 12 }}
+                  formatter={(value) => [`${Number(value).toLocaleString()} 만원/평`, "평당가"]}
+                />
+                <ReferenceLine
+                  x={data.plannedPrice[0].pricePerPyeong}
+                  stroke="#0071e3"
+                  strokeDasharray="4 4"
+                  strokeWidth={1.5}
+                />
+                <Bar dataKey="price" radius={[0, 4, 4, 0]}>
+                  {[data.plannedPrice[0], ...data.comparison].map((_, i) => (
+                    <Cell key={i} fill={i === 0 ? "#0071e3" : "#6e6e73"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
 
       {/* 종합 의견 */}
       <div className="rounded-xl bg-blue-50/80 border border-blue-100 p-4">

@@ -11,7 +11,7 @@
  *  - static-data.ts            (isRegulatedArea, isHUGHighPriceArea, getLoanRegulations, getNearbySupplyCases, getStaticMarketContext)
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 // ── audit-engine ──
 import {

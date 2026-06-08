@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useRef, useCallback, Suspense } from "react";
+import React, { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { cn } from "@/lib/utils";
 import {
   FileText, Printer, Download, Building2, Users, BarChart3,
   Scale, TrendingUp, BookOpen, ChevronLeft, ChevronRight, Loader2,
 } from "lucide-react";
 import type { ScrReportData } from "@/lib/feasibility/scr-types";
+import { ScrTableOfContents } from "./ScrTableOfContents";
 
 const ScrChapterI = React.lazy(() => import("./ScrChapterI").then((m) => ({ default: m.ScrChapterI })));
 const ScrChapterII = React.lazy(() => import("./ScrChapterII").then((m) => ({ default: m.ScrChapterII })));
@@ -32,7 +33,20 @@ type TabId = (typeof TABS)[number]["id"];
 
 export function ScrReportViewer({ data }: ScrReportViewerProps) {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const [printReady, setPrintReady] = useState(false);
   const tabsRef = useRef<HTMLDivElement>(null);
+
+  // 인쇄 시 전체 장 렌더링을 위해 모든 청크 사전 로드
+  useEffect(() => {
+    Promise.all([
+      import("./ScrChapterI"),
+      import("./ScrChapterII"),
+      import("./ScrChapterIII"),
+      import("./ScrChapterIV"),
+      import("./ScrChapterV"),
+      import("./ScrAppendices"),
+    ]).then(() => setPrintReady(true));
+  }, []);
 
   const handlePrint = useCallback(() => {
     window.print();
@@ -173,13 +187,8 @@ export function ScrReportViewer({ data }: ScrReportViewerProps) {
         </div>
       </div>
 
-      {/* ─── 탭 콘텐츠 ─── */}
-      <div>
-        {/* 인쇄 시 챕터 제목 표시 */}
-        <h2 className="hidden print:block text-lg font-bold text-[#1d1d1f] mb-4 print:break-before-page">
-          {TABS.find((t) => t.id === activeTab)?.label}
-        </h2>
-
+      {/* ─── 탭 콘텐츠 (화면 전용) ─── */}
+      <div className="print:hidden">
         <Suspense
           fallback={
             <div className="flex items-center justify-center py-20">
@@ -196,6 +205,45 @@ export function ScrReportViewer({ data }: ScrReportViewerProps) {
           {activeTab === "appendices" && <ScrAppendices data={data.appendices} />}
         </Suspense>
       </div>
+
+      {/* ─── 인쇄 전용: 전체 장 순차 출력 ─── */}
+      {printReady && (
+        <div className="hidden print:block">
+          <div className="break-before-page">
+            <ScrTableOfContents
+              projectName={data.frontMatter.projectName}
+              reportNumber={data.frontMatter.reportNumber}
+              date={data.frontMatter.date}
+            />
+          </div>
+          <Suspense fallback={null}>
+            <div className="break-before-page">
+              <h2 className="text-lg font-bold text-[#1d1d1f] mb-4">I. 사업 개요</h2>
+              <ScrChapterI data={data.projectOverview} />
+            </div>
+            <div className="break-before-page">
+              <h2 className="text-lg font-bold text-[#1d1d1f] mb-4">II. 시행사 분석</h2>
+              <ScrChapterII data={data.developerAnalysis} />
+            </div>
+            <div className="break-before-page">
+              <h2 className="text-lg font-bold text-[#1d1d1f] mb-4">III. 시장 분석</h2>
+              <ScrChapterIII data={data.marketAnalysis} />
+            </div>
+            <div className="break-before-page">
+              <h2 className="text-lg font-bold text-[#1d1d1f] mb-4">IV. 분양가 적정성</h2>
+              <ScrChapterIV data={data.priceAdequacy} siteAddress={data.projectOverview.projectSummary.siteAddress} />
+            </div>
+            <div className="break-before-page">
+              <h2 className="text-lg font-bold text-[#1d1d1f] mb-4">V. 상환 분석</h2>
+              <ScrChapterV data={data.repaymentAnalysis} />
+            </div>
+            <div className="break-before-page">
+              <h2 className="text-lg font-bold text-[#1d1d1f] mb-4">부록</h2>
+              <ScrAppendices data={data.appendices} />
+            </div>
+          </Suspense>
+        </div>
+      )}
 
       {/* ─── 탭 전환 네비게이션 (하단) ─── */}
       <div className="flex items-center justify-between pt-2 print:hidden">
@@ -239,17 +287,20 @@ export function ScrReportViewer({ data }: ScrReportViewerProps) {
         @media print {
           body { background: white !important; }
           .print\\:hidden { display: none !important; }
+          .hidden.print\\:block { display: block !important; }
           .print\\:shadow-none { box-shadow: none !important; }
           .print\\:border-gray-200 { border-color: #e5e7eb !important; }
-          .print\\:break-before-page { break-before: page; }
+          .break-before-page { break-before: page; }
           .print\\:space-y-3 > :not([hidden]) ~ :not([hidden]) {
             --tw-space-y-reverse: 0;
             margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));
             margin-bottom: calc(0.75rem * var(--tw-space-y-reverse));
           }
-          /* 표 페이지 넘김 방지 */
+          /* 표·카드 페이지 넘김 방지 */
           table { break-inside: avoid; }
           .rounded-2xl { break-inside: avoid; }
+          /* 인쇄용 차트 대체 표시 */
+          .print\\:border-amber-300 { border-color: #fcd34d !important; }
         }
       `}</style>
     </div>

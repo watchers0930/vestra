@@ -59,6 +59,24 @@ export function EmptyDataNotice({ message }: { message?: string }) {
   );
 }
 
+/* ─── 폴백(추정) 데이터 배지 ─── */
+export function FallbackBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[10px] font-medium border border-amber-200 print:border-amber-300">
+      추정치
+    </span>
+  );
+}
+
+/* ─── AI 분석 서술 블록 ─── */
+export function NarrativeBlock({ text }: { text: string }) {
+  return (
+    <div className="rounded-2xl border border-blue-100 bg-blue-50/40 p-5 print:border-blue-200">
+      <p className="text-sm text-[#1d1d1f] leading-[1.8] whitespace-pre-line">{text}</p>
+    </div>
+  );
+}
+
 /* ─── 금액 포맷 유틸 ─── */
 export function formatAmount(value: number | undefined | null, unit = ""): string {
   if (value === undefined || value === null) return "-";

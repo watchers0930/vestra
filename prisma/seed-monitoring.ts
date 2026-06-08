@@ -19,10 +19,6 @@ function sha256(data: string): string {
   return crypto.createHash("sha256").update(data).digest("hex");
 }
 
-function randomHex(len: number): string {
-  return crypto.randomBytes(len).toString("hex");
-}
-
 function randomBase64(len: number): string {
   return crypto.randomBytes(len).toString("base64");
 }

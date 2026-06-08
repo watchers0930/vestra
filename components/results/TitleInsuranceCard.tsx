@@ -2,7 +2,6 @@
 
 import {
   Shield,
-  ChevronRight,
   ExternalLink,
   CheckCircle2,
 } from "lucide-react";

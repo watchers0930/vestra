@@ -10,7 +10,6 @@ import {
   // DSCR
   calculateDscr,
   calculateDscrAtSaleRate,
-  type DscrInput,
   // Monthly Cashflow
   generateMonthlyCashflow,
   type MonthlyCashflowInput,

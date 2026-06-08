@@ -11,11 +11,10 @@ import type {
   ScrSalesCase,
   ScrSupplyCase,
   ScrPremiumRow,
-  ScrSupplyItem,
 } from "./scr-types";
 import {
   fmt, pct, safe, tableOpen, tableClose, thead,
-  tbodyOpen, tbodyClose, tr, kvRow,
+  tbodyOpen, tbodyClose, tr,
 } from "./scr-table-utils";
 
 // ─── 장 IV: 분양가적정성 (표30~39) ───

@@ -6,7 +6,7 @@
 
 import type { ScrReportData } from "./scr-types";
 import {
-  COLORS, PALETTE, W, H, CW, CH, PAD,
+  COLORS, PALETTE,
   svgOpen, svgClose, figureWrap,
   lineChart, barChart, areaChart, pieChart,
 } from "./scr-chart-primitives";

@@ -1,11 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ScrSection, EmptyDataNotice, thCls, tdCls, tdNumCls } from "./scr-shared";
+import { ScrSection, EmptyDataNotice, NarrativeBlock, thCls, tdCls, tdNumCls } from "./scr-shared";
 import { TrendingUp, Calculator, Wallet } from "lucide-react";
 import {
   PieChart, Pie, Cell,
-  Tooltip, ResponsiveContainer,
+  BarChart, Bar,
+  XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import type {
   ScrRepaymentAnalysis,
@@ -154,6 +156,78 @@ function BusinessIncomeSection({ data }: { data: ScrBusinessIncome }) {
   );
 }
 
+/* ─── 그림17: 수입·지출 항목별 적층 바차트 ─── */
+function RevenueExpenseStackedChart({ data }: { data: ScrBusinessIncome }) {
+  const chartData = [
+    {
+      name: "수입",
+      아파트: data.revenue.apartment,
+      오피스텔: data.revenue.officetel,
+      발코니: data.revenue.balconyExpansion,
+      상가: data.revenue.commercial,
+      중도금이자: data.revenue.interimInterest,
+      부가세: data.revenue.vat,
+    },
+    {
+      name: "지출",
+      토지비: data.cost.land,
+      직접공사비: data.cost.directConstruction,
+      간접공사비: data.cost.indirectConstruction,
+      분양경비: data.cost.salesExpense,
+      일반관리비: data.cost.generalAdmin,
+      "PF이자": data.cost.pfInterest,
+      기타: data.cost.tax + data.cost.pfFee + data.cost.interimInterest,
+    },
+  ];
+
+  const revenueKeys = ["아파트", "오피스텔", "발코니", "상가", "중도금이자", "부가세"];
+  const expenseKeys = ["토지비", "직접공사비", "간접공사비", "분양경비", "일반관리비", "PF이자", "기타"];
+  const allKeys = [...revenueKeys, ...expenseKeys];
+  const colors = ["#0071e3", "#5856d6", "#30b0c7", "#34c759", "#ff9500", "#8e8e93",
+    "#ff3b30", "#ef4444", "#f97316", "#f59e0b", "#8b5cf6", "#6366f1", "#a3a3a3"];
+
+  if (data.revenue.total === 0 && data.cost.total === 0) return null;
+
+  return (
+    <ScrSection icon={Calculator} title="그림17. 수입·지출 비교" sub="항목별 구성">
+      <div className="h-72 print:hidden">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 5, bottom: 5, left: 40 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+            <XAxis
+              type="number"
+              tick={{ fontSize: 11, fill: "#6e6e73" }}
+              tickFormatter={(v: number) => v >= 10000 ? `${(v / 10000).toFixed(0)}억` : `${v.toLocaleString()}`}
+            />
+            <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: "#1d1d1f", fontWeight: 600 }} width={40} />
+            <Tooltip
+              contentStyle={{ borderRadius: 12, border: "1px solid #e5e5e5", fontSize: 12 }}
+              formatter={(value, name) => [`${Number(value).toLocaleString()} 만원`, name]}
+            />
+            <Legend wrapperStyle={{ fontSize: 10 }} />
+            {allKeys.map((key, i) => (
+              <Bar key={key} dataKey={key} stackId="a" fill={colors[i % colors.length]} />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      {/* 인쇄 대체: 수입/지출 합계 비교 */}
+      <div className="hidden print:block">
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="rounded-lg bg-emerald-50 p-3">
+            <p className="text-xs font-semibold text-emerald-600 mb-1">총수입</p>
+            <p className="text-lg font-bold tabular-nums">{data.revenue.total.toLocaleString()} 만원</p>
+          </div>
+          <div className="rounded-lg bg-red-50 p-3">
+            <p className="text-xs font-semibold text-red-600 mb-1">총지출</p>
+            <p className="text-lg font-bold tabular-nums">{data.cost.total.toLocaleString()} 만원</p>
+          </div>
+        </div>
+      </div>
+    </ScrSection>
+  );
+}
+
 /* ─── 그림18: 사업비 구성 파이차트 ─── */
 const PIE_COLORS = ["#0071e3", "#34c759", "#ff9500", "#ff3b30", "#8e8e93", "#5856d6", "#af52de", "#007aff", "#30b0c7"];
 
@@ -242,7 +316,10 @@ export function ScrChapterV({ data }: ScrChapterVProps) {
       )}
 
       <BusinessIncomeSection data={data.businessIncome} />
+      <RevenueExpenseStackedChart data={data.businessIncome} />
       <BusinessCostPieChart data={data.businessIncome} />
+
+      {data.incomeNarrative && <NarrativeBlock text={data.incomeNarrative} />}
 
       {data.cashFlowSummary.length > 0 || data.fundingScale.length > 0 ? (
         <CashFlowFundingSection summary={data.cashFlowSummary} funding={data.fundingScale} />
@@ -253,8 +330,20 @@ export function ScrChapterV({ data }: ScrChapterVProps) {
       )}
       <MonthlyCashFlowSection parts={data.monthlyCashFlow} />
       <MonthlyCumulativeAreaChart parts={data.monthlyCashFlow} />
+
+      {data.cashflowNarrative && <NarrativeBlock text={data.cashflowNarrative} />}
+
       <ScenarioSection data={data.scenario} />
       <BepSection data={data.bep} />
+
+      {data.scenarioNarrative && <NarrativeBlock text={data.scenarioNarrative} />}
+
+      {data.overallConclusion && (
+        <div className="rounded-2xl border-2 border-blue-200 bg-blue-50/60 p-6 print:border-blue-300">
+          <h4 className="text-sm font-bold text-[#1d1d1f] mb-3">종합 의견</h4>
+          <p className="text-sm text-[#1d1d1f] leading-[1.8] whitespace-pre-line">{data.overallConclusion}</p>
+        </div>
+      )}
     </div>
   );
 }

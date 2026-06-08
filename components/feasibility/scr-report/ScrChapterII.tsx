@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ScrSection, EmptyDataNotice, thCls, tdCls, tdNumCls } from "./scr-shared";
+import { ScrSection, EmptyDataNotice, NarrativeBlock, thCls, tdCls, tdNumCls } from "./scr-shared";
 import {
   Building, Users, Briefcase, TrendingUp, BarChart3, Wallet,
 } from "lucide-react";
@@ -386,6 +386,8 @@ export function ScrChapterII({ data }: ScrChapterIIProps) {
           <EmptyDataNotice message="현금흐름 데이터가 추출되지 않았습니다." />
         </ScrSection>
       )}
+
+      {data.analysisNarrative && <NarrativeBlock text={data.analysisNarrative} />}
     </div>
   );
 }

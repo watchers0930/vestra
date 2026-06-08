@@ -314,6 +314,35 @@ vi.mock("@/lib/feasibility/api", () => ({
   }),
 }));
 
+// ─── Mock: MOLIT API ───
+vi.mock("@/lib/molit-api", () => ({
+  fetchRecentPrices: vi.fn().mockResolvedValue({
+    avgPrice: 250000000,
+    minPrice: 200000000,
+    maxPrice: 300000000,
+    transactionCount: 5,
+    transactions: [
+      {
+        dealAmount: 250000000,
+        buildYear: 2020,
+        dealYear: 2024,
+        dealMonth: 6,
+        dealDay: 15,
+        aptName: "테스트아파트",
+        area: 84.5,
+        floor: 10,
+        dong: "역삼동",
+      },
+    ],
+    period: "2024-01~2024-06",
+  }),
+}));
+
+// ─── Mock: AI 서술 ───
+vi.mock("@/lib/feasibility/scr-ai-narratives", () => ({
+  generateAiNarratives: vi.fn().mockResolvedValue(null),
+}));
+
 // ─── Mock: 계산 엔진 ───
 vi.mock("@/lib/feasibility/calc", () => ({
   calculateBusinessIncome: vi.fn().mockReturnValue(mockBusinessIncome),
@@ -370,7 +399,6 @@ import {
 
 import {
   getStaticMarketContext,
-  getNearbySupplyCases,
 } from "@/lib/feasibility/static-data";
 
 // ─── 테스트 헬퍼 ───
@@ -887,9 +915,10 @@ describe("SCR Orchestrator — generateScrReport", () => {
 
     const report = await generateScrReport(input);
 
-    expect(report.developerAnalysis.companyOverview.companyName).toBe("미확인");
-    expect(report.developerAnalysis.profitability.length).toBe(0);
-    expect(report.developerAnalysis.financialStability.balanceSheet.length).toBe(0);
+    // DART 없으면 orchestrator가 "시행사 미상"을 전달, fallback 재무 생성됨
+    expect(report.developerAnalysis.companyOverview.companyName).toBe("시행사 미상");
+    expect(report.developerAnalysis.profitability.length).toBeGreaterThan(0);
+    expect(report.developerAnalysis.financialStability.balanceSheet.length).toBeGreaterThan(0);
   });
 
   // ── 20. 분양가 적정성 검토 구조 확인 ──
@@ -996,10 +1025,10 @@ describe("SCR Orchestrator — generateScrReport", () => {
 
     const projections = report.repaymentAnalysis.scenario.projections;
 
-    // 차주안 (1000000/1000000 = 1.0) -> "기본"
-    expect(projections[0].scenario).toBe("기본");
-    // 시나리오1 (950000/1000000 = 0.95) -> "낙관"
-    expect(projections[1].scenario).toBe("낙관");
+    // 차주안 (1000000/1000000 = 1.0) -> "낙관" (분양률 100%)
+    expect(projections[0].scenario).toBe("낙관");
+    // 시나리오1 (950000/1000000 = 0.95) -> "기본"
+    expect(projections[1].scenario).toBe("기본");
     // 시나리오2 (900000/1000000 = 0.9) -> "보수"
     expect(projections[2].scenario).toBe("보수");
     // 시나리오3 (850000/1000000 = 0.85) -> "비관"
@@ -1041,7 +1070,8 @@ describe("SCR Orchestrator — generateScrReport", () => {
 
     const report = await generateScrReport(input);
 
-    expect(report.marketAnalysis.housingMarket.supplyRate.length).toBe(0);
+    // 폴백 데이터가 생성되므로 빈 배열이 아님
+    expect(report.marketAnalysis.housingMarket.supplyRate.length).toBeGreaterThan(0);
   });
 
   // ── 28. rentPriceIndex 매칭 (appendices priceIndexTrend) ──

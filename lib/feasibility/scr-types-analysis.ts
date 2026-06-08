@@ -14,6 +14,8 @@ export interface ScrMarketAnalysis {
   regulations: ScrRegulations;
   demographics: ScrDemographics;
   housingMarket: ScrHousingMarket;
+  demographicNarrative?: string;
+  housingNarrative?: string;
 }
 
 export interface ScrRegulations {
@@ -121,6 +123,7 @@ export interface ScrPriceAdequacy {
   facilityOverview: string;
   priceReview: ScrPriceReview;
   adequacyOpinion: ScrAdequacyOpinion;
+  locationNarrative?: string;
 }
 
 export interface ScrLocationAnalysis {
@@ -237,6 +240,10 @@ export interface ScrRepaymentAnalysis {
   };
   scenario: ScrScenarioAnalysis;
   bep: ScrBepAnalysis;
+  incomeNarrative?: string;
+  cashflowNarrative?: string;
+  scenarioNarrative?: string;
+  overallConclusion?: string;
 }
 
 export interface ScrPeriodSaleRateRow {

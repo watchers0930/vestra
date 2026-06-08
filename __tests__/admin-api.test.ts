@@ -756,7 +756,7 @@ describe("Admin API Routes", () => {
     it("관리자 미인증 → 403", async () => {
       mockAuth.mockResolvedValue(null);
 
-      const req = makeGetRequest("http://localhost:3000/api/admin/loan-rates");
+      makeGetRequest("http://localhost:3000/api/admin/loan-rates");
       const res = await loanRatesGET();
 
       expect(res.status).toBe(403);

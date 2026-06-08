@@ -34,15 +34,6 @@ const safeContractResult: any = {
   missingClauses: [],
 };
 
-const riskyContractResult: any = {
-  safetyScore: 35,
-  clauses: [
-    { riskLevel: "high" },
-    { riskLevel: "warning" },
-  ],
-  missingClauses: ["특약사항"],
-};
-
 describe("calculateVScore", () => {
   // ─── 1. 정상 입력 (모든 소스 데이터 제공) ───
 

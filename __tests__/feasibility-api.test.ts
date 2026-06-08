@@ -86,7 +86,6 @@ beforeEach(() => {
   global.fetch = vi.fn();
   vi.spyOn(console, "warn").mockImplementation(() => {});
   // apiCache 내부 Map을 강제 flush하여 테스트 격리 보장
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (apiCache as any).cache.clear();
 });
 

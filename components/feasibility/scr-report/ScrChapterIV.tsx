@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { ScrSection, EmptyDataNotice, thCls } from "./scr-shared";
+import { ScrSection, EmptyDataNotice, NarrativeBlock, thCls } from "./scr-shared";
 import { MapPin, TrendingUp, Home } from "lucide-react";
 import type {
   ScrPriceAdequacy,
@@ -312,6 +312,8 @@ export function ScrChapterIV({ data, siteAddress }: ScrChapterIVProps) {
           <EmptyDataNotice message="입지여건 데이터가 추출되지 않았습니다." />
         </ScrSection>
       )}
+
+      {data.locationNarrative && <NarrativeBlock text={data.locationNarrative} />}
 
       <LocationMap
         siteAddress={siteAddress}

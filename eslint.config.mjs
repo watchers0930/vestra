@@ -15,12 +15,13 @@ const eslintConfig = defineConfig([
     "sample-docs/**",
     "public/sw.js",
     "scripts/**",
+    "coverage/**",
   ]),
   {
     files: ["__tests__/**"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { ignoreRestSiblings: true }],
     },
   },
 ]);

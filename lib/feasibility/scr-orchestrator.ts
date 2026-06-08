@@ -11,6 +11,7 @@ import type { ParsedDocument, ExtractedValue } from "./feasibility-types";
 import type { ProjectType } from "./scr-types";
 import type { ScrReportData } from "./scr-types";
 import type { ScrClaimKey } from "./scr-claim-keys";
+import { generateAiNarratives } from "./scr-ai-narratives";
 
 // 외부 API
 import {
@@ -24,6 +25,7 @@ import {
   fetchMOISPopulation,
   fetchMOISAgePopulation,
 } from "./api";
+import { fetchRecentPrices } from "@/lib/molit-api";
 
 // 계산 엔진
 import {
@@ -129,7 +131,7 @@ export async function generateScrReport(
 
   // ── Step 2: 외부 API 데이터 수집 ──
   progress(15, "외부 데이터 수집 중...");
-  const apiData = await collectExternalData(district, developerName);
+  const apiData = await collectExternalData(district, developerName, address);
   progress(40, "외부 데이터 수집 완료");
 
   // ── Step 3: 계산 엔진 실행 ──
@@ -144,8 +146,24 @@ export async function generateScrReport(
   );
   progress(70, "계산 엔진 완료");
 
+  // ── Step 3.5: AI 분석 서술 생성 ──
+  progress(72, "AI 분석 서술 생성 중...");
+  const totalUnits = getClaimValue(parsedDocs, "total_units");
+  const aiNarratives = await generateAiNarratives({
+    projectName: getClaimString(parsedDocs, "building_name") || "미정",
+    address,
+    district,
+    developerName,
+    constructorName,
+    totalUnits,
+    projectType,
+    calcResults,
+    apiData,
+  });
+  progress(80, aiNarratives ? "AI 분석 완료" : "AI 분석 생략");
+
   // ── Step 4: 보고서 조립 ──
-  progress(80, "보고서 조립 중...");
+  progress(82, "보고서 조립 중...");
   const report = assembleReport(
     parsedDocs,
     mergedData,
@@ -156,7 +174,8 @@ export async function generateScrReport(
     district,
     developerName,
     constructorName,
-    options
+    options,
+    aiNarratives
   );
   progress(100, "보고서 생성 완료");
 
@@ -167,7 +186,8 @@ export async function generateScrReport(
 
 async function collectExternalData(
   district: string,
-  developerName: string
+  developerName: string,
+  address: string
 ): Promise<ExternalApiData> {
   const [
     populationTrends,
@@ -177,6 +197,7 @@ async function collectExternalData(
     rentPriceIndex,
     moisPopulation,
     moisAge,
+    salesTransactions,
   ] = await Promise.all([
     fetchPopulationTrends(district).catch(() => null),
     fetchHousingSupply(district).catch(() => null),
@@ -185,6 +206,7 @@ async function collectExternalData(
     fetchRentPriceIndex(district).catch(() => null),
     fetchMOISPopulation(district).catch(() => null),
     fetchMOISAgePopulation(district).catch(() => null),
+    fetchRecentPrices(address, 6).catch(() => null),
   ]);
 
   let corpInfo = null;
@@ -209,6 +231,7 @@ async function collectExternalData(
     moisPopulation,
     moisAge,
     staticMarket,
+    salesTransactions,
   };
 }
 

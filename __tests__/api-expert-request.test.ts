@@ -107,7 +107,7 @@ describe("POST /api/expert/request", () => {
 
   // 6. 연락처 미입력
   it("연락처 미입력 → 400", async () => {
-    const { contactPhone, ...noContact } = validBody;
+    const { contactPhone: _cp, ...noContact } = validBody;
     const req = makeRequest(noContact, { origin: "http://localhost:3000" });
     const res = await POST(req);
     const data = await res.json();
@@ -118,7 +118,7 @@ describe("POST /api/expert/request", () => {
 
   // 7. 이메일만 입력해도 성공
   it("이메일만 입력해도 성공", async () => {
-    const { contactPhone, ...rest } = validBody;
+    const { contactPhone: _cp2, ...rest } = validBody;
     const body = { ...rest, contactEmail: "test@example.com" };
     const req = makeRequest(body, { origin: "http://localhost:3000" });
     const res = await POST(req);

@@ -516,10 +516,8 @@ describe("molit-api", () => {
         ${makeRentItemXml({ 보증금액: "60,000", 월세금액: "0", 법정동: "역삼동" })}
       </items></body></response>`;
 
-      let callCount = 0;
       (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
         async (url: string) => {
-          callCount++;
           const urlStr = String(url);
           const isRent = urlStr.includes("AptRent");
           return {
@@ -544,7 +542,7 @@ describe("molit-api", () => {
       // 매매 0건 + 전월세 0건 → 연립/오피스텔 호출 발생
       mockFetchXml("<response><body><items></items></body></response>");
 
-      const result = await fetchComprehensivePrices(
+      await fetchComprehensivePrices(
         "서울시 강남구 역삼동",
         1
       );
@@ -558,7 +556,7 @@ describe("molit-api", () => {
 
   describe("LAWD_CODE_MAP", () => {
     it("주요 지역 코드가 5자리 숫자 문자열이다", () => {
-      for (const [key, value] of Object.entries(LAWD_CODE_MAP)) {
+      for (const [, value] of Object.entries(LAWD_CODE_MAP)) {
         expect(value).toMatch(/^\d{5}$/);
       }
     });

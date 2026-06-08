@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ScrSection, EmptyDataNotice, thCls, tdCls, tdNumCls } from "./scr-shared";
+import { ScrSection, EmptyDataNotice, NarrativeBlock, thCls, tdCls, tdNumCls } from "./scr-shared";
 import {
   Users, Home, TrendingDown, Building2, MapPin,
 } from "lucide-react";
@@ -433,6 +433,8 @@ export function ScrChapterIII({ data }: ScrChapterIIIProps) {
         </ScrSection>
       )}
 
+      {data.demographicNarrative && <NarrativeBlock text={data.demographicNarrative} />}
+
       {hasHousingMarket ? (
         <HousingMarketSection data={data.housingMarket} />
       ) : (
@@ -440,6 +442,8 @@ export function ScrChapterIII({ data }: ScrChapterIIIProps) {
           <EmptyDataNotice message="주택시장 데이터가 추출되지 않았습니다." />
         </ScrSection>
       )}
+
+      {data.housingNarrative && <NarrativeBlock text={data.housingNarrative} />}
 
       {hasSupply ? (
         <SupplySection

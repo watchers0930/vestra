@@ -160,6 +160,7 @@ export interface ScrDeveloperAnalysis {
   profitability: ScrProfitabilityRow[];
   financialStability: ScrFinancialStability;
   cashFlow: ScrCashFlowRow[];
+  analysisNarrative?: string;
 }
 
 export interface ScrCompanyOverview {

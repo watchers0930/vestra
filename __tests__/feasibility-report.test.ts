@@ -11,7 +11,7 @@
  *   - scr-parser-extensions.ts (확장 파싱 엔진)
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 
 import type { ScrReportData } from "@/lib/feasibility/scr-types";
 import type { ScrSupplyItem } from "@/lib/feasibility/scr-types-analysis";
