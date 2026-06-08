@@ -23,7 +23,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
   if (!session?.user) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-[#fbfbfd] px-4 py-10">
+      <div className="flex min-h-[calc(100vh-180px)] items-center justify-center px-4 py-10">
         <div className="w-full max-w-[380px]">
           <div className="mb-8 text-center">
             <VestraLogoMark size={56} className="mx-auto mb-4" />
