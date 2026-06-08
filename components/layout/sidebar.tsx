@@ -268,10 +268,8 @@ export default function Sidebar() {
           ) : (
             <>
               {userMenuGroups.map((group, groupIndex) => {
-                // BUSINESS가 아니면 사업성분석(feasibility)을 그룹에서 제외
-                const filteredItems = isBusiness
-                  ? group.items
-                  : group.items.filter((item) => item.href !== "/feasibility");
+                // 사업성분석은 그룹에서 제외 (BUSINESS일 때 "기업 서비스"에서 별도 표시)
+                const filteredItems = group.items.filter((item) => item.href !== "/feasibility");
                 if (filteredItems.length === 0) return null;
                 return (
                 <div key={group.label}>
