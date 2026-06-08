@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FileSearch, Shield, Calculator, Copy, ShieldCheck, ClipboardCheck } from "lucide-react";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import FeedbackWidget from "@/components/common/FeedbackWidget";
 import { CategoryHero } from "@/components/common/CategoryHero";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
@@ -31,6 +32,7 @@ export default function ContractReviewPage() {
   } = useContractAnalysis();
 
   return (
+    <AuthGuard featureName="계약검토">
     <div style={{ paddingBottom: "48px" }}>
       <CategoryHero
         badge="📋 계약검토"
@@ -228,5 +230,6 @@ export default function ContractReviewPage() {
         </div>
       )}
     </div>
+    </AuthGuard>
   );
 }

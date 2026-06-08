@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Eye, Plus } from "lucide-react";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/common/Button";
 import { useMonitoringData } from "./hooks/useMonitoringData";
@@ -44,6 +45,7 @@ export default function MonitoringPage() {
   }
 
   return (
+    <AuthGuard featureName="등기감시">
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <div className="flex items-start justify-between">
         <PageHeader
@@ -90,5 +92,6 @@ export default function MonitoringPage() {
         />
       )}
     </div>
+    </AuthGuard>
   );
 }

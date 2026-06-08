@@ -11,22 +11,28 @@ export function CtaSection() {
           지금 바로<br />시작하세요
         </h2>
         <p className="text-lg lg:text-xl text-white/50 mb-10 lg:mb-16 max-w-lg mx-auto">
-          가입 없이도 무료로 체험할 수 있습니다
+          로그인 없이 시세지도, 공시가격, 세금계산을 바로 이용하세요
         </p>
         <div className="flex flex-wrap items-center justify-center gap-6">
           <Link
-            href="/login"
+            href="/price-map"
             className="bg-white text-[#00042a] px-10 py-4 rounded font-extrabold text-[11px] tracking-widest uppercase hover:bg-blue-50 transition-colors"
           >
-            무료로 시작하기
+            시세지도 바로가기
           </Link>
           <Link
-            href="/login"
+            href="/rights"
             className="border border-white/30 text-white px-10 py-4 rounded font-bold text-[11px] tracking-widest uppercase hover:bg-white/5 transition-colors"
           >
-            데모 보기
+            권리분석 무료 체험
           </Link>
         </div>
+        <Link
+          href="/login"
+          className="inline-block mt-8 text-white/40 text-[11px] tracking-widest uppercase hover:text-white/70 transition-colors"
+        >
+          로그인하여 전체 기능 이용 →
+        </Link>
       </div>
     </section>
   );

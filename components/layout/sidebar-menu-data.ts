@@ -8,26 +8,29 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+export type AccessTier = "OPEN" | "TRIAL" | "AUTH_REQUIRED";
+
 export interface MenuItem {
   href: string;
   icon: LucideIcon;
   label: string;
   description: string;
+  tier?: AccessTier;
   children?: { href: string; label: string }[];
 }
 
 export interface MenuGroup { label: string; items: MenuItem[]; }
 
 export const userMenuItems: MenuItem[] = [
-  { href: "/dashboard",      icon: LayoutDashboard, label: "대시보드",       description: "보유 자산 현황과 주요 지표를 한눈에 확인합니다" },
-  { href: "/rights",         icon: Shield,          label: "권리분석",       description: "등기부등본을 업로드하면 갑구·을구 권리관계를 AI가 종합 분석합니다" },
-  { href: "/contract",       icon: FileSearch,      label: "계약검토",       description: "매매·임대차 계약서를 AI가 검토하고 위험 조항을 알려드립니다" },
-  { href: "/tax",            icon: Calculator,      label: "세금계산",       description: "취득세·양도세·종부세 등 부동산 세금을 시나리오별로 계산합니다" },
-  { href: "/official-price", icon: Landmark,        label: "공시가격 조회",  description: "개별공시지가·공동주택가격·개별주택가격을 통합 조회합니다" },
-  { href: "/prediction",     icon: TrendingUp,      label: "시세전망",       description: "실거래가 데이터 기반으로 시세 추이와 향후 전망을 분석합니다" },
-  { href: "/price-map",      icon: MapPin,          label: "시세지도",       description: "지도 위에서 아파트별 실거래가와 시세 변동을 한눈에 확인합니다" },
+  { href: "/dashboard",      icon: LayoutDashboard, label: "대시보드",       description: "보유 자산 현황과 주요 지표를 한눈에 확인합니다", tier: "AUTH_REQUIRED" },
+  { href: "/rights",         icon: Shield,          label: "권리분석",       description: "등기부등본을 업로드하면 갑구·을구 권리관계를 AI가 종합 분석합니다", tier: "TRIAL" },
+  { href: "/contract",       icon: FileSearch,      label: "계약검토",       description: "매매·임대차 계약서를 AI가 검토하고 위험 조항을 알려드립니다", tier: "AUTH_REQUIRED" },
+  { href: "/tax",            icon: Calculator,      label: "세금계산",       description: "취득세·양도세·종부세 등 부동산 세금을 시나리오별로 계산합니다", tier: "OPEN" },
+  { href: "/official-price", icon: Landmark,        label: "공시가격 조회",  description: "개별공시지가·공동주택가격·개별주택가격을 통합 조회합니다", tier: "OPEN" },
+  { href: "/prediction",     icon: TrendingUp,      label: "시세전망",       description: "실거래가 데이터 기반으로 시세 추이와 향후 전망을 분석합니다", tier: "TRIAL" },
+  { href: "/price-map",      icon: MapPin,          label: "시세지도",       description: "지도 위에서 아파트별 실거래가와 시세 변동을 한눈에 확인합니다", tier: "OPEN" },
   {
-    href: "/jeonse", icon: Home, label: "전세보호", description: "전세 안전 진단부터 전입신고·확정일자까지 보호 절차를 안내합니다",
+    href: "/jeonse", icon: Home, label: "전세보호", description: "전세 안전 진단부터 전입신고·확정일자까지 보호 절차를 안내합니다", tier: "TRIAL",
     children: [
       { href: "/jeonse",                    label: "절차 안내" },
       { href: "/jeonse/analysis",           label: "전세 안전 분석" },
@@ -40,12 +43,12 @@ export const userMenuItems: MenuItem[] = [
       { href: "/neighborhood",              label: "주변 환경 분석" },
     ],
   },
-  { href: "/feasibility",    icon: ClipboardCheck,  label: "사업성분석 보고서", description: "다중 문서 기반 SCR 수준 사업성 검증 보고서를 생성합니다" },
-  { href: "/assistant",      icon: MessageSquare,   label: "AI 어시스턴트",  description: "부동산 관련 궁금한 점을 AI에게 자유롭게 질문할 수 있습니다" },
-  { href: "/expert-connect", icon: Users,           label: "전문가 연결",    description: "AI 분석 결과를 전문가가 직접 검증하고 상담해드립니다" },
-  { href: "/monitoring",     icon: Eye,             label: "등기감시",       description: "등기부등본 변동을 실시간 감시하고 무결성 검증 증명서를 발급합니다" },
-  { href: "/api-hub",        icon: Database,        label: "API 데이터 허브", description: "국토교통부·법원 등 공공 API 연동 현황과 데이터를 조회합니다" },
-  { href: "/agent",          icon: Handshake,       label: "중개관리",       description: "부동산 중개 고객을 관리하고 물건 모니터링을 설정합니다" },
+  { href: "/feasibility",    icon: ClipboardCheck,  label: "사업성분석 보고서", description: "다중 문서 기반 SCR 수준 사업성 검증 보고서를 생성합니다", tier: "AUTH_REQUIRED" },
+  { href: "/assistant",      icon: MessageSquare,   label: "AI 어시스턴트",  description: "부동산 관련 궁금한 점을 AI에게 자유롭게 질문할 수 있습니다", tier: "AUTH_REQUIRED" },
+  { href: "/expert-connect", icon: Users,           label: "전문가 연결",    description: "AI 분석 결과를 전문가가 직접 검증하고 상담해드립니다", tier: "AUTH_REQUIRED" },
+  { href: "/monitoring",     icon: Eye,             label: "등기감시",       description: "등기부등본 변동을 실시간 감시하고 무결성 검증 증명서를 발급합니다", tier: "AUTH_REQUIRED" },
+  { href: "/api-hub",        icon: Database,        label: "API 데이터 허브", description: "국토교통부·법원 등 공공 API 연동 현황과 데이터를 조회합니다", tier: "AUTH_REQUIRED" },
+  { href: "/agent",          icon: Handshake,       label: "중개관리",       description: "부동산 중개 고객을 관리하고 물건 모니터링을 설정합니다", tier: "AUTH_REQUIRED" },
 ];
 
 export const userMenuGroups: MenuGroup[] = [

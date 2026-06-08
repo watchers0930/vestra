@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import { CategoryHero } from "@/components/common/CategoryHero";
 import { ExpertCard } from "@/components/expert/ExpertCard";
 import { useExpertConsult } from "./hooks/useExpertConsult";
@@ -19,6 +20,7 @@ export default function ExpertConnectPage() {
   } = useExpertConsult();
 
   return (
+    <AuthGuard featureName="전문가 연결">
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       <CategoryHero
         badge="✨ 전문가 연결"
@@ -48,5 +50,6 @@ export default function ExpertConnectPage() {
 
       <ProcessInfographic />
     </div>
+    </AuthGuard>
   );
 }

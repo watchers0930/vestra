@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Send, Bot, User, Sparkles, Trash2, Copy, Check, TrendingUp, FileText, Shield, Calculator, ArrowRight } from "lucide-react";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import { CategoryHero } from "@/components/common/CategoryHero";
 import { useAssistantData } from "./hooks/useAssistantData";
 
@@ -40,6 +41,7 @@ export default function AssistantPage() {
   } = useAssistantData();
 
   return (
+    <AuthGuard featureName="AI 어시스턴트">
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 3rem)", gap: 0 }}>
       <CategoryHero
         badge="✨ AI 어시스턴트"
@@ -260,5 +262,6 @@ export default function AssistantPage() {
         .group\\/msg:hover .group-hover\\/msg\\:opacity-100 { opacity: 1 !important; }
       `}</style>
     </div>
+    </AuthGuard>
   );
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   ShieldCheck, ChevronLeft, ChevronRight,
-  ChevronDown, Menu, X, ExternalLink,
+  ChevronDown, Menu, X, ExternalLink, Lock,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
@@ -147,6 +147,15 @@ export default function Sidebar() {
             {showLabel && (
               <>
                 <div className="min-w-0 flex-1 truncate text-[13.5px] font-semibold tracking-[-0.01em]">{item.label}</div>
+                {!session?.user && item.tier === "OPEN" && (
+                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 tracking-wide flex-shrink-0">FREE</span>
+                )}
+                {!session?.user && item.tier === "TRIAL" && (
+                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 tracking-wide flex-shrink-0">체험</span>
+                )}
+                {!session?.user && item.tier === "AUTH_REQUIRED" && (
+                  <Lock size={11} className="text-white/20 flex-shrink-0" />
+                )}
                 <ChevronDown size={14} style={{ flexShrink: 0, transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", color: isActive ? "rgba(255,255,255,0.78)" : "rgba(255,255,255,0.44)" }} />
               </>
             )}
@@ -184,6 +193,15 @@ export default function Sidebar() {
         >
           {iconEl}
           {showLabel && <div className="min-w-0 flex-1 truncate text-[13.5px] font-semibold tracking-[-0.01em]">{item.label}</div>}
+          {showLabel && !session?.user && item.tier === "OPEN" && (
+            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 tracking-wide flex-shrink-0">FREE</span>
+          )}
+          {showLabel && !session?.user && item.tier === "TRIAL" && (
+            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 tracking-wide flex-shrink-0">체험</span>
+          )}
+          {showLabel && !session?.user && item.tier === "AUTH_REQUIRED" && (
+            <Lock size={11} className="text-white/20 flex-shrink-0" />
+          )}
           {badgeCount != null && badgeCount > 0 && (
             <span className="bg-red-500 rounded-full text-[9px] text-white" style={{ minWidth: "16px", height: "16px", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", fontWeight: 700, flexShrink: 0 }}>
               {badgeCount > 99 ? "99+" : badgeCount}

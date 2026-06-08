@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, X } from "lucide-react";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import { CategoryHero } from "@/components/common/CategoryHero";
 import { StepIndicator } from "@/components/loading/StepIndicator";
 import { UploadStep } from "./components/UploadStep";
@@ -27,6 +28,7 @@ export default function FeasibilityPage() {
   } = useFeasibilityAnalysis();
 
   return (
+    <AuthGuard featureName="사업성분석">
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       <CategoryHero
         badge="✨ 수익성 분석"
@@ -93,5 +95,6 @@ export default function FeasibilityPage() {
         />
       )}
     </div>
+    </AuthGuard>
   );
 }

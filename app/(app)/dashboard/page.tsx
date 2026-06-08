@@ -3,6 +3,7 @@
 import { Shield, FileText, TrendingUp, Search, Building2, Banknote, AlertTriangle, Info, ClipboardList } from "lucide-react";
 import { formatKRW } from "@/lib/utils";
 import { EmptyState } from "@/components/common";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useDashboardData } from "./hooks/useDashboardData";
 import { DashboardSkeleton } from "./components/DashboardSkeleton";
 import { DashboardTopbar } from "./components/DashboardTopbar";
@@ -39,6 +40,7 @@ export default function DashboardPage() {
     : { trend: "고위험", dir: "down" as const };
 
   return (
+    <AuthGuard featureName="대시보드">
     <div>
       {/* ── Topbar ── */}
       <DashboardTopbar monitoredCount={monitoredCount} session={session} />
@@ -219,5 +221,6 @@ export default function DashboardPage() {
 
       </div>
     </div>
+    </AuthGuard>
   );
 }

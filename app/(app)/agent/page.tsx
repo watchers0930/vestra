@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Briefcase, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/common/Button";
 import { useAgentData } from "./hooks/useAgentData";
@@ -26,6 +27,7 @@ export default function AgentPage() {
   } = useAgentData();
 
   return (
+    <AuthGuard featureName="중개관리">
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       {/* 헤더 */}
       <div className="flex items-start justify-between">
@@ -106,5 +108,6 @@ export default function AgentPage() {
         onSubmit={addClient}
       />
     </div>
+    </AuthGuard>
   );
 }

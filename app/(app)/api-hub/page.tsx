@@ -3,6 +3,7 @@
 import { Database, CheckCircle, Clock, Activity, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageHeader, Card, Alert } from "@/components/common";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 
 const APIs = [
   {
@@ -128,6 +129,7 @@ const dataTypes = [
 
 export default function ApiHubPage() {
   return (
+    <AuthGuard featureName="API 데이터 허브">
     <div>
       <PageHeader icon={Database} title="API 데이터 허브" description="10개 공공기관 API 연동 현황" />
 
@@ -223,5 +225,6 @@ export default function ApiHubPage() {
         </Alert>
       </div>
     </div>
+    </AuthGuard>
   );
 }

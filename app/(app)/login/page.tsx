@@ -94,13 +94,39 @@ export default function LoginPage() {
             <div className="flex-1 border-t border-[#e5e5e7]" />
           </div>
 
-          {/* 게스트 체험 */}
-          <button
-            onClick={() => router.push("/rights")}
-            className="w-full px-4 py-3 rounded-xl border border-[#e5e5e7] text-sm text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] transition-colors"
-          >
-            게스트로 체험하기 (일 2회 제한)
-          </button>
+          {/* 무료 기능 바로가기 */}
+          <div className="space-y-2">
+            <p className="text-[11px] text-[#86868b] text-center font-medium tracking-wide">로그인 없이 바로 이용</p>
+            <div className="grid grid-cols-3 gap-2">
+              <Link
+                href="/price-map"
+                className="flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl border border-[#e5e5e7] hover:bg-[#f5f5f7] hover:border-[#0071e3]/20 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px] text-[#0071e3]" style={{ fontVariationSettings: "'FILL' 0,'wght' 300" }}>map</span>
+                <span className="text-[11px] font-medium text-[#1d1d1f]">시세지도</span>
+              </Link>
+              <Link
+                href="/official-price"
+                className="flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl border border-[#e5e5e7] hover:bg-[#f5f5f7] hover:border-[#0071e3]/20 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px] text-[#0071e3]" style={{ fontVariationSettings: "'FILL' 0,'wght' 300" }}>account_balance</span>
+                <span className="text-[11px] font-medium text-[#1d1d1f]">공시가격</span>
+              </Link>
+              <Link
+                href="/tax"
+                className="flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl border border-[#e5e5e7] hover:bg-[#f5f5f7] hover:border-[#0071e3]/20 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px] text-[#0071e3]" style={{ fontVariationSettings: "'FILL' 0,'wght' 300" }}>calculate</span>
+                <span className="text-[11px] font-medium text-[#1d1d1f]">세금계산</span>
+              </Link>
+            </div>
+            <button
+              onClick={() => router.push("/rights")}
+              className="w-full px-4 py-2.5 rounded-xl border border-dashed border-[#d2d2d7] text-xs text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] transition-colors"
+            >
+              권리분석 체험하기 (일 2회 무료)
+            </button>
+          </div>
 
           {/* 관리자 로그인 */}
           <div className="mt-6">
