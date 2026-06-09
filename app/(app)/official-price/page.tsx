@@ -5,6 +5,7 @@ import { Search, Landmark, Building2, Home, MapPin, ExternalLink, Loader2 } from
 import Link from "next/link";
 import { formatKRW } from "@/lib/utils";
 import { CategoryHero } from "@/components/common/CategoryHero";
+import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import { InfoRow } from "@/components/results";
 import AddressAutocomplete, { type AddressResult } from "@/components/common/AddressAutocomplete";
 import type { OfficialPriceResult } from "@/lib/official-price-api";
@@ -59,7 +60,8 @@ export default function OfficialPricePage() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 0, paddingTop: "52px" }}>
+      <DashboardPageTopbar current="공시가격 조회" primaryHref="/tax" primaryLabel="세금계산" />
       <CategoryHero
         badge="✨ 공시가격 조회"
         title="공시가격 조회"

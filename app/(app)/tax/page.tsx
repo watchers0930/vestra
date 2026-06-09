@@ -8,6 +8,7 @@ import { calculateAcquisitionTax, calculateHoldingTax, calculateTransferTax } fr
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { CategoryHero } from "@/components/common/CategoryHero";
+import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import { SliderInput } from "@/components/forms";
 import { InfoRow, ScholarPapers } from "@/components/results";
 import { useHydrated } from "@/lib/use-hydrated";
@@ -162,7 +163,8 @@ export default function TaxPage() {
   const sectionGap = { marginBottom: "20px" };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 0, paddingTop: "52px" }}>
+      <DashboardPageTopbar current="세금계산" primaryHref="/rights" primaryLabel="권리분석" />
 
       <CategoryHero
         badge="✨ 세무 계산기"

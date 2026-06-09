@@ -1,6 +1,7 @@
 "use client";
 
 import { Eye, EyeOff } from "lucide-react";
+import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import { useNeighborhoodData, type FacilityGroup } from "./hooks/useNeighborhoodData";
 import { NeighborhoodPanel } from "./components/NeighborhoodPanel";
 import { MobileNeighborhoodSheet } from "./components/MobileNeighborhoodSheet";
@@ -23,7 +24,8 @@ export default function NeighborhoodMapPage() {
 
   return (
     <div className="h-full w-full">
-      <div className="flex h-full flex-row">
+      <DashboardPageTopbar current="동네 분석" primaryHref="/jeonse" primaryLabel="전세보호" />
+      <div className="flex flex-row" style={{ height: "calc(100% - 52px)", marginTop: "52px" }}>
         {/* 데스크톱 좌측 패널 — hidden lg:flex */}
         <NeighborhoodPanel {...panelProps} />
 

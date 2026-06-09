@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { OfficialPriceResult } from "@/lib/official-price-api";
 import { TrendingUp, BarChart3, Home, Shield, Activity, MapPin, Zap } from "lucide-react";
 import { CategoryHero } from "@/components/common/CategoryHero";
+import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
 import { ScholarPapers } from "@/components/results";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
@@ -65,7 +66,8 @@ export default function PredictionPage() {
   }, [result, address]);
 
   return (
-    <div style={{ paddingBottom: "48px" }}>
+    <div style={{ paddingBottom: "48px", paddingTop: "52px" }}>
+      <DashboardPageTopbar current="시세전망" primaryHref="/rights" primaryLabel="권리분석" />
       <CategoryHero
         badge="📈 시세전망"
         title="실거래 기반 AI 시세 분석 및 전망"

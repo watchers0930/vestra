@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { Home } from "lucide-react";
+import { CategoryHero } from "@/components/common/CategoryHero";
+import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import { formatKRW, formatNumber, parseNumber } from "@/lib/format";
 import { useHydrated } from "@/lib/use-hydrated";
 import {
@@ -96,19 +98,14 @@ export default function JeonseComparisonPage() {
     : [];
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
-      {/* 헤더 */}
-      <div>
-        <div className="flex items-center gap-2">
-          <Home className="h-6 w-6 text-indigo-600" />
-          <h1 className="text-xl font-bold text-gray-900">
-            전세 vs 월세 비교 시뮬레이터
-          </h1>
-        </div>
-        <p className="mt-1 text-sm text-gray-500">
-          전세와 월세의 실질 비용을 비교하여 유리한 선택을 확인합니다
-        </p>
-      </div>
+    <div className="mx-auto max-w-5xl space-y-6 px-4 pb-6 pt-[52px] sm:px-6">
+      <DashboardPageTopbar current="전세·월세 비교" primaryHref="/jeonse" primaryLabel="전세보호" />
+      <CategoryHero
+        badge={<><Home size={11} strokeWidth={2} />전세·월세 비교</>}
+        title="전세 vs 월세 비교 시뮬레이터"
+        description="전세와 월세의 실질 비용을 비교하여 유리한 선택을 확인합니다"
+        marginBottom="0px"
+      />
 
       {/* 입력 폼 */}
       <div className="rounded-xl border border-gray-200 bg-white p-5">

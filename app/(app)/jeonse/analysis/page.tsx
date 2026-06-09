@@ -1,6 +1,7 @@
 "use client";
 
 import { CategoryHero } from "@/components/common/CategoryHero";
+import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import { JeonseInputForm } from "./components/JeonseInputForm";
 import { JeonseResultPanel } from "./components/JeonseResultPanel";
 import { useJeonseAnalysis } from "./hooks/useJeonseAnalysis";
@@ -20,7 +21,8 @@ export default function JeonsePage() {
   } = useJeonseAnalysis();
 
   return (
-    <div style={{ paddingBottom: "48px" }}>
+    <div style={{ paddingBottom: "48px", paddingTop: "52px" }}>
+      <DashboardPageTopbar current="전세 안전 분석" primaryHref="/jeonse" primaryLabel="전세보호" />
       <CategoryHero
         badge="🛡️ 전세 안전 분석"
         title="전세권 설정 및 임차권등기명령 AI 분석"

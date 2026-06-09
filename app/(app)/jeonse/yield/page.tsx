@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { TrendingUp } from "lucide-react";
+import { CategoryHero } from "@/components/common/CategoryHero";
+import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { formatKRW, formatNumber, parseNumber } from "@/lib/format";
 
@@ -85,19 +87,14 @@ export default function RentalYieldPage() {
     "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
-      {/* 헤더 */}
-      <div>
-        <div className="flex items-center gap-2">
-          <TrendingUp className="h-6 w-6 text-indigo-600" />
-          <h1 className="text-xl font-bold text-gray-900">
-            임대 수익률 계산기
-          </h1>
-        </div>
-        <p className="mt-1 text-sm text-gray-500">
-          매매가 대비 월세 수익률을 계산합니다
-        </p>
-      </div>
+    <div className="mx-auto max-w-5xl space-y-6 px-4 pb-6 pt-[52px] sm:px-6">
+      <DashboardPageTopbar current="임대 수익률" primaryHref="/jeonse" primaryLabel="전세보호" />
+      <CategoryHero
+        badge={<><TrendingUp size={11} strokeWidth={2} />임대 수익률</>}
+        title="임대 수익률 계산기"
+        description="매매가 대비 월세 수익률을 계산합니다"
+        marginBottom="0px"
+      />
 
       {/* 입력 폼 */}
       <div className="rounded-xl border border-gray-200 bg-white p-5">

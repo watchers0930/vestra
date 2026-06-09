@@ -18,7 +18,7 @@ export function CategoryHero({
   return (
     <section
       style={{
-        marginTop: "10px",
+        marginTop: "40px",
         marginBottom,
       }}
     >

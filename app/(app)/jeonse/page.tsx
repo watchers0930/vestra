@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Shield, MapPin, Stamp, ShieldCheck, Gavel, FileText, ChevronRight, Users, ArrowRight } from "lucide-react";
 import { CategoryHero } from "@/components/common/CategoryHero";
+import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 
 const PROCEDURES = [
   {
@@ -61,7 +62,8 @@ const ORDER_STEPS = [
 
 export default function JeonseHubPage() {
   return (
-    <div style={{ paddingBottom: "48px" }}>
+    <div style={{ paddingBottom: "48px", paddingTop: "52px" }}>
+      <DashboardPageTopbar current="전세보호" primaryHref="/jeonse/analysis" primaryLabel="전세분석" />
       <CategoryHero
         badge="🏠 전세보호"
         title="전세 보증금 보호 가이드"

@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { CategoryHero } from "@/components/common/CategoryHero";
+import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 
 export default function ProcedurePageLayout({
   title,
@@ -17,7 +18,8 @@ export default function ProcedurePageLayout({
   sidebar?: React.ReactNode;
 }) {
   return (
-    <div style={{ paddingBottom: "48px" }}>
+    <div style={{ paddingBottom: "48px", paddingTop: "52px" }}>
+      <DashboardPageTopbar current={breadcrumbLabel} primaryHref="/jeonse" primaryLabel="전세보호" />
       <CategoryHero
         badge={
           <>

@@ -116,10 +116,6 @@ export function useAssistantData() {
     }
   }, [messages, hydrated]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streamingContent]);
-
   const clearConversation = useCallback(() => {
     setMessages([]);
     localStorage.removeItem(STORAGE_KEY);

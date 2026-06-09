@@ -4,7 +4,8 @@ import Link from "next/link";
 import { FileSearch, Shield, Calculator, Copy, ShieldCheck, ClipboardCheck } from "lucide-react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import FeedbackWidget from "@/components/common/FeedbackWidget";
-import { DashboardPageHero, DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
+import { CategoryHero } from "@/components/common/CategoryHero";
+import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
 import { NerHighlight } from "@/components/common/NerHighlight";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
@@ -35,20 +36,12 @@ export default function ContractReviewPage() {
     <AuthGuard featureName="계약검토">
     <div>
       <DashboardPageTopbar current="계약검토" primaryHref="/rights" primaryLabel="권리분석" />
-      <div className="px-4 pb-20 sm:px-6 lg:px-9">
-        <div className="mb-7 mt-[18px]">
-          <DashboardPageHero
-            eyebrow="계약검토"
-            title="부동산 계약서 AI 자동 분석"
-            description={<>조항별 위험도와 누락 항목을 AI가 자동으로 검토하고 계약 안전점수를 산출합니다.</>}
-            icon={FileSearch}
-            statItems={[
-              { icon: FileSearch, label: "검토 범위", value: "조항별" },
-              { icon: ShieldCheck, label: "안전점수", value: "100점" },
-              { icon: Shield, label: "연계 분석", value: "권리분석" },
-            ]}
-          />
-        </div>
+      <div className="pb-20 pt-[52px]">
+        <CategoryHero
+          badge="📝 계약검토"
+          title="부동산 계약서 AI 자동 분석"
+          description={<>조항별 위험도와 누락 항목을 AI가 자동으로 검토하고<br />계약 안전점수를 산출합니다.</>}
+        />
 
       {/* 입력 카드 */}
       <ContractInputCard

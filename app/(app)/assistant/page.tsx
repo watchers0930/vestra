@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { Send, Bot, User, Sparkles, Trash2, Copy, Check, TrendingUp, FileText, Shield, Calculator, ArrowRight } from "lucide-react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import { DashboardPageHero, DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
+import { CategoryHero } from "@/components/common/CategoryHero";
+import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import { useAssistantData } from "./hooks/useAssistantData";
 
 const EXAMPLE_QUESTIONS = [
@@ -44,34 +45,26 @@ export default function AssistantPage() {
     <AuthGuard featureName="AI 어시스턴트">
     <div>
       <DashboardPageTopbar current="AI 어시스턴트" primaryHref="/contract" primaryLabel="계약검토" />
-      <div className="flex min-h-[calc(100vh-72px)] flex-col px-4 pb-20 sm:px-6 lg:px-9">
-        <div className="mb-7 mt-[18px]">
-          <DashboardPageHero
-            eyebrow="AI 어시스턴트"
-            title="부동산 전문 AI 상담"
-            description="권리분석, 세무, 투자, 계약, 전세보호 질문을 하나의 대화 흐름에서 확인합니다."
-            icon={Sparkles}
-            actions={messages.length > 0 ? (
-              <button
-                onClick={clearConversation}
-                className="inline-flex items-center gap-[6px] rounded-full px-[18px] py-[11px] text-[13px] font-semibold transition-colors"
-                style={{
-                  background: "rgba(255,59,48,0.10)",
-                  border: "1px solid rgba(255,59,48,0.18)",
-                  color: "#ff7b73",
-                }}
-              >
-                <Trash2 size={14} strokeWidth={2} />
-                초기화
-              </button>
-            ) : undefined}
-            statItems={[
-              { icon: Shield, label: "권리/전세", value: "상담" },
-              { icon: FileText, label: "계약 특약", value: "검토" },
-              { icon: Calculator, label: "세무 질문", value: "답변" },
-            ]}
-          />
-        </div>
+      <div className="flex min-h-[calc(100vh-72px)] flex-col pb-20 pt-[52px]">
+        <CategoryHero
+          badge="✨ AI 어시스턴트"
+          title="부동산 전문 AI 상담"
+          description={<>권리분석, 세무, 투자, 계약, 전세보호 질문을<br />하나의 대화 흐름에서 확인합니다.</>}
+          actions={messages.length > 0 ? (
+            <button
+              onClick={clearConversation}
+              className="inline-flex items-center gap-[6px] rounded-full px-[18px] py-[11px] text-[13px] font-semibold transition-colors"
+              style={{
+                background: "rgba(255,59,48,0.10)",
+                border: "1px solid rgba(255,59,48,0.18)",
+                color: "#ff7b73",
+              }}
+            >
+              <Trash2 size={14} strokeWidth={2} />
+              초기화
+            </button>
+          ) : undefined}
+        />
 
       {/* ── 채팅 영역 ── */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", overflow: "hidden", minHeight: "560px" }}>

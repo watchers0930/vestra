@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { Truck } from "lucide-react";
+import { CategoryHero } from "@/components/common/CategoryHero";
+import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import {
   BarChart,
   Bar,
@@ -129,19 +131,14 @@ export default function MovingCostPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
-      {/* 헤더 */}
-      <div>
-        <div className="flex items-center gap-2">
-          <Truck className="h-6 w-6 text-indigo-600" />
-          <h1 className="text-xl font-bold text-gray-900">
-            이사 비용 계산기
-          </h1>
-        </div>
-        <p className="mt-1 text-sm text-gray-500">
-          이사 업체 견적 + 중개수수료 + 세금을 한번에 계산합니다
-        </p>
-      </div>
+    <div className="mx-auto max-w-5xl space-y-6 px-4 pb-6 pt-[52px] sm:px-6">
+      <DashboardPageTopbar current="이사 비용" primaryHref="/jeonse" primaryLabel="전세보호" />
+      <CategoryHero
+        badge={<><Truck size={11} strokeWidth={2} />이사 비용</>}
+        title="이사 비용 계산기"
+        description="이사 업체 견적 + 중개수수료 + 세금을 한번에 계산합니다"
+        marginBottom="0px"
+      />
 
       {/* 입력 폼 */}
       <div className="rounded-xl border border-gray-200 bg-white p-5">

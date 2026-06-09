@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FileText, Loader2, ShieldCheck, Home, Calculator, TrendingUp } from "lucide-react";
 import { AiDisclaimer } from "@/components/common";
 import { CategoryHero } from "@/components/common/CategoryHero";
+import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import FeedbackWidget from "@/components/common/FeedbackWidget";
 import { AnalysisLoader } from "@/components/common/AnalysisLoader";
 import { ErrorRetry } from "@/components/common/ErrorRetry";
@@ -40,11 +41,13 @@ export default function RightsAnalysisPage() {
 
   return (
     <div>
-      <CategoryHero
-        badge="⚖️ 권리분석"
-        title="등기부등본 AI 종합 분석"
-        description={<>갑구·을구 권리관계를 AI가 분석하여 위험도와<br />투자 적합성을 판단합니다.</>}
-      />
+      <DashboardPageTopbar current="권리분석" primaryHref="/contract" primaryLabel="계약검토" />
+      <div className="pt-[52px]">
+        <CategoryHero
+          badge="⚖️ 권리분석"
+          title="등기부등본 AI 종합 분석"
+          description={<>갑구·을구 권리관계를 AI가 분석하여 위험도와<br />투자 적합성을 판단합니다.</>}
+        />
 
       {/* 이전 분석 기록 배너 */}
       {previousAnalysis && (
@@ -237,6 +240,7 @@ export default function RightsAnalysisPage() {
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }
