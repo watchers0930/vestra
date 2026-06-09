@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   try {
     if (!isCodefAvailable()) {
       return NextResponse.json(
-        { error: "CODEF API가 설정되지 않았습니다." },
+        { error: "등기부 공식 연계 검색 서비스가 설정되지 않았습니다." },
         { status: 503 },
       );
     }
@@ -37,6 +37,13 @@ export async function GET(req: NextRequest) {
       query: address,
     });
   } catch (error: unknown) {
-    return handleApiError(error, "CODEF 주소 검색");
+    if (error instanceof Error && error.message === "CODEF_CLIENT_NOT_FOUND") {
+      console.error("[등기부 주소 공식 연계 검색] CODEF client id가 유효하지 않습니다.");
+      return NextResponse.json(
+        { error: "등기부 공식 연계 검색 인증키 확인이 필요합니다. 파일 업로드 또는 텍스트 입력으로 분석을 진행해주세요." },
+        { status: 503 },
+      );
+    }
+    return handleApiError(error, "등기부 주소 공식 연계 검색");
   }
 }

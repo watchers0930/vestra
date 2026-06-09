@@ -17,7 +17,7 @@ const CODEF_DEMO_BASE = "https://development.codef.io";
 
 // 공공 부동산 API 엔드포인트
 const PRODUCT_REGISTRY = "/v1/kr/public/ck/real-estate-register/status";
-const PRODUCT_ADDRESS = "/v1/kr/public/ck/real-estate-address/search";
+const PRODUCT_ADDRESS = "/v1/kr/public/ck/real-estate/address";
 
 // 토큰 TTL: 6일 (실제 7일이지만 여유분)
 const TOKEN_TTL = 6 * 24 * 60 * 60 * 1000;
@@ -29,20 +29,22 @@ const ADDRESS_CACHE_TTL = 30 * 60 * 1000;
 // ─── 환경 변수 ───
 
 function getCodefConfig() {
-  const clientId = process.env.CODEF_DEMO_CLIENT_ID;
-  const clientSecret = process.env.CODEF_DEMO_CLIENT_SECRET;
+  const clientId = process.env.CODEF_CLIENT_ID || process.env.CODEF_DEMO_CLIENT_ID;
+  const clientSecret = process.env.CODEF_CLIENT_SECRET || process.env.CODEF_DEMO_CLIENT_SECRET;
   const publicKey = process.env.CODEF_PUBLIC_KEY;
+  const baseUrl =
+    process.env.CODEF_API_BASE ||
+    (process.env.CODEF_CLIENT_ID ? "https://api.codef.io" : CODEF_DEMO_BASE);
 
   if (!clientId || !clientSecret) {
-    throw new Error("CODEF API 키가 설정되지 않았습니다. (CODEF_DEMO_CLIENT_ID, CODEF_DEMO_CLIENT_SECRET)");
+    throw new Error("CODEF API 키가 설정되지 않았습니다. (CODEF_CLIENT_ID/CODEF_CLIENT_SECRET 또는 CODEF_DEMO_CLIENT_ID/CODEF_DEMO_CLIENT_SECRET)");
   }
 
   return {
     clientId,
     clientSecret,
     publicKey: publicKey || "",
-    // 데모 환경 사용 (프로덕션 전환 시 CODEF_API_BASE로 변경)
-    baseUrl: CODEF_DEMO_BASE,
+    baseUrl,
   };
 }
 
@@ -112,6 +114,9 @@ export async function getCodefToken(): Promise<string> {
 
   if (!res.ok) {
     const errText = await res.text();
+    if (errText.includes("No client found")) {
+      throw new Error("CODEF_CLIENT_NOT_FOUND");
+    }
     throw new Error(`CODEF 토큰 발급 실패 (${res.status}): ${errText}`);
   }
 
@@ -189,8 +194,9 @@ export async function searchAddress(address: string): Promise<CodefAddressResult
 
   const response = await codefRequest(PRODUCT_ADDRESS, {
     organization: "0002",
-    inquiryType: "0",
-    reqAddress: address,
+    searchGbn: "1",
+    address,
+    recordStatus: "0",
   });
 
   const dataArr = Array.isArray(response.data) ? response.data : [response.data];
@@ -198,10 +204,10 @@ export async function searchAddress(address: string): Promise<CodefAddressResult
   const results: CodefAddressResult[] = dataArr
     .filter((item) => item && typeof item === "object")
     .map((item) => ({
-      uniqueNo: String(item.uniqueNo || ""),
-      address: String(item.address || item.commAddress || ""),
-      realEstateType: String(item.realEstateType || item.commRealEstateType || ""),
-      realEstateTypeCode: String(item.realEstateTypeCode || item.commRealEstateTypeCode || ""),
+      uniqueNo: String(item.commUniqueNo || item.uniqueNo || ""),
+      address: String(item.commAddrLotNumber || item.address || item.commAddress || ""),
+      realEstateType: String(item.resType || item.realEstateType || item.commRealEstateType || ""),
+      realEstateTypeCode: String(item.realtyType || item.realEstateTypeCode || item.commRealEstateTypeCode || ""),
     }))
     .filter((r) => r.uniqueNo || r.address);
 
@@ -375,5 +381,8 @@ function formatRegistryEntry(entry: Record<string, unknown>): string {
 // ─── CODEF 사용 가능 여부 확인 ───
 
 export function isCodefAvailable(): boolean {
-  return !!(process.env.CODEF_DEMO_CLIENT_ID && process.env.CODEF_DEMO_CLIENT_SECRET);
+  return !!(
+    (process.env.CODEF_CLIENT_ID && process.env.CODEF_CLIENT_SECRET) ||
+    (process.env.CODEF_DEMO_CLIENT_ID && process.env.CODEF_DEMO_CLIENT_SECRET)
+  );
 }
