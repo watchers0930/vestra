@@ -30,6 +30,7 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
   const [deposit, setDeposit] = useState("");
   const [contractDate, setContractDate] = useState("");
   const [moveInDate, setMoveInDate] = useState("");
+  const [ownerName, setOwnerName] = useState("");
 
   // 등록
   const [submitting, setSubmitting] = useState(false);
@@ -88,6 +89,7 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
       if (deposit) body.deposit = Number(deposit);
       if (contractDate) body.contractDate = contractDate;
       if (moveInDate) body.moveInDate = moveInDate;
+      if (ownerName.trim()) body.ownerName = ownerName.trim();
 
       const res = await fetch("/api/monitoring", {
         method: "POST",
@@ -126,14 +128,14 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
 
         {/* 본문 */}
         <div className="px-6 py-5 overflow-y-auto flex-1 space-y-5">
-          {/* CODEF 서비스 불가 안내 */}
+          {/* 등기부 검색 서비스 불가 안내 */}
           {codefUnavailable && (
             <div className="flex items-start gap-2.5 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
               <AlertTriangle size={16} className="text-amber-600 mt-0.5 shrink-0" />
               <div>
                 <p className="text-sm font-medium text-amber-800">등기부 검색 서비스 점검 중</p>
                 <p className="text-xs text-amber-700 mt-0.5">
-                  CODEF 연동 서비스가 일시적으로 이용 불가합니다. 잠시 후 다시 시도해주세요.
+                  공식 연계 조회 서비스가 일시적으로 이용 불가합니다. 잠시 후 다시 시도해주세요.
                 </p>
               </div>
             </div>
@@ -203,6 +205,12 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
           {selected && (
             <div className="space-y-3 pt-2 border-t border-gray-100">
               <p className="text-xs text-[#86868b]">계약 정보 (선택 입력)</p>
+              <FormInput
+                label="소유자명"
+                placeholder="등기부상 소유자명"
+                value={ownerName}
+                onChange={(e) => setOwnerName(e.target.value)}
+              />
               <FormInput
                 label="보증금 (만원)"
                 type="number"

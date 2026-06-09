@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { address, contractDate, moveInDate, deposit, commUniqueNo } = body;
+    const { address, contractDate, moveInDate, deposit, commUniqueNo, ownerName } = body;
     if (!address || typeof address !== "string" || address.trim().length < 5) {
       return NextResponse.json(
         { error: "유효한 주소를 입력해주세요." },
@@ -126,6 +126,7 @@ export async function POST(req: NextRequest) {
           ...(moveInDate ? { moveInDate: new Date(moveInDate) } : {}),
           ...(deposit ? { deposit: Number(deposit) } : {}),
           ...(commUniqueNo ? { commUniqueNo } : {}),
+          ...(ownerName ? { ownerName: String(ownerName).trim() } : {}),
         },
       });
       return NextResponse.json({ property: reactivated, reactivated: true });
@@ -162,6 +163,7 @@ export async function POST(req: NextRequest) {
         ...(moveInDate ? { moveInDate: new Date(moveInDate) } : {}),
         ...(deposit ? { deposit: Number(deposit) } : {}),
         ...(commUniqueNo ? { commUniqueNo } : {}),
+        ...(ownerName ? { ownerName: String(ownerName).trim() } : {}),
       },
     });
 

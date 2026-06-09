@@ -20,11 +20,23 @@ import { verifyCronSecret } from "@/lib/cron-auth";
 import { fetchRegistry, isCodefAvailable } from "@/lib/codef-api";
 import { recordRegistrySnapshot } from "@/lib/registry-snapshot-recorder";
 import { getSectionLabel } from "@/lib/registry-blockchain";
+import {
+  fetchRegistryCaseStatus,
+  isTilkoAvailable,
+  shouldConfirmWithCodef,
+  type TilkoCaseStatusResult,
+} from "@/lib/tilko-api";
 
 const BATCH_SIZE = 50;
 
 function generateContentHash(content: string): string {
   return createHash("sha256").update(content).digest("hex");
+}
+
+function mapSignalStatus(phase: TilkoCaseStatusResult["phase"]): string {
+  if (phase === "completed") return "pending_confirm";
+  if (phase === "dismissed") return "dismissed";
+  return "case_detected";
 }
 
 // ── 변동 유형 감지 (상세 분석) ──
@@ -195,6 +207,7 @@ export async function GET(req: NextRequest) {
     const simulate = url.searchParams.get("simulate") === "true";
     const changeType = url.searchParams.get("changeType") || "mortgage_added";
     const propertyIdFilter = url.searchParams.get("propertyId");
+    const forceCodef = url.searchParams.get("forceCodef") === "true";
 
     if (simulate) {
       console.log(`[CRON:MONITOR] 시뮬레이션 모드 — changeType=${changeType}, propertyId=${propertyIdFilter || "전체"}`);
@@ -237,10 +250,104 @@ export async function GET(req: NextRequest) {
     let alertsCreated = 0;
     let notificationsSent = 0;
     let codefQueries = 0;
+    let tilkoPrechecks = 0;
+    let tilkoSignals = 0;
     let skipped = 0;
 
     for (const prop of allProperties) {
       try {
+        // 1차 감시: Tilko 등기신청사건 처리현황 조회
+        // - 접수/처리 중: 조기 경고만 발송
+        // - 처리 완료: CODEF 등기부등본 상세 조회로 확정
+        // - Tilko 미설정/강제 조회/시뮬레이션: 기존 CODEF 경로 유지
+        if (!simulate && !forceCodef && isTilkoAvailable()) {
+          try {
+            const caseStatus = await fetchRegistryCaseStatus({
+              reqAddress: prop.address,
+              commUniqueNo: prop.commUniqueNo,
+              ownerName: prop.ownerName,
+            });
+            tilkoPrechecks++;
+
+            const now = new Date();
+            if (!caseStatus.hasSignal) {
+              await prisma.monitoredProperty.update({
+                where: { id: prop.id },
+                data: {
+                  tilkoLastCaseCheckedAt: now,
+                  lastCheckedAt: now,
+                  registrySignalStatus: "idle",
+                },
+              });
+              continue;
+            }
+
+            tilkoSignals++;
+            const signalStatus = mapSignalStatus(caseStatus.phase);
+            const shouldCreateSignalAlert =
+              prop.registrySignalStatus !== signalStatus ||
+              prop.registrySignalSummary !== caseStatus.summary;
+
+            await prisma.monitoredProperty.update({
+              where: { id: prop.id },
+              data: {
+                tilkoLastCaseCheckedAt: now,
+                lastCheckedAt: now,
+                registrySignalStatus: signalStatus,
+                registrySignalDetectedAt: prop.registrySignalDetectedAt || now,
+                registrySignalSummary: caseStatus.summary,
+                registrySignalRaw: caseStatus.rawData,
+              },
+            });
+
+            if (shouldCreateSignalAlert) {
+              await prisma.monitoringAlert.create({
+                data: {
+                  monitoredPropertyId: prop.id,
+                  changeType: signalStatus === "dismissed" ? "case_dismissed" : "case_detected",
+                  summary: caseStatus.summary,
+                  detail:
+                    signalStatus === "pending_confirm"
+                      ? "등기신청 사건 처리가 완료된 것으로 감지되었습니다. 최신 등기부 확정조회로 실제 반영 내용을 확인합니다."
+                      : "등기 변경으로 이어질 수 있는 신청 사건이 감지되었습니다. 아직 등기부등본 반영 여부는 확정 전입니다.",
+                  riskLevel: signalStatus === "dismissed" ? "low" : "medium",
+                },
+              });
+              alertsCreated++;
+
+              const recipients = await getNotificationRecipients(prop.id, prop.userId);
+              for (const recipientId of recipients) {
+                await sendNotification({
+                  userId: recipientId,
+                  type: "registry_change",
+                  title:
+                    signalStatus === "pending_confirm"
+                      ? "[VESTRA] 등기신청 처리완료 감지"
+                      : "[VESTRA] 등기신청 사건 감지",
+                  body: `${prop.address}\n${caseStatus.summary}\n아직 등기부등본 변경 확정 전입니다.`,
+                  data: {
+                    propertyId: prop.id,
+                    changeType: signalStatus,
+                    riskLevel: "medium",
+                    monitorMode: prop.monitorMode,
+                    source: "tilko",
+                  },
+                });
+                notificationsSent++;
+              }
+            }
+
+            if (!shouldConfirmWithCodef(caseStatus)) {
+              continue;
+            }
+          } catch (tilkoError) {
+            console.error(
+              `[CRON:MONITOR] Tilko 프리체크 실패 (CODEF 직접 조회로 폴백): ${prop.address}`,
+              tilkoError instanceof Error ? tilkoError.message : tilkoError
+            );
+          }
+        }
+
         // CODEF로 등기부 조회 (시뮬레이션 시 가짜 등기부 반환)
         const registry = await fetchRegistryContent(prop.address, prop.commUniqueNo, simulate
           ? { simulate: true, changeType, baselineData: prop.baselineData }
@@ -260,7 +367,19 @@ export async function GET(req: NextRequest) {
         codefQueries++;
         const newHash = generateContentHash(registry.text);
 
-        // 블록체인 스냅샷 기록 (해시체인 + 머클트리 + 서명 + 암호화)
+        // 해시가 동일하면 변동 없음
+        if (prop.lastHash === newHash) {
+          await prisma.monitoredProperty.update({
+            where: { id: prop.id },
+            data: {
+              lastCheckedAt: new Date(),
+              registrySignalStatus: "confirmed_no_change",
+            },
+          });
+          continue;
+        }
+
+        // 변경 또는 최초 기준점인 경우에만 스냅샷 기록 (해시체인 + 머클트리 + 서명 + 암호화)
         let snapshotResult: { changedSections: string[]; isFirstSnapshot: boolean } | null = null;
         try {
           snapshotResult = await recordRegistrySnapshot({
@@ -272,15 +391,6 @@ export async function GET(req: NextRequest) {
             `[CRON:MONITOR] 스냅샷 기록 실패 (기존 해시 비교로 폴백): ${prop.address}`,
             snapError instanceof Error ? snapError.message : snapError
           );
-        }
-
-        // 해시가 동일하면 변동 없음
-        if (prop.lastHash === newHash) {
-          await prisma.monitoredProperty.update({
-            where: { id: prop.id },
-            data: { lastCheckedAt: new Date() },
-          });
-          continue;
         }
 
         // 변동 감지! baseline과 비교
@@ -353,6 +463,9 @@ export async function GET(req: NextRequest) {
           data: {
             lastCheckedAt: new Date(),
             lastHash: newHash,
+            registrySignalStatus: changes.some((change) => change.changeType !== "baseline_set")
+              ? "confirmed_changed"
+              : "confirmed_no_change",
             // 최초 조회 시 baseline 저장
             ...(!prop.baselineData ? { baselineData: registry.text } : {}),
           },
@@ -372,6 +485,8 @@ export async function GET(req: NextRequest) {
       gapMode: gapProperties.length,
       standardMode: standardProperties.length,
       codefQueries,
+      tilkoPrechecks,
+      tilkoSignals,
       skipped,
       alertsCreated,
       notificationsSent,

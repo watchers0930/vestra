@@ -10,6 +10,9 @@ export interface MonitoredProperty {
   monitorMode: string;
   deposit: number | null;
   lastCheckedAt: string | null;
+  registrySignalStatus?: string | null;
+  registrySignalSummary?: string | null;
+  tilkoLastCaseCheckedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

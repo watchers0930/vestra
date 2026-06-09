@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, AlertCircle, ChevronRight } from "lucide-react";
+import { Clock, AlertCircle, ChevronRight, Radar, ShieldCheck, Zap } from "lucide-react";
 import { Card } from "@/components/common/Card";
 import { Badge } from "@/components/common/Badge";
 import type { MonitoredProperty } from "../hooks/useMonitoringData";
@@ -42,10 +42,55 @@ function formatRelativeTime(dateStr: string | null): string {
   return `${days}일 전`;
 }
 
+function formatNextCheck(dateStr: string | null): string {
+  if (!dateStr) return "첫 점검 대기";
+  const next = new Date(dateStr).getTime() + 4 * 60 * 60 * 1000;
+  const diff = next - Date.now();
+  if (diff <= 0) return "점검 대기 중";
+  const mins = Math.ceil(diff / 60000);
+  if (mins < 60) return `${mins}분 후`;
+  const hours = Math.floor(mins / 60);
+  const remain = mins % 60;
+  return remain > 0 ? `${hours}시간 ${remain}분 후` : `${hours}시간 후`;
+}
+
+function isRecentlyCreated(dateStr: string): boolean {
+  return Date.now() - new Date(dateStr).getTime() < 5 * 60 * 1000;
+}
+
+function signalLabel(status?: string | null): string {
+  switch (status) {
+    case "case_detected":
+      return "신청사건 감지";
+    case "pending_confirm":
+      return "확정조회 대기";
+    case "confirmed_changed":
+      return "변경 확인";
+    case "confirmed_no_change":
+      return "변경 없음";
+    case "dismissed":
+      return "종결 확인";
+    default:
+      return "프리체크 대기";
+  }
+}
+
 export function MonitoringPropertyCard({ property, unreadCount, highestRisk }: Props) {
+  const isActive = property.status === "active";
+  const recent = isRecentlyCreated(property.createdAt);
+  const signalStatus = property.registrySignalStatus || "idle";
+  const lastPrecheck = property.tilkoLastCaseCheckedAt || property.lastCheckedAt;
+
   return (
     <Link href={`/monitoring/${property.id}`} className="block group">
-      <Card hover className="relative overflow-hidden transition-all duration-200 group-hover:-translate-y-[2px] group-hover:shadow-lg">
+      <Card
+        hover
+        className={[
+          "relative overflow-hidden transition-all duration-200 group-hover:-translate-y-[2px] group-hover:shadow-lg",
+          isActive ? "border-emerald-100 shadow-[0_1px_16px_rgba(48,209,88,0.08)]" : "",
+          recent ? "ring-2 ring-emerald-200/80" : "",
+        ].join(" ")}
+      >
         {/* 상태 인디케이터 */}
         <div
           className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl"
@@ -55,6 +100,19 @@ export function MonitoringPropertyCard({ property, unreadCount, highestRisk }: P
               : "linear-gradient(180deg, #6e6e73, #8e8e93)",
           }}
         />
+        {isActive && (
+          <>
+            <div className="absolute inset-x-0 top-0 h-[2px] overflow-hidden bg-emerald-50">
+              <div className="h-full w-1/2 animate-[scan-line_2.8s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-emerald-400 to-transparent" />
+            </div>
+            <style jsx>{`
+              @keyframes scan-line {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(220%); }
+              }
+            `}</style>
+          </>
+        )}
 
         <div className="p-5 pl-6">
           {/* 헤더: 주소 + 배지 */}
@@ -69,17 +127,58 @@ export function MonitoringPropertyCard({ property, unreadCount, highestRisk }: P
                 </p>
               )}
             </div>
-            <Badge variant={property.status === "active" ? "success" : "neutral"} size="sm">
-              {property.status === "active" ? "감시중" : "일시중지"}
+            <Badge variant={isActive ? "success" : "neutral"} size="sm" className={isActive ? "gap-1.5" : ""}>
+              {isActive && (
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+              )}
+              {isActive ? "감시 활성" : "일시중지"}
             </Badge>
           </div>
 
-          {/* 감시 모드 */}
-          <div className="flex items-center gap-2 mb-3">
+          {/* 감시 모드 + 실행 단계 */}
+          <div className="mb-3 flex flex-wrap items-center gap-2">
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[#6e6e73] font-medium">
               {MODE_LABEL[property.monitorMode] || property.monitorMode}
             </span>
+            {isActive && (
+              <>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                  <Radar size={11} />
+                  4시간 주기
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                  <ShieldCheck size={11} />
+                  {signalLabel(signalStatus)}
+                </span>
+              </>
+            )}
+            {recent && isActive && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#1d1d1f] px-2 py-0.5 text-[11px] font-semibold text-white">
+                <Zap size={11} />
+                방금 등록
+              </span>
+            )}
           </div>
+
+          {isActive && (
+            <div className="mb-4 rounded-lg border border-emerald-100 bg-gradient-to-r from-emerald-50 to-blue-50 px-3 py-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-emerald-800">등기감시 엔진 작동 중</p>
+                  <p className="mt-0.5 truncate text-[11px] text-[#5f6368]">
+                    프리체크 후 이상징후 발생 시 최신 등기부 확정조회
+                  </p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-[10px] text-[#86868b]">다음 점검</p>
+                  <p className="text-[11px] font-semibold text-[#1d1d1f]">{formatNextCheck(lastPrecheck)}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 하단: 미확인 알림 + 최종 점검 */}
           <div className="flex items-center justify-between">

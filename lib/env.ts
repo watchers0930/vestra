@@ -30,6 +30,11 @@ const ENV_VARS: EnvVar[] = [
   { key: "NEXT_PUBLIC_GA_MEASUREMENT_ID", required: false, description: "클라이언트 GA4 Measurement ID (G-...)" },
   { key: "NEXT_PUBLIC_GTM_ID", required: false, description: "Google Tag Manager Container ID (GTM-...)" },
   { key: "REGISTRY_SIGNING_SEED", required: false, description: "등기변동 모니터링 Ed25519 서명 시드" },
+  { key: "TILKO_API_KEY", required: false, description: "Tilko 등기신청사건 프리체크 API Key" },
+  { key: "TILKO_PUBLIC_KEY", required: false, description: "Tilko 서버용 공개키(Base64)" },
+  { key: "TILKO_IROS_ID", required: false, description: "인터넷등기소 로그인 ID" },
+  { key: "TILKO_IROS_PASSWORD", required: false, description: "인터넷등기소 로그인 비밀번호" },
+  { key: "TILKO_REGISTRY_CASE_STATUS_PATH", required: false, description: "Tilko 등기신청사건 처리현황 API path" },
 ];
 
 let validated = false;
