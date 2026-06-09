@@ -6,9 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="-mx-4 lg:-mx-6">
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }
