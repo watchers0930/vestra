@@ -4,10 +4,10 @@ import { Shield, FileText, TrendingUp, Search, Building2, Banknote, AlertTriangl
 import { formatKRW } from "@/lib/utils";
 import { EmptyState } from "@/components/common";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { CategoryHero } from "@/components/common/CategoryHero";
+import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import { useDashboardData } from "./hooks/useDashboardData";
 import { DashboardSkeleton } from "./components/DashboardSkeleton";
-import { DashboardTopbar } from "./components/DashboardTopbar";
-import { DashboardHero } from "./components/DashboardHero";
 import { DashboardKpiCard } from "./components/DashboardKpiCard";
 import { QuickAccess } from "./components/QuickAccess";
 import { PortfolioOverview } from "./components/PortfolioOverview";
@@ -42,42 +42,13 @@ export default function DashboardPage() {
   return (
     <AuthGuard featureName="대시보드">
     <div>
-      {/* ── Topbar ── */}
-      <DashboardTopbar monitoredCount={monitoredCount} session={session} />
-
-      {/* ── Body ── */}
-      <div className="px-4 sm:px-6 lg:px-9 pb-20">
-
-        {/* Hero */}
-        <div className="mt-[18px] mb-7">
-          <DashboardHero
-            session={session}
-            totalAssets={totalAssets}
-            totalValue={totalValue}
-            avgSafety={avgSafety}
-            mounted={mounted}
-          />
-        </div>
-
-        {/* Info Banner */}
-        <div
-          className="mb-7 flex items-center gap-[12px] rounded-[13px] px-[20px] py-[14px] text-[12.5px] leading-[1.55] text-[#424245]"
-          style={{
-            background: "rgba(0,113,227,0.05)",
-            border: "1px solid rgba(0,113,227,0.12)",
-          }}
-        >
-          <div
-            className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px]"
-            style={{ background: "rgba(0,113,227,0.10)" }}
-          >
-            <Info size={15} strokeWidth={1.7} style={{ color: "#0071e3" }} />
-          </div>
-          <span>
-            권리분석, 계약검토, 시세전망 등에서 분석한 결과가 이 대시보드에 자동으로 표시됩니다.
-            분석은 언제든지 새로 추가할 수 있습니다.
-          </span>
-        </div>
+      <DashboardPageTopbar current="대시보드" primaryHref="/rights" primaryLabel="새 분석" />
+      <div className="pb-20 pt-[52px]">
+        <CategoryHero
+          badge="📊 대시보드"
+          title="AI 자산 분석 대시보드"
+          description={<>권리분석, 계약검토, 시세전망 등에서 분석한 결과가<br />이 대시보드에 자동으로 표시됩니다.</>}
+        />
 
         {/* KPI Cards */}
         <div className="mb-7 grid grid-cols-1 sm:grid-cols-2 gap-[14px] xl:grid-cols-4">
