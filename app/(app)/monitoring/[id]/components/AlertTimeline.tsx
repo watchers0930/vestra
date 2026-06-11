@@ -1,12 +1,19 @@
 "use client";
 
-import { CheckCircle, Info } from "lucide-react";
+import { CheckCircle, FileSearch, Info } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardContent } from "@/components/common/Card";
 import type { AlertItem } from "../hooks/usePropertyDetail";
 
 interface Props {
   alerts: AlertItem[];
   deposit: number | null;
+  property: {
+    id: string;
+    address: string;
+    commUniqueNo: string | null;
+    ownerName: string | null;
+  };
   onMarkRead: (id: string) => void;
 }
 
@@ -112,7 +119,25 @@ function formatDateTime(dateStr: string): string {
   });
 }
 
-export function AlertTimeline({ alerts, deposit, onMarkRead }: Props) {
+export function AlertTimeline({ alerts, deposit, property, onMarkRead }: Props) {
+  const router = useRouter();
+  const canIssueRegistry = !!property.commUniqueNo && !!property.ownerName;
+
+  function openRegistryIssue() {
+    if (!canIssueRegistry) return;
+    sessionStorage.setItem(
+      "vestra_registry_issue_prefill",
+      JSON.stringify({
+        propertyId: property.id,
+        address: property.address,
+        commUniqueNo: property.commUniqueNo,
+        ownerName: property.ownerName,
+        source: "monitoring-alert",
+      })
+    );
+    router.push("/rights?issue=1");
+  }
+
   if (alerts.length === 0) {
     return (
       <Card>
@@ -138,6 +163,9 @@ export function AlertTimeline({ alerts, deposit, onMarkRead }: Props) {
             {alerts.map((alert) => {
               const color = RISK_COLOR[alert.riskLevel] || "#6e6e73";
               const explanation = getRiskExplanation(alert.changeType, alert.riskLevel, alert.summary, deposit);
+              const showIssueCta =
+                canIssueRegistry &&
+                (alert.summary.includes("처리 완료") || alert.changeType !== "case_detected");
               return (
                 <div key={alert.id} className="relative pl-8 py-3 group">
                   {/* 점 */}
@@ -179,6 +207,17 @@ export function AlertTimeline({ alerts, deposit, onMarkRead }: Props) {
                       <span className="text-[11px] text-[#aeaeb2] mt-1 inline-block">
                         {formatDateTime(alert.createdAt)}
                       </span>
+
+                      {showIssueCta && (
+                        <button
+                          type="button"
+                          onClick={openRegistryIssue}
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#1d1d1f] px-3 py-1.5 text-[11px] font-bold text-white transition-colors hover:bg-[#333336]"
+                        >
+                          <FileSearch size={12} />
+                          최신 등기부 확인하기
+                        </button>
+                      )}
                     </div>
 
                     {!alert.isRead && (

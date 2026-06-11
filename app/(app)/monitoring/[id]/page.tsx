@@ -98,7 +98,7 @@ export default function MonitoringDetailPage({ params }: Props) {
       {/* 콘텐츠 */}
       <div className="space-y-6">
         <PropertyInfoHeader property={property} monitorDays={monitorDays} />
-        <AlertTimeline alerts={property.alerts} deposit={property.deposit} onMarkRead={markAlertRead} />
+        <AlertTimeline alerts={property.alerts} deposit={property.deposit} property={property} onMarkRead={markAlertRead} />
         <SnapshotChainView snapshots={snapshots} />
         <IntegrityVerification
           result={integrityResult}

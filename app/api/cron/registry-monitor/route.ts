@@ -1,11 +1,11 @@
 /**
  * 등기변동 모니터링 Cron Job (v2 — CODEF 실연동)
  * ─────────────────────────────────────────────
- * Vercel Cron: 매일 오전 9시 실행
+ * Vercel Cron: 하루 2회 실행 (vercel.json: 0 3,8 * * *)
  *
  * 모니터링 모드:
- *  - standard: 일반 감시 (1일 1회)
- *  - contract_gap: 계약~전입 강화 감시 (cron은 1일 1회지만 contract_gap 우선 처리)
+ *  - standard: 일반 감시 (하루 2회)
+ *  - contract_gap: 계약~전입 강화 감시 (contract_gap 대상 우선 처리)
  *
  * CODEF API를 통해 실제 등기부를 조회하고 SHA-256 해시 비교로 변동을 감지한다.
  * 데모 환경에서는 시뮬레이션, 유료 전환 시 실제 조회로 자동 전환.
@@ -258,7 +258,7 @@ export async function GET(req: NextRequest) {
       try {
         // 1차 감시: Tilko 등기신청사건 처리현황 조회
         // - 접수/처리 중: 조기 경고만 발송
-        // - 처리 완료: CODEF 등기부등본 상세 조회로 확정
+        // - 처리 완료: 사용자 결제 기반 최신 등기부 발급 CTA까지만 진행
         // - Tilko 미설정/강제 조회/시뮬레이션: 기존 CODEF 경로 유지
         if (!simulate && !forceCodef && isTilkoAvailable()) {
           try {
@@ -337,9 +337,10 @@ export async function GET(req: NextRequest) {
               }
             }
 
-            if (!shouldConfirmWithCodef(caseStatus)) {
-              continue;
+            if (shouldConfirmWithCodef(caseStatus)) {
+              skipped++;
             }
+            continue;
           } catch (tilkoError) {
             console.error(
               `[CRON:MONITOR] Tilko 프리체크 실패 (CODEF 직접 조회로 폴백): ${prop.address}`,

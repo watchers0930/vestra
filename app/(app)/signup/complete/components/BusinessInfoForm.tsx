@@ -125,8 +125,8 @@ export default function BusinessInfoForm({
           등록이 완료되었습니다
         </h3>
         <p className="text-sm text-muted mb-1">
-          {intendedRole === "REALESTATE" ? "중개사" : "기업"} 등급 승인은
-          관리자 확인 후 적용됩니다.
+          {intendedRole === "REALESTATE" ? "중개사" : "기업"} 회원으로
+          전환되었습니다.
         </p>
         <p className="text-xs text-muted">
           잠시 후 대시보드로 이동합니다...

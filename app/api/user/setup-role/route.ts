@@ -15,49 +15,73 @@ export async function POST(req: NextRequest) {
 
   const { role, businessNumber, companyName, representName } = await req.json();
 
-  // 유효한 업그레이드 역할만 허용
-  if (!["BUSINESS", "REALESTATE"].includes(role)) {
+  // 유효한 역할만 허용
+  if (!["PERSONAL", "BUSINESS", "REALESTATE"].includes(role)) {
     return NextResponse.json({ error: "유효하지 않은 역할입니다" }, { status: 400 });
   }
 
-  // 사업자등록번호 필수
-  if (!businessNumber || typeof businessNumber !== "string" || businessNumber.trim().length < 10) {
+  // PERSONAL: 즉시 역할 전환, business info 불필요
+  if (role === "PERSONAL") {
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { role: "PERSONAL" },
+    });
+
+    await logAuditWithRequest({
+      userId: session.user.id,
+      action: "ROLE_CHANGE",
+      detail: { newRole: "PERSONAL", status: "applied" },
+    });
+
+    return NextResponse.json({ message: "개인 회원으로 전환되었습니다." });
+  }
+
+  // REALESTATE/BUSINESS: business info 필요 여부 확인
+  const hasBusinessInfo = !!businessNumber && !!companyName && !!representName;
+
+  if (!hasBusinessInfo) {
+    // business info가 요청에 없으면 DB에 이미 있는지 확인
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { companyName: true, role: true },
+    });
+
+    if (user?.companyName) {
+      // 이미 business info가 있으면 역할만 전환
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { role },
+      });
+
+      await logAuditWithRequest({
+        userId: session.user.id,
+        action: "ROLE_CHANGE",
+        detail: { newRole: role, status: "applied" },
+      });
+
+      return NextResponse.json({ message: `${role === "REALESTATE" ? "중개사" : "기업"} 회원으로 전환되었습니다.` });
+    }
+
+    // business info가 없으면 폼 입력 필요
+    return NextResponse.json({ needsBusinessInfo: true }, { status: 422 });
+  }
+
+  // business info 검증
+  if (typeof businessNumber !== "string" || businessNumber.trim().length < 10) {
     return NextResponse.json({ error: "사업자등록번호를 입력해주세요" }, { status: 400 });
   }
-
-  // 회사명 검증 (BUSINESS/REALESTATE 역할일 때 필수, 2~50자)
-  if (!companyName || typeof companyName !== "string" || companyName.trim().length < 2 || companyName.trim().length > 50) {
+  if (typeof companyName !== "string" || companyName.trim().length < 2 || companyName.trim().length > 50) {
     return NextResponse.json({ error: "회사명을 입력해주세요 (2~50자)" }, { status: 400 });
   }
-
-  // 대표자명 검증 (BUSINESS/REALESTATE 역할일 때 필수, 2~20자)
-  if (!representName || typeof representName !== "string" || representName.trim().length < 2 || representName.trim().length > 20) {
+  if (typeof representName !== "string" || representName.trim().length < 2 || representName.trim().length > 20) {
     return NextResponse.json({ error: "대표자명을 입력해주세요 (2~20자)" }, { status: 400 });
   }
 
-  // 현재 사용자 상태 확인
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { verifyStatus: true, role: true },
-  });
-
-  if (!user) {
-    return NextResponse.json({ error: "사용자를 찾을 수 없습니다" }, { status: 404 });
-  }
-
-  if (user.verifyStatus === "pending") {
-    return NextResponse.json({ error: "이미 인증 신청이 진행 중입니다" }, { status: 409 });
-  }
-
-  if (user.role === "BUSINESS" || user.role === "REALESTATE" || user.role === "ADMIN") {
-    return NextResponse.json({ error: "이미 상위 등급입니다" }, { status: 409 });
-  }
-
-  // 인증 신청: pending 상태로 변경 (관리자 승인 대기)
-  // PII 암호화는 Prisma 미들웨어가 자동 처리
+  // business info 저장 + 역할 전환
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
+      role,
       businessNumber: businessNumber.trim(),
       companyName: companyName.trim(),
       representName: representName.trim(),
@@ -65,12 +89,11 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // 감사 로그: 역할 변경 신청
   await logAuditWithRequest({
     userId: session.user.id,
     action: "ROLE_CHANGE",
     detail: { requestedRole: role, companyName: companyName.trim(), representName: representName.trim(), status: "pending" },
   });
 
-  return NextResponse.json({ message: "인증 신청이 접수되었습니다. 관리자 승인 후 반영됩니다." });
+  return NextResponse.json({ message: "등록이 완료되었습니다. 관리자 승인 후 전체 기능이 활성화됩니다." });
 }

@@ -33,7 +33,7 @@ export default function RightsAnalysisPage() {
     fileInputRef,
     loadSample, handleAddressAnalyze,
     handleDrop, handleDragOver, handleDragLeave,
-    handleFileChange, handleAnalyze,
+    handleFileChange, handleAnalyze, applyIssuedRegistryAnalysis,
   } = useRightsAnalysis();
 
   const usedFile  = inputMode === "file" && fileName;
@@ -102,6 +102,7 @@ export default function RightsAnalysisPage() {
         handleDragLeave={handleDragLeave}
         handleFileChange={handleFileChange}
         handleAnalyze={handleAnalyze}
+        applyIssuedRegistryAnalysis={applyIssuedRegistryAnalysis}
       />
 
       {/* 에러 */}

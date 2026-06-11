@@ -13,6 +13,8 @@ export interface PropertyDetail {
   contractDate: string | null;
   moveInDate: string | null;
   lastCheckedAt: string | null;
+  commUniqueNo: string | null;
+  ownerName: string | null;
   createdAt: string;
   snapshotCount: number;
   alerts: AlertItem[];

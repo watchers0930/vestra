@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, AlertCircle, ChevronRight, Radar, ShieldCheck, Zap } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Clock, AlertCircle, ChevronRight, Radar, ShieldCheck, Zap, FileSearch } from "lucide-react";
 import { Card } from "@/components/common/Card";
 import { Badge } from "@/components/common/Badge";
 import type { MonitoredProperty } from "../hooks/useMonitoringData";
@@ -42,18 +43,6 @@ function formatRelativeTime(dateStr: string | null): string {
   return `${days}일 전`;
 }
 
-function formatNextCheck(dateStr: string | null): string {
-  if (!dateStr) return "첫 점검 대기";
-  const next = new Date(dateStr).getTime() + 4 * 60 * 60 * 1000;
-  const diff = next - Date.now();
-  if (diff <= 0) return "점검 대기 중";
-  const mins = Math.ceil(diff / 60000);
-  if (mins < 60) return `${mins}분 후`;
-  const hours = Math.floor(mins / 60);
-  const remain = mins % 60;
-  return remain > 0 ? `${hours}시간 ${remain}분 후` : `${hours}시간 후`;
-}
-
 function isRecentlyCreated(dateStr: string): boolean {
   return Date.now() - new Date(dateStr).getTime() < 5 * 60 * 1000;
 }
@@ -75,11 +64,71 @@ function signalLabel(status?: string | null): string {
   }
 }
 
+function signalPhase(property: MonitoredProperty): {
+  label: string;
+  className: string;
+} | null {
+  const status = property.registrySignalStatus || "idle";
+  const summary = property.registrySignalSummary || "";
+
+  if (status === "pending_confirm" || summary.includes("처리 완료")) {
+    return {
+      label: "처리 완료",
+      className: "bg-violet-50 text-violet-700",
+    };
+  }
+  if (summary.includes("처리 중")) {
+    return {
+      label: "처리 중",
+      className: "bg-amber-50 text-amber-700",
+    };
+  }
+  if (status === "case_detected" || summary.includes("접수")) {
+    return {
+      label: "접수",
+      className: "bg-blue-50 text-blue-700",
+    };
+  }
+  if (status === "dismissed") {
+    return {
+      label: "종결",
+      className: "bg-slate-100 text-slate-600",
+    };
+  }
+  return null;
+}
+
 export function MonitoringPropertyCard({ property, unreadCount, highestRisk }: Props) {
+  const router = useRouter();
   const isActive = property.status === "active";
   const recent = isRecentlyCreated(property.createdAt);
   const signalStatus = property.registrySignalStatus || "idle";
-  const lastPrecheck = property.tilkoLastCaseCheckedAt || property.lastCheckedAt;
+  const phase = signalPhase(property);
+  const isCompletedSignal =
+    signalStatus === "pending_confirm" ||
+    signalStatus === "confirmed_changed" ||
+    (property.registrySignalSummary || "").includes("처리 완료");
+  const showIssueCta =
+    isActive &&
+    property.commUniqueNo &&
+    property.ownerName &&
+    isCompletedSignal;
+
+  function openRegistryIssue(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    sessionStorage.setItem(
+      "vestra_registry_issue_prefill",
+      JSON.stringify({
+        propertyId: property.id,
+        address: property.address,
+        commUniqueNo: property.commUniqueNo,
+        ownerName: property.ownerName,
+        source: "monitoring",
+      })
+    );
+    router.push("/rights?issue=1");
+  }
 
   return (
     <Link href={`/monitoring/${property.id}`} className="block group">
@@ -147,12 +196,17 @@ export function MonitoringPropertyCard({ property, unreadCount, highestRisk }: P
               <>
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
                   <Radar size={11} />
-                  4시간 주기
+                  하루 2회
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
                   <ShieldCheck size={11} />
                   {signalLabel(signalStatus)}
                 </span>
+                {phase && (
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold ${phase.className}`}>
+                    {phase.label}
+                  </span>
+                )}
               </>
             )}
             {recent && isActive && (
@@ -173,11 +227,22 @@ export function MonitoringPropertyCard({ property, unreadCount, highestRisk }: P
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-[10px] text-[#86868b]">다음 점검</p>
-                  <p className="text-[11px] font-semibold text-[#1d1d1f]">{formatNextCheck(lastPrecheck)}</p>
+                  <p className="text-[10px] text-[#86868b]">점검 주기</p>
+                  <p className="text-[11px] font-semibold text-[#1d1d1f]">하루 2회</p>
                 </div>
               </div>
             </div>
+          )}
+
+          {showIssueCta && (
+            <button
+              type="button"
+              onClick={openRegistryIssue}
+              className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#1d1d1f] px-3 py-2 text-[12px] font-bold text-white transition-colors hover:bg-[#333336]"
+            >
+              <FileSearch size={14} />
+              최신 등기부 확인하기
+            </button>
           )}
 
           {/* 하단: 미확인 알림 + 최종 점검 */}

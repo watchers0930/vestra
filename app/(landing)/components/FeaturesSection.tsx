@@ -32,6 +32,14 @@ const FEATURES_DATA: { icon: string; label: string; title: string; desc: string;
     tier: "TRIAL",
   },
   {
+    icon: "verified_user",
+    label: "Registry Guard",
+    title: "등기부 AI 보호",
+    desc: "인공지능이 하루 2회 등기부등본의 변경사항을 자동으로 확인합니다. 소유권 이전, 근저당 설정 등 이상 징후 발견 시 즉시 알려드려 당신의 부동산을 지켜드립니다.",
+    href: "/registry",
+    tier: "AUTH_REQUIRED",
+  },
+  {
     icon: "contract",
     label: "Contract Review",
     title: "계약서 AI 검토",
@@ -70,7 +78,7 @@ const iconStyle = { fontVariationSettings: "'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 
 export function FeaturesSection() {
   const [expanded, setExpanded] = useState(false);
 
-  const visible = expanded ? FEATURES_DATA : FEATURES_DATA.slice(0, 3);
+  const visible = expanded ? FEATURES_DATA : FEATURES_DATA.slice(0, 6);
 
   return (
     <section id="features" className="py-16 px-5 lg:py-40 lg:px-12 bg-[#fbf8ff]">

@@ -7,6 +7,21 @@ import { SAMPLE_REGISTRY_TEXT } from "@/lib/registry-parser";
 import type { UnifiedResult } from "@/components/rights/RightsResult";
 import type { InputMode, AnalysisStep } from "../types";
 
+export interface IssuedRegistryAnalysisPayload {
+  order?: {
+    orderId?: string;
+    status?: string;
+  };
+  registry: {
+    text: string;
+    address?: string;
+  };
+  analysis: {
+    id?: string;
+    result: UnifiedResult;
+  };
+}
+
 export function useRightsAnalysis() {
   const [inputMode, setInputMode] = useState<InputMode>("file");
   const [rawText, setRawText] = useState("");
@@ -256,6 +271,46 @@ export function useRightsAnalysis() {
     }
   };
 
+  const applyIssuedRegistryAnalysis = useCallback((payload: IssuedRegistryAnalysisPayload) => {
+    const data = payload.analysis.result;
+    const issuedText = payload.registry.text;
+    const addr =
+      data.parsed?.title?.address ||
+      data.propertyInfo?.address ||
+      payload.registry.address ||
+      "CODEF 등기부";
+
+    setRawText(issuedText);
+    setResult(data);
+    setError(null);
+    setStep("done");
+    setCodefSource(true);
+    setFileName(null);
+    setFileType(null);
+    setAnalysisId(payload.analysis.id || `rights_${Date.now()}`);
+
+    if (data.propertyInfo?.estimatedPrice) {
+      setEstimatedPrice(data.propertyInfo.estimatedPrice);
+    }
+
+    addAnalysis({
+      type: "rights",
+      typeLabel: "권리분석",
+      address: addr,
+      summary: `${data.riskScore?.grade || "?"}등급 (${data.riskScore?.gradeLabel || ""}, ${data.riskScore?.totalScore || 0}점) | CODEF 등기부 발급`,
+      data: data as unknown as Record<string, unknown>,
+    });
+    addOrUpdateAsset({
+      address: data.propertyInfo?.address || addr,
+      type: data.propertyInfo?.type || "부동산",
+      estimatedPrice: data.propertyInfo?.estimatedPrice || 0,
+      jeonsePrice: data.propertyInfo?.jeonsePrice || 0,
+      safetyScore: data.riskAnalysis?.safetyScore || 0,
+      riskScore: data.riskAnalysis?.riskScore || 0,
+    });
+    addNotification(`CODEF 등기부 발급 및 권리분석 완료: ${addr}`);
+  }, []);
+
   // autoAddress 세팅 시 자동 분석 실행 (handleAddressAnalyze 정의 이후에 선언)
   useEffect(() => {
     if (!autoAddress) return;
@@ -276,6 +331,6 @@ export function useRightsAnalysis() {
     fileInputRef,
     loadSample, handleAddressAnalyze,
     handleDrop, handleDragOver, handleDragLeave,
-    handleFileChange, handleAnalyze,
+    handleFileChange, handleAnalyze, applyIssuedRegistryAnalysis,
   };
 }

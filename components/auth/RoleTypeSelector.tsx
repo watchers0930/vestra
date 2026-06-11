@@ -1,7 +1,7 @@
 "use client";
 
 import { User, Building2, Briefcase } from "lucide-react";
-import RoleTypeCard from "./RoleTypeCard";
+import RoleTypeCard from "@/components/auth/RoleTypeCard";
 
 interface RoleTypeSelectorProps {
   selectedRole: string | null;

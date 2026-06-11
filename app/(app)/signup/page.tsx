@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { clearAll } from "@/lib/store";
 import { VestraLogoMark } from "@/components/common/VestraLogo";
-import RoleTypeSelector from "./components/RoleTypeSelector";
+import RoleTypeSelector from "@/components/auth/RoleTypeSelector";
 
 export default function SignupPage() {
   const router = useRouter();

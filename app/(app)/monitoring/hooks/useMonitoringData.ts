@@ -13,6 +13,8 @@ export interface MonitoredProperty {
   registrySignalStatus?: string | null;
   registrySignalSummary?: string | null;
   tilkoLastCaseCheckedAt?: string | null;
+  commUniqueNo?: string | null;
+  ownerName?: string | null;
   createdAt: string;
   updatedAt: string;
 }

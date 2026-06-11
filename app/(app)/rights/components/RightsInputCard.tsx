@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Shield,
   CheckCircle,
@@ -15,6 +15,7 @@ import {
 import { formatKRW } from "@/lib/utils";
 import { SliderInput } from "@/components/forms";
 import type { InputMode, AnalysisStep } from "../types";
+import type { IssuedRegistryAnalysisPayload } from "../hooks/useRightsAnalysis";
 
 interface Props {
   inputMode: InputMode;
@@ -39,6 +40,7 @@ interface Props {
   handleDragLeave: () => void;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleAnalyze: () => void;
+  applyIssuedRegistryAnalysis: (payload: IssuedRegistryAnalysisPayload) => void;
 }
 
 const MODES = [
@@ -53,6 +55,7 @@ interface IssueSearchResult {
   uniqueNo: string;
   address: string;
   realEstateType: string;
+  realEstateTypeCode?: string;
 }
 
 export function RightsInputCard({
@@ -66,7 +69,7 @@ export function RightsInputCard({
   fileInputRef,
   loadSample, handleAddressAnalyze,
   handleDrop, handleDragOver, handleDragLeave,
-  handleFileChange, handleAnalyze,
+  handleFileChange, handleAnalyze, applyIssuedRegistryAnalysis,
 }: Props) {
   const isAnalyzing = step !== "idle" && step !== "done";
   const [issueAddress, setIssueAddress] = useState("");
@@ -77,7 +80,46 @@ export function RightsInputCard({
   const [issueSearching, setIssueSearching] = useState(false);
   const [issueResults, setIssueResults] = useState<IssueSearchResult[]>([]);
   const [selectedIssueTarget, setSelectedIssueTarget] = useState<IssueSearchResult | null>(null);
+  const [issuePropertyId, setIssuePropertyId] = useState("");
   const [issueMessage, setIssueMessage] = useState("");
+  const canSubmitIssue = !!(selectedIssueTarget || issueUniqueNo.trim()) && issueOwnerName.trim().length >= 2 && issueConsent;
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("issue") !== "1") return;
+
+    const raw = sessionStorage.getItem("vestra_registry_issue_prefill");
+    if (!raw) return;
+
+    try {
+      const prefill = JSON.parse(raw) as {
+        propertyId?: string;
+        address?: string;
+        commUniqueNo?: string;
+        ownerName?: string;
+      };
+      if (prefill.propertyId) {
+        setIssuePropertyId(prefill.propertyId);
+      }
+      if (prefill.address) {
+        setIssueAddress(prefill.address);
+      }
+      if (prefill.commUniqueNo) {
+        setIssueUniqueNo(prefill.commUniqueNo);
+        setSelectedIssueTarget({
+          address: prefill.address || "",
+          uniqueNo: prefill.commUniqueNo,
+          realEstateType: "부동산",
+        });
+      }
+      if (prefill.ownerName) {
+        setIssueOwnerName(prefill.ownerName);
+      }
+      setIssueMessage("감시 알림의 물건 정보가 입력되었습니다. 동의 후 최신 등기부를 확인하세요.");
+    } catch {
+      /* 프리필 실패 시 수동 입력 유지 */
+    }
+  }, []);
 
   async function handleIssueSearch() {
     if (issueSearching || issueAddress.trim().length < 2) return;
@@ -102,7 +144,7 @@ export function RightsInputCard({
         setSelectedIssueTarget(results[0]);
         setIssueAddress(results[0].address);
         setIssueUniqueNo(results[0].uniqueNo);
-        setIssueMessage("조회 대상이 확인되었습니다. 소유자명을 확인한 뒤 결제를 진행하세요.");
+        setIssueMessage("조회 대상이 확인되었습니다. 소유자명을 확인한 뒤 최신 등기부를 조회하세요.");
       } else {
         setIssueMessage("조회할 부동산을 선택해 주세요.");
       }
@@ -117,7 +159,7 @@ export function RightsInputCard({
     setSelectedIssueTarget(result);
     setIssueAddress(result.address);
     setIssueUniqueNo(result.uniqueNo);
-    setIssueMessage("조회 대상이 확인되었습니다. 결제 전 주소와 소유자명을 확인하세요.");
+    setIssueMessage("조회 대상이 확인되었습니다. 주소와 소유자명을 확인하세요.");
   }
 
   async function handleIssueOrder() {
@@ -132,6 +174,8 @@ export function RightsInputCard({
         body: JSON.stringify({
           address: selectedIssueTarget?.address || issueAddress.trim(),
           commUniqueNo: selectedIssueTarget?.uniqueNo || issueUniqueNo.trim(),
+          realEstateType: selectedIssueTarget?.realEstateTypeCode,
+          monitoredPropertyId: issuePropertyId || undefined,
           ownerName: issueOwnerName.trim(),
           purpose: "analysis",
           includeHistory: true,
@@ -140,10 +184,15 @@ export function RightsInputCard({
       });
       const data = await res.json();
       if (!res.ok) {
-        setIssueMessage(data.error || "조회 신청에 실패했습니다.");
+        setIssueMessage(data.detail || data.error || "등기부 발급 및 분석에 실패했습니다.");
         return;
       }
-      setIssueMessage(`베스트라 결제 대기 주문이 생성되었습니다. 등기부 조회 및 AI 권리분석 수수료 ${REGISTRY_ISSUE_PRICE.toLocaleString()}원 · 주문번호 ${data.order.orderId}`);
+      if (data.analysis && data.registry) {
+        applyIssuedRegistryAnalysis(data as IssuedRegistryAnalysisPayload);
+        setIssueMessage(`등기부 발급 및 AI 권리분석이 완료되었습니다. 주문번호 ${data.order.orderId}`);
+        return;
+      }
+      setIssueMessage(`결제 대기 주문이 생성되었습니다. 주문번호 ${data.order.orderId}`);
     } catch {
       setIssueMessage("네트워크 오류가 발생했습니다.");
     } finally {
@@ -240,11 +289,11 @@ export function RightsInputCard({
                   <p style={{ fontSize: "13.5px", fontWeight: 800, color: "#1d1d1f" }}>등기부 조회 및 AI 권리분석 신청</p>
                 </div>
                 <p style={{ fontSize: "11.5px", color: "#6e6e73", lineHeight: 1.55 }}>
-                  베스트라에 서비스 수수료를 결제하면 공식 연계 API로 최신 등기부 정보를 조회하고, 수신 즉시 권리분석과 기준 스냅샷 저장에 사용합니다.
+                  공식 연계 API로 최신 등기부 정보를 조회하고, 수신 즉시 권리분석과 기준 스냅샷 저장에 사용합니다.
                 </p>
               </div>
               <div style={{ textAlign: "right", flexShrink: 0 }}>
-                <p style={{ fontSize: "10.5px", color: "#86868b" }}>조회+AI 분석 수수료</p>
+                <p style={{ fontSize: "10.5px", color: "#86868b" }}>조회+AI 분석 기준가</p>
                 <p style={{ fontSize: "18px", fontWeight: 900, color: "#0071e3" }}>{REGISTRY_ISSUE_PRICE.toLocaleString()}원</p>
               </div>
             </div>
@@ -359,28 +408,28 @@ export function RightsInputCard({
 
             <button
               onClick={handleIssueOrder}
-              disabled={issueLoading || !selectedIssueTarget || issueOwnerName.trim().length < 2 || !issueConsent}
+              disabled={issueLoading || !canSubmitIssue}
               style={{
                 width: "100%",
                 padding: "11px 14px",
                 borderRadius: "12px",
                 border: "none",
-                background: issueLoading || !selectedIssueTarget || issueOwnerName.trim().length < 2 || !issueConsent ? "rgba(0,0,0,0.08)" : "#1d1d1f",
-                color: issueLoading || !selectedIssueTarget || issueOwnerName.trim().length < 2 || !issueConsent ? "#aaa" : "#fff",
+                background: issueLoading || !canSubmitIssue ? "rgba(0,0,0,0.08)" : "#1d1d1f",
+                color: issueLoading || !canSubmitIssue ? "#aaa" : "#fff",
                 fontSize: "13px",
                 fontWeight: 800,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "7px",
-                cursor: issueLoading || !selectedIssueTarget || issueOwnerName.trim().length < 2 || !issueConsent ? "not-allowed" : "pointer",
+                cursor: issueLoading || !canSubmitIssue ? "not-allowed" : "pointer",
               }}
             >
               {issueLoading ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
-              {issueLoading ? "주문 생성 중..." : "베스트라에 1,000원 결제 후 조회 진행"}
+              {issueLoading ? "결제 주문 생성 중..." : "등기부 발급 결제 진행"}
             </button>
             <p style={{ fontSize: "10.5px", color: issueMessage.includes("실패") || issueMessage.includes("오류") ? "#ff3b30" : "#6e6e73", marginTop: "8px", minHeight: "14px" }}>
-              {issueMessage || "결제금액은 베스트라 서비스 이용료이며, 결제 승인 후 등기부 조회와 AI 권리분석이 진행됩니다."}
+              {issueMessage || `결제 완료 후 CODEF 공식 연계로 등기부를 조회하고 분석 결과를 저장합니다. 서비스 이용료 기준 ${REGISTRY_ISSUE_PRICE.toLocaleString()}원`}
             </p>
           </div>
         </div>
