@@ -14,6 +14,10 @@
       "schedule": "0 6 * * *"
     },
     {
+      "path": "/api/cron/research-journal",
+      "schedule": "30 8 * * *"
+    },
+    {
       "path": "/api/cron/guarantee-monitor",
       "schedule": "0 0 * * 1"
     },

@@ -29,6 +29,10 @@ const NewsTab = dynamic(
   () => import("@/components/admin/NewsTab").then((mod) => ({ default: mod.NewsTab })),
   { ssr: false, loading: () => <div className="h-64 animate-pulse bg-gray-100 rounded-xl" /> }
 );
+const ResearchJournalTab = dynamic(
+  () => import("@/components/admin/ResearchJournalTab").then((mod) => ({ default: mod.ResearchJournalTab })),
+  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-gray-100 rounded-xl" /> }
+);
 
 export default function AdminPage() {
   return (
@@ -145,6 +149,7 @@ function AdminContent() {
           {tab === "news" && <NewsTab />}
           {tab === "guarantee-rules" && <GuaranteeRulesTab />}
           {tab === "loan-rates" && <LoanRatesTab />}
+          {tab === "research-journal" && <ResearchJournalTab />}
 
           {tab === "account" && (
             <AccountTab

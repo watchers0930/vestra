@@ -214,6 +214,7 @@ export function useAdminData() {
     { key: "news", label: "뉴스·정책", description: "부동산 뉴스/정책 수집 현황을 확인합니다" },
     { key: "guarantee-rules", label: "보증보험 규칙", description: "보증보험 가입조건 규칙을 관리합니다" },
     { key: "loan-rates", label: "대출 금리", description: "FSS 연동 전세대출 금리 관리" },
+    { key: "research-journal", label: "연구일지", description: "Git 변경이력 기반 연구개발 일지를 저장하고 출력합니다" },
     { key: "account", label: "계정 설정", description: "관리자 비밀번호 변경 및 계정 설정을 관리합니다" },
   ];
 

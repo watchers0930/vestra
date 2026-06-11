@@ -11,7 +11,8 @@ export type Tab =
   | "apikey"
   | "news"
   | "guarantee-rules"
-  | "loan-rates";
+  | "loan-rates"
+  | "research-journal";
 
 export interface Stats {
   totalUsers: number;
