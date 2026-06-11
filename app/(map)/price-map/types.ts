@@ -1,3 +1,6 @@
+export type PropertyType = "아파트" | "연립/빌라/다세대" | "다가구/단독";
+export type PriceMapTradeType = "매매" | "전세" | "월세";
+
 export interface AptData {
   name: string;
   dong: string;
@@ -7,6 +10,9 @@ export interface AptData {
   lng: number;
   change: number | null;
   year: number;
+  propertyType?: PropertyType;
+  deposit?: number;
+  monthlyRent?: number;
 }
 
 export interface RiskItem {
@@ -18,6 +24,9 @@ export interface RiskItem {
 
 export interface MapResponse {
   gu: string;
+  propertyType: PropertyType;
+  tradeType: PriceMapTradeType;
+  dataSource: "molit" | "none";
   apartments: AptData[];
   center: { lat: number; lng: number };
   availableGus: string[];

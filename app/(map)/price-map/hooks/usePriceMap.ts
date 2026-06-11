@@ -1,22 +1,26 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { formatPrice, formatKRW, escapeHtml } from "@/lib/format";
+import { formatKRW, escapeHtml } from "@/lib/format";
 import { analyzeRisk, getAreaColor } from "../lib/analyzeRisk";
-import type { AptData, MapResponse } from "../types";
+import { formatMapPrice } from "../lib/formatMapPrice";
+import { findSidoForGu, getFirstSelectableGu, isGuSelectable } from "../constants";
+import type { AptData, MapResponse, PriceMapTradeType, PropertyType } from "../types";
 import type { OfficialPriceResult } from "@/lib/official-price-api";
 
 const LOCAL_TTL = 30 * 60 * 1000; // 30분 fresh cache
 const LOCAL_MAX_AGE = 24 * 60 * 60 * 1000; // 24시간 stale cache fallback
 const PREF_GU_KEY = "pm:selected-gu";
 const PREF_TRADE_TYPE_KEY = "pm:trade-type";
+const PREF_PROPERTY_TYPE_KEY = "pm:property-type";
 const INITIAL_GU = "강남구";
-const INITIAL_TRADE_TYPE: "매매" | "전세" = "매매";
+const INITIAL_TRADE_TYPE: PriceMapTradeType = "매매";
+const INITIAL_PROPERTY_TYPE: PropertyType = "아파트";
 const MARKER_CHUNK_SIZE = 12;
 const MARKER_BATCH_DELAY = 40;
 
-function localKey(gu: string, tradeType: "매매" | "전세") {
-  return `pm:v2:${gu}:${tradeType}`;
+function localKey(gu: string, propertyType: PropertyType, tradeType: PriceMapTradeType) {
+  return `pm:v3:${gu}:${propertyType}:${tradeType}`;
 }
 
 function readInitialGu() {
@@ -28,13 +32,23 @@ function readInitialGu() {
   }
 }
 
-function readInitialTradeType(): "매매" | "전세" {
+function readInitialTradeType(): PriceMapTradeType {
   if (typeof window === "undefined") return INITIAL_TRADE_TYPE;
   try {
     const value = localStorage.getItem(PREF_TRADE_TYPE_KEY);
-    return value === "전세" ? "전세" : INITIAL_TRADE_TYPE;
+    return value === "전세" || value === "월세" ? value : INITIAL_TRADE_TYPE;
   } catch {
     return INITIAL_TRADE_TYPE;
+  }
+}
+
+function readInitialPropertyType(): PropertyType {
+  if (typeof window === "undefined") return INITIAL_PROPERTY_TYPE;
+  try {
+    const value = localStorage.getItem(PREF_PROPERTY_TYPE_KEY);
+    return value === "연립/빌라/다세대" || value === "다가구/단독" ? value : INITIAL_PROPERTY_TYPE;
+  } catch {
+    return INITIAL_PROPERTY_TYPE;
   }
 }
 
@@ -55,9 +69,22 @@ export function usePriceMap() {
   const [mapStatus, setMapStatus] = useState<"loading" | "ready" | "error">(hasKakaoKey ? "loading" : "error");
   const [showGuDropdown, setShowGuDropdown] = useState(false);
   const [selectedSido, setSelectedSido] = useState("서울");
-  const [tradeType, setTradeType] = useState<"매매" | "전세">(readInitialTradeType);
+  const [tradeType, setTradeType] = useState<PriceMapTradeType>(readInitialTradeType);
+  const [propertyType, setPropertyType] = useState<PropertyType>(readInitialPropertyType);
   const [riskPopup, setRiskPopup] = useState<{ apt: AptData; risk: ReturnType<typeof analyzeRisk> } | null>(null);
   const [officialPriceLabel, setOfficialPriceLabel] = useState<string>("");
+
+  useEffect(() => {
+    if (isGuSelectable(selectedGu, propertyType)) {
+      setSelectedSido(findSidoForGu(selectedGu, propertyType));
+      return;
+    }
+
+    const nextGu = getFirstSelectableGu(propertyType);
+    setSelectedGu(nextGu);
+    setSelectedSido(findSidoForGu(nextGu, propertyType));
+    setShowGuDropdown(false);
+  }, [selectedGu, propertyType]);
 
   // 선택된 아파트 변경 시 공시지가 조회
   useEffect(() => {
@@ -125,17 +152,18 @@ export function usePriceMap() {
     try {
       localStorage.setItem(PREF_GU_KEY, selectedGu);
       localStorage.setItem(PREF_TRADE_TYPE_KEY, tradeType);
+      localStorage.setItem(PREF_PROPERTY_TYPE_KEY, propertyType);
     } catch {
       // Ignore localStorage access failures.
     }
-  }, [selectedGu, tradeType]);
+  }, [selectedGu, tradeType, propertyType]);
 
   const fetchData = useCallback(async (gu: string) => {
     let hasUsableCache = false;
 
     // localStorage 캐시 확인 → 있으면 즉시 표시 후 fresh 여부에 따라 네트워크 생략
     try {
-      const raw = localStorage.getItem(localKey(gu, tradeType));
+      const raw = localStorage.getItem(localKey(gu, propertyType, tradeType));
       if (raw) {
         const { ts, payload } = JSON.parse(raw) as { ts: number; payload: MapResponse };
         const age = Date.now() - ts;
@@ -154,13 +182,13 @@ export function usePriceMap() {
 
     if (!hasUsableCache) setLoading(true);
     try {
-      const res = await fetch(`/api/price-map?gu=${encodeURIComponent(gu)}&type=${tradeType}`);
+      const res = await fetch(`/api/price-map?gu=${encodeURIComponent(gu)}&propertyType=${encodeURIComponent(propertyType)}&type=${tradeType}`);
       if (!res.ok) throw new Error(`API ${res.status}`);
       const json: MapResponse = await res.json();
       setData(json);
       setSelectedApt(null);
       try {
-        localStorage.setItem(localKey(gu, tradeType), JSON.stringify({ ts: Date.now(), payload: json }));
+        localStorage.setItem(localKey(gu, propertyType, tradeType), JSON.stringify({ ts: Date.now(), payload: json }));
       } catch { /* QuotaExceededError 무시 */ }
     } catch (err) {
       console.error("시세 데이터 로드 실패:", err);
@@ -168,7 +196,7 @@ export function usePriceMap() {
     } finally {
       setLoading(false);
     }
-  }, [tradeType]);
+  }, [tradeType, propertyType]);
 
   useEffect(() => {
     fetchData(selectedGu);
@@ -303,7 +331,7 @@ export function usePriceMap() {
       const allMarkers: any[] = [];
 
       function createOverlayContent(apt: AptData) {
-        const priceText = formatPrice(apt.price);
+        const priceText = formatMapPrice(apt, tradeType);
         const bgColor = getAreaColor(apt.area);
         const changeHtml = apt.change !== null
           ? `<div style="font-size:10px;color:#fff;background:rgba(255,255,255,.2);border-radius:4px;padding:1px 4px;margin-top:2px">${apt.change >= 0 ? "+" : ""}${escapeHtml(apt.change)}%</div>`
@@ -420,7 +448,7 @@ export function usePriceMap() {
       cancelled = true;
       if (chunkTimer) clearTimeout(chunkTimer);
     };
-  }, [data, mapStatus, selectAndMoveToApt]);
+  }, [data, mapStatus, selectAndMoveToApt, tradeType]);
 
   const topChanges = data?.apartments
     ? [...data.apartments].filter((a) => a.change !== null).sort((a, b) => (b.change as number) - (a.change as number)).slice(0, 5)
@@ -430,6 +458,7 @@ export function usePriceMap() {
     mapRef, data, selectedGu, setSelectedGu,
     selectedApt, loading, showGuDropdown, setShowGuDropdown,
     selectedSido, setSelectedSido, tradeType, setTradeType,
+    propertyType, setPropertyType,
     riskPopup, setRiskPopup,
     selectAndMoveToApt, topChanges, analyzeRisk, mapStatus,
     officialPriceLabel,

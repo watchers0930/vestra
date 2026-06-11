@@ -1,6 +1,6 @@
 "use client";
 
-import { Shield, FileText, TrendingUp, Search, Building2, Banknote, AlertTriangle, Info, ClipboardList } from "lucide-react";
+import { Shield, FileText, TrendingUp, Search, Building2, Banknote, AlertTriangle, ClipboardList } from "lucide-react";
 import { formatKRW } from "@/lib/utils";
 import { EmptyState } from "@/components/common";
 import { AuthGuard } from "@/components/auth/AuthGuard";
@@ -17,7 +17,7 @@ import { AnalysisHistory } from "./components/AnalysisHistory";
 export default function DashboardPage() {
   const {
     session, assets, analyses, mounted, loading,
-    cascadeLoading, monitoredCount, monitoredAddresses, monitoringLoading, alertAddressMap,
+    cascadeLoading, monitoredAddresses, monitoringLoading, alertAddressMap,
     totalAssets, totalValue, avgSafety, avgRisk,
     riskDistribution, assetValueData, addressCountMap,
     handleDeleteAnalysis, handleCascadeUpdate, handleMonitorToggle,

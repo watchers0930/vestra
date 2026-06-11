@@ -11,6 +11,7 @@ export default function PriceMapPage() {
     mapRef, data, selectedGu, setSelectedGu,
     selectedApt, loading, showGuDropdown, setShowGuDropdown,
     selectedSido, setSelectedSido, tradeType, setTradeType,
+    propertyType, setPropertyType,
     riskPopup, setRiskPopup,
     selectAndMoveToApt, topChanges, mapStatus,
     officialPriceLabel,
@@ -30,6 +31,8 @@ export default function PriceMapPage() {
           setSelectedSido={setSelectedSido}
           tradeType={tradeType}
           setTradeType={setTradeType}
+          propertyType={propertyType}
+          setPropertyType={setPropertyType}
           topChanges={topChanges}
           selectAndMoveToApt={selectAndMoveToApt}
           setRiskPopup={setRiskPopup}
@@ -45,7 +48,7 @@ export default function PriceMapPage() {
         )}
 
         <div className="relative flex-1" style={{ minHeight: 0 }}>
-          <MapOverlay loading={loading} total={data?.total || 0} />
+          <MapOverlay loading={loading} total={data?.total || 0} propertyType={propertyType} />
           <div ref={mapRef} className="absolute inset-0" />
           {mapStatus === "loading" ? (
             <div className="absolute left-1/2 top-12 z-20 -translate-x-1/2 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 text-center shadow-sm backdrop-blur-sm">
@@ -75,6 +78,8 @@ export default function PriceMapPage() {
         setSelectedSido={setSelectedSido}
         tradeType={tradeType}
         setTradeType={setTradeType}
+        propertyType={propertyType}
+        setPropertyType={setPropertyType}
         topChanges={topChanges}
         selectAndMoveToApt={selectAndMoveToApt}
         setRiskPopup={setRiskPopup}

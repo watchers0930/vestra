@@ -2,10 +2,10 @@
 
 import { useState, useRef, useCallback } from "react";
 import { MapPin, TrendingUp, TrendingDown, ChevronDown, ChevronUp } from "lucide-react";
-import { formatPrice } from "@/lib/format";
 import { analyzeRisk } from "../lib/analyzeRisk";
-import { SIDO_MAP } from "../constants";
-import type { AptData } from "../types";
+import { formatMapPrice } from "../lib/formatMapPrice";
+import { getSelectableSidoMap } from "../constants";
+import type { AptData, PriceMapTradeType, PropertyType } from "../types";
 
 interface Props {
   selectedGu: string;
@@ -16,8 +16,10 @@ interface Props {
   setShowGuDropdown: (v: boolean) => void;
   selectedSido: string;
   setSelectedSido: (s: string) => void;
-  tradeType: "매매" | "전세";
-  setTradeType: (t: "매매" | "전세") => void;
+  tradeType: PriceMapTradeType;
+  setTradeType: (t: PriceMapTradeType) => void;
+  propertyType: PropertyType;
+  setPropertyType: (t: PropertyType) => void;
   topChanges: AptData[];
   selectAndMoveToApt: (apt: AptData) => void;
   setRiskPopup: (v: { apt: AptData; risk: ReturnType<typeof analyzeRisk> } | null) => void;
@@ -28,16 +30,19 @@ const RANK_COLORS = ["#0071e3", "#1a9e45", "#b86f00"];
 const PEEK_HEIGHT = 64;
 const PEEK_HEIGHT_WITH_APT = 88;
 const EXPANDED_HEIGHT_VH = 55;
+const PROPERTY_TYPES: PropertyType[] = ["아파트", "연립/빌라/다세대", "다가구/단독"];
+const TRADE_TYPES: PriceMapTradeType[] = ["매매", "전세", "월세"];
 
 export function MobileMapSheet({
   selectedGu, setSelectedGu, selectedApt, loading,
   showGuDropdown, setShowGuDropdown, selectedSido, setSelectedSido,
-  tradeType, setTradeType, topChanges, selectAndMoveToApt, setRiskPopup,
+  tradeType, setTradeType, propertyType, setPropertyType, topChanges, selectAndMoveToApt, setRiskPopup,
   officialPriceLabel,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const startY = useRef(0);
   const startExpanded = useRef(false);
+  const selectableSidoMap = getSelectableSidoMap(propertyType);
 
   const peekHeight = selectedApt ? PEEK_HEIGHT_WITH_APT : PEEK_HEIGHT;
 
@@ -72,7 +77,7 @@ export function MobileMapSheet({
           <div className="flex items-center gap-2">
             <MapPin size={14} strokeWidth={1.5} style={{ color: "#0071e3" }} />
             <span className="text-[13px] font-bold text-[#1d1d1f]">{selectedGu}</span>
-            <span className="text-[11px] font-medium text-[#6e6e73]">· {tradeType}</span>
+            <span className="text-[11px] font-medium text-[#6e6e73]">· {propertyType} · {tradeType}</span>
           </div>
           {expanded
             ? <ChevronDown size={16} className="text-[#aeaeb2]" />
@@ -87,7 +92,7 @@ export function MobileMapSheet({
               <span className="text-[11px] text-[#6e6e73]">{selectedApt.area}평</span>
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
-              <span className="text-[12px] font-bold text-[#1d1d1f]">{formatPrice(selectedApt.price)}</span>
+              <span className="text-[12px] font-bold text-[#1d1d1f]">{formatMapPrice(selectedApt, tradeType)}</span>
               {selectedApt.change !== null && (
                 <span className="text-[10px] font-bold" style={{ color: (selectedApt.change ?? 0) >= 0 ? "#ff3b30" : "#0071e3" }}>
                   {(selectedApt.change ?? 0) >= 0 ? "+" : ""}{selectedApt.change}%
@@ -120,7 +125,7 @@ export function MobileMapSheet({
                 </div>
                 <div className="grid grid-cols-2 gap-1.5 mb-3">
                   {[
-                    { label: "시세", value: formatPrice(selectedApt.price) },
+                    { label: tradeType === "월세" ? "월세" : "시세", value: formatMapPrice(selectedApt, tradeType) },
                     { label: "면적", value: `${selectedApt.area}평` },
                     { label: "건축", value: `${selectedApt.year}년` },
                     { label: "공시지가", value: officialPriceLabel || "데이터 없음" },
@@ -143,7 +148,20 @@ export function MobileMapSheet({
           })()}
 
           {/* 필터 */}
-          <div className="flex items-center gap-2 px-4 pb-3 border-b border-black/[0.06]">
+          <div className="px-4 pb-3 border-b border-black/[0.06]">
+            <div className="grid grid-cols-3 gap-1.5 mb-2">
+              {PROPERTY_TYPES.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setPropertyType(t)}
+                  className="min-h-[34px] rounded-[9px] px-1.5 py-1.5 text-[10px] font-bold leading-tight"
+                  style={{ border: propertyType === t ? "1px solid rgba(0,113,227,0.28)" : "1px solid rgba(0,0,0,0.08)", background: propertyType === t ? "rgba(0,113,227,0.08)" : "#f5f5f7", color: propertyType === t ? "#0071e3" : "#3d3d3f" }}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <button
                 onClick={() => setShowGuDropdown(!showGuDropdown)}
@@ -159,7 +177,7 @@ export function MobileMapSheet({
                 <div className="absolute z-20 top-full mt-1 left-0 right-0 flex rounded-[14px] border border-black/10 bg-white shadow-lg overflow-hidden" style={{ maxHeight: "260px" }}>
                   <div className="w-[100px] flex-shrink-0 border-r border-black/[0.06] overflow-y-auto">
                     <p className="sticky top-0 bg-[#f5f5f7] px-2.5 py-1.5 text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider">시도</p>
-                    {Object.keys(SIDO_MAP).map((sido) => (
+                    {Object.keys(selectableSidoMap).map((sido) => (
                       <button
                         key={sido}
                         onClick={() => setSelectedSido(sido)}
@@ -172,7 +190,7 @@ export function MobileMapSheet({
                   </div>
                   <div className="flex-1 overflow-y-auto">
                     <p className="sticky top-0 bg-[#f5f5f7] px-2.5 py-1.5 text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider">시군구</p>
-                    {(SIDO_MAP[selectedSido] || []).map((gu) => (
+                    {(selectableSidoMap[selectedSido] || []).map((gu) => (
                       <button
                         key={gu}
                         onClick={() => { setSelectedGu(gu); setShowGuDropdown(false); }}
@@ -187,7 +205,7 @@ export function MobileMapSheet({
               )}
             </div>
             <div className="flex rounded-[10px] border border-black/10 overflow-hidden flex-shrink-0">
-              {(["매매", "전세"] as const).map((t) => (
+              {TRADE_TYPES.map((t) => (
                 <button
                   key={t}
                   onClick={() => setTradeType(t)}
@@ -197,6 +215,7 @@ export function MobileMapSheet({
                   {t}
                 </button>
               ))}
+            </div>
             </div>
           </div>
 
@@ -230,7 +249,7 @@ export function MobileMapSheet({
                         <p className="text-[10px] text-[#6e6e73] m-0">{apt.area}평 · {apt.year}년</p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-[12px] font-bold text-[#1d1d1f] m-0">{formatPrice(apt.price)}</p>
+                        <p className="text-[12px] font-bold text-[#1d1d1f] m-0">{formatMapPrice(apt, tradeType)}</p>
                         <p className="text-[10px] font-bold m-0" style={{ color: isUp ? "#ff3b30" : "#0071e3" }}>
                           {apt.change !== null ? `${isUp ? "+" : ""}${apt.change}%` : "-"}
                         </p>

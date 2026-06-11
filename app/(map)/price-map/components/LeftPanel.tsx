@@ -1,10 +1,10 @@
 "use client";
 
 import { MapPin, TrendingUp, TrendingDown, ChevronDown, BarChart3, Building2 } from "lucide-react";
-import { formatPrice } from "@/lib/format";
 import { analyzeRisk } from "../lib/analyzeRisk";
-import { SIDO_MAP } from "../constants";
-import type { AptData } from "../types";
+import { formatMapPrice } from "../lib/formatMapPrice";
+import { getSelectableSidoMap } from "../constants";
+import type { AptData, PriceMapTradeType, PropertyType } from "../types";
 
 interface Props {
   selectedGu: string;
@@ -15,8 +15,10 @@ interface Props {
   setShowGuDropdown: (v: boolean) => void;
   selectedSido: string;
   setSelectedSido: (s: string) => void;
-  tradeType: "매매" | "전세";
-  setTradeType: (t: "매매" | "전세") => void;
+  tradeType: PriceMapTradeType;
+  setTradeType: (t: PriceMapTradeType) => void;
+  propertyType: PropertyType;
+  setPropertyType: (t: PropertyType) => void;
   topChanges: AptData[];
   selectAndMoveToApt: (apt: AptData) => void;
   setRiskPopup: (v: { apt: AptData; risk: ReturnType<typeof analyzeRisk> } | null) => void;
@@ -24,13 +26,17 @@ interface Props {
 }
 
 const RANK_COLORS = ["#0071e3", "#1a9e45", "#b86f00"];
+const PROPERTY_TYPES: PropertyType[] = ["아파트", "연립/빌라/다세대", "다가구/단독"];
+const TRADE_TYPES: PriceMapTradeType[] = ["매매", "전세", "월세"];
 
 export function LeftPanel({
   selectedGu, setSelectedGu, selectedApt, loading,
   showGuDropdown, setShowGuDropdown, selectedSido, setSelectedSido,
-  tradeType, setTradeType, topChanges, selectAndMoveToApt, setRiskPopup,
+  tradeType, setTradeType, propertyType, setPropertyType, topChanges, selectAndMoveToApt, setRiskPopup,
   officialPriceLabel,
 }: Props) {
+  const selectableSidoMap = getSelectableSidoMap(propertyType);
+
   return (
     <div className="hidden lg:flex" style={{ height: "100%", width: "300px", flexShrink: 0, flexDirection: "column", background: "#f5f5f7", borderRight: "1px solid rgba(0,0,0,0.08)" }}>
 
@@ -42,7 +48,7 @@ export function LeftPanel({
           <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "3px 10px", borderRadius: "20px", fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase" as const, color: "#2997ff", background: "rgba(41,151,255,0.10)", border: "1px solid rgba(41,151,255,0.20)", marginBottom: "10px" }}>
             <BarChart3 size={9} strokeWidth={2} /> 시세지도
           </div>
-          <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#fff", letterSpacing: "-0.03em", margin: 0, lineHeight: 1.2 }}>아파트 시세 지도</h2>
+          <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#fff", letterSpacing: "-0.03em", margin: 0, lineHeight: 1.2 }}>{propertyType} 시세 지도</h2>
           <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.40)", marginTop: "5px", marginBottom: 0, lineHeight: 1.5 }}>
             국토부 실거래 기준 · 최근 1년 변동률
           </p>
@@ -63,6 +69,17 @@ export function LeftPanel({
 
       {/* ── 필터 영역 ── */}
       <div style={{ padding: "12px 12px 10px", background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.07)", flexShrink: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "6px", marginBottom: "8px" }}>
+          {PROPERTY_TYPES.map((t) => (
+            <button
+              key={t}
+              onClick={() => setPropertyType(t)}
+              style={{ minHeight: "34px", borderRadius: "9px", border: propertyType === t ? "1px solid rgba(0,113,227,0.28)" : "1px solid rgba(0,0,0,0.08)", background: propertyType === t ? "rgba(0,113,227,0.08)" : "#f5f5f7", color: propertyType === t ? "#0071e3" : "#3d3d3f", fontSize: "10.5px", fontWeight: 700, lineHeight: 1.2, cursor: "pointer", padding: "6px 4px" }}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           {/* 지역 선택 드롭다운 */}
           <div style={{ position: "relative", flex: 1 }}>
@@ -80,7 +97,7 @@ export function LeftPanel({
               <div style={{ position: "absolute", zIndex: 20, top: "calc(100% + 4px)", left: 0, width: "360px", display: "flex", borderRadius: "14px", border: "1px solid rgba(0,0,0,0.10)", background: "#fff", boxShadow: "0 8px 32px rgba(0,0,0,0.14)", overflow: "hidden" }}>
                 <div style={{ width: "110px", flexShrink: 0, borderRight: "1px solid rgba(0,0,0,0.06)", overflowY: "auto", maxHeight: "260px" }}>
                   <p style={{ position: "sticky", top: 0, background: "#f5f5f7", padding: "6px 10px", fontSize: "10px", fontWeight: 700, color: "#aeaeb2", letterSpacing: "0.06em", textTransform: "uppercase" as const }}>시도</p>
-                  {Object.keys(SIDO_MAP).map((sido) => (
+                  {Object.keys(selectableSidoMap).map((sido) => (
                     <button
                       key={sido}
                       onClick={() => setSelectedSido(sido)}
@@ -92,7 +109,7 @@ export function LeftPanel({
                 </div>
                 <div style={{ flex: 1, overflowY: "auto", maxHeight: "260px" }}>
                   <p style={{ position: "sticky", top: 0, background: "#f5f5f7", padding: "6px 10px", fontSize: "10px", fontWeight: 700, color: "#aeaeb2", letterSpacing: "0.06em", textTransform: "uppercase" as const }}>시군구</p>
-                  {(SIDO_MAP[selectedSido] || []).map((gu) => (
+                  {(selectableSidoMap[selectedSido] || []).map((gu) => (
                     <button
                       key={gu}
                       onClick={() => { setSelectedGu(gu); setShowGuDropdown(false); }}
@@ -108,7 +125,7 @@ export function LeftPanel({
 
           {/* 매매/전세 토글 */}
           <div style={{ display: "flex", borderRadius: "10px", border: "1px solid rgba(0,0,0,0.10)", overflow: "hidden", flexShrink: 0 }}>
-            {(["매매", "전세"] as const).map((t) => (
+            {TRADE_TYPES.map((t) => (
               <button
                 key={t}
                 onClick={() => setTradeType(t)}
@@ -159,7 +176,7 @@ export function LeftPanel({
                       <p style={{ fontSize: "10.5px", color: "#6e6e73", margin: 0 }}>{apt.area}평 · {apt.year}년</p>
                     </div>
                     <div style={{ textAlign: "right" as const, flexShrink: 0 }}>
-                      <p style={{ fontSize: "12px", fontWeight: 700, color: "#1d1d1f", margin: 0 }}>{formatPrice(apt.price)}</p>
+                      <p style={{ fontSize: "12px", fontWeight: 700, color: "#1d1d1f", margin: 0 }}>{formatMapPrice(apt, tradeType)}</p>
                       <p style={{ fontSize: "10.5px", fontWeight: 700, color: isUp ? "#ff3b30" : "#0071e3", margin: 0 }}>
                         {apt.change !== null ? `${isUp ? "+" : ""}${apt.change}%` : "-"}
                       </p>
@@ -193,7 +210,7 @@ export function LeftPanel({
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "12px" }}>
                 {[
-                  { label: "시세", value: formatPrice(selectedApt.price) },
+                  { label: tradeType === "월세" ? "월세" : "시세", value: formatMapPrice(selectedApt, tradeType) },
                   { label: "면적", value: `${selectedApt.area}평` },
                   { label: "건축", value: `${selectedApt.year}년` },
                   { label: "공시지가", value: officialPriceLabel || "데이터 없음" },

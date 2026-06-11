@@ -6,14 +6,37 @@
 export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
-import { fetchRecentPrices, fetchRecentRentPrices, LAWD_CODE_MAP } from "@/lib/molit-api";
+import {
+  fetchRecentResidentialSalePrices,
+  fetchRecentRentPrices,
+  LAWD_CODE_MAP,
+  type ResidentialSaleType,
+} from "@/lib/molit-api";
 // fetchREBMarketData 제거 — 단지별 실거래 데이터만 사용
 import { APICache } from "@/lib/api-cache";
 import { kvCache } from "@/lib/kv-cache";
-import { AptPrice, SEED_DATA, DONG_CENTER, GU_CENTER, GU_ADDRESS_MAP, REGION_GROUPS } from "@/lib/price-map-data";
+import { DONG_CENTER, GU_CENTER, GU_ADDRESS_MAP, REGION_GROUPS } from "@/lib/price-map-data";
+import type { AptData, PriceMapTradeType, PropertyType } from "@/app/(map)/price-map/types";
 
 // 카카오 REST API로 아파트 실제 좌표 검색
 const GEOCODE_TTL = 7 * 24 * 60 * 60 * 1000; // 7일
+
+const PROPERTY_TYPES = ["아파트", "연립/빌라/다세대", "다가구/단독"] as const satisfies readonly PropertyType[];
+
+function parsePropertyType(value: string | null): PropertyType {
+  return PROPERTY_TYPES.includes(value as PropertyType) ? value as PropertyType : "아파트";
+}
+
+function toResidentialType(propertyType: PropertyType): ResidentialSaleType {
+  if (propertyType === "연립/빌라/다세대") return "rowhouse";
+  if (propertyType === "다가구/단독") return "singlehouse";
+  return "apartment";
+}
+
+function parseTradeType(value: string | null): PriceMapTradeType {
+  if (value === "전세" || value === "월세") return value;
+  return "매매";
+}
 
 // 주거 관련 카테고리 판별
 function isResidentialCategory(cat?: string): boolean {
@@ -83,18 +106,13 @@ async function kakaoAddressSearch(kakaoKey: string, query: string): Promise<{ la
 
 // 거리 검증: center에서 maxKm 이내인지 확인
 function validateDistance(coord: { lat: number; lng: number }, center: { lat: number; lng: number } | undefined, maxKm: number): boolean {
-  if (!center) return false; // center 없으면 검증 불가 → 거부 (안전 우선)
+  if (!center) return true;
   return haversineDistance(coord, center) <= maxKm;
 }
 
-function getSeedCenter(gu: string): { lat: number; lng: number } | null {
-  const seed = SEED_DATA[gu];
-  if (!seed || seed.length === 0) return null;
-
-  return {
-    lat: seed.reduce((sum, apt) => sum + apt.lat, 0) / seed.length,
-    lng: seed.reduce((sum, apt) => sum + apt.lng, 0) / seed.length,
-  };
+function formatRegionAddressForSearch(regionAddress: string): string {
+  if (regionAddress === "경상남도고성") return "경상남도 고성군";
+  return regionAddress.replace(/^(부산|대구|인천|광주|대전|울산)(.+구)$/, "$1 $2");
 }
 
 async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: string): Promise<{ lat: number; lng: number } | null> {
@@ -105,9 +123,9 @@ async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: str
   const kakaoKey = process.env.KAKAO_REST_KEY;
   if (!kakaoKey) return null;
 
-  const guCenter = GU_CENTER[gu] || getSeedCenter(gu) || { lat: 37.4979, lng: 127.0276 }; // 강남 기본값
+  const guCenter = GU_CENTER[gu];
   const center = DONG_CENTER[dong] || guCenter;
-  const regionAddress = GU_ADDRESS_MAP[gu] || gu;
+  const regionAddress = formatRegionAddressForSearch(GU_ADDRESS_MAP[gu] || gu);
   const MAX_DISTANCE_KM = 5; // 구 중심에서 5km 이상이면 부정확한 결과로 판단
 
   // 아파트명 정제: 괄호/숫자 제거 (예: "신동아(22)" → "신동아")
@@ -268,49 +286,25 @@ export async function DELETE(req: NextRequest) {
 
 const RESPONSE_CACHE_TTL = 6 * 60 * 60 * 1000; // 6시간
 
-async function geocodeSeedApartments(
-  gu: string,
-  apartments: AptPrice[]
-): Promise<AptPrice[]> {
-  if (apartments.length === 0) return apartments;
-
-  const geocoded = await geocodeAll(
-    apartments.map((apt) => ({
-      gu,
-      dong: apt.dong,
-      name: apt.name,
-    }))
-  );
-
-  return apartments.map((apt) => {
-    const coord = geocoded.get(`${apt.name}@@${apt.dong}@@`);
-    if (!coord) return apt;
-
-    return {
-      ...apt,
-      lat: coord.lat,
-      lng: coord.lng,
-    };
-  });
-}
-
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const gu = searchParams.get("gu") || "강남구";
 
   // 입력 검증: 허용된 구 목록에 없으면 400
-  const allowedGus = Object.keys(SEED_DATA);
+  const allowedGus = [...new Set([...Object.keys(GU_ADDRESS_MAP), ...Object.keys(LAWD_CODE_MAP)])];
   if (!allowedGus.includes(gu)) {
     return NextResponse.json({ error: "지원하지 않는 지역입니다", availableGus: allowedGus }, { status: 400 });
   }
 
   const minPrice = parseInt(searchParams.get("minPrice") || "0");
   const maxPrice = parseInt(searchParams.get("maxPrice") || "9999999");
-  const tradeType = searchParams.get("type") === "전세" ? "전세" : "매매";
+  const tradeType = parseTradeType(searchParams.get("type"));
+  const propertyType = parsePropertyType(searchParams.get("propertyType"));
+  const residentialType = toResidentialType(propertyType);
 
   // ── 전체 응답 KV 캐시 조회 (가격 필터 없는 요청만 캐시 적용) ──
   const useResponseCache = minPrice === 0 && maxPrice === 9999999;
-  const responseCacheKey = `price-map:v5:${gu}:${tradeType}`;
+  const responseCacheKey = `price-map:v6:${gu}:${propertyType}:${tradeType}`;
   if (useResponseCache) {
     const cached = await kvCache.get<object>(responseCacheKey);
     if (cached) {
@@ -318,48 +312,54 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // MOLIT 실거래가 API 시도 → 실패 시 시드 데이터 폴백
-  let data: AptPrice[] = [];
-  let dataSource: "molit" | "seed" = "seed";
+  // MOLIT 실거래가 API만 사용한다. 실데이터가 없으면 빈 결과를 반환한다.
+  const data: AptData[] = [];
+  let dataSource: "molit" | "none" = "none";
 
   // 구 이름 → 법정동 코드 매핑 (LAWD_CODE_MAP에서 검색)
-  const guToAddress = GU_ADDRESS_MAP[gu];
+  const guToAddress = GU_ADDRESS_MAP[gu] || gu;
   const lawdCode = guToAddress ? LAWD_CODE_MAP[guToAddress] : undefined;
 
   if (lawdCode && process.env.MOLIT_API_KEY) {
     try {
       // 전세/매매 공통 처리
-      const txResult = tradeType === "전세"
-        ? await fetchRecentRentPrices(guToAddress, 12)
-        : await fetchRecentPrices(guToAddress, 12);
+      const txResult = tradeType === "매매"
+        ? await fetchRecentResidentialSalePrices(guToAddress, 12, residentialType)
+        : await fetchRecentRentPrices(guToAddress, 12, residentialType);
 
       if (txResult && txResult.transactions.length > 0) {
-        // 아파트명별 그룹핑
+        const transactions = tradeType === "월세"
+          ? txResult.transactions.filter((tx) => "rentType" in tx && tx.rentType === "월세")
+          : tradeType === "전세"
+            ? txResult.transactions.filter((tx) => "rentType" in tx && tx.rentType === "전세")
+            : txResult.transactions;
+
+        // 물건명/동/지번별 그룹핑
         const grouped = new Map<string, typeof txResult.transactions[0][]>();
-        for (const tx of txResult.transactions) {
-          const key = tx.aptName || "알수없음";
+        for (const tx of transactions) {
+          const baseName = tx.aptName || (propertyType === "다가구/단독" ? "단독/다가구" : propertyType);
+          const key = `${baseName}@@${tx.dong || ""}@@${tx.jibun || ""}`;
           if (!grouped.has(key)) grouped.set(key, []);
           grouped.get(key)!.push(tx);
         }
 
-        const seedApts = SEED_DATA[gu] || [];
-        const seedMap = new Map(seedApts.map(s => [`${s.name}@@${s.dong}`, s]));
         const entries = [...grouped.entries()];
 
-        // 좌표 조회: KV캐시/카카오 geocode API → 시드 데이터 폴백
+        // 좌표 조회: KV캐시/카카오 geocode API. 좌표가 확인되지 않으면 제외한다.
         const geocoded = new Map<string, { lat: number; lng: number }>();
 
-        // 모든 단지에 대해 정확한 geocode 시도, 실패 시 시드 데이터 폴백
+        // 모든 물건에 대해 정확한 geocode 시도
         const needsGeocode: { gu: string; dong: string; name: string; jibun?: string }[] = [];
-        await Promise.allSettled(entries.map(async ([aptName, txs]) => {
+        await Promise.allSettled(entries.map(async ([groupKey, txs]) => {
           const latest = txs[0];
-          const key = `${aptName}@@${latest.dong || ""}@@${latest.jibun || ""}`;
-          const cacheKey = APICache.makeKey("geocode-v2", gu, latest.dong || "", aptName, latest.jibun || "");
+          const [name] = groupKey.split("@@");
+          const key = `${name}@@${latest.dong || ""}@@${latest.jibun || ""}`;
+          const cacheKey = APICache.makeKey("geocode-v2", gu, latest.dong || "", name, latest.jibun || "");
           const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
           if (cached) {
             geocoded.set(key, cached);
           } else {
-            needsGeocode.push({ gu, dong: latest.dong || "", name: aptName, jibun: latest.jibun || "" });
+            needsGeocode.push({ gu, dong: latest.dong || "", name, jibun: latest.jibun || "" });
           }
         }));
 
@@ -371,30 +371,45 @@ export async function GET(req: NextRequest) {
           }
         }
 
-        entries.forEach(([aptName, txs]) => {
+        entries.forEach(([groupKey, txs]) => {
           const latest = txs[0];
-          const seed = seedMap.get(`${aptName}@@${latest.dong || ""}`);
-          const amount = tradeType === "전세"
+          const [aptNameFromKey] = groupKey.split("@@");
+          const aptName = aptNameFromKey || latest.aptName || propertyType;
+          const displayName = latest.jibun && (aptName === "단독/다가구" || aptName === propertyType)
+            ? `${latest.dong || "주소"} ${latest.jibun}`
+            : aptName;
+          const amount = tradeType === "매매"
+            ? (latest as { dealAmount?: number }).dealAmount || 0
+            : tradeType === "전세"
+              ? (latest as { deposit?: number }).deposit || 0
+              : (latest as { monthlyRent?: number }).monthlyRent || 0;
+          const deposit = tradeType !== "매매"
             ? (latest as { deposit?: number }).deposit || 0
-            : (latest as { dealAmount?: number }).dealAmount || 0;
+            : undefined;
+          const monthlyRent = tradeType === "월세"
+            ? (latest as { monthlyRent?: number }).monthlyRent || 0
+            : undefined;
           if (amount <= 0) return;
 
           const priceInMan = Math.round(amount / 10000);
           const change = calcChangeByArea(txs.map(t => ({
-            amount: tradeType === "전세" ? ((t as { deposit?: number }).deposit || 0) : ((t as { dealAmount?: number }).dealAmount || 0),
+            amount: tradeType === "매매"
+              ? ((t as { dealAmount?: number }).dealAmount || 0)
+              : tradeType === "전세"
+                ? ((t as { deposit?: number }).deposit || 0)
+                : ((t as { monthlyRent?: number }).monthlyRent || 0),
             area: t.area || 0,
             dealYear: (t as { dealYear?: number }).dealYear || 0,
             dealMonth: (t as { dealMonth?: number }).dealMonth || 0,
           })));
           // 거래 부족(0)이면 null → 프론트에서 변동률 미표시
 
-          // 좌표 우선순위: 1) KV캐시 geocode → 2) 시드 데이터 → 정확한 좌표 없으면 제외
-          const coords = geocoded.get(`${aptName}@@${latest.dong || ""}@@${latest.jibun || ""}`)
-            || (seed ? { lat: seed.lat, lng: seed.lng } : null);
+          // 좌표 우선순위: KV캐시 geocode → 카카오 geocode. 정확한 좌표 없으면 제외.
+          const coords = geocoded.get(`${aptName}@@${latest.dong || ""}@@${latest.jibun || ""}`) || null;
           if (!coords) return; // geocode 실패 → 지도에 미표시 (가짜 좌표 방지)
 
           data.push({
-            name: aptName,
+            name: displayName,
             dong: latest.dong || "",
             price: priceInMan,
             area: latest.area ? Math.round((latest.area * 1.45) / 3.3058) : 0,
@@ -402,25 +417,23 @@ export async function GET(req: NextRequest) {
             lng: coords.lng,
             change: change !== 0 ? change : null,
             year: latest.buildYear || 0,
+            propertyType,
+            ...(deposit !== undefined ? { deposit: Math.round(deposit / 10000) } : {}),
+            ...(monthlyRent !== undefined ? { monthlyRent: Math.round(monthlyRent / 10000) } : {}),
           });
         });
         if (data.length > 0) dataSource = "molit";
       }
     } catch (err) {
-      console.error("[price-map] MOLIT API 호출 실패, 시드 데이터로 폴백:", err);
+      console.error("[price-map] MOLIT API 호출 실패:", err);
     }
   }
 
-  // MOLIT 실패 or 데이터 없음 → 시드 데이터 폴백
-  if (data.length === 0) {
-    data = await geocodeSeedApartments(gu, [...(SEED_DATA[gu] || [])]);
-    dataSource = "seed";
-  }
-
-  const availableGus = Object.keys(SEED_DATA);
+  const availableGus = Object.keys(GU_ADDRESS_MAP);
 
   const responsePayload = {
     gu,
+    propertyType,
     tradeType,
     dataSource,
     apartments: data,
@@ -432,7 +445,7 @@ export async function GET(req: NextRequest) {
     total: data.length,
   };
 
-  // 전체 응답 KV 캐시 저장 (실데이터만 캐시 — seed 폴백은 캐시하지 않음)
+  // 전체 응답 KV 캐시 저장 (실데이터만 캐시)
   if (useResponseCache && dataSource === "molit") {
     await kvCache.set(responseCacheKey, responsePayload, RESPONSE_CACHE_TTL);
   }

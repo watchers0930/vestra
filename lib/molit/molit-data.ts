@@ -196,7 +196,13 @@ export function parseTransactions(xml: string): RealTransaction[] {
       dealYear: parseInt(extractVal(item, "dealYear", "년"), 10) || 0,
       dealMonth: parseInt(extractVal(item, "dealMonth", "월"), 10) || 0,
       dealDay: parseInt(extractVal(item, "dealDay", "일"), 10) || 0,
-      aptName: extractVal(item, "aptNm", "아파트") || extractVal(item, "aptNm", "단지명"),
+      aptName:
+        extractVal(item, "aptNm", "아파트") ||
+        extractVal(item, "aptNm", "단지명") ||
+        extractXmlValue(item, "mhouseNm") ||
+        extractVal(item, "houseType", "주택유형") ||
+        extractXmlValue(item, "연립다세대") ||
+        extractXmlValue(item, "건물명"),
       area: parseFloat(extractVal(item, "excluUseAr", "전용면적")) || 0,
       floor: parseInt(extractVal(item, "floor", "층"), 10) || 0,
       dong: extractVal(item, "umdNm", "법정동"),
@@ -231,7 +237,13 @@ export function parseRentTransactions(xml: string): RentTransaction[] {
       dealYear: parseInt(extractVal(item, "dealYear", "년"), 10) || 0,
       dealMonth: parseInt(extractVal(item, "dealMonth", "월"), 10) || 0,
       dealDay: parseInt(extractVal(item, "dealDay", "일"), 10) || 0,
-      aptName: extractVal(item, "aptNm", "아파트") || extractVal(item, "aptNm", "단지명"),
+      aptName:
+        extractVal(item, "aptNm", "아파트") ||
+        extractVal(item, "aptNm", "단지명") ||
+        extractXmlValue(item, "mhouseNm") ||
+        extractVal(item, "houseType", "주택유형") ||
+        extractXmlValue(item, "연립다세대") ||
+        extractXmlValue(item, "건물명"),
       area: parseFloat(extractVal(item, "excluUseAr", "전용면적")) || 0,
       floor: parseInt(extractVal(item, "floor", "층"), 10) || 0,
       dong: extractVal(item, "umdNm", "법정동"),
@@ -295,4 +307,12 @@ export const MOLIT_ENDPOINTS = {
     "https://apis.data.go.kr/1613000/RTMSDataSvcSHTrade/getRTMSDataSvcSHTrade",
   officeTelTrade:
     "https://apis.data.go.kr/1613000/RTMSDataSvcOffiTrade/getRTMSDataSvcOffiTrade",
+  aptRent:
+    "https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent",
+  rowHouseRent:
+    "https://apis.data.go.kr/1613000/RTMSDataSvcRHRent/getRTMSDataSvcRHRent",
+  singleHouseRent:
+    "https://apis.data.go.kr/1613000/RTMSDataSvcSHRent/getRTMSDataSvcSHRent",
+  officeTelRent:
+    "https://apis.data.go.kr/1613000/RTMSDataSvcOffiRent/getRTMSDataSvcOffiRent",
 };

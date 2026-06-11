@@ -327,7 +327,7 @@ export default function Sidebar() {
                         <div style={{ margin: "8px 10px", borderTop: "1px solid rgba(255,255,255,0.06)" }} />
                       )}
                       <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                        {renderMenuItem(userMenuItems[8], isUserItemActive(userMenuItems[8]))}
+                        {renderMenuItem(userMenuItems[9], isUserItemActive(userMenuItems[9]))}
                       </div>
                     </div>
                   )}

@@ -3,6 +3,7 @@
 interface Props {
   loading: boolean;
   total: number;
+  propertyType: string;
 }
 
 const LEGEND_ITEMS = [
@@ -13,7 +14,7 @@ const LEGEND_ITEMS = [
   { color: "#93c5fd", label: "20평대 이하" },
 ];
 
-export function MapOverlay({ loading, total }: Props) {
+export function MapOverlay({ loading, total, propertyType }: Props) {
   return (
     <>
       {/* 로딩 오버레이 */}
@@ -42,7 +43,7 @@ export function MapOverlay({ loading, total }: Props) {
       {/* 총 건수 배지 */}
       <div style={{ position: "absolute", left: "12px", top: "12px", zIndex: 10, background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 2px 10px rgba(0,0,0,0.08)", padding: "6px 12px" }}>
         <span style={{ fontSize: "12px", color: "#6e6e73" }}>
-          <span style={{ fontWeight: 700, color: "#0071e3" }}>{total}</span>개 아파트
+          <span style={{ fontWeight: 700, color: "#0071e3" }}>{total}</span>개 {propertyType}
         </span>
       </div>
 
