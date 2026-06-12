@@ -10,7 +10,22 @@ function SignupCompleteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status, update } = useSession();
-  const intendedRole = searchParams.get("intendedRole");
+
+  // URL searchParam 우선, OAuth 리다이렉트 후 없으면 sessionStorage에서 읽음
+  const [intendedRole, setIntendedRole] = useState<string | null>(
+    searchParams.get("intendedRole")
+  );
+
+  useEffect(() => {
+    if (intendedRole) return; // URL에서 이미 가져온 경우 건너뜀
+    const stored = sessionStorage.getItem("intendedRole");
+    if (stored) {
+      setIntendedRole(stored);
+      sessionStorage.removeItem("intendedRole");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // mount에서만 실행
+
   const isValidRole =
     intendedRole === "PERSONAL" ||
     intendedRole === "REALESTATE" ||

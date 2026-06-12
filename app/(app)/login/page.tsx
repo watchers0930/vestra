@@ -32,9 +32,10 @@ export default function LoginPage() {
 
   const handleSocialLogin = (provider: "google" | "naver") => {
     if (!selectedRole) return;
-    signIn(provider, {
-      callbackUrl: `/signup/complete?intendedRole=${selectedRole}`,
-    });
+    // intendedRole을 sessionStorage에 저장 후 단순 callbackUrl 사용
+    // (쿼리스트링 포함 callbackUrl이 NextAuth OAuth 콜백 Configuration 에러 유발)
+    sessionStorage.setItem("intendedRole", selectedRole);
+    signIn(provider, { callbackUrl: "/signup/complete" });
   };
 
   const handleAdminLogin = async (e: React.FormEvent) => {

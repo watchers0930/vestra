@@ -77,13 +77,20 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
     // 매 요청마다 DB에서 최신 role/verifyStatus 동기화
     // (어드민 승인 즉시 반영을 위해 캐시 없음 — PK SELECT 3컬럼, ~1ms)
     if (token.id) {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: token.id as string },
-        select: { role: true, dailyLimit: true, verifyStatus: true },
-      });
-      token.role = dbUser?.role || "PERSONAL";
-      token.dailyLimit = dbUser?.dailyLimit || ROLE_LIMITS.PERSONAL;
-      token.verifyStatus = dbUser?.verifyStatus || "none";
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true, dailyLimit: true, verifyStatus: true },
+        });
+        token.role = dbUser?.role || "PERSONAL";
+        token.dailyLimit = dbUser?.dailyLimit || ROLE_LIMITS.PERSONAL;
+        token.verifyStatus = dbUser?.verifyStatus || "none";
+      } catch {
+        // DB 일시 장애 시 기존 토큰 값 유지 (OAuth 콜백 Configuration 에러 방지)
+        token.role = token.role ?? "PERSONAL";
+        token.dailyLimit = token.dailyLimit ?? ROLE_LIMITS.PERSONAL;
+        token.verifyStatus = token.verifyStatus ?? "none";
+      }
     }
 
     return token;
