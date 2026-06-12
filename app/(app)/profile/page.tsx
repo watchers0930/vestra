@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { signOut } from "next-auth/react";
+import { clearAll } from "@/lib/store";
 import {
   User,
   Shield,
@@ -418,7 +419,7 @@ export default function ProfilePage() {
 
       {/* 로그아웃 */}
       <button
-        onClick={() => signOut({ redirectTo: "/" })}
+        onClick={() => { clearAll(); signOut({ redirectTo: "/" }); }}
         className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-sm text-muted hover:text-foreground hover:bg-[#f5f5f7] transition-colors"
       >
         <LogOut size={16} strokeWidth={1.5} />

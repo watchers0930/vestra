@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { getAssets, getAnalyses, removeAnalysis, type StoredAsset, type AnalysisRecord } from "@/lib/store";
+import { getAssets, getAnalyses, removeAnalysis, ensureUserIsolation, type StoredAsset, type AnalysisRecord } from "@/lib/store";
 import { useToast } from "@/components/common/toast";
 
 export function useDashboardData() {
@@ -22,6 +22,8 @@ export function useDashboardData() {
   useEffect(() => {
     async function loadData() {
       if (session?.user) {
+        // 계정 전환 시 이전 계정의 localStorage 데이터 격리
+        ensureUserIsolation(session.user.id);
         try {
           const res = await fetch("/api/user/sync-data");
           if (res.ok) {

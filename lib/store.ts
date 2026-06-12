@@ -26,6 +26,21 @@ export interface StoredAsset {
 
 const ANALYSIS_KEY = "vestra_analyses";
 const ASSETS_KEY = "vestra_assets";
+const LAST_USER_KEY = "vestra_last_user";
+
+/**
+ * 현재 로그인 사용자가 이전과 다르면 localStorage를 초기화
+ * - 같은 브라우저에서 계정 전환 시 타 계정 데이터 노출 방지
+ * - useDashboardData 등 세션 로드 시점에 호출
+ */
+export function ensureUserIsolation(userId: string): void {
+  if (typeof window === "undefined") return;
+  const lastUser = localStorage.getItem(LAST_USER_KEY);
+  if (lastUser !== userId) {
+    clearAll();
+    localStorage.setItem(LAST_USER_KEY, userId);
+  }
+}
 
 // ─── 인코딩/디코딩 (XSS 시 평문 노출 방지) ───
 
@@ -181,6 +196,7 @@ export function getLatestAnalysisForAddress(address: string): AnalysisRecord | n
 export function clearAll(): void {
   localStorage.removeItem(ANALYSIS_KEY);
   localStorage.removeItem(ASSETS_KEY);
+  localStorage.removeItem(LAST_USER_KEY);
 }
 
 /** 특정 날짜(기본: 오늘)의 분석 이력 삭제 */
