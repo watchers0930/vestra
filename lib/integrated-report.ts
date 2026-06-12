@@ -253,6 +253,8 @@ export function aggregateReport(
       missingClauses: [],
       safetyScore: report.contractRisk.overallRisk === "low" ? 90
         : report.contractRisk.overallRisk === "medium" ? 60 : 30,
+      extractedInfo: { paymentSchedule: [] },
+      reviewIssues: [],
     };
   }
 

@@ -17,6 +17,7 @@ import { ClauseAnalysisCard } from "./components/ClauseAnalysisCard";
 import { MissingClausesCard } from "./components/MissingClausesCard";
 import { SafetyChecklist } from "./components/SafetyChecklist";
 import { RecommendedTermsCard } from "./components/RecommendedTermsCard";
+import { ContractExecutiveSummary } from "./components/ContractExecutiveSummary";
 import { getScoreLabel, riskBadgeLabel } from "./constants";
 
 export default function ContractReviewPage() {
@@ -82,6 +83,19 @@ export default function ContractReviewPage() {
                   lines.push("[AI 종합 의견]");
                   lines.push(result.aiOpinion);
                   lines.push("");
+                  if (result.extractedInfo) {
+                    lines.push("[계약 핵심정보]");
+                    lines.push(`목적물: ${result.extractedInfo.propertyAddress || "미확인"}`);
+                    lines.push(`임대인: ${result.extractedInfo.landlordName || "미확인"}`);
+                    lines.push(`임차인: ${result.extractedInfo.tenantName || "미확인"}`);
+                    lines.push(`계약기간: ${result.extractedInfo.contractStartDate || "미확인"} ~ ${result.extractedInfo.contractEndDate || "미확인"}`);
+                    lines.push("");
+                  }
+                  if (result.reviewIssues?.length) {
+                    lines.push("[우선 검토 이슈]");
+                    result.reviewIssues.forEach((issue) => lines.push(`- ${issue.title}: ${issue.recommendation}`));
+                    lines.push("");
+                  }
                   result.clauses.forEach((c) => {
                     lines.push(`[${riskBadgeLabel[c.riskLevel]}] ${c.title}`);
                     lines.push(c.analysis);
@@ -143,6 +157,7 @@ export default function ContractReviewPage() {
             </div>
           </div>
 
+          <ContractExecutiveSummary extractedInfo={result.extractedInfo} reviewIssues={result.reviewIssues} />
           <ClauseAnalysisCard clauses={result.clauses} />
           <MissingClausesCard missingClauses={result.missingClauses} />
 

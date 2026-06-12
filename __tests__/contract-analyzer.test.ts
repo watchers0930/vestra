@@ -58,6 +58,23 @@ const UNSTRUCTURED_TEXT = `
 특약사항으로 반려동물 사육을 금지합니다.
 `;
 
+const DETAILED_CONTRACT = `
+부동산 임대차 계약서
+
+임대인: 김임대
+임차인: 박임차
+
+제1조 (목적물의 표시)
+서울특별시 강남구 테헤란로 123, 456호
+
+제2조 (보증금 및 차임)
+보증금은 금 5억원으로 하며, 계약금 5천만원은 계약시, 중도금 2억원은 2025년 3월 1일, 잔금 2억5천만원은 2025년 4월 1일에 지급한다.
+보증금 반환은 임대차 종료 후 1개월 이내에 한다.
+
+제3조 (계약기간)
+임대차 기간은 2025년 5월 1일부터 2027년 4월 30일까지 2년으로 한다.
+`;
+
 // ─── 테스트 ───
 
 describe("analyzeContract (계약서 분석 엔진)", () => {
@@ -183,6 +200,59 @@ describe("analyzeContract (계약서 분석 엔진)", () => {
       const result = analyzeContract(SAMPLE_CONTRACT);
       expect(result.safetyScore).toBeGreaterThanOrEqual(0);
       expect(result.safetyScore).toBeLessThanOrEqual(100);
+    });
+  });
+
+  describe("계약 핵심정보 추출", () => {
+    it("주소, 당사자, 보증금, 계약기간을 추출한다", () => {
+      const result = analyzeContract(DETAILED_CONTRACT);
+
+      expect(result.extractedInfo.propertyAddress).toBe("서울특별시 강남구 테헤란로 123, 456호");
+      expect(result.extractedInfo.landlordName).toBe("김임대");
+      expect(result.extractedInfo.tenantName).toBe("박임차");
+      expect(result.extractedInfo.depositAmount).toBe(500_000_000);
+      expect(result.extractedInfo.contractStartDate).toBe("2025-05-01");
+      expect(result.extractedInfo.contractEndDate).toBe("2027-04-30");
+      expect(result.extractedInfo.durationMonths).toBe(24);
+    });
+
+    it("계약금, 중도금, 잔금 지급 일정을 추출한다", () => {
+      const result = analyzeContract(DETAILED_CONTRACT);
+
+      expect(result.extractedInfo.paymentSchedule).toHaveLength(3);
+      expect(result.extractedInfo.paymentSchedule[0]).toMatchObject({
+        label: "계약금",
+        amount: 50_000_000,
+      });
+      expect(result.extractedInfo.paymentSchedule[1]).toMatchObject({
+        label: "중도금",
+        amount: 200_000_000,
+        dueDate: "2025-03-01",
+      });
+      expect(result.extractedInfo.paymentSchedule[2]).toMatchObject({
+        label: "잔금",
+        amount: 250_000_000,
+        dueDate: "2025-04-01",
+      });
+    });
+  });
+
+  describe("우선 검토 이슈", () => {
+    it("위험 계약서의 핵심 보완 이슈를 생성한다", () => {
+      const result = analyzeContract(RISKY_CONTRACT);
+      const issueIds = result.reviewIssues.map((issue) => issue.id);
+
+      expect(issueIds).toContain("missing_property_address");
+      expect(issueIds).toContain("missing_party_identity");
+      expect(issueIds).toContain("missing_deposit_return_deadline");
+      expect(issueIds).toContain("short_lease_period");
+    });
+
+    it("검토 이슈가 안전점수에 반영된다", () => {
+      const result = analyzeContract(RISKY_CONTRACT);
+
+      expect(result.reviewIssues.length).toBeGreaterThan(0);
+      expect(result.safetyScore).toBeLessThan(50);
     });
   });
 

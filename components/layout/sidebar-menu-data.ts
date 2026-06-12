@@ -4,7 +4,7 @@ import {
   Users, CheckCircle, FileText, Megaphone,
   KeyRound, ClipboardCheck, Brain, SlidersHorizontal,
   ShieldAlert, Key, Newspaper, MapPin, Landmark, Eye,
-  Handshake,
+  Handshake, BookOpenText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -69,6 +69,7 @@ export const adminMenuItems: MenuItem[] = [
   { href: "/admin?tab=apikey",              icon: Key,              label: "API KEY",      description: "외부 API 키를 관리합니다" },
   { href: "/admin?tab=news",                icon: Newspaper,        label: "뉴스·정책",     description: "부동산 뉴스/정책 수집 현황을 확인합니다" },
   { href: "/admin?tab=guarantee-rules",     icon: ShieldCheck,      label: "보증보험 규칙", description: "보증보험 가입조건 규칙을 관리합니다" },
+  { href: "/admin?tab=research-journal",    icon: BookOpenText,     label: "연구일지",      description: "Git 변경이력 기반 연구개발 일지를 저장하고 출력합니다" },
   { href: "/admin?tab=account",             icon: KeyRound,         label: "계정 설정",     description: "관리자 비밀번호 변경 및 계정 설정을 관리합니다" },
 ];
 

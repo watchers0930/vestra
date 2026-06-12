@@ -101,6 +101,8 @@ export async function POST(req: NextRequest) {
               clauses: engineResult.clauses,
               missingClauses: engineResult.missingClauses,
               safetyScore: engineResult.safetyScore,
+              extractedInfo: engineResult.extractedInfo,
+              reviewIssues: engineResult.reviewIssues,
               highRiskCount: engineResult.clauses.filter((c) => c.riskLevel === "high").length,
               warningCount: engineResult.clauses.filter((c) => c.riskLevel === "warning").length,
               courtContext: courtContext || "관련 판례 없음",
@@ -137,6 +139,8 @@ export async function POST(req: NextRequest) {
       clauses: engineResult.clauses,
       missingClauses: engineResult.missingClauses,
       safetyScore: engineResult.safetyScore,
+      extractedInfo: engineResult.extractedInfo,
+      reviewIssues: engineResult.reviewIssues,
       aiOpinion,
       recommendedTerms,
     });

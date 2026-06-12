@@ -12,10 +12,39 @@ export interface MissingClause {
   description: string;
 }
 
+export interface ContractPaymentItem {
+  label: "계약금" | "중도금" | "잔금" | "기타";
+  amount?: number;
+  dueDate?: string;
+  rawText: string;
+}
+
+export interface ContractExtractedInfo {
+  propertyAddress?: string;
+  landlordName?: string;
+  tenantName?: string;
+  depositAmount?: number;
+  monthlyRentAmount?: number;
+  contractStartDate?: string;
+  contractEndDate?: string;
+  durationMonths?: number;
+  paymentSchedule: ContractPaymentItem[];
+}
+
+export interface ContractReviewIssue {
+  id: string;
+  severity: "critical" | "high" | "warning" | "info";
+  title: string;
+  description: string;
+  recommendation: string;
+}
+
 export interface AnalysisResult {
   clauses: AnalyzedClause[];
   missingClauses: MissingClause[];
   safetyScore: number;
+  extractedInfo?: ContractExtractedInfo;
+  reviewIssues?: ContractReviewIssue[];
   aiOpinion: string;
   recommendedTerms?: RecommendedTermsResult;
 }
