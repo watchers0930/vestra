@@ -17,8 +17,19 @@ export default function PushSubscriber() {
 
     if (supported) {
       navigator.serviceWorker.ready.then((reg) => {
-        reg.pushManager.getSubscription().then((sub) => {
-          setIsSubscribed(!!sub);
+        reg.pushManager.getSubscription().then(async (sub) => {
+          if (sub) {
+            setIsSubscribed(true);
+            // 기존 구독이 있으면 현재 로그인 사용자로 DB 재등록
+            // (다른 계정이 같은 브라우저를 사용한 경우 푸시 수신자 오염 방지)
+            await fetch("/api/push/subscribe", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(sub.toJSON()),
+            }).catch(() => {});
+          } else {
+            setIsSubscribed(false);
+          }
         });
       });
     }
