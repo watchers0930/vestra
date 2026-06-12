@@ -177,8 +177,12 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
   const contractClauses = generateContractClauses(riskScore, parsed);
 
   // 5단계: PropertyInfo
+  const displayAddress = inputSource === "codef" && userAddress
+    ? userAddress
+    : parsed.title.address || address;
+
   const propertyInfo = {
-    address: parsed.title.address || address,
+    address: displayAddress,
     type: parsed.title.purpose || "아파트",
     area: parsed.title.area || "",
     buildYear: parsed.title.buildingDetail || "",

@@ -58,6 +58,10 @@ interface IssueSearchResult {
   realEstateTypeCode?: string;
 }
 
+function normalizeAddress(value: string) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
 export function RightsInputCard({
   inputMode, setInputMode,
   rawText, setRawText,
@@ -142,7 +146,6 @@ export function RightsInputCard({
         setIssueMessage("검색 결과가 없습니다. 주소를 더 구체적으로 입력해 주세요.");
       } else if (results.length === 1) {
         setSelectedIssueTarget(results[0]);
-        setIssueAddress(results[0].address);
         setIssueUniqueNo(results[0].uniqueNo);
         setIssueMessage("조회 대상이 확인되었습니다. 소유자명을 확인한 뒤 최신 등기부를 조회하세요.");
       } else {
@@ -157,7 +160,6 @@ export function RightsInputCard({
 
   function selectIssueTarget(result: IssueSearchResult) {
     setSelectedIssueTarget(result);
-    setIssueAddress(result.address);
     setIssueUniqueNo(result.uniqueNo);
     setIssueMessage("조회 대상이 확인되었습니다. 주소와 소유자명을 확인하세요.");
   }
@@ -172,7 +174,8 @@ export function RightsInputCard({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          address: selectedIssueTarget?.address || issueAddress.trim(),
+          address: issueAddress.trim(),
+          registryAddress: selectedIssueTarget?.address || issueAddress.trim(),
           commUniqueNo: selectedIssueTarget?.uniqueNo || issueUniqueNo.trim(),
           realEstateType: selectedIssueTarget?.realEstateTypeCode,
           monitoredPropertyId: issuePropertyId || undefined,
@@ -372,7 +375,14 @@ export function RightsInputCard({
             {selectedIssueTarget && (
               <div style={{ marginBottom: "10px", border: "1px solid rgba(48,209,88,0.22)", borderRadius: "12px", background: "rgba(48,209,88,0.06)", padding: "10px 12px" }}>
                 <p style={{ fontSize: "11px", fontWeight: 800, color: "#1a9e45" }}>조회 대상 확인 완료</p>
-                <p style={{ marginTop: "3px", fontSize: "11px", color: "#3c3c43", lineHeight: 1.45 }}>{selectedIssueTarget.address}</p>
+                <p style={{ marginTop: "3px", fontSize: "11px", color: "#3c3c43", lineHeight: 1.45 }}>
+                  입력 주소: {issueAddress.trim()}
+                </p>
+                {normalizeAddress(selectedIssueTarget.address) !== normalizeAddress(issueAddress) && (
+                  <p style={{ marginTop: "3px", fontSize: "10.5px", color: "#6e6e73", lineHeight: 1.45 }}>
+                    등기 조회 대상: {selectedIssueTarget.address}
+                  </p>
+                )}
                 <p style={{ marginTop: "2px", fontSize: "10px", color: "#86868b" }}>부동산 고유번호는 시스템이 자동으로 확인했습니다.</p>
               </div>
             )}

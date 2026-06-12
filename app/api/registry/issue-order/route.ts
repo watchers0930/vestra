@@ -45,8 +45,10 @@ function getOrderMetadata(order: IssueOrderForExecution) {
     typeof orderMeta.monitoredPropertyId === "string" ? orderMeta.monitoredPropertyId : "";
   const realEstateType =
     typeof orderMeta.realEstateType === "string" ? orderMeta.realEstateType : undefined;
+  const registryAddress =
+    typeof orderMeta.registryAddress === "string" ? orderMeta.registryAddress : order.address;
 
-  return { monitoredPropertyId, realEstateType };
+  return { monitoredPropertyId, realEstateType, registryAddress };
 }
 
 async function executePaidOrder(params: {
@@ -55,7 +57,7 @@ async function executePaidOrder(params: {
   ip: string;
 }) {
   const { req, order, ip } = params;
-  const { monitoredPropertyId, realEstateType } = getOrderMetadata(order);
+  const { monitoredPropertyId, realEstateType, registryAddress } = getOrderMetadata(order);
 
   if (order.status === "issued") {
     return NextResponse.json(
@@ -109,7 +111,7 @@ async function executePaidOrder(params: {
 
   try {
     const registry = await fetchRegistry({
-      reqAddress: order.address,
+      reqAddress: registryAddress,
       commUniqueNo: order.commUniqueNo,
       realEstateType,
       registerType: order.registerType,
@@ -144,7 +146,7 @@ async function executePaidOrder(params: {
       ip,
     });
 
-    const analysisAddress = analysisResult.propertyInfo.address || registry.address || order.address;
+    const analysisAddress = order.address || analysisResult.propertyInfo.address || registry.address;
     const analysisSummary = `${analysisResult.riskScore?.grade || "?"}등급 (${analysisResult.riskScore?.gradeLabel || ""}, ${analysisResult.riskScore?.totalScore || 0}점) | CODEF 등기부 발급`;
     const analysisData = JSON.stringify({
       propertyInfo: analysisResult.propertyInfo,
@@ -234,6 +236,7 @@ async function executePaidOrder(params: {
       detail: {
         orderId: issuedOrder.orderId,
         address: analysisAddress,
+        registryAddress: registry.address,
         commUniqueNo: order.commUniqueNo,
         analysisId: savedAnalysis.id,
         monitoredPropertyId: monitoredProperty?.id,
@@ -258,6 +261,7 @@ async function executePaidOrder(params: {
         registerType: registry.registerType,
         uniqueNo: registry.uniqueNo,
         address: registry.address,
+        requestedAddress: order.address,
         source: "codef",
       },
       snapshot: snapshotResult
@@ -337,6 +341,7 @@ export async function POST(req: NextRequest) {
     const includeHistory = body.includeHistory !== false;
     const accepted = body.acceptedTerms === true;
     const realEstateType = typeof body.realEstateType === "string" ? body.realEstateType : undefined;
+    const registryAddress = typeof body.registryAddress === "string" ? body.registryAddress.trim() : address;
     const registerType = typeof body.registerType === "string" ? body.registerType : "0";
     const monitoredPropertyId = typeof body.monitoredPropertyId === "string" ? body.monitoredPropertyId : "";
 
@@ -385,6 +390,7 @@ export async function POST(req: NextRequest) {
           orderMeta: {
             monitoredPropertyId: monitoredProperty?.id ?? null,
             realEstateType: realEstateType ?? null,
+            registryAddress,
           },
         },
       },
@@ -397,6 +403,7 @@ export async function POST(req: NextRequest) {
       detail: {
         orderId: order.orderId,
         address,
+        registryAddress,
         commUniqueNo,
         amount: ISSUE_PRICE,
         status: "payment_required",

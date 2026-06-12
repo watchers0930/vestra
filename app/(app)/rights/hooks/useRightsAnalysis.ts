@@ -275,8 +275,8 @@ export function useRightsAnalysis() {
     const data = payload.analysis.result;
     const issuedText = payload.registry.text;
     const addr =
-      data.parsed?.title?.address ||
       data.propertyInfo?.address ||
+      data.parsed?.title?.address ||
       payload.registry.address ||
       "CODEF 등기부";
 
