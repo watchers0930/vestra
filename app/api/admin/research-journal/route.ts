@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
     title: entry.title,
     content: entry.content,
     commits: Array.isArray(entry.commits) ? entry.commits : [],
+    source: entry.source || "manual",
   }, session?.user?.id);
 
   const entries = await listResearchJournalEntries();
