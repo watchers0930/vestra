@@ -263,7 +263,8 @@ export async function fetchAptRentTransactions(
   lawdCd: string,
   dealYmd: string
 ): Promise<RentTransaction[]> {
-  const serviceKey = process.env.KAPT_API_KEY || process.env.MOLIT_API_KEY;
+  // 아파트 엔드포인트는 MOLIT 키만 승인 — KAPT 키(비아파트 전용)와 혼용 금지
+  const serviceKey = process.env.MOLIT_API_KEY;
   if (!serviceKey) return [];
 
   const baseUrl = MOLIT_ENDPOINTS.aptRent;
