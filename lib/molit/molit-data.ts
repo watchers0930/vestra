@@ -165,16 +165,9 @@ export async function molitFetch(url: string): Promise<string | null> {
       signal: controller.signal,
     });
     clearTimeout(timeout);
-    if (!res.ok) {
-      // DEBUG: 비아파트 API 키 진단용 임시 로그 (확인 후 제거)
-      const endpoint = url.split("?")[0].split("/").pop() || url;
-      const keyHint = url.includes("serviceKey=") ? url.split("serviceKey=")[1].substring(0, 8) : "unknown";
-      console.error(`[molitFetch] ${res.status} ${res.statusText} — endpoint=${endpoint} key=${keyHint}...`);
-      return null;
-    }
+    if (!res.ok) return null;
     return await res.text();
-  } catch (err) {
-    console.error(`[molitFetch] fetch error: ${err}`);
+  } catch {
     return null;
   }
 }
