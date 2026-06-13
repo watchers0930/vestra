@@ -8,7 +8,7 @@ function formatRentAmount(priceInMan: number): string {
 
 export function formatMapPrice(apt: AptData, tradeType: PriceMapTradeType): string {
   if (tradeType === "월세") {
-    const deposit = apt.deposit ? formatRentAmount(apt.deposit) : "보증금 -";
+    const deposit = apt.deposit ? formatRentAmount(apt.deposit) : "-";
     const monthly = apt.monthlyRent ?? apt.price;
     return `보증금 ${deposit} / 월 ${monthly.toLocaleString()}만`;
   }

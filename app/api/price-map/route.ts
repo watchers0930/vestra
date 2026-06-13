@@ -434,6 +434,8 @@ export async function GET(req: NextRequest) {
             ? (latest as { monthlyRent?: number }).monthlyRent || 0
             : undefined;
           if (amount <= 0) return;
+          // 월세 이상값 필터: 1,000만원/월 초과는 데이터 오류로 제외
+          if (tradeType === "월세" && amount > 100_000_000) return;
 
           const priceInMan = Math.round(amount / 10000);
           const change = calcChangeByArea(txs.map(t => ({

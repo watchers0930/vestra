@@ -20,7 +20,7 @@ const MARKER_CHUNK_SIZE = 12;
 const MARKER_BATCH_DELAY = 40;
 
 function localKey(gu: string, propertyType: PropertyType, tradeType: PriceMapTradeType) {
-  return `pm:v3:${gu}:${propertyType}:${tradeType}`;
+  return `pm:v4:${gu}:${propertyType}:${tradeType}`;
 }
 
 function readInitialGu() {
