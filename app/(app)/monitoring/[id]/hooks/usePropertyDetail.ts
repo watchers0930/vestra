@@ -105,6 +105,16 @@ export function usePropertyDetail(propertyId: string) {
     }
   }, [propertyId]);
 
+  const deleteProperty = useCallback(async (): Promise<boolean> => {
+    if (!propertyId) return false;
+    try {
+      const res = await fetch(`/api/monitoring/${propertyId}`, { method: "DELETE" });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }, [propertyId]);
+
   const markAlertRead = useCallback(async (alertId: string) => {
     try {
       await fetch(`/api/monitoring/alerts/${alertId}`, {
@@ -135,5 +145,6 @@ export function usePropertyDetail(propertyId: string) {
     verifying,
     verifyIntegrity,
     markAlertRead,
+    deleteProperty,
   };
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { use, useState } from "react";
-import { ArrowLeft, FileDown, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, FileDown, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/common/Button";
 import { Skeleton } from "@/components/common/Skeleton";
@@ -17,6 +18,7 @@ interface Props {
 
 export default function MonitoringDetailPage({ params }: Props) {
   const { id } = use(params);
+  const router = useRouter();
   const {
     property,
     snapshots,
@@ -26,9 +28,19 @@ export default function MonitoringDetailPage({ params }: Props) {
     verifying,
     verifyIntegrity,
     markAlertRead,
+    deleteProperty,
   } = usePropertyDetail(id);
 
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    const ok = await deleteProperty();
+    setDeleting(false);
+    if (ok) router.push("/monitoring");
+  };
 
   const handleExportPdf = async () => {
     if (!property) return;
@@ -84,15 +96,44 @@ export default function MonitoringDetailPage({ params }: Props) {
           <span>목록으로</span>
         </Link>
 
-        <Button
-          variant="secondary"
-          icon={pdfLoading ? Loader2 : FileDown}
-          size="sm"
-          onClick={handleExportPdf}
-          loading={pdfLoading}
-        >
-          증명서 PDF
-        </Button>
+        <div className="flex items-center gap-2">
+          {confirmDelete ? (
+            <>
+              <span className="text-[12px] text-[#6e6e73]">삭제할까요?</span>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="text-[12px] text-[#6e6e73] hover:text-[#1d1d1f] transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-1 text-[12px] font-semibold text-red-600 hover:text-red-700 disabled:opacity-50 transition-colors"
+              >
+                {deleting && <Loader2 size={12} className="animate-spin" />}
+                삭제
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="flex items-center gap-1 text-[12px] text-[#86868b] hover:text-red-500 transition-colors"
+            >
+              <Trash2 size={14} />
+              삭제
+            </button>
+          )}
+          <Button
+            variant="secondary"
+            icon={pdfLoading ? Loader2 : FileDown}
+            size="sm"
+            onClick={handleExportPdf}
+            loading={pdfLoading}
+          >
+            증명서 PDF
+          </Button>
+        </div>
       </div>
 
       {/* 콘텐츠 */}

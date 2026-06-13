@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { validateOrigin } from "@/lib/csrf";
 
 export async function GET(
   req: NextRequest,
@@ -83,5 +84,40 @@ export async function GET(
       { error: "처리 중 오류가 발생했습니다." },
       { status: 500 }
     );
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증 필요" }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    // 소유자만 삭제 가능 (에이전트/고객 연결은 삭제 불가)
+    const property = await prisma.monitoredProperty.findFirst({
+      where: { id, userId: session.user.id },
+    });
+
+    if (!property) {
+      return NextResponse.json({ error: "물건을 찾을 수 없습니다." }, { status: 404 });
+    }
+
+    // Cascade: MonitoringAlert, MonitoringSnapshot 자동 삭제
+    await prisma.monitoredProperty.delete({ where: { id } });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "알 수 없는 오류";
+    console.error(`[monitoring/[id] DELETE] ${message}`);
+    return NextResponse.json({ error: "처리 중 오류가 발생했습니다." }, { status: 500 });
   }
 }
