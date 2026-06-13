@@ -192,6 +192,24 @@ async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: str
     }
   }
 
+  // ── 3단계 (비아파트 전용): 법정동 주소 폴백 ──
+  // jibun 마스킹(예: "3**")으로 개별 주소 검색이 실패해도 동 중심 좌표라도 확보
+  if (!isApt && dong) {
+    const dongCacheKey = APICache.makeKey("geocode-dong-v1", gu, dong);
+    let dongCoord = await kvCache.get<{ lat: number; lng: number }>(dongCacheKey);
+    if (!dongCoord) {
+      dongCoord = await kakaoAddressSearch(kakaoKey, `${regionAddress} ${dong}`);
+      if (dongCoord) {
+        await kvCache.set(dongCacheKey, dongCoord, GEOCODE_TTL);
+      }
+    }
+    if (dongCoord) {
+      // 동 중심은 property-specific 캐시에도 저장해 두어 다음 요청에서 빠르게 반환
+      await kvCache.set(cacheKey, dongCoord, GEOCODE_TTL);
+      return dongCoord;
+    }
+  }
+
   return null;
 }
 
