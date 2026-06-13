@@ -419,9 +419,25 @@ export async function GET(req: NextRequest) {
           })));
           // 거래 부족(0)이면 null → 프론트에서 변동률 미표시
 
-          // 좌표 우선순위: KV캐시 geocode → 카카오 geocode. 정확한 좌표 없으면 제외.
-          const coords = geocoded.get(`${aptName}@@${latest.dong || ""}@@${latest.jibun || ""}`) || null;
-          if (!coords) return; // geocode 실패 → 지도에 미표시 (가짜 좌표 방지)
+          // 좌표 우선순위: KV캐시 geocode → 카카오 geocode → 동 중심(비아파트 폴백)
+          let coords = geocoded.get(`${aptName}@@${latest.dong || ""}@@${latest.jibun || ""}`) || null;
+          if (!coords) {
+            // 비아파트 유형은 개별 주소 geocode 실패 시 동 중심 ± 소폭 산포로 폴백
+            if (propertyType !== "아파트") {
+              const base = DONG_CENTER[latest.dong || ""] || GU_CENTER[gu];
+              if (base) {
+                const jitter = 0.0015; // ±약 100m
+                coords = {
+                  lat: base.lat + (Math.random() - 0.5) * jitter,
+                  lng: base.lng + (Math.random() - 0.5) * jitter,
+                };
+              } else {
+                return;
+              }
+            } else {
+              return; // 아파트 geocode 실패 → 지도에 미표시 (가짜 좌표 방지)
+            }
+          }
 
           data.push({
             name: displayName,
