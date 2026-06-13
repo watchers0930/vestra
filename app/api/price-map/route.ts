@@ -120,7 +120,8 @@ function formatRegionAddressForSearch(regionAddress: string): string {
 
 async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: string, propertyType: PropertyType = "아파트"): Promise<{ lat: number; lng: number } | null> {
   const isApt = propertyType === "아파트";
-  const cacheKey = APICache.makeKey("geocode-v3", gu, dong, aptName, jibun || "", propertyType);
+  // geocode-v4: 비아파트 지터 포함 + 일반명칭 오탐 방지 (v3 캐시 무효화)
+  const cacheKey = APICache.makeKey("geocode-v4", gu, dong, aptName, jibun || "", propertyType);
   const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
   if (cached) return cached;
 
@@ -130,7 +131,7 @@ async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: str
   const guCenter = GU_CENTER[gu];
   const center = DONG_CENTER[dong] || guCenter;
   const regionAddress = formatRegionAddressForSearch(GU_ADDRESS_MAP[gu] || gu);
-  const MAX_DISTANCE_KM = 5; // 구 중심에서 5km 이상이면 부정확한 결과로 판단
+  const MAX_DISTANCE_KM = 5;
 
   // 아파트명 정제: 괄호/숫자 제거 (예: "신동아(22)" → "신동아")
   const cleanName = aptName.replace(/\(.*?\)/g, "").replace(/\d+$/g, "").trim();
@@ -168,32 +169,37 @@ async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: str
     }
   }
 
-  // ── 2단계: 카카오 키워드 검색 (카테고리 필터 없음, 폴백) ──
-  // 비아파트 유형은 "아파트" 접미사 없이 실제 물건명으로 검색
-  const fallbackQueries = isApt
-    ? [
-        `${regionAddress} ${dong} ${cleanName}아파트`,
-        `${gu} ${dong} ${cleanName}아파트`,
-        `${dong} ${cleanName}아파트`,
-        `${gu} ${cleanName}`,
-      ]
-    : [
-        `${regionAddress} ${dong} ${cleanName}`,
-        `${gu} ${dong} ${cleanName}`,
-        `${dong} ${cleanName}`,
-        `${gu} ${cleanName}`,
-        cleanName,
-      ];
-  for (const q of fallbackQueries) {
-    const coord = await kakaoKeywordSearch(kakaoKey, q, center, undefined, isApt);
-    if (coord && validateDistance(coord, center, MAX_DISTANCE_KM)) {
-      await kvCache.set(cacheKey, coord, GEOCODE_TTL);
-      return coord;
+  // ── 2단계: 카카오 키워드 검색 (비아파트 일반명칭은 스킵 — 오탐 방지) ──
+  // "단독", "연립" 같은 일반명칭은 타 구/동 건물과 오탐 → 동 주소 폴백으로 직행
+  const GENERIC_NON_APT_NAMES = new Set(["단독", "다가구", "단독주택", "다가구주택", "연립", "다세대", "연립다세대", "빌라"]);
+  const skipKeyword = !isApt && GENERIC_NON_APT_NAMES.has(cleanName);
+
+  if (!skipKeyword) {
+    const fallbackQueries = isApt
+      ? [
+          `${regionAddress} ${dong} ${cleanName}아파트`,
+          `${gu} ${dong} ${cleanName}아파트`,
+          `${dong} ${cleanName}아파트`,
+          `${gu} ${cleanName}`,
+        ]
+      : [
+          `${regionAddress} ${dong} ${cleanName}`,
+          `${gu} ${dong} ${cleanName}`,
+          `${dong} ${cleanName}`,
+          `${gu} ${cleanName}`,
+          cleanName,
+        ];
+    for (const q of fallbackQueries) {
+      const coord = await kakaoKeywordSearch(kakaoKey, q, center, undefined, isApt);
+      if (coord && validateDistance(coord, center, MAX_DISTANCE_KM)) {
+        await kvCache.set(cacheKey, coord, GEOCODE_TTL);
+        return coord;
+      }
     }
   }
 
   // ── 3단계 (비아파트 전용): 법정동 주소 폴백 ──
-  // jibun 마스킹(예: "3**")으로 개별 주소 검색이 실패해도 동 중심 좌표라도 확보
+  // jibun 마스킹·일반명칭으로 정확한 좌표를 못 찾을 때 동 중심 ±100m 지터 적용
   if (!isApt && dong) {
     const dongCacheKey = APICache.makeKey("geocode-dong-v1", gu, dong);
     let dongCoord = await kvCache.get<{ lat: number; lng: number }>(dongCacheKey);
@@ -204,9 +210,14 @@ async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: str
       }
     }
     if (dongCoord) {
-      // 동 중심은 property-specific 캐시에도 저장해 두어 다음 요청에서 빠르게 반환
-      await kvCache.set(cacheKey, dongCoord, GEOCODE_TTL);
-      return dongCoord;
+      // 동 중심 + 지터 → property-specific 캐시 저장 (같은 동 마커 분산)
+      const jitter = 0.0015;
+      const jitteredCoord = {
+        lat: dongCoord.lat + (Math.random() - 0.5) * jitter,
+        lng: dongCoord.lng + (Math.random() - 0.5) * jitter,
+      };
+      await kvCache.set(cacheKey, jitteredCoord, GEOCODE_TTL);
+      return jitteredCoord;
     }
   }
 
@@ -337,7 +348,7 @@ export async function GET(req: NextRequest) {
 
   // ── 전체 응답 KV 캐시 조회 (가격 필터 없는 요청만 캐시 적용) ──
   const useResponseCache = minPrice === 0 && maxPrice === 9999999;
-  const responseCacheKey = `price-map:v6:${gu}:${propertyType}:${tradeType}`;
+  const responseCacheKey = `price-map:v7:${gu}:${propertyType}:${tradeType}`;
   if (useResponseCache) {
     const cached = await kvCache.get<object>(responseCacheKey);
     if (cached) {
@@ -387,7 +398,7 @@ export async function GET(req: NextRequest) {
           const latest = txs[0];
           const [name] = groupKey.split("@@");
           const key = `${name}@@${latest.dong || ""}@@${latest.jibun || ""}`;
-          const cacheKey = APICache.makeKey("geocode-v3", gu, latest.dong || "", name, latest.jibun || "", propertyType);
+          const cacheKey = APICache.makeKey("geocode-v4", gu, latest.dong || "", name, latest.jibun || "", propertyType);
           const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
           if (cached) {
             geocoded.set(key, cached);
