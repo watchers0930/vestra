@@ -62,12 +62,6 @@ function normalizeAddress(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
 
-/** 입력 주소와 조회 결과 주소가 의미상 일치하는지 확인 (3자 이상 토큰 하나라도 겹치면 일치) */
-function addressesMatch(input: string, result: string): boolean {
-  const tokens = normalizeAddress(input).split(" ").filter((t) => t.length >= 3);
-  const norm = normalizeAddress(result);
-  return tokens.some((t) => norm.includes(t));
-}
 
 export function RightsInputCard({
   inputMode, setInputMode,
@@ -152,15 +146,9 @@ export function RightsInputCard({
       if (results.length === 0) {
         setIssueMessage("검색 결과가 없습니다. 주소를 더 구체적으로 입력해 주세요.");
       } else if (results.length === 1) {
-        const matched = addressesMatch(issueAddress.trim(), results[0].address);
-        if (matched) {
-          setSelectedIssueTarget(results[0]);
-          setIssueUniqueNo(results[0].uniqueNo);
-          setIssueMessage("조회 대상이 확인되었습니다. 소유자명을 확인한 뒤 최신 등기부를 조회하세요.");
-        } else {
-          // 입력 주소와 다른 결과 → 자동 선택 안 함, 수동 확인 유도
-          setIssueMessage("⚠️ 조회 결과가 입력 주소와 다릅니다. 정확한 주소인지 확인 후 직접 선택해 주세요. (데모 환경에서는 실제 주소 검색이 제한될 수 있습니다)");
-        }
+        setSelectedIssueTarget(results[0]);
+        setIssueUniqueNo(results[0].uniqueNo);
+        setIssueMessage("조회 대상이 확인되었습니다. 소유자명을 확인한 뒤 최신 등기부를 조회하세요.");
       } else {
         setIssueMessage("조회할 부동산을 선택해 주세요.");
       }
@@ -397,6 +385,7 @@ export function RightsInputCard({
                   </p>
                 )}
                 <p style={{ marginTop: "2px", fontSize: "10px", color: "#86868b" }}>부동산 고유번호는 시스템이 자동으로 확인했습니다.</p>
+                <p style={{ marginTop: "5px", fontSize: "10px", color: "#ff9500", fontWeight: 600 }}>⚠ 데모 환경에서는 실제 주소 조회가 지원되지 않습니다.</p>
               </div>
             )}
 
