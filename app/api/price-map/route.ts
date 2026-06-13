@@ -60,7 +60,8 @@ async function kakaoKeywordSearch(
   kakaoKey: string,
   query: string,
   center?: { lat: number; lng: number },
-  categoryGroupCode?: string
+  categoryGroupCode?: string,
+  preferApartment: boolean = true
 ): Promise<{ lat: number; lng: number } | null> {
   try {
     let url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=15`;
@@ -75,15 +76,17 @@ async function kakaoKeywordSearch(
     const json = await res.json();
     const docs = json.documents || [];
 
-    // 1순위: 카테고리에 "아파트" 포함
-    const aptDoc = docs.find((d: { category_name?: string }) => d.category_name?.includes("아파트"));
-    if (aptDoc) return { lat: parseFloat(aptDoc.y), lng: parseFloat(aptDoc.x) };
+    // 아파트 유형: 아파트 카테고리 우선
+    if (preferApartment) {
+      const aptDoc = docs.find((d: { category_name?: string }) => d.category_name?.includes("아파트"));
+      if (aptDoc) return { lat: parseFloat(aptDoc.y), lng: parseFloat(aptDoc.x) };
+    }
 
-    // 2순위: 주거 관련 카테고리 (빌딩, 주거, 주택, 오피스텔)
+    // 주거 관련 카테고리 (빌딩, 주거, 주택, 오피스텔)
     const residDoc = docs.find((d: { category_name?: string }) => isResidentialCategory(d.category_name));
     if (residDoc) return { lat: parseFloat(residDoc.y), lng: parseFloat(residDoc.x) };
 
-    // 3순위: 첫 번째 결과 (폴백)
+    // 폴백: 첫 번째 결과
     if (docs[0]) return { lat: parseFloat(docs[0].y), lng: parseFloat(docs[0].x) };
   } catch { /* ignore */ }
   return null;
@@ -115,8 +118,9 @@ function formatRegionAddressForSearch(regionAddress: string): string {
   return regionAddress.replace(/^(부산|대구|인천|광주|대전|울산)(.+구)$/, "$1 $2");
 }
 
-async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: string): Promise<{ lat: number; lng: number } | null> {
-  const cacheKey = APICache.makeKey("geocode-v2", gu, dong, aptName, jibun || "");
+async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: string, propertyType: PropertyType = "아파트"): Promise<{ lat: number; lng: number } | null> {
+  const isApt = propertyType === "아파트";
+  const cacheKey = APICache.makeKey("geocode-v3", gu, dong, aptName, jibun || "", propertyType);
   const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
   if (cached) return cached;
 
@@ -146,31 +150,42 @@ async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: str
     }
   }
 
-  // ── 1단계: 카카오 키워드 검색 + 아파트 카테고리 (AP4) — 가장 정확 ──
-  const categoryQueries = [
-    `${regionAddress} ${dong} ${cleanName}아파트`,
-    `${gu} ${dong} ${cleanName}아파트`,
-    `${dong} ${cleanName}아파트`,
-    `${gu} ${cleanName}아파트`,
-    `${cleanName}아파트`,
-  ];
-  for (const q of categoryQueries) {
-    const coord = await kakaoKeywordSearch(kakaoKey, q, center, "AP4");
-    if (coord && validateDistance(coord, center, MAX_DISTANCE_KM)) {
-      await kvCache.set(cacheKey, coord, GEOCODE_TTL);
-      return coord;
+  // ── 1단계: 아파트 전용 — 카카오 키워드 검색 + AP4 카테고리 ──
+  if (isApt) {
+    const categoryQueries = [
+      `${regionAddress} ${dong} ${cleanName}아파트`,
+      `${gu} ${dong} ${cleanName}아파트`,
+      `${dong} ${cleanName}아파트`,
+      `${gu} ${cleanName}아파트`,
+      `${cleanName}아파트`,
+    ];
+    for (const q of categoryQueries) {
+      const coord = await kakaoKeywordSearch(kakaoKey, q, center, "AP4", true);
+      if (coord && validateDistance(coord, center, MAX_DISTANCE_KM)) {
+        await kvCache.set(cacheKey, coord, GEOCODE_TTL);
+        return coord;
+      }
     }
   }
 
   // ── 2단계: 카카오 키워드 검색 (카테고리 필터 없음, 폴백) ──
-  const fallbackQueries = [
-    `${regionAddress} ${dong} ${cleanName}아파트`,
-    `${gu} ${dong} ${cleanName}아파트`,
-    `${dong} ${cleanName}아파트`,
-    `${gu} ${cleanName}`,
-  ];
+  // 비아파트 유형은 "아파트" 접미사 없이 실제 물건명으로 검색
+  const fallbackQueries = isApt
+    ? [
+        `${regionAddress} ${dong} ${cleanName}아파트`,
+        `${gu} ${dong} ${cleanName}아파트`,
+        `${dong} ${cleanName}아파트`,
+        `${gu} ${cleanName}`,
+      ]
+    : [
+        `${regionAddress} ${dong} ${cleanName}`,
+        `${gu} ${dong} ${cleanName}`,
+        `${dong} ${cleanName}`,
+        `${gu} ${cleanName}`,
+        cleanName,
+      ];
   for (const q of fallbackQueries) {
-    const coord = await kakaoKeywordSearch(kakaoKey, q, center);
+    const coord = await kakaoKeywordSearch(kakaoKey, q, center, undefined, isApt);
     if (coord && validateDistance(coord, center, MAX_DISTANCE_KM)) {
       await kvCache.set(cacheKey, coord, GEOCODE_TTL);
       return coord;
@@ -181,7 +196,7 @@ async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: str
 }
 
 // 여러 아파트 좌표를 병렬로 조회 (배치 단위 + 전체 타임아웃)
-async function geocodeAll(apartments: { gu: string; dong: string; name: string; jibun?: string }[]): Promise<Map<string, { lat: number; lng: number }>> {
+async function geocodeAll(apartments: { gu: string; dong: string; name: string; jibun?: string; propertyType?: PropertyType }[]): Promise<Map<string, { lat: number; lng: number }>> {
   const results = new Map<string, { lat: number; lng: number }>();
   const BATCH_SIZE = 10;
   const TOTAL_TIMEOUT = 8000; // 전체 geocoding 8초 제한 (Vercel 10초 함수 제한 고려)
@@ -195,7 +210,7 @@ async function geocodeAll(apartments: { gu: string; dong: string; name: string; 
     }
     const batch = apartments.slice(i, i + BATCH_SIZE);
     const promises = batch.map(async (apt) => {
-      const coord = await geocodeApt(apt.gu, apt.dong, apt.name, apt.jibun);
+      const coord = await geocodeApt(apt.gu, apt.dong, apt.name, apt.jibun, apt.propertyType);
       if (coord) results.set(`${apt.name}@@${apt.dong}@@${apt.jibun || ""}`, coord);
     });
     await Promise.allSettled(promises);
@@ -349,17 +364,17 @@ export async function GET(req: NextRequest) {
         const geocoded = new Map<string, { lat: number; lng: number }>();
 
         // 모든 물건에 대해 정확한 geocode 시도
-        const needsGeocode: { gu: string; dong: string; name: string; jibun?: string }[] = [];
+        const needsGeocode: { gu: string; dong: string; name: string; jibun?: string; propertyType?: PropertyType }[] = [];
         await Promise.allSettled(entries.map(async ([groupKey, txs]) => {
           const latest = txs[0];
           const [name] = groupKey.split("@@");
           const key = `${name}@@${latest.dong || ""}@@${latest.jibun || ""}`;
-          const cacheKey = APICache.makeKey("geocode-v2", gu, latest.dong || "", name, latest.jibun || "");
+          const cacheKey = APICache.makeKey("geocode-v3", gu, latest.dong || "", name, latest.jibun || "", propertyType);
           const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
           if (cached) {
             geocoded.set(key, cached);
           } else {
-            needsGeocode.push({ gu, dong: latest.dong || "", name, jibun: latest.jibun || "" });
+            needsGeocode.push({ gu, dong: latest.dong || "", name, jibun: latest.jibun || "", propertyType });
           }
         }));
 
