@@ -294,6 +294,11 @@ export function usePriceMap() {
     let cancelled = false;
     let chunkTimer: ReturnType<typeof setTimeout> | null = null;
 
+    // effect 스코프에 선언 → cleanup에서 이전 오버레이 제거 가능
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allOverlayEntries: { overlay: any | null; apt: AptData; position: any; content: HTMLDivElement | null }[] = [];
+    let visibleOverlays = new Set<number>();
+
     const renderMarkers = () => {
       if (cancelled || !kakaoMapRef.current) return;
       const maps = window.kakao.maps;
@@ -325,8 +330,6 @@ export function usePriceMap() {
         { offset: new maps.Point(10, 10) }
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const allOverlayEntries: { overlay: any | null; apt: AptData; position: any; content: HTMLDivElement | null }[] = [];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const allMarkers: any[] = [];
 
@@ -399,7 +402,6 @@ export function usePriceMap() {
       requestAnimationFrame(loadNextChunk);
 
       const DETAIL_LEVEL = 4;
-      let visibleOverlays = new Set<number>();
 
       const updateOverlays = () => {
         const level = map.getLevel();
@@ -447,6 +449,10 @@ export function usePriceMap() {
     return () => {
       cancelled = true;
       if (chunkTimer) clearTimeout(chunkTimer);
+      // tradeType/data 변경 시 이전 오버레이를 지도에서 제거 (잔류 방지)
+      visibleOverlays.forEach((idx) => {
+        if (allOverlayEntries[idx]?.overlay) allOverlayEntries[idx].overlay.setMap(null);
+      });
     };
   }, [data, mapStatus, selectAndMoveToApt, tradeType]);
 
