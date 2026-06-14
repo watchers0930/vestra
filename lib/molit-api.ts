@@ -439,7 +439,7 @@ export async function fetchGenericSaleTransactions(
         extractVal(item, "houseType", "주택유형") ||
         extractXmlValue(item, "연립다세대") ||
         fallbackName,
-      area: parseFloat(extractVal(item, "excluUseAr", "전용면적")) || parseFloat(extractXmlValue(item, "연면적")) || 0,
+      area: parseFloat(extractVal(item, "excluUseAr", "전용면적")) || parseFloat(extractXmlValue(item, "연면적")) || parseFloat(extractXmlValue(item, "계약면적")) || 0,
       floor: parseInt(extractVal(item, "floor", "층"), 10) || 0,
       dong: extractVal(item, "umdNm", "법정동"),
       jibun: extractVal(item, "jibun", "지번"),
