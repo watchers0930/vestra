@@ -82,12 +82,18 @@ async function kakaoKeywordSearch(
       if (aptDoc) return { lat: parseFloat(aptDoc.y), lng: parseFloat(aptDoc.x) };
     }
 
-    // 주거 관련 카테고리 (빌딩, 주거, 주택, 오피스텔)
-    const residDoc = docs.find((d: { category_name?: string }) => isResidentialCategory(d.category_name));
+    // 주거 관련 카테고리 (빌딩, 주거, 주택, 오피스텔) — 비아파트는 아파트 카테고리 제외
+    const residDoc = docs.find((d: { category_name?: string }) => {
+      if (!preferApartment && d.category_name?.includes("아파트")) return false;
+      return isResidentialCategory(d.category_name);
+    });
     if (residDoc) return { lat: parseFloat(residDoc.y), lng: parseFloat(residDoc.x) };
 
-    // 폴백: 첫 번째 결과
-    if (docs[0]) return { lat: parseFloat(docs[0].y), lng: parseFloat(docs[0].x) };
+    // 폴백: 첫 번째 결과 — 비아파트는 아파트 건물 제외
+    const fallbackDoc = preferApartment
+      ? docs[0]
+      : docs.find((d: { category_name?: string }) => !d.category_name?.includes("아파트")) || null;
+    if (fallbackDoc) return { lat: parseFloat(fallbackDoc.y), lng: parseFloat(fallbackDoc.x) };
   } catch { /* ignore */ }
   return null;
 }
@@ -120,8 +126,8 @@ function formatRegionAddressForSearch(regionAddress: string): string {
 
 async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: string, propertyType: PropertyType = "아파트"): Promise<{ lat: number; lng: number } | null> {
   const isApt = propertyType === "아파트";
-  // geocode-v4: 비아파트 지터 포함 + 일반명칭 오탐 방지 (v3 캐시 무효화)
-  const cacheKey = APICache.makeKey("geocode-v4", gu, dong, aptName, jibun || "", propertyType);
+  // geocode-v5: 비아파트 지터 포함 + 일반명칭 오탐 방지 (v3 캐시 무효화)
+  const cacheKey = APICache.makeKey("geocode-v5", gu, dong, aptName, jibun || "", propertyType);
   const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
   if (cached) return cached;
 
@@ -398,7 +404,7 @@ export async function GET(req: NextRequest) {
           const latest = txs[0];
           const [name] = groupKey.split("@@");
           const key = `${name}@@${latest.dong || ""}@@${latest.jibun || ""}`;
-          const cacheKey = APICache.makeKey("geocode-v4", gu, latest.dong || "", name, latest.jibun || "", propertyType);
+          const cacheKey = APICache.makeKey("geocode-v5", gu, latest.dong || "", name, latest.jibun || "", propertyType);
           const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
           if (cached) {
             geocoded.set(key, cached);
