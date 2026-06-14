@@ -403,7 +403,7 @@ export async function GET(req: NextRequest) {
 
           for (const [dong, g] of dongMap) {
             if (g.amounts.length === 0) continue;
-            let dongCoord = DONG_CENTER[dong] || null;
+            let dongCoord: { lat: number; lng: number } | null = DONG_CENTER[dong] ?? null;
             if (!dongCoord && kakaoKey) {
               const dongCacheKey = APICache.makeKey("geocode-dong-v2", gu, dong);
               dongCoord = await kvCache.get<{ lat: number; lng: number }>(dongCacheKey);
