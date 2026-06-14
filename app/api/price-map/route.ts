@@ -126,8 +126,9 @@ function formatRegionAddressForSearch(regionAddress: string): string {
 
 async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: string, propertyType: PropertyType = "아파트"): Promise<{ lat: number; lng: number } | null> {
   const isApt = propertyType === "아파트";
-  // geocode-v5: 비아파트 지터 포함 + 일반명칭 오탐 방지 (v3 캐시 무효화)
-  const cacheKey = APICache.makeKey("geocode-v5", gu, dong, aptName, jibun || "", propertyType);
+  // 아파트: geocode-v4 유지 (기존 캐시 보존), 비아파트: geocode-v5-nonapt (아파트 오매핑 수정)
+  const geocodeVersion = isApt ? "geocode-v4" : "geocode-v5-nonapt";
+  const cacheKey = APICache.makeKey(geocodeVersion, gu, dong, aptName, jibun || "", propertyType);
   const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
   if (cached) return cached;
 
@@ -404,7 +405,8 @@ export async function GET(req: NextRequest) {
           const latest = txs[0];
           const [name] = groupKey.split("@@");
           const key = `${name}@@${latest.dong || ""}@@${latest.jibun || ""}`;
-          const cacheKey = APICache.makeKey("geocode-v5", gu, latest.dong || "", name, latest.jibun || "", propertyType);
+          const aptCacheVersion = propertyType === "아파트" ? "geocode-v4" : "geocode-v5-nonapt";
+          const cacheKey = APICache.makeKey(aptCacheVersion, gu, latest.dong || "", name, latest.jibun || "", propertyType);
           const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
           if (cached) {
             geocoded.set(key, cached);
