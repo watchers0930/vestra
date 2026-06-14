@@ -219,9 +219,18 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    const { analysisId } = await req.json();
+    const body = await req.json();
+    const { analysisId, assetId } = body;
+
+    if (assetId) {
+      await prisma.asset.deleteMany({
+        where: { id: assetId, userId: session.user.id },
+      });
+      return NextResponse.json({ ok: true, deleted: assetId });
+    }
+
     if (!analysisId) {
-      return NextResponse.json({ error: "analysisId는 필수입니다." }, { status: 400 });
+      return NextResponse.json({ error: "analysisId 또는 assetId는 필수입니다." }, { status: 400 });
     }
 
     await prisma.analysis.deleteMany({

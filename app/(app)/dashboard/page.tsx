@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Shield, FileText, TrendingUp, Search, Building2, Banknote, AlertTriangle, ClipboardList } from "lucide-react";
 import { formatKRW } from "@/lib/utils";
 import { EmptyState } from "@/components/common";
@@ -20,7 +21,7 @@ export default function DashboardPage() {
     cascadeLoading, monitoredAddresses, monitoringLoading, alertAddressMap,
     totalAssets, totalValue, avgSafety, avgRisk,
     riskDistribution, assetValueData, addressCountMap,
-    handleDeleteAnalysis, handleCascadeUpdate, handleMonitorToggle,
+    handleDeleteAnalysis, handleDeleteAsset, handleCascadeUpdate, handleMonitorToggle,
   } = useDashboardData();
 
   if (loading) return <DashboardSkeleton />;
@@ -101,7 +102,12 @@ export default function DashboardPage() {
               <div className="text-base sm:text-[20px] font-bold tracking-[-0.02em] text-[#1d1d1f]">
                 포트폴리오 현황
               </div>
-              <span className="text-[12.5px] font-medium text-[#0071e3] cursor-pointer">전체 보기 →</span>
+              <a
+                href="#registered-assets"
+                className="text-[12.5px] font-medium text-[#0071e3] transition-colors hover:text-[#005bb5] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30"
+              >
+                전체 보기 →
+              </a>
             </div>
             <PortfolioOverview
               totalValue={totalValue}
@@ -130,12 +136,17 @@ export default function DashboardPage() {
 
         {/* Asset List */}
         {mounted && assets.length > 0 && (
-          <div className="mb-7">
+          <div id="registered-assets" className="mb-7 scroll-mt-24">
             <div className="mb-4 flex items-baseline justify-between">
               <div className="text-base sm:text-[20px] font-bold tracking-[-0.02em] text-[#1d1d1f]">
                 등록 자산
               </div>
-              <span className="text-[12.5px] font-medium text-[#0071e3] cursor-pointer">관리하기 →</span>
+              <Link
+                href="/monitoring"
+                className="text-[12.5px] font-medium text-[#0071e3] transition-colors hover:text-[#005bb5] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30"
+              >
+                관리하기 →
+              </Link>
             </div>
             <AssetList
               assets={assets}
@@ -143,6 +154,7 @@ export default function DashboardPage() {
               monitoringLoading={monitoringLoading}
               monitoredAddresses={monitoredAddresses}
               handleMonitorToggle={handleMonitorToggle}
+              handleDeleteAsset={handleDeleteAsset}
             />
           </div>
         )}
@@ -154,7 +166,12 @@ export default function DashboardPage() {
               <div className="text-base sm:text-[20px] font-bold tracking-[-0.02em] text-[#1d1d1f]">
                 최근 분석 이력
               </div>
-              <span className="text-[12.5px] font-medium text-[#0071e3] cursor-pointer">전체 보기 →</span>
+              <Link
+                href="/report"
+                className="text-[12.5px] font-medium text-[#0071e3] transition-colors hover:text-[#005bb5] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30"
+              >
+                전체 보기 →
+              </Link>
             </div>
             <AnalysisHistory
               analyses={analyses}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Shield, TrendingUp, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Shield, TrendingUp, Loader2, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { formatKRW } from "@/lib/utils";
 import type { StoredAsset } from "@/lib/store";
 import type { Session } from "next-auth";
@@ -15,6 +15,7 @@ interface Props {
   monitoringLoading: string | null;
   monitoredAddresses: Set<string>;
   handleMonitorToggle: (address: string) => void;
+  handleDeleteAsset: (id: string) => void;
 }
 
 function getAssetName(address: string, type: string): string {
@@ -60,6 +61,7 @@ export function AssetList({
   monitoringLoading,
   monitoredAddresses,
   handleMonitorToggle,
+  handleDeleteAsset,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
 
@@ -224,6 +226,19 @@ export function AssetList({
               >
                 <TrendingUp size={12} strokeWidth={1.5} />
               </Link>
+
+              <button
+                onClick={() => {
+                  if (confirm(`"${getAssetName(asset.address, asset.type)}" 자산을 삭제하시겠습니까?`)) {
+                    handleDeleteAsset(asset.id);
+                  }
+                }}
+                className="flex h-[28px] w-[28px] items-center justify-center rounded-[8px] transition-all hover:bg-red-50 hover:text-red-500"
+                style={{ border: "1px solid rgba(0,0,0,0.08)", background: "#fff", color: "#c7c7cc" }}
+                title="자산 삭제"
+              >
+                <Trash2 size={12} strokeWidth={1.5} />
+              </button>
             </div>
           </div>
         );

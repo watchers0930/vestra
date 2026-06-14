@@ -1,6 +1,6 @@
 {
   "name": "vestra",
-  "version": "5.29.10",
+  "version": "5.29.11",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,6 +10,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "check:secrets": "./scripts/check-secrets.sh",
     "verify:release": "./scripts/verify-release.sh",
     "smoke": "./scripts/smoke-deployment.sh",
     "deploy:preview": "./scripts/deploy-vestra.sh preview",

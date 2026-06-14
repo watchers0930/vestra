@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { getAssets, getAnalyses, removeAnalysis, ensureUserIsolation, type StoredAsset, type AnalysisRecord } from "@/lib/store";
+import { getAssets, getAnalyses, removeAnalysis, removeAsset, ensureUserIsolation, type StoredAsset, type AnalysisRecord } from "@/lib/store";
 import { useToast } from "@/components/common/toast";
 
 export function useDashboardData() {
@@ -124,6 +124,20 @@ export function useDashboardData() {
     }
   }, [session?.user]);
 
+  const handleDeleteAsset = useCallback(async (id: string) => {
+    removeAsset(id);
+    setAssets((prev) => prev.filter((a) => a.id !== id));
+    if (session?.user) {
+      try {
+        await fetch("/api/user/sync-data", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assetId: id }),
+        });
+      } catch { /* 실패해도 로컬은 이미 삭제됨 */ }
+    }
+  }, [session?.user]);
+
   const handleCascadeUpdate = async (address: string) => {
     setCascadeLoading(address);
     try {
@@ -181,6 +195,6 @@ export function useDashboardData() {
     monitoringLoading, monitoringSuccess, alertAddressMap,
     totalAssets, totalValue, avgSafety, avgRisk,
     riskDistribution, assetValueData, addressCountMap,
-    handleDeleteAnalysis, handleCascadeUpdate, handleMonitorToggle,
+    handleDeleteAnalysis, handleDeleteAsset, handleCascadeUpdate, handleMonitorToggle,
   };
 }
