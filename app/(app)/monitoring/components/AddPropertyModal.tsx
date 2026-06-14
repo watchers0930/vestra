@@ -16,6 +16,11 @@ interface Props {
   onSuccess: () => void;
 }
 
+function isCollectiveBuilding(type: string): boolean {
+  const t = type.toLowerCase();
+  return t.includes("집합") || t.includes("아파트") || t.includes("오피스텔") || t.includes("다세대") || t.includes("연립");
+}
+
 export function AddPropertyModal({ onClose, onSuccess }: Props) {
   // 주소 검색
   const [query, setQuery] = useState("");
@@ -25,6 +30,10 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
 
   // 선택된 물건
   const [selected, setSelected] = useState<SearchResult | null>(null);
+
+  // 동/호수 (집합건물 전용)
+  const [dong, setDong] = useState("");
+  const [ho, setHo] = useState("");
 
   // 계약 정보
   const [deposit, setDeposit] = useState("");
@@ -82,8 +91,14 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
     setSubmitError("");
 
     try {
+      const fullAddress = [
+        selected.address,
+        dong.trim() ? `${dong.trim()}동` : "",
+        ho.trim() ? `${ho.trim()}호` : "",
+      ].filter(Boolean).join(" ");
+
       const body: Record<string, unknown> = {
-        address: selected.address,
+        address: fullAddress,
         commUniqueNo: selected.uniqueNo,
       };
       if (deposit) body.deposit = Number(deposit);
@@ -178,7 +193,7 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
                 {results.map((r) => (
                   <button
                     key={r.uniqueNo}
-                    onClick={() => setSelected(r)}
+                    onClick={() => { setSelected(r); setDong(""); setHo(""); }}
                     className="w-full text-left px-3 py-2.5 hover:bg-[#f5f5f7] transition-colors flex items-start gap-2.5"
                     style={{
                       background: selected?.uniqueNo === r.uniqueNo ? "rgba(0,113,227,0.06)" : undefined,
@@ -198,6 +213,33 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* 동/호수 입력 (집합건물 선택 시) */}
+          {selected && isCollectiveBuilding(selected.realEstateType) && (
+            <div className="space-y-2 pt-2 border-t border-gray-100">
+              <p className="text-sm font-medium text-[#1d1d1f]">동·호수 입력</p>
+              <p className="text-xs text-[#86868b]">아파트·오피스텔 등 집합건물은 등기부가 호수별로 발급됩니다. 동·호수를 입력해야 정확한 감시가 가능합니다.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <FormInput
+                  label="동"
+                  placeholder="예: 101"
+                  value={dong}
+                  onChange={(e) => setDong(e.target.value)}
+                />
+                <FormInput
+                  label="호수"
+                  placeholder="예: 1004"
+                  value={ho}
+                  onChange={(e) => setHo(e.target.value)}
+                />
+              </div>
+              {(dong || ho) && (
+                <p className="text-xs text-[#0071e3] font-medium">
+                  등록 주소: {[selected.address, dong.trim() ? `${dong.trim()}동` : "", ho.trim() ? `${ho.trim()}호` : ""].filter(Boolean).join(" ")}
+                </p>
+              )}
             </div>
           )}
 
