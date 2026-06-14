@@ -340,7 +340,8 @@ export function usePriceMap() {
           ? `<div style="font-size:10px;color:#fff;background:rgba(255,255,255,.2);border-radius:4px;padding:1px 4px;margin-top:2px">${apt.change >= 0 ? "+" : ""}${escapeHtml(apt.change)}%</div>`
           : "";
         const content = document.createElement("div");
-        content.innerHTML = `<div style="cursor:pointer;padding:4px 10px;border-radius:8px;font-size:13px;font-weight:700;color:#fff;background:${bgColor};box-shadow:0 2px 8px rgba(0,0,0,.25);white-space:nowrap;line-height:1.3;text-align:center;min-width:50px"><div style="font-size:11px;opacity:.85">${escapeHtml(apt.area)}평</div><div>${escapeHtml(priceText)}</div>${changeHtml}</div><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid ${bgColor};margin:0 auto"></div>`;
+        const areaText = apt.area ? `${escapeHtml(apt.area)}평` : "-";
+        content.innerHTML = `<div style="cursor:pointer;padding:4px 10px;border-radius:8px;font-size:13px;font-weight:700;color:#fff;background:${bgColor};box-shadow:0 2px 8px rgba(0,0,0,.25);white-space:nowrap;line-height:1.3;text-align:center;min-width:50px"><div style="font-size:11px;opacity:.85">${areaText}</div><div>${escapeHtml(priceText)}</div>${changeHtml}</div><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid ${bgColor};margin:0 auto"></div>`;
         content.style.cssText = "display:flex;flex-direction:column;align-items:center";
         content.addEventListener("click", () => selectAndMoveToApt(apt));
         return content;

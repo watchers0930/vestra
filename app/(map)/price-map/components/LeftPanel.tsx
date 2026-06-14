@@ -173,7 +173,7 @@ export function LeftPanel({
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: "12px", fontWeight: 700, color: "#1d1d1f", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{apt.name}</p>
-                      <p style={{ fontSize: "10.5px", color: "#6e6e73", margin: 0 }}>{apt.area}평 · {apt.year}년</p>
+                      <p style={{ fontSize: "10.5px", color: "#6e6e73", margin: 0 }}>{apt.area ? `${apt.area}평 · ` : ""}{apt.year ? `${apt.year}년` : "-"}</p>
                     </div>
                     <div style={{ textAlign: "right" as const, flexShrink: 0 }}>
                       <p style={{ fontSize: "12px", fontWeight: 700, color: "#1d1d1f", margin: 0 }}>{formatMapPrice(apt, tradeType)}</p>
@@ -211,8 +211,8 @@ export function LeftPanel({
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "12px" }}>
                 {[
                   { label: tradeType === "월세" ? "월세" : "시세", value: formatMapPrice(selectedApt, tradeType) },
-                  { label: "면적", value: `${selectedApt.area}평` },
-                  { label: "건축", value: `${selectedApt.year}년` },
+                  { label: "면적", value: selectedApt.area ? `${selectedApt.area}평` : "미제공" },
+                  { label: "건축", value: selectedApt.year ? `${selectedApt.year}년` : "-" },
                   { label: "공시지가", value: officialPriceLabel || "데이터 없음" },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ borderRadius: "10px", background: "#f5f5f7", padding: "8px 10px" }}>
