@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { formatKRW, escapeHtml } from "@/lib/format";
+import { formatKRW } from "@/lib/format";
 import { analyzeRisk, getAreaColor } from "../lib/analyzeRisk";
 import { formatMapPrice } from "../lib/formatMapPrice";
 import { findSidoForGu, getFirstSelectableGu, isGuSelectable } from "../constants";
@@ -332,18 +332,30 @@ export function usePriceMap() {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const allMarkers: any[] = [];
+      let selectedOverlayEl: HTMLElement | null = null;
 
       function createOverlayContent(apt: AptData) {
         const priceText = formatMapPrice(apt, tradeType);
         const bgColor = getAreaColor(apt.area);
-        const changeHtml = apt.change !== null
-          ? `<div style="font-size:10px;color:#fff;background:rgba(255,255,255,.2);border-radius:4px;padding:1px 4px;margin-top:2px">${apt.change >= 0 ? "+" : ""}${escapeHtml(apt.change)}%</div>`
-          : "";
+
+        const pill = document.createElement("div");
+        pill.textContent = priceText;
+        pill.style.cssText = `cursor:pointer;padding:3px 8px;border-radius:16px;font-size:12px;font-weight:700;color:#fff;background:${bgColor};box-shadow:0 1px 6px rgba(0,0,0,.22);white-space:nowrap;transition:transform 0.15s,box-shadow 0.15s;`;
+
         const content = document.createElement("div");
-        const areaText = apt.area ? `${escapeHtml(apt.area)}평` : "-";
-        content.innerHTML = `<div style="cursor:pointer;padding:4px 10px;border-radius:8px;font-size:13px;font-weight:700;color:#fff;background:${bgColor};box-shadow:0 2px 8px rgba(0,0,0,.25);white-space:nowrap;line-height:1.3;text-align:center;min-width:50px"><div style="font-size:11px;opacity:.85">${areaText}</div><div>${escapeHtml(priceText)}</div>${changeHtml}</div><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid ${bgColor};margin:0 auto"></div>`;
-        content.style.cssText = "display:flex;flex-direction:column;align-items:center";
-        content.addEventListener("click", () => selectAndMoveToApt(apt));
+        content.style.cssText = "display:flex;align-items:center;justify-content:center;";
+        content.appendChild(pill);
+
+        content.addEventListener("click", () => {
+          if (selectedOverlayEl) {
+            selectedOverlayEl.style.transform = "scale(1)";
+            selectedOverlayEl.style.boxShadow = "0 1px 6px rgba(0,0,0,.22)";
+          }
+          pill.style.transform = "scale(1.3)";
+          pill.style.boxShadow = "0 3px 14px rgba(0,0,0,.35)";
+          selectedOverlayEl = pill;
+          selectAndMoveToApt(apt);
+        });
         return content;
       }
 
@@ -355,7 +367,7 @@ export function usePriceMap() {
           entry.overlay = new maps.CustomOverlay({
             position: entry.position,
             content: entry.content,
-            yAnchor: 1.1,
+            yAnchor: 0.5,
             map: null,
           });
         }
@@ -402,7 +414,7 @@ export function usePriceMap() {
       };
       requestAnimationFrame(loadNextChunk);
 
-      const DETAIL_LEVEL = 4;
+      const DETAIL_LEVEL = 3;
 
       const updateOverlays = () => {
         const level = map.getLevel();
