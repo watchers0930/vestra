@@ -335,11 +335,14 @@ export function usePriceMap() {
       let selectedOverlayEl: HTMLElement | null = null;
 
       function createOverlayContent(apt: AptData) {
-        const priceText = formatMapPrice(apt, tradeType);
-        const bgColor = getAreaColor(apt.area);
+        const isDongGroup = apt.count != null;
+        const bgColor = isDongGroup ? "#6366f1" : getAreaColor(apt.area);
+        const label = isDongGroup
+          ? `${apt.dong} ${apt.count}건`
+          : formatMapPrice(apt, tradeType);
 
         const pill = document.createElement("div");
-        pill.textContent = priceText;
+        pill.textContent = label;
         pill.style.cssText = `cursor:pointer;padding:3px 8px;border-radius:16px;font-size:12px;font-weight:700;color:#fff;background:${bgColor};box-shadow:0 1px 6px rgba(0,0,0,.22);white-space:nowrap;transition:transform 0.15s,box-shadow 0.15s;`;
 
         const content = document.createElement("div");

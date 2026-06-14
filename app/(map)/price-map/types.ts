@@ -13,6 +13,7 @@ export interface AptData {
   propertyType?: PropertyType;
   deposit?: number;
   monthlyRent?: number;
+  count?: number;         // 비아파트 동 집계 건수
 }
 
 export interface RiskItem {

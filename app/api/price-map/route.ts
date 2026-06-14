@@ -378,83 +378,129 @@ export async function GET(req: NextRequest) {
         // 좌표 조회: KV캐시/카카오 geocode API. 좌표가 확인되지 않으면 제외한다.
         const geocoded = new Map<string, { lat: number; lng: number }>();
 
-        // 모든 물건에 대해 정확한 geocode 시도
-        const needsGeocode: { gu: string; dong: string; name: string; jibun?: string; propertyType?: PropertyType }[] = [];
-        await Promise.allSettled(entries.map(async ([groupKey, txs]) => {
-          const latest = txs[0];
-          const [name] = groupKey.split("@@");
-          const key = `${name}@@${latest.dong || ""}@@${latest.jibun || ""}`;
-          const aptCacheVersion = propertyType === "아파트" ? "geocode-v4" : "geocode-v5-nonapt";
-          const cacheKey = APICache.makeKey(aptCacheVersion, gu, latest.dong || "", name, latest.jibun || "", propertyType);
-          const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
-          if (cached) {
-            geocoded.set(key, cached);
-          } else {
-            needsGeocode.push({ gu, dong: latest.dong || "", name, jibun: latest.jibun || "", propertyType });
-          }
-        }));
+        if (propertyType !== "아파트") {
+          // ── 비아파트: 동별 집계 마커 (카카오/네이버 방식) ──
+          const kakaoKey = process.env.KAKAO_REST_KEY;
+          const regionAddress = formatRegionAddressForSearch(guToAddress);
+          const dongMap = new Map<string, { amounts: number[]; deposits: number[]; monthlies: number[] }>();
 
-        // 2단계: 캐시 미스 아파트 → 카카오 geocode API 호출 (배치 + 타임아웃)
-        if (needsGeocode.length > 0) {
-          const freshCoords = await geocodeAll(needsGeocode);
-          for (const [key, coord] of freshCoords) {
-            geocoded.set(key, coord);
-          }
-        }
-
-        entries.forEach(([groupKey, txs]) => {
-          const latest = txs[0];
-          const [aptNameFromKey] = groupKey.split("@@");
-          const aptName = aptNameFromKey || latest.aptName || propertyType;
-          const displayName = latest.jibun && (aptName === "단독/다가구" || aptName === propertyType)
-            ? `${latest.dong || "주소"} ${latest.jibun}`
-            : aptName;
-          const amount = tradeType === "매매"
-            ? (latest as { dealAmount?: number }).dealAmount || 0
-            : tradeType === "전세"
-              ? (latest as { deposit?: number }).deposit || 0
-              : (latest as { monthlyRent?: number }).monthlyRent || 0;
-          const deposit = tradeType !== "매매"
-            ? (latest as { deposit?: number }).deposit || 0
-            : undefined;
-          const monthlyRent = tradeType === "월세"
-            ? (latest as { monthlyRent?: number }).monthlyRent || 0
-            : undefined;
-          if (amount <= 0) return;
-          // 월세 이상값 필터: 1,000만원/월 초과는 데이터 오류로 제외
-          if (tradeType === "월세" && amount > 100_000_000) return;
-
-          const priceInMan = Math.round(amount / 10000);
-          const change = calcChangeByArea(txs.map(t => ({
-            amount: tradeType === "매매"
-              ? ((t as { dealAmount?: number }).dealAmount || 0)
+          for (const [, txs] of entries) {
+            const latest = txs[0];
+            const dong = latest.dong || "기타";
+            if (!dongMap.has(dong)) dongMap.set(dong, { amounts: [], deposits: [], monthlies: [] });
+            const g = dongMap.get(dong)!;
+            const amount = tradeType === "매매"
+              ? (latest as { dealAmount?: number }).dealAmount || 0
               : tradeType === "전세"
-                ? ((t as { deposit?: number }).deposit || 0)
-                : ((t as { monthlyRent?: number }).monthlyRent || 0),
-            area: t.area || 0,
-            dealYear: (t as { dealYear?: number }).dealYear || 0,
-            dealMonth: (t as { dealMonth?: number }).dealMonth || 0,
-          })));
-          // 거래 부족(0)이면 null → 프론트에서 변동률 미표시
+                ? (latest as { deposit?: number }).deposit || 0
+                : (latest as { monthlyRent?: number }).monthlyRent || 0;
+            if (amount <= 0) continue;
+            if (tradeType === "월세" && amount > 100_000_000) continue;
+            g.amounts.push(amount);
+            if (tradeType !== "매매") g.deposits.push((latest as { deposit?: number }).deposit || 0);
+            if (tradeType === "월세") g.monthlies.push((latest as { monthlyRent?: number }).monthlyRent || 0);
+          }
 
-          // 좌표를 특정할 수 없으면 미표시 (도로 위 오표시 방지)
-          const coords = geocoded.get(`${aptName}@@${latest.dong || ""}@@${latest.jibun || ""}`) || null;
-          if (!coords) return;
+          for (const [dong, g] of dongMap) {
+            if (g.amounts.length === 0) continue;
+            let dongCoord = DONG_CENTER[dong] || null;
+            if (!dongCoord && kakaoKey) {
+              const dongCacheKey = APICache.makeKey("geocode-dong-v2", gu, dong);
+              dongCoord = await kvCache.get<{ lat: number; lng: number }>(dongCacheKey);
+              if (!dongCoord) {
+                dongCoord = await kakaoAddressSearch(kakaoKey, `${regionAddress} ${dong}`);
+                if (dongCoord) await kvCache.set(dongCacheKey, dongCoord, GEOCODE_TTL);
+              }
+            }
+            if (!dongCoord) continue;
 
-          data.push({
-            name: displayName,
-            dong: latest.dong || "",
-            price: priceInMan,
-            area: latest.area ? Math.round((latest.area * 1.45) / 3.3058) : 0,
-            lat: coords.lat,
-            lng: coords.lng,
-            change: change !== 0 ? change : null,
-            year: latest.buildYear || 0,
-            propertyType,
-            ...(deposit !== undefined ? { deposit: Math.round(deposit / 10000) } : {}),
-            ...(monthlyRent !== undefined ? { monthlyRent: Math.round(monthlyRent / 10000) } : {}),
+            const avgAmount = Math.round(g.amounts.reduce((a, b) => a + b, 0) / g.amounts.length);
+            const priceInMan = Math.round(avgAmount / 10000);
+            const avgDeposit = g.deposits.length > 0
+              ? Math.round(g.deposits.reduce((a, b) => a + b, 0) / g.deposits.length / 10000) : undefined;
+            const avgMonthly = g.monthlies.length > 0
+              ? Math.round(g.monthlies.reduce((a, b) => a + b, 0) / g.monthlies.length / 10000) : undefined;
+
+            data.push({
+              name: dong,
+              dong,
+              price: priceInMan,
+              area: 0,
+              lat: dongCoord.lat,
+              lng: dongCoord.lng,
+              change: null,
+              year: 0,
+              count: g.amounts.length,
+              propertyType,
+              ...(avgDeposit !== undefined ? { deposit: avgDeposit } : {}),
+              ...(avgMonthly !== undefined ? { monthlyRent: avgMonthly } : {}),
+            });
+          }
+        } else {
+          // ── 아파트: 개별 geocoding (기존 방식) ──
+          const needsGeocode: { gu: string; dong: string; name: string; jibun?: string; propertyType?: PropertyType }[] = [];
+          await Promise.allSettled(entries.map(async ([groupKey, txs]) => {
+            const latest = txs[0];
+            const [name] = groupKey.split("@@");
+            const key = `${name}@@${latest.dong || ""}@@${latest.jibun || ""}`;
+            const cacheKey = APICache.makeKey("geocode-v4", gu, latest.dong || "", name, latest.jibun || "", propertyType);
+            const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
+            if (cached) {
+              geocoded.set(key, cached);
+            } else {
+              needsGeocode.push({ gu, dong: latest.dong || "", name, jibun: latest.jibun || "", propertyType });
+            }
+          }));
+
+          if (needsGeocode.length > 0) {
+            const freshCoords = await geocodeAll(needsGeocode);
+            for (const [key, coord] of freshCoords) geocoded.set(key, coord);
+          }
+
+          entries.forEach(([groupKey, txs]) => {
+            const latest = txs[0];
+            const [aptNameFromKey] = groupKey.split("@@");
+            const aptName = aptNameFromKey || latest.aptName || propertyType;
+            const amount = tradeType === "매매"
+              ? (latest as { dealAmount?: number }).dealAmount || 0
+              : tradeType === "전세"
+                ? (latest as { deposit?: number }).deposit || 0
+                : (latest as { monthlyRent?: number }).monthlyRent || 0;
+            const deposit = tradeType !== "매매" ? (latest as { deposit?: number }).deposit || 0 : undefined;
+            const monthlyRent = tradeType === "월세" ? (latest as { monthlyRent?: number }).monthlyRent || 0 : undefined;
+            if (amount <= 0) return;
+            if (tradeType === "월세" && amount > 100_000_000) return;
+
+            const priceInMan = Math.round(amount / 10000);
+            const change = calcChangeByArea(txs.map(t => ({
+              amount: tradeType === "매매"
+                ? ((t as { dealAmount?: number }).dealAmount || 0)
+                : tradeType === "전세"
+                  ? ((t as { deposit?: number }).deposit || 0)
+                  : ((t as { monthlyRent?: number }).monthlyRent || 0),
+              area: t.area || 0,
+              dealYear: (t as { dealYear?: number }).dealYear || 0,
+              dealMonth: (t as { dealMonth?: number }).dealMonth || 0,
+            })));
+
+            const coords = geocoded.get(`${aptName}@@${latest.dong || ""}@@${latest.jibun || ""}`) || null;
+            if (!coords) return;
+
+            data.push({
+              name: aptName,
+              dong: latest.dong || "",
+              price: priceInMan,
+              area: latest.area ? Math.round((latest.area * 1.45) / 3.3058) : 0,
+              lat: coords.lat,
+              lng: coords.lng,
+              change: change !== 0 ? change : null,
+              year: latest.buildYear || 0,
+              propertyType,
+              ...(deposit !== undefined ? { deposit: Math.round(deposit / 10000) } : {}),
+              ...(monthlyRent !== undefined ? { monthlyRent: Math.round(monthlyRent / 10000) } : {}),
+            });
           });
-        });
+        }
         if (data.length > 0) dataSource = "molit";
       }
     } catch (err) {
