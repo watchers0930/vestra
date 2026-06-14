@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+echo "🔐 release verification: secrets"
+npm run check:secrets
+
 echo "🔎 release verification: lint"
 npm run lint
 

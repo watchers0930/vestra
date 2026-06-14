@@ -73,6 +73,7 @@ docs/                  # PDCA 문서
 
 ## Key Conventions
 - 한국어 UI, 코드는 영어
+- 사용자를 `대장님`으로 호칭한다.
 - App Router 사용 (pages/ 미사용)
 - API Route에서 OpenAI 호출 (서버사이드)
 - Prisma로 DB 접근 (Neon PostgreSQL)
@@ -93,6 +94,18 @@ docs/                  # PDCA 문서
 - `[coverage: low]` — Sources 링크의 원본 파일 직접 읽기
 
 **wiki 파일 직접 수정 금지** — `/wiki-compile` 로만 갱신.
+
+### 작업 종료 시 위키 갱신 프로토콜
+
+사용자가 `작업 종료`라고 지시하면 다음을 자동 수행한다.
+
+1. 이번 세션의 변경 파일과 변경 목적을 확인한다.
+2. 변경이 플랫폼 개요, 알고리즘, API, 프론트엔드 구조, 보안, 주요 기능, 배포/인프라 중 하나에 영향을 주면 위키 갱신 대상으로 판단한다.
+3. 위키 갱신 대상이면 `/wiki-compile`을 실행해 `wiki/`를 갱신한다.
+4. `/wiki-compile`은 `llm-wiki-compiler` Claude 플러그인의 slash command이며, 프로젝트 루트의 `.wiki-compiler.json` 설정을 사용한다.
+5. 위키 파일은 직접 편집하지 않는다. 반드시 `/wiki-compile` 결과물만 반영한다.
+6. 단순 문구, 시각 스타일, 테스트만의 변경처럼 지식베이스 반영 가치가 낮은 작업은 갱신을 생략하고 생략 사유를 보고한다.
+7. slash command 실행이 현재 환경에서 불가능하면 위키 갱신 필요 여부와 차단 사유를 보고하고, 임의로 `wiki/`를 수정하지 않는다.
 
 ## Commands
 ```bash
@@ -123,6 +136,16 @@ npm run lint         # ESLint
 - 기존 사용자 변경을 되돌리거나 덮어쓰지 않는다.
 - 배포와 무관한 변경을 끼워 넣지 않는다.
 
+### 엔지니어링 품질
+- 현재 동작을 확인하지 않은 상태에서 핵심 로직, 인증, 결제, DB, 외부 API 코드를 바꾸지 않는다.
+- 버그 수정, 리팩터링, 문구 변경, 스타일 변경, 의존성 변경을 한 작업에 섞지 않는다.
+- 변경은 작게 나누고, 각 단위마다 가능한 검증(`lint`, `test`, `build`, 관련 수동 확인)을 수행한다.
+- 테스트 없는 확신을 검증으로 간주하지 않는다. 테스트가 없으면 실행 경로 또는 실패 가능성을 명확히 보고한다.
+- 실패 시 되돌릴 수 없는 변경은 먼저 롤백 방법을 정한 뒤 진행한다.
+- 비밀값, API 키, DB URL, 토큰, 개인정보를 로그·커밋·문서·스크린샷에 노출하지 않는다.
+- `package.json`, lockfile, Prisma schema, 인증/보안 설정, 배포 스크립트 변경은 영향 범위를 먼저 확인하고 별도 변경으로 취급한다.
+- API, DB, 배포, 보안, 핵심 기능 동작이 바뀌면 README/CLAUDE/wiki/runbook 갱신 필요 여부를 반드시 판단한다.
+
 ### 구조 및 리팩터링
 - 500줄 초과 파일은 분리 대상이다.
 - 큰 파일을 수정할 때는 분리 가능성을 먼저 본다.
@@ -139,6 +162,13 @@ npm run lint         # ESLint
 - `main`이 `origin/main`과 어긋나 있으면 배포하지 않는다.
 - 배포 전 `lint`, `test`, `build`를 반드시 통과해야 한다.
 - 테스트 배포 후 smoke check(`/`, `/login`, `/api/health`)를 반드시 통과해야 한다.
+
+### 데이터베이스 운영
+- `.env.local`의 Neon PostgreSQL 접속은 확인되었으며, 일반 기능 개발·DB 조회·Prisma introspection은 진행 가능하다.
+- 현재 운영 DB는 Prisma Migrate로 관리되는 상태가 아니다 (`prisma/migrations` 없음, 기존 DB baseline 미설정).
+- 테이블/컬럼/인덱스/관계 변경이 필요한 작업은 일반 작업과 분리해 별도 DB 변경 작업으로 진행한다.
+- 운영 DB에 `prisma migrate dev`, `prisma migrate deploy`, `prisma db push`, `prisma migrate resolve` 같은 구조 변경 명령을 임의 실행하지 않는다.
+- DB 구조 변경이 필요하면 먼저 baseline/preview 검증/백업/운영 적용 순서를 제안하고 사용자 지시를 받은 뒤 진행한다.
 
 ## Environment Variables
 - `OPENAI_API_KEY` - OpenAI API 키
