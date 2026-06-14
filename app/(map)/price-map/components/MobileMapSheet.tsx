@@ -89,7 +89,7 @@ export function MobileMapSheet({
           <div className="flex items-center justify-between px-4 pb-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-[12px] font-bold text-[#0071e3] truncate">{selectedApt.name}</span>
-              <span className="text-[11px] text-[#6e6e73]">{selectedApt.area}평</span>
+              {selectedApt.area ? <span className="text-[11px] text-[#6e6e73]">{selectedApt.area}평</span> : null}
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <span className="text-[12px] font-bold text-[#1d1d1f]">{formatMapPrice(selectedApt, tradeType)}</span>
@@ -126,8 +126,8 @@ export function MobileMapSheet({
                 <div className="grid grid-cols-2 gap-1.5 mb-3">
                   {[
                     { label: tradeType === "월세" ? "월세" : "시세", value: formatMapPrice(selectedApt, tradeType) },
-                    { label: "면적", value: `${selectedApt.area}평` },
-                    { label: "건축", value: `${selectedApt.year}년` },
+                    { label: "면적", value: selectedApt.area ? `${selectedApt.area}평` : "미제공" },
+                    { label: "건축", value: selectedApt.year ? `${selectedApt.year}년` : "-" },
                     { label: "공시지가", value: officialPriceLabel || "데이터 없음" },
                   ].map(({ label, value }) => (
                     <div key={label} className="rounded-[10px] bg-[#f5f5f7] px-2.5 py-2">
@@ -246,7 +246,7 @@ export function MobileMapSheet({
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-bold text-[#1d1d1f] m-0 truncate">{apt.name}</p>
-                        <p className="text-[10px] text-[#6e6e73] m-0">{apt.area}평 · {apt.year}년</p>
+                        <p className="text-[10px] text-[#6e6e73] m-0">{apt.area ? `${apt.area}평 · ` : ""}{apt.year ? `${apt.year}년` : "-"}</p>
                       </div>
                       <div className="text-right flex-shrink-0">
                         <p className="text-[12px] font-bold text-[#1d1d1f] m-0">{formatMapPrice(apt, tradeType)}</p>
