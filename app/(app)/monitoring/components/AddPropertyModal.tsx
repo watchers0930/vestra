@@ -18,7 +18,8 @@ interface Props {
 
 function isCollectiveBuilding(type: string): boolean {
   const t = type.toLowerCase();
-  return t.includes("집합") || t.includes("아파트") || t.includes("오피스텔") || t.includes("다세대") || t.includes("연립");
+  // 순수 토지류(토지·임야)는 호수 없음, 나머지 건물 유형은 모두 동·호수 입력 허용
+  return !t.includes("토지") && !t.includes("임야");
 }
 
 export function AddPropertyModal({ onClose, onSuccess }: Props) {
