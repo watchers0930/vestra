@@ -284,7 +284,7 @@ describe("DELETE /api/user/sync-data", () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe("analysisId는 필수입니다.");
+    expect(body.error).toBe("analysisId 또는 assetId는 필수입니다.");
   });
 
   it("정상 삭제 → 200", async () => {
