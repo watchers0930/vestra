@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { RefreshCw, Loader2, Scale, ClipboardList, TrendingUp, Home, FileText, Building2, X, Trash2 } from "lucide-react";
+import {
+  RefreshCw, Loader2, Scale, ClipboardList, TrendingUp,
+  Home, FileText, Building2, X, Trash2, MapPin, Calendar,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { Button } from "@/components/common/Button";
 import type { AnalysisRecord } from "@/lib/store";
 
 const TYPE_ICON: Record<string, LucideIcon> = {
@@ -41,11 +45,7 @@ function getChip(summary: string): { label: string; color: string; bg: string } 
     return { label: `↓ ${summary.slice(0, 18)}`, color: "#ff3b30", bg: "rgba(255,59,48,0.07)" };
   if (s.includes("주의") || s.includes("확인") || s.includes("권고") || s.includes("보증"))
     return { label: `! ${summary.slice(0, 18)}`, color: "#b86f00", bg: "rgba(255,159,10,0.09)" };
-  return {
-    label: summary.slice(0, 20) || "분석 완료",
-    color: "#6e6e73",
-    bg: "rgba(0,0,0,0.05)",
-  };
+  return { label: summary.slice(0, 20) || "분석 완료", color: "#6e6e73", bg: "rgba(0,0,0,0.05)" };
 }
 
 function formatAddress(address: string): string {
@@ -54,7 +54,6 @@ function formatAddress(address: string): string {
   return address;
 }
 
-// 분석 data에서 표시 가능한 핵심 수치 추출
 function extractKeyMetrics(type: string, data: Record<string, unknown>): { label: string; value: string }[] {
   const metrics: { label: string; value: string }[] = [];
   try {
@@ -83,7 +82,7 @@ function extractKeyMetrics(type: string, data: Record<string, unknown>): { label
       const grade = data.vScoreGrade;
       if (grade) metrics.push({ label: "등급", value: String(grade) });
     }
-  } catch { /* 추출 실패 시 무시 */ }
+  } catch { /* 무시 */ }
   return metrics;
 }
 
@@ -121,13 +120,14 @@ export function AnalysisHistory({
 
   return (
     <>
+      {/* 카드 목록 */}
       <div className="grid grid-cols-1 gap-[13px] sm:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => {
           const IconComp = TYPE_ICON[item.type] ?? FileText;
-          const iconBg   = TYPE_BG[item.type]   ?? "rgba(0,0,0,0.06)";
-          const iconColor = TYPE_COLOR[item.type] ?? "#6e6e73";
-          const chip     = getChip(item.summary);
-          const addr     = formatAddress(item.address);
+          const iconBg    = TYPE_BG[item.type]    ?? "rgba(0,0,0,0.06)";
+          const iconColor = TYPE_COLOR[item.type]  ?? "#6e6e73";
+          const chip      = getChip(item.summary);
+          const addr      = formatAddress(item.address);
           const isCascading = cascadeLoading === item.address;
           const canCascade  = addressCountMap[item.address] >= 2;
           const alert = alertAddressMap[item.address];
@@ -142,24 +142,16 @@ export function AnalysisHistory({
                 ...(!alert ? { border: "1px solid rgba(0,0,0,0.08)" } : {}),
                 boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
               }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.10)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLDivElement).style.boxShadow = "0 2px 12px rgba(0,0,0,0.06)";
-              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.10)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 2px 12px rgba(0,0,0,0.06)"; }}
             >
               {alert && (
                 <span className="absolute top-[10px] left-[10px] rounded-full bg-amber-100 px-[7px] py-[1px] text-[10px] font-semibold text-amber-700">
                   ⚠ 변동감지
                 </span>
               )}
-
               <div className={`mb-[13px] flex items-start justify-between ${alert ? "mt-[14px]" : ""}`}>
-                <div
-                  className="flex h-[38px] w-[38px] items-center justify-center rounded-[11px]"
-                  style={{ background: iconBg }}
-                >
+                <div className="flex h-[38px] w-[38px] items-center justify-center rounded-[11px]" style={{ background: iconBg }}>
                   <IconComp size={17} strokeWidth={1.5} style={{ color: iconColor }} />
                 </div>
                 <div className="flex items-center gap-[6px]">
@@ -177,46 +169,26 @@ export function AnalysisHistory({
                       <RefreshCw size={11} className={isCascading ? "animate-spin" : ""} />
                     </button>
                   )}
-                  {isCascading && (
-                    <span className="flex items-center gap-[3px] text-[10px] font-medium text-[#0071e3]">
-                      <Loader2 size={10} className="animate-spin" />
-                    </span>
-                  )}
+                  {isCascading && <Loader2 size={10} className="animate-spin text-[#0071e3]" />}
                 </div>
               </div>
-
-              <div className="mb-[3px] text-[13.5px] font-semibold text-[#1d1d1f]">
-                {item.typeLabel}
-              </div>
-              <div
-                className="mb-[15px] overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] text-[#6e6e73]"
-                title={addr}
-              >
+              <div className="mb-[3px] text-[13.5px] font-semibold text-[#1d1d1f]">{item.typeLabel}</div>
+              <div className="mb-[15px] overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] text-[#6e6e73]" title={addr}>
                 {addr}
               </div>
-
               <div className="flex items-center justify-between">
-                <span
-                  className="rounded-full px-[9px] py-[3px] text-[11px] font-semibold"
-                  style={{ color: chip.color, background: chip.bg }}
-                >
+                <span className="rounded-full px-[9px] py-[3px] text-[11px] font-semibold" style={{ color: chip.color, background: chip.bg }}>
                   {chip.label}
                 </span>
-                <div className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-[#f5f5f7] text-[11px] text-[#6e6e73]">
-                  ›
-                </div>
+                <div className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-[#f5f5f7] text-[11px] text-[#6e6e73]">›</div>
               </div>
             </div>
           );
 
           return alert ? (
-            <Link key={item.id} href={`/monitoring/${alert.monitoredPropertyId}`}>
-              {cardContent}
-            </Link>
+            <Link key={item.id} href={`/monitoring/${alert.monitoredPropertyId}`}>{cardContent}</Link>
           ) : (
-            <div key={item.id} onClick={() => setSelected(item)}>
-              {cardContent}
-            </div>
+            <div key={item.id} onClick={() => setSelected(item)}>{cardContent}</div>
           );
         })}
 
@@ -224,10 +196,7 @@ export function AnalysisHistory({
         <Link
           href="/rights"
           className="flex min-h-[130px] flex-col items-center justify-center gap-[7px] rounded-[18px] transition-colors hover:bg-[#eeeef0]"
-          style={{
-            background: "#f5f5f7",
-            border: "2px dashed rgba(0,0,0,0.08)",
-          }}
+          style={{ background: "#f5f5f7", border: "2px dashed rgba(0,0,0,0.08)" }}
         >
           <span className="text-[26px] text-[#c7c7cc]">＋</span>
           <span className="text-[12px] font-semibold text-[#6e6e73]">새 분석 시작</span>
@@ -237,93 +206,85 @@ export function AnalysisHistory({
       {/* 상세 모달 */}
       {selected && (() => {
         const IconComp = TYPE_ICON[selected.type] ?? FileText;
-        const iconBg   = TYPE_BG[selected.type]   ?? "rgba(0,0,0,0.06)";
-        const iconColor = TYPE_COLOR[selected.type] ?? "#6e6e73";
-        const addr = formatAddress(selected.address);
+        const iconBg    = TYPE_BG[selected.type]    ?? "rgba(0,0,0,0.06)";
+        const iconColor = TYPE_COLOR[selected.type]  ?? "#6e6e73";
+        const addr    = formatAddress(selected.address);
         const metrics = extractKeyMetrics(selected.type, selected.data);
 
         return (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
             onClick={() => setSelected(null)}
           >
             <div
-              className="w-full max-w-[480px] rounded-[24px] bg-white p-[28px]"
-              style={{ boxShadow: "0 24px 80px rgba(0,0,0,0.18)" }}
+              className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               {/* 헤더 */}
-              <div className="mb-[20px] flex items-start justify-between">
-                <div className="flex items-center gap-[12px]">
-                  <div
-                    className="flex h-[44px] w-[44px] items-center justify-center rounded-[13px]"
-                    style={{ background: iconBg }}
-                  >
-                    <IconComp size={20} strokeWidth={1.5} style={{ color: iconColor }} />
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: iconBg }}>
+                    <IconComp size={16} strokeWidth={1.5} style={{ color: iconColor }} />
                   </div>
-                  <div>
-                    <div className="text-[15px] font-semibold text-[#1d1d1f]">{selected.typeLabel}</div>
-                    <div className="text-[11.5px] text-[#6e6e73]">
-                      {new Date(selected.date).toLocaleDateString("ko-KR", {
-                        year: "numeric", month: "long", day: "numeric"
-                      })}
-                    </div>
-                  </div>
+                  <span className="text-[15px] font-semibold text-[#1d1d1f]">{selected.typeLabel}</span>
                 </div>
                 <button
                   onClick={() => setSelected(null)}
-                  className="flex h-[28px] w-[28px] items-center justify-center rounded-full transition-colors hover:bg-[#f5f5f7]"
-                  style={{ color: "#6e6e73" }}
+                  className="p-1.5 rounded-lg hover:bg-[#f5f5f7] transition-colors"
                 >
-                  <X size={14} />
+                  <X size={16} className="text-[#86868b]" />
                 </button>
               </div>
 
-              {/* 주소 */}
-              <div
-                className="mb-[16px] rounded-[12px] px-[14px] py-[10px] text-[12.5px] text-[#3a3a3c]"
-                style={{ background: "#f5f5f7" }}
-              >
-                {addr}
-              </div>
+              {/* 본문 */}
+              <div className="px-6 py-5 space-y-4">
 
-              {/* 요약 */}
-              <div className="mb-[16px]">
-                <div className="mb-[6px] text-[11px] font-semibold uppercase tracking-wide text-[#6e6e73]">분석 요약</div>
-                <p className="text-[13.5px] leading-[1.6] text-[#1d1d1f]">{selected.summary}</p>
-              </div>
-
-              {/* 핵심 수치 */}
-              {metrics.length > 0 && (
-                <div className="mb-[20px] grid grid-cols-2 gap-[8px]">
-                  {metrics.map((m) => (
-                    <div
-                      key={m.label}
-                      className="rounded-[10px] px-[12px] py-[9px]"
-                      style={{ background: "#f5f5f7" }}
-                    >
-                      <div className="text-[10.5px] text-[#6e6e73]">{m.label}</div>
-                      <div className="text-[14px] font-semibold text-[#1d1d1f]">{m.value}</div>
-                    </div>
-                  ))}
+                {/* 주소 */}
+                <div className="flex items-start gap-2.5 rounded-xl bg-[#f5f5f7] px-4 py-3">
+                  <MapPin size={14} className="text-[#86868b] mt-0.5 shrink-0" />
+                  <span className="text-[13px] text-[#1d1d1f]">{addr}</span>
                 </div>
-              )}
 
-              {/* 삭제 버튼 */}
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="flex w-full items-center justify-center gap-[6px] rounded-[12px] py-[12px] text-[13.5px] font-semibold text-white transition-colors"
-                style={{ background: deleting ? "#ff3b3088" : "#ff3b30" }}
-              >
-                {deleting ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Trash2 size={14} />
+                {/* 날짜 */}
+                <div className="flex items-center gap-2 text-[12px] text-[#86868b]">
+                  <Calendar size={13} />
+                  {new Date(selected.date).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })} 분석
+                </div>
+
+                {/* 핵심 수치 */}
+                {metrics.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {metrics.map((m) => (
+                      <div key={m.label} className="rounded-xl bg-[#f5f5f7] px-4 py-3">
+                        <div className="text-[10.5px] text-[#86868b] mb-0.5">{m.label}</div>
+                        <div className="text-[14px] font-semibold text-[#1d1d1f]">{m.value}</div>
+                      </div>
+                    ))}
+                  </div>
                 )}
-                {deleting ? "삭제 중..." : "이력 완전 삭제"}
-              </button>
+
+                {/* 요약 */}
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#86868b] mb-2">분석 요약</p>
+                  <p className="text-[13.5px] leading-relaxed text-[#1d1d1f]">{selected.summary}</p>
+                </div>
+              </div>
+
+              {/* 하단 */}
+              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+                <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>
+                  닫기
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  icon={Trash2}
+                  loading={deleting}
+                  onClick={handleDelete}
+                >
+                  이력 삭제
+                </Button>
+              </div>
             </div>
           </div>
         );
