@@ -181,7 +181,9 @@ export const DELETE = withAgentAuth<{ id: string }>(
 
       await prisma.agentClient.update({
         where: { id: params.id },
-        data: { status: "inactive" },
+        // clientEmail, clientUserId를 null로 클리어해야 unique constraint 해제됨
+        // (재등록 시 동일 이메일/userId로 새 레코드 생성 가능)
+        data: { status: "inactive", clientEmail: null, clientUserId: null },
       });
 
       return NextResponse.json({ success: true });
