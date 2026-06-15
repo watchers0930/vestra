@@ -153,7 +153,7 @@ export function RegistryAnalysisModal({ address, open, onClose }: Props) {
         </div>
 
         {/* 본문 */}
-        <div className="overflow-y-auto flex-1 px-6 py-5">
+        <div className="overflow-y-auto flex-1 min-h-0 px-6 py-5">
           {(step === "fetching" || step === "analyzing") && (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
