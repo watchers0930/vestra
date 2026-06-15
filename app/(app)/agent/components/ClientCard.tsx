@@ -10,11 +10,13 @@ export interface ClientCardClient {
   clientName: string;
   clientPhone?: string | null;
   clientEmail?: string | null;
+  clientUserId?: string | null;
   status: string;
   propertyAddress?: string | null;
   contractDate?: string | null;
   createdAt: string;
   _count?: { properties: number };
+  monitoringActive?: boolean;
 }
 
 interface ClientCardProps {

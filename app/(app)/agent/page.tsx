@@ -24,6 +24,7 @@ export default function AgentPage() {
     setSearchTerm,
     addClient,
     deleteClient,
+    toggleMonitoring,
   } = useAgentData();
 
   return (
@@ -70,6 +71,7 @@ export default function AgentPage() {
         <ClientList
           clients={clients}
           onDelete={deleteClient}
+          onToggleMonitoring={toggleMonitoring}
           loading={loading}
         />
 

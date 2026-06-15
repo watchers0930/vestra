@@ -8,11 +8,13 @@ export interface AgentClient {
   clientName: string;
   clientPhone?: string | null;
   clientEmail?: string | null;
+  clientUserId?: string | null;
   status: string;
   propertyAddress?: string | null;
   contractDate?: string | null;
   createdAt: string;
   _count?: { properties: number };
+  monitoringActive?: boolean;
 }
 
 export interface AgentStats {
@@ -120,6 +122,24 @@ export function useAgentData() {
     return res.json();
   }, [refresh]);
 
+  // 등기감시 토글
+  const toggleMonitoring = useCallback(async (id: string) => {
+    const res = await fetch(`/api/agent/clients/${id}/toggle-monitoring`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || "등기감시 전환에 실패했습니다.");
+    }
+    const data = await res.json();
+    // 낙관적 업데이트
+    setClients((prev) =>
+      prev.map((c) => c.id === id ? { ...c, monitoringActive: data.monitoringActive } : c)
+    );
+    return data;
+  }, []);
+
   // 고객 삭제(비활성화)
   const deleteClient = useCallback(async (id: string) => {
     // 즉시 목록에서 제거 (낙관적 업데이트)
@@ -147,6 +167,7 @@ export function useAgentData() {
     setSearchTerm,
     addClient,
     deleteClient,
+    toggleMonitoring,
     refresh,
   };
 }

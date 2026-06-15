@@ -37,16 +37,27 @@ export const GET = withAgentAuth(async (req, { session }) => {
         : {}),
     };
 
-    const [clients, total] = await Promise.all([
+    const [raw, total] = await Promise.all([
       prisma.agentClient.findMany({
         where,
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
-        include: { _count: { select: { properties: true } } },
+        include: {
+          _count: { select: { properties: true } },
+          properties: {
+            where: { status: "active" },
+            select: { monitoredProperty: { select: { status: true } } },
+          },
+        },
       }),
       prisma.agentClient.count({ where }),
     ]);
+
+    const clients = raw.map(({ properties, ...c }) => ({
+      ...c,
+      monitoringActive: properties.some((p) => p.monitoredProperty?.status === "active"),
+    }));
 
     return NextResponse.json({
       clients,
