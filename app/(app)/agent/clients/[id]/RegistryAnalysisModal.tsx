@@ -38,6 +38,14 @@ export function RegistryAnalysisModal({ address, open, onClose }: Props) {
   const [rawText, setRawText] = useState("");
   const [error, setError] = useState("");
 
+  // 모달 열릴 때 body 스크롤 잠금
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [open]);
+
   useEffect(() => {
     if (!open || !address) return;
     runAnalysis();
@@ -126,9 +134,9 @@ export function RegistryAnalysisModal({ address, open, onClose }: Props) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden" style={{ maxHeight: "90vh" }}>
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div className="min-w-0 flex-1 pr-4">
             <h2 className="text-base font-semibold text-[#1d1d1f]">등기부 분석</h2>
             <p className="text-xs text-[#86868b] truncate">{address}</p>
@@ -153,7 +161,7 @@ export function RegistryAnalysisModal({ address, open, onClose }: Props) {
         </div>
 
         {/* 본문 */}
-        <div className="overflow-y-auto flex-1 min-h-0 px-6 py-5">
+        <div className="overflow-y-auto px-6 py-5" style={{ maxHeight: "calc(90vh - 73px)" }}>
           {(step === "fetching" || step === "analyzing") && (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
