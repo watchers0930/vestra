@@ -18,7 +18,18 @@ export const GET = withAgentAuth<{ id: string }>(
     try {
       const client = await prisma.agentClient.findUnique({
         where: { id: params.id },
-        include: { properties: true },
+        include: {
+          properties: {
+            include: {
+              monitoredProperty: {
+                select: {
+                  status: true,
+                  _count: { select: { snapshots: true } },
+                },
+              },
+            },
+          },
+        },
       });
 
       if (!client) {

@@ -20,6 +20,10 @@ interface ClientProperty {
   address: string;
   status: string;
   createdAt: string;
+  monitoredProperty?: {
+    status: string;
+    _count: { snapshots: number };
+  } | null;
 }
 
 interface ClientDetail {
@@ -269,6 +273,24 @@ export default function ClientDetailPage() {
                       <span className="text-sm text-[#1d1d1f] truncate">{prop.address}</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0 ml-3">
+                      {/* 감시 상태 뱃지 */}
+                      {prop.monitoredProperty ? (
+                        prop.monitoredProperty._count.snapshots > 0 ? (
+                          <span
+                            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+                            style={{ background: "rgba(52,199,89,0.1)", color: "#1a7f37", border: "1px solid rgba(52,199,89,0.3)" }}
+                          >
+                            🛡 감시 중
+                          </span>
+                        ) : (
+                          <span
+                            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+                            style={{ background: "rgba(255,149,0,0.1)", color: "#b86f00", border: "1px solid rgba(255,149,0,0.3)" }}
+                          >
+                            🕐 대기 중
+                          </span>
+                        )
+                      ) : null}
                       <span className="text-[11px] text-[#86868b]">{formatDate(prop.createdAt)}</span>
                       <button
                         onClick={() => setRegistryAddress(prop.address)}
@@ -277,7 +299,7 @@ export default function ClientDetailPage() {
                         style={{ background: "rgba(255,149,0,0.08)", color: "#b86f00", border: "1px solid rgba(255,149,0,0.25)" }}
                       >
                         <FileText size={11} />
-                        등기부 분석
+                        AI 분석
                       </button>
                       <button
                         onClick={() => handleDeleteProperty(prop.id)}
@@ -354,6 +376,7 @@ export default function ClientDetailPage() {
         address={registryAddress}
         open={!!registryAddress}
         onClose={() => setRegistryAddress("")}
+        onSnapshotCreated={loadClient}
       />
     </>
   );

@@ -30,9 +30,10 @@ interface Props {
   address: string;
   open: boolean;
   onClose: () => void;
+  onSnapshotCreated?: () => void; // 초기 스냅샷 생성 완료 시 콜백
 }
 
-export function RegistryAnalysisModal({ address, open, onClose }: Props) {
+export function RegistryAnalysisModal({ address, open, onClose, onSnapshotCreated }: Props) {
   const [step, setStep] = useState<Step>("idle");
   const [result, setResult] = useState<UnifiedResult | null>(null);
   const [rawText, setRawText] = useState("");
@@ -119,6 +120,16 @@ export function RegistryAnalysisModal({ address, open, onClose }: Props) {
       setRawText(syntheticText);
       setResult(data as UnifiedResult);
       setStep("done");
+
+      // 초기 스냅샷 트리거 (백그라운드, 실패해도 무시)
+      fetch("/api/monitoring/trigger", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, syntheticText }),
+      })
+        .then((r) => r.json())
+        .then((r) => { if (r.success || r.alreadyInitialized) onSnapshotCreated?.(); })
+        .catch(() => {});
     } catch (e) {
       setError(e instanceof Error ? e.message : "분석에 실패했습니다.");
       setStep("error");
