@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
       address: parsed.title.address,
       ownerName,
       realEstateType,
+      rawText: text,
     });
   } catch {
     return NextResponse.json(

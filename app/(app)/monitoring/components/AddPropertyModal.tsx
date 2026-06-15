@@ -37,6 +37,7 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfParsing, setPdfParsing] = useState(false);
   const [pdfError, setPdfError] = useState("");
+  const [pdfRawText, setPdfRawText] = useState("");
 
   // 선택된 물건
   const [selected, setSelected] = useState<SearchResult | null>(null);
@@ -134,6 +135,7 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
 
       setSelected({ uniqueNo: "", address: data.address, realEstateType: data.realEstateType || "건물" });
       if (data.ownerName) setOwnerName(data.ownerName);
+      if (data.rawText) setPdfRawText(data.rawText);
     } catch {
       setPdfError("네트워크 오류가 발생했습니다.");
     } finally {
@@ -158,6 +160,7 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
         address: fullAddress,
       };
       if (selected.uniqueNo) body.commUniqueNo = selected.uniqueNo;
+      if (pdfRawText) body.pdfRawText = pdfRawText;
       if (deposit) body.deposit = Number(deposit);
       if (contractDate) body.contractDate = contractDate;
       if (moveInDate) body.moveInDate = moveInDate;

@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { validateOrigin } from "@/lib/csrf";
 import { createAuditLog } from "@/lib/audit-log";
+import { recordRegistrySnapshot } from "@/lib/registry-snapshot-recorder";
 
 export async function GET(req: NextRequest) {
   try {
@@ -88,7 +89,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { address, contractDate, moveInDate, deposit, commUniqueNo, ownerName } = body;
+    const { address, contractDate, moveInDate, deposit, commUniqueNo, ownerName, pdfRawText } = body;
     if (!address || typeof address !== "string" || address.trim().length < 5) {
       return NextResponse.json(
         { error: "유효한 주소를 입력해주세요." },
@@ -129,6 +130,9 @@ export async function POST(req: NextRequest) {
           ...(ownerName ? { ownerName: String(ownerName).trim() } : {}),
         },
       });
+      if (pdfRawText && typeof pdfRawText === "string") {
+        recordRegistrySnapshot({ propertyId: reactivated.id, fullText: pdfRawText }).catch(() => {});
+      }
       return NextResponse.json({ property: reactivated, reactivated: true });
     }
 
@@ -174,6 +178,10 @@ export async function POST(req: NextRequest) {
       detail: { address: address.trim() },
       req,
     });
+
+    if (pdfRawText && typeof pdfRawText === "string") {
+      recordRegistrySnapshot({ propertyId: property.id, fullText: pdfRawText }).catch(() => {});
+    }
 
     return NextResponse.json({ property }, { status: 201 });
   } catch (error) {
