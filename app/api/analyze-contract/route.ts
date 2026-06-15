@@ -54,14 +54,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "계약서 내용을 입력해주세요." }, { status: 400 });
     }
 
-    // 부동산 계약서 여부 판별
-    const REAL_ESTATE_KEYWORDS = [
-      "임대차", "임대인", "임차인", "전세", "월세", "보증금", "매매", "부동산",
-      "토지", "건물", "주택", "아파트", "오피스텔", "분양", "등기", "소유권",
-      "근저당", "전입", "임대", "임차", "지상권", "전세권", "대항력",
+    // 부동산 계약서 여부 판별 — 계약서 전용 키워드 2개 이상 포함 시에만 통과
+    const REAL_ESTATE_CONTRACT_KEYWORDS = [
+      "임대인", "임차인", "임대차", "전세보증금", "전세계약", "월세계약",
+      "보증금 반환", "임대차계약", "주택임대차", "특약사항", "원상회복",
+      "명도", "전입신고", "확정일자", "근저당", "전세권", "대항력", "우선변제",
+      "임대차보호법", "계약갱신",
     ];
-    const isRealEstate = REAL_ESTATE_KEYWORDS.some((kw) => contractText.includes(kw));
-    if (!isRealEstate) {
+    const matchCount = REAL_ESTATE_CONTRACT_KEYWORDS.filter((kw) => contractText.includes(kw)).length;
+    if (matchCount < 2) {
       return NextResponse.json(
         { error: "부동산 관련 계약서만 분석이 가능합니다." },
         { status: 422 }
