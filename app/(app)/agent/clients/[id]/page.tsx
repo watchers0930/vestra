@@ -12,6 +12,7 @@ import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Skeleton } from "@/components/common/Skeleton";
 import { FormInput } from "@/components/forms/FormInput";
+import AddressAutocomplete from "@/components/common/AddressAutocomplete";
 
 interface ClientProperty {
   id: string;
@@ -58,7 +59,8 @@ export default function ClientDetailPage() {
   const [error, setError] = useState("");
 
   // 물건 추가
-  const [newAddress, setNewAddress] = useState("");
+  const [baseAddress, setBaseAddress] = useState("");
+  const [detailAddress, setDetailAddress] = useState("");
   const [addingProperty, setAddingProperty] = useState(false);
   const [propertyError, setPropertyError] = useState("");
 
@@ -86,7 +88,11 @@ export default function ClientDetailPage() {
   // 물건 추가
   async function handleAddProperty(e: React.FormEvent) {
     e.preventDefault();
-    if (!newAddress.trim()) return;
+    if (!baseAddress.trim()) return;
+
+    const fullAddress = detailAddress.trim()
+      ? `${baseAddress.trim()} ${detailAddress.trim()}`
+      : baseAddress.trim();
 
     setAddingProperty(true);
     setPropertyError("");
@@ -95,7 +101,7 @@ export default function ClientDetailPage() {
       const res = await fetch(`/api/agent/clients/${id}/properties`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: newAddress.trim() }),
+        body: JSON.stringify({ address: fullAddress }),
       });
 
       if (!res.ok) {
@@ -104,7 +110,8 @@ export default function ClientDetailPage() {
         return;
       }
 
-      setNewAddress("");
+      setBaseAddress("");
+      setDetailAddress("");
       loadClient();
     } catch {
       setPropertyError("네트워크 오류가 발생했습니다.");
@@ -265,26 +272,39 @@ export default function ClientDetailPage() {
             )}
 
             {/* 물건 추가 폼 */}
-            <form onSubmit={handleAddProperty} className="flex items-end gap-2">
-              <div className="flex-1">
-                <FormInput
-                  label={isTypeA ? "물건 추가" : "물건 주소 등록 (등기 변경감시 시작)"}
-                  placeholder="예: 경기도 광명시 철산동 367 108동 1403호"
-                  value={newAddress}
-                  onChange={(e) => setNewAddress(e.target.value)}
+            <form onSubmit={handleAddProperty} className="space-y-2">
+              <div>
+                <label className="block text-[11px] font-600 text-[#6e6e73] mb-1">
+                  {isTypeA ? "물건 주소" : "물건 주소 (등기 변경감시 시작)"}
+                </label>
+                <AddressAutocomplete
+                  value={baseAddress}
+                  onChange={setBaseAddress}
+                  onSelect={(result) => setBaseAddress(result.roadAddress || result.address)}
+                  placeholder="도로명 주소 검색 (예: 광명시 철산동)"
                 />
               </div>
-              <Button
-                type="submit"
-                variant="primary"
-                size="sm"
-                icon={Plus}
-                loading={addingProperty}
-                disabled={!newAddress.trim()}
-                className="mb-px"
-              >
-                {isTypeA ? "추가" : "감시 시작"}
-              </Button>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <FormInput
+                    label="상세 주소"
+                    placeholder="예: 108동 1403호"
+                    value={detailAddress}
+                    onChange={(e) => setDetailAddress(e.target.value)}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  icon={Plus}
+                  loading={addingProperty}
+                  disabled={!baseAddress.trim()}
+                  className="mb-px"
+                >
+                  {isTypeA ? "추가" : "감시 시작"}
+                </Button>
+              </div>
             </form>
             {propertyError && (
               <p className="mt-1.5 text-xs text-red-500">{propertyError}</p>
