@@ -13,6 +13,7 @@ import { Button } from "@/components/common/Button";
 import { Skeleton } from "@/components/common/Skeleton";
 import { FormInput } from "@/components/forms/FormInput";
 import AddressAutocomplete from "@/components/common/AddressAutocomplete";
+import { RegistryAnalysisModal } from "./RegistryAnalysisModal";
 
 interface ClientProperty {
   id: string;
@@ -57,6 +58,7 @@ export default function ClientDetailPage() {
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [registryAddress, setRegistryAddress] = useState("");
 
   // 물건 추가
   const [baseAddress, setBaseAddress] = useState("");
@@ -165,6 +167,7 @@ export default function ClientDetailPage() {
   const isTypeA = !!client.clientUserId; // VESTRA 가입 고객 (A타입)
 
   return (
+    <>
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       {/* 뒤로가기 */}
       <Link href="/agent" className="inline-flex items-center gap-1.5 text-sm text-[#6e6e73] hover:text-primary mb-6 transition-colors">
@@ -267,15 +270,15 @@ export default function ClientDetailPage() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0 ml-3">
                       <span className="text-[11px] text-[#86868b]">{formatDate(prop.createdAt)}</span>
-                      <Link
-                        href={`/rights?address=${encodeURIComponent(prop.address)}`}
+                      <button
+                        onClick={() => setRegistryAddress(prop.address)}
                         title="등기부 분석"
                         className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold transition-colors"
                         style={{ background: "rgba(255,149,0,0.08)", color: "#b86f00", border: "1px solid rgba(255,149,0,0.25)" }}
                       >
                         <FileText size={11} />
                         등기부 분석
-                      </Link>
+                      </button>
                       <button
                         onClick={() => handleDeleteProperty(prop.id)}
                         className="p-1 rounded hover:bg-red-50 transition-colors"
@@ -347,5 +350,11 @@ export default function ClientDetailPage() {
         </Card>
       </div>
     </div>
+      <RegistryAnalysisModal
+        address={registryAddress}
+        open={!!registryAddress}
+        onClose={() => setRegistryAddress("")}
+      />
+    </>
   );
 }
