@@ -155,7 +155,7 @@ export const POST = withAgentAuth(async (req, { session }) => {
       },
     });
 
-    // 감시 물건 자동 연결
+    // 감시 물건 자동 연결 (명시적 ID 지정)
     if (Array.isArray(monitoredPropertyIds) && monitoredPropertyIds.length > 0) {
       const monitoredProps = await prisma.monitoredProperty.findMany({
         where: { id: { in: monitoredPropertyIds }, status: "active" },
@@ -165,6 +165,26 @@ export const POST = withAgentAuth(async (req, { session }) => {
       for (const prop of monitoredProps) {
         await prisma.agentClientProperty.create({
           data: {
+            agentClientId: client.id,
+            address: prop.address,
+            monitoredPropertyId: prop.id,
+          },
+        });
+      }
+    }
+
+    // 케이스 1: clientUserId로 가입 고객인 경우 → 해당 고객의 등기감시 물건 자동 연결
+    if (clientUserId && !(Array.isArray(monitoredPropertyIds) && monitoredPropertyIds.length > 0)) {
+      const clientMonitoredProps = await prisma.monitoredProperty.findMany({
+        where: { userId: clientUserId, status: "active" },
+        select: { id: true, address: true },
+      });
+
+      for (const prop of clientMonitoredProps) {
+        await prisma.agentClientProperty.upsert({
+          where: { agentClientId_address: { agentClientId: client.id, address: prop.address } },
+          update: { monitoredPropertyId: prop.id },
+          create: {
             agentClientId: client.id,
             address: prop.address,
             monitoredPropertyId: prop.id,

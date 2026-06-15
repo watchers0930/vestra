@@ -68,14 +68,26 @@ export const POST = withAgentAuth<{ id: string }>(
           where: { address: address.trim(), status: "active" },
           select: { id: true },
         });
-        if (matched) resolvedMonitorId = matched.id;
+        if (matched) {
+          resolvedMonitorId = matched.id;
+        } else {
+          // 케이스 2: 매칭 없음 → MonitoredProperty 자동 생성 (upsert로 중복 안전 처리)
+          // 고객이 VESTRA 가입자이면 고객 소유로, 아니면 중개사 소유로 등록
+          const ownerId = client.clientUserId ?? session.user.id;
+          const newMonitor = await prisma.monitoredProperty.upsert({
+            where: { userId_address: { userId: ownerId, address: address.trim() } },
+            update: { status: "active" },
+            create: { userId: ownerId, address: address.trim() },
+          });
+          resolvedMonitorId = newMonitor.id;
+        }
       }
 
       const property = await prisma.agentClientProperty.create({
         data: {
           agentClientId: params.id,
           address: address.trim(),
-          ...(resolvedMonitorId ? { monitoredPropertyId: resolvedMonitorId } : {}),
+          monitoredPropertyId: resolvedMonitorId,
         },
       });
 
