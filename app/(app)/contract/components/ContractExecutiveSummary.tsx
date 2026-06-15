@@ -32,7 +32,7 @@ function InfoTile({ icon: Icon, label, value }: { icon: typeof Home; label: stri
         <Icon size={14} strokeWidth={1.6} />
         {label}
       </div>
-      <p style={{ fontSize: "13px", fontWeight: 700, color: "#1d1d1f", lineHeight: 1.45 }}>{value || "미확인"}</p>
+      <p style={{ fontSize: "13px", fontWeight: 400, color: "#1d1d1f", lineHeight: 1.45 }}>{value || "미확인"}</p>
     </div>
   );
 }
