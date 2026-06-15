@@ -267,6 +267,15 @@ export default function ClientDetailPage() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0 ml-3">
                       <span className="text-[11px] text-[#86868b]">{formatDate(prop.createdAt)}</span>
+                      <Link
+                        href={`/rights?address=${encodeURIComponent(prop.address)}`}
+                        title="등기부 분석"
+                        className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold transition-colors"
+                        style={{ background: "rgba(255,149,0,0.08)", color: "#b86f00", border: "1px solid rgba(255,149,0,0.25)" }}
+                      >
+                        <FileText size={11} />
+                        등기부 분석
+                      </Link>
                       <button
                         onClick={() => handleDeleteProperty(prop.id)}
                         className="p-1 rounded hover:bg-red-50 transition-colors"
