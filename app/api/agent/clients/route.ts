@@ -107,14 +107,13 @@ export const POST = withAgentAuth(async (req, { session }) => {
       }
     }
 
-    // --- 중복 체크 (동일 agentId + clientEmail) ---
+    // --- 중복 체크 (동일 agentId + clientEmail, inactive 제외) ---
     if (clientEmail) {
-      const existing = await prisma.agentClient.findUnique({
+      const existing = await prisma.agentClient.findFirst({
         where: {
-          agentId_clientEmail: {
-            agentId: session.user.id,
-            clientEmail: clientEmail.trim(),
-          },
+          agentId: session.user.id,
+          clientEmail: clientEmail.trim(),
+          status: { not: "inactive" },
         },
       });
       if (existing) {
