@@ -141,6 +141,20 @@ export const POST = withAgentAuth(async (req, { session }) => {
       }
     }
 
+    // create 전 처리: 기존 inactive 레코드의 unique 필드 클리어 (재등록 충돌 방지)
+    if (clientEmail) {
+      await prisma.agentClient.updateMany({
+        where: { agentId: session.user.id, clientEmail: clientEmail.trim(), status: "inactive" },
+        data: { clientEmail: null },
+      });
+    }
+    if (clientUserId) {
+      await prisma.agentClient.updateMany({
+        where: { clientUserId, status: "inactive" },
+        data: { clientUserId: null },
+      });
+    }
+
     const client = await prisma.agentClient.create({
       data: {
         agentId: session.user.id,
