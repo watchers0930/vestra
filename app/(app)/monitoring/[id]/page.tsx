@@ -145,6 +145,7 @@ export default function MonitoringDetailPage({ params }: Props) {
           result={integrityResult}
           verifying={verifying}
           onVerify={verifyIntegrity}
+          isUnverifiedSource={!property.commUniqueNo}
         />
       </div>
     </div>

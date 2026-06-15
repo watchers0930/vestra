@@ -303,9 +303,12 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
           {/* PDF 업로드 탭 */}
           {tab === "pdf" && (
             <div className="space-y-3">
-              <p className="text-xs text-[#86868b]">
-                인터넷등기소(iros.go.kr)에서 발급한 등기부등본 PDF를 업로드하면 주소와 소유자명을 자동으로 인식합니다.
-              </p>
+              <div className="rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 space-y-1">
+                <p className="text-[12.5px] font-semibold text-blue-800">발급 후 바로 업로드하세요</p>
+                <p className="text-[11.5px] text-blue-700">
+                  반드시 <a href="https://www.iros.go.kr" target="_blank" rel="noopener noreferrer" className="underline font-medium">인터넷등기소(iros.go.kr)</a>에서 직접 발급한 등기부등본 PDF를 업로드하세요. 타인에게 받은 파일은 원본 진위를 보장할 수 없습니다.
+                </p>
+              </div>
 
               <div
                 className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 py-8 cursor-pointer hover:border-primary/40 hover:bg-[#f5f5f7] transition-colors"

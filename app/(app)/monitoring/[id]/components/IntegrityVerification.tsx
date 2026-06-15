@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheck, CheckCircle, XCircle, Loader2, ChevronDown, Key } from "lucide-react";
+import { ShieldCheck, CheckCircle, XCircle, Loader2, ChevronDown, Key, AlertTriangle, Info } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/common/Card";
 import { Button } from "@/components/common/Button";
 import type { IntegrityResult } from "../hooks/usePropertyDetail";
@@ -10,6 +10,7 @@ interface Props {
   result: IntegrityResult | null;
   verifying: boolean;
   onVerify: () => void;
+  isUnverifiedSource?: boolean; // commUniqueNo 없는 PDF 등록 물건
 }
 
 function StatusIcon({ ok }: { ok: boolean }) {
@@ -20,7 +21,7 @@ function StatusIcon({ ok }: { ok: boolean }) {
   );
 }
 
-export function IntegrityVerification({ result, verifying, onVerify }: Props) {
+export function IntegrityVerification({ result, verifying, onVerify, isUnverifiedSource }: Props) {
   const [showKey, setShowKey] = useState(false);
 
   return (
@@ -40,9 +41,38 @@ export function IntegrityVerification({ result, verifying, onVerify }: Props) {
           검증 실행
         </Button>
       </CardHeader>
-      <CardContent className="px-5 pb-5 pt-0">
+      <CardContent className="px-5 pb-5 pt-0 space-y-3">
+        {/* PDF 직접 등록 경고 */}
+        {isUnverifiedSource && (
+          <div className="flex items-start gap-2.5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3">
+            <AlertTriangle size={15} className="text-amber-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-[12.5px] font-semibold text-amber-800">원본 진위 미검증 물건</p>
+              <p className="text-[11.5px] text-amber-700 mt-0.5">
+                이 물건은 공식 등기 연계 없이 PDF로 직접 등록되었습니다. 아래 검사는 Vestra 내부 기록의 변조 여부만 확인하며, 최초 업로드된 PDF가 실제 등기부와 일치하는지는 보장하지 않습니다.
+              </p>
+              <a
+                href="https://www.iros.go.kr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1.5 inline-block text-[11.5px] font-medium text-amber-800 underline"
+              >
+                인터넷등기소에서 직접 발급·확인하기 →
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* 면책 문구 */}
+        <div className="flex items-start gap-2 rounded-lg bg-[#f5f5f7] px-3 py-2.5">
+          <Info size={13} className="text-[#86868b] mt-0.5 shrink-0" />
+          <p className="text-[11px] text-[#6e6e73] leading-relaxed">
+            이 검사는 <strong>Vestra가 저장한 등기부 기록이 이후 변조되지 않았는지</strong>만 확인합니다. 등기부 원본의 진위 여부는 <a href="https://www.iros.go.kr" target="_blank" rel="noopener noreferrer" className="underline">인터넷등기소</a>에서 직접 확인하세요.
+          </p>
+        </div>
+
         {!result && !verifying && (
-          <p className="text-center text-[13px] text-[#86868b] py-6">
+          <p className="text-center text-[13px] text-[#86868b] py-4">
             검증 버튼을 눌러 블록체인 암호화 기반으로 등기부 기록의 무결성을 확인하세요.
           </p>
         )}

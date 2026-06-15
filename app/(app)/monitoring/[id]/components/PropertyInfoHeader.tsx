@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, Calendar, Shield, Banknote } from "lucide-react";
+import { MapPin, Calendar, Shield, Banknote, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/common/Badge";
 import { Card, CardContent } from "@/components/common/Card";
 import type { PropertyDetail } from "../hooks/usePropertyDetail";
@@ -45,6 +45,16 @@ export function PropertyInfoHeader({ property, monitorDays }: Props) {
               <Badge variant="info">
                 {MODE_LABEL[property.monitorMode] || property.monitorMode}
               </Badge>
+              {!property.commUniqueNo && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
+                  style={{ background: "rgba(255,159,10,0.12)", color: "#b86f00" }}
+                  title="공식 등기 연계 없이 PDF로 직접 등록된 물건입니다. 원본 진위가 검증되지 않았습니다."
+                >
+                  <AlertTriangle size={10} />
+                  원본 미검증
+                </span>
+              )}
               <span className="text-[11.5px] text-[#86868b]">
                 감시 {monitorDays}일째
               </span>
