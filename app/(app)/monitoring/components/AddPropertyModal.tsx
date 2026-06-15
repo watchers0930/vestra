@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Search, MapPin, Building2, X, AlertTriangle } from "lucide-react";
+import { useState, useRef } from "react";
+import { Search, MapPin, Building2, X, AlertTriangle, FileText, Upload } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { FormInput } from "@/components/forms/FormInput";
 
@@ -23,11 +23,20 @@ function isCollectiveBuilding(type: string): boolean {
 }
 
 export function AddPropertyModal({ onClose, onSuccess }: Props) {
+  // 탭
+  const [tab, setTab] = useState<"search" | "pdf">("search");
+
   // 주소 검색
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
+
+  // PDF 업로드
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfParsing, setPdfParsing] = useState(false);
+  const [pdfError, setPdfError] = useState("");
 
   // 선택된 물건
   const [selected, setSelected] = useState<SearchResult | null>(null);
@@ -48,6 +57,17 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
 
   // CODEF 서비스 상태
   const [codefUnavailable, setCodefUnavailable] = useState(false);
+
+  function handleTabChange(t: "search" | "pdf") {
+    setTab(t);
+    setSelected(null);
+    setDong("");
+    setHo("");
+    setOwnerName("");
+    setSubmitError("");
+    setPdfError("");
+    setSearchError("");
+  }
 
   async function handleSearch() {
     if (query.trim().length < 2) {
@@ -85,6 +105,42 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
     }
   }
 
+  async function handlePdfParse() {
+    if (!pdfFile) return;
+
+    setPdfParsing(true);
+    setPdfError("");
+    setSelected(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", pdfFile);
+
+      const res = await fetch("/api/monitoring/parse-pdf", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPdfError(data.error || "PDF 파싱에 실패했습니다.");
+        return;
+      }
+
+      if (!data.address) {
+        setPdfError("주소를 인식하지 못했습니다. 등기부등본 PDF인지 확인해주세요.");
+        return;
+      }
+
+      setSelected({ uniqueNo: "", address: data.address, realEstateType: data.realEstateType || "건물" });
+      if (data.ownerName) setOwnerName(data.ownerName);
+    } catch {
+      setPdfError("네트워크 오류가 발생했습니다.");
+    } finally {
+      setPdfParsing(false);
+    }
+  }
+
   async function handleSubmit() {
     if (!selected) return;
 
@@ -100,8 +156,8 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
 
       const body: Record<string, unknown> = {
         address: fullAddress,
-        commUniqueNo: selected.uniqueNo,
       };
+      if (selected.uniqueNo) body.commUniqueNo = selected.uniqueNo;
       if (deposit) body.deposit = Number(deposit);
       if (contractDate) body.contractDate = contractDate;
       if (moveInDate) body.moveInDate = moveInDate;
@@ -144,76 +200,156 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
 
         {/* 본문 */}
         <div className="px-6 py-5 overflow-y-auto flex-1 space-y-5">
-          {/* 등기부 검색 서비스 불가 안내 */}
-          {codefUnavailable && (
-            <div className="flex items-start gap-2.5 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
-              <AlertTriangle size={16} className="text-amber-600 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-amber-800">등기부 검색 서비스 점검 중</p>
-                <p className="text-xs text-amber-700 mt-0.5">
-                  공식 연계 조회 서비스가 일시적으로 이용 불가합니다. 잠시 후 다시 시도해주세요.
-                </p>
-              </div>
-            </div>
-          )}
 
-          {/* 주소 검색 */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5">주소 검색</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="예: 서울 강남구 역삼동 123"
-                className="flex-1 px-3 py-2 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-              />
-              <Button
-                variant="primary"
-                size="sm"
-                icon={Search}
-                loading={searching}
-                onClick={handleSearch}
-              >
-                검색
-              </Button>
-            </div>
-            {searchError && (
-              <p className="mt-1.5 text-xs text-red-500">{searchError}</p>
-            )}
+          {/* 탭 */}
+          <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm font-medium">
+            <button
+              onClick={() => handleTabChange("search")}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 transition-colors"
+              style={{ background: tab === "search" ? "#1d1d1f" : "#fff", color: tab === "search" ? "#fff" : "#6e6e73" }}
+            >
+              <Search size={13} />
+              주소 검색
+            </button>
+            <button
+              onClick={() => handleTabChange("pdf")}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 transition-colors border-l border-gray-200"
+              style={{ background: tab === "pdf" ? "#1d1d1f" : "#fff", color: tab === "pdf" ? "#fff" : "#6e6e73" }}
+            >
+              <FileText size={13} />
+              등기부 PDF
+            </button>
           </div>
 
-          {/* 검색 결과 */}
-          {results.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium mb-1.5">
-                검색 결과 ({results.length}건)
-              </label>
-              <div className="border border-border rounded-lg divide-y divide-gray-100 max-h-48 overflow-y-auto">
-                {results.map((r) => (
-                  <button
-                    key={r.uniqueNo}
-                    onClick={() => { setSelected(r); setDong(""); setHo(""); }}
-                    className="w-full text-left px-3 py-2.5 hover:bg-[#f5f5f7] transition-colors flex items-start gap-2.5"
-                    style={{
-                      background: selected?.uniqueNo === r.uniqueNo ? "rgba(0,113,227,0.06)" : undefined,
-                    }}
+          {/* 주소 검색 탭 */}
+          {tab === "search" && (
+            <>
+              {/* CODEF 불가 안내 */}
+              {codefUnavailable && (
+                <div className="flex items-start gap-2.5 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
+                  <AlertTriangle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-800">등기부 검색 서비스 점검 중</p>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      공식 연계 조회 서비스가 일시적으로 이용 불가합니다. 잠시 후 다시 시도해주세요.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5">주소 검색</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    placeholder="예: 서울 강남구 역삼동 123"
+                    className="flex-1 px-3 py-2 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  />
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    icon={Search}
+                    loading={searching}
+                    onClick={handleSearch}
                   >
-                    <MapPin size={14} className="text-[#86868b] mt-0.5 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm text-[#1d1d1f] truncate">{r.address}</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <Building2 size={11} className="text-[#86868b]" />
-                        <span className="text-[11px] text-[#86868b]">{r.realEstateType}</span>
-                      </div>
-                    </div>
-                    {selected?.uniqueNo === r.uniqueNo && (
-                      <span className="ml-auto text-[11px] text-primary font-medium shrink-0">선택됨</span>
-                    )}
-                  </button>
-                ))}
+                    검색
+                  </Button>
+                </div>
+                {searchError && (
+                  <p className="mt-1.5 text-xs text-red-500">{searchError}</p>
+                )}
               </div>
+
+              {results.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">
+                    검색 결과 ({results.length}건)
+                  </label>
+                  <div className="border border-border rounded-lg divide-y divide-gray-100 max-h-48 overflow-y-auto">
+                    {results.map((r) => (
+                      <button
+                        key={r.uniqueNo}
+                        onClick={() => { setSelected(r); setDong(""); setHo(""); }}
+                        className="w-full text-left px-3 py-2.5 hover:bg-[#f5f5f7] transition-colors flex items-start gap-2.5"
+                        style={{
+                          background: selected?.uniqueNo === r.uniqueNo ? "rgba(0,113,227,0.06)" : undefined,
+                        }}
+                      >
+                        <MapPin size={14} className="text-[#86868b] mt-0.5 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm text-[#1d1d1f] truncate">{r.address}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <Building2 size={11} className="text-[#86868b]" />
+                            <span className="text-[11px] text-[#86868b]">{r.realEstateType}</span>
+                          </div>
+                        </div>
+                        {selected?.uniqueNo === r.uniqueNo && (
+                          <span className="ml-auto text-[11px] text-primary font-medium shrink-0">선택됨</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* PDF 업로드 탭 */}
+          {tab === "pdf" && (
+            <div className="space-y-3">
+              <p className="text-xs text-[#86868b]">
+                인터넷등기소(iros.go.kr)에서 발급한 등기부등본 PDF를 업로드하면 주소와 소유자명을 자동으로 인식합니다.
+              </p>
+
+              <div
+                className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 py-8 cursor-pointer hover:border-primary/40 hover:bg-[#f5f5f7] transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload size={22} className="text-[#86868b]" />
+                <p className="text-sm text-[#1d1d1f] font-medium">
+                  {pdfFile ? pdfFile.name : "PDF 파일 선택"}
+                </p>
+                <p className="text-xs text-[#86868b]">최대 10MB</p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0] || null;
+                    setPdfFile(f);
+                    setSelected(null);
+                    setPdfError("");
+                  }}
+                />
+              </div>
+
+              {pdfFile && !selected && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  loading={pdfParsing}
+                  onClick={handlePdfParse}
+                  className="w-full"
+                >
+                  등기부 분석
+                </Button>
+              )}
+
+              {pdfError && <p className="text-xs text-red-500">{pdfError}</p>}
+
+              {selected && tab === "pdf" && (
+                <div className="flex items-start gap-2 rounded-lg bg-blue-50 border border-blue-100 px-3 py-2.5">
+                  <MapPin size={14} className="text-primary mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-[#1d1d1f]">{selected.address}</p>
+                    <p className="text-[11px] text-[#86868b] mt-0.5">{selected.realEstateType}</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
