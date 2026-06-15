@@ -333,7 +333,7 @@ export async function GET(req: NextRequest) {
 
   // ── 전체 응답 KV 캐시 조회 (가격 필터 없는 요청만 캐시 적용) ──
   const useResponseCache = minPrice === 0 && maxPrice === 9999999;
-  const responseCacheKey = `price-map:v8:${gu}:${propertyType}:${tradeType}`;
+  const responseCacheKey = `price-map:v9:${gu}:${propertyType}:${tradeType}`;
   if (useResponseCache) {
     const cached = await kvCache.get<object>(responseCacheKey);
     if (cached) {
@@ -377,66 +377,8 @@ export async function GET(req: NextRequest) {
         // 좌표 조회: KV캐시/카카오 geocode API. 좌표가 확인되지 않으면 제외한다.
         const geocoded = new Map<string, { lat: number; lng: number }>();
 
-        if (propertyType !== "아파트") {
-          // ── 비아파트: 동별 집계 마커 (카카오/네이버 방식) ──
-          const kakaoKey = process.env.KAKAO_REST_KEY;
-          const regionAddress = formatRegionAddressForSearch(guToAddress);
-          const dongMap = new Map<string, { amounts: number[]; deposits: number[]; monthlies: number[] }>();
-
-          for (const [, txs] of entries) {
-            const latest = txs[0];
-            const dong = latest.dong || "기타";
-            if (!dongMap.has(dong)) dongMap.set(dong, { amounts: [], deposits: [], monthlies: [] });
-            const g = dongMap.get(dong)!;
-            const amount = tradeType === "매매"
-              ? (latest as { dealAmount?: number }).dealAmount || 0
-              : tradeType === "전세"
-                ? (latest as { deposit?: number }).deposit || 0
-                : (latest as { monthlyRent?: number }).monthlyRent || 0;
-            if (amount <= 0) continue;
-            if (tradeType === "월세" && amount > 100_000_000) continue;
-            g.amounts.push(amount);
-            if (tradeType !== "매매") g.deposits.push((latest as { deposit?: number }).deposit || 0);
-            if (tradeType === "월세") g.monthlies.push((latest as { monthlyRent?: number }).monthlyRent || 0);
-          }
-
-          for (const [dong, g] of dongMap) {
-            if (g.amounts.length === 0) continue;
-            let dongCoord: { lat: number; lng: number } | null = DONG_CENTER[dong] ?? null;
-            if (!dongCoord && kakaoKey) {
-              const dongCacheKey = APICache.makeKey("geocode-dong-v2", gu, dong);
-              dongCoord = await kvCache.get<{ lat: number; lng: number }>(dongCacheKey);
-              if (!dongCoord) {
-                dongCoord = await kakaoAddressSearch(kakaoKey, `${regionAddress} ${dong}`);
-                if (dongCoord) await kvCache.set(dongCacheKey, dongCoord, GEOCODE_TTL);
-              }
-            }
-            if (!dongCoord) continue;
-
-            const avgAmount = Math.round(g.amounts.reduce((a, b) => a + b, 0) / g.amounts.length);
-            const priceInMan = Math.round(avgAmount / 10000);
-            const avgDeposit = g.deposits.length > 0
-              ? Math.round(g.deposits.reduce((a, b) => a + b, 0) / g.deposits.length / 10000) : undefined;
-            const avgMonthly = g.monthlies.length > 0
-              ? Math.round(g.monthlies.reduce((a, b) => a + b, 0) / g.monthlies.length / 10000) : undefined;
-
-            data.push({
-              name: dong,
-              dong,
-              price: priceInMan,
-              area: 0,
-              lat: dongCoord.lat,
-              lng: dongCoord.lng,
-              change: null,
-              year: 0,
-              count: g.amounts.length,
-              propertyType,
-              ...(avgDeposit !== undefined ? { deposit: avgDeposit } : {}),
-              ...(avgMonthly !== undefined ? { monthlyRent: avgMonthly } : {}),
-            });
-          }
-        } else {
-          // ── 아파트: 개별 geocoding (기존 방식) ──
+        {
+          // ── 개별 geocoding (아파트 / 연립·빌라·다세대 공통) ──
           const needsGeocode: { gu: string; dong: string; name: string; jibun?: string; propertyType?: PropertyType }[] = [];
           await Promise.allSettled(entries.map(async ([groupKey, txs]) => {
             const latest = txs[0];

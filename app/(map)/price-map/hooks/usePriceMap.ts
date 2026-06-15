@@ -20,7 +20,7 @@ const MARKER_CHUNK_SIZE = 12;
 const MARKER_BATCH_DELAY = 40;
 
 function localKey(gu: string, propertyType: PropertyType, tradeType: PriceMapTradeType) {
-  return `pm:v4:${gu}:${propertyType}:${tradeType}`;
+  return `pm:v5:${gu}:${propertyType}:${tradeType}`;
 }
 
 function readInitialGu() {
@@ -431,8 +431,8 @@ export function usePriceMap() {
       };
       requestAnimationFrame(loadNextChunk);
 
-      // 비아파트(동별 집계)는 zoom level 무관하게 항상 오버레이 표시
-      const isNonApt = data.apartments.length > 0 && data.apartments[0].count != null;
+      // 비아파트는 zoom level 무관하게 항상 오버레이 표시
+      const isNonApt = propertyType !== "아파트";
       const DETAIL_LEVEL = isNonApt ? 999 : 3;
 
       const updateOverlays = () => {
@@ -486,7 +486,7 @@ export function usePriceMap() {
         if (allOverlayEntries[idx]?.overlay) allOverlayEntries[idx].overlay.setMap(null);
       });
     };
-  }, [data, mapStatus, selectAndMoveToApt, tradeType]);
+  }, [data, mapStatus, selectAndMoveToApt, tradeType, propertyType]);
 
   const topChanges = data?.apartments
     ? [...data.apartments].filter((a) => a.change !== null).sort((a, b) => (b.change as number) - (a.change as number)).slice(0, 5)
