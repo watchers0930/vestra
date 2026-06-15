@@ -46,7 +46,7 @@ function readInitialPropertyType(): PropertyType {
   if (typeof window === "undefined") return INITIAL_PROPERTY_TYPE;
   try {
     const value = localStorage.getItem(PREF_PROPERTY_TYPE_KEY);
-    return value === "연립/빌라/다세대" || value === "다가구/단독" ? value : INITIAL_PROPERTY_TYPE;
+    return value === "연립/빌라/다세대" ? value : INITIAL_PROPERTY_TYPE;
   } catch {
     return INITIAL_PROPERTY_TYPE;
   }

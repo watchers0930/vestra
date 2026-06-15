@@ -21,7 +21,7 @@ import type { AptData, PriceMapTradeType, PropertyType } from "@/app/(map)/price
 // 카카오 REST API로 아파트 실제 좌표 검색
 const GEOCODE_TTL = 7 * 24 * 60 * 60 * 1000; // 7일
 
-const PROPERTY_TYPES = ["아파트", "연립/빌라/다세대", "다가구/단독"] as const satisfies readonly PropertyType[];
+const PROPERTY_TYPES = ["아파트", "연립/빌라/다세대"] as const satisfies readonly PropertyType[];
 
 function parsePropertyType(value: string | null): PropertyType {
   return PROPERTY_TYPES.includes(value as PropertyType) ? value as PropertyType : "아파트";
@@ -29,7 +29,6 @@ function parsePropertyType(value: string | null): PropertyType {
 
 function toResidentialType(propertyType: PropertyType): ResidentialSaleType {
   if (propertyType === "연립/빌라/다세대") return "rowhouse";
-  if (propertyType === "다가구/단독") return "singlehouse";
   return "apartment";
 }
 
@@ -367,7 +366,7 @@ export async function GET(req: NextRequest) {
         // 물건명/동/지번별 그룹핑
         const grouped = new Map<string, typeof txResult.transactions[0][]>();
         for (const tx of transactions) {
-          const baseName = tx.aptName || (propertyType === "다가구/단독" ? "단독/다가구" : propertyType);
+          const baseName = tx.aptName || propertyType;
           const key = `${baseName}@@${tx.dong || ""}@@${tx.jibun || ""}`;
           if (!grouped.has(key)) grouped.set(key, []);
           grouped.get(key)!.push(tx);

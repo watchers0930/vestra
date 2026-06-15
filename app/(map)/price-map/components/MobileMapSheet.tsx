@@ -30,7 +30,7 @@ const RANK_COLORS = ["#0071e3", "#1a9e45", "#b86f00"];
 const PEEK_HEIGHT = 64;
 const PEEK_HEIGHT_WITH_APT = 88;
 const EXPANDED_HEIGHT_VH = 55;
-const PROPERTY_TYPES: PropertyType[] = ["아파트", "연립/빌라/다세대", "다가구/단독"];
+const PROPERTY_TYPES: PropertyType[] = ["아파트", "연립/빌라/다세대"];
 const TRADE_TYPES: PriceMapTradeType[] = ["매매", "전세", "월세"];
 
 export function MobileMapSheet({
