@@ -41,7 +41,7 @@ export default function ContractReviewPage() {
         <CategoryHero
           badge="📝 계약검토"
           title="부동산 계약서 AI 자동 분석"
-          description={<>조항별 위험도와 누락 항목을 AI가 자동으로 검토하고<br />계약 안전점수를 산출합니다.</>}
+          description={<>조항별 위험도와 누락 항목을 AI가 자동으로 검토하고<br />계약 안전점수를 산출합니다. <span className="text-amber-600 font-medium">부동산 관련 계약서만 분석이 가능합니다.</span></>}
         />
 
       {/* 입력 카드 */}
