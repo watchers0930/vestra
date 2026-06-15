@@ -335,34 +335,14 @@ export function usePriceMap() {
       let selectedOverlayEl: HTMLElement | null = null;
 
       function createOverlayContent(apt: AptData) {
-        const isDongGroup = apt.count != null;
-
         const content = document.createElement("div");
         content.style.cssText = "display:flex;align-items:center;justify-content:center;";
 
-        let innerEl: HTMLElement;
-
-        if (isDongGroup) {
-          // 동별 집계 — 클러스터 원형 스타일 (건수 숫자 + 동 이름)
-          const circle = document.createElement("div");
-          circle.style.cssText = `cursor:pointer;width:44px;height:44px;border-radius:50%;background:rgba(99,102,241,0.88);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.28);transition:transform 0.15s;`;
-          const countEl = document.createElement("span");
-          countEl.textContent = `${apt.count}`;
-          countEl.style.cssText = "font-size:16px;font-weight:700;line-height:1;";
-          const shortDong = apt.dong.replace(/동$/, "");
-          const nameEl = document.createElement("span");
-          nameEl.textContent = shortDong.length > 3 ? shortDong.slice(0, 3) : shortDong;
-          nameEl.style.cssText = "font-size:9px;opacity:0.85;margin-top:1px;";
-          circle.appendChild(countEl);
-          circle.appendChild(nameEl);
-          innerEl = circle;
-        } else {
-          const bgColor = getAreaColor(apt.area);
-          const pill = document.createElement("div");
-          pill.textContent = formatMapPrice(apt, tradeType);
-          pill.style.cssText = `cursor:pointer;padding:3px 8px;border-radius:16px;font-size:12px;font-weight:700;color:#fff;background:${bgColor};box-shadow:0 1px 6px rgba(0,0,0,.22);white-space:nowrap;transition:transform 0.15s,box-shadow 0.15s;`;
-          innerEl = pill;
-        }
+        const bgColor = getAreaColor(apt.area);
+        const pill = document.createElement("div");
+        pill.textContent = formatMapPrice(apt, tradeType);
+        pill.style.cssText = `cursor:pointer;padding:3px 8px;border-radius:16px;font-size:12px;font-weight:700;color:#fff;background:${bgColor};box-shadow:0 1px 6px rgba(0,0,0,.22);white-space:nowrap;transition:transform 0.15s,box-shadow 0.15s;`;
+        const innerEl = pill;
 
         content.appendChild(innerEl);
         content.addEventListener("click", () => {
@@ -431,9 +411,7 @@ export function usePriceMap() {
       };
       requestAnimationFrame(loadNextChunk);
 
-      // 비아파트는 zoom level 무관하게 항상 오버레이 표시
-      const isNonApt = propertyType !== "아파트";
-      const DETAIL_LEVEL = isNonApt ? 999 : 3;
+      const DETAIL_LEVEL = 3;
 
       const updateOverlays = () => {
         const level = map.getLevel();
