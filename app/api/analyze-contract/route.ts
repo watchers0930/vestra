@@ -54,6 +54,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "계약서 내용을 입력해주세요." }, { status: 400 });
     }
 
+    // 부동산 계약서 여부 판별
+    const REAL_ESTATE_KEYWORDS = [
+      "임대차", "임대인", "임차인", "전세", "월세", "보증금", "매매", "부동산",
+      "토지", "건물", "주택", "아파트", "오피스텔", "분양", "등기", "소유권",
+      "근저당", "전입", "임대", "임차", "지상권", "전세권", "대항력",
+    ];
+    const isRealEstate = REAL_ESTATE_KEYWORDS.some((kw) => contractText.includes(kw));
+    if (!isRealEstate) {
+      return NextResponse.json(
+        { error: "부동산 관련 계약서만 분석이 가능합니다." },
+        { status: 422 }
+      );
+    }
+
     // 1단계: 자체 엔진으로 계약서 분석
     const engineResult = analyzeContract(contractText);
 
