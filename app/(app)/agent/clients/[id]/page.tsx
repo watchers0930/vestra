@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, User, Phone, Mail, MapPin, Calendar,
-  Plus, FileText, ShieldCheck, ShieldOff,
+  Plus, FileText, ShieldCheck, ShieldOff, Trash2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/common/Card";
 import { Badge } from "@/components/common/Badge";
@@ -84,6 +84,24 @@ export default function ClientDetailPage() {
   useEffect(() => {
     loadClient();
   }, [loadClient]);
+
+  // 물건 삭제
+  async function handleDeleteProperty(propId: string) {
+    if (!confirm("이 물건을 삭제하시겠습니까?")) return;
+    try {
+      const res = await fetch(`/api/agent/clients/${id}/properties/${propId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        loadClient();
+      } else {
+        const data = await res.json();
+        alert(data.error || "삭제에 실패했습니다.");
+      }
+    } catch {
+      alert("네트워크 오류가 발생했습니다.");
+    }
+  }
 
   // 물건 추가
   async function handleAddProperty(e: React.FormEvent) {
@@ -247,9 +265,16 @@ export default function ClientDetailPage() {
                       <MapPin size={13} className="text-[#86868b] shrink-0" />
                       <span className="text-sm text-[#1d1d1f] truncate">{prop.address}</span>
                     </div>
-                    <span className="text-[11px] text-[#86868b] shrink-0 ml-3">
-                      {formatDate(prop.createdAt)}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0 ml-3">
+                      <span className="text-[11px] text-[#86868b]">{formatDate(prop.createdAt)}</span>
+                      <button
+                        onClick={() => handleDeleteProperty(prop.id)}
+                        className="p-1 rounded hover:bg-red-50 transition-colors"
+                        title="물건 삭제"
+                      >
+                        <Trash2 size={13} className="text-[#c7c7cc] hover:text-red-500 transition-colors" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
