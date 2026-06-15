@@ -63,11 +63,11 @@ export function ClientList({ clients, onDelete, loading }: ClientListProps) {
             <th className="px-4 py-3 text-right text-[11px] font-700 text-[#6e6e73] tracking-wide">액션</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#e5e5e7]">
+        <tbody>
           {clients.map((client) => {
             const statusCfg = STATUS_CONFIG[client.status] || STATUS_CONFIG.inactive;
             return (
-              <tr key={client.id} className="hover:bg-[#fafafa] transition-colors group">
+              <tr key={client.id} className="hover:bg-[#fafafa] transition-colors group" style={{ borderBottom: "1px solid #f0f0f0" }}>
                 {/* 고객명 */}
                 <td className="px-4 py-3">
                   <Link
