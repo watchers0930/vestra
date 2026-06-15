@@ -149,7 +149,7 @@ export function MobileMapSheet({
 
           {/* 필터 */}
           <div className="px-4 pb-3 border-b border-black/[0.06]">
-            <div className="grid grid-cols-3 gap-1.5 mb-2">
+            <div className="grid grid-cols-2 gap-1.5 mb-2">
               {PROPERTY_TYPES.map((t) => (
                 <button
                   key={t}

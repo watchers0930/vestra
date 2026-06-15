@@ -69,7 +69,7 @@ export function LeftPanel({
 
       {/* ── 필터 영역 ── */}
       <div style={{ padding: "12px 12px 10px", background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.07)", flexShrink: 0 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "6px", marginBottom: "8px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "6px", marginBottom: "8px" }}>
           {PROPERTY_TYPES.map((t) => (
             <button
               key={t}
