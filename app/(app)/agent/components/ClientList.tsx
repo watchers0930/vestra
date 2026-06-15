@@ -63,7 +63,7 @@ export function ClientList({ clients, onDelete, loading }: ClientListProps) {
             <th className="px-4 py-3 text-right text-[11px] font-700 text-[#6e6e73] tracking-wide">액션</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#f0f0f2]">
+        <tbody className="divide-y divide-[#e5e5e7]">
           {clients.map((client) => {
             const statusCfg = STATUS_CONFIG[client.status] || STATUS_CONFIG.inactive;
             return (

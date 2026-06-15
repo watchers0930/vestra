@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, User, Phone, Mail, MapPin, Calendar,
-  Plus, FileText,
+  Plus, FileText, ShieldCheck, ShieldOff,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/common/Card";
 import { Badge } from "@/components/common/Badge";
@@ -25,6 +25,7 @@ interface ClientDetail {
   clientName: string;
   clientPhone?: string | null;
   clientEmail?: string | null;
+  clientUserId?: string | null;
   status: string;
   memo?: string | null;
   propertyAddress?: string | null;
@@ -136,6 +137,7 @@ export default function ClientDetailPage() {
   }
 
   const statusCfg = STATUS_CONFIG[client.status] || STATUS_CONFIG.inactive;
+  const isTypeA = !!client.clientUserId; // VESTRA 가입 고객 (A타입)
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
@@ -158,7 +160,27 @@ export default function ClientDetailPage() {
                   <p className="text-xs text-[#86868b]">등록일: {formatDate(client.createdAt)}</p>
                 </div>
               </div>
-              <Badge variant={statusCfg.variant} size="md">{statusCfg.label}</Badge>
+              <div className="flex items-center gap-2">
+                {/* A/B 타입 배지 */}
+                {isTypeA ? (
+                  <span
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-700"
+                    style={{ background: "rgba(0,113,227,0.07)", color: "#0071e3", border: "1px solid rgba(0,113,227,0.18)" }}
+                  >
+                    <ShieldCheck size={11} />
+                    VESTRA 가입
+                  </span>
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-700"
+                    style={{ background: "rgba(110,110,115,0.07)", color: "#6e6e73", border: "1px solid rgba(110,110,115,0.18)" }}
+                  >
+                    <ShieldOff size={11} />
+                    미가입 고객
+                  </span>
+                )}
+                <Badge variant={statusCfg.variant} size="md">{statusCfg.label}</Badge>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -225,15 +247,29 @@ export default function ClientDetailPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[#86868b] mb-5">등록된 물건이 없습니다.</p>
+              /* B타입이고 물건 없을 때 안내 */
+              !isTypeA ? (
+                <div
+                  className="mb-5 p-4 rounded-xl"
+                  style={{ background: "rgba(255,149,0,0.06)", border: "1px solid rgba(255,149,0,0.20)" }}
+                >
+                  <p className="text-[12.5px] font-semibold text-[#b86f00] mb-1">등기감시 물건이 없습니다</p>
+                  <p className="text-[12px] text-[#6e6e73] leading-relaxed">
+                    이 고객은 VESTRA에 가입되어 있지 않아 자동 연결이 불가합니다.<br />
+                    아래에서 물건 주소를 직접 등록하면 중개인 명의로 등기 변경감시가 시작됩니다.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-[#86868b] mb-5">등록된 물건이 없습니다.</p>
+              )
             )}
 
             {/* 물건 추가 폼 */}
             <form onSubmit={handleAddProperty} className="flex items-end gap-2">
               <div className="flex-1">
                 <FormInput
-                  label="물건 추가"
-                  placeholder="주소를 입력하세요"
+                  label={isTypeA ? "물건 추가" : "물건 주소 등록 (등기 변경감시 시작)"}
+                  placeholder="예: 경기도 광명시 철산동 367 108동 1403호"
                   value={newAddress}
                   onChange={(e) => setNewAddress(e.target.value)}
                 />
@@ -247,7 +283,7 @@ export default function ClientDetailPage() {
                 disabled={!newAddress.trim()}
                 className="mb-px"
               >
-                추가
+                {isTypeA ? "추가" : "감시 시작"}
               </Button>
             </form>
             {propertyError && (
