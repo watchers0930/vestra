@@ -23,6 +23,7 @@ export const GET = withAgentAuth<{ id: string }>(
             include: {
               monitoredProperty: {
                 select: {
+                  id: true,
                   status: true,
                   _count: { select: { snapshots: true } },
                 },

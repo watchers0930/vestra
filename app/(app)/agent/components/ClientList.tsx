@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Users, Phone, Mail, ChevronRight, Trash2, ShieldCheck, ShieldOff, FileText } from "lucide-react";
+import { Users, Phone, Mail, ChevronRight, Trash2, ShieldCheck, ShieldOff } from "lucide-react";
 import { Skeleton } from "@/components/common/Skeleton";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Badge } from "@/components/common/Badge";
@@ -211,22 +211,28 @@ export function ClientList({ clients, onDelete, onToggleMonitoring, loading }: C
                   ) : isTypeA && !hasProperties ? (
                     <span className="text-[11px] text-[#c7c7cc]">물건 없음</span>
                   ) : (
-                    /* B타입: 등기부 발급 버튼 */
-                    <Link
-                      href={`/agent/clients/${client.id}`}
-                      onClick={(e) => e.stopPropagation()}
-                      style={{
-                        display: "inline-flex", alignItems: "center", gap: 4,
-                        padding: "4px 10px", borderRadius: 999,
+                    /* B타입: 감시 상태 뱃지 */
+                    client.monitoringActive ? (
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", gap: 3,
+                        padding: "3px 8px", borderRadius: 999,
                         fontSize: 11, fontWeight: 700,
-                        background: "rgba(255,149,0,0.08)", color: "#b86f00",
-                        border: "1px solid rgba(255,149,0,0.25)",
-                        textDecoration: "none",
-                      }}
-                    >
-                      <FileText size={11} />
-                      등기부 발급
-                    </Link>
+                        background: "rgba(52,199,89,0.1)", color: "#1a7f37",
+                        border: "1px solid rgba(52,199,89,0.3)",
+                      }}>
+                        🛡 감시 중
+                      </span>
+                    ) : (
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", gap: 3,
+                        padding: "3px 8px", borderRadius: 999,
+                        fontSize: 11, fontWeight: 700,
+                        background: "rgba(110,110,115,0.07)", color: "#6e6e73",
+                        border: "1px solid rgba(110,110,115,0.18)",
+                      }}>
+                        미등록
+                      </span>
+                    )
                   )}
                 </td>
 

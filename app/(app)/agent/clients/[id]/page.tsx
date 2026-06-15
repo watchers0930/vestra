@@ -21,6 +21,7 @@ interface ClientProperty {
   status: string;
   createdAt: string;
   monitoredProperty?: {
+    id: string;
     status: string;
     _count: { snapshots: number };
   } | null;
@@ -273,15 +274,17 @@ export default function ClientDetailPage() {
                       <span className="text-sm text-[#1d1d1f] truncate">{prop.address}</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0 ml-3">
-                      {/* 감시 상태 뱃지 */}
+                      {/* 감시 상태 뱃지 (클릭 시 해시체인 페이지) */}
                       {prop.monitoredProperty ? (
                         prop.monitoredProperty._count.snapshots > 0 ? (
-                          <span
-                            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+                          <Link
+                            href={`/monitoring/${prop.monitoredProperty.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold hover:opacity-80 transition-opacity"
                             style={{ background: "rgba(52,199,89,0.1)", color: "#1a7f37", border: "1px solid rgba(52,199,89,0.3)" }}
                           >
                             🛡 감시 중
-                          </span>
+                          </Link>
                         ) : (
                           <span
                             className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
