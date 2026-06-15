@@ -96,7 +96,7 @@ export function usePropertyDetail(propertyId: string) {
       );
       if (res.ok) {
         const data = await res.json();
-        setIntegrityResult(data);
+        setIntegrityResult({ ...data.verification, publicKey: data.publicKey });
       }
     } catch {
       /* 검증 실패 */
