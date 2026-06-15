@@ -198,6 +198,7 @@ export const POST = withAgentAuth(async (req, { session }) => {
     }
 
     // 케이스 1: clientUserId로 가입 고객인 경우 → 해당 고객의 등기감시 물건 자동 연결
+    let case1Linked = false;
     if (clientUserId && !(Array.isArray(monitoredPropertyIds) && monitoredPropertyIds.length > 0)) {
       const clientMonitoredProps = await prisma.monitoredProperty.findMany({
         where: { userId: clientUserId, status: "active" },
@@ -215,6 +216,28 @@ export const POST = withAgentAuth(async (req, { session }) => {
           },
         });
       }
+      if (clientMonitoredProps.length > 0) case1Linked = true;
+    }
+
+    // 케이스 3: propertyAddress가 있고 아직 아무 물건도 연결 안 된 경우 → 자동 생성 (B타입/A타입 0건)
+    const alreadyLinked =
+      (Array.isArray(monitoredPropertyIds) && monitoredPropertyIds.length > 0) || case1Linked;
+
+    if (propertyAddress && !alreadyLinked) {
+      const addr = propertyAddress.trim();
+      const ownerId = clientUserId ?? session.user.id;
+      const newMonitor = await prisma.monitoredProperty.upsert({
+        where: { userId_address: { userId: ownerId, address: addr } },
+        update: { status: "active" },
+        create: { userId: ownerId, address: addr },
+      });
+      await prisma.agentClientProperty.create({
+        data: {
+          agentClientId: client.id,
+          address: addr,
+          monitoredPropertyId: newMonitor.id,
+        },
+      });
     }
 
     return NextResponse.json({ client }, { status: 201 });

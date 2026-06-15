@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X, Search, User, MapPin, Eye, Check } from "lucide-react";
+import { X, Search, User, MapPin, Eye, Check, UserPlus } from "lucide-react";
 import { Button } from "@/components/common/Button";
-import { TextAreaInput } from "@/components/forms/FormInput";
+import { FormInput, TextAreaInput } from "@/components/forms/FormInput";
+import AddressAutocomplete from "@/components/common/AddressAutocomplete";
 
 interface MonitoredProp {
   id: string;
@@ -32,11 +33,23 @@ interface AddClientModalProps {
 }
 
 export function AddClientModal({ open, onClose, onSubmit }: AddClientModalProps) {
+  // 모드: "vestra" = VESTRA 회원 검색, "direct" = 미가입 고객 직접 등록
+  const [mode, setMode] = useState<"vestra" | "direct">("vestra");
+
+  // VESTRA 회원 검색 상태
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchedUser[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<SearchedUser | null>(null);
   const [memo, setMemo] = useState("");
+
+  // 미가입 고객 직접 등록 상태
+  const [directName, setDirectName] = useState("");
+  const [directPhone, setDirectPhone] = useState("");
+  const [directEmail, setDirectEmail] = useState("");
+  const [directBase, setDirectBase] = useState("");
+  const [directDetail, setDirectDetail] = useState("");
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,10 +72,16 @@ export function AddClientModal({ open, onClose, onSubmit }: AddClientModalProps)
   // 모달 닫힐 때 폼 초기화
   useEffect(() => {
     if (!open) {
+      setMode("vestra");
       setQuery("");
       setResults([]);
       setSelected(null);
       setMemo("");
+      setDirectName("");
+      setDirectPhone("");
+      setDirectEmail("");
+      setDirectBase("");
+      setDirectDetail("");
       setError("");
     }
   }, [open]);
@@ -96,24 +115,42 @@ export function AddClientModal({ open, onClose, onSubmit }: AddClientModalProps)
   if (!open) return null;
 
   async function handleSubmit() {
-    if (!selected) return;
-
     setSubmitting(true);
     setError("");
 
     try {
-      await onSubmit({
-        clientName: selected.name || "미입력",
-        ...(selected.email ? { clientEmail: selected.email } : {}),
-        clientUserId: selected.id,
-        ...(memo.trim() ? { memo: memo.trim() } : {}),
-        ...(selected.monitoredProperties.length > 0
-          ? {
-              propertyAddress: selected.monitoredProperties[0].address,
-              monitoredPropertyIds: selected.monitoredProperties.map((p) => p.id),
-            }
-          : {}),
-      });
+      if (mode === "direct") {
+        if (!directName.trim() || directName.trim().length < 2) {
+          setError("고객명을 2자 이상 입력해주세요.");
+          return;
+        }
+        const fullAddress = directBase.trim()
+          ? directDetail.trim()
+            ? `${directBase.trim()} ${directDetail.trim()}`
+            : directBase.trim()
+          : undefined;
+
+        await onSubmit({
+          clientName: directName.trim(),
+          ...(directPhone.trim() ? { clientPhone: directPhone.trim() } : {}),
+          ...(directEmail.trim() ? { clientEmail: directEmail.trim() } : {}),
+          ...(fullAddress ? { propertyAddress: fullAddress } : {}),
+        });
+      } else {
+        if (!selected) return;
+        await onSubmit({
+          clientName: selected.name || "미입력",
+          ...(selected.email ? { clientEmail: selected.email } : {}),
+          clientUserId: selected.id,
+          ...(memo.trim() ? { memo: memo.trim() } : {}),
+          ...(selected.monitoredProperties.length > 0
+            ? {
+                propertyAddress: selected.monitoredProperties[0].address,
+                monitoredPropertyIds: selected.monitoredProperties.map((p) => p.id),
+              }
+            : {}),
+        });
+      }
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "고객 추가에 실패했습니다.");
@@ -141,10 +178,77 @@ export function AddClientModal({ open, onClose, onSubmit }: AddClientModalProps)
           </button>
         </div>
 
+        {/* 모드 전환 탭 */}
+        <div className="flex px-6 pt-4 gap-2">
+          <button
+            onClick={() => { setMode("vestra"); setError(""); }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              mode === "vestra"
+                ? "bg-primary/10 text-primary"
+                : "text-[#86868b] hover:bg-[#f5f5f7]"
+            }`}
+          >
+            <User size={12} />
+            VESTRA 회원
+          </button>
+          <button
+            onClick={() => { setMode("direct"); setSelected(null); setError(""); }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              mode === "direct"
+                ? "bg-[#ff9500]/10 text-[#b86f00]"
+                : "text-[#86868b] hover:bg-[#f5f5f7]"
+            }`}
+          >
+            <UserPlus size={12} />
+            미가입 고객
+          </button>
+        </div>
+
         {/* 본문 */}
         <div className="px-6 py-5 overflow-y-auto flex-1 space-y-5">
-          {/* 회원 검색 */}
-          {!selected ? (
+          {/* 미가입 고객 직접 등록 폼 */}
+          {mode === "direct" ? (
+            <>
+              <FormInput
+                label="고객명 *"
+                placeholder="이름 입력 (2자 이상)"
+                value={directName}
+                onChange={(e) => setDirectName(e.target.value)}
+              />
+              <FormInput
+                label="연락처"
+                placeholder="010-0000-0000"
+                value={directPhone}
+                onChange={(e) => setDirectPhone(e.target.value)}
+              />
+              <FormInput
+                label="이메일"
+                placeholder="example@email.com"
+                value={directEmail}
+                onChange={(e) => setDirectEmail(e.target.value)}
+              />
+              <div>
+                <label className="block text-[11px] font-600 text-[#6e6e73] mb-1">
+                  물건 주소 (등기감시 시작)
+                </label>
+                <AddressAutocomplete
+                  value={directBase}
+                  onChange={setDirectBase}
+                  onSelect={(result) => setDirectBase(result.roadAddress || result.address)}
+                  placeholder="도로명 주소 검색"
+                />
+              </div>
+              <FormInput
+                label="상세 주소"
+                placeholder="예: 108동 1403호"
+                value={directDetail}
+                onChange={(e) => setDirectDetail(e.target.value)}
+              />
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </>
+          ) : (
+          /* 회원 검색 */
+          !selected ? (
             <>
               <div>
                 <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">
@@ -284,6 +388,7 @@ export function AddClientModal({ open, onClose, onSubmit }: AddClientModalProps)
 
               {error && <p className="text-xs text-red-500">{error}</p>}
             </>
+          )
           )}
         </div>
 
@@ -295,7 +400,7 @@ export function AddClientModal({ open, onClose, onSubmit }: AddClientModalProps)
           <Button
             variant="primary"
             size="sm"
-            disabled={!selected}
+            disabled={mode === "vestra" ? !selected : !directName.trim()}
             loading={submitting}
             onClick={handleSubmit}
           >
