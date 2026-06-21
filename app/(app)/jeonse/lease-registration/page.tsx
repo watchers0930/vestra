@@ -77,13 +77,18 @@ export default function LeaseRegistrationPage() {
           이 등기가 완료되면 <strong style={{ color: "#1d1d1f" }}>이사를 가더라도</strong> 대항력과 우선변제권이 유지되어,
           새 집으로 이사하면서도 보증금을 보호받을 수 있습니다.
         </p>
+      </div>
+
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
+        <FlowChart steps={steps} />
         <a
           href="https://ecfs.scourt.go.kr"
           target="_blank"
           rel="noopener noreferrer"
           style={{
             display: "inline-flex", alignItems: "center", gap: "7px",
-            marginTop: "16px",
+            marginTop: "20px",
             padding: "11px 18px",
             borderRadius: "12px",
             background: "#0071e3",
@@ -98,11 +103,6 @@ export default function LeaseRegistrationPage() {
           <ExternalLink size={14} strokeWidth={2} />
           대법원 전자소송 신청
         </a>
-      </div>
-
-      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
-        <FlowChart steps={steps} />
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
