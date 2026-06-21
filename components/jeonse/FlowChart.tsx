@@ -23,144 +23,124 @@ const CIRCLE_COLOR: Record<string, { bg: string; shadow: string }> = {
 
 export default function FlowChart({ steps }: { steps: FlowStepData[]; className?: string }) {
   return (
-    <div style={{ width: "100%" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", width: "100%" }}>
-        {steps.map((step, i) => {
-          const isLast = i === steps.length - 1;
-          const c = CIRCLE_COLOR[step.color] ?? CIRCLE_COLOR.blue;
-          const Icon = step.icon;
+    <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
+      {steps.map((step, i) => {
+        const isLast = i === steps.length - 1;
+        const c = CIRCLE_COLOR[step.color] ?? CIRCLE_COLOR.blue;
+        const Icon = step.icon;
 
-          return (
-            <div key={i} style={{ display: "flex", alignItems: "flex-start", flex: 1, minWidth: 0 }}>
-              {/* ── 스텝 카드 ── */}
-              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
-                {/* 원 + 아이콘 */}
-                <div
-                  style={{
-                    width: "44px", height: "44px", borderRadius: "50%",
-                    background: c.bg,
-                    boxShadow: `0 4px 14px ${c.shadow}`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon size={18} strokeWidth={2} style={{ color: "#fff" }} />
-                </div>
-
-                {/* 단계 번호 */}
-                <span
-                  style={{
-                    fontSize: "10px", fontWeight: 700,
-                    color: c.bg, marginTop: "8px", letterSpacing: "0.06em",
-                  }}
-                >
-                  STEP {step.number}
-                </span>
-
-                {/* 제목 */}
-                <p
-                  style={{
-                    fontSize: "12.5px", fontWeight: 700, color: "#1d1d1f",
-                    textAlign: "center", marginTop: "4px", lineHeight: 1.35,
-                    padding: "0 6px",
-                  }}
-                >
-                  {step.title}
-                </p>
-
-                {/* 설명 */}
-                <p
-                  style={{
-                    fontSize: "11px", color: "#6e6e73", textAlign: "center",
-                    lineHeight: 1.55, marginTop: "5px", padding: "0 4px",
-                  }}
-                >
-                  {step.description}
-                </p>
-
-                {/* 태그 (소요시간 / 장소) */}
-                {(step.duration || step.location) && (
-                  <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "4px", marginTop: "7px" }}>
-                    {step.duration && (
-                      <span
-                        style={{
-                          display: "inline-flex", alignItems: "center", gap: "3px",
-                          padding: "2px 8px", borderRadius: "20px",
-                          fontSize: "10px", color: "#6e6e73",
-                          background: "#f5f5f7", border: "1px solid rgba(0,0,0,0.06)",
-                        }}
-                      >
-                        <Clock size={9} strokeWidth={1.5} /> {step.duration}
-                      </span>
-                    )}
-                    {step.location && (
-                      <span
-                        style={{
-                          display: "inline-flex", alignItems: "center", gap: "3px",
-                          padding: "2px 8px", borderRadius: "20px",
-                          fontSize: "10px", color: "#6e6e73",
-                          background: "#f5f5f7", border: "1px solid rgba(0,0,0,0.06)",
-                        }}
-                      >
-                        <MapPin size={9} strokeWidth={1.5} /> {step.location}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* 서브스텝 */}
-                {step.subSteps && step.subSteps.length > 0 && (
-                  <ul style={{ marginTop: "8px", padding: "0 6px", listStyle: "none", width: "100%" }}>
-                    {step.subSteps.map((sub, j) => (
-                      <li
-                        key={j}
-                        style={{
-                          display: "flex", alignItems: "flex-start", gap: "5px",
-                          fontSize: "10.5px", color: "#6e6e73", lineHeight: 1.5, marginBottom: "3px",
-                        }}
-                      >
-                        <CheckCircle2 size={11} strokeWidth={1.5} style={{ color: "#30d158", flexShrink: 0, marginTop: "1px" }} />
-                        {sub}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+        return (
+          <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
+            {/* ── 왼쪽: 원 + 세로 연결선 ── */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+              <div
+                style={{
+                  width: "44px", height: "44px", borderRadius: "50%",
+                  background: c.bg,
+                  boxShadow: `0 4px 14px ${c.shadow}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                <Icon size={18} strokeWidth={2} style={{ color: "#fff" }} />
               </div>
-
-              {/* ── 연결선 ── */}
               {!isLast && (
                 <div
                   style={{
-                    display: "flex", alignItems: "center", height: "44px",
-                    padding: "0 4px", flexShrink: 0,
+                    width: "2px",
+                    flex: 1,
+                    minHeight: "24px",
+                    background: "linear-gradient(180deg, rgba(0,113,227,0.35) 0%, rgba(0,113,227,0.12) 100%)",
+                    borderRadius: "2px",
+                    margin: "4px 0",
                   }}
-                >
-                  <div
-                    style={{
-                      width: "32px", height: "2px",
-                      background: "linear-gradient(90deg, rgba(0,113,227,0.40) 0%, rgba(0,113,227,0.15) 100%)",
-                      borderRadius: "2px",
-                      position: "relative",
-                    }}
-                  >
-                    {/* 화살 끝 */}
-                    <div
-                      style={{
-                        position: "absolute", right: "-4px", top: "50%",
-                        transform: "translateY(-50%)",
-                        width: 0, height: 0,
-                        borderTop: "4px solid transparent",
-                        borderBottom: "4px solid transparent",
-                        borderLeft: "5px solid rgba(0,113,227,0.35)",
-                      }}
-                    />
-                  </div>
-                </div>
+                />
               )}
             </div>
-          );
-        })}
-      </div>
+
+            {/* ── 오른쪽: 내용 ── */}
+            <div style={{ flex: 1, paddingBottom: isLast ? "0" : "20px" }}>
+              {/* 단계 번호 */}
+              <span
+                style={{
+                  fontSize: "11px", fontWeight: 700,
+                  color: c.bg, letterSpacing: "0.06em",
+                  display: "block", marginBottom: "4px", marginTop: "10px",
+                }}
+              >
+                STEP {step.number}
+              </span>
+
+              {/* 제목 */}
+              <p
+                style={{
+                  fontSize: "14px", fontWeight: 700, color: "#1d1d1f",
+                  lineHeight: 1.35, marginBottom: "5px",
+                }}
+              >
+                {step.title}
+              </p>
+
+              {/* 설명 */}
+              <p
+                style={{
+                  fontSize: "12.5px", color: "#6e6e73",
+                  lineHeight: 1.6, marginBottom: "7px",
+                }}
+              >
+                {step.description}
+              </p>
+
+              {/* 태그 (소요시간 / 장소) */}
+              {(step.duration || step.location) && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "7px" }}>
+                  {step.duration && (
+                    <span
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: "3px",
+                        padding: "2px 8px", borderRadius: "20px",
+                        fontSize: "10px", color: "#6e6e73",
+                        background: "#f5f5f7", border: "1px solid rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      <Clock size={9} strokeWidth={1.5} /> {step.duration}
+                    </span>
+                  )}
+                  {step.location && (
+                    <span
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: "3px",
+                        padding: "2px 8px", borderRadius: "20px",
+                        fontSize: "10px", color: "#6e6e73",
+                        background: "#f5f5f7", border: "1px solid rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      <MapPin size={9} strokeWidth={1.5} /> {step.location}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* 서브스텝 */}
+              {step.subSteps && step.subSteps.length > 0 && (
+                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                  {step.subSteps.map((sub, j) => (
+                    <li
+                      key={j}
+                      style={{
+                        display: "flex", alignItems: "flex-start", gap: "5px",
+                        fontSize: "11.5px", color: "#6e6e73", lineHeight: 1.5, marginBottom: "3px",
+                      }}
+                    >
+                      <CheckCircle2 size={11} strokeWidth={1.5} style={{ color: "#30d158", flexShrink: 0, marginTop: "2px" }} />
+                      {sub}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
