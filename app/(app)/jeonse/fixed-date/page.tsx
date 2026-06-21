@@ -42,7 +42,7 @@ export default function FixedDatePage() {
         <>
           <DocumentChecklist documents={documents} />
           <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+            <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <GovernmentLink name="대법원 인터넷등기소" url="https://www.iros.go.kr" description="등기부등본 열람 및 확정일자 확인" />
               <GovernmentLink name="정부24" url="https://www.gov.kr" description="온라인 민원 처리" />
@@ -52,8 +52,8 @@ export default function FixedDatePage() {
       }
     >
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>확정일자란?</h3>
-        <p style={{ fontSize: "13px", lineHeight: 1.75, color: "#6e6e73" }}>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>확정일자란?</h3>
+        <p style={{ fontSize: "14px", lineHeight: 1.75, color: "#6e6e73" }}>
           임대차계약서에 관공서(주민센터)가 날짜를 확인하는 도장을 찍어주는 것입니다.
           전입신고와 결합되면 <strong style={{ color: "#1d1d1f" }}>우선변제권</strong>이 성립하여,
           경매 시 후순위 권리자보다 보증금을 먼저 돌려받을 수 있습니다.
@@ -61,7 +61,7 @@ export default function FixedDatePage() {
       </div>
 
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
         <FlowChart steps={steps} />
       </div>
 

@@ -80,7 +80,7 @@ export default function DocumentChecklist({
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
             <span
               style={{
-                fontSize: "13px", fontWeight: 600,
+                fontSize: "14px", fontWeight: 600,
                 color: isChecked ? "#6e6e73" : "#1d1d1f",
                 textDecoration: isChecked ? "line-through" : "none",
               }}
@@ -92,7 +92,7 @@ export default function DocumentChecklist({
                 style={{
                   display: "inline-flex", alignItems: "center", gap: "3px",
                   padding: "2px 8px", borderRadius: "20px",
-                  fontSize: "10px", fontWeight: 700,
+                  fontSize: "11px", fontWeight: 700,
                   color: config.color, background: config.bg,
                 }}
               >
@@ -102,11 +102,11 @@ export default function DocumentChecklist({
             )}
           </div>
           {doc.description && (
-            <div style={{ fontSize: "11.5px", color: "#6e6e73", marginTop: "2px" }}>{doc.description}</div>
+            <div style={{ fontSize: "12.5px", color: "#6e6e73", marginTop: "2px" }}>{doc.description}</div>
           )}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginTop: "4px" }}>
-            <span style={{ fontSize: "11px", color: "#aeaeb2" }}>발급처: {doc.where}</span>
-            {doc.cost && <span style={{ fontSize: "11px", color: "#aeaeb2" }}>비용: {doc.cost}</span>}
+            <span style={{ fontSize: "12px", color: "#aeaeb2" }}>발급처: {doc.where}</span>
+            {doc.cost && <span style={{ fontSize: "12px", color: "#aeaeb2" }}>비용: {doc.cost}</span>}
             {doc.online && doc.onlineUrl && (
               <a
                 href={doc.onlineUrl}
@@ -114,7 +114,7 @@ export default function DocumentChecklist({
                 rel="noopener noreferrer"
                 style={{
                   display: "inline-flex", alignItems: "center", gap: "4px",
-                  fontSize: "11px", color: "#0071e3", textDecoration: "none",
+                  fontSize: "12px", color: "#0071e3", textDecoration: "none",
                   fontWeight: 500,
                 }}
                 onClick={(e) => e.stopPropagation()}
@@ -143,13 +143,13 @@ export default function DocumentChecklist({
         <h4
           style={{
             display: "flex", alignItems: "center", gap: "7px",
-            fontSize: "15px", fontWeight: 700, color: "#1d1d1f",
+            fontSize: "16px", fontWeight: 700, color: "#1d1d1f",
           }}
         >
           <FileText size={16} strokeWidth={1.5} style={{ color: "#6e6e73" }} />
           {title}
         </h4>
-        <span style={{ fontSize: "11px", color: "#aeaeb2" }}>
+        <span style={{ fontSize: "12px", color: "#aeaeb2" }}>
           {checkedCount}/{totalCount}
           {requiredCount > 0 && ` (필수 ${checkedRequired}/${requiredCount})`}
         </span>
@@ -180,7 +180,7 @@ export default function DocumentChecklist({
           {Object.entries(groups).map(([category, docs]) => (
             <div key={category}>
               {category && (
-                <div style={{ fontSize: "10px", fontWeight: 700, color: "#aeaeb2", letterSpacing: "0.10em", textTransform: "uppercase", marginBottom: "6px", paddingLeft: "12px" }}>
+                <div style={{ fontSize: "11px", fontWeight: 700, color: "#aeaeb2", letterSpacing: "0.10em", textTransform: "uppercase", marginBottom: "6px", paddingLeft: "12px" }}>
                   {category}
                 </div>
               )}

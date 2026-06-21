@@ -46,7 +46,7 @@ export default function TransferPage() {
         <>
           <DocumentChecklist documents={documents} />
           <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+            <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <GovernmentLink name="정부24" url="https://www.gov.kr" description="온라인 전입신고 및 각종 민원 처리" />
             </div>
@@ -55,8 +55,8 @@ export default function TransferPage() {
       }
     >
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>전입신고란?</h3>
-        <p style={{ fontSize: "13px", lineHeight: 1.75, color: "#6e6e73" }}>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>전입신고란?</h3>
+        <p style={{ fontSize: "14px", lineHeight: 1.75, color: "#6e6e73" }}>
           새로운 주소지로 주민등록을 옮기는 행정 절차입니다.
           주택임대차보호법상 <strong style={{ color: "#1d1d1f" }}>대항력</strong>의 핵심 요건으로,
           전입신고를 하면 다음 날부터 임차권을 제3자(새 집주인, 경매 낙찰자 등)에게 주장할 수 있습니다.
@@ -64,7 +64,7 @@ export default function TransferPage() {
       </div>
 
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
         <FlowChart steps={steps} />
       </div>
 

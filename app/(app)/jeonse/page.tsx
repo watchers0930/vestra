@@ -100,10 +100,10 @@ export default function JeonseHubPage() {
               <Shield size={22} style={{ color: "#0071e3" }} strokeWidth={1.5} />
             </div>
             <div>
-              <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "3px" }}>
+              <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "3px" }}>
                 전세 안전 AI 분석
               </h3>
-              <p style={{ fontSize: "12.5px", color: "#6e6e73" }}>
+              <p style={{ fontSize: "13.5px", color: "#6e6e73" }}>
                 계약 정보를 입력하면 전세권 설정 필요성과 위험도를 분석합니다
               </p>
             </div>
@@ -113,7 +113,7 @@ export default function JeonseHubPage() {
       </Link>
 
       {/* 행정 절차 가이드 */}
-      <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#1d1d1f", letterSpacing: "-0.02em", marginBottom: "16px" }}>
+      <h2 style={{ fontSize: "19px", fontWeight: 700, color: "#1d1d1f", letterSpacing: "-0.02em", marginBottom: "16px" }}>
         행정 절차 가이드
       </h2>
       <div
@@ -159,9 +159,9 @@ export default function JeonseHubPage() {
                   {badge.text}
                 </span>
               </div>
-              <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#1d1d1f", marginBottom: "6px" }}>{title}</h3>
-              <p style={{ fontSize: "12px", lineHeight: 1.6, color: "#6e6e73", marginBottom: "14px" }}>{description}</p>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "11.5px", color: "#aeaeb2" }}>
+              <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "6px" }}>{title}</h3>
+              <p style={{ fontSize: "13px", lineHeight: 1.6, color: "#6e6e73", marginBottom: "14px" }}>{description}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "12.5px", color: "#aeaeb2" }}>
                 <span>{steps}단계</span>
                 <span style={{ color: diffColor, fontWeight: 500 }}>{difficulty}</span>
                 {requiresLandlord && (
@@ -186,7 +186,7 @@ export default function JeonseHubPage() {
           padding: "24px",
         }}
       >
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", letterSpacing: "-0.02em", marginBottom: "16px" }}>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", letterSpacing: "-0.02em", marginBottom: "16px" }}>
           권장 처리 순서
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
@@ -206,14 +206,14 @@ export default function JeonseHubPage() {
                 <div style={{ flex: 1 }}>
                   <span
                     style={{
-                      fontSize: "14px", fontWeight: 700,
+                      fontSize: "15px", fontWeight: 700,
                       color: item.color,
                       display: "block", marginBottom: "4px",
                     }}
                   >
                     {item.label}
                   </span>
-                  <p style={{ fontSize: "12.5px", color: "#6e6e73", lineHeight: 1.65, margin: 0 }}>
+                  <p style={{ fontSize: "13.5px", color: "#6e6e73", lineHeight: 1.65, margin: 0 }}>
                     {item.description}
                   </p>
                 </div>

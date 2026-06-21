@@ -43,7 +43,7 @@ export default function LeaseReportPage() {
         <>
           <DocumentChecklist documents={documents} />
           <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+            <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <GovernmentLink name="정부24" url="https://www.gov.kr" description="주택임대차 신고 온라인 제출" />
               <GovernmentLink name="국토교통부 실거래가 공개시스템" url="https://rt.molit.go.kr" description="임대차 신고 현황 확인" />
@@ -53,8 +53,8 @@ export default function LeaseReportPage() {
       }
     >
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>주택임대차 신고란?</h3>
-        <p style={{ fontSize: "13px", lineHeight: 1.75, color: "#6e6e73" }}>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>주택임대차 신고란?</h3>
+        <p style={{ fontSize: "14px", lineHeight: 1.75, color: "#6e6e73" }}>
           보증금이 일정 금액을 초과하는 주택 임대차 계약을 체결하면
           30일 이내에 관할 주민센터에 신고해야 하는 <strong style={{ color: "#1d1d1f" }}>의무 제도</strong>입니다.
           신고를 완료하면 <strong style={{ color: "#1d1d1f" }}>확정일자가 자동으로 부여</strong>되어 별도 신청이 필요 없습니다.
@@ -62,7 +62,7 @@ export default function LeaseReportPage() {
       </div>
 
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
         <FlowChart steps={steps} />
       </div>
 

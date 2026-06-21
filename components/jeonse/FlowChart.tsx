@@ -62,7 +62,7 @@ export default function FlowChart({ steps }: { steps: FlowStepData[]; className?
               {/* 단계 번호 */}
               <span
                 style={{
-                  fontSize: "11px", fontWeight: 700,
+                  fontSize: "12px", fontWeight: 700,
                   color: c.bg, letterSpacing: "0.06em",
                   display: "block", marginBottom: "4px", marginTop: "10px",
                 }}
@@ -73,7 +73,7 @@ export default function FlowChart({ steps }: { steps: FlowStepData[]; className?
               {/* 제목 */}
               <p
                 style={{
-                  fontSize: "14px", fontWeight: 700, color: "#1d1d1f",
+                  fontSize: "15px", fontWeight: 700, color: "#1d1d1f",
                   lineHeight: 1.35, marginBottom: "5px",
                 }}
               >
@@ -83,7 +83,7 @@ export default function FlowChart({ steps }: { steps: FlowStepData[]; className?
               {/* 설명 */}
               <p
                 style={{
-                  fontSize: "12.5px", color: "#6e6e73",
+                  fontSize: "13.5px", color: "#6e6e73",
                   lineHeight: 1.6, marginBottom: "7px",
                 }}
               >
@@ -98,7 +98,7 @@ export default function FlowChart({ steps }: { steps: FlowStepData[]; className?
                       style={{
                         display: "inline-flex", alignItems: "center", gap: "3px",
                         padding: "2px 8px", borderRadius: "20px",
-                        fontSize: "10px", color: "#6e6e73",
+                        fontSize: "11px", color: "#6e6e73",
                         background: "#f5f5f7", border: "1px solid rgba(0,0,0,0.06)",
                       }}
                     >
@@ -110,7 +110,7 @@ export default function FlowChart({ steps }: { steps: FlowStepData[]; className?
                       style={{
                         display: "inline-flex", alignItems: "center", gap: "3px",
                         padding: "2px 8px", borderRadius: "20px",
-                        fontSize: "10px", color: "#6e6e73",
+                        fontSize: "11px", color: "#6e6e73",
                         background: "#f5f5f7", border: "1px solid rgba(0,0,0,0.06)",
                       }}
                     >
@@ -128,7 +128,7 @@ export default function FlowChart({ steps }: { steps: FlowStepData[]; className?
                       key={j}
                       style={{
                         display: "flex", alignItems: "flex-start", gap: "5px",
-                        fontSize: "11.5px", color: "#6e6e73", lineHeight: 1.5, marginBottom: "3px",
+                        fontSize: "12.5px", color: "#6e6e73", lineHeight: 1.5, marginBottom: "3px",
                       }}
                     >
                       <CheckCircle2 size={11} strokeWidth={1.5} style={{ color: "#30d158", flexShrink: 0, marginTop: "2px" }} />

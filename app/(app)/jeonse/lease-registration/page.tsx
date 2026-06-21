@@ -59,7 +59,7 @@ export default function LeaseRegistrationPage() {
         <>
           <DocumentChecklist documents={documents} />
           <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+            <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <GovernmentLink name="대법원 전자소송" url="https://ecfs.scourt.go.kr" description="임차권등기명령 온라인 신청" />
               <GovernmentLink name="대한법률구조공단" url="https://www.klac.or.kr" description="무료 법률 상담 및 소송 지원" />
@@ -70,8 +70,8 @@ export default function LeaseRegistrationPage() {
       }
     >
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>임차권등기명령이란?</h3>
-        <p style={{ fontSize: "13px", lineHeight: 1.75, color: "#6e6e73" }}>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>임차권등기명령이란?</h3>
+        <p style={{ fontSize: "14px", lineHeight: 1.75, color: "#6e6e73" }}>
           임대차 계약이 끝났는데 보증금을 돌려받지 못한 경우,
           법원에 신청하여 등기부에 임차권을 기재하는 제도입니다.
           이 등기가 완료되면 <strong style={{ color: "#1d1d1f" }}>이사를 가더라도</strong> 대항력과 우선변제권이 유지되어,
@@ -80,7 +80,7 @@ export default function LeaseRegistrationPage() {
       </div>
 
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
         <FlowChart steps={steps} />
       </div>
 
@@ -101,7 +101,7 @@ export default function LeaseRegistrationPage() {
       </div>
 
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
       </div>
     </ProcedurePageLayout>
   );

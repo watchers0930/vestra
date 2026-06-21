@@ -53,9 +53,9 @@ export default function TipBox({
     >
       <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "6px" }}>
         <Icon size={14} strokeWidth={1.5} style={{ color: v.iconColor, flexShrink: 0 }} />
-        <span style={{ fontSize: "13px", fontWeight: 700, color: v.titleColor }}>{title}</span>
+        <span style={{ fontSize: "14px", fontWeight: 700, color: v.titleColor }}>{title}</span>
       </div>
-      <div style={{ fontSize: "12.5px", lineHeight: 1.65, color: v.textColor }}>{children}</div>
+      <div style={{ fontSize: "13.5px", lineHeight: 1.65, color: v.textColor }}>{children}</div>
     </div>
   );
 }

@@ -59,7 +59,7 @@ export default function JeonseRightPage() {
         <>
           <DocumentChecklist documents={documents} />
           <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
+            <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>관련 사이트</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <GovernmentLink name="대법원 인터넷등기소" url="https://www.iros.go.kr" description="전자 등기 신청 및 등기부등본 열람" />
               <GovernmentLink name="위택스" url="https://www.wetax.go.kr" description="등록면허세 신고 및 납부" />
@@ -69,8 +69,8 @@ export default function JeonseRightPage() {
       }
     >
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>전세권설정등기란?</h3>
-        <p style={{ fontSize: "13px", lineHeight: 1.75, color: "#6e6e73" }}>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "10px" }}>전세권설정등기란?</h3>
+        <p style={{ fontSize: "14px", lineHeight: 1.75, color: "#6e6e73" }}>
           전세권을 등기부등본에 <strong style={{ color: "#1d1d1f" }}>물권(物權)</strong>으로 등재하는 절차입니다.
           일반 임차권(채권)보다 훨씬 강력한 보호를 받으며,
           보증금 미반환 시 별도 소송 없이 <strong style={{ color: "#1d1d1f" }}>직접 경매를 청구</strong>할 수 있습니다.
@@ -79,7 +79,7 @@ export default function JeonseRightPage() {
       </div>
 
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
-        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
         <FlowChart steps={steps} />
       </div>
 
