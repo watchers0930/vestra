@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Shield, MapPin, Stamp, ShieldCheck, Gavel, FileText, ChevronRight, Users, ArrowRight } from "lucide-react";
+import { Shield, MapPin, Stamp, ShieldCheck, Gavel, FileText, ChevronRight, ChevronDown, Users, ArrowRight } from "lucide-react";
 import { CategoryHero } from "@/components/common/CategoryHero";
 import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 
@@ -54,10 +54,10 @@ const PROCEDURES = [
 ];
 
 const ORDER_STEPS = [
-  { label: "전입신고",       color: "#ff3b30", bg: "rgba(255,59,48,0.10)" },
-  { label: "확정일자",       color: "#ff3b30", bg: "rgba(255,59,48,0.10)" },
-  { label: "주택임대차 신고", color: "#004ab3", bg: "rgba(0,113,227,0.10)" },
-  { label: "전세권설정등기",  color: "#1a9e45", bg: "rgba(48,209,88,0.10)" },
+  { label: "전입신고",       description: "새 주소지로 주민등록을 이전하여 대항력을 확보합니다", color: "#ff3b30", bg: "rgba(255,59,48,0.10)" },
+  { label: "확정일자",       description: "계약서에 확정일자를 받아 보증금 우선변제권을 확보합니다", color: "#ff3b30", bg: "rgba(255,59,48,0.10)" },
+  { label: "주택임대차 신고", description: "보증금 6천만원 초과 시 30일 내 의무이며, 신고 시 확정일자가 자동 부여됩니다", color: "#004ab3", bg: "rgba(0,113,227,0.10)" },
+  { label: "전세권설정등기",  description: "등기부에 물권으로 기록하여 가장 강력한 보호를 받습니다", color: "#1a9e45", bg: "rgba(48,209,88,0.10)" },
 ];
 
 export default function JeonseHubPage() {
@@ -189,25 +189,43 @@ export default function JeonseHubPage() {
         <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", letterSpacing: "-0.02em", marginBottom: "16px" }}>
           권장 처리 순서
         </h3>
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
           {ORDER_STEPS.map((item, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              {i > 0 && <ChevronRight size={14} style={{ color: "#aeaeb2" }} strokeWidth={1.5} />}
-              <span
-                style={{
-                  fontSize: "12px", fontWeight: 600,
-                  padding: "5px 13px", borderRadius: "20px",
-                  color: item.color, background: item.bg,
-                }}
-              >
-                {item.label}
-              </span>
+            <div key={i}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "12px 0" }}>
+                <div
+                  style={{
+                    width: "28px", height: "28px", borderRadius: "50%",
+                    background: item.bg, border: `1.5px solid ${item.color}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0, marginTop: "1px",
+                  }}
+                >
+                  <span style={{ fontSize: "12px", fontWeight: 700, color: item.color }}>{i + 1}</span>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <span
+                    style={{
+                      fontSize: "14px", fontWeight: 700,
+                      color: item.color,
+                      display: "block", marginBottom: "4px",
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                  <p style={{ fontSize: "12.5px", color: "#6e6e73", lineHeight: 1.65, margin: 0 }}>
+                    {item.description}
+                  </p>
+                </div>
+              </div>
+              {i < ORDER_STEPS.length - 1 && (
+                <div style={{ paddingLeft: "14px" }}>
+                  <ChevronDown size={14} style={{ color: "#aeaeb2" }} strokeWidth={1.5} />
+                </div>
+              )}
             </div>
           ))}
         </div>
-        <p style={{ fontSize: "11.5px", color: "#6e6e73", marginTop: "12px", lineHeight: 1.65 }}>
-          전입신고와 확정일자는 입주 즉시 처리하세요. 주택임대차 신고는 보증금 6천만원 초과 시 30일 내 의무입니다.
-        </p>
       </div>
     </div>
   );
