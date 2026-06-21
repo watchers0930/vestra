@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldCheck, Users, FileStack, Building, FileSignature, Clock, CheckCircle, ExternalLink } from "lucide-react";
+import { ShieldCheck, Users, FileStack, Building, FileSignature, Clock, CheckCircle, ExternalLink, Bot } from "lucide-react";
 import { ProcedurePageLayout, FlowChart, DocumentChecklist, TipBox, GovernmentLink } from "@/components/jeonse";
 import type { FlowStepData } from "@/components/jeonse";
 
@@ -81,27 +81,46 @@ export default function JeonseRightPage() {
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
         <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
         <FlowChart steps={steps} />
-        <a
-          href="https://www.iros.go.kr"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: "inline-flex", alignItems: "center", gap: "7px",
-            marginTop: "20px",
-            padding: "11px 18px",
-            borderRadius: "12px",
-            background: "#0071e3",
-            color: "#fff",
-            fontSize: "14px", fontWeight: 600,
-            textDecoration: "none",
-            transition: "background 0.15s",
-          }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#0077ed"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#0071e3"; }}
-        >
-          <ExternalLink size={14} strokeWidth={2} />
-          등기온 전자등기 신청
-        </a>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "20px" }}>
+          <a
+            href="https://www.iros.go.kr"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: "7px",
+              padding: "11px 18px",
+              borderRadius: "12px",
+              background: "#0071e3",
+              color: "#fff",
+              fontSize: "14px", fontWeight: 600,
+              textDecoration: "none",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#0077ed"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#0071e3"; }}
+          >
+            <ExternalLink size={14} strokeWidth={2} />
+            등기온 전자등기 신청
+          </a>
+          <a
+            href="/assistant"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: "7px",
+              padding: "11px 18px",
+              borderRadius: "12px",
+              background: "#5856d6",
+              color: "#fff",
+              fontSize: "14px", fontWeight: 600,
+              textDecoration: "none",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#4f4ec7"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#5856d6"; }}
+          >
+            <Bot size={14} strokeWidth={2} />
+            Vestra AI 상담하기
+          </a>
+        </div>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>

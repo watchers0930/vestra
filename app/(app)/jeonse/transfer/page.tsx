@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, FileSignature, Truck, Building2, CheckCircle } from "lucide-react";
+import { MapPin, FileSignature, Truck, Building2, CheckCircle, Bot } from "lucide-react";
 import { ProcedurePageLayout, FlowChart, DocumentChecklist, TipBox, GovernmentLink } from "@/components/jeonse";
 import type { FlowStepData } from "@/components/jeonse";
 
@@ -66,6 +66,26 @@ export default function TransferPage() {
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
         <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "20px" }}>절차 안내</h3>
         <FlowChart steps={steps} />
+        <div style={{ marginTop: "20px" }}>
+          <a
+            href="/assistant"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: "7px",
+              padding: "11px 18px",
+              borderRadius: "12px",
+              background: "#5856d6",
+              color: "#fff",
+              fontSize: "14px", fontWeight: 600,
+              textDecoration: "none",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#4f4ec7"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#5856d6"; }}
+          >
+            <Bot size={14} strokeWidth={2} />
+            Vestra AI 상담하기
+          </a>
+        </div>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
