@@ -1,6 +1,6 @@
 "use client";
 
-import { Gavel, AlertOctagon, FileStack, Building, Clock, FileSignature, CheckCircle } from "lucide-react";
+import { Gavel, AlertOctagon, FileStack, Building, Clock, FileSignature, CheckCircle, ExternalLink } from "lucide-react";
 import { ProcedurePageLayout, FlowChart, DocumentChecklist, TipBox, GovernmentLink } from "@/components/jeonse";
 import type { FlowStepData } from "@/components/jeonse";
 
@@ -77,6 +77,27 @@ export default function LeaseRegistrationPage() {
           이 등기가 완료되면 <strong style={{ color: "#1d1d1f" }}>이사를 가더라도</strong> 대항력과 우선변제권이 유지되어,
           새 집으로 이사하면서도 보증금을 보호받을 수 있습니다.
         </p>
+        <a
+          href="https://ecfs.scourt.go.kr"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: "7px",
+            marginTop: "16px",
+            padding: "11px 18px",
+            borderRadius: "12px",
+            background: "#0071e3",
+            color: "#fff",
+            fontSize: "14px", fontWeight: 600,
+            textDecoration: "none",
+            transition: "background 0.15s",
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#0077ed"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#0071e3"; }}
+        >
+          <ExternalLink size={14} strokeWidth={2} />
+          대법원 전자소송 신청
+        </a>
       </div>
 
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>

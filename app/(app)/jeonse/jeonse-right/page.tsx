@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldCheck, Users, FileStack, Building, FileSignature, Clock, CheckCircle } from "lucide-react";
+import { ShieldCheck, Users, FileStack, Building, FileSignature, Clock, CheckCircle, ExternalLink } from "lucide-react";
 import { ProcedurePageLayout, FlowChart, DocumentChecklist, TipBox, GovernmentLink } from "@/components/jeonse";
 import type { FlowStepData } from "@/components/jeonse";
 
@@ -76,6 +76,27 @@ export default function JeonseRightPage() {
           보증금 미반환 시 별도 소송 없이 <strong style={{ color: "#1d1d1f" }}>직접 경매를 청구</strong>할 수 있습니다.
           다만 임대인의 협조가 반드시 필요합니다.
         </p>
+        <a
+          href="https://www.iros.go.kr"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: "7px",
+            marginTop: "16px",
+            padding: "11px 18px",
+            borderRadius: "12px",
+            background: "#0071e3",
+            color: "#fff",
+            fontSize: "14px", fontWeight: 600,
+            textDecoration: "none",
+            transition: "background 0.15s",
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#0077ed"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#0071e3"; }}
+        >
+          <ExternalLink size={14} strokeWidth={2} />
+          등기온 전자등기 신청
+        </a>
       </div>
 
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
