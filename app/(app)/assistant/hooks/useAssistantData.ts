@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,6 +27,8 @@ const STORAGE_KEY = "vestra_assistant_messages";
 const HISTORY_KEY = "vestra_analysis_history";
 const MAX_STORED_MESSAGES = 100;
 const MAX_HISTORY_ENTRIES = 3;
+const GUEST_LIMIT = 3;
+const GUEST_COUNT_KEY = "vestra_guest_chat_count";
 
 function loadMessages(): Message[] {
   if (typeof window === "undefined") return [];
@@ -95,17 +98,24 @@ function getContextPrefix(): string {
 // Hook
 // ---------------------------------------------------------------------------
 export function useAssistantData() {
+  const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [streamingContent, setStreamingContent] = useState("");
+  const [showSignupModal, setShowSignupModal] = useState(false);
+  const [guestCount, setGuestCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Restore messages from localStorage on mount
+  // Restore messages and guest count from localStorage on mount
   useEffect(() => {
     setMessages(loadMessages());
+    if (typeof window !== "undefined") {
+      const count = parseInt(localStorage.getItem(GUEST_COUNT_KEY) || "0", 10);
+      setGuestCount(count);
+    }
     setHydrated(true);
   }, []);
 
@@ -130,6 +140,15 @@ export function useAssistantData() {
   const sendMessage = async (text?: string) => {
     const messageText = text || input.trim();
     if (!messageText) return;
+
+    // 비회원 횟수 제한
+    if (!session?.user) {
+      const currentCount = parseInt(localStorage.getItem(GUEST_COUNT_KEY) || "0", 10);
+      if (currentCount >= GUEST_LIMIT) {
+        setShowSignupModal(true);
+        return;
+      }
+    }
 
     const userMessage: Message = {
       role: "user",
@@ -216,6 +235,13 @@ export function useAssistantData() {
         };
         setMessages((prev) => [...prev, assistantMessage]);
       }
+
+      // 비회원 사용 횟수 증가
+      if (!session?.user) {
+        const newCount = parseInt(localStorage.getItem(GUEST_COUNT_KEY) || "0", 10) + 1;
+        localStorage.setItem(GUEST_COUNT_KEY, String(newCount));
+        setGuestCount(newCount);
+      }
     } catch {
       const errorMessage: Message = {
         role: "assistant",
@@ -229,6 +255,9 @@ export function useAssistantData() {
     }
   };
 
+  const isGuest = !session?.user;
+  const guestRemaining = Math.max(0, GUEST_LIMIT - guestCount);
+
   return {
     messages,
     input,
@@ -240,5 +269,9 @@ export function useAssistantData() {
     clearConversation,
     handleCopy,
     sendMessage,
+    showSignupModal,
+    setShowSignupModal,
+    isGuest,
+    guestRemaining,
   };
 }
