@@ -1,8 +1,9 @@
 {
   "version": 2,
-  "compiled_at": "2026-04-18T00:00:00.000Z",
-  "source_count": 35,
+  "compiled_at": "2026-06-22T00:00:00.000Z",
+  "source_count": 48,
   "topic_count": 7,
+  "concept_count": 2,
   "topics": [
     "platform-overview",
     "algorithm",
@@ -11,6 +12,10 @@
     "security",
     "features",
     "deployment"
+  ],
+  "concepts": [
+    "two-stage-principle",
+    "uncalibrated-parameters"
   ],
   "sources": [
     "CLAUDE.md",
@@ -24,6 +29,8 @@
     "docs/VESTRA_Patent_Report_2026.md",
     "docs/VESTRA-기술보고서-및-특허기술-설명서.md",
     "docs/01-SRS.md",
+    "docs/deployment-runbook.md",
+    "docs/VESTRA_사용가이드_슬라이드.md",
     "docs/security/secure-coding-guide.md",
     "docs/security/access-control-matrix.md",
     "docs/security/audit-log-policy.md",
@@ -36,18 +43,29 @@
     "docs/03-analysis/vestra-rfp-enhancement-final.analysis.md",
     "docs/03-analysis/vestra-rfp-enhancement.analysis.md",
     "docs/03-analysis/features/prediction-enhancement.analysis.md",
+    "docs/02-design/registry-monitoring-hybrid.md",
     "docs/02-design/features/prediction-enhancement.design.md",
     "docs/02-design/features/feasibility-scr-upgrade.design.md",
     "docs/02-design/features/guarantee-insurance-eligibility.design.md",
     "docs/02-design/features/news-policy-collector.design.md",
     "docs/02-design/features/feasibility-report.design.md",
     "docs/02-design/features/competitive-advantage.design.md",
+    "docs/01-plan/features/competitive-advantage.plan.md",
+    "docs/01-plan/features/data-integration.plan.md",
+    "docs/01-plan/features/prediction-enhancement.plan.md",
     "docs/01-plan/features/vestra-dgon-integration.plan.md",
     "docs/01-plan/features/feasibility-scr-upgrade.plan.md",
     "docs/01-plan/features/guarantee-insurance-eligibility.plan.md",
     "docs/01-plan/features/feasibility-report.plan.md",
     "docs/01-plan/features/news-policy-collector.plan.md",
-    "docs/04-report/features/prediction-enhancement.report.md"
+    "docs/04-report/features/prediction-enhancement.report.md",
+    "documents/사업계획서/VESTRA_사업계획서_지원금신청_v3.md",
+    "documents/사업계획서/VESTRA_사업계획서_현행화_v2.md",
+    "documents/사업계획서/VESTRA_초기창업패키지_신청서_v3.md",
+    "documents/완료보고서-2026-03-23/VESTRA_기술분석서_v4.5.1.md",
+    "documents/완료보고서-2026-03-23/VESTRA_완료보고서_v4.5.1.md",
+    "documents/완료보고서-2026-03-23/VESTRA_종합평점_v4.5.1.md",
+    "documents/완료보고서-2026-03-23/VESTRA_특허기능설명서_v4.5.1.md"
   ],
   "status": "complete",
   "coverage": {

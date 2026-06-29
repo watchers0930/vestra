@@ -17,11 +17,13 @@ VESTRA는 한국 부동산 전세사기 예방에 특화된 AI 플랫폼으로, 
 | 현재 버전 | v5.11.0 |
 | 배포 URL | https://vestra-plum.vercel.app |
 | 소스 코드 규모 | 31,315 LOC |
-| 독자 알고리즘 | 8종 (특허 출원 대상) |
-| API 엔드포인트 | 49개+ |
-| DB 모델 | 25개 |
-| 페이지 수 | 26개 |
-| 테스트 | 9개 파일, 1,497 LOC |
+| 독자 알고리즘 | 7종 (특허 출원 대상) |
+| API 엔드포인트 | 51개 |
+| DB 모델 | 28개 |
+| 페이지 수 | 27개 |
+| 테스트 | 14개 파일 |
+| 종합 평점 | 9.2/10 A등급 (v4.5.1) |
+| Wiki 컴파일 | 2026-06-22 · 7 topics · 48 sources |
 
 ---
 
@@ -115,3 +117,8 @@ OpenAI gpt-4.1-mini + Vercel Serverless
 - [보안](topics/security.md)
 - [주요 기능](topics/features.md)
 - [배포/인프라](topics/deployment.md)
+
+## 개념 아티클 (크로스커팅 패턴)
+
+- [2단계 검증 원칙](concepts/two-stage-principle.md) — 알고리즘·배포·보안에서 반복되는 2단계 구조
+- [미검증 파라미터 문제](concepts/uncalibrated-parameters.md) — 위험도 가중치 캘리브레이션 미완료 패턴

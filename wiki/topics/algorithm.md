@@ -1,7 +1,7 @@
 ---
 topic: algorithm
-last_compiled: 2026-04-18
-sources: 6
+last_compiled: 2026-06-22
+sources: 11
 ---
 
 # 핵심 알고리즘 (Algorithm)
@@ -607,11 +607,92 @@ rate₁ = 1%(P≤6억) / 1%+(P-6억)/3억×2%(6억<P≤9억) / 3%(P>9억)
 
 ---
 
-## Sources [coverage: high -- 6 sources]
+## External Data Sources (공공 API 10종)
+[coverage: high -- 3 sources]
+
+예측 엔진 및 분석 알고리즘이 활용하는 외부 데이터 소스 전체 목록:
+
+| API | 모듈 | 활용 알고리즘 | 데이터 |
+|-----|------|-------------|--------|
+| MOLIT 실거래가 | molit-api.ts | 시세전망, V-Score | 아파트/주택 실거래, 전세 실거래 (36개월) |
+| BOK 기준금리 | bok-api.ts | 시세전망 거시보정 | 한국은행 기준금리, 거시경제 지표 |
+| REB 가격지수 | reb-api.ts | 시세전망 | 매매/전세 가격지수 변동률 |
+| 건축물대장 | building-api.ts | 시세전망, 사기위험 | 건물 상세(연식, 층수, 세대수) |
+| 대법원 판례 | court-api.ts | 계약서 분석 | 부동산 관련 법률 판례 |
+| 서울열린데이터 | seoul-data-api.ts | 시세전망 크로스체크 | 서울시 공공 데이터 |
+| KOSIS 통계 | kosis-api.ts | 시세전망 | 인구 동향, 주택 공급 |
+| DART 기업정보 | dart-api.ts | SCR 사업성 | 시행사 재무제표, 법인 정보 |
+| REPS 부동산 | reps-api.ts | 시세전망 | 매매/전세 가격지수 상세 |
+| MOIS 인구 | mois-api.ts | 시세전망 | 지역별 인구/연령 통계 |
+
+---
+
+## 등기변동 하이브리드 감시 아키텍처
+[coverage: medium -- 1 source]
+
+등기부등본 전체 재조회 비용을 줄이면서도 조기 경보를 제공하는 2단계 하이브리드 감시 설계. 설계 문서: `docs/02-design/registry-monitoring-hybrid.md`
+
+**역할 분리**:
+
+| 단계 | 공급자 | 역할 | 결과 |
+|------|--------|------|------|
+| 1차 프리체크 | Tilko | 등기신청사건 접수/처리/완료 상태 감지 | 조기 경고 |
+| 2차 확정 조회 | CODEF | 최신 등기부등본 전체 조회 | 실제 변경 확정 |
+| 3차 분석 | Vestra | 이전 스냅샷과 최신 등기부 비교 | 위험 유형/알림 |
+
+**상태 흐름**:
+```
+idle
+  → case_detected       Tilko 신청/접수/처리 중 사건 감지
+  → pending_confirm     Tilko 처리 완료 신호, CODEF 확인 대기
+  → confirmed_changed   CODEF 조회 후 등기부 변경 확정
+  → confirmed_no_change CODEF 조회 후 변경 없음 확인
+  → dismissed           취하/각하/반려 종결
+```
+
+**운영 주기**:
+
+| 모드 | Tilko 프리체크 | CODEF 강제 검증 |
+|------|--------------|----------------|
+| 일반 감시 | 하루 1회 | 월 1회 |
+| 계약~전입 감시 | 하루 3~6회 | 전입 전날/잔금 당일 |
+| 고위험 물건 | 하루 1회 이상 | 주 1회 |
+
+**구현 위치**:
+- Cron: `app/api/cron/registry-monitor/route.ts`
+- Tilko 클라이언트: `lib/tilko-api.ts`
+- CODEF 조회: `lib/codef-api.ts`
+- 스냅샷: `lib/registry-snapshot-recorder.ts`, `lib/registry-blockchain.ts`
+- 상태 저장: `MonitoredProperty.registrySignalStatus`
+
+---
+
+## 시세전망 강화 로드맵 (Phase A~D)
+[coverage: medium -- 2 sources]
+
+기획서: `docs/01-plan/features/prediction-enhancement.plan.md`
+
+| Phase | 내용 | 주요 파일 |
+|-------|------|-----------|
+| A — 예측 엔진 고도화 | MOLIT 36개월 확대, ARIMA/ETS 추가 (3→5모델), 월별 세분화 예측 | `lib/prediction-engine.ts`, `lib/molit-api.ts` |
+| B — 외부 데이터 연동 | 한국은행 기준금리 실시간, 입주물량, 인구이동 | `lib/bok-api.ts`, `lib/supply-api.ts`, `lib/population-api.ts` |
+| C — UI 개선 | 예측 대시보드, 지역 비교 (3개 지역), 시장 사이클 탐지 | `components/prediction/Dashboard.tsx`, `RegionCompare.tsx`, `MarketCycle.tsx` |
+| D — 백테스팅 | 과거 12개월 예측 정확도 검증, MAPE < 15% 목표 | `lib/backtesting.ts`, `components/prediction/BacktestView.tsx` |
+
+**목표 성능**: API 응답 < 8초, 백테스팅 MAPE < 15%
+
+---
+
+## Sources [coverage: high -- 11 sources]
 
 - `/Users/watchers/Desktop/vestra/docs/ALGORITHM.md` — 3개 핵심 엔진 기술 명세 (KIBO 심사용)
-- `/Users/watchers/Desktop/vestra/docs/VESTRA_Patent_Report_2026.md` — 9개 특허 기술 상세 (특허성 분석, 청구항 예시, 선행기술 비교)
-- `/Users/watchers/Desktop/vestra/docs/TECHNICAL-STATUS-REPORT.md` — 8종 독자 알고리즘 목록, 시스템 아키텍처, 코드 규모
-- `/Users/watchers/Desktop/vestra/docs/03-analysis/vestra-algorithm-advancement.analysis.md` — 4대 핵심 알고리즘 설계-구현 Gap 분석 (95% 일치율)
-- `/Users/watchers/Desktop/vestra/docs/03-analysis/predict-value.analysis.md` — ML 학습관리 탭 및 도메인 용어 시스템 Gap 분석 (99% 일치율)
-- `/Users/watchers/Desktop/vestra/docs/VESTRA-기술보고서-및-특허기술-설명서.md` — 8개 특허 기술 수식 상세 (A~H), 파라미터 근거 및 실증 검증 로드맵
+- `/Users/watchers/Desktop/vestra/docs/VESTRA_Patent_Report_2026.md` — 9개 특허 기술 상세
+- `/Users/watchers/Desktop/vestra/docs/TECHNICAL-STATUS-REPORT.md` — 8종 독자 알고리즘 목록
+- `/Users/watchers/Desktop/vestra/docs/03-analysis/vestra-algorithm-advancement.analysis.md` — 알고리즘 Gap 분석
+- `/Users/watchers/Desktop/vestra/docs/03-analysis/predict-value.analysis.md` — ML 학습관리 Gap 분석
+- `/Users/watchers/Desktop/vestra/docs/VESTRA-기술보고서-및-특허기술-설명서.md` — 8개 특허 기술 수식 상세
+- `/Users/watchers/Desktop/vestra/documents/완료보고서-2026-03-23/VESTRA_기술분석서_v4.5.1.md` — 알고리즘 7종 상세 + API 51개 분류
+- `/Users/watchers/Desktop/vestra/documents/완료보고서-2026-03-23/VESTRA_특허기능설명서_v4.5.1.md` — 특허기능 수식 상세
+- `/Users/watchers/Desktop/vestra/docs/02-design/registry-monitoring-hybrid.md` — 등기변동 하이브리드 감시 설계
+- `/Users/watchers/Desktop/vestra/docs/01-plan/features/prediction-enhancement.plan.md` — 시세전망 강화 기획
+- `/Users/watchers/Desktop/vestra/docs/01-plan/features/data-integration.plan.md` — 공공 데이터 3종 연동 기획

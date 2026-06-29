@@ -1,7 +1,7 @@
 ---
 topic: api
-last_compiled: 2026-04-18
-sources: 5
+last_compiled: 2026-06-22
+sources: 6
 ---
 
 # API
@@ -10,7 +10,7 @@ sources: 5
 
 [coverage: high -- 3 sources]
 
-VESTRA 플랫폼의 모든 서버 엔드포인트 인터페이스 명세. Next.js 16 App Router 기반 Vercel 서버리스 함수로 구현되어 있으며, 총 50개 API 라우트가 존재한다. 핵심 목적은 등기부등본 분석, 계약서 검토, 시세전망, 권리분석, AI 채팅 등 부동산 AI 서비스를 안전하게 외부에 노출하는 것이다. 모든 OpenAI 호출은 서버사이드에서만 실행된다.
+VESTRA 플랫폼의 모든 서버 엔드포인트 인터페이스 명세. Next.js 16 App Router 기반 Vercel 서버리스 함수로 구현되어 있으며, 총 51개 API 라우트가 존재한다 (분석 12·사업성 7·관리자 16·사용자 5·모니터링 3·상호검증 2·Cron 2·기타 4). 핵심 목적은 등기부등본 분석, 계약서 검토, 시세전망, 권리분석, AI 채팅 등 부동산 AI 서비스를 안전하게 외부에 노출하는 것이다. 모든 OpenAI 호출은 서버사이드에서만 실행된다.
 
 - 프로덕션 베이스 URL: `https://vestra-plum.vercel.app`
 - 개발 베이스 URL: `http://localhost:3000`
@@ -121,7 +121,7 @@ Vercel Serverless Functions
         ├── Cascade / Confidence / Registry Parser
         └── OpenAI gpt-4.1-mini (서버사이드 전용)
         │
-        ├── Neon PostgreSQL (Prisma ORM, 25개 모델)
+        ├── Neon PostgreSQL (Prisma ORM, 28개 모델)
         ├── OpenAI API
         └── 공공 API (MOLIT, 건축물대장, 대법원, ECOS, 학술검색)
 ```
@@ -168,9 +168,10 @@ middleware.ts
 | 외부 API | 내부 모듈 | 환경변수 | 자동 호출 엔드포인트 |
 |---------|----------|---------|------------------|
 | MOLIT 실거래가 (국토교통부) | `lib/molit-api.ts` | `MOLIT_API_KEY` | analyze-unified, analyze-rights, predict-value |
-| 건축물대장 (국토교통부) | `lib/building-api.ts` | - | - |
+| 건축물대장·K-apt 단지목록 (국토교통부) | `lib/building-api.ts` | `KAPT_API_KEY` | analyze-unified, analyze-rights |
+| VWorld NED 공시가격 (국토지리정보원) | `lib/vworld-api.ts` | `VWORLD_API_KEY` | analyze-unified, predict-value |
 | 대법원 판례 (법제처) | `lib/court-api.ts` | `LAW_API_KEY` | analyze-contract, chat |
-| ECOS 기준금리 (한국은행) | - | - | - |
+| ECOS 기준금리 (한국은행) | `lib/bok-api.ts` | `BOK_API_KEY` | predict-value |
 | OpenAI (gpt-4.1-mini) | `lib/openai.ts` | `OPENAI_API_KEY` | 분석 API 전반 |
 | KCB/NICE 신용정보 | `lib/credit-api.ts` | KCB/NICE API키 | credit-check |
 
@@ -293,3 +294,4 @@ middleware.ts
 - `/Users/watchers/Desktop/vestra/docs/TECHNICAL-STATUS-REPORT.md`
 - `/Users/watchers/Desktop/vestra/docs/VESTRA-플랫폼-완료보고서.md`
 - `/Users/watchers/Desktop/vestra/docs/03-analysis/vestra-rfp-enhancement-final.analysis.md`
+- `/Users/watchers/Desktop/vestra/documents/완료보고서-2026-03-23/VESTRA_기술분석서_v4.5.1.md`

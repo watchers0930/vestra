@@ -1,7 +1,7 @@
 ---
 topic: features
-last_compiled: 2026-04-18
-sources: 10
+last_compiled: 2026-06-22
+sources: 14
 ---
 
 # 주요 기능 (Features)
@@ -397,7 +397,7 @@ Next.js 서버 (Vercel Serverless)
 - **이메일 발송**은 Mock 모드만 구현. 실제 이메일 발송 미연동
 - **Rate Limit DB 오류** 발생 시 요청 허용 정책 (가용성 우선 설계)
 - **뉴스 RSS URL** 구현 시 실제 접속 가능 여부 검증 필요. 접속 불가 시 graceful skip
-- **대출 가심사/의사결정 리포트/임대인 프로파일** 기능은 설계 완료 상태이나 미구현
+- **대출 가심사/의사결정 리포트/임대인 프로파일/상호검증/AI 신뢰도** 페이지는 사용자 가이드(v4.5.1) 기준으로 존재하나 구현 완성도 검증 필요 (`/loan-check`, `/decision-report`, `/landlord-profile`, `/verification`, `/ai-trust`)
 
 ---
 
@@ -413,3 +413,7 @@ Next.js 서버 (Vercel Serverless)
 - `/Users/watchers/Desktop/vestra/docs/02-design/features/competitive-advantage.design.md`
 - `/Users/watchers/Desktop/vestra/docs/03-analysis/vestra-rfp-enhancement-final.analysis.md`
 - `/Users/watchers/Desktop/vestra/docs/04-report/features/prediction-enhancement.report.md`
+- `/Users/watchers/Desktop/vestra/docs/VESTRA_사용가이드_슬라이드.md`
+- `/Users/watchers/Desktop/vestra/docs/01-plan/features/competitive-advantage.plan.md`
+- `/Users/watchers/Desktop/vestra/docs/01-plan/features/data-integration.plan.md`
+- `/Users/watchers/Desktop/vestra/docs/02-design/registry-monitoring-hybrid.md`

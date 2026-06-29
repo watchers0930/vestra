@@ -1,7 +1,7 @@
 ---
 topic: security
-last_compiled: 2026-04-18
-sources: 7
+last_compiled: 2026-06-22
+sources: 8
 ---
 
 # 보안 정책 및 가이드 (Security)
@@ -12,7 +12,9 @@ sources: 7
 
 VESTRA의 보안 아키텍처는 행정안전부 SW 개발보안 가이드 및 OWASP Top 10 (2021) 기준을 기반으로 구현되었다. 개인정보보호법 제33조(개인정보 영향평가) 준수를 목표로 하며, PII 암호화·역할 기반 접근 제어·감사 로그를 3대 핵심 축으로 삼는다.
 
-2026-03-23 전수 보안 점검(v3.7.0 기준) 결과 종합 등급 **B+ (7.5/10)** 이며, CRITICAL 2건·HIGH 5건·MEDIUM 7건·LOW 3건의 미결 이슈가 존재한다.
+2026-03-23 전수 보안 점검(v3.7.0 기준) 결과 종합 등급 **B+ (7.5/10)** 이며, CRITICAL 2건·HIGH 5건·MEDIUM 7건·LOW 3건의 이슈가 식별되었다.
+
+v4.5.1 종합평점 (2026-06-22 기준) 에서는 `withAdminAuth` HOF 통일, `crypto.ts` PII 암호화 강화, `sanitize.ts` 개선 등으로 보안 영역 점수가 **9.0/10** 으로 상향되었다. OWASP Top 10 (2021) 기준 10개 항목 중 **8개 완전 충족, 2개 부분 충족**.
 
 ---
 
@@ -195,7 +197,28 @@ try {
 
 **접근 권한**: ADMIN만 조회 가능 (대시보드). 삭제는 자동 파기만 허용.
 
-### 8. 개인정보 영향평가 (PIA)
+### 8. OWASP Top 10 (2021) 커버리지
+
+v4.5.1 종합평점 기준 (출처: `VESTRA_종합평점_v4.5.1.md`)
+
+| # | OWASP 항목 | 상태 |
+|---|------------|------|
+| A01 | Broken Access Control | ✅ 완전 충족 (RBAC 5단계 + withAdminAuth HOF) |
+| A02 | Cryptographic Failures | ✅ 완전 충족 (AES-256-GCM PII 암호화, HKDF 키 파생) |
+| A03 | Injection | ✅ 완전 충족 (Prisma 파라미터 바인딩, sanitize.ts) |
+| A04 | Insecure Design | ✅ 완전 충족 (Rate Limit + Cost Guard 이중 방어) |
+| A05 | Security Misconfiguration | ✅ 완전 충족 (AUTH_SECRET fail-fast, 보안 헤더 전체 적용) |
+| A06 | Vulnerable Components | ✅ 완전 충족 |
+| A07 | Auth & Session Management | ✅ 완전 충족 (NextAuth v5 JWE, HttpOnly 쿠키) |
+| A08 | Software Integrity Failures | ✅ 완전 충족 |
+| A09 | Logging & Monitoring | ⚠️ 부분 충족 (감사 로그 구현됨, 자동 파기 스케줄러 미구현) |
+| A10 | SSRF | ⚠️ 부분 충족 (외부 API 도메인 고정, 사용자 URL 미허용이나 CSP unsafe-inline 잔존) |
+
+**전체 결과**: 8/10 완전 충족, 2/10 부분 충족
+
+---
+
+### 9. 개인정보 영향평가 (PIA)
 
 평가일 2026-03-11. 근거: 개인정보보호법 제33조.
 
@@ -346,3 +369,4 @@ middleware.ts (Edge Function)
 5. `/Users/watchers/Desktop/vestra/docs/security/pia.md`
 6. `/Users/watchers/Desktop/vestra/docs/03-analysis/security-audit-2026-03-23.md`
 7. `/Users/watchers/Desktop/vestra/docs/TECHNICAL-STATUS-REPORT.md`
+8. `/Users/watchers/Desktop/vestra/documents/완료보고서-2026-03-23/VESTRA_종합평점_v4.5.1.md`

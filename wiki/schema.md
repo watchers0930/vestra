@@ -68,5 +68,35 @@ wiki/
 │   ├── security.md
 │   ├── features.md
 │   └── deployment.md
-└── concepts/             # 개념 설명 (향후 확장)
+└── concepts/             # 크로스커팅 패턴
+    ├── two-stage-principle.md
+    └── uncalibrated-parameters.md
 ```
+
+---
+
+## Topics 목록
+
+| 슬러그 | 설명 | 키워드 |
+|--------|------|--------|
+| `platform-overview` | 플랫폼 전체 개요, 기술스택, 스케일 지표 | 플랫폼, 개요, 기술스택, 비즈니스, 사업계획 |
+| `algorithm` | 7개 핵심 알고리즘, 외부 데이터 연동, 예측 로드맵 | 알고리즘, V-Score, 사기위험도, 시세예측, 공공API |
+| `api` | 51개 API 라우트 명세, 인증, Rate Limit | API, 엔드포인트, 인증, Rate Limit |
+| `frontend` | UI 컴포넌트 구조, 라우팅, 페이지 목록 | 프론트엔드, 컴포넌트, UI, 페이지 |
+| `security` | 보안 아키텍처, RBAC, PII 암호화, OWASP | 보안, 인증, 암호화, OWASP, 감사로그 |
+| `features` | 30+ 기능 목록, 전세분석, 권리분석, 등기감시 | 기능, 전세, 권리분석, 등기, 계약 |
+| `deployment` | Vercel 배포, 환경변수, Cron Job | 배포, Vercel, 환경변수, Cron |
+
+## Concepts 목록
+
+| 슬러그 | 설명 | 연결 토픽 |
+|--------|------|-----------|
+| `two-stage-principle` | 중요 판단은 항상 2단계 구조 (알고리즘·배포·보안에서 공통 패턴) | algorithm, deployment, security |
+| `uncalibrated-parameters` | 핵심 위험도 가중치가 휴리스틱 초기값이며 실사고 데이터 캘리브레이션 대기 중 | algorithm, api, deployment |
+
+---
+
+## Evolution Log
+
+- 2026-06-22: 개념 아티클 디렉토리(concepts/) 초기 생성 — two-stage-principle, uncalibrated-parameters 추가
+- 2026-06-22: Topics/Concepts 목록 섹션 schema.md에 추가

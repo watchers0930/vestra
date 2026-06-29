@@ -1,5 +1,39 @@
 # Wiki Compile Log
 
+## 2026-06-22 — 증분 컴파일
+
+- 모드: codebase
+- 신규 소스 파일: 13개 추가 (총 35 → 48개 → compile-state 기준 35개 + 13개 신규)
+- 업데이트 토픽: 6개 (deployment, platform-overview, algorithm, features, security, api)
+- 개념 아티클 신규 생성: 2개 (two-stage-principle, uncalibrated-parameters)
+
+### 토픽별 변경 요약
+| 토픽 | 변경 유형 | 주요 추가 내용 |
+|------|-----------|----------------|
+| deployment | 전면 재작성 | 2단계 배포 모델(preview→promote), 환경변수 15종, smoke check |
+| platform-overview | 전면 재작성 | v4.5.1 지표(51 API/27 pages/80 components/28 DB), 9.2/10 A등급, 경쟁우위 |
+| algorithm | 섹션 추가 | 공공 API 10종 테이블, 등기변동 하이브리드 감시, 시세전망 Phase A~D |
+| features | 헤더·소스 업데이트 | 경쟁우위 기획, 데이터통합, 사용가이드 반영, 기능현황 갱신 |
+| security | 섹션 추가 | OWASP Top 10 매트릭스(8/10 충족), 보안 점수 9.0/10 업데이트 |
+| api | 헤더·수치 업데이트 | 51개 라우트 분류, 28개 DB 모델, 외부 API 7종(VWorld·K-apt·BOK) |
+
+### 신규 소스 문서 (13개)
+- docs/01-plan/features/competitive-advantage.plan.md
+- docs/01-plan/features/data-integration.plan.md
+- docs/01-plan/features/prediction-enhancement.plan.md
+- docs/02-design/registry-monitoring-hybrid.md
+- docs/deployment-runbook.md
+- docs/VESTRA_사용가이드_슬라이드.md
+- documents/사업계획서/VESTRA_사업계획서_지원금신청_v3.md
+- documents/사업계획서/VESTRA_사업계획서_현행화_v2.md
+- documents/사업계획서/VESTRA_초기창업패키지_신청서_v3.md
+- documents/완료보고서-2026-03-23/VESTRA_기술분석서_v4.5.1.md
+- documents/완료보고서-2026-03-23/VESTRA_완료보고서_v4.5.1.md
+- documents/완료보고서-2026-03-23/VESTRA_종합평점_v4.5.1.md
+- documents/완료보고서-2026-03-23/VESTRA_특허기능설명서_v4.5.1.md
+
+---
+
 ## 2026-04-18 — 전체 재컴파일
 
 - 모드: codebase
