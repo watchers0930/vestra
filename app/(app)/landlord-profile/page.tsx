@@ -10,6 +10,7 @@ import {
   Megaphone,
   TrendingDown,
   Loader2,
+  Info,
 } from "lucide-react";
 import { PageHeader, Card, Badge } from "@/components/common";
 import { Button } from "@/components/common";
@@ -351,6 +352,43 @@ export default function LandlordProfilePage() {
               </div>
             </div>
           </Card>
+
+          {/* 데이터 출처 및 면책 안내 */}
+          <div className="rounded-xl border border-[#e5e5e7] bg-[#f5f5f7] px-5 py-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Info className="h-4 w-4 text-[#6e6e73]" />
+              <h3 className="text-sm font-semibold text-[#1d1d1f]">데이터 출처 및 유의사항</h3>
+            </div>
+            <div className="space-y-2 text-xs leading-relaxed text-[#6e6e73]">
+              <div className="flex gap-2">
+                <span className="shrink-0 font-medium text-[#1d1d1f]">소유 물건 목록</span>
+                <span>
+                  현재 연동된 등기 데이터 기반으로 조회됩니다. 공공 API 범위 제한으로 전국 소유 물건의 전수 조회는 지원되지 않으며, 실제 보유 물건과 다를 수 있습니다.
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <span className="shrink-0 font-medium text-[#1d1d1f]">추정 시세</span>
+                <span>
+                  국토교통부 실거래가 API(최근 6개월 평균)를 기반으로 산출됩니다. 실제 시세와 차이가 있을 수 있습니다.
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <span className="shrink-0 font-medium text-[#1d1d1f]">판례 이력</span>
+                <span>
+                  법제처 Open API를 통해 소유자명 관련 판례를 검색합니다. 판례 익명 처리 정책상 개인과의 직접 매칭에는 한계가 있으며, 실제 소송 이력과 다를 수 있습니다.
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <span className="shrink-0 font-medium text-[#1d1d1f]">사기 사례</span>
+                <span>
+                  사용자 제보 기반 데이터베이스와 주소로 매칭됩니다. 허위 제보가 포함될 수 있으며 공식 수사 결과가 아닙니다.
+                </span>
+              </div>
+              <div className="mt-3 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-amber-800">
+                이 프로파일은 참고용 정보입니다. 최종 계약 판단은 반드시 등기부등본 원본을 확인하고 법률 전문가와 상담하시기 바랍니다.
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

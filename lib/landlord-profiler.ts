@@ -118,10 +118,12 @@ function scoreToGrade(score: number): string {
 
 /**
  * 소유자명과 물건 정보 배열로 임대인 종합 프로파일 생성
+ * @param courtCaseCount - 외부(법제처 API)에서 조회한 관련 판례 수
  */
 export async function buildLandlordProfile(
   ownerName: string,
   properties: LandlordProperty[],
+  courtCaseCount = 0,
 ): Promise<LandlordProfile> {
   const nameH = hashName(ownerName);
   const nameD = maskName(ownerName);
@@ -145,14 +147,12 @@ export async function buildLandlordProfile(
     // FraudCase 테이블 없으면 무시
   }
 
-  // TODO: court-api.ts 연동하여 판례 검색
-  const courtCaseCount = 0;
-
   // 위험 요인 분석
   const riskFactors: string[] = [];
   if (mortgageRatio > 60) riskFactors.push(`근저당 비율 ${mortgageRatio}%로 높음`);
   if (totalLiens > 0) riskFactors.push(`압류/가압류 ${(totalLiens / 10000).toFixed(0)}만원 존재`);
   if (properties.length >= 5) riskFactors.push(`소유 물건 ${properties.length}건 — 과도한 투자 가능성`);
+  if (courtCaseCount > 0) riskFactors.push(`관련 판례 ${courtCaseCount}건 검색됨 (법제처 기준)`);
   if (fraudCaseCount > 0) riskFactors.push(`전세사기 사례 ${fraudCaseCount}건 매칭`);
   if (properties.some((p) => p.riskLevel === "HIGH")) riskFactors.push("고위험 물건 보유");
 

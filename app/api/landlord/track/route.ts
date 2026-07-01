@@ -15,6 +15,7 @@ import {
   type LandlordProperty,
 } from "@/lib/landlord-profiler";
 import { fetchRecentPrices } from "@/lib/molit-api";
+import { searchCourtCases } from "@/lib/court-api";
 import { validateOrigin } from "@/lib/csrf";
 
 // 시드 데이터: 소유자별 물건 목록 (실 데이터 연동 전)
@@ -126,7 +127,16 @@ export async function POST(req: NextRequest) {
       riskLevel: assessPropertyRisk(p.mortgageTotal, p.liensTotal, p.estimatedPrice),
     }));
 
-    const profile = await buildLandlordProfile(ownerName, properties);
+    // 법제처 Open API 판례 검색 (LAW_API_KEY 없으면 graceful fallback으로 0 반환)
+    let courtCaseCount = 0;
+    try {
+      const cases = await searchCourtCases(`${ownerName.trim()} 전세보증금`, 10);
+      courtCaseCount = cases.length;
+    } catch {
+      // API 키 미설정 또는 외부 오류 시 0 유지
+    }
+
+    const profile = await buildLandlordProfile(ownerName, properties, courtCaseCount);
 
     return NextResponse.json(profile);
   } catch (error) {
