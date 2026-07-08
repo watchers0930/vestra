@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ReceiptText, CreditCard, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { ReceiptText, CreditCard, Loader2, CheckCircle, AlertCircle, MapPin } from "lucide-react";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import type { IssuedRegistryAnalysisPayload } from "../hooks/useRightsAnalysis";
 
@@ -22,6 +22,40 @@ interface Props {
 export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
   const { data: session } = useSession();
   const router = useRouter();
+  const postcodeReadyRef = useRef(false);
+
+  // 다음 주소 스크립트 로드
+  useEffect(() => {
+    if (window.daum?.Postcode) { postcodeReadyRef.current = true; return; }
+    const existing = document.getElementById("daum-postcode-script");
+    if (existing) { existing.addEventListener("load", () => { postcodeReadyRef.current = true; }); return; }
+    const script = document.createElement("script");
+    script.id = "daum-postcode-script";
+    script.src = "https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+    script.async = true;
+    script.onload = () => { postcodeReadyRef.current = true; };
+    document.head.appendChild(script);
+  }, []);
+
+  const openAddressSearch = useCallback(() => {
+    const open = () => new window.daum!.Postcode({
+      oncomplete: (data) => {
+        const addr = data.userSelectedType === "R" ? data.roadAddress : data.jibunAddress;
+        setIssueAddress(addr);
+      },
+    }).open();
+
+    if (postcodeReadyRef.current && window.daum?.Postcode) {
+      open();
+    } else {
+      const script = document.getElementById("daum-postcode-script");
+      if (script) {
+        script.addEventListener("load", open, { once: true });
+      } else {
+        open();
+      }
+    }
+  }, []);
 
   const [issueAddress, setIssueAddress] = useState("");
   const [issueOwnerName, setIssueOwnerName] = useState("");
@@ -240,13 +274,38 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
         {/* 입력 폼 (처리 중/완료가 아닐 때) */}
         {paymentPhase === "idle" || paymentPhase === "error" ? (
           <>
-            <input
-              value={issueAddress}
-              onChange={(e) => setIssueAddress(e.target.value)}
-              placeholder="부동산 주소를 입력하세요 (예: 서울시 강남구 역삼동 123)"
-              style={inputStyle}
-              disabled={isProcessing}
-            />
+            {/* 주소 검색 (다음 주소) */}
+            <div style={{ display: "flex", gap: "6px", marginBottom: "8px" }}>
+              <input
+                value={issueAddress}
+                readOnly
+                placeholder="주소 검색 버튼을 눌러 주소를 선택하세요"
+                style={{ ...inputStyle, marginBottom: 0, flex: 1, cursor: "default", background: issueAddress ? "#fff" : "#f5f5f7", color: issueAddress ? "#1d1d1f" : "#86868b" }}
+              />
+              <button
+                type="button"
+                onClick={openAddressSearch}
+                disabled={isProcessing}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "0 14px",
+                  borderRadius: "10px",
+                  border: "1px solid rgba(0,113,227,0.25)",
+                  background: "rgba(0,113,227,0.07)",
+                  color: "#0071e3",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  cursor: isProcessing ? "not-allowed" : "pointer",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                }}
+              >
+                <MapPin size={13} />
+                주소 검색
+              </button>
+            </div>
 
             {/* 집합건물 여부 */}
             <label style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "8px", cursor: "pointer" }}>
