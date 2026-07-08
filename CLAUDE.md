@@ -116,10 +116,21 @@ npm run lint         # ESLint
 ```
 
 ## Deployment Rule
-- `vestra`는 바로 운영 배포하지 않는다.
-- 항상 먼저 `t-vestra.vercel.app`으로 테스트 배포한다.
-- 운영 배포(`vestra-plum.vercel.app`)는 사용자 확인 또는 별도 승격 지시가 있을 때만 진행한다.
-- 기본 배포 흐름은 `테스트 배포 -> 사용자 확인/지시 -> 운영 승격`이다.
+
+> ⚠️ **절대 규칙 — 모든 작업, 예외 없음**
+> 모든 변경은 테스트에 먼저 push·배포한 뒤, 대장의 확인/승격 지시가 있을 때만 운영에 반영한다.
+
+- **테스트 배포 브랜치**: `test` (`git push origin test`)
+- **테스트 URL**: `t-vestra.vercel.app`
+- **운영 배포 브랜치**: `main` → `vestra-plum.vercel.app`
+- 운영은 테스트 확인 후 별도 지시가 있을 때만 승격한다.
+- 운영은 새로 다시 빌드하지 않고, `t-vestra`가 가리키는 동일 deployment를 그대로 승격한다.
+- **배포 흐름**:
+  1. `main`에 커밋
+  2. `deploy vestra` — Vercel preview 빌드 → `t-vestra.vercel.app` alias 연결
+  3. test 브랜치 동기화: `git checkout test && git reset --hard main && git push origin test && git checkout main`
+  4. 대장 확인 후 승격 지시
+  5. `deploy vestra promote` — t-vestra 동일 빌드를 `vestra-plum.vercel.app`으로 alias 이동 (재빌드 없음)
 
 ## Absolute Rules
 

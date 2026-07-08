@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { createAuditLog } from "@/lib/audit-log";
-import { fetchRegistry, isCodefAvailable } from "@/lib/codef-api";
+import { fetchRegistryDocumentByAddress, isTilkoRegistryDocAvailable } from "@/lib/tilko-api";
 import { runAnalysisPipeline, sanitizeInput } from "@/app/api/analyze-unified/analyze-service";
 import { recordRegistrySnapshot } from "@/lib/registry-snapshot-recorder";
 import { createHash } from "crypto";
@@ -82,12 +82,8 @@ async function executePaidOrder(params: {
     );
   }
 
-  if (!order.commUniqueNo) {
-    return NextResponse.json({ error: "부동산 고유번호가 없어 발급할 수 없습니다." }, { status: 400 });
-  }
-
-  if (!isCodefAvailable()) {
-    return NextResponse.json({ error: "등기부 공식 연계 조회 서비스가 설정되지 않았습니다." }, { status: 503 });
+  if (!isTilkoRegistryDocAvailable()) {
+    return NextResponse.json({ error: "틸코 등기부 조회 서비스가 설정되지 않았습니다." }, { status: 503 });
   }
 
   const monitoredProperty = monitoredPropertyId
@@ -110,11 +106,8 @@ async function executePaidOrder(params: {
   });
 
   try {
-    const registry = await fetchRegistry({
-      reqAddress: registryAddress,
-      commUniqueNo: order.commUniqueNo,
-      realEstateType,
-      registerType: order.registerType,
+    const registry = await fetchRegistryDocumentByAddress({
+      address: registryAddress,
     });
 
     const documentText = sanitizeInput(registry.text);
@@ -142,12 +135,12 @@ async function executePaidOrder(params: {
     const analysisResult = await runAnalysisPipeline({
       rawText: documentText,
       address: order.address,
-      inputSource: "codef",
+      inputSource: "tilko",
       ip,
     });
 
     const analysisAddress = order.address || analysisResult.propertyInfo.address || registry.address;
-    const analysisSummary = `${analysisResult.riskScore?.grade || "?"}등급 (${analysisResult.riskScore?.gradeLabel || ""}, ${analysisResult.riskScore?.totalScore || 0}점) | CODEF 등기부 발급`;
+    const analysisSummary = `${analysisResult.riskScore?.grade || "?"}등급 (${analysisResult.riskScore?.gradeLabel || ""}, ${analysisResult.riskScore?.totalScore || 0}점) | 틸코 등기부 발급`;
     const analysisData = JSON.stringify({
       propertyInfo: analysisResult.propertyInfo,
       riskAnalysis: analysisResult.riskAnalysis,
@@ -173,7 +166,7 @@ async function executePaidOrder(params: {
       dataSource: {
         registryParsed: true,
         molitAvailable: !!analysisResult.marketData,
-        inputSource: "codef",
+        inputSource: "tilko",
       },
     });
 
@@ -242,7 +235,7 @@ async function executePaidOrder(params: {
         monitoredPropertyId: monitoredProperty?.id,
         snapshotSequenceNo: snapshotResult?.sequenceNo,
         snapshotHash: snapshotResult?.snapshotHash,
-        provider: "codef",
+        provider: "tilko",
       },
       req,
     });
@@ -258,11 +251,9 @@ async function executePaidOrder(params: {
       },
       registry: {
         text: documentText,
-        registerType: registry.registerType,
-        uniqueNo: registry.uniqueNo,
         address: registry.address,
         requestedAddress: order.address,
-        source: "codef",
+        source: "tilko",
       },
       snapshot: snapshotResult
         ? {
@@ -295,7 +286,7 @@ async function executePaidOrder(params: {
         orderId: order.orderId,
         address: order.address,
         commUniqueNo: order.commUniqueNo,
-        provider: "codef",
+        provider: "tilko",
         error: message,
       },
       req,
@@ -348,9 +339,6 @@ export async function POST(req: NextRequest) {
     if (!address || address.length < 5) {
       return NextResponse.json({ error: "유효한 주소가 필요합니다." }, { status: 400 });
     }
-    if (!commUniqueNo) {
-      return NextResponse.json({ error: "조회 대상 부동산 확인 후 신청할 수 있습니다." }, { status: 400 });
-    }
     if (!ownerName) {
       return NextResponse.json({ error: "등기부 조회/발급을 위해 소유자명이 필요합니다." }, { status: 400 });
     }
@@ -380,7 +368,7 @@ export async function POST(req: NextRequest) {
         ownerName,
         amount: ISSUE_PRICE,
         status: "payment_required",
-        provider: "codef",
+        provider: "tilko",
         purpose,
         includeHistory,
         registerType,
@@ -407,7 +395,7 @@ export async function POST(req: NextRequest) {
         commUniqueNo,
         amount: ISSUE_PRICE,
         status: "payment_required",
-        provider: "codef",
+        provider: "tilko",
       },
       req,
     });

@@ -35,9 +35,9 @@ export function useRightsAnalysis() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [analysisId, setAnalysisId] = useState<string>("");
   const [previousAnalysis, setPreviousAnalysis] = useState<{ date: string; summary: string } | null>(null);
-  const [codefAddress, setCodefAddress] = useState("");
-  const [codefFetching, setCodefFetching] = useState(false);
-  const [codefSource, setCodefSource] = useState(false);
+  const [tilkoAddress, setTilkoAddress] = useState("");
+  const [tilkoFetching, setTilkoFetching] = useState(false);
+  const [tilkoSource, setTilkoSource] = useState(false);
   const [autoAddress, setAutoAddress] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,8 +59,8 @@ export function useRightsAnalysis() {
     const params = new URLSearchParams(window.location.search);
     const urlAddr = params.get("address");
     if (urlAddr) {
-      setInputMode("codef");
-      setCodefAddress(urlAddr);
+      setInputMode("tilko");
+      setTilkoAddress(urlAddr);
       setAutoAddress(urlAddr);
     }
   }, []);
@@ -69,57 +69,107 @@ export function useRightsAnalysis() {
     setRawText(SAMPLE_REGISTRY_TEXT);
     setFileName(null);
     setFileType(null);
-    setCodefSource(false);
+    setTilkoSource(false);
     setInputMode("text");
   };
 
   const handleAddressAnalyze = async (addrOverride?: string) => {
-    const addr = (addrOverride ?? codefAddress).trim();
+    const addr = (addrOverride ?? tilkoAddress).trim();
     if (!addr || addr.length < 4) return;
-    setCodefFetching(true);
+    setTilkoFetching(true);
     setError(null);
     setResult(null);
 
     try {
-      const geoRes = await fetch(`/api/analyze-unified?address=${encodeURIComponent(addr)}`);
-      const geoData = await geoRes.json();
-      if (geoData.error) throw new Error(geoData.error);
+      setStep("tilko-fetch");
 
-      const b = geoData.building;
-      const p = geoData.price;
-      const lines: string[] = ["【 표 제 부 】", "", `소재지번: ${addr}`];
-      if (b?.buildingName) lines.push(`건물명칭: ${b.buildingName}`);
-      if (b?.totalArea) lines.push(`연면적: ${b.totalArea}㎡`);
-      if (b?.mainPurpose) lines.push(`주용도: ${b.mainPurpose}`);
-      if (b?.structure) lines.push(`구조: ${b.structure}`);
-      if (b?.buildYear) lines.push(`건축년도: ${b.buildYear}년`);
-      if (b?.floors) lines.push(`지상층수: ${b.floors}층`);
-      if (b?.households) lines.push(`세대수: ${b.households}세대`);
-      if (p?.sale) {
-        lines.push("", "─── 실거래가 정보 ───");
-        lines.push(`평균 매매가: ${p.sale.avgPrice.toLocaleString()}원`);
-        lines.push(`최근거래: ${p.sale.period} (${p.sale.transactionCount}건)`);
-      }
-      if (p?.rent?.avgDeposit) {
-        lines.push(`전세 평균가: ${p.rent.avgDeposit.toLocaleString()}원`);
-        if (p.jeonseRatio) lines.push(`전세가율: ${p.jeonseRatio.toFixed(1)}%`);
-      }
-      lines.push("", "【 갑 구 】 (소유권에 관한 사항)");
-      lines.push("※ 등기부등본 미제출 — 공공데이터 기반 간이 분석");
-      lines.push("", "【 을 구 】 (소유권 이외의 권리에 관한 사항)");
-      lines.push("※ 등기부등본 미제출 — 권리관계 직접 확인 필요");
-      const syntheticText = lines.join("\n");
+      // 1. 틸코 등기부등본 + 시세 데이터 병렬 조회
+      const [tilkoRes, geoRes] = await Promise.allSettled([
+        fetch("/api/tilko/registry-document", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address: addr }),
+        }),
+        fetch(`/api/analyze-unified?address=${encodeURIComponent(addr)}`),
+      ]);
 
-      const autoPrice = p?.sale?.avgPrice || p?.rent?.avgDeposit || 0;
+      // 시세 데이터 파싱 (실패해도 계속 진행)
+      let geoData: {
+        building?: {
+          buildingName?: string;
+          totalArea?: number | string;
+          mainPurpose?: string;
+          structure?: string;
+          buildYear?: number | string;
+        };
+        price?: {
+          sale?: {
+            avgPrice: number;
+            period?: string;
+            transactionCount?: number;
+          };
+          rent?: {
+            avgDeposit: number;
+          };
+          jeonseRatio?: number;
+        };
+      } | null = null;
+      let autoPrice = 0;
+      if (geoRes.status === "fulfilled" && geoRes.value.ok) {
+        geoData = await geoRes.value.json().catch(() => null);
+        const p = geoData?.price;
+        if (p?.sale?.avgPrice) autoPrice = p.sale.avgPrice;
+        else if (p?.rent?.avgDeposit) autoPrice = p.rent.avgDeposit;
+      }
       if (autoPrice > 0) setEstimatedPrice(autoPrice);
       const priceForAnalysis = autoPrice > 0 ? autoPrice : estimatedPrice;
 
-      setCodefSource(true);
+      // 2. 틸코 성공 시 실 등기부 텍스트, 실패 시 간이 텍스트 폴백
+      let registryText: string;
+      let registrySource: "tilko" | "synthetic";
+
+      if (tilkoRes.status === "fulfilled" && tilkoRes.value.ok) {
+        const tilkoData = await tilkoRes.value.json();
+        if (tilkoData.text && !tilkoData.error) {
+          registryText = tilkoData.text;
+          registrySource = "tilko";
+        } else {
+          throw new Error(tilkoData.error || "틸코 등기부 응답 오류");
+        }
+      } else {
+        // 폴백: 공공데이터 기반 간이 텍스트
+        console.warn("[권리분석] 틸코 조회 실패, 간이분석으로 폴백");
+        const b = geoData?.building;
+        const p = geoData?.price;
+        const lines: string[] = ["【 표 제 부 】", "", `소재지번: ${addr}`];
+        if (b?.buildingName) lines.push(`건물명칭: ${b.buildingName}`);
+        if (b?.totalArea) lines.push(`연면적: ${b.totalArea}㎡`);
+        if (b?.mainPurpose) lines.push(`주용도: ${b.mainPurpose}`);
+        if (b?.structure) lines.push(`구조: ${b.structure}`);
+        if (b?.buildYear) lines.push(`건축년도: ${b.buildYear}년`);
+        if (p?.sale) {
+          lines.push("", "─── 실거래가 정보 ───");
+          lines.push(`평균 매매가: ${p.sale.avgPrice.toLocaleString()}원`);
+          lines.push(`최근거래: ${p.sale.period} (${p.sale.transactionCount}건)`);
+        }
+        if (p?.rent?.avgDeposit) {
+          lines.push(`전세 평균가: ${p.rent.avgDeposit.toLocaleString()}원`);
+          if (p.jeonseRatio) lines.push(`전세가율: ${p.jeonseRatio.toFixed(1)}%`);
+        }
+        lines.push("", "【 갑 구 】 (소유권에 관한 사항)");
+        lines.push("※ 등기부등본 미제출 — 공공데이터 기반 간이 분석");
+        lines.push("", "【 을 구 】 (소유권 이외의 권리에 관한 사항)");
+        lines.push("※ 등기부등본 미제출 — 권리관계 직접 확인 필요");
+        registryText = lines.join("\n");
+        registrySource = "synthetic";
+      }
+
+      setTilkoSource(true);
       setFileName(null);
       setFileType(null);
 
-      setStep("codef-fetch"); await new Promise((r) => setTimeout(r, 400));
-      setStep("parsing"); await new Promise((r) => setTimeout(r, 600));
+      await new Promise((r) => setTimeout(r, 300));
+      setStep("parsing"); await new Promise((r) => setTimeout(r, 500));
       setStep("validating"); await new Promise((r) => setTimeout(r, 400));
       setStep("scoring"); await new Promise((r) => setTimeout(r, 400));
       setStep("molit"); await new Promise((r) => setTimeout(r, 300));
@@ -128,18 +178,23 @@ export function useRightsAnalysis() {
       const res = await fetch("/api/analyze-unified", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rawText: syntheticText, estimatedPrice: priceForAnalysis, source: "address" }),
+        body: JSON.stringify({
+          rawText: registryText,
+          estimatedPrice: priceForAnalysis,
+          source: registrySource === "tilko" ? "tilko" : "address",
+        }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      setRawText(syntheticText);
+      setRawText(registryText);
       setResult(data);
       setStep("done");
 
+      const summaryLabel = registrySource === "tilko" ? "틸코 등기부" : "간이분석";
       addAnalysis({
         type: "rights", typeLabel: "권리분석", address: addr,
-        summary: `${data.riskScore?.grade || "?"}등급 (${data.riskScore?.gradeLabel || ""}, ${data.riskScore?.totalScore || 0}점) | 간이분석`,
+        summary: `${data.riskScore?.grade || "?"}등급 (${data.riskScore?.gradeLabel || ""}, ${data.riskScore?.totalScore || 0}점) | ${summaryLabel}`,
         data: data as unknown as Record<string, unknown>,
       });
       addOrUpdateAsset({
@@ -154,7 +209,7 @@ export function useRightsAnalysis() {
       setError(e instanceof Error ? e.message : "분석에 실패했습니다.");
       setStep("idle");
     } finally {
-      setCodefFetching(false);
+      setTilkoFetching(false);
     }
   };
 
@@ -172,7 +227,7 @@ export function useRightsAnalysis() {
     }
 
     setError(null);
-    setCodefSource(false);
+    setTilkoSource(false);
     setFileType(isPdf ? "pdf" : "image");
     setFileName(isPdf ? firstFile.name : `${uploadFiles.length}개 이미지`);
     setIsExtracting(true);
@@ -223,9 +278,9 @@ export function useRightsAnalysis() {
     setError(null);
 
     const usedFile = inputMode === "file" && fileName;
-    const usedCodef = codefSource && rawText;
+    const usedTilko = tilkoSource && rawText;
 
-    if (usedCodef) { setStep("codef-fetch"); await new Promise((r) => setTimeout(r, 400)); }
+    if (usedTilko) { setStep("tilko-fetch"); await new Promise((r) => setTimeout(r, 400)); }
     else if (usedFile) { setStep("extracting"); await new Promise((r) => setTimeout(r, 400)); }
     setStep("parsing"); await new Promise((r) => setTimeout(r, 600));
     setStep("validating"); await new Promise((r) => setTimeout(r, 400));
@@ -237,7 +292,7 @@ export function useRightsAnalysis() {
       const res = await fetch("/api/analyze-unified", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rawText, estimatedPrice, source: codefSource ? "codef" : "manual" }),
+        body: JSON.stringify({ rawText, estimatedPrice, source: tilkoSource ? "tilko" : "manual" }),
         signal: controller.signal,
       });
       const data = await res.json();
@@ -278,13 +333,13 @@ export function useRightsAnalysis() {
       data.propertyInfo?.address ||
       data.parsed?.title?.address ||
       payload.registry.address ||
-      "CODEF 등기부";
+      "틸코 등기부";
 
     setRawText(issuedText);
     setResult(data);
     setError(null);
     setStep("done");
-    setCodefSource(true);
+    setTilkoSource(true);
     setFileName(null);
     setFileType(null);
     setAnalysisId(payload.analysis.id || `rights_${Date.now()}`);
@@ -297,7 +352,7 @@ export function useRightsAnalysis() {
       type: "rights",
       typeLabel: "권리분석",
       address: addr,
-      summary: `${data.riskScore?.grade || "?"}등급 (${data.riskScore?.gradeLabel || ""}, ${data.riskScore?.totalScore || 0}점) | CODEF 등기부 발급`,
+      summary: `${data.riskScore?.grade || "?"}등급 (${data.riskScore?.gradeLabel || ""}, ${data.riskScore?.totalScore || 0}점) | 틸코 등기부 발급`,
       data: data as unknown as Record<string, unknown>,
     });
     addOrUpdateAsset({
@@ -308,7 +363,7 @@ export function useRightsAnalysis() {
       safetyScore: data.riskAnalysis?.safetyScore || 0,
       riskScore: data.riskAnalysis?.riskScore || 0,
     });
-    addNotification(`CODEF 등기부 발급 및 권리분석 완료: ${addr}`);
+    addNotification(`틸코 등기부 발급 및 권리분석 완료: ${addr}`);
   }, []);
 
   // autoAddress 세팅 시 자동 분석 실행 (handleAddressAnalyze 정의 이후에 선언)
@@ -326,8 +381,8 @@ export function useRightsAnalysis() {
     step, result, error, setError,
     fileName, fileType, isDragging, isExtracting,
     analysisId, previousAnalysis,
-    codefAddress, setCodefAddress,
-    codefFetching, codefSource, setCodefSource,
+    tilkoAddress, setTilkoAddress,
+    tilkoFetching, tilkoSource, setTilkoSource,
     fileInputRef,
     loadSample, handleAddressAnalyze,
     handleDrop, handleDragOver, handleDragLeave,

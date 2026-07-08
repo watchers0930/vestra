@@ -6,11 +6,11 @@ import type { AnalysisStep } from "../types";
 interface Props {
   step: AnalysisStep;
   showExtract?: boolean;
-  showCodef?: boolean;
+  showTilko?: boolean;
   fileType?: "pdf" | "image" | null;
 }
 
-export function AnalysisStepIndicator({ step, showExtract, showCodef, fileType }: Props) {
+export function AnalysisStepIndicator({ step, showExtract, showTilko, fileType }: Props) {
   const baseSteps = [
     { key: "parsing",    icon: DatabaseIcon, label: "파싱"     },
     { key: "validating", icon: ShieldCheck,  label: "검증"     },
@@ -23,10 +23,10 @@ export function AnalysisStepIndicator({ step, showExtract, showCodef, fileType }
     ? { key: "extracting", icon: ImageIcon, label: "OCR" }
     : { key: "extracting", icon: FileText,  label: "PDF 추출" };
 
-  const codefStep = { key: "codef-fetch", icon: Building2, label: "등기 조회" };
+  const tilkoStep = { key: "tilko-fetch", icon: Building2, label: "등기 조회" };
 
   let steps = baseSteps;
-  if (showCodef) steps = [codefStep, ...baseSteps];
+  if (showTilko) steps = [tilkoStep, ...baseSteps];
   else if (showExtract) steps = [extractStep, ...baseSteps];
 
   const currentIdx = steps.findIndex((s) => s.key === step);

@@ -28,8 +28,8 @@ export default function RightsAnalysisPage() {
     step, result, error, setError,
     fileName, fileType, isDragging, isExtracting,
     analysisId, previousAnalysis,
-    codefAddress, setCodefAddress,
-    codefFetching, codefSource, setCodefSource,
+    tilkoAddress, setTilkoAddress,
+    tilkoFetching, tilkoSource, setTilkoSource,
     fileInputRef,
     loadSample, handleAddressAnalyze,
     handleDrop, handleDragOver, handleDragLeave,
@@ -37,7 +37,7 @@ export default function RightsAnalysisPage() {
   } = useRightsAnalysis();
 
   const usedFile  = inputMode === "file" && fileName;
-  const usedCodef = codefSource && rawText;
+  const usedTilko = tilkoSource && rawText;
 
   return (
     <div>
@@ -90,10 +90,10 @@ export default function RightsAnalysisPage() {
         fileName={fileName}
         isDragging={isDragging}
         isExtracting={isExtracting}
-        codefAddress={codefAddress}
-        setCodefAddress={setCodefAddress}
-        codefFetching={codefFetching}
-        setCodefSource={setCodefSource}
+        tilkoAddress={tilkoAddress}
+        setTilkoAddress={setTilkoAddress}
+        tilkoFetching={tilkoFetching}
+        setTilkoSource={setTilkoSource}
         fileInputRef={fileInputRef}
         loadSample={loadSample}
         handleAddressAnalyze={handleAddressAnalyze}
@@ -132,7 +132,7 @@ export default function RightsAnalysisPage() {
         >
           <p style={{ fontSize: "14px", fontWeight: 600, color: "#1d1d1f", textAlign: "center", marginBottom: "4px" }}>등기부등본 종합 분석 중...</p>
           <p style={{ fontSize: "12px", color: "#aeaeb2", textAlign: "center", marginBottom: "4px" }}>약 10~15초 소요</p>
-          <AnalysisStepIndicator step={step} showExtract={!!usedFile} showCodef={!!usedCodef} fileType={fileType} />
+          <AnalysisStepIndicator step={step} showExtract={!!usedFile} showTilko={!!usedTilko} fileType={fileType} />
           <AnalysisLoader
             steps={["등기부등본 파싱 중...", "권리관계 분석 중...", "위험도 점수 산출 중...", "AI 종합 의견 생성 중..."]}
             interval={3000}

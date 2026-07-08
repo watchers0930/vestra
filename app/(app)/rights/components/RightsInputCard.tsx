@@ -28,10 +28,10 @@ interface Props {
   fileName: string | null;
   isDragging: boolean;
   isExtracting: boolean;
-  codefAddress: string;
-  setCodefAddress: (v: string) => void;
-  codefFetching: boolean;
-  setCodefSource: (v: boolean) => void;
+  tilkoAddress: string;
+  setTilkoAddress: (v: string) => void;
+  tilkoFetching: boolean;
+  setTilkoSource: (v: boolean) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   loadSample: () => void;
   handleAddressAnalyze: () => void;
@@ -44,23 +44,12 @@ interface Props {
 }
 
 const MODES = [
-  { key: "codef" as InputMode, icon: Search,         label: "주소 자동 조회" },
+  { key: "tilko" as InputMode, icon: Search,         label: "주소 자동 조회" },
   { key: "file"  as InputMode, icon: Upload,         label: "파일 업로드"   },
   { key: "text"  as InputMode, icon: ClipboardPaste, label: "텍스트 입력"   },
 ];
 
 const REGISTRY_ISSUE_PRICE = 1000;
-
-interface IssueSearchResult {
-  uniqueNo: string;
-  address: string;
-  realEstateType: string;
-  realEstateTypeCode?: string;
-}
-
-function normalizeAddress(value: string) {
-  return value.replace(/\s+/g, " ").trim();
-}
 
 
 export function RightsInputCard({
@@ -69,8 +58,8 @@ export function RightsInputCard({
   estimatedPrice, setEstimatedPrice,
   step, fileName,
   isDragging, isExtracting,
-  codefAddress, setCodefAddress,
-  codefFetching, setCodefSource,
+  tilkoAddress, setTilkoAddress,
+  tilkoFetching, setTilkoSource,
   fileInputRef,
   loadSample, handleAddressAnalyze,
   handleDrop, handleDragOver, handleDragLeave,
@@ -79,15 +68,11 @@ export function RightsInputCard({
   const isAnalyzing = step !== "idle" && step !== "done";
   const [issueAddress, setIssueAddress] = useState("");
   const [issueOwnerName, setIssueOwnerName] = useState("");
-  const [issueUniqueNo, setIssueUniqueNo] = useState("");
   const [issueConsent, setIssueConsent] = useState(false);
   const [issueLoading, setIssueLoading] = useState(false);
-  const [issueSearching, setIssueSearching] = useState(false);
-  const [issueResults, setIssueResults] = useState<IssueSearchResult[]>([]);
-  const [selectedIssueTarget, setSelectedIssueTarget] = useState<IssueSearchResult | null>(null);
   const [issuePropertyId, setIssuePropertyId] = useState("");
   const [issueMessage, setIssueMessage] = useState("");
-  const canSubmitIssue = !!(selectedIssueTarget || issueUniqueNo.trim()) && issueOwnerName.trim().length >= 2 && issueConsent;
+  const canSubmitIssue = issueAddress.trim().length >= 5 && issueOwnerName.trim().length >= 2 && issueConsent;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -109,14 +94,6 @@ export function RightsInputCard({
       if (prefill.address) {
         setIssueAddress(prefill.address);
       }
-      if (prefill.commUniqueNo) {
-        setIssueUniqueNo(prefill.commUniqueNo);
-        setSelectedIssueTarget({
-          address: prefill.address || "",
-          uniqueNo: prefill.commUniqueNo,
-          realEstateType: "부동산",
-        });
-      }
       if (prefill.ownerName) {
         setIssueOwnerName(prefill.ownerName);
       }
@@ -125,45 +102,6 @@ export function RightsInputCard({
       /* 프리필 실패 시 수동 입력 유지 */
     }
   }, []);
-
-  async function handleIssueSearch() {
-    if (issueSearching || issueAddress.trim().length < 2) return;
-    setIssueSearching(true);
-    setIssueMessage("");
-    setIssueResults([]);
-    setSelectedIssueTarget(null);
-    setIssueUniqueNo("");
-
-    try {
-      const res = await fetch(`/api/codef/search?address=${encodeURIComponent(issueAddress.trim())}`);
-      const data = await res.json();
-      if (!res.ok) {
-        setIssueMessage(data.error || "조회 대상 확인에 실패했습니다.");
-        return;
-      }
-      const results = (data.results || []) as IssueSearchResult[];
-      setIssueResults(results);
-      if (results.length === 0) {
-        setIssueMessage("검색 결과가 없습니다. 주소를 더 구체적으로 입력해 주세요.");
-      } else if (results.length === 1) {
-        setSelectedIssueTarget(results[0]);
-        setIssueUniqueNo(results[0].uniqueNo);
-        setIssueMessage("조회 대상이 확인되었습니다. 소유자명을 확인한 뒤 최신 등기부를 조회하세요.");
-      } else {
-        setIssueMessage("조회할 부동산을 선택해 주세요.");
-      }
-    } catch {
-      setIssueMessage("네트워크 오류가 발생했습니다.");
-    } finally {
-      setIssueSearching(false);
-    }
-  }
-
-  function selectIssueTarget(result: IssueSearchResult) {
-    setSelectedIssueTarget(result);
-    setIssueUniqueNo(result.uniqueNo);
-    setIssueMessage("조회 대상이 확인되었습니다. 주소와 소유자명을 확인하세요.");
-  }
 
   async function handleIssueOrder() {
     if (issueLoading) return;
@@ -176,9 +114,7 @@ export function RightsInputCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           address: issueAddress.trim(),
-          registryAddress: selectedIssueTarget?.address || issueAddress.trim(),
-          commUniqueNo: selectedIssueTarget?.uniqueNo || issueUniqueNo.trim(),
-          realEstateType: selectedIssueTarget?.realEstateTypeCode,
+          registryAddress: issueAddress.trim(),
           monitoredPropertyId: issuePropertyId || undefined,
           ownerName: issueOwnerName.trim(),
           purpose: "analysis",
@@ -302,92 +238,22 @@ export function RightsInputCard({
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: "8px", marginBottom: "8px" }}>
-              <input
-                value={issueAddress}
-                onChange={(e) => {
-                  setIssueAddress(e.target.value);
-                  setSelectedIssueTarget(null);
-                  setIssueUniqueNo("");
-                }}
-                onKeyDown={(e) => e.key === "Enter" && handleIssueSearch()}
-                placeholder="부동산 주소를 입력하고 먼저 확인하세요"
-                style={{
-                  minWidth: 0,
-                  padding: "10px 12px",
-                  borderRadius: "10px",
-                  border: "1px solid rgba(0,0,0,0.10)",
-                  fontSize: "12.5px",
-                  outline: "none",
-                  background: "#fff",
-                }}
-              />
-              <button
-                onClick={handleIssueSearch}
-                disabled={issueSearching || issueAddress.trim().length < 2}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "10px 13px",
-                  borderRadius: "10px",
-                  border: "none",
-                  background: issueSearching || issueAddress.trim().length < 2 ? "rgba(0,0,0,0.08)" : "#0071e3",
-                  color: issueSearching || issueAddress.trim().length < 2 ? "#aaa" : "#fff",
-                  fontSize: "12px",
-                  fontWeight: 800,
-                  cursor: issueSearching || issueAddress.trim().length < 2 ? "not-allowed" : "pointer",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {issueSearching ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}
-                대상 확인
-              </button>
-            </div>
-
-            {issueResults.length > 1 && (
-              <div style={{ marginBottom: "10px", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "12px", overflow: "hidden", background: "#fff" }}>
-                {issueResults.slice(0, 5).map((result) => {
-                  const selected = selectedIssueTarget?.uniqueNo === result.uniqueNo;
-                  return (
-                    <button
-                      key={`${result.uniqueNo}-${result.address}`}
-                      onClick={() => selectIssueTarget(result)}
-                      style={{
-                        width: "100%",
-                        textAlign: "left",
-                        border: "none",
-                        borderBottom: "1px solid rgba(0,0,0,0.06)",
-                        background: selected ? "rgba(0,113,227,0.06)" : "#fff",
-                        padding: "9px 11px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <span style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#1d1d1f" }}>{result.address}</span>
-                      <span style={{ display: "block", marginTop: "2px", fontSize: "10.5px", color: "#86868b" }}>
-                        {result.realEstateType || "부동산"} · 고유번호 자동 확인
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {selectedIssueTarget && (
-              <div style={{ marginBottom: "10px", border: "1px solid rgba(48,209,88,0.22)", borderRadius: "12px", background: "rgba(48,209,88,0.06)", padding: "10px 12px" }}>
-                <p style={{ fontSize: "11px", fontWeight: 800, color: "#1a9e45" }}>조회 대상 확인 완료</p>
-                <p style={{ marginTop: "3px", fontSize: "11px", color: "#3c3c43", lineHeight: 1.45 }}>
-                  입력 주소: {issueAddress.trim()}
-                </p>
-                {normalizeAddress(selectedIssueTarget.address) !== normalizeAddress(issueAddress) && (
-                  <p style={{ marginTop: "3px", fontSize: "10.5px", color: "#6e6e73", lineHeight: 1.45 }}>
-                    등기 조회 대상: {selectedIssueTarget.address}
-                  </p>
-                )}
-                <p style={{ marginTop: "2px", fontSize: "10px", color: "#86868b" }}>부동산 고유번호는 시스템이 자동으로 확인했습니다.</p>
-                <p style={{ marginTop: "5px", fontSize: "10px", color: "#ff9500", fontWeight: 600 }}>⚠ 데모 환경에서는 실제 주소 조회가 지원되지 않습니다.</p>
-              </div>
-            )}
+            <input
+              value={issueAddress}
+              onChange={(e) => setIssueAddress(e.target.value)}
+              placeholder="부동산 주소를 입력하세요 (예: 서울시 강남구 역삼동 123)"
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: "10px",
+                border: "1px solid rgba(0,0,0,0.10)",
+                fontSize: "12.5px",
+                outline: "none",
+                background: "#fff",
+                boxSizing: "border-box",
+                marginBottom: "8px",
+              }}
+            />
 
             <input
               value={issueOwnerName}
@@ -441,23 +307,23 @@ export function RightsInputCard({
               {issueLoading ? "결제 주문 생성 중..." : "등기부 발급 결제 진행"}
             </button>
             <p style={{ fontSize: "10.5px", color: issueMessage.includes("실패") || issueMessage.includes("오류") ? "#ff3b30" : "#6e6e73", marginTop: "8px", minHeight: "14px" }}>
-              {issueMessage || `결제 완료 후 CODEF 공식 연계로 등기부를 조회하고 분석 결과를 저장합니다. 서비스 이용료 기준 ${REGISTRY_ISSUE_PRICE.toLocaleString()}원`}
+              {issueMessage || `결제 완료 후 틸코 API로 최신 등기부를 조회하고 AI 권리분석 결과를 저장합니다. 서비스 이용료 기준 ${REGISTRY_ISSUE_PRICE.toLocaleString()}원`}
             </p>
           </div>
         </div>
 
         {/* 주소 자동 분석 */}
-        {inputMode === "codef" && (
+        {inputMode === "tilko" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <div style={{ display: "flex", gap: "8px" }}>
               <input
                 type="text"
-                value={codefAddress}
-                onChange={(e) => { setCodefAddress(e.target.value); setCodefSource(false); }}
+                value={tilkoAddress}
+                onChange={(e) => { setTilkoAddress(e.target.value); setTilkoSource(false); }}
                 onKeyDown={(e) => e.key === "Enter" && handleAddressAnalyze()}
                 placeholder="예: 서울시 구로구 구로동 554-24"
                 aria-label="부동산 주소"
-                disabled={codefFetching}
+                disabled={tilkoFetching}
                 style={{
                   flex: 1,
                   padding: "11px 16px",
@@ -474,25 +340,25 @@ export function RightsInputCard({
               />
               <button
                 onClick={handleAddressAnalyze}
-                disabled={codefFetching || codefAddress.trim().length < 4}
+                disabled={tilkoFetching || tilkoAddress.trim().length < 4}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
                   padding: "11px 20px",
                   borderRadius: "12px",
-                  background: codefFetching || codefAddress.trim().length < 4 ? "rgba(0,0,0,0.08)" : "#0071e3",
-                  color: codefFetching || codefAddress.trim().length < 4 ? "#aaa" : "#fff",
+                  background: tilkoFetching || tilkoAddress.trim().length < 4 ? "rgba(0,0,0,0.08)" : "#0071e3",
+                  color: tilkoFetching || tilkoAddress.trim().length < 4 ? "#aaa" : "#fff",
                   fontSize: "13.5px",
                   fontWeight: 600,
                   border: "none",
-                  cursor: codefFetching || codefAddress.trim().length < 4 ? "not-allowed" : "pointer",
+                  cursor: tilkoFetching || tilkoAddress.trim().length < 4 ? "not-allowed" : "pointer",
                   whiteSpace: "nowrap",
                   transition: "background 0.15s",
                 }}
               >
-                {codefFetching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
-                {codefFetching ? "조회 중..." : "조회"}
+                {tilkoFetching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+                {tilkoFetching ? "조회 중..." : "조회"}
               </button>
             </div>
             <p style={{ fontSize: "11px", color: "#aeaeb2" }}>
@@ -554,7 +420,7 @@ export function RightsInputCard({
         {inputMode === "text" && (
           <textarea
             value={rawText}
-            onChange={(e) => { setRawText(e.target.value); setCodefSource(false); }}
+            onChange={(e) => { setRawText(e.target.value); setTilkoSource(false); }}
             placeholder="등기부등본 텍스트를 붙여넣으세요..."
             aria-label="등기부등본 텍스트 입력"
             style={{

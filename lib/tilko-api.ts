@@ -12,7 +12,9 @@ import crypto from "crypto";
 
 const DEFAULT_TILKO_BASE = "https://api.tilko.net";
 const DEFAULT_CASE_STATUS_PATH = "/api/v2.0/Iros2IdLogin/RetrieveApplCsprCsList";
+const DEFAULT_REGISTRY_DOC_PATH = "/api/v2.0/Iros2IdLogin/GetRegistryDocument";
 const CASE_STATUS_CACHE_TTL = 20 * 60 * 1000;
+const REGISTRY_DOC_CACHE_TTL = 60 * 60 * 1000;
 
 export type TilkoCasePhase =
   | "none"
@@ -233,4 +235,187 @@ function buildSummary(cases: TilkoRegistryCase[], phase: TilkoCasePhase): string
   const purpose = first.purpose ? ` - ${first.purpose}` : "";
   const count = cases.length > 1 ? ` 외 ${cases.length - 1}건` : "";
   return `등기신청 사건 ${phaseLabel[phase]} 감지${purpose}${count}`;
+}
+
+// ─── 등기부등본 발급 ───
+
+export interface TilkoRegistryDocResult {
+  text: string;
+  address: string;
+  rawData: Record<string, unknown>;
+  source: "tilko";
+}
+
+function getTilkoRegistryDocConfig() {
+  const apiKey = process.env.TILKO_REGISTRY_DOC_API_KEY || process.env.TILKO_API_KEY;
+  const publicKey = process.env.TILKO_REGISTRY_DOC_PUBLIC_KEY || process.env.TILKO_PUBLIC_KEY;
+  const irosId = process.env.TILKO_IROS_ID;
+  const irosPassword = process.env.TILKO_IROS_PASSWORD;
+  const docPath = process.env.TILKO_REGISTRY_DOC_PATH || DEFAULT_REGISTRY_DOC_PATH;
+
+  if (!apiKey || !publicKey || !irosId || !irosPassword) {
+    throw new Error(
+      "Tilko 등기부등본 API 설정이 없습니다. (TILKO_REGISTRY_DOC_API_KEY, TILKO_REGISTRY_DOC_PUBLIC_KEY, TILKO_IROS_ID, TILKO_IROS_PASSWORD)"
+    );
+  }
+
+  return {
+    apiKey,
+    publicKey,
+    irosId,
+    irosPassword,
+    baseUrl: process.env.TILKO_API_BASE || DEFAULT_TILKO_BASE,
+    docPath,
+  };
+}
+
+export function isTilkoRegistryDocAvailable(): boolean {
+  return !!(
+    (process.env.TILKO_REGISTRY_DOC_API_KEY || process.env.TILKO_API_KEY) &&
+    (process.env.TILKO_REGISTRY_DOC_PUBLIC_KEY || process.env.TILKO_PUBLIC_KEY) &&
+    process.env.TILKO_IROS_ID &&
+    process.env.TILKO_IROS_PASSWORD
+  );
+}
+
+export async function fetchRegistryDocumentByAddress(params: {
+  address: string;
+  realClsCd?: string;
+  registryGubun?: string;
+}): Promise<TilkoRegistryDocResult> {
+  const { address, realClsCd = "3", registryGubun = "1" } = params;
+
+  const cacheKey = APICache.makeKey("tilko-reg-doc", address, realClsCd, registryGubun);
+  const cached = apiCache.get<TilkoRegistryDocResult>(cacheKey);
+  if (cached) return cached;
+
+  const config = getTilkoRegistryDocConfig();
+  const aesKey = crypto.randomBytes(16);
+  const encKey = encryptAesKey(config.publicKey, aesKey);
+
+  const res = await fetch(`${config.baseUrl}${config.docPath}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "API-KEY": config.apiKey,
+      "ENC-KEY": encKey,
+    },
+    body: JSON.stringify({
+      Auth: {
+        UserId: encryptForTilko(aesKey, config.irosId),
+        UserPassword: encryptForTilko(aesKey, config.irosPassword),
+      },
+      Address: encryptForTilko(aesKey, address),
+      RealClsCd: realClsCd,
+      RegistryGubun: registryGubun,
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Tilko 등기부등본 조회 실패 (${res.status}): ${errText.slice(0, 300)}`);
+  }
+
+  const rawData = (await res.json()) as Record<string, unknown>;
+
+  // API 레벨 오류 처리
+  const errCode = rawData.errCode ?? rawData.error_code ?? rawData.resultCode ?? rawData.code;
+  if (errCode !== undefined && errCode !== "0000" && errCode !== "00" && errCode !== 0 && errCode !== "0") {
+    const errMsg = rawData.errMessage ?? rawData.error_message ?? rawData.resultMessage ?? rawData.message ?? "등기부 조회 실패";
+    throw new Error(`Tilko API 오류 (${errCode}): ${errMsg}`);
+  }
+
+  console.log("[Tilko 등기부등본] rawData keys:", Object.keys(rawData));
+
+  const text = extractTilkoRegistryText(rawData, address);
+  const result: TilkoRegistryDocResult = { text, address, rawData, source: "tilko" };
+  apiCache.set(cacheKey, result, REGISTRY_DOC_CACHE_TTL);
+  return result;
+}
+
+function extractTilkoRegistryText(raw: Record<string, unknown>, fallbackAddress: string): string {
+  // 1. raw 텍스트/HTML 필드 우선 확인
+  const rawContent = raw.resContent ?? raw.content ?? raw.htmlContent ?? raw.textContent ?? raw.registryContent ?? raw.resRegistryContent;
+  if (typeof rawContent === "string" && rawContent.length > 50) {
+    return rawContent
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(?:p|div|tr|li|td|th)>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .trim();
+  }
+
+  // 2. 구조화 JSON 처리
+  const data = (isRecord(raw.data) ? raw.data : isRecord(raw.result) ? raw.result : isRecord(raw.resBody) ? raw.resBody : raw) as Record<string, unknown>;
+  const lines: string[] = [];
+
+  lines.push("【 표 제 부 】", "");
+  const addr = String(data.resAddress ?? data.address ?? data.reqAddress ?? fallbackAddress);
+  lines.push(`소재지번: ${addr}`);
+
+  if (data.resBuildingName ?? data.buildingName) lines.push(`건물명칭: ${String(data.resBuildingName ?? data.buildingName)}`);
+  if (data.resExclusiveArea ?? data.exclusiveArea) lines.push(`전용면적: ${String(data.resExclusiveArea ?? data.exclusiveArea)}㎡`);
+  if (data.resTotalArea ?? data.totalArea) lines.push(`연면적: ${String(data.resTotalArea ?? data.totalArea)}㎡`);
+  if (data.resPurpose ?? data.purpose) lines.push(`주용도: ${String(data.resPurpose ?? data.purpose)}`);
+  if (data.resStructure ?? data.structure) lines.push(`구조: ${String(data.resStructure ?? data.structure)}`);
+  if (data.resBuildYear ?? data.buildYear) lines.push(`건축년도: ${String(data.resBuildYear ?? data.buildYear)}년`);
+
+  // 갑구
+  const gapguRaw = data.resGapgu ?? data.gapgu ?? data.ownershipList ?? data.ownership;
+  const gapguList = Array.isArray(gapguRaw) ? gapguRaw : gapguRaw ? [gapguRaw] : [];
+  lines.push("", "【 갑 구 】 (소유권에 관한 사항)");
+  lines.push("──────────────────────────────────");
+  if (gapguList.length > 0) {
+    for (const entry of gapguList) {
+      if (typeof entry === "string") { lines.push(entry); continue; }
+      if (!isRecord(entry)) continue;
+      const parts: string[] = [];
+      const seq = entry.resSeq ?? entry.seq ?? entry.순위번호;
+      const purpose = entry.resPurpose ?? entry.purpose ?? entry.등기목적;
+      const date = entry.resDate ?? entry.date ?? entry.접수일자;
+      const owner = entry.resOwnerName ?? entry.ownerName ?? entry.name ?? entry.소유자;
+      const amount = entry.resAmount ?? entry.amount ?? entry.금액;
+      if (seq) parts.push(`순위번호: ${seq}`);
+      if (purpose) parts.push(`등기목적: ${purpose}`);
+      if (date) parts.push(`접수일자: ${date}`);
+      if (owner) parts.push(`소유자: ${owner}`);
+      if (amount) parts.push(`금액: ${amount}`);
+      if (parts.length) lines.push(parts.join(" / "));
+    }
+  } else {
+    lines.push("※ 갑구 정보 없음");
+  }
+
+  // 을구
+  const eulguRaw = data.resEulgu ?? data.eulgu ?? data.otherRightsList ?? data.mortgageList;
+  const eulguList = Array.isArray(eulguRaw) ? eulguRaw : eulguRaw ? [eulguRaw] : [];
+  lines.push("", "【 을 구 】 (소유권 이외의 권리에 관한 사항)");
+  lines.push("──────────────────────────────────");
+  if (eulguList.length > 0) {
+    for (const entry of eulguList) {
+      if (typeof entry === "string") { lines.push(entry); continue; }
+      if (!isRecord(entry)) continue;
+      const parts: string[] = [];
+      const seq = entry.resSeq ?? entry.seq ?? entry.순위번호;
+      const purpose = entry.resPurpose ?? entry.purpose ?? entry.등기목적;
+      const date = entry.resDate ?? entry.date ?? entry.접수일자;
+      const creditor = entry.resCreditor ?? entry.creditor ?? entry.채권자;
+      const amount = entry.resAmount ?? entry.amount ?? entry.resBondAmount ?? entry.채권액;
+      const debtor = entry.resDebtorName ?? entry.debtorName ?? entry.채무자;
+      if (seq) parts.push(`순위번호: ${seq}`);
+      if (purpose) parts.push(`등기목적: ${purpose}`);
+      if (date) parts.push(`접수일자: ${date}`);
+      if (creditor) parts.push(`채권자: ${creditor}`);
+      if (amount) parts.push(`채권액: ${amount}`);
+      if (debtor) parts.push(`채무자: ${debtor}`);
+      if (parts.length) lines.push(parts.join(" / "));
+    }
+  } else {
+    lines.push("※ 을구 정보 없음");
+  }
+
+  return lines.join("\n");
 }

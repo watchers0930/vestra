@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Search, MapPin, Building2, X, AlertTriangle, FileText, Upload } from "lucide-react";
+import { Search, MapPin, Building2, X, FileText, Upload } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { FormInput } from "@/components/forms/FormInput";
 
@@ -29,7 +29,7 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
   // 주소 검색
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [searching, setSearching] = useState(false);
+  const [searching] = useState(false);
   const [searchError, setSearchError] = useState("");
 
   // PDF 업로드
@@ -56,9 +56,6 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  // CODEF 서비스 상태
-  const [codefUnavailable, setCodefUnavailable] = useState(false);
-
   function handleTabChange(t: "search" | "pdf") {
     setTab(t);
     setSelected(null);
@@ -70,40 +67,13 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
     setSearchError("");
   }
 
-  async function handleSearch() {
+  function handleSearch() {
     if (query.trim().length < 2) {
       setSearchError("주소를 2자 이상 입력해주세요.");
       return;
     }
-
-    setSearching(true);
     setSearchError("");
-    setResults([]);
-    setSelected(null);
-
-    try {
-      const res = await fetch(`/api/codef/search?address=${encodeURIComponent(query.trim())}`);
-      const data = await res.json();
-
-      if (!res.ok) {
-        if (res.status === 503 || res.status === 500) {
-          setCodefUnavailable(true);
-        }
-        setSearchError(data.error || "검색에 실패했습니다.");
-        return;
-      }
-
-      if (data.results?.length === 0) {
-        setSearchError("검색 결과가 없습니다. 주소를 다시 확인해주세요.");
-        return;
-      }
-
-      setResults(data.results || []);
-    } catch {
-      setSearchError("네트워크 오류가 발생했습니다.");
-    } finally {
-      setSearching(false);
-    }
+    setSelected({ uniqueNo: "", address: query.trim(), realEstateType: "부동산" });
   }
 
   async function handlePdfParse() {
@@ -227,19 +197,6 @@ export function AddPropertyModal({ onClose, onSuccess }: Props) {
           {/* 주소 검색 탭 */}
           {tab === "search" && (
             <>
-              {/* CODEF 불가 안내 */}
-              {codefUnavailable && (
-                <div className="flex items-start gap-2.5 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
-                  <AlertTriangle size={16} className="text-amber-600 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-amber-800">등기부 검색 서비스 점검 중</p>
-                    <p className="text-xs text-amber-700 mt-0.5">
-                      공식 연계 조회 서비스가 일시적으로 이용 불가합니다. 잠시 후 다시 시도해주세요.
-                    </p>
-                  </div>
-                </div>
-              )}
-
               <div>
                 <label className="block text-sm font-medium mb-1.5">주소 검색</label>
                 <div className="flex gap-2">
