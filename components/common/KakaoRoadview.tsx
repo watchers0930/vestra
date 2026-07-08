@@ -12,11 +12,14 @@ interface KakaoRoadviewProps {
 export function KakaoRoadview({ lat, lng, className }: KakaoRoadviewProps) {
   const uid   = useId();
   const domId = `roadview-${uid.replace(/:/g, "")}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rvRef = useRef<any>(null);
-  const [status, setStatus] = useState<"loading" | "ok" | "none">("loading");
+  const [status, setStatus] = useState<"loading" | "ok" | "none">(
+    lat && lng ? "loading" : "none"
+  );
 
   useEffect(() => {
-    if (!lat || !lng) { setStatus("none"); return; }
+    if (!lat || !lng) return;
 
     let cancelled = false;
 
@@ -35,7 +38,7 @@ export function KakaoRoadview({ lat, lng, className }: KakaoRoadviewProps) {
 
       client.getNearestPanoId(position, 100, (panoId: number | null) => {
         if (cancelled) return;
-        panoId === null ? setStatus("none") : (roadview.setPanoId(panoId, position), setStatus("ok"));
+        if (panoId === null) { setStatus("none"); } else { roadview.setPanoId(panoId, position); setStatus("ok"); }
       });
     }
 
