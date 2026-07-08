@@ -16,17 +16,21 @@ const kakaoConnect = "https://dapi.kakao.com https://*.daumcdn.net https://*.kak
 const kakaoImg = "https://*.daumcdn.net https://*.kakao.com https://*.kakao.io";
 const googleTagDomains = "https://www.googletagmanager.com";
 const googleAnalyticsConnect = "https://www.google-analytics.com https://region1.google-analytics.com";
+// 토스페이먼츠 CSP 도메인
+const tossDomains = "https://js.tosspayments.com";
+const tossConnect = "https://api.tosspayments.com https://js.tosspayments.com";
+const tossFrame = "https://*.tosspayments.com https://*.toss.im";
 const isDev = process.env.NODE_ENV !== "production";
 
 // 기본 CSP (unsafe-eval 없음)
 const baseCSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${kakaoDomains} ${googleTagDomains}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${kakaoDomains} ${googleTagDomains} ${tossDomains}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   `img-src 'self' data: blob: ${kakaoImg} https://lh3.googleusercontent.com https://images.unsplash.com`,
   "font-src 'self' data: https://fastly.jsdelivr.net https://fonts.gstatic.com",
-  `connect-src 'self' https://api.openai.com https://*.neon.tech ${kakaoConnect} ${googleAnalyticsConnect} https://api.odcloud.kr https://apis.data.go.kr https://fcm.googleapis.com https://*.push.services.mozilla.com https://*.notify.windows.com`,
-  `frame-src https://postcode.map.kakao.com ${googleTagDomains}`,
+  `connect-src 'self' https://api.openai.com https://*.neon.tech ${kakaoConnect} ${googleAnalyticsConnect} https://api.odcloud.kr https://apis.data.go.kr https://fcm.googleapis.com https://*.push.services.mozilla.com https://*.notify.windows.com ${tossConnect}`,
+  `frame-src https://postcode.map.kakao.com ${googleTagDomains} ${tossFrame}`,
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
