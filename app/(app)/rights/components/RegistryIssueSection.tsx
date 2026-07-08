@@ -64,7 +64,8 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
   const [issuePropertyId, setIssuePropertyId] = useState("");
   const [issueMessage, setIssueMessage] = useState("");
   const [isApartment, setIsApartment] = useState(false);
-  const [unitNumber, setUnitNumber] = useState("");
+  const [dong, setDong] = useState("");
+  const [ho, setHo] = useState("");
   const [loading, setLoading] = useState(false);
   const [paymentPhase, setPaymentPhase] = useState<"idle" | "confirming" | "executing" | "done" | "error">("idle");
 
@@ -156,10 +157,8 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
     setIssueMessage("");
 
     try {
-      const fullAddress =
-        isApartment && unitNumber.trim()
-          ? `${issueAddress.trim()} ${unitNumber.trim()}`
-          : issueAddress.trim();
+      const unitPart = [dong.trim() ? `${dong.trim()}동` : "", ho.trim() ? `${ho.trim()}호` : ""].filter(Boolean).join(" ");
+      const fullAddress = isApartment && unitPart ? `${issueAddress.trim()} ${unitPart}` : issueAddress.trim();
 
       // 1. 주문 생성
       const orderRes = await fetch("/api/registry/issue-order", {
@@ -313,7 +312,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
               <input
                 type="checkbox"
                 checked={isApartment}
-                onChange={(e) => { setIsApartment(e.target.checked); if (!e.target.checked) setUnitNumber(""); }}
+                onChange={(e) => { setIsApartment(e.target.checked); if (!e.target.checked) { setDong(""); setHo(""); } }}
                 disabled={isProcessing}
               />
               <span style={{ fontSize: "13px", color: "#3c3c43", fontWeight: 500 }}>
@@ -329,14 +328,29 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
             {/* 동호수 */}
             {isApartment && (
               <>
-                <input
-                  value={unitNumber}
-                  onChange={(e) => setUnitNumber(e.target.value)}
-                  placeholder="동호수 (예: 101동 502호)"
-                  style={inputStyle}
-                  disabled={isProcessing}
-                />
-                {!unitNumber.trim() && (
+                <div style={{ display: "flex", gap: "6px", marginBottom: "8px", alignItems: "center" }}>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={dong}
+                    onChange={(e) => setDong(e.target.value.replace(/[^0-9]/g, ""))}
+                    placeholder="동"
+                    disabled={isProcessing}
+                    style={{ ...inputStyle, marginBottom: 0, width: "80px", textAlign: "center", flexShrink: 0 }}
+                  />
+                  <span style={{ fontSize: "13px", color: "#3c3c43", flexShrink: 0 }}>동</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={ho}
+                    onChange={(e) => setHo(e.target.value.replace(/[^0-9]/g, ""))}
+                    placeholder="호"
+                    disabled={isProcessing}
+                    style={{ ...inputStyle, marginBottom: 0, width: "80px", textAlign: "center", flexShrink: 0 }}
+                  />
+                  <span style={{ fontSize: "13px", color: "#3c3c43", flexShrink: 0 }}>호</span>
+                </div>
+                {(!dong.trim() || !ho.trim()) && (
                   <p style={{ fontSize: "13px", color: "#ff9500", marginBottom: "8px", marginTop: "-4px" }}>
                     ⚠ 동호수 미입력 시 소유자명 기준으로 조회되어 정확도가 낮아질 수 있습니다.
                   </p>
@@ -348,10 +362,10 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
             <input
               value={issueOwnerName}
               onChange={(e) => setIssueOwnerName(e.target.value)}
-              placeholder={isApartment && !unitNumber.trim() ? "등기부상 소유자명 (필수)" : "등기부상 소유자명"}
+              placeholder={isApartment && (!dong.trim() || !ho.trim()) ? "등기부상 소유자명 (필수)" : "등기부상 소유자명"}
               style={{
                 ...inputStyle,
-                borderColor: isApartment && !unitNumber.trim() && !issueOwnerName.trim() ? "rgba(255,149,0,0.4)" : "rgba(0,0,0,0.10)",
+                borderColor: isApartment && (!dong.trim() || !ho.trim()) && !issueOwnerName.trim() ? "rgba(255,149,0,0.4)" : "rgba(0,0,0,0.10)",
               }}
               disabled={isProcessing}
             />
