@@ -12,14 +12,14 @@ export default function NeighborhoodMapPage() {
     loading, result, error,
     expandedCats, visibleFacilities,
     toggleCat, handleAnalyze,
-    toggleFacility, toggleAllFacilities, navigateTo,
+    toggleFacility, toggleAllFacilities, navigateTo, highlightItem,
   } = useNeighborhoodData();
 
   const panelProps = {
     address, setAddress, loading, result, error,
     expandedCats, visibleFacilities,
     toggleCat, handleAnalyze,
-    toggleFacility, toggleAllFacilities, navigateTo,
+    toggleFacility, toggleAllFacilities, navigateTo, highlightItem,
   };
 
   return (

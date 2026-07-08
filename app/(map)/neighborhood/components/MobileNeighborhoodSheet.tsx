@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronUp, ChevronRight, Loader2, Sparkles,
   Navigation, Heart, Eye, EyeOff,
 } from "lucide-react";
-import type { AnalysisResult, FacilityGroup } from "../hooks/useNeighborhoodData";
+import type { AnalysisResult, FacilityGroup, FacilityItem } from "../hooks/useNeighborhoodData";
 import AddressAutocomplete, { type AddressResult } from "@/components/common/AddressAutocomplete";
 
 const CATEGORY_META = [
@@ -53,12 +53,13 @@ interface Props {
   toggleFacility: (key: string) => void;
   toggleAllFacilities: (show: boolean) => void;
   navigateTo: (lat: number, lng: number) => void;
+  highlightItem: (item: FacilityItem, color: string) => void;
 }
 
 export function MobileNeighborhoodSheet({
   address, setAddress, loading, result, error,
   expandedCats, visibleFacilities,
-  toggleCat, handleAnalyze, toggleFacility, toggleAllFacilities, navigateTo,
+  toggleCat, handleAnalyze, toggleFacility, toggleAllFacilities, navigateTo, highlightItem,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const startY = useRef(0);
@@ -296,10 +297,10 @@ export function MobileNeighborhoodSheet({
                                       {f.items.slice(0, 5).map((item, i) => (
                                         <button
                                           key={i}
-                                          onClick={() => navigateTo(item.lat, item.lng)}
+                                          onClick={() => highlightItem(item, f.color)}
                                           className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg bg-transparent border-none cursor-pointer text-left active:bg-black/5"
                                         >
-                                          <Navigation size={9} strokeWidth={1.5} className="text-[#c7c7cc] flex-shrink-0" />
+                                          <Navigation size={9} strokeWidth={1.5} className="flex-shrink-0" style={{ color: f.color }} />
                                           <span className="text-[11px] text-[#1d1d1f] flex-1 truncate">{item.name}</span>
                                           <span className="text-[10px] text-[#aeaeb2] tabular-nums flex-shrink-0">{formatDistance(item.distance)}</span>
                                         </button>

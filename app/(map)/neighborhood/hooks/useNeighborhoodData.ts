@@ -65,6 +65,8 @@ export function useNeighborhoodData() {
   const overlaysRef = useRef<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const circleRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const selectedOverlayRef = useRef<any>(null);
 
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
@@ -247,6 +249,45 @@ export function useNeighborhoodData() {
     }
   };
 
+  const highlightItem = useCallback((item: FacilityItem, color: string) => {
+    if (!kakaoMapRef.current) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const maps = (window as any).kakao.maps;
+    const map = kakaoMapRef.current;
+    const pos = new maps.LatLng(item.lat, item.lng);
+
+    // 기존 선택 마커 제거
+    if (selectedOverlayRef.current) {
+      selectedOverlayRef.current.setMap(null);
+      selectedOverlayRef.current = null;
+    }
+
+    // 지도 이동
+    map.setCenter(pos);
+    map.setLevel(3);
+
+    // 선택 강조 오버레이 생성
+    const el = document.createElement("div");
+    el.style.cssText = "display:flex;flex-direction:column;align-items:center;pointer-events:none;";
+    el.innerHTML = `
+      <div style="background:${color};color:#fff;padding:5px 12px;border-radius:14px;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,0.28);border:2.5px solid #fff;">
+        ${item.name.length > 12 ? item.name.slice(0, 12) + "…" : item.name}
+      </div>
+      <div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid ${color};margin-top:-1px;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.15));"></div>
+      <div style="width:10px;height:10px;border-radius:50%;background:${color};border:2px solid #fff;margin-top:2px;box-shadow:0 2px 6px rgba(0,0,0,0.2);"></div>
+    `;
+
+    const overlay = new maps.CustomOverlay({
+      map,
+      position: pos,
+      content: el,
+      yAnchor: 1.0,
+      zIndex: 20,
+    });
+
+    selectedOverlayRef.current = overlay;
+  }, []);
+
   return {
     mapRef,
     address,
@@ -261,5 +302,6 @@ export function useNeighborhoodData() {
     toggleFacility,
     toggleAllFacilities,
     navigateTo,
+    highlightItem,
   };
 }

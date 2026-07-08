@@ -5,7 +5,7 @@ import {
   ChevronDown, ChevronRight, Loader2, Sparkles, Navigation,
   Heart, Eye, EyeOff,
 } from "lucide-react";
-import type { AnalysisResult, FacilityGroup } from "../hooks/useNeighborhoodData";
+import type { AnalysisResult, FacilityGroup, FacilityItem } from "../hooks/useNeighborhoodData";
 import AddressAutocomplete, { type AddressResult } from "@/components/common/AddressAutocomplete";
 
 const CATEGORY_META = [
@@ -49,12 +49,13 @@ interface Props {
   toggleFacility: (key: string) => void;
   toggleAllFacilities: (show: boolean) => void;
   navigateTo: (lat: number, lng: number) => void;
+  highlightItem: (item: FacilityItem, color: string) => void;
 }
 
 export function NeighborhoodPanel({
   address, setAddress, loading, result, error,
   expandedCats, visibleFacilities,
-  toggleCat, handleAnalyze, toggleFacility, toggleAllFacilities, navigateTo,
+  toggleCat, handleAnalyze, toggleFacility, toggleAllFacilities, navigateTo, highlightItem,
 }: Props) {
   return (
     <div className="hidden lg:flex h-full w-[340px] flex-shrink-0 flex-col overflow-y-auto border-r border-black/[0.08] bg-[#f5f5f7]">
@@ -274,10 +275,10 @@ export function NeighborhoodPanel({
                                     {f.items.slice(0, 5).map((item, i) => (
                                       <button
                                         key={i}
-                                        onClick={() => navigateTo(item.lat, item.lng)}
+                                        onClick={() => highlightItem(item, f.color)}
                                         className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg bg-transparent border-none cursor-pointer text-left transition-colors duration-[120ms] hover:bg-[#f5f5f7]"
                                       >
-                                        <Navigation size={10} strokeWidth={1.5} className="text-[#c7c7cc] flex-shrink-0" />
+                                        <Navigation size={10} strokeWidth={1.5} className="flex-shrink-0" style={{ color: f.color }} />
                                         <span className="text-[11.5px] text-[#1d1d1f] flex-1 truncate">{item.name}</span>
                                         <span className="text-[10.5px] text-[#aeaeb2] tabular-nums flex-shrink-0">{formatDistance(item.distance)}</span>
                                       </button>
