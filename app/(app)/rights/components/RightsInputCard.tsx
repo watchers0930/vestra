@@ -285,7 +285,7 @@ export function RightsInputCard({
               step={10000000}
               formatValue={formatKRW}
             />
-            <p style={{ fontSize: "10.5px", color: "#aeaeb2", marginTop: "4px" }}>
+            <p style={{ fontSize: "13px", color: "#aeaeb2", marginTop: "4px" }}>
               MOLIT 실거래 데이터가 있으면 자동으로 시세를 반영합니다
             </p>
           </div>

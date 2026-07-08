@@ -225,7 +225,7 @@ export default function RightsAnalysisPage() {
           >
             <p
               style={{
-                fontSize: "10.5px",
+                fontSize: "13px",
                 fontWeight: 700,
                 color: "#aeaeb2",
                 letterSpacing: "0.10em",

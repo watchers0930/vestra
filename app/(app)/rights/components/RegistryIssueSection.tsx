@@ -249,7 +249,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
             </p>
           </div>
           <div style={{ textAlign: "right", flexShrink: 0 }}>
-            <p style={{ fontSize: "10.5px", color: "#86868b" }}>조회+AI 분석 기준가</p>
+            <p style={{ fontSize: "13px", color: "#86868b" }}>조회+AI 분석 기준가</p>
             <p style={{ fontSize: "18px", fontWeight: 900, color: "#0071e3" }}>{REGISTRY_ISSUE_PRICE.toLocaleString()}원</p>
           </div>
         </div>
@@ -320,7 +320,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
                 집합건물 (아파트·오피스텔·빌라 등)
               </span>
               {isApartment && detectApartment(issueAddress) && (
-                <span style={{ fontSize: "10.5px", color: "#0071e3", background: "rgba(0,113,227,0.08)", borderRadius: "6px", padding: "1px 7px" }}>
+                <span style={{ fontSize: "13px", color: "#0071e3", background: "rgba(0,113,227,0.08)", borderRadius: "6px", padding: "1px 7px" }}>
                   자동 감지
                 </span>
               )}
@@ -399,7 +399,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
         {/* 상태 메시지 */}
         {issueMessage && (
           <p style={{
-            fontSize: "10.5px",
+            fontSize: "13px",
             color: isError ? "#ff3b30" : "#6e6e73",
             marginTop: "8px",
             display: "flex",
@@ -411,7 +411,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
           </p>
         )}
         {!issueMessage && paymentPhase === "idle" && (
-          <p style={{ fontSize: "10.5px", color: "#6e6e73", marginTop: "8px" }}>
+          <p style={{ fontSize: "13px", color: "#6e6e73", marginTop: "8px" }}>
             결제 완료 후 틸코 API로 최신 등기부를 조회하고 AI 권리분석 결과를 저장합니다. 서비스 이용료 기준 {REGISTRY_ISSUE_PRICE.toLocaleString()}원
           </p>
         )}
