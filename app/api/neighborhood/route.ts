@@ -201,18 +201,19 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. 시설별 주변 검색 + K-apt 단지정보 (병렬)
+    // 카테고리 검색 대신 키워드+카테고리 병행으로 좌표 정확도 향상
     const [subway, bus, school, academy, kindergarten, mart, pharmacy, hospital, convenience, park, bank, kaptInfo] = await Promise.all([
-      kakaoCategorySearch(kakaoKey, coord, "SW8"),
+      kakaoKeywordSearch(kakaoKey, "지하철역", coord, "SW8"),
       fetchNearbyBusStops(coord),
-      kakaoCategorySearch(kakaoKey, coord, "SC4"),
-      kakaoCategorySearch(kakaoKey, coord, "AC5"),
+      kakaoKeywordSearch(kakaoKey, "학교", coord, "SC4"),
+      kakaoKeywordSearch(kakaoKey, "학원", coord, "AC5"),
       kakaoKeywordSearch(kakaoKey, "유치원 어린이집", coord, ""),
-      kakaoCategorySearch(kakaoKey, coord, "MT1"),
-      kakaoCategorySearch(kakaoKey, coord, "PM9"),
-      kakaoCategorySearch(kakaoKey, coord, "HP8"),
-      kakaoCategorySearch(kakaoKey, coord, "CS2"),
+      kakaoKeywordSearch(kakaoKey, "마트 대형마트", coord, "MT1"),
+      kakaoKeywordSearch(kakaoKey, "약국", coord, "PM9"),
+      kakaoKeywordSearch(kakaoKey, "병원 의원 클리닉", coord, "HP8"),
+      kakaoKeywordSearch(kakaoKey, "편의점", coord, "CS2"),
       kakaoKeywordSearch(kakaoKey, "공원", coord, ""),
-      kakaoCategorySearch(kakaoKey, coord, "BK9"),
+      kakaoKeywordSearch(kakaoKey, "은행", coord, "BK9"),
       fetchKaptInfoByAddress(coord.fullAddress || address, coord.buildingName).catch(() => null),
     ]);
 
