@@ -191,6 +191,29 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
         return;
       }
 
+      // 테스트 도메인: Toss 결제 우회 → 바로 실행
+      const isTestDomain = window.location.hostname === "t-vestra.vercel.app" || window.location.hostname === "localhost";
+      if (isTestDomain) {
+        setLoading(false);
+        setPaymentPhase("executing");
+        setIssueMessage("[테스트] 결제 우회 — 등기부 조회 중...");
+        const execRes = await fetch("/api/registry/issue-order", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: orderData.order.orderId }),
+        });
+        const execData = await execRes.json();
+        if (!execRes.ok) {
+          setPaymentPhase("error");
+          setIssueMessage(execData.error || "등기부 발급 중 오류가 발생했습니다.");
+          return;
+        }
+        setPaymentPhase("done");
+        setIssueMessage(`[테스트] 등기부 발급 완료. 주문번호 ${orderData.order.orderId}`);
+        applyIssuedRegistryAnalysis(execData as IssuedRegistryAnalysisPayload);
+        return;
+      }
+
       // 2. Toss SDK (마운트 시 미리 로드됨, 없으면 즉시 로드)
       let toss = tossRef.current;
       if (!toss) {
