@@ -24,6 +24,9 @@ import {
   fetchRegistryCaseStatus,
   isTilkoAvailable,
   shouldConfirmWithCodef,
+  fetchRegistryDocumentByAddress,
+  isTilkoRegistryDocAvailable,
+  extractCommUniqueNoFromText,
   type TilkoCaseStatusResult,
 } from "@/lib/tilko-api";
 
@@ -256,6 +259,119 @@ export async function GET(req: NextRequest) {
 
     for (const prop of allProperties) {
       try {
+        // commUniqueNo 없는 물건: Tilko 등기부 발급으로 직접 해시 비교
+        // commUniqueNo가 있는 물건은 아래 사건 처리현황 경로로 진행
+        if (!simulate && !prop.commUniqueNo && isTilkoRegistryDocAvailable()) {
+          const now = new Date();
+          try {
+            const registry = await fetchRegistryDocumentByAddress({ address: prop.address });
+            const newHash = generateContentHash(registry.text);
+            const extractedNo = extractCommUniqueNoFromText(registry.text) ?? undefined;
+
+            // 최초 조회: baseline 저장 후 다음 회차부터 비교
+            if (!prop.lastHash) {
+              await prisma.monitoredProperty.update({
+                where: { id: prop.id },
+                data: {
+                  lastHash: newHash,
+                  baselineData: registry.text,
+                  lastCheckedAt: now,
+                  registrySignalStatus: "confirmed_no_change",
+                  ...(extractedNo ? { commUniqueNo: extractedNo } : {}),
+                },
+              });
+              await recordRegistrySnapshot({ propertyId: prop.id, fullText: registry.text }).catch(() => {});
+              tilkoPrechecks++;
+              continue;
+            }
+
+            // 변동 없음
+            if (prop.lastHash === newHash) {
+              await prisma.monitoredProperty.update({
+                where: { id: prop.id },
+                data: {
+                  lastCheckedAt: now,
+                  registrySignalStatus: "confirmed_no_change",
+                  ...(extractedNo && !prop.commUniqueNo ? { commUniqueNo: extractedNo } : {}),
+                },
+              });
+              tilkoPrechecks++;
+              continue;
+            }
+
+            // 변동 감지!
+            let snapshotResult: { changedSections: string[]; isFirstSnapshot: boolean } | null = null;
+            try {
+              snapshotResult = await recordRegistrySnapshot({ propertyId: prop.id, fullText: registry.text });
+            } catch { /* 스냅샷 실패해도 알림은 발송 */ }
+
+            const oldContent = prop.baselineData || "";
+            const changes = detectChanges(oldContent, registry.text);
+            const sectionInfo = snapshotResult?.changedSections?.length
+              ? `\n[변동 섹션: ${snapshotResult.changedSections.map(getSectionLabel).join(", ")}]`
+              : "";
+
+            for (const change of changes) {
+              await prisma.monitoringAlert.create({
+                data: {
+                  monitoredPropertyId: prop.id,
+                  changeType: change.changeType,
+                  summary: change.summary,
+                  detail: change.detail + sectionInfo,
+                  riskLevel: change.riskLevel,
+                },
+              });
+              alertsCreated++;
+
+              const isGap = prop.monitorMode === "contract_gap";
+              const isUrgent = change.riskLevel === "high" || change.riskLevel === "critical";
+              if (isUrgent || isGap) {
+                const prefix = isGap ? "[긴급:계약감시]" : "[VESTRA]";
+                const suffix = isGap && isUrgent
+                  ? "\n\n⚠️ 계약~전입 기간 중 등기 변동입니다. 즉시 확인하세요."
+                  : "";
+                const recipients = await getNotificationRecipients(prop.id, prop.userId);
+                for (const recipientId of recipients) {
+                  await sendNotification({
+                    userId: recipientId,
+                    type: "registry_change",
+                    title: `${prefix} ${change.summary}`,
+                    body: `${prop.address}\n${change.detail}${sectionInfo}${suffix}`,
+                    data: {
+                      propertyId: prop.id,
+                      changeType: change.changeType,
+                      riskLevel: change.riskLevel,
+                      monitorMode: prop.monitorMode,
+                      source: "tilko-doc",
+                    },
+                  });
+                  notificationsSent++;
+                }
+              }
+            }
+
+            await prisma.monitoredProperty.update({
+              where: { id: prop.id },
+              data: {
+                lastCheckedAt: now,
+                lastHash: newHash,
+                registrySignalStatus: "confirmed_changed",
+                ...(extractedNo && !prop.commUniqueNo ? { commUniqueNo: extractedNo } : {}),
+                ...(!prop.baselineData ? { baselineData: registry.text } : {}),
+              },
+            });
+            tilkoPrechecks++;
+          } catch (e) {
+            console.error(`[CRON:MONITOR] Tilko 발급 직접 비교 실패: ${prop.address}`, e instanceof Error ? e.message : e);
+            skipped++;
+            await prisma.monitoredProperty.update({
+              where: { id: prop.id },
+              data: { lastCheckedAt: now },
+            }).catch(() => {});
+          }
+          continue;
+        }
+
         // 1차 감시: Tilko 등기신청사건 처리현황 조회
         // - 접수/처리 중: 조기 경고만 발송
         // - 처리 완료: 사용자 결제 기반 최신 등기부 발급 CTA까지만 진행
