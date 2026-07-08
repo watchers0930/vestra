@@ -23,6 +23,17 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
   const { data: session } = useSession();
   const router = useRouter();
   const postcodeReadyRef = useRef(false);
+  // Toss SDK를 미리 로드해서 클릭 시 팝업 차단 방지
+  const tossRef = useRef<Awaited<ReturnType<typeof loadTossPayments>> | null>(null);
+
+  useEffect(() => {
+    fetch("/api/payment/config")
+      .then((r) => r.json())
+      .then(({ clientKey }) => {
+        if (clientKey) loadTossPayments(clientKey).then((t) => { tossRef.current = t; });
+      })
+      .catch(() => {});
+  }, []);
 
   // 다음 주소 스크립트 로드
   useEffect(() => {
@@ -180,17 +191,21 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
         return;
       }
 
-      // 2. Toss 클라이언트 키 로드
-      const configRes = await fetch("/api/payment/config");
-      const { clientKey } = await configRes.json();
-      if (!clientKey) {
-        setIssueMessage("결제 설정이 완료되지 않았습니다. 관리자에게 문의하세요.");
-        return;
+      // 2. Toss SDK (마운트 시 미리 로드됨, 없으면 즉시 로드)
+      let toss = tossRef.current;
+      if (!toss) {
+        const configRes = await fetch("/api/payment/config");
+        const { clientKey } = await configRes.json();
+        if (!clientKey) {
+          setIssueMessage("결제 설정이 완료되지 않았습니다. 관리자에게 문의하세요.");
+          return;
+        }
+        toss = await loadTossPayments(clientKey);
+        tossRef.current = toss;
       }
 
       // 3. 토스 결제창 오픈
-      const customerKey = session?.user?.id ?? "anonymous";
-      const toss = await loadTossPayments(clientKey);
+      const customerKey = session?.user?.id ?? `anon-${Date.now()}`;
       const payment = toss.payment({ customerKey });
 
       await payment.requestPayment({
@@ -201,8 +216,13 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
         successUrl: `${window.location.origin}/rights?payment=success`,
         failUrl: `${window.location.origin}/rights?payment=fail`,
       });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "결제 중 오류가 발생했습니다.";
+    } catch (err: unknown) {
+      let msg = "결제 중 오류가 발생했습니다.";
+      if (err instanceof Error) {
+        msg = err.message;
+      } else if (err && typeof err === "object" && "message" in err) {
+        msg = String((err as { message: unknown }).message);
+      }
       if (!msg.includes("PAY_PROCESS_CANCELED")) {
         setIssueMessage(msg);
       }
