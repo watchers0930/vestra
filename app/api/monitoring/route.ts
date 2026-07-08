@@ -133,6 +133,18 @@ export async function POST(req: NextRequest) {
         },
       });
       if (pdfRawText && typeof pdfRawText === "string") {
+        const pdfExtractedNo = (!reactivated.commUniqueNo && !commUniqueNo)
+          ? extractCommUniqueNoFromText(pdfRawText) ?? undefined
+          : undefined;
+        const pdfHash = createHash("sha256").update(pdfRawText).digest("hex");
+        await prisma.monitoredProperty.update({
+          where: { id: reactivated.id },
+          data: {
+            ...(pdfExtractedNo ? { commUniqueNo: pdfExtractedNo } : {}),
+            baselineData: pdfRawText,
+            lastHash: pdfHash,
+          },
+        });
         recordRegistrySnapshot({ propertyId: reactivated.id, fullText: pdfRawText }).catch(() => {});
       }
       // 재활성화 시에도 commUniqueNo 없으면 Tilko 발급으로 보완
@@ -200,6 +212,18 @@ export async function POST(req: NextRequest) {
     });
 
     if (pdfRawText && typeof pdfRawText === "string") {
+      const pdfExtractedNo = !commUniqueNo
+        ? extractCommUniqueNoFromText(pdfRawText) ?? undefined
+        : undefined;
+      const pdfHash = createHash("sha256").update(pdfRawText).digest("hex");
+      await prisma.monitoredProperty.update({
+        where: { id: property.id },
+        data: {
+          ...(pdfExtractedNo ? { commUniqueNo: pdfExtractedNo } : {}),
+          baselineData: pdfRawText,
+          lastHash: pdfHash,
+        },
+      });
       recordRegistrySnapshot({ propertyId: property.id, fullText: pdfRawText }).catch(() => {});
     }
 
