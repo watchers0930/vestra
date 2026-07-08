@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ReceiptText, CreditCard, Loader2 } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { ReceiptText, CreditCard, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import type { IssuedRegistryAnalysisPayload } from "../hooks/useRightsAnalysis";
 
 const REGISTRY_ISSUE_PRICE = 1000;
-
 const APARTMENT_KEYWORDS = ["아파트", "오피스텔", "빌라", "연립", "다세대", "주상복합", "apt"];
 
 function detectApartment(address: string): boolean {
@@ -18,59 +20,114 @@ interface Props {
 }
 
 export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
+  const { data: session } = useSession();
+  const router = useRouter();
+
   const [issueAddress, setIssueAddress] = useState("");
   const [issueOwnerName, setIssueOwnerName] = useState("");
   const [issueConsent, setIssueConsent] = useState(false);
-  const [issueLoading, setIssueLoading] = useState(false);
   const [issuePropertyId, setIssuePropertyId] = useState("");
   const [issueMessage, setIssueMessage] = useState("");
   const [isApartment, setIsApartment] = useState(false);
   const [unitNumber, setUnitNumber] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [paymentPhase, setPaymentPhase] = useState<"idle" | "confirming" | "executing" | "done" | "error">("idle");
 
   useEffect(() => {
     setIsApartment(detectApartment(issueAddress));
   }, [issueAddress]);
 
+  // 감시 알림 프리필
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("issue") !== "1") return;
-
     const raw = sessionStorage.getItem("vestra_registry_issue_prefill");
     if (!raw) return;
-
     try {
-      const prefill = JSON.parse(raw) as {
-        propertyId?: string;
-        address?: string;
-        commUniqueNo?: string;
-        ownerName?: string;
-      };
+      const prefill = JSON.parse(raw) as { propertyId?: string; address?: string; ownerName?: string };
       if (prefill.propertyId) setIssuePropertyId(prefill.propertyId);
       if (prefill.address) setIssueAddress(prefill.address);
       if (prefill.ownerName) setIssueOwnerName(prefill.ownerName);
       setIssueMessage("감시 알림의 물건 정보가 입력되었습니다. 동의 후 최신 등기부를 확인하세요.");
-    } catch {
-      /* 프리필 실패 시 수동 입력 유지 */
-    }
+    } catch { /* 무시 */ }
   }, []);
 
-  const canSubmitIssue =
-    issueAddress.trim().length >= 5 &&
-    issueOwnerName.trim().length >= 2 &&
-    issueConsent;
+  // 토스 결제 결과 처리 (리다이렉트 복귀)
+  const handlePaymentReturn = useCallback(async (paymentKey: string, orderId: string, amount: number) => {
+    setPaymentPhase("confirming");
+    setIssueMessage("결제 확인 중...");
 
-  async function handleIssueOrder() {
-    if (issueLoading) return;
-    setIssueLoading(true);
+    // 1. 결제 검증
+    const confirmRes = await fetch("/api/registry/payment/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paymentKey, orderId, amount }),
+    });
+    const confirmData = await confirmRes.json();
+
+    if (!confirmRes.ok) {
+      setPaymentPhase("error");
+      setIssueMessage(confirmData.error || "결제 확인에 실패했습니다.");
+      router.replace("/rights");
+      return;
+    }
+
+    // 2. 등기부 발급 실행
+    setPaymentPhase("executing");
+    setIssueMessage("등기부 조회 및 AI 권리분석 중...");
+
+    const executeRes = await fetch("/api/registry/issue-order", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId }),
+    });
+    const executeData = await executeRes.json();
+
+    router.replace("/rights");
+
+    if (!executeRes.ok) {
+      setPaymentPhase("error");
+      setIssueMessage(executeData.error || "등기부 발급 중 오류가 발생했습니다.");
+      return;
+    }
+
+    setPaymentPhase("done");
+    setIssueMessage(`등기부 발급 및 AI 권리분석 완료. 주문번호 ${orderId}`);
+    applyIssuedRegistryAnalysis(executeData as IssuedRegistryAnalysisPayload);
+  }, [applyIssuedRegistryAnalysis, router]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("payment");
+    if (status === "success") {
+      const paymentKey = params.get("paymentKey") || "";
+      const orderId = params.get("orderId") || "";
+      const amount = Number(params.get("amount") || 0);
+      handlePaymentReturn(paymentKey, orderId, amount);
+    } else if (status === "fail") {
+      const message = params.get("message") || "결제가 취소되었거나 실패했습니다.";
+      setPaymentPhase("error");
+      setIssueMessage(message);
+      router.replace("/rights");
+    }
+  }, [handlePaymentReturn, router]);
+
+  const canSubmit = issueAddress.trim().length >= 5 && issueOwnerName.trim().length >= 2 && issueConsent;
+  const isProcessing = loading || paymentPhase === "confirming" || paymentPhase === "executing";
+
+  async function handlePayment() {
+    if (isProcessing || !canSubmit) return;
+    setLoading(true);
     setIssueMessage("");
 
-    const fullAddress =
-      isApartment && unitNumber.trim()
-        ? `${issueAddress.trim()} ${unitNumber.trim()}`
-        : issueAddress.trim();
-
     try {
-      const res = await fetch("/api/registry/issue-order", {
+      const fullAddress =
+        isApartment && unitNumber.trim()
+          ? `${issueAddress.trim()} ${unitNumber.trim()}`
+          : issueAddress.trim();
+
+      // 1. 주문 생성
+      const orderRes = await fetch("/api/registry/issue-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -83,21 +140,40 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
           acceptedTerms: issueConsent,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setIssueMessage(data.detail || data.error || "등기부 발급 및 분석에 실패했습니다.");
+      const orderData = await orderRes.json();
+      if (!orderRes.ok) {
+        setIssueMessage(orderData.error || "주문 생성에 실패했습니다.");
         return;
       }
-      if (data.analysis && data.registry) {
-        applyIssuedRegistryAnalysis(data as IssuedRegistryAnalysisPayload);
-        setIssueMessage(`등기부 발급 및 AI 권리분석이 완료되었습니다. 주문번호 ${data.order.orderId}`);
+
+      // 2. Toss 클라이언트 키 로드
+      const configRes = await fetch("/api/payment/config");
+      const { clientKey } = await configRes.json();
+      if (!clientKey) {
+        setIssueMessage("결제 설정이 완료되지 않았습니다. 관리자에게 문의하세요.");
         return;
       }
-      setIssueMessage(`결제 대기 주문이 생성되었습니다. 주문번호 ${data.order.orderId}`);
-    } catch {
-      setIssueMessage("네트워크 오류가 발생했습니다.");
+
+      // 3. 토스 결제창 오픈
+      const customerKey = session?.user?.id ?? "anonymous";
+      const toss = await loadTossPayments(clientKey);
+      const payment = toss.payment({ customerKey });
+
+      await payment.requestPayment({
+        method: "CARD",
+        amount: { currency: "KRW", value: orderData.order.amount },
+        orderId: orderData.order.orderId,
+        orderName: "등기부 조회 및 AI 권리분석",
+        successUrl: `${window.location.origin}/rights?payment=success`,
+        failUrl: `${window.location.origin}/rights?payment=fail`,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "결제 중 오류가 발생했습니다.";
+      if (!msg.includes("PAY_PROCESS_CANCELED")) {
+        setIssueMessage(msg);
+      }
     } finally {
-      setIssueLoading(false);
+      setLoading(false);
     }
   }
 
@@ -112,6 +188,8 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
     boxSizing: "border-box",
     marginBottom: "8px",
   };
+
+  const isError = paymentPhase === "error" || (issueMessage.includes("실패") || issueMessage.includes("오류") || issueMessage.includes("취소"));
 
   return (
     <div
@@ -141,114 +219,142 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
           </div>
         </div>
 
-        {/* 주소 입력 */}
-        <input
-          value={issueAddress}
-          onChange={(e) => setIssueAddress(e.target.value)}
-          placeholder="부동산 주소를 입력하세요 (예: 서울시 강남구 역삼동 123)"
-          style={inputStyle}
-        />
-
-        {/* 집합건물 여부 체크 */}
-        <label style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "8px", cursor: "pointer" }}>
-          <input
-            type="checkbox"
-            checked={isApartment}
-            onChange={(e) => {
-              setIsApartment(e.target.checked);
-              if (!e.target.checked) setUnitNumber("");
-            }}
-          />
-          <span style={{ fontSize: "11.5px", color: "#3c3c43", fontWeight: 500 }}>
-            집합건물 (아파트·오피스텔·빌라 등)
-          </span>
-          {isApartment && detectApartment(issueAddress) && (
-            <span style={{ fontSize: "10.5px", color: "#0071e3", background: "rgba(0,113,227,0.08)", borderRadius: "6px", padding: "1px 7px" }}>
-              자동 감지
-            </span>
-          )}
-        </label>
-
-        {/* 동호수 입력 (집합건물일 때만) */}
-        {isApartment && (
-          <>
-            <input
-              value={unitNumber}
-              onChange={(e) => setUnitNumber(e.target.value)}
-              placeholder="동호수 (예: 101동 502호)"
-              style={inputStyle}
-            />
-            {!unitNumber.trim() && (
-              <p style={{ fontSize: "11px", color: "#ff9500", marginBottom: "8px", marginTop: "-4px" }}>
-                ⚠ 동호수 미입력 시 소유자명 기준으로 조회되어 정확도가 낮아질 수 있습니다.
-              </p>
-            )}
-          </>
+        {/* 결제 처리 중 오버레이 */}
+        {(paymentPhase === "confirming" || paymentPhase === "executing") && (
+          <div style={{ textAlign: "center", padding: "20px 0", marginBottom: "12px" }}>
+            <Loader2 size={28} className="animate-spin" style={{ color: "#0071e3", margin: "0 auto 10px" }} />
+            <p style={{ fontSize: "13px", fontWeight: 600, color: "#0071e3" }}>
+              {paymentPhase === "confirming" ? "결제 확인 중..." : "등기부 조회 및 AI 권리분석 중..."}
+            </p>
+            <p style={{ fontSize: "11px", color: "#6e6e73", marginTop: "4px" }}>잠시만 기다려주세요.</p>
+          </div>
         )}
 
-        {/* 소유자명 입력 */}
-        <input
-          value={issueOwnerName}
-          onChange={(e) => setIssueOwnerName(e.target.value)}
-          placeholder={isApartment && !unitNumber.trim() ? "등기부상 소유자명 (필수)" : "등기부상 소유자명"}
-          style={{
-            ...inputStyle,
-            borderColor:
-              isApartment && !unitNumber.trim() && !issueOwnerName.trim()
-                ? "rgba(255,149,0,0.4)"
-                : "rgba(0,0,0,0.10)",
-          }}
-        />
+        {paymentPhase === "done" && (
+          <div style={{ textAlign: "center", padding: "16px 0", marginBottom: "12px" }}>
+            <CheckCircle size={28} style={{ color: "#30d158", margin: "0 auto 8px" }} />
+            <p style={{ fontSize: "13px", fontWeight: 600, color: "#1a9e45" }}>분석이 완료되었습니다.</p>
+          </div>
+        )}
 
-        {/* 동의 체크 */}
-        <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "12px", cursor: "pointer" }}>
-          <input
-            type="checkbox"
-            checked={issueConsent}
-            onChange={(e) => setIssueConsent(e.target.checked)}
-            style={{ marginTop: "2px" }}
-          />
-          <span style={{ fontSize: "11px", color: "#6e6e73", lineHeight: 1.45 }}>
-            베스트라의 등기부 조회 및 AI 권리분석 서비스를 위해 입력 정보를 공식 연계 조회 사업자에 전송하고, 조회된 문서를 권리분석 및 감시 기준 스냅샷에 사용하는 데 동의합니다.
-          </span>
-        </label>
+        {/* 입력 폼 (처리 중/완료가 아닐 때) */}
+        {paymentPhase === "idle" || paymentPhase === "error" ? (
+          <>
+            <input
+              value={issueAddress}
+              onChange={(e) => setIssueAddress(e.target.value)}
+              placeholder="부동산 주소를 입력하세요 (예: 서울시 강남구 역삼동 123)"
+              style={inputStyle}
+              disabled={isProcessing}
+            />
 
-        {/* 제출 버튼 */}
-        <button
-          onClick={handleIssueOrder}
-          disabled={issueLoading || !canSubmitIssue}
-          style={{
-            width: "100%",
-            padding: "11px 14px",
-            borderRadius: "12px",
-            border: "none",
-            background: issueLoading || !canSubmitIssue ? "rgba(0,0,0,0.08)" : "#1d1d1f",
-            color: issueLoading || !canSubmitIssue ? "#aaa" : "#fff",
-            fontSize: "13px",
-            fontWeight: 800,
+            {/* 집합건물 여부 */}
+            <label style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "8px", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={isApartment}
+                onChange={(e) => { setIsApartment(e.target.checked); if (!e.target.checked) setUnitNumber(""); }}
+                disabled={isProcessing}
+              />
+              <span style={{ fontSize: "11.5px", color: "#3c3c43", fontWeight: 500 }}>
+                집합건물 (아파트·오피스텔·빌라 등)
+              </span>
+              {isApartment && detectApartment(issueAddress) && (
+                <span style={{ fontSize: "10.5px", color: "#0071e3", background: "rgba(0,113,227,0.08)", borderRadius: "6px", padding: "1px 7px" }}>
+                  자동 감지
+                </span>
+              )}
+            </label>
+
+            {/* 동호수 */}
+            {isApartment && (
+              <>
+                <input
+                  value={unitNumber}
+                  onChange={(e) => setUnitNumber(e.target.value)}
+                  placeholder="동호수 (예: 101동 502호)"
+                  style={inputStyle}
+                  disabled={isProcessing}
+                />
+                {!unitNumber.trim() && (
+                  <p style={{ fontSize: "11px", color: "#ff9500", marginBottom: "8px", marginTop: "-4px" }}>
+                    ⚠ 동호수 미입력 시 소유자명 기준으로 조회되어 정확도가 낮아질 수 있습니다.
+                  </p>
+                )}
+              </>
+            )}
+
+            {/* 소유자명 */}
+            <input
+              value={issueOwnerName}
+              onChange={(e) => setIssueOwnerName(e.target.value)}
+              placeholder={isApartment && !unitNumber.trim() ? "등기부상 소유자명 (필수)" : "등기부상 소유자명"}
+              style={{
+                ...inputStyle,
+                borderColor: isApartment && !unitNumber.trim() && !issueOwnerName.trim() ? "rgba(255,149,0,0.4)" : "rgba(0,0,0,0.10)",
+              }}
+              disabled={isProcessing}
+            />
+
+            {/* 동의 */}
+            <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "12px", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={issueConsent}
+                onChange={(e) => setIssueConsent(e.target.checked)}
+                style={{ marginTop: "2px" }}
+                disabled={isProcessing}
+              />
+              <span style={{ fontSize: "11px", color: "#6e6e73", lineHeight: 1.45 }}>
+                베스트라의 등기부 조회 및 AI 권리분석 서비스를 위해 입력 정보를 공식 연계 조회 사업자에 전송하고, 조회된 문서를 권리분석 및 감시 기준 스냅샷에 사용하는 데 동의합니다.
+              </span>
+            </label>
+
+            {/* 결제 버튼 */}
+            <button
+              onClick={handlePayment}
+              disabled={isProcessing || !canSubmit}
+              style={{
+                width: "100%",
+                padding: "11px 14px",
+                borderRadius: "12px",
+                border: "none",
+                background: isProcessing || !canSubmit ? "rgba(0,0,0,0.08)" : "#1d1d1f",
+                color: isProcessing || !canSubmit ? "#aaa" : "#fff",
+                fontSize: "13px",
+                fontWeight: 800,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "7px",
+                cursor: isProcessing || !canSubmit ? "not-allowed" : "pointer",
+              }}
+            >
+              {loading ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
+              {loading ? "결제창 로딩 중..." : "등기부 발급 결제 진행"}
+            </button>
+          </>
+        ) : null}
+
+        {/* 상태 메시지 */}
+        {issueMessage && (
+          <p style={{
+            fontSize: "10.5px",
+            color: isError ? "#ff3b30" : "#6e6e73",
+            marginTop: "8px",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            gap: "7px",
-            cursor: issueLoading || !canSubmitIssue ? "not-allowed" : "pointer",
-          }}
-        >
-          {issueLoading ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
-          {issueLoading ? "결제 주문 생성 중..." : "등기부 발급 결제 진행"}
-        </button>
-
-        <p
-          style={{
-            fontSize: "10.5px",
-            color:
-              issueMessage.includes("실패") || issueMessage.includes("오류") ? "#ff3b30" : "#6e6e73",
-            marginTop: "8px",
-            minHeight: "14px",
-          }}
-        >
-          {issueMessage ||
-            `결제 완료 후 틸코 API로 최신 등기부를 조회하고 AI 권리분석 결과를 저장합니다. 서비스 이용료 기준 ${REGISTRY_ISSUE_PRICE.toLocaleString()}원`}
-        </p>
+            gap: "4px",
+          }}>
+            {isError && <AlertCircle size={11} />}
+            {issueMessage}
+          </p>
+        )}
+        {!issueMessage && paymentPhase === "idle" && (
+          <p style={{ fontSize: "10.5px", color: "#6e6e73", marginTop: "8px" }}>
+            결제 완료 후 틸코 API로 최신 등기부를 조회하고 AI 권리분석 결과를 저장합니다. 서비스 이용료 기준 {REGISTRY_ISSUE_PRICE.toLocaleString()}원
+          </p>
+        )}
       </div>
     </div>
   );
