@@ -20,6 +20,8 @@ export interface IssuedRegistryAnalysisPayload {
     id?: string;
     result: UnifiedResult;
   };
+  ownerMatch?: boolean;
+  registryOwnerMasked?: string;
 }
 
 export function useRightsAnalysis() {
@@ -39,6 +41,8 @@ export function useRightsAnalysis() {
   const [tilkoFetching, setTilkoFetching] = useState(false);
   const [tilkoSource, setTilkoSource] = useState(false);
   const [autoAddress, setAutoAddress] = useState<string | null>(null);
+  const [ownerMatch, setOwnerMatch] = useState<boolean | null>(null);
+  const [registryOwnerMasked, setRegistryOwnerMasked] = useState<string>("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -340,6 +344,8 @@ export function useRightsAnalysis() {
     setError(null);
     setStep("done");
     setTilkoSource(true);
+    if (payload.ownerMatch !== undefined) setOwnerMatch(payload.ownerMatch);
+    if (payload.registryOwnerMasked) setRegistryOwnerMasked(payload.registryOwnerMasked);
     setFileName(null);
     setFileType(null);
     setAnalysisId(payload.analysis.id || `rights_${Date.now()}`);
@@ -387,5 +393,6 @@ export function useRightsAnalysis() {
     loadSample, handleAddressAnalyze,
     handleDrop, handleDragOver, handleDragLeave,
     handleFileChange, handleAnalyze, applyIssuedRegistryAnalysis,
+    ownerMatch, registryOwnerMasked,
   };
 }

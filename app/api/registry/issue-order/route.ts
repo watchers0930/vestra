@@ -12,11 +12,35 @@ import { createHash } from "crypto";
 const ISSUE_PRICE = 1000;
 const CONSENT_VERSION = "registry-issue-v1";
 
+function extractCurrentOwner(gapgu: Array<{ purpose: string; holder: string; isCancelled: boolean }>): string {
+  const active = [...gapgu]
+    .reverse()
+    .find((e) => !e.isCancelled && (e.purpose.includes("소유권") || e.holder));
+  return active?.holder?.trim() || "";
+}
+
+function maskOwnerName(name: string): string {
+  if (!name) return "**";
+  return name[0] + "*".repeat(Math.max(name.length - 1, 1));
+}
+
+function normalizeOwner(name: string): string {
+  return name.replace(/\s+/g, "").replace(/[()（）]/g, "");
+}
+
+function compareOwnerNames(input: string, registry: string): boolean {
+  const a = normalizeOwner(input);
+  const b = normalizeOwner(registry);
+  if (!a || !b) return false;
+  return a === b || b.includes(a) || a.includes(b);
+}
+
 interface IssueOrderForExecution {
   id: string;
   userId: string;
   address: string;
   commUniqueNo: string | null;
+  ownerName: string | null;
   amount: number;
   status: string;
   provider: string;
@@ -240,6 +264,10 @@ async function executePaidOrder(params: {
       req,
     });
 
+    const registryOwner = extractCurrentOwner(analysisResult.parsed?.gapgu || []);
+    const ownerMatch = compareOwnerNames(order.ownerName || "", registryOwner);
+    const registryOwnerMasked = maskOwnerName(registryOwner);
+
     return NextResponse.json({
       order: {
         id: issuedOrder.id,
@@ -267,6 +295,8 @@ async function executePaidOrder(params: {
         id: savedAnalysis.id,
         result: JSON.parse(analysisData),
       },
+      ownerMatch,
+      registryOwnerMasked,
     });
   } catch (issueError) {
     const message = issueError instanceof Error ? issueError.message : "등기부 발급/분석 중 오류가 발생했습니다.";
@@ -458,6 +488,7 @@ export async function PATCH(req: NextRequest) {
         userId: true,
         address: true,
         commUniqueNo: true,
+        ownerName: true,
         amount: true,
         status: true,
         provider: true,

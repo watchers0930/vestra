@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { FileText, Loader2, ShieldCheck, Home, Calculator, TrendingUp } from "lucide-react";
+import { FileText, Loader2, ShieldCheck, Home, Calculator, TrendingUp, AlertTriangle } from "lucide-react";
 import { AiDisclaimer } from "@/components/common";
 import { CategoryHero } from "@/components/common/CategoryHero";
 import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
@@ -34,6 +34,7 @@ export default function RightsAnalysisPage() {
     loadSample, handleAddressAnalyze,
     handleDrop, handleDragOver, handleDragLeave,
     handleFileChange, handleAnalyze, applyIssuedRegistryAnalysis,
+    ownerMatch, registryOwnerMasked,
   } = useRightsAnalysis();
 
   const usedFile  = inputMode === "file" && fileName;
@@ -140,8 +141,50 @@ export default function RightsAnalysisPage() {
         </div>
       )}
 
-      {/* 결과 */}
-      {result && step === "done" && (
+      {/* 결과 — 소유자 불일치 차단 */}
+      {result && step === "done" && ownerMatch === false && (
+        <div
+          className="mb-6"
+          style={{
+            borderRadius: "20px",
+            border: "1.5px solid #ff3b30",
+            background: "rgba(255,59,48,0.04)",
+            padding: "32px 28px",
+            textAlign: "center",
+          }}
+        >
+          <AlertTriangle size={36} style={{ color: "#ff3b30", margin: "0 auto 16px" }} />
+          <p style={{ fontSize: "17px", fontWeight: 800, color: "#1d1d1f", marginBottom: "10px" }}>
+            소유자 불일치 — 분석 결과 제공 불가
+          </p>
+          <p style={{ fontSize: "13px", color: "#3c3c43", lineHeight: 1.65, marginBottom: "18px" }}>
+            입력하신 소유자명이 등기부에 기재된 실제 소유자와 다릅니다.<br />
+            임대인이 해당 부동산의 실제 소유자가 아닐 수 있으니 주의하세요.
+          </p>
+          <div
+            style={{
+              display: "inline-block",
+              padding: "12px 24px",
+              borderRadius: "12px",
+              background: "rgba(255,59,48,0.08)",
+              border: "1px solid rgba(255,59,48,0.20)",
+              marginBottom: "20px",
+            }}
+          >
+            <p style={{ fontSize: "11px", color: "#86868b", marginBottom: "4px" }}>등기부상 소유자 (성만 공개)</p>
+            <p style={{ fontSize: "22px", fontWeight: 900, color: "#ff3b30", letterSpacing: "0.08em" }}>
+              {registryOwnerMasked || "확인 불가"}
+            </p>
+          </div>
+          <p style={{ fontSize: "11px", color: "#aeaeb2", lineHeight: 1.6 }}>
+            정보 입력 오류로 인한 환불은 불가합니다.<br />
+            올바른 소유자명을 확인 후 재신청해 주세요.
+          </p>
+        </div>
+      )}
+
+      {/* 결과 — 소유자 일치 또는 파일/텍스트 분석 */}
+      {result && step === "done" && ownerMatch !== false && (
         <>
           <div id="rights-result" aria-live="polite">
             <AiDisclaimer compact className="mb-4" />
