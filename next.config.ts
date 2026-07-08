@@ -18,7 +18,7 @@ const googleTagDomains = "https://www.googletagmanager.com";
 const googleAnalyticsConnect = "https://www.google-analytics.com https://region1.google-analytics.com";
 // 토스페이먼츠 CSP 도메인
 const tossDomains = "https://js.tosspayments.com";
-const tossConnect = "https://api.tosspayments.com https://js.tosspayments.com";
+const tossConnect = "https://api.tosspayments.com https://js.tosspayments.com https://event.tosspayments.com https://log.tosspayments.com";
 const tossFrame = "https://*.tosspayments.com https://*.toss.im";
 const isDev = process.env.NODE_ENV !== "production";
 
