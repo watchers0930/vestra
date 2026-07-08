@@ -66,14 +66,14 @@ export default function RightsAnalysisPage() {
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <FileText size={15} style={{ color: "#0071e3", flexShrink: 0 }} />
-            <span style={{ fontSize: "12.5px", color: "#0071e3" }}>이전 분석 기록이 있습니다: {previousAnalysis.date}</span>
+            <span style={{ fontSize: "13px", color: "#0071e3" }}>이전 분석 기록이 있습니다: {previousAnalysis.date}</span>
           </div>
           <button
             onClick={() => {
               const el = document.getElementById("rights-result");
               if (el) el.scrollIntoView({ behavior: "smooth" });
             }}
-            style={{ fontSize: "11.5px", fontWeight: 600, color: "#0071e3", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+            style={{ fontSize: "13px", fontWeight: 600, color: "#0071e3", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
           >
             결과 보기 →
           </button>
@@ -132,7 +132,7 @@ export default function RightsAnalysisPage() {
           }}
         >
           <p style={{ fontSize: "14px", fontWeight: 600, color: "#1d1d1f", textAlign: "center", marginBottom: "4px" }}>등기부등본 종합 분석 중...</p>
-          <p style={{ fontSize: "12px", color: "#aeaeb2", textAlign: "center", marginBottom: "4px" }}>약 10~15초 소요</p>
+          <p style={{ fontSize: "13px", color: "#aeaeb2", textAlign: "center", marginBottom: "4px" }}>약 10~15초 소요</p>
           <AnalysisStepIndicator step={step} showExtract={!!usedFile} showTilko={!!usedTilko} fileType={fileType} />
           <AnalysisLoader
             steps={["등기부등본 파싱 중...", "권리관계 분석 중...", "위험도 점수 산출 중...", "AI 종합 의견 생성 중..."]}
@@ -171,12 +171,12 @@ export default function RightsAnalysisPage() {
               marginBottom: "20px",
             }}
           >
-            <p style={{ fontSize: "11px", color: "#86868b", marginBottom: "4px" }}>등기부상 소유자 (성만 공개)</p>
+            <p style={{ fontSize: "13px", color: "#86868b", marginBottom: "4px" }}>등기부상 소유자 (성만 공개)</p>
             <p style={{ fontSize: "22px", fontWeight: 900, color: "#ff3b30", letterSpacing: "0.08em" }}>
               {registryOwnerMasked || "확인 불가"}
             </p>
           </div>
-          <p style={{ fontSize: "11px", color: "#aeaeb2", lineHeight: 1.6 }}>
+          <p style={{ fontSize: "13px", color: "#aeaeb2", lineHeight: 1.6 }}>
             정보 입력 오류로 인한 환불은 불가합니다.<br />
             올바른 소유자명을 확인 후 재신청해 주세요.
           </p>
@@ -194,7 +194,7 @@ export default function RightsAnalysisPage() {
           <div className="mt-3 flex items-center justify-between">
             <span
               style={{
-                fontSize: "11px",
+                fontSize: "13px",
                 color: "#6e6e73",
                 background: "#f5f5f7",
                 borderRadius: "8px",

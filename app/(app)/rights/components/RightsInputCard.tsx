@@ -100,7 +100,7 @@ export function RightsInputCard({
                   gap: "5px",
                   padding: "7px 14px",
                   borderRadius: "20px",
-                  fontSize: "12.5px",
+                  fontSize: "13px",
                   fontWeight: active ? 600 : 500,
                   cursor: "pointer",
                   transition: "all 0.15s",
@@ -119,7 +119,7 @@ export function RightsInputCard({
         <button
           onClick={loadSample}
           style={{
-            fontSize: "11.5px",
+            fontSize: "13px",
             fontWeight: 500,
             color: "#0071e3",
             background: "rgba(0,113,227,0.06)",
@@ -186,7 +186,7 @@ export function RightsInputCard({
                 {tilkoFetching ? "조회 중..." : "조회"}
               </button>
             </div>
-            <p style={{ fontSize: "11px", color: "#aeaeb2" }}>
+            <p style={{ fontSize: "13px", color: "#aeaeb2" }}>
               건축물대장 + 실거래가 공공데이터 기반 · 등기부등본 없이 간이 분석 (권리관계 정보 제한)
             </p>
           </div>
@@ -229,13 +229,13 @@ export function RightsInputCard({
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
                 <CheckCircle size={28} strokeWidth={1.5} style={{ color: "#30d158" }} />
                 <p style={{ fontSize: "13.5px", fontWeight: 600, color: "#1a9e45" }}>{fileName}</p>
-                <p style={{ fontSize: "11.5px", color: "#30d158" }}>텍스트 추출 완료 ({rawText.length.toLocaleString()}자) — 클릭하여 변경</p>
+                <p style={{ fontSize: "13px", color: "#30d158" }}>텍스트 추출 완료 ({rawText.length.toLocaleString()}자) — 클릭하여 변경</p>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
                 <FileText size={30} strokeWidth={1.2} style={{ color: "#aeaeb2" }} />
                 <p style={{ fontSize: "13.5px", fontWeight: 500, color: "#3c3c43" }}>등기부등본 PDF 또는 이미지를 드래그하세요</p>
-                <p style={{ fontSize: "11.5px", color: "#aeaeb2" }}>PDF, JPG, PNG — 최대 10MB</p>
+                <p style={{ fontSize: "13px", color: "#aeaeb2" }}>PDF, JPG, PNG — 최대 10MB</p>
               </div>
             )}
           </div>
@@ -254,7 +254,7 @@ export function RightsInputCard({
               padding: "12px 14px",
               borderRadius: "12px",
               border: "1.5px solid rgba(0,0,0,0.10)",
-              fontSize: "12px",
+              fontSize: "13px",
               fontFamily: "monospace",
               resize: "vertical",
               outline: "none",

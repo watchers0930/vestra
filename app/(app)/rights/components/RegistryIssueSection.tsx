@@ -217,7 +217,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
     padding: "10px 12px",
     borderRadius: "10px",
     border: "1px solid rgba(0,0,0,0.10)",
-    fontSize: "12.5px",
+    fontSize: "13px",
     outline: "none",
     background: "#fff",
     boxSizing: "border-box",
@@ -244,7 +244,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
               <ReceiptText size={16} style={{ color: "#0071e3" }} />
               <p style={{ fontSize: "13.5px", fontWeight: 800, color: "#1d1d1f" }}>등기부 조회 및 AI 권리분석 신청</p>
             </div>
-            <p style={{ fontSize: "11.5px", color: "#6e6e73", lineHeight: 1.55 }}>
+            <p style={{ fontSize: "13px", color: "#6e6e73", lineHeight: 1.55 }}>
               공식 연계 API로 최신 등기부 정보를 조회하고, 수신 즉시 권리분석과 기준 스냅샷 저장에 사용합니다.
             </p>
           </div>
@@ -261,7 +261,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
             <p style={{ fontSize: "13px", fontWeight: 600, color: "#0071e3" }}>
               {paymentPhase === "confirming" ? "결제 확인 중..." : "등기부 조회 및 AI 권리분석 중..."}
             </p>
-            <p style={{ fontSize: "11px", color: "#6e6e73", marginTop: "4px" }}>잠시만 기다려주세요.</p>
+            <p style={{ fontSize: "13px", color: "#6e6e73", marginTop: "4px" }}>잠시만 기다려주세요.</p>
           </div>
         )}
 
@@ -296,7 +296,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
                   border: "1px solid rgba(0,113,227,0.25)",
                   background: "rgba(0,113,227,0.07)",
                   color: "#0071e3",
-                  fontSize: "12px",
+                  fontSize: "13px",
                   fontWeight: 700,
                   cursor: isProcessing ? "not-allowed" : "pointer",
                   whiteSpace: "nowrap",
@@ -316,7 +316,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
                 onChange={(e) => { setIsApartment(e.target.checked); if (!e.target.checked) setUnitNumber(""); }}
                 disabled={isProcessing}
               />
-              <span style={{ fontSize: "11.5px", color: "#3c3c43", fontWeight: 500 }}>
+              <span style={{ fontSize: "13px", color: "#3c3c43", fontWeight: 500 }}>
                 집합건물 (아파트·오피스텔·빌라 등)
               </span>
               {isApartment && detectApartment(issueAddress) && (
@@ -337,7 +337,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
                   disabled={isProcessing}
                 />
                 {!unitNumber.trim() && (
-                  <p style={{ fontSize: "11px", color: "#ff9500", marginBottom: "8px", marginTop: "-4px" }}>
+                  <p style={{ fontSize: "13px", color: "#ff9500", marginBottom: "8px", marginTop: "-4px" }}>
                     ⚠ 동호수 미입력 시 소유자명 기준으로 조회되어 정확도가 낮아질 수 있습니다.
                   </p>
                 )}
@@ -365,7 +365,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
                 style={{ marginTop: "2px" }}
                 disabled={isProcessing}
               />
-              <span style={{ fontSize: "11px", color: "#6e6e73", lineHeight: 1.45 }}>
+              <span style={{ fontSize: "13px", color: "#6e6e73", lineHeight: 1.45 }}>
                 베스트라의 등기부 조회 및 AI 권리분석 서비스를 위해 입력 정보를 공식 연계 조회 사업자에 전송하고, 조회된 문서를 권리분석 및 감시 기준 스냅샷에 사용하는 데 동의합니다.
               </span>
             </label>

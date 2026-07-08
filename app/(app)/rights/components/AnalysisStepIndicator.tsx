@@ -66,7 +66,7 @@ export function AnalysisStepIndicator({ step, showExtract, showTilko, fileType }
               </div>
               <span
                 style={{
-                  fontSize: "10px",
+                  fontSize: "13px",
                   fontWeight: isActive || isDone ? 600 : 400,
                   color: isActive || isDone ? "#0071e3" : "#aeaeb2",
                   whiteSpace: "nowrap",
