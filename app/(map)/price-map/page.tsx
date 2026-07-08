@@ -5,11 +5,12 @@ import { LeftPanel } from "./components/LeftPanel";
 import { MobileMapSheet } from "./components/MobileMapSheet";
 import { RiskPopup } from "./components/RiskPopup";
 import { MapOverlay } from "./components/MapOverlay";
+import { AptSlidePanel } from "./components/AptSlidePanel";
 
 export default function PriceMapPage() {
   const {
     mapRef, data, selectedGu, setSelectedGu,
-    selectedApt, loading, showGuDropdown, setShowGuDropdown,
+    selectedApt, setSelectedApt, loading, showGuDropdown, setShowGuDropdown,
     selectedSido, setSelectedSido, tradeType, setTradeType,
     propertyType, setPropertyType,
     riskPopup, setRiskPopup,
@@ -23,7 +24,6 @@ export default function PriceMapPage() {
         <LeftPanel
           selectedGu={selectedGu}
           setSelectedGu={setSelectedGu}
-          selectedApt={selectedApt}
           loading={loading}
           showGuDropdown={showGuDropdown}
           setShowGuDropdown={setShowGuDropdown}
@@ -35,8 +35,6 @@ export default function PriceMapPage() {
           setPropertyType={setPropertyType}
           topChanges={topChanges}
           selectAndMoveToApt={selectAndMoveToApt}
-          setRiskPopup={setRiskPopup}
-          officialPriceLabel={officialPriceLabel}
         />
 
         {riskPopup && (
@@ -64,6 +62,26 @@ export default function PriceMapPage() {
               </div>
             </div>
           ) : null}
+
+          {/* 아파트 선택 시 우측 슬라이드 패널 */}
+          <div
+            className={[
+              "absolute inset-y-0 right-0 z-10 w-[340px]",
+              "bg-white shadow-[-4px_0_28px_rgba(0,0,0,0.10)]",
+              "transition-transform duration-300 ease-in-out",
+              selectedApt ? "translate-x-0" : "translate-x-full",
+            ].join(" ")}
+          >
+            {selectedApt && (
+              <AptSlidePanel
+                apt={selectedApt}
+                tradeType={tradeType}
+                officialPriceLabel={officialPriceLabel}
+                onClose={() => setSelectedApt(null)}
+                onRiskPopup={setRiskPopup}
+              />
+            )}
+          </div>
         </div>
       </div>
 

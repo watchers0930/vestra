@@ -1,7 +1,6 @@
 "use client";
 
-import { MapPin, TrendingUp, TrendingDown, ChevronDown, BarChart3, Building2 } from "lucide-react";
-import { analyzeRisk } from "../lib/analyzeRisk";
+import { MapPin, TrendingUp, ChevronDown, BarChart3, Building2 } from "lucide-react";
 import { formatMapPrice } from "../lib/formatMapPrice";
 import { getSelectableSidoMap } from "../constants";
 import type { AptData, PriceMapTradeType, PropertyType } from "../types";
@@ -9,7 +8,6 @@ import type { AptData, PriceMapTradeType, PropertyType } from "../types";
 interface Props {
   selectedGu: string;
   setSelectedGu: (gu: string) => void;
-  selectedApt: AptData | null;
   loading: boolean;
   showGuDropdown: boolean;
   setShowGuDropdown: (v: boolean) => void;
@@ -21,8 +19,6 @@ interface Props {
   setPropertyType: (t: PropertyType) => void;
   topChanges: AptData[];
   selectAndMoveToApt: (apt: AptData) => void;
-  setRiskPopup: (v: { apt: AptData; risk: ReturnType<typeof analyzeRisk> } | null) => void;
-  officialPriceLabel?: string;
 }
 
 const RANK_COLORS = ["#0071e3", "#1a9e45", "#b86f00"];
@@ -30,10 +26,9 @@ const PROPERTY_TYPES: PropertyType[] = ["아파트", "연립/빌라/다세대"];
 const TRADE_TYPES: PriceMapTradeType[] = ["매매", "전세", "월세"];
 
 export function LeftPanel({
-  selectedGu, setSelectedGu, selectedApt, loading,
+  selectedGu, setSelectedGu, loading,
   showGuDropdown, setShowGuDropdown, selectedSido, setSelectedSido,
-  tradeType, setTradeType, propertyType, setPropertyType, topChanges, selectAndMoveToApt, setRiskPopup,
-  officialPriceLabel,
+  tradeType, setTradeType, propertyType, setPropertyType, topChanges, selectAndMoveToApt,
 }: Props) {
   const selectableSidoMap = getSelectableSidoMap(propertyType);
 
@@ -158,15 +153,14 @@ export function LeftPanel({
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               {topChanges.map((apt, i) => {
-                const isSelected = selectedApt?.name === apt.name;
                 const isUp = (apt.change ?? 0) >= 0;
                 return (
                   <button
                     key={apt.name}
                     onClick={() => selectAndMoveToApt(apt)}
-                    style={{ display: "flex", alignItems: "center", gap: "10px", borderRadius: "12px", padding: "10px 12px", background: isSelected ? "rgba(0,113,227,0.05)" : "#f5f5f7", border: isSelected ? "1.5px solid rgba(0,113,227,0.25)" : "1.5px solid transparent", cursor: "pointer", textAlign: "left" as const, transition: "all 0.15s" }}
-                    onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = "#ebebed"; }}
-                    onMouseLeave={(e) => { if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = "#f5f5f7"; }}
+                    style={{ display: "flex", alignItems: "center", gap: "10px", borderRadius: "12px", padding: "10px 12px", background: "#f5f5f7", border: "1.5px solid transparent", cursor: "pointer", textAlign: "left" as const, transition: "all 0.15s" }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#ebebed"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#f5f5f7"; }}
                   >
                     <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "22px", height: "22px", borderRadius: "50%", background: RANK_COLORS[i] ?? "#aeaeb2", fontSize: "10px", fontWeight: 700, color: "#fff", flexShrink: 0 }}>
                       {i + 1}
@@ -188,51 +182,6 @@ export function LeftPanel({
           )}
         </div>
 
-        {/* 선택된 아파트 상세 */}
-        {selectedApt && (() => {
-          const isUp = (selectedApt.change ?? 0) >= 0;
-          return (
-            <div style={{ background: "#fff", border: "1px solid rgba(0,113,227,0.18)", borderRadius: "16px", boxShadow: "0 2px 12px rgba(0,113,227,0.08)", padding: "14px" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "12px", gap: "8px" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h4 style={{ fontSize: "13px", fontWeight: 700, color: "#1d1d1f", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{selectedApt.name}</h4>
-                  <p style={{ fontSize: "11px", color: "#6e6e73", margin: 0, marginTop: "2px" }}>{selectedApt.dong}</p>
-                </div>
-                {selectedApt.change !== null ? (
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "4px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700, background: isUp ? "rgba(255,59,48,0.08)" : "rgba(0,113,227,0.08)", color: isUp ? "#ff3b30" : "#0071e3", flexShrink: 0 }}>
-                    {isUp ? <TrendingUp size={11} strokeWidth={2} /> : <TrendingDown size={11} strokeWidth={2} />}
-                    {isUp ? "+" : ""}{selectedApt.change}%
-                  </span>
-                ) : (
-                  <span style={{ fontSize: "10.5px", fontWeight: 600, padding: "4px 10px", borderRadius: "20px", background: "rgba(0,0,0,0.05)", color: "#aeaeb2" }}>데이터 부족</span>
-                )}
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "12px" }}>
-                {[
-                  { label: tradeType === "월세" ? "월세" : "시세", value: formatMapPrice(selectedApt, tradeType) },
-                  { label: "면적", value: selectedApt.area ? `${selectedApt.area}평` : "미제공" },
-                  { label: "건축", value: selectedApt.year ? `${selectedApt.year}년` : "-" },
-                  { label: "공시지가", value: officialPriceLabel || "데이터 없음" },
-                ].map(({ label, value }) => (
-                  <div key={label} style={{ borderRadius: "10px", background: "#f5f5f7", padding: "8px 10px" }}>
-                    <p style={{ fontSize: "10px", color: "#aeaeb2", margin: 0 }}>{label}</p>
-                    <p style={{ fontSize: "12px", fontWeight: 700, color: "#1d1d1f", margin: 0, marginTop: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{value}</p>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setRiskPopup({ apt: selectedApt, risk: analyzeRisk(selectedApt) })}
-                style={{ display: "block", width: "100%", borderRadius: "10px", background: "#0071e3", padding: "9px", textAlign: "center" as const, fontSize: "12px", fontWeight: 600, color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 2px 10px rgba(0,113,227,0.30)", transition: "all 0.15s" }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#0077ed"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#0071e3"; }}
-              >
-                위험도 분석 →
-              </button>
-            </div>
-          );
-        })()}
       </div>
     </div>
   );

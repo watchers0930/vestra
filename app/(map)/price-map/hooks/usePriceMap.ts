@@ -472,7 +472,7 @@ export function usePriceMap() {
 
   return {
     mapRef, data, selectedGu, setSelectedGu,
-    selectedApt, loading, showGuDropdown, setShowGuDropdown,
+    selectedApt, setSelectedApt, loading, showGuDropdown, setShowGuDropdown,
     selectedSido, setSelectedSido, tradeType, setTradeType,
     propertyType, setPropertyType,
     riskPopup, setRiskPopup,
