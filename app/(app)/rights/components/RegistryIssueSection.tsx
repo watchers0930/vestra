@@ -40,7 +40,8 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
   const openAddressSearch = useCallback(() => {
     const open = () => new window.daum!.Postcode({
       oncomplete: (data) => {
-        const addr = data.userSelectedType === "R" ? data.roadAddress : data.jibunAddress;
+        const base = data.userSelectedType === "R" ? data.roadAddress : data.jibunAddress;
+        const addr = data.buildingName ? `${base} (${data.buildingName})` : base;
         setIssueAddress(addr);
       },
     }).open();
