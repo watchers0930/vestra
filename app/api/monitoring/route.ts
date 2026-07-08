@@ -11,6 +11,8 @@ import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { validateOrigin } from "@/lib/csrf";
 import { createAuditLog } from "@/lib/audit-log";
 import { recordRegistrySnapshot } from "@/lib/registry-snapshot-recorder";
+import { fetchRegistryDocumentByAddress, isTilkoRegistryDocAvailable, extractCommUniqueNoFromText } from "@/lib/tilko-api";
+import { createHash } from "crypto";
 
 export async function GET(req: NextRequest) {
   try {
@@ -133,6 +135,24 @@ export async function POST(req: NextRequest) {
       if (pdfRawText && typeof pdfRawText === "string") {
         recordRegistrySnapshot({ propertyId: reactivated.id, fullText: pdfRawText }).catch(() => {});
       }
+      // 재활성화 시에도 commUniqueNo 없으면 Tilko 발급으로 보완
+      if (!reactivated.commUniqueNo && !commUniqueNo && !pdfRawText && isTilkoRegistryDocAvailable()) {
+        fetchRegistryDocumentByAddress({ address: address.trim() })
+          .then(async (registry) => {
+            const extractedNo = registry.commUniqueNo ?? extractCommUniqueNoFromText(registry.text) ?? undefined;
+            const baselineHash = createHash("sha256").update(registry.text).digest("hex");
+            await prisma.monitoredProperty.update({
+              where: { id: reactivated.id },
+              data: {
+                ...(extractedNo ? { commUniqueNo: extractedNo } : {}),
+                baselineData: registry.text,
+                lastHash: baselineHash,
+              },
+            });
+            await recordRegistrySnapshot({ propertyId: reactivated.id, fullText: registry.text });
+          })
+          .catch((e) => console.error(`[MONITORING] 재활성화 등기부 발급 실패: ${address.trim()}`, e instanceof Error ? e.message : e));
+      }
       return NextResponse.json({ property: reactivated, reactivated: true });
     }
 
@@ -181,6 +201,32 @@ export async function POST(req: NextRequest) {
 
     if (pdfRawText && typeof pdfRawText === "string") {
       recordRegistrySnapshot({ propertyId: property.id, fullText: pdfRawText }).catch(() => {});
+    }
+
+    // 최초 등록 시 Tilko 등기부 발급 → commUniqueNo 추출 + baseline 저장
+    // commUniqueNo가 이미 있거나(PDF 등록) pdfRawText가 있으면 스킵
+    if (!commUniqueNo && !pdfRawText && isTilkoRegistryDocAvailable()) {
+      try {
+        const registry = await fetchRegistryDocumentByAddress({ address: address.trim() });
+        const extractedNo = registry.commUniqueNo ?? extractCommUniqueNoFromText(registry.text) ?? undefined;
+        const baselineHash = createHash("sha256").update(registry.text).digest("hex");
+
+        await prisma.monitoredProperty.update({
+          where: { id: property.id },
+          data: {
+            ...(extractedNo ? { commUniqueNo: extractedNo } : {}),
+            baselineData: registry.text,
+            lastHash: baselineHash,
+          },
+        });
+
+        await recordRegistrySnapshot({ propertyId: property.id, fullText: registry.text });
+
+        console.log(`[MONITORING] 최초 등기부 발급 완료: ${address.trim()}${extractedNo ? ` / 고유번호: ${extractedNo}` : ""}`);
+      } catch (e) {
+        // 발급 실패해도 등록 자체는 완료 — 크론에서 재시도 가능
+        console.error(`[MONITORING] 최초 등기부 발급 실패 (등록은 완료): ${address.trim()}`, e instanceof Error ? e.message : e);
+      }
     }
 
     return NextResponse.json({ property }, { status: 201 });

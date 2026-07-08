@@ -244,6 +244,13 @@ export interface TilkoRegistryDocResult {
   address: string;
   rawData: Record<string, unknown>;
   source: "tilko";
+  commUniqueNo?: string;
+}
+
+// 등기부 텍스트에서 부동산 고유번호 파싱 (예: 1234-2024-012345)
+export function extractCommUniqueNoFromText(text: string): string | null {
+  const match = text.match(/고유번호[\s:：]+(\d{4}-\d{4}-\d{6})/);
+  return match ? match[1] : null;
 }
 
 function getTilkoRegistryDocConfig() {
@@ -328,7 +335,8 @@ export async function fetchRegistryDocumentByAddress(params: {
   console.log("[Tilko 등기부등본] rawData keys:", Object.keys(rawData));
 
   const text = extractTilkoRegistryText(rawData, address);
-  const result: TilkoRegistryDocResult = { text, address, rawData, source: "tilko" };
+  const commUniqueNo = extractCommUniqueNoFromText(text) ?? undefined;
+  const result: TilkoRegistryDocResult = { text, address, rawData, source: "tilko", commUniqueNo };
   apiCache.set(cacheKey, result, REGISTRY_DOC_CACHE_TTL);
   return result;
 }
