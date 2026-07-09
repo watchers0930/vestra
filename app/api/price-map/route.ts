@@ -33,7 +33,7 @@ function toResidentialType(propertyType: PropertyType): ResidentialSaleType {
 }
 
 function parseTradeType(value: string | null): PriceMapTradeType {
-  if (value === "전세" || value === "월세") return value;
+  if (value === "전세") return value;
   return "매매";
 }
 
@@ -357,11 +357,9 @@ export async function GET(req: NextRequest) {
         : await fetchRecentRentPrices(guToAddress, 12, residentialType);
 
       if (txResult && txResult.transactions.length > 0) {
-        const transactions = tradeType === "월세"
-          ? txResult.transactions.filter((tx) => "rentType" in tx && tx.rentType === "월세")
-          : tradeType === "전세"
-            ? txResult.transactions.filter((tx) => "rentType" in tx && tx.rentType === "전세")
-            : txResult.transactions;
+        const transactions = tradeType === "전세"
+          ? txResult.transactions.filter((tx) => "rentType" in tx && tx.rentType === "전세")
+          : txResult.transactions;
 
         // 물건명/동/지번별 그룹핑
         const grouped = new Map<string, typeof txResult.transactions[0][]>();
@@ -404,21 +402,15 @@ export async function GET(req: NextRequest) {
             const aptName = aptNameFromKey || latest.aptName || propertyType;
             const amount = tradeType === "매매"
               ? (latest as { dealAmount?: number }).dealAmount || 0
-              : tradeType === "전세"
-                ? (latest as { deposit?: number }).deposit || 0
-                : (latest as { monthlyRent?: number }).monthlyRent || 0;
-            const deposit = tradeType !== "매매" ? (latest as { deposit?: number }).deposit || 0 : undefined;
-            const monthlyRent = tradeType === "월세" ? (latest as { monthlyRent?: number }).monthlyRent || 0 : undefined;
+              : (latest as { deposit?: number }).deposit || 0;
+            const deposit = tradeType === "전세" ? (latest as { deposit?: number }).deposit || 0 : undefined;
             if (amount <= 0) return;
-            if (tradeType === "월세" && amount > 100_000_000) return;
 
             const priceInMan = Math.round(amount / 10000);
             const change = calcChangeByArea(txs.map(t => ({
               amount: tradeType === "매매"
                 ? ((t as { dealAmount?: number }).dealAmount || 0)
-                : tradeType === "전세"
-                  ? ((t as { deposit?: number }).deposit || 0)
-                  : ((t as { monthlyRent?: number }).monthlyRent || 0),
+                : ((t as { deposit?: number }).deposit || 0),
               area: t.area || 0,
               dealYear: (t as { dealYear?: number }).dealYear || 0,
               dealMonth: (t as { dealMonth?: number }).dealMonth || 0,
@@ -438,7 +430,6 @@ export async function GET(req: NextRequest) {
               year: latest.buildYear || 0,
               propertyType,
               ...(deposit !== undefined ? { deposit: Math.round(deposit / 10000) } : {}),
-              ...(monthlyRent !== undefined ? { monthlyRent: Math.round(monthlyRent / 10000) } : {}),
             });
           });
         }

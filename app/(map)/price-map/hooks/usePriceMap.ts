@@ -36,7 +36,7 @@ function readInitialTradeType(): PriceMapTradeType {
   if (typeof window === "undefined") return INITIAL_TRADE_TYPE;
   try {
     const value = localStorage.getItem(PREF_TRADE_TYPE_KEY);
-    return value === "전세" || value === "월세" ? value : INITIAL_TRADE_TYPE;
+    return value === "전세" ? value : INITIAL_TRADE_TYPE;
   } catch {
     return INITIAL_TRADE_TYPE;
   }

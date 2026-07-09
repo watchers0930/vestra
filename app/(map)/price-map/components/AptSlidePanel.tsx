@@ -18,7 +18,7 @@ export function AptSlidePanel({ apt, tradeType, officialPriceLabel, onClose, onR
   const isUp = (apt.change ?? 0) >= 0;
 
   const infoItems = [
-    { label: tradeType === "월세" ? "월세" : tradeType === "전세" ? "전세가" : "시세", value: formatMapPrice(apt, tradeType) },
+    { label: tradeType === "전세" ? "전세가" : "시세", value: formatMapPrice(apt, tradeType) },
     { label: "면적",   value: apt.area ? `${apt.area}평` : "미제공" },
     { label: "건축",   value: apt.year ? `${apt.year}년` : "-" },
     { label: "공시가격", value: officialPriceLabel || "조회중..." },

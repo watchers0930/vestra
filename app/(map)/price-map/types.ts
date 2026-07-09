@@ -1,5 +1,5 @@
 export type PropertyType = "아파트" | "연립/빌라/다세대";
-export type PriceMapTradeType = "매매" | "전세" | "월세";
+export type PriceMapTradeType = "매매" | "전세";
 
 export interface AptData {
   name: string;

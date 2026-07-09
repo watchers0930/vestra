@@ -31,7 +31,7 @@ const PEEK_HEIGHT = 64;
 const PEEK_HEIGHT_WITH_APT = 88;
 const EXPANDED_HEIGHT_VH = 55;
 const PROPERTY_TYPES: PropertyType[] = ["아파트", "연립/빌라/다세대"];
-const TRADE_TYPES: PriceMapTradeType[] = ["매매", "전세", "월세"];
+const TRADE_TYPES: PriceMapTradeType[] = ["매매", "전세"];
 
 export function MobileMapSheet({
   selectedGu, setSelectedGu, selectedApt, loading,
@@ -125,7 +125,7 @@ export function MobileMapSheet({
                 </div>
                 <div className="grid grid-cols-2 gap-1.5 mb-3">
                   {[
-                    { label: tradeType === "월세" ? "월세" : "시세", value: formatMapPrice(selectedApt, tradeType) },
+                    { label: tradeType === "전세" ? "전세가" : "시세", value: formatMapPrice(selectedApt, tradeType) },
                     { label: "면적", value: selectedApt.area ? `${selectedApt.area}평` : "미제공" },
                     { label: "건축", value: selectedApt.year ? `${selectedApt.year}년` : "-" },
                     { label: "공시지가", value: officialPriceLabel || "데이터 없음" },
