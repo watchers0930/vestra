@@ -170,7 +170,8 @@ export function useNeighborhoodData() {
 
   // 분석 결과 → 지도에 마커 표시
   const renderMarkers = useCallback(() => {
-    if (!result || !kakaoMapRef.current) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!result || !kakaoMapRef.current || !(window as any).kakao?.maps) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const maps = (window as any).kakao.maps;
     const map = kakaoMapRef.current;
@@ -241,16 +242,17 @@ export function useNeighborhoodData() {
   };
 
   const navigateTo = (lat: number, lng: number) => {
-    if (kakaoMapRef.current) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const maps = (window as any).kakao.maps;
-      kakaoMapRef.current.setCenter(new maps.LatLng(lat, lng));
-      kakaoMapRef.current.setLevel(3);
-    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!kakaoMapRef.current || !(window as any).kakao?.maps) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const maps = (window as any).kakao.maps;
+    kakaoMapRef.current.setCenter(new maps.LatLng(lat, lng));
+    kakaoMapRef.current.setLevel(3);
   };
 
   const highlightItem = useCallback((item: FacilityItem, color: string) => {
-    if (!kakaoMapRef.current) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!kakaoMapRef.current || !(window as any).kakao?.maps) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const maps = (window as any).kakao.maps;
     const map = kakaoMapRef.current;
