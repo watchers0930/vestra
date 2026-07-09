@@ -61,6 +61,43 @@ async function kakaoKeywordSearch(
   }
 }
 
+async function fetchNearbyBusStops(
+  center: { lat: number; lng: number },
+  radius: number = 1000
+): Promise<KakaoPlace[]> {
+  try {
+    const query = `[out:json][timeout:10];(node["highway"="bus_stop"](around:${radius},${center.lat},${center.lng});node["public_transport"="platform"]["bus"="yes"](around:${radius},${center.lat},${center.lng}););out body;`;
+    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+    const res = await fetch(url, { headers: { Accept: "application/json", "User-Agent": "Vestra/1.0" } });
+    if (!res.ok) return [];
+    const json = await res.json();
+    const elements = json.elements || [];
+    return elements
+      .map((el: { lat: number; lon: number; tags?: Record<string, string> }) => {
+        const lat = el.lat;
+        const lng = el.lon;
+        const R = 6371000;
+        const dLat = ((lat - center.lat) * Math.PI) / 180;
+        const dLng = ((lng - center.lng) * Math.PI) / 180;
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos((center.lat * Math.PI) / 180) * Math.cos((lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+        const dist = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+        return {
+          place_name: el.tags?.name || el.tags?.["name:ko"] || "버스정류장",
+          category_group_name: "버스정류장",
+          distance: String(dist),
+          x: String(lng),
+          y: String(lat),
+          road_address_name: "",
+        } as KakaoPlace;
+      })
+      .filter((p: KakaoPlace) => parseInt(p.distance) <= radius)
+      .sort((a: KakaoPlace, b: KakaoPlace) => parseInt(a.distance) - parseInt(b.distance))
+      .slice(0, 15);
+  } catch {
+    return [];
+  }
+}
+
 // ── 점수 계산 ──────────────────────────────────
 
 interface FacilityItem {
@@ -141,7 +178,7 @@ export async function POST(req: NextRequest) {
     // 카테고리 검색 대신 키워드+카테고리 병행으로 좌표 정확도 향상
     const [subway, bus, school, academy, kindergarten, mart, pharmacy, hospital, convenience, park, bank, kaptInfo] = await Promise.all([
       kakaoKeywordSearch(kakaoKey, "지하철역", coord, "SW8"),
-      kakaoKeywordSearch(kakaoKey, "버스정류장", coord, ""),
+      fetchNearbyBusStops(coord),
       kakaoKeywordSearch(kakaoKey, "학교", coord, "SC4"),
       kakaoKeywordSearch(kakaoKey, "학원", coord, "AC5"),
       kakaoKeywordSearch(kakaoKey, "유치원 어린이집", coord, ""),
