@@ -65,7 +65,7 @@ export function ListingFormContent() {
   ] as const;
 
   const durationOptions = [6, 12, 18, 24, 36];
-  const roomTypes = ["아파트", "빌라/다세대", "오피스텔", "단독주택", "상가", "토지", "기타"];
+  const roomTypes = ["아파트", "빌라/다세대", "오피스텔", "단독주택"];
 
   return (
     <div style={{ width: "100%", paddingBottom: 48 }}>
