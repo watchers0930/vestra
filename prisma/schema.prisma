@@ -99,6 +99,10 @@ model User {
   agentClients   AgentClient[] @relation("AgentClients")
   clientAgent    AgentClient?  @relation("ClientAgent")
 
+  // 매물 & 계약의향서
+  ownedListings    Listing[]             @relation("OwnedListings")
+  sentApplications ContractApplication[] @relation("SentApplications")
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }
@@ -687,4 +691,71 @@ model AgentClientProperty {
   @@unique([agentClientId, address])
   @@index([agentClientId])
   @@index([monitoredPropertyId])
+}
+
+// ---------------------------------------------------------------------------
+// 매물 (Listing)
+// ---------------------------------------------------------------------------
+
+model Listing {
+  id          String @id @default(cuid())
+  ownerId     String
+
+  listingType String // JEONSE | SALE
+  address     String
+  roomType    String? // 아파트 | 빌라 | 오피스텔 | 단독주택 | 원룸/투룸
+  size        Float?  // 전용면적 (㎡)
+  floor       Int?
+  totalFloor  Int?
+
+  deposit       BigInt  // 전세 보증금 or 매매가
+  managementFee BigInt? // 관리비
+  duration      Int?    // 전세 계약 기간 (개월)
+
+  availableFrom DateTime?
+  description   String?   @db.Text
+  photos        Json?     // String[] — Vercel Blob URL 배열
+
+  status     String @default("ACTIVE") // ACTIVE | HIDDEN | CONTRACTED | COMPLETED
+  analysisId String? // Analysis.id — 권리분석 첨부
+  viewCount  Int    @default(0)
+
+  owner        User                  @relation("OwnedListings", fields: [ownerId], references: [id], onDelete: Cascade)
+  applications ContractApplication[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([listingType, status])
+  @@index([address])
+  @@index([createdAt(sort: Desc)])
+}
+
+// ---------------------------------------------------------------------------
+// 계약의향서 (ContractApplication)
+// ---------------------------------------------------------------------------
+
+model ContractApplication {
+  id          String @id @default(cuid())
+  listingId   String
+  applicantId String // User.id
+
+  moveInDate      DateTime
+  duration        Int?    // 전세만 해당 (개월)
+  memo            String? @db.Text
+  proposedDeposit BigInt? // 제안 보증금/매매가 (네고)
+
+  status          String  @default("PENDING") // PENDING | ACCEPTED | REJECTED | WITHDRAWN
+  rejectionReason String? @db.Text
+
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  applicant User    @relation("SentApplications", fields: [applicantId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([listingId])
+  @@index([applicantId])
+  @@index([status])
 }

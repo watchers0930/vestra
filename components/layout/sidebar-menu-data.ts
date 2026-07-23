@@ -4,7 +4,7 @@ import {
   Users, CheckCircle, FileText, Megaphone,
   KeyRound, ClipboardCheck, Brain, SlidersHorizontal,
   ShieldAlert, Key, Newspaper, MapPin, Landmark, Eye,
-  Handshake, BookOpenText,
+  Handshake, BookOpenText, Building2, ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 
@@ -49,12 +49,23 @@ export const userMenuItems: MenuItem[] = [
   { href: "/expert-connect", icon: Users,           label: "전문가 연결",    description: "AI 분석 결과를 전문가가 직접 검증하고 상담해드립니다", tier: "AUTH_REQUIRED" },
   { href: "/api-hub",        icon: Database,        label: "API 데이터 허브", description: "국토교통부·법원 등 공공 API 연동 현황과 데이터를 조회합니다", tier: "AUTH_REQUIRED" },
   { href: "/agent",          icon: Handshake,       label: "중개관리",       description: "부동산 중개 고객을 관리하고 물건 모니터링을 설정합니다", tier: "AUTH_REQUIRED" },
+  {
+    href: "/listings", icon: Building2, label: "매물 거래", description: "매물을 등록하고 계약의향서를 관리합니다", tier: "AUTH_REQUIRED",
+    children: [
+      { href: "/listings",          label: "매물 목록" },
+      { href: "/listings/new",      label: "매물 등록" },
+      { href: "/listings/my",       label: "내 매물 관리" },
+      { href: "/applications",      label: "받은 의향서" },
+      { href: "/applications/my",   label: "보낸 의향서" },
+    ],
+  },
 ];
 
 export const userMenuGroups: MenuGroup[] = [
-  { label: "메인",     items: [userMenuItems[0]] },
+  { label: "메인",       items: [userMenuItems[0]] },
   { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[2], userMenuItems[3], userMenuItems[6], userMenuItems[8], userMenuItems[7], userMenuItems[9]] },
-  { label: "도구",     items: [userMenuItems[10], userMenuItems[11], userMenuItems[4], userMenuItems[5]] },
+  { label: "도구",       items: [userMenuItems[10], userMenuItems[11], userMenuItems[4], userMenuItems[5]] },
+  { label: "매물 거래",   items: [userMenuItems[12]] },
 ];
 
 export const adminMenuItems: MenuItem[] = [
