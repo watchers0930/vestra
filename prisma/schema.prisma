@@ -720,6 +720,11 @@ model Listing {
   analysisId String? // Analysis.id — 권리분석 첨부
   viewCount  Int    @default(0)
 
+  // 안전 증명
+  safetyDocuments Json?  // [{type: "건축물대장"|"전입세대열람", url: string, filename: string}]
+  officialPrice   BigInt? // 공시가격 캐시 (VWorld API)
+  jeonseRatio     Float?  // 전세가율 (deposit / officialPrice × 100)
+
   owner        User                  @relation("OwnedListings", fields: [ownerId], references: [id], onDelete: Cascade)
   applications ContractApplication[]
 

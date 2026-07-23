@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { SafetyDoc } from "../components/SafetySection";
 
 export type ListingFormData = {
   listingType: "JEONSE" | "SALE";
@@ -35,6 +36,8 @@ export function useListingForm() {
   const router = useRouter();
   const [form, setForm] = useState<ListingFormData>(INITIAL);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [analysisId, setAnalysisId] = useState("");
+  const [safetyDocs, setSafetyDocs] = useState<SafetyDoc[]>([]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -92,6 +95,8 @@ export function useListingForm() {
         availableFrom: form.availableFrom ? new Date(form.availableFrom).toISOString() : undefined,
         description: form.description || undefined,
         photos: photos.length > 0 ? photos : undefined,
+        analysisId: analysisId || undefined,
+        safetyDocuments: safetyDocs.length > 0 ? safetyDocs : undefined,
       };
       const res = await fetch("/api/listings", {
         method: "POST",
@@ -110,5 +115,11 @@ export function useListingForm() {
     }
   }
 
-  return { form, set, photos, uploading, uploadPhoto, removePhoto, submitting, error, submit };
+  return {
+    form, set,
+    photos, uploading, uploadPhoto, removePhoto,
+    analysisId, setAnalysisId,
+    safetyDocs, setSafetyDocs,
+    submitting, error, submit,
+  };
 }

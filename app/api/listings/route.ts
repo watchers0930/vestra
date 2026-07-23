@@ -4,6 +4,12 @@ import { auth } from "@/lib/auth";
 import { z } from "zod";
 import { validateOrigin } from "@/lib/csrf";
 
+const safetyDocSchema = z.object({
+  type: z.enum(["건축물대장", "전입세대열람"]),
+  url: z.string().url(),
+  filename: z.string().max(200),
+});
+
 const createListingSchema = z.object({
   listingType: z.enum(["JEONSE", "SALE"]),
   address: z.string().min(5, "주소를 입력해주세요."),
@@ -17,6 +23,8 @@ const createListingSchema = z.object({
   availableFrom: z.string().optional().nullable(),
   description: z.string().max(2000).optional().nullable(),
   analysisId: z.string().optional().nullable(),
+  photos: z.array(z.string().url()).max(10).optional().nullable(),
+  safetyDocuments: z.array(safetyDocSchema).max(5).optional().nullable(),
 });
 
 // GET /api/listings — 매물 목록
@@ -60,6 +68,10 @@ export async function GET(req: NextRequest) {
           duration: true,
           availableFrom: true,
           photos: true,
+          description: true,
+          safetyDocuments: true,
+          officialPrice: true,
+          jeonseRatio: true,
           status: true,
           viewCount: true,
           analysisId: true,
@@ -98,7 +110,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { deposit, managementFee, availableFrom, ...rest } = parsed.data;
+    const { deposit, managementFee, availableFrom, safetyDocuments, photos, ...rest } = parsed.data;
 
     const listing = await prisma.listing.create({
       data: {
@@ -107,11 +119,13 @@ export async function POST(req: NextRequest) {
         deposit: BigInt(deposit),
         managementFee: managementFee != null ? BigInt(managementFee) : null,
         availableFrom: availableFrom ? new Date(availableFrom) : null,
+        photos: photos ?? undefined,
+        safetyDocuments: safetyDocuments ?? undefined,
       },
       select: { id: true, status: true, createdAt: true },
     });
 
-    return NextResponse.json(listing, { status: 201 });
+    return NextResponse.json({ listing }, { status: 201 });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
@@ -123,5 +137,6 @@ function serialize(l: Record<string, unknown>) {
     ...l,
     deposit: (l.deposit as bigint)?.toString() ?? null,
     managementFee: (l.managementFee as bigint | null)?.toString() ?? null,
+    officialPrice: (l.officialPrice as bigint | null)?.toString() ?? null,
   };
 }

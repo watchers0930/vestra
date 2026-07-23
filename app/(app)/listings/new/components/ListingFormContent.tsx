@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, X, Loader2, ChevronLeft } from "lucide-react";
 import { useListingForm } from "../hooks/useListingForm";
+import { SafetySection } from "./SafetySection";
 
 function formatCommas(val: string) {
   const d = val.replace(/\D/g, "");
@@ -43,7 +44,13 @@ function Field({ label, required, children }: { label: string; required?: boolea
 
 export function ListingFormContent() {
   const router = useRouter();
-  const { form, set, photos, uploading, uploadPhoto, removePhoto, submitting, error, submit } = useListingForm();
+  const {
+    form, set,
+    photos, uploading, uploadPhoto, removePhoto,
+    analysisId, setAnalysisId,
+    safetyDocs, setSafetyDocs,
+    submitting, error, submit,
+  } = useListingForm();
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -272,6 +279,14 @@ export function ListingFormContent() {
             JPG, PNG, WEBP • 파일당 최대 5MB
           </p>
         </Field>
+
+        {/* 안전 증명 */}
+        <SafetySection
+          analysisId={analysisId}
+          onAnalysisIdChange={setAnalysisId}
+          safetyDocs={safetyDocs}
+          onDocsChange={setSafetyDocs}
+        />
 
         {/* 에러 */}
         {error && (

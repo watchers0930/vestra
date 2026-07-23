@@ -18,6 +18,9 @@ export interface ListingItem {
   availableFrom: string | null;
   photos: string[] | null;
   description: string | null;
+  safetyDocuments: { type: string; url: string; filename: string }[] | null;
+  officialPrice: string | null;
+  jeonseRatio: number | null;
   status: ListingStatus;
   viewCount: number;
   analysisId: string | null;

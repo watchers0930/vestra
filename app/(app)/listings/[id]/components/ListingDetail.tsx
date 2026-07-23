@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Building2, AreaChart, Layers, Calendar, Eye, FileCheck2,
-  ChevronLeft, ChevronRight, Edit2, Trash2, FileText,
+  ChevronLeft, ChevronRight, FileText, ShieldCheck,
+  Loader2, ExternalLink, Edit2, Trash2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import type { ListingItem } from "../../hooks/useListings";
@@ -22,17 +23,19 @@ const TYPE_LABEL: Record<string, string> = { JEONSE: "전세", SALE: "매매" };
 const STATUS_LABEL: Record<string, string> = {
   ACTIVE: "거래중", HIDDEN: "숨김", CONTRACTED: "계약완료", COMPLETED: "거래완료",
 };
-const STATUS_COLOR: Record<string, string> = {
-  ACTIVE: "#34c759", HIDDEN: "#aeaeb2", CONTRACTED: "#0071e3", COMPLETED: "#6e6e73",
-};
+interface Props { listing: ListingItem; onReload?: () => void; }
 
-interface Props { listing: ListingItem; }
-
-export function ListingDetail({ listing }: Props) {
+export function ListingDetail({ listing, onReload }: Props) {
   const { data: session } = useSession();
   const router = useRouter();
   const [photoIdx, setPhotoIdx] = useState(0);
   const [showModal, setShowModal] = useState(false);
+  const [safetyChecking, setSafetyChecking] = useState(false);
+  const [safetyResult, setSafetyResult] = useState<{
+    officialPrice: number | null;
+    jeonseRatio: number | null;
+    insurance: { hugEligible: boolean; sgiEligible: boolean } | null;
+  } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [applicationSent, setApplicationSent] = useState(false);
 
@@ -49,6 +52,22 @@ export function ListingDetail({ listing }: Props) {
       else alert("삭제에 실패했습니다.");
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function handleSafetyCheck() {
+    setSafetyChecking(true);
+    try {
+      const res = await fetch(`/api/listings/${listing.id}/safety-check`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setSafetyResult(data);
+        onReload?.();
+      } else {
+        alert("안전점검에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      }
+    } finally {
+      setSafetyChecking(false);
     }
   }
 
@@ -253,6 +272,111 @@ export function ListingDetail({ listing }: Props) {
           <p style={{ fontSize: 13, color: "#1d1d1f", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
             {listing.description}
           </p>
+        </div>
+      )}
+
+      {/* 안전 증명 섹션 */}
+      {(listing.analysisId || listing.safetyDocuments?.length || listing.jeonseRatio != null || isOwner) && (
+        <div
+          style={{
+            background: "#fff", border: "1.5px solid rgba(52,199,89,0.2)",
+            borderRadius: 18, padding: 20, marginBottom: 16,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 14 }}>
+            <ShieldCheck size={16} strokeWidth={2} style={{ color: "#34c759" }} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#1d1d1f" }}>안전 증명</span>
+          </div>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+            {listing.analysisId && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 100, background: "rgba(0,113,227,0.08)", color: "#0071e3", fontSize: 12, fontWeight: 600 }}>
+                <FileCheck2 size={12} strokeWidth={2} />AI 권리분석 첨부
+              </span>
+            )}
+            {listing.safetyDocuments?.map((doc) => (
+              <a key={doc.type} href={doc.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 100, background: "rgba(52,199,89,0.1)", color: "#1a9e45", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                  <FileText size={12} strokeWidth={2} />{doc.type} <ExternalLink size={10} strokeWidth={2} />
+                </span>
+              </a>
+            ))}
+          </div>
+
+          {/* 전세가율 + 보증보험 */}
+          {listing.listingType === "JEONSE" && (
+            <>
+              {(listing.jeonseRatio != null || safetyResult) && (
+                <div style={{ display: "flex", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
+                  {(() => {
+                    const ratio = safetyResult?.jeonseRatio ?? listing.jeonseRatio;
+                    const officialPrice = safetyResult?.officialPrice ?? (listing.officialPrice ? Number(listing.officialPrice) : null);
+                    const ins = safetyResult?.insurance;
+                    if (ratio == null) return null;
+                    const safe = ratio <= 80;
+                    const warn = ratio > 80 && ratio <= 100;
+                    return (
+                      <>
+                        <div style={{ flex: 1, minWidth: 120, background: safe ? "rgba(52,199,89,0.08)" : warn ? "rgba(255,149,0,0.08)" : "rgba(255,59,48,0.08)", borderRadius: 12, padding: "12px 14px" }}>
+                          <p style={{ fontSize: 10, color: "#aeaeb2", marginBottom: 4 }}>전세가율</p>
+                          <p style={{ fontSize: 20, fontWeight: 900, color: safe ? "#1a9e45" : warn ? "#b45309" : "#c0392b", letterSpacing: "-0.02em" }}>
+                            {ratio.toFixed(1)}%
+                          </p>
+                          <p style={{ fontSize: 11, color: "#6e6e73", marginTop: 2 }}>
+                            {safe ? "✓ 안전" : warn ? "⚠ 주의" : "✕ 위험"}
+                            {officialPrice && <span style={{ marginLeft: 4 }}>공시가 {Math.round(officialPrice / 10000).toLocaleString()}만원</span>}
+                          </p>
+                        </div>
+                        {ins && (
+                          <div style={{ flex: 1, minWidth: 120, background: (ins.hugEligible || ins.sgiEligible) ? "rgba(52,199,89,0.08)" : "rgba(255,59,48,0.06)", borderRadius: 12, padding: "12px 14px" }}>
+                            <p style={{ fontSize: 10, color: "#aeaeb2", marginBottom: 4 }}>보증보험</p>
+                            <p style={{ fontSize: 13, fontWeight: 700, color: (ins.hugEligible || ins.sgiEligible) ? "#1a9e45" : "#c0392b" }}>
+                              {ins.hugEligible ? "HUG 가입 가능" : ins.sgiEligible ? "SGI 가입 가능" : "가입 어려움"}
+                            </p>
+                            <p style={{ fontSize: 11, color: "#6e6e73", marginTop: 2 }}>임차인 보호 기준</p>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+              {isOwner && listing.jeonseRatio == null && !safetyResult && (
+                <button
+                  onClick={handleSafetyCheck}
+                  disabled={safetyChecking}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "9px 16px", borderRadius: 10, border: "1px solid rgba(52,199,89,0.3)",
+                    background: "rgba(52,199,89,0.06)", fontSize: 13, fontWeight: 600,
+                    color: "#1a9e45", cursor: safetyChecking ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {safetyChecking
+                    ? <><Loader2 size={13} strokeWidth={2} style={{ animation: "spin 1s linear infinite" }} />계산 중...</>
+                    : <><ShieldCheck size={13} strokeWidth={2} />전세가율 · 보증보험 자동 계산</>
+                  }
+                </button>
+              )}
+              {isOwner && (listing.jeonseRatio != null || safetyResult) && (
+                <button
+                  onClick={handleSafetyCheck}
+                  disabled={safetyChecking}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "7px 12px", borderRadius: 8, border: "1px solid #d2d2d7",
+                    background: "#fff", fontSize: 11, fontWeight: 600,
+                    color: "#6e6e73", cursor: safetyChecking ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {safetyChecking
+                    ? <><Loader2 size={11} strokeWidth={2} style={{ animation: "spin 1s linear infinite" }} />재계산 중...</>
+                    : "재계산"
+                  }
+                </button>
+              )}
+            </>
+          )}
         </div>
       )}
 
