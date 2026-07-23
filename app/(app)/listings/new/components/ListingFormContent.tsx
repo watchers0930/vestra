@@ -68,7 +68,7 @@ export function ListingFormContent() {
   const roomTypes = ["아파트", "빌라/다세대", "오피스텔", "단독주택", "상가", "토지", "기타"];
 
   return (
-    <div style={{ maxWidth: 600, margin: "0 auto", paddingBottom: 48 }}>
+    <div style={{ width: "100%", paddingBottom: 48 }}>
       {/* 상단 */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
         <button

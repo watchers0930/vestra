@@ -72,7 +72,7 @@ export function ListingDetail({ listing, onReload }: Props) {
   }
 
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto", paddingBottom: 48 }}>
+    <div style={{ width: "100%", paddingBottom: 48 }}>
       {/* 상단 네비게이션 */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <button

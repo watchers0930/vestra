@@ -23,7 +23,7 @@ export default function ListingDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 680, margin: "0 auto", paddingTop: 40 }}>
+      <div style={{ width: "100%", paddingTop: 40 }}>
         <div style={{ height: 300, borderRadius: 20, background: "#f5f5f7", marginBottom: 20 }} />
         <div style={{ height: 120, borderRadius: 20, background: "#f5f5f7", marginBottom: 12 }} />
         <div style={{ height: 60, borderRadius: 16, background: "#f5f5f7" }} />
