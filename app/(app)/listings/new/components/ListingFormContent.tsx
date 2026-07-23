@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, X, Loader2, ChevronLeft } from "lucide-react";
 import { useListingForm } from "../hooks/useListingForm";
@@ -52,6 +52,26 @@ export function ListingFormContent() {
     submitting, error, submit,
   } = useListingForm();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [zonecode, setZonecode] = useState("");
+
+  useEffect(() => {
+    if (document.getElementById("daum-postcode-script")) return;
+    const script = document.createElement("script");
+    script.id = "daum-postcode-script";
+    script.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+    document.head.appendChild(script);
+  }, []);
+
+  function openPostcode() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    new (window as any).daum.Postcode({
+      oncomplete: (data: { roadAddress: string; jibunAddress: string; zonecode: string }) => {
+        set("address", data.roadAddress || data.jibunAddress);
+        set("detailAddress", "");
+        setZonecode(data.zonecode);
+      },
+    }).open();
+  }
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -105,11 +125,36 @@ export function ListingFormContent() {
 
         {/* 주소 */}
         <Field label="주소" required>
+          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+            <input
+              style={{ ...inputStyle, width: 110, flexShrink: 0, background: "#f5f5f7", color: "#6e6e73" }}
+              placeholder="우편번호"
+              value={zonecode}
+              readOnly
+            />
+            <button
+              type="button"
+              onClick={openPostcode}
+              style={{
+                flex: 1, padding: "10px 0", borderRadius: 10, background: "#0071e3",
+                color: "#fff", fontSize: 13, fontWeight: 600, border: "none",
+                cursor: "pointer", whiteSpace: "nowrap",
+              }}
+            >
+              주소 검색
+            </button>
+          </div>
+          <input
+            style={{ ...inputStyle, background: "#f5f5f7", color: "#1d1d1f", marginBottom: 8 }}
+            placeholder="기본주소 (주소 검색 후 자동 입력)"
+            value={form.address}
+            readOnly
+          />
           <input
             style={inputStyle}
-            placeholder="예) 서울시 강남구 역삼동 123"
-            value={form.address}
-            onChange={(e) => set("address", e.target.value)}
+            placeholder="상세주소 (동·호수 등)"
+            value={form.detailAddress}
+            onChange={(e) => set("detailAddress", e.target.value)}
           />
         </Field>
 

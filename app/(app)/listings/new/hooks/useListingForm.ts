@@ -7,6 +7,7 @@ import type { SafetyDoc } from "../components/SafetySection";
 export type ListingFormData = {
   listingType: "JEONSE" | "SALE";
   address: string;
+  detailAddress: string;
   roomType: string;
   size: string;
   floor: string;
@@ -21,6 +22,7 @@ export type ListingFormData = {
 const INITIAL: ListingFormData = {
   listingType: "JEONSE",
   address: "",
+  detailAddress: "",
   roomType: "",
   size: "",
   floor: "",
@@ -82,9 +84,11 @@ export function useListingForm() {
 
     setSubmitting(true);
     try {
+      const fullAddress = form.address.trim() +
+        (form.detailAddress.trim() ? ` ${form.detailAddress.trim()}` : "");
       const body = {
         listingType: form.listingType,
-        address: form.address.trim(),
+        address: fullAddress,
         roomType: form.roomType || undefined,
         size: form.size ? Number(form.size) : undefined,
         floor: form.floor ? Number(form.floor) : undefined,
