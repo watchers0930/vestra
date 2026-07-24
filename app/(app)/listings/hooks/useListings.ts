@@ -26,6 +26,7 @@ export interface ListingItem {
   taxDocUrl: string | null;
   taxDocFilename: string | null;
   buildingDocUrl: string | null;
+  insuranceResult: { hugEligible: boolean; sgiEligible: boolean; hfEligible: boolean; recommendation: string } | null;
   status: ListingStatus;
   viewCount: number;
   analysisId: string | null;

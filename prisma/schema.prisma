@@ -733,6 +733,8 @@ model Listing {
   buildingDocUrl    String?            // 건축물대장 확인 URL (KAPT)
   taxDocUrl         String?            // 재산세납부확인서 Blob URL
   taxDocFilename    String?
+  seniorLiens       BigInt?            // 선순위 채권 합계 (등기부 파싱)
+  insuranceResult   Json?              // { hugEligible, sgiEligible, hfEligible, recommendation }
 
   owner        User                  @relation("OwnedListings", fields: [ownerId], references: [id], onDelete: Cascade)
   applications ContractApplication[]

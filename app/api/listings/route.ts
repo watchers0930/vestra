@@ -77,6 +77,7 @@ export async function GET(req: NextRequest) {
           taxDocUrl: true,
           taxDocFilename: true,
           buildingDocUrl: true,
+          insuranceResult: true,
           status: true,
           viewCount: true,
           analysisId: true,
