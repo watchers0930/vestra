@@ -4,6 +4,33 @@ import { auth } from "@/lib/auth";
 import { z } from "zod";
 import { validateOrigin } from "@/lib/csrf";
 
+// GET /api/contract-applications/[id] — 채팅방 진입용 단건 조회
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    const { id } = await params;
+    const app = await prisma.contractApplication.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        applicantId: true,
+        listing: { select: { address: true, owner: { select: { id: true, name: true } } } },
+        applicant: { select: { id: true, name: true } },
+      },
+    });
+    if (!app) return NextResponse.json({ error: "찾을 수 없습니다." }, { status: 404 });
+    const isParticipant = app.applicantId === session.user.id || app.listing.owner.id === session.user.id;
+    if (!isParticipant) return NextResponse.json({ error: "접근 권한이 없습니다." }, { status: 403 });
+    return NextResponse.json(app);
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
+  }
+}
+
 const patchSchema = z.object({
   status: z.enum(["ACCEPTED", "REJECTED", "WITHDRAWN"]),
   rejectionReason: z.string().max(300).optional().nullable(),

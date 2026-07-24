@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { CheckCircle2, XCircle, Clock, Building2, Calendar, FileText } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Building2, Calendar, FileText, MessageCircle } from "lucide-react";
 
 interface Application {
   id: string;
@@ -228,6 +228,19 @@ export function ReceivedApplicationsContent() {
                     <span style={{ fontSize: 11, color: "#aeaeb2" }}>
                       {new Date(a.createdAt).toLocaleDateString("ko-KR")}
                     </span>
+                    <Link
+                      href={`/chat/${a.id}`}
+                      style={{
+                        padding: "7px 12px", borderRadius: 10,
+                        border: "1px solid #d2d2d7", background: "#f5f5f7",
+                        fontSize: 12, fontWeight: 600, color: "#3d3d3f",
+                        display: "flex", alignItems: "center", gap: 4,
+                        textDecoration: "none",
+                      }}
+                    >
+                      <MessageCircle size={13} strokeWidth={2} />
+                      채팅
+                    </Link>
                     {a.status === "PENDING" && (
                       <>
                         <button

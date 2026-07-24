@@ -99,9 +99,10 @@ model User {
   agentClients   AgentClient[] @relation("AgentClients")
   clientAgent    AgentClient?  @relation("ClientAgent")
 
-  // 매물 & 계약의향서
+  // 매물 & 계약의향서 & 채팅
   ownedListings    Listing[]             @relation("OwnedListings")
   sentApplications ContractApplication[] @relation("SentApplications")
+  sentMessages     Message[]             @relation("SentMessages")
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -754,8 +755,9 @@ model ContractApplication {
   status          String  @default("PENDING") // PENDING | ACCEPTED | REJECTED | WITHDRAWN
   rejectionReason String? @db.Text
 
-  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  applicant User    @relation("SentApplications", fields: [applicantId], references: [id], onDelete: Cascade)
+  listing   Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  applicant User      @relation("SentApplications", fields: [applicantId], references: [id], onDelete: Cascade)
+  messages  Message[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -763,4 +765,24 @@ model ContractApplication {
   @@index([listingId])
   @@index([applicantId])
   @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// 채팅 메시지 (Message)
+// ---------------------------------------------------------------------------
+
+model Message {
+  id            String              @id @default(cuid())
+  applicationId String
+  senderId      String
+  content       String              @db.Text
+  readAt        DateTime?
+
+  application   ContractApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  sender        User                @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime            @default(now())
+
+  @@index([applicationId, createdAt])
+  @@index([senderId])
 }

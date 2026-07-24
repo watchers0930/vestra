@@ -19,6 +19,7 @@ export type NotificationType =
   | "analysis_complete"
   | "verification_request"
   | "verification_response"
+  | "chat_message"
   | "system";
 
 export interface NotificationPayload {

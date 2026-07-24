@@ -57,6 +57,7 @@ export const userMenuItems: MenuItem[] = [
       { href: "/listings/my",       label: "내 매물 관리" },
       { href: "/applications",      label: "받은 의향서" },
       { href: "/applications/my",   label: "보낸 의향서" },
+      { href: "/chat",              label: "채팅" },
     ],
   },
 ];
