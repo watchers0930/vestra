@@ -161,13 +161,11 @@ const S = StyleSheet.create({
 
 // ─── 서명 박스 ────────────────────────────────────────────────────────────────
 function SignBox({
-  role,
   label,
   name,
   email,
   signatureUrl,
 }: {
-  role: string;
   label: string;
   name?: string | null;
   email: string;
@@ -285,14 +283,12 @@ export function ContractPdf({ data }: { data: EContractPdfData }) {
 
         <View style={S.signSection}>
           <SignBox
-            role="LANDLORD"
             label="임대인"
             name={data.landlord.name}
             email={data.landlord.email}
             signatureUrl={data.landlord.signatureUrl}
           />
           <SignBox
-            role="TENANT"
             label="임차인"
             name={data.tenant.name}
             email={data.tenant.email}
@@ -300,7 +296,6 @@ export function ContractPdf({ data }: { data: EContractPdfData }) {
           />
           {data.broker && (
             <SignBox
-              role="BROKER"
               label="공인중개사"
               name={data.broker.name}
               email={data.broker.email}

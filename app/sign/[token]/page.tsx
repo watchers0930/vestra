@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { use } from "react";
+import Link from "next/link";
 import { SignatureCanvas } from "./components/SignatureCanvas";
 import { CheckCircle, AlertCircle, FileText, Loader2 } from "lucide-react";
 
@@ -126,7 +127,7 @@ export default function SignPage({ params }: { params: Promise<{ token: string }
           <p className="text-gray-700 font-medium">
             {alreadySigned ? "이미 서명이 완료된 링크입니다." : error}
           </p>
-          <a href="/" className="text-blue-600 text-sm hover:underline">Vestra 홈으로</a>
+          <Link href="/" className="text-blue-600 text-sm hover:underline">Vestra 홈으로</Link>
         </div>
       </div>
     );

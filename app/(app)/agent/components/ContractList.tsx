@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileSignature, CheckCircle, Clock, XCircle, ExternalLink, Plus } from "lucide-react";
+import { FileSignature, CheckCircle, Clock, ExternalLink, Plus } from "lucide-react";
 import Link from "next/link";
 
 type Signature = { role: string; signedAt: string | null };
