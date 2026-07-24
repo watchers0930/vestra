@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { put } from "@vercel/blob";
-import { renderToBuffer } from "@react-pdf/renderer";
-import React from "react";
 import crypto from "crypto";
-import { ContractPdf, EContractPdfData } from "@/lib/pdf/contract-template";
 
 type Params = { params: Promise<{ token: string }> };
 
@@ -70,12 +66,10 @@ export async function POST(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "서명 이미지가 필요합니다." }, { status: 400 });
     }
 
-    // Vercel Blob에 서명 이미지 업로드
-    const blobResult = await put(
-      `e-contracts/${sig.contractId}/sig-${sig.role.toLowerCase()}.png`,
-      signatureFile,
-      { access: "public", contentType: "image/png" }
-    );
+    // 서명 이미지를 base64 data URL로 변환하여 DB에 저장
+    const arrayBuffer = await signatureFile.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    const signatureUrl = `data:image/png;base64,${base64}`;
 
     const contract = sig.contract;
     const hasBroker = !!contract.brokerEmail;
@@ -93,7 +87,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         data: {
           signedAt: new Date(),
           method: "HANDWRITING",
-          signatureUrl: blobResult.url,
+          signatureUrl,
           signerName: signerName?.trim() || sig.signerName,
           signerPhone: signerPhone?.trim() || sig.signerPhone,
           ipAddress: getClientIp(req),
@@ -150,65 +144,15 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 }
 
-// 최종 PDF 생성 (모든 서명 완료 후)
+// 최종 서명 완료 후 상태 업데이트 (PDF는 온디맨드 생성 — /api/e-contracts/[id]/pdf)
 async function generateFinalPdf(contractId: string) {
   try {
-    const contract = await prisma.eContract.findUnique({
-      where: { id: contractId },
-      include: {
-        landlord: { select: { name: true, email: true } },
-        signatures: true,
-      },
-    });
-    if (!contract) return;
-
-    const getSig = (role: string) => contract.signatures.find((s) => s.role === role);
-    const landlordSig = getSig("LANDLORD");
-    const tenantSig = getSig("TENANT");
-    const brokerSig = getSig("BROKER");
-
-    const pdfData: EContractPdfData = {
-      id: contract.id,
-      contractType: contract.contractType as "JEONSE" | "MONTHLY" | "SALE",
-      address: contract.address,
-      deposit: contract.deposit,
-      monthlyRent: contract.monthlyRent,
-      duration: contract.duration,
-      startDate: contract.startDate,
-      endDate: contract.endDate,
-      specialTerms: contract.specialTerms,
-      createdAt: contract.createdAt,
-      landlord: {
-        name: contract.landlord.name,
-        email: contract.landlord.email ?? "",
-        signatureUrl: landlordSig?.signatureUrl,
-      },
-      tenant: {
-        name: tenantSig?.signerName,
-        email: contract.tenantEmail,
-        signatureUrl: tenantSig?.signatureUrl,
-      },
-      broker: brokerSig
-        ? {
-            name: brokerSig.signerName,
-            email: contract.brokerEmail ?? "",
-            signatureUrl: brokerSig.signatureUrl,
-          }
-        : null,
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pdfBuffer = await renderToBuffer(React.createElement(ContractPdf, { data: pdfData }) as any);
-
-    const blobResult = await put(
-      `e-contracts/${contractId}/final-contract.pdf`,
-      pdfBuffer,
-      { access: "public", contentType: "application/pdf" }
-    );
-
     await prisma.eContract.update({
       where: { id: contractId },
-      data: { finalPdfUrl: blobResult.url, completedAt: new Date() },
+      data: {
+        finalPdfUrl: `/api/e-contracts/${contractId}/pdf`,
+        completedAt: new Date(),
+      },
     });
   } catch (e) {
     console.error("[generateFinalPdf]", e);
