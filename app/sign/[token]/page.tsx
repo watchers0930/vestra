@@ -159,9 +159,9 @@ export default function SignPage({ params }: { params: Promise<{ token: string }
               다음 서명자에게 서명 링크가 전달됩니다.
             </div>
           ) : null}
-          <a href="/" className="inline-block text-blue-600 text-sm hover:underline">
+          <Link href="/" className="inline-block text-blue-600 text-sm hover:underline">
             Vestra 홈으로
-          </a>
+          </Link>
         </div>
       </div>
     );
