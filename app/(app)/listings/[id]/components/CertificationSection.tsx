@@ -66,6 +66,12 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
 
   const docItems = [
     {
+      key: "taxDoc" as const,
+      label: "재산세납부확인서",
+      desc: hasTaxDoc ? (listing.taxDocFilename ?? "업로드 완료") : "직접 업로드 필요",
+      url: listing.taxDocUrl,
+    },
+    {
       key: "registry" as const,
       label: "등기사항전부증명서",
       desc: "틸코 API 자동조회",
@@ -76,12 +82,6 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
       label: "건축물대장",
       desc: "KAPT 자동조회",
       url: listing.buildingDocUrl,
-    },
-    {
-      key: "taxDoc" as const,
-      label: "재산세납부확인서",
-      desc: hasTaxDoc ? (listing.taxDocFilename ?? "업로드 완료") : "직접 업로드 필요",
-      url: listing.taxDocUrl,
     },
   ];
 
@@ -232,20 +232,20 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
             {
               icon: UploadCloud,
               step: "01",
-              label: "서류 업로드",
+              label: "재산세납부확인서 업로드",
               desc: "위택스에서 재산세납부확인서 발급 후 PDF 또는 이미지로 업로드",
             },
             {
               icon: MousePointerClick,
               step: "02",
               label: "인증 버튼 클릭",
-              desc: "\"안전인증 받기\" 버튼을 클릭하면 자동 조회가 시작됩니다",
+              desc: "업로드 완료 후 \"안전인증 받기\" 버튼 클릭",
             },
             {
               icon: ScanSearch,
               step: "03",
-              label: "서류 자동 조회",
-              desc: "등기사항전부증명서(틸코)와 건축물대장(KAPT)을 시스템이 자동 확인",
+              label: "나머지 서류 자동 조회",
+              desc: "등기사항전부증명서(틸코)·건축물대장(KAPT) 시스템 자동 확인",
             },
             {
               icon: BadgeCheck,
