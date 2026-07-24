@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, AreaChart, Layers, Calendar, Eye, FileCheck2 } from "lucide-react";
+import { Building2, AreaChart, Layers, Calendar, Eye, FileCheck2, ShieldCheck } from "lucide-react";
 import type { ListingItem } from "../hooks/useListings";
 
 function formatWon(val: string | null) {
@@ -59,6 +59,23 @@ export function ListingCard({ listing }: Props) {
           >
             {TYPE_LABEL[listing.listingType]}
           </span>
+
+          {/* 안전인증 뱃지 */}
+          {listing.isCertified && (
+            <span style={{
+              position: "absolute", bottom: 10, left: 10,
+              background: "linear-gradient(135deg, #1a7f4b 0%, #22a75e 100%)",
+              color: "#fff", borderRadius: "100px", padding: "4px 10px",
+              fontSize: "11px", fontWeight: 800,
+              display: "flex", alignItems: "center", gap: 4,
+              boxShadow: "0 2px 8px rgba(26,127,75,0.35)",
+              letterSpacing: "-0.01em",
+            }}>
+              <ShieldCheck size={12} strokeWidth={2.5} />
+              안전인증
+            </span>
+          )}
+
           {listing.analysisId && (
             <span
               style={{

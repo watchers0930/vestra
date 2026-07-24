@@ -722,9 +722,17 @@ model Listing {
   viewCount  Int    @default(0)
 
   // 안전 증명
-  safetyDocuments Json?  // [{type: "건축물대장"|"전입세대열람", url: string, filename: string}]
+  safetyDocuments Json?  // [{type, url, filename}]
   officialPrice   BigInt? // 공시가격 캐시 (VWorld API)
   jeonseRatio     Float?  // 전세가율 (deposit / officialPrice × 100)
+
+  // 안전인증
+  isCertified       Boolean  @default(false)
+  certifiedAt       DateTime?
+  registryText      String?  @db.Text  // 틸코 등기부 원문
+  buildingDocUrl    String?            // 건축물대장 확인 URL (KAPT)
+  taxDocUrl         String?            // 재산세납부확인서 Blob URL
+  taxDocFilename    String?
 
   owner        User                  @relation("OwnedListings", fields: [ownerId], references: [id], onDelete: Cascade)
   applications ContractApplication[]

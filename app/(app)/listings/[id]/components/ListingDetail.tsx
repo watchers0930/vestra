@@ -10,6 +10,7 @@ import {
 import { useSession } from "next-auth/react";
 import type { ListingItem } from "../../hooks/useListings";
 import { ApplicationModal } from "./ApplicationModal";
+import { CertificationSection } from "./CertificationSection";
 
 function formatWon(val: string | null) {
   if (!val) return "-";
@@ -379,6 +380,9 @@ export function ListingDetail({ listing, onReload }: Props) {
           )}
         </div>
       )}
+
+      {/* 안전인증 섹션 */}
+      <CertificationSection listing={listing} isOwner={isOwner} onReload={onReload} />
 
       {/* 계약 의향서 버튼 */}
       {canApply && (

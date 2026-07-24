@@ -21,6 +21,11 @@ export interface ListingItem {
   safetyDocuments: { type: string; url: string; filename: string }[] | null;
   officialPrice: string | null;
   jeonseRatio: number | null;
+  isCertified: boolean;
+  certifiedAt: string | null;
+  taxDocUrl: string | null;
+  taxDocFilename: string | null;
+  buildingDocUrl: string | null;
   status: ListingStatus;
   viewCount: number;
   analysisId: string | null;
