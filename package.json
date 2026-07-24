@@ -21,6 +21,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@prisma/client": "^6.19.2",
+    "@react-pdf/renderer": "^4.5.1",
     "@serwist/next": "^9.5.7",
     "@tosspayments/tosspayments-sdk": "^2.7.1",
     "@types/leaflet": "^1.9.21",
