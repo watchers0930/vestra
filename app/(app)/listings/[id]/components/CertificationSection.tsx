@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { ShieldCheck, Shield, CheckCircle2, Circle, Loader2, Upload, ExternalLink } from "lucide-react";
+import { ShieldCheck, Shield, CheckCircle2, Circle, Loader2, Upload, ExternalLink, UploadCloud, MousePointerClick, ScanSearch, BadgeCheck } from "lucide-react";
 import type { ListingItem } from "../../hooks/useListings";
 
 interface CertifyResult {
@@ -221,6 +221,67 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
           {certResult.error && certResult.error}
         </div>
       )}
+
+      {/* 안전인증 4단계 가이드 */}
+      <div style={{ marginTop: 20, paddingTop: 18, borderTop: "1px solid #f2f2f7" }}>
+        <p style={{ fontSize: 12, fontWeight: 700, color: "#aeaeb2", letterSpacing: "0.04em", marginBottom: 14 }}>
+          안전인증 받는 방법
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {[
+            {
+              icon: UploadCloud,
+              step: "01",
+              label: "서류 업로드",
+              desc: "위택스에서 재산세납부확인서 발급 후 PDF 또는 이미지로 업로드",
+            },
+            {
+              icon: MousePointerClick,
+              step: "02",
+              label: "인증 버튼 클릭",
+              desc: "\"안전인증 받기\" 버튼을 클릭하면 자동 조회가 시작됩니다",
+            },
+            {
+              icon: ScanSearch,
+              step: "03",
+              label: "서류 자동 조회",
+              desc: "등기사항전부증명서(틸코)와 건축물대장(KAPT)을 시스템이 자동 확인",
+            },
+            {
+              icon: BadgeCheck,
+              step: "04",
+              label: "인증 마크 부여",
+              desc: "3종 완비 확인 즉시 매물 목록에 안전인증 뱃지가 표시됩니다",
+            },
+          ].map(({ icon: Icon, step, label, desc }) => (
+            <div key={step} style={{
+              padding: "14px 14px 14px 14px",
+              borderRadius: 14,
+              background: "#f9f9fb",
+              border: "1px solid #efefef",
+              display: "flex", flexDirection: "column", gap: 8,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 10,
+                  background: "linear-gradient(135deg,#1a7f4b,#22a75e)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                  <Icon size={15} strokeWidth={2} color="#fff" />
+                </div>
+                <div>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#22a75e", display: "block", letterSpacing: "0.04em" }}>
+                    STEP {step}
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f" }}>{label}</span>
+                </div>
+              </div>
+              <p style={{ fontSize: 11, color: "#6e6e73", lineHeight: 1.55, margin: 0 }}>{desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
