@@ -33,7 +33,7 @@ export function HeroSection() {
 
           {/* Right — image */}
           <div className="relative">
-            <div className="landing-img-overlay h-[280px] lg:h-[552px] rounded-xl shadow-2xl">
+            <div className="landing-img-overlay hero-img-container rounded-xl shadow-2xl">
               <Image
                 src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80"
                 alt="부동산 자산관리 플랫폼"

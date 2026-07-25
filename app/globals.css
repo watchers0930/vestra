@@ -270,6 +270,10 @@ body {
 }
 .landing-testimonial-card:hover { box-shadow: 0 16px 60px rgba(0,4,42,0.1); }
 
+/* Hero image container */
+.hero-img-container { height: 280px; }
+@media (min-width: 1024px) { .hero-img-container { height: 552px; } }
+
 /* Image overlay */
 .landing-img-overlay { position: relative; overflow: hidden; }
 .landing-img-overlay::after {
