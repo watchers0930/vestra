@@ -71,6 +71,42 @@ export const userMenuGroups: MenuGroup[] = [
   { label: "중개사 도구", items: [userMenuItems[13], userMenuItems[14]] },
 ];
 
+// ── TENANT(임차인/매수인) 전용 메뉴 ──
+const tenantListings: MenuItem = {
+  href: "/listings", icon: Building2, label: "매물 거래", description: "안심인증 매물을 확인하고 계약 의향서를 보냅니다", tier: "AUTH_REQUIRED",
+  children: [
+    { href: "/listings",        label: "매물 목록" },
+    { href: "/applications/my", label: "보낸 의향서" },
+    { href: "/chat",            label: "채팅" },
+  ],
+};
+
+export const tenantMenuGroups: MenuGroup[] = [
+  { label: "매물 거래",   items: [tenantListings] },
+  { label: "메인",       items: [userMenuItems[0]] },
+  { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[2], userMenuItems[3], userMenuItems[6], userMenuItems[8], userMenuItems[7]] },
+  { label: "도구",       items: [userMenuItems[10], userMenuItems[11], userMenuItems[4], userMenuItems[5]] },
+];
+
+// ── LANDLORD(임대인/매도인) 전용 메뉴 ──
+const landlordListings: MenuItem = {
+  href: "/listings", icon: Building2, label: "매물 관리", description: "매물을 등록하고 계약의향서를 관리합니다", tier: "AUTH_REQUIRED",
+  children: [
+    { href: "/listings",      label: "매물 목록" },
+    { href: "/listings/new",  label: "매물 등록" },
+    { href: "/listings/my",   label: "내 매물 관리" },
+    { href: "/applications",  label: "받은 의향서" },
+    { href: "/chat",          label: "채팅" },
+  ],
+};
+
+export const landlordMenuGroups: MenuGroup[] = [
+  { label: "매물 관리",   items: [landlordListings] },
+  { label: "메인",       items: [userMenuItems[0]] },
+  { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[2], userMenuItems[3], userMenuItems[6], userMenuItems[7]] },
+  { label: "도구",       items: [userMenuItems[10], userMenuItems[11], userMenuItems[4], userMenuItems[5]] },
+];
+
 export const adminMenuItems: MenuItem[] = [
   { href: "/admin",                         icon: LayoutDashboard,  label: "개요",         description: "서비스 통계, 사용량, 시스템 상태를 한눈에 확인합니다" },
   { href: "/admin?tab=users",               icon: Users,            label: "회원 관리",     description: "회원 목록 조회, 역할 변경, 사용 한도를 관리합니다" },

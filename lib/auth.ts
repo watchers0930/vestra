@@ -80,16 +80,18 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
       try {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { role: true, dailyLimit: true, verifyStatus: true },
+          select: { role: true, dailyLimit: true, verifyStatus: true, userType: true },
         });
         token.role = dbUser?.role || "PERSONAL";
         token.dailyLimit = dbUser?.dailyLimit || ROLE_LIMITS.PERSONAL;
         token.verifyStatus = dbUser?.verifyStatus || "none";
+        token.userType = dbUser?.userType ?? null;
       } catch {
         // DB 일시 장애 시 기존 토큰 값 유지 (OAuth 콜백 Configuration 에러 방지)
         token.role = token.role ?? "PERSONAL";
         token.dailyLimit = token.dailyLimit ?? ROLE_LIMITS.PERSONAL;
         token.verifyStatus = token.verifyStatus ?? "none";
+        token.userType = token.userType ?? null;
       }
     }
 
@@ -101,6 +103,7 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
       session.user.role = token.role as string;
       session.user.dailyLimit = token.dailyLimit as number;
       session.user.verifyStatus = token.verifyStatus as string;
+      session.user.userType = (token.userType as string | null) ?? null;
     }
     return session;
   },
@@ -219,6 +222,7 @@ declare module "next-auth" {
       role: string;
       dailyLimit: number;
       verifyStatus: string;
+      userType: string | null;
       name?: string | null;
       email?: string | null;
       image?: string | null;
@@ -229,6 +233,7 @@ declare module "next-auth" {
     role?: string;
     dailyLimit?: number;
     verifyStatus?: string;
+    userType?: string | null;
   }
 }
 
@@ -238,5 +243,6 @@ declare module "@auth/core/jwt" {
     role?: string;
     dailyLimit?: number;
     verifyStatus?: string;
+    userType?: string | null;
   }
 }

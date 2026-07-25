@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import BusinessInfoForm from "./components/BusinessInfoForm";
+import UserTypeSelector from "./components/UserTypeSelector";
 import { VestraLogoMark } from "@/components/common/VestraLogo";
 
 function SignupCompleteContent() {
@@ -33,6 +34,7 @@ function SignupCompleteContent() {
   const requiresBusinessInfo =
     intendedRole === "REALESTATE" || intendedRole === "BUSINESS";
   const [needsBusinessInfo, setNeedsBusinessInfo] = useState(false);
+  const [selectedUserType, setSelectedUserType] = useState<"TENANT" | "LANDLORD" | null>(null);
   const isProcessingRef = useRef(false);
 
   // 미로그인 상태면 login으로 리다이렉트
@@ -54,12 +56,17 @@ function SignupCompleteContent() {
       return;
     }
 
+    // PERSONAL은 userType 선택 후 진행
+    if (intendedRole === "PERSONAL" && !selectedUserType) {
+      return;
+    }
+
     isProcessingRef.current = true;
 
     fetch("/api/user/setup-role", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: intendedRole }),
+      body: JSON.stringify({ role: intendedRole, userType: selectedUserType }),
     })
       .then(async (res) => {
         if (res.ok) {
@@ -112,6 +119,11 @@ function SignupCompleteContent() {
         </div>
       </div>
     );
+  }
+
+  // PERSONAL: userType 선택 화면
+  if (intendedRole === "PERSONAL" && !selectedUserType) {
+    return <UserTypeSelector onSelect={setSelectedUserType} />;
   }
 
   if (!requiresBusinessInfo || !needsBusinessInfo) {

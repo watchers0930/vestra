@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   }
 
-  const { role, businessNumber, companyName, representName } = await req.json();
+  const { role, businessNumber, companyName, representName, userType } = await req.json();
 
   // 유효한 역할만 허용
   if (!["PERSONAL", "BUSINESS", "REALESTATE"].includes(role)) {
@@ -22,15 +22,16 @@ export async function POST(req: NextRequest) {
 
   // PERSONAL: 즉시 역할 전환, business info 불필요
   if (role === "PERSONAL") {
+    const validUserType = userType === "TENANT" || userType === "LANDLORD" ? userType : null;
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { role: "PERSONAL" },
+      data: { role: "PERSONAL", ...(validUserType ? { userType: validUserType } : {}) },
     });
 
     await logAuditWithRequest({
       userId: session.user.id,
       action: "ROLE_CHANGE",
-      detail: { newRole: "PERSONAL", status: "applied" },
+      detail: { newRole: "PERSONAL", userType: validUserType, status: "applied" },
     });
 
     return NextResponse.json({ message: "개인 회원으로 전환되었습니다." });

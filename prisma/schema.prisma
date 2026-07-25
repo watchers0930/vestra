@@ -66,6 +66,7 @@ model User {
 
   // 회원 등급
   role           String    @default("PERSONAL") // GUEST | PERSONAL | BUSINESS | REALESTATE | ADMIN
+  userType       String?                         // TENANT(임차/매수인) | LANDLORD(임대/매도인)
   businessNumber String?                        // 사업자등록번호 (기업/부동산)
   companyName    String?                        // 회사명
   representName  String?                        // 대표자명

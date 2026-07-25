@@ -18,7 +18,7 @@ import PushSubscriber from "@/components/pwa/PushSubscriber";
 import PwaInstallButton from "@/components/layout/PwaInstallButton";
 import { useNewMemberBadge } from "@/hooks/useNewMemberBadge";
 import {
-  type MenuItem, userMenuItems, userMenuGroups, adminMenuItems,
+  type MenuItem, userMenuItems, userMenuGroups, tenantMenuGroups, landlordMenuGroups, adminMenuItems,
   ACTIVE_STYLE, ITEM_BASE,
 } from "./sidebar-menu-data";
 
@@ -36,7 +36,13 @@ export default function Sidebar() {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "ADMIN";
   const userRole = session?.user?.role;
+  const userType = session?.user?.userType;
   const isBusiness = userRole === "BUSINESS";
+  const activeGroups = userRole === "REALESTATE"
+    ? userMenuGroups
+    : userType === "LANDLORD"
+      ? landlordMenuGroups
+      : tenantMenuGroups;
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<string | null>(() => {
@@ -285,7 +291,7 @@ export default function Sidebar() {
             </div>
           ) : (
             <>
-              {userMenuGroups.map((group, groupIndex) => {
+              {activeGroups.map((group, groupIndex) => {
                 // 사업성분석은 그룹에서 제외 (BUSINESS일 때 "기업 서비스"에서 별도 표시)
                 const filteredItems = group.items.filter((item) => item.href !== "/feasibility");
                 if (filteredItems.length === 0) return null;
