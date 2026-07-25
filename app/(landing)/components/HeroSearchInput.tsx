@@ -2,19 +2,40 @@ import Link from "next/link";
 
 export function HeroSearchInput() {
   return (
-    <div className="flex flex-row flex-wrap items-center gap-3 mt-2">
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginTop: "8px" }}>
       <Link
         href="/jeonse/analysis"
-        className="inline-flex items-center gap-2 w-fit px-7 py-3.5 rounded bg-[#00042a] text-white font-bold text-[15px] hover:bg-[#1a2060] transition-colors"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          padding: "14px 28px",
+          borderRadius: "8px",
+          backgroundColor: "#00042a",
+          color: "#ffffff",
+          fontWeight: 700,
+          fontSize: "15px",
+          textDecoration: "none",
+          whiteSpace: "nowrap",
+        }}
       >
-        <span>🛡️</span>
         전세 위험도 분석
       </Link>
       <Link
         href="/rights"
-        className="inline-flex items-center gap-2 w-fit px-7 py-3.5 rounded border-2 border-[#00042a] text-[#00042a] font-bold text-[15px] hover:bg-[#00042a] hover:text-white transition-colors"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          padding: "14px 28px",
+          borderRadius: "8px",
+          border: "2px solid #00042a",
+          backgroundColor: "transparent",
+          color: "#00042a",
+          fontWeight: 700,
+          fontSize: "15px",
+          textDecoration: "none",
+          whiteSpace: "nowrap",
+        }}
       >
-        <span>📋</span>
         등기부 권리분석
       </Link>
     </div>
