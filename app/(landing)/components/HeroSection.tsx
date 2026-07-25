@@ -11,7 +11,7 @@ export function HeroSection() {
         <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-24 items-center">
 
           {/* Left */}
-          <div className="z-10">
+          <div style={{ position: "relative", zIndex: 10, marginTop: "100px", marginBottom: "50px" }}>
             <div className="flex items-center gap-3 mb-6 lg:mb-10">
               <div className="landing-accent-line" />
               <span className="landing-section-label">AI-Powered Real Estate Curation</span>
