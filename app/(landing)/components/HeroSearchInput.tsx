@@ -1,34 +1,22 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export function HeroSearchInput() {
-  const [address, setAddress] = useState("");
-  const router = useRouter();
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = address.trim();
-    if (!trimmed) return;
-    router.push(`/jeonse/analysis?address=${encodeURIComponent(trimmed)}`);
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-2 w-full max-w-lg">
-      <input
-        type="text"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        placeholder="분석할 주소를 입력하세요 (예: 서울시 마포구 ...)"
-        className="flex-1 h-12 px-4 rounded-xl border border-[#d8d6e3] bg-white text-sm text-[#00042a] placeholder:text-[#9e9cb0] focus:outline-none focus:border-[#4a58a7] focus:ring-2 focus:ring-[#4a58a7]/10"
-      />
-      <button
-        type="submit"
-        className="h-12 px-5 rounded-xl bg-[#00042a] text-white text-sm font-semibold whitespace-nowrap hover:bg-[#1a2060] transition-colors"
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-2">
+      <Link
+        href="/jeonse/analysis"
+        className="inline-flex items-center gap-2 h-13 px-7 rounded-xl bg-[#00042a] text-white text-[14px] font-bold shadow-lg hover:bg-[#1a2060] transition-all hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
       >
-        위험도 분석
-      </button>
-    </form>
+        <span className="text-base">🛡️</span>
+        전세 위험도 분석 시작하기
+      </Link>
+      <Link
+        href="/rights"
+        className="inline-flex items-center gap-2 h-13 px-7 rounded-xl border-2 border-[#00042a] text-[#00042a] text-[14px] font-bold hover:bg-[#00042a] hover:text-white transition-all hover:-translate-y-0.5 active:translate-y-0"
+      >
+        <span className="text-base">📋</span>
+        등기부 권리분석 하기
+      </Link>
+    </div>
   );
 }
