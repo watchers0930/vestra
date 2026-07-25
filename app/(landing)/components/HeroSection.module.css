@@ -1,7 +1,7 @@
 .heroImgContainer {
   height: 196px;
   overflow: hidden;
-  margin-top: 30px;
+  margin-top: 60px;
 }
 
 @media (min-width: 1024px) {
