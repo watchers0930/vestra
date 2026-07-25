@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { Home, FileText, Bell } from "lucide-react";
 
 const SITUATIONS = [
   {
-    icon: "🏠",
+    Icon: Home,
     question: "전세 계약 앞두셨나요?",
     description: "보증금 안전 여부와 전세사기 위험도를 계약 전에 확인하세요",
     cta: "전세 안전 분석 →",
@@ -10,7 +11,7 @@ const SITUATIONS = [
     accent: "#7b8fff",
   },
   {
-    icon: "📄",
+    Icon: FileText,
     question: "계약서가 있으신가요?",
     description: "계약서의 독소조항과 위험 문구를 AI가 즉시 검토합니다",
     cta: "계약서 AI 분석 →",
@@ -18,7 +19,7 @@ const SITUATIONS = [
     accent: "#4cd98a",
   },
   {
-    icon: "🔔",
+    Icon: Bell,
     question: "살고 있는 집이 걱정되나요?",
     description: "등기부등본 변동을 24시간 감시하고 이상 발생 시 즉시 알립니다",
     cta: "등기 모니터링 →",
@@ -52,7 +53,7 @@ export function SituationSection() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ fontSize: "20px", lineHeight: 1 }}>{s.icon}</span>
+                <s.Icon size={18} color="#ffffff" strokeWidth={2} />
                 <p style={{ color: "#ffffff", fontSize: "15px", fontWeight: 700, margin: 0 }}>{s.question}</p>
               </div>
               <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "13px", lineHeight: 1.65, margin: 0 }}>
