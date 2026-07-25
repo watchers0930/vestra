@@ -1,15 +1,14 @@
 import Image from "next/image";
 import { TICKER_ITEMS } from "../constants";
 import { HeroSearchInput } from "./HeroSearchInput";
+import { SituationSection } from "./SituationSection";
 
 export function HeroSection() {
-  const tickerList = [...TICKER_ITEMS, ...TICKER_ITEMS];
-
   return (
-    <>
+    <div className="bg-[#fbf8ff] overflow-hidden">
       {/* Hero */}
-      <section className="relative min-h-screen flex flex-col justify-center px-5 lg:px-12 bg-[#fbf8ff] overflow-hidden">
-        <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-24 items-center pt-20 lg:pt-10">
+      <section className="relative flex flex-col justify-center px-5 lg:px-12 pt-28 lg:pt-20 pb-10">
+        <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-24 items-center">
 
           {/* Left */}
           <div className="z-10">
@@ -22,20 +21,19 @@ export function HeroSection() {
               <span className="block leading-[1.1]">부동산 권리분석 플랫폼</span>
               <span className="block font-thin italic leading-[1.2]">베스트라</span>
             </h1>
-            <p className="text-xs lg:text-base text-[#454651] max-w-md mb-8 lg:mb-14 leading-[1.8]">
+            <p className="text-xs lg:text-base text-[#454651] max-w-md mb-8 lg:mb-10 leading-[1.8]">
               VESTRA는 수만 개의 데이터 포인트를 정밀하게 분석하여<br />전문가의 통찰력을 디지털화합니다.
             </p>
 
             <HeroSearchInput />
-            <p className="text-[11px] text-[#9e9cb0] mt-2">
+            <p className="text-[11px] text-[#9e9cb0] mt-3">
               로그인 없이 기본 분석 가능 · 상세 리포트는 회원가입 후 제공
             </p>
-
           </div>
 
           {/* Right — image */}
           <div className="relative">
-            <div className="landing-img-overlay h-[280px] lg:h-[640px] rounded-xl shadow-2xl">
+            <div className="landing-img-overlay h-[280px] lg:h-[580px] rounded-xl shadow-2xl">
               <Image
                 src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80"
                 alt="부동산 자산관리 플랫폼"
@@ -57,7 +55,6 @@ export function HeroSection() {
                 <p className="text-[12px] text-[#454651] leading-[1.3]">
                   출원번호: 10-2026-0085160
                 </p>
-                <div className="h-[20px]" />
               </div>
             </div>
           </div>
@@ -68,19 +65,8 @@ export function HeroSection() {
         <div className="absolute -left-40 bottom-0 w-[500px] h-[500px] bg-[#4a58a7]/4 rounded-full blur-[100px] pointer-events-none" />
       </section>
 
-      {/* Ticker */}
-      <div className="bg-[#00042a] py-4 landing-ticker-wrap">
-        <div className="landing-ticker-inner">
-          <div className="flex items-center gap-12 px-6" style={{ whiteSpace: "nowrap" }}>
-            {tickerList.map((item, i) => (
-              <span key={i} className="flex items-center gap-4">
-                <span className="text-white/40 font-bold text-[10px] tracking-widest uppercase">★</span>
-                <span className="text-white font-bold text-[11px] tracking-widest uppercase">{item}</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
+      {/* Situation cards — same background */}
+      <SituationSection />
+    </div>
   );
 }
