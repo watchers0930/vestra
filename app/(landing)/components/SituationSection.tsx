@@ -7,7 +7,7 @@ const SITUATIONS = [
     description: "보증금 안전 여부와 전세사기 위험도를 계약 전에 확인하세요",
     cta: "전세 안전 분석 →",
     href: "/jeonse/analysis",
-    accent: "#4a58a7",
+    accent: "#7b8fff",
   },
   {
     icon: "📄",
@@ -15,7 +15,7 @@ const SITUATIONS = [
     description: "계약서의 독소조항과 위험 문구를 AI가 즉시 검토합니다",
     cta: "계약서 AI 분석 →",
     href: "/contract",
-    accent: "#1a9e45",
+    accent: "#4cd98a",
   },
   {
     icon: "🔔",
@@ -23,36 +23,47 @@ const SITUATIONS = [
     description: "등기부등본 변동을 24시간 감시하고 이상 발생 시 즉시 알립니다",
     cta: "등기 모니터링 →",
     href: "/monitoring",
-    accent: "#d97706",
+    accent: "#fbbf24",
   },
 ];
 
 export function SituationSection() {
   return (
-    <div className="max-w-[1440px] mx-auto w-full px-5 lg:px-12 pb-16 pt-10">
-      <h2 className="text-[18px] lg:text-[22px] font-extrabold text-[#00042a] tracking-tight mb-6">
-        지금 어떤 상황이신가요?
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {SITUATIONS.map((s) => (
-          <Link
-            key={s.href}
-            href={s.href}
-            className="group flex flex-col gap-3 rounded-xl p-6 bg-white/60 hover:bg-white transition-all duration-200 hover:shadow-md"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-xl">{s.icon}</span>
-              <p className="text-[15px] font-extrabold text-[#00042a]">{s.question}</p>
-            </div>
-            <p className="text-[13px] text-[#6d6d78] leading-[1.65]">{s.description}</p>
-            <span
-              className="text-[13px] font-bold"
-              style={{ color: s.accent }}
+    <div style={{ backgroundColor: "#00042a", padding: "56px 0" }}>
+      <div style={{ maxWidth: "1440px", margin: "0 auto", padding: "0 48px" }}>
+        <h2 style={{ color: "#ffffff", fontSize: "22px", fontWeight: 800, marginBottom: "28px", letterSpacing: "-0.02em" }}>
+          지금 어떤 상황이신가요?
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "16px" }}>
+          {SITUATIONS.map((s) => (
+            <Link
+              key={s.href}
+              href={s.href}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+                padding: "24px",
+                borderRadius: "12px",
+                backgroundColor: "rgba(255,255,255,0.07)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                textDecoration: "none",
+                transition: "background 0.2s",
+              }}
             >
-              {s.cta}
-            </span>
-          </Link>
-        ))}
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ fontSize: "20px", lineHeight: 1 }}>{s.icon}</span>
+                <p style={{ color: "#ffffff", fontSize: "15px", fontWeight: 700, margin: 0 }}>{s.question}</p>
+              </div>
+              <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "13px", lineHeight: 1.65, margin: 0 }}>
+                {s.description}
+              </p>
+              <span style={{ color: s.accent, fontSize: "13px", fontWeight: 700 }}>
+                {s.cta}
+              </span>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );
