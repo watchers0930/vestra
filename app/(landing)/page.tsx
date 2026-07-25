@@ -1,4 +1,5 @@
 import { HeroSection } from "./components/HeroSection";
+import { SituationSection } from "./components/SituationSection";
 import { FeaturesSection } from "./components/FeaturesSection";
 import { EditorialSection } from "./components/EditorialSection";
 import { PricingSection } from "./components/PricingSection";
@@ -32,6 +33,7 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <HeroSection />
+      <SituationSection />
       <FeaturesSection />
       <EditorialSection />
       <PricingSection />

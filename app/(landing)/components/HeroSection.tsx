@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { TICKER_ITEMS } from "../constants";
+import { HeroSearchInput } from "./HeroSearchInput";
 
 export function HeroSection() {
   const tickerList = [...TICKER_ITEMS, ...TICKER_ITEMS];
@@ -25,29 +26,10 @@ export function HeroSection() {
               VESTRA는 수만 개의 데이터 포인트를 정밀하게 분석하여<br />전문가의 통찰력을 디지털화합니다.
             </p>
 
-            <div className="flex items-center gap-6">
-              <div className="flex -space-x-2">
-                <div className="w-8 h-8 rounded-full bg-[#e4e1e9] border-2 border-white" />
-                <div className="w-8 h-8 rounded-full bg-[#efedf4] border-2 border-white" />
-                <div className="w-8 h-8 rounded-full bg-[#dee0ff] border-2 border-white" />
-              </div>
-              <div>
-                <div className="flex gap-0.5 mb-0.5">
-                  {Array(5).fill(0).map((_, i) => (
-                    <span
-                      key={i}
-                      className="material-symbols-outlined text-xs text-amber-400"
-                      style={{ fontVariationSettings: "'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 24" }}
-                    >
-                      star
-                    </span>
-                  ))}
-                </div>
-                <p className="mt-1 text-[10px] font-medium text-[#6d6d78] tracking-wide">
-                  특허 출원 기술 구조를 반영한 분석 파이프라인
-                </p>
-              </div>
-            </div>
+            <HeroSearchInput />
+            <p className="text-[11px] text-[#9e9cb0] mt-2">
+              로그인 없이 기본 분석 가능 · 상세 리포트는 회원가입 후 제공
+            </p>
 
           </div>
 
