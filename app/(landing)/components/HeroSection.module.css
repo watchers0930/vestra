@@ -1,10 +1,10 @@
 .heroImgContainer {
-  height: 280px;
+  height: 196px;
   overflow: hidden;
 }
 
 @media (min-width: 1024px) {
   .heroImgContainer {
-    height: 552px;
+    height: 386px;
   }
 }
