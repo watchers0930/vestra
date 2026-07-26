@@ -128,9 +128,14 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
       mapRef.current = map;
       setTimeout(() => map.relayout(), 100);
       new ResizeObserver(() => map.relayout()).observe(el);
-      const pinEl = document.createElement("div");
-      Object.assign(pinEl.style, { width: "13px", height: "13px", borderRadius: "50%", background: "#0F2547", border: "3px solid #fff", boxShadow: "0 2px 8px rgba(15,37,71,.5)" });
-      new kakao.maps.CustomOverlay({ map, position: pos, content: pinEl, yAnchor: 0.5, zIndex: 10 });
+      // 건물 핀 (prominent pin)
+      const buildPin = document.createElement("div");
+      const bShape = document.createElement("div");
+      Object.assign(bShape.style, { width: "22px", height: "22px", borderRadius: "50% 50% 50% 0", background: "#0F2547", transform: "rotate(-45deg)", boxShadow: "0 3px 10px rgba(15,37,71,.55)", border: "2.5px solid #fff", position: "relative" });
+      const bDot = document.createElement("div");
+      Object.assign(bDot.style, { width: "7px", height: "7px", borderRadius: "50%", background: "#fff", position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)" });
+      bShape.appendChild(bDot); buildPin.appendChild(bShape);
+      new kakao.maps.CustomOverlay({ map, position: pos, content: buildPin, yAnchor: 1.15, zIndex: 20 });
       const ps = new kakao.maps.services.Places();
       let done = 0;
       INFRA_CATS.forEach((cat) => {
@@ -141,9 +146,15 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
           if (status === kakao.maps.services.Status.OK) {
             data.slice(0, 5).forEach((p) => {
               const pPos = new kakao.maps.LatLng(p.y, p.x);
-              const dotEl = document.createElement("div");
-              Object.assign(dotEl.style, { width: "9px", height: "9px", borderRadius: "50%", background: cat.color, border: "2px solid #fff", boxShadow: "0 1px 4px rgba(0,0,0,.25)" });
-              const ov = new kakao.maps.CustomOverlay({ map, position: pPos, content: dotEl, yAnchor: 0.5, zIndex: 2 });
+              // 카테고리 색상 핀 마커
+              const markerEl = document.createElement("div");
+              Object.assign(markerEl.style, { display: "flex", flexDirection: "column", alignItems: "center", cursor: "default" });
+              const mShape = document.createElement("div");
+              Object.assign(mShape.style, { width: "18px", height: "18px", borderRadius: "50% 50% 50% 0", background: cat.color, transform: "rotate(-45deg)", boxShadow: `0 2px 8px ${cat.color}88`, border: "2px solid #fff", position: "relative" });
+              const mDot = document.createElement("div");
+              Object.assign(mDot.style, { width: "5px", height: "5px", borderRadius: "50%", background: "#fff", position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)" });
+              mShape.appendChild(mDot); markerEl.appendChild(mShape);
+              const ov = new kakao.maps.CustomOverlay({ map, position: pPos, content: markerEl, yAnchor: 1.15, zIndex: 5 });
               dots.get(cat.code)!.push(ov);
               const d = parseInt(p.distance);
               places.get(cat.code)!.push({ name: p.place_name, distance: d >= 1000 ? `${(d / 1000).toFixed(1)}km` : `${d}m`, catCode: cat.code, lat: parseFloat(p.y), lng: parseFloat(p.x) });
