@@ -81,7 +81,7 @@ export function ListingDetail({ listing, onReload }: Props) {
       </div>
 
       {/* 2-컬럼 레이아웃: 갤러리(좌) + 정보패널(우) */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
+      <div className="listing-detail-grid">
 
         {/* ── 좌: 갤러리 ── */}
         <div>
@@ -179,7 +179,7 @@ export function ListingDetail({ listing, onReload }: Props) {
         </div>
 
         {/* ── 우: sticky 정보 패널 ── */}
-        <div className="lg:sticky lg:top-6">
+        <div className="listing-detail-sticky">
           <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 22, padding: 28, boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
 
             {/* 조회수 */}

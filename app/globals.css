@@ -284,3 +284,26 @@ body {
 .landing-img-overlay:hover::after { opacity: 0.5; }
 .landing-img-overlay img { transition: transform 0.7s ease; }
 .landing-img-overlay:hover img { transform: scale(1.03); }
+
+/* Listing detail 2-column responsive layout */
+.listing-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  align-items: start;
+}
+@media (min-width: 1024px) {
+  .listing-detail-grid {
+    grid-template-columns: 1fr 360px;
+    gap: 28px;
+  }
+}
+.listing-detail-sticky {
+  /* mobile: normal flow */
+}
+@media (min-width: 1024px) {
+  .listing-detail-sticky {
+    position: sticky;
+    top: 24px;
+  }
+}
