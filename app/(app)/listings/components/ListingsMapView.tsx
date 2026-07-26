@@ -65,7 +65,8 @@ function KakaoMarkersMap({ markers, activeId, onMarkerClick, panTo }: KakaoMarke
     }
 
     function tryInit() {
-      if (window.__kakaoMapsReady && window.kakao?.maps?.Map) {
+      // kakao.maps.Map이 이미 사용 가능하면 바로 초기화
+      if (window.kakao?.maps?.Map) {
         initMap();
       } else if (window.kakao?.maps?.load) {
         window.kakao.maps.load(() => { if (!cancelled) initMap(); });
@@ -78,7 +79,7 @@ function KakaoMarkersMap({ markers, activeId, onMarkerClick, panTo }: KakaoMarke
         const t0 = Date.now();
         const timer = setInterval(() => {
           if (cancelled) { clearInterval(timer); return; }
-          if (window.__kakaoMapsReady && window.kakao?.maps?.Map) {
+          if (window.kakao?.maps?.Map) {
             clearInterval(timer); initMap();
           } else if (Date.now() - t0 > 15000) {
             clearInterval(timer);
