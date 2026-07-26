@@ -32,13 +32,25 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const listingType = searchParams.get("listingType"); // JEONSE | SALE
+    const roomType   = searchParams.get("roomType");
+    const region     = searchParams.get("region");
+    const minSize    = searchParams.get("minSize");
+    const maxSize    = searchParams.get("maxSize");
     const mine = searchParams.get("mine") === "true";
     const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
-    const limit = Math.min(30, Number(searchParams.get("limit") ?? "12"));
+    const limit = Math.min(100, Number(searchParams.get("limit") ?? "12"));
 
     const where: Record<string, unknown> = { status: "ACTIVE" };
     if (listingType === "JEONSE" || listingType === "SALE") {
       where.listingType = listingType;
+    }
+    if (roomType) where.roomType = roomType;
+    if (region)   where.address  = { contains: region };
+    if (minSize || maxSize) {
+      const sizeFilter: Record<string, number> = {};
+      if (minSize) sizeFilter.gte = Number(minSize);
+      if (maxSize) sizeFilter.lte = Number(maxSize);
+      where.size = sizeFilter;
     }
 
     if (mine) {

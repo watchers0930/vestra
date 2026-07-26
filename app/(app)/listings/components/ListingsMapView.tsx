@@ -1,30 +1,61 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { ChevronLeft, ChevronRight, RefreshCw, Building2 } from "lucide-react";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, RefreshCw, Building2, X, Plus } from "lucide-react";
 import { useListings, type ListingItem, type ListingType } from "../hooks/useListings";
+import { KakaoMarkersMap, type MapMarker } from "./KakaoMarkersMap";
 import { MapSlidePanel } from "./MapSlidePanel";
 import type { ListingSlideData } from "./MapSlidePanelInfo";
+import { REGIONS } from "@/lib/regions";
 
 // ────────────────────────────────────────────────────────────
-// 타입
+// 상수
 // ────────────────────────────────────────────────────────────
-interface Marker {
-  id: string;
-  lat: number;
-  lng: number;
-  label: string;
-  listing: ListingItem;
-}
+const LISTING_TABS: { value: ListingType | "ALL"; label: string }[] = [
+  { value: "ALL",    label: "전체" },
+  { value: "JEONSE", label: "전세" },
+  { value: "SALE",   label: "매매" },
+];
+
+const ROOM_TYPES = [
+  { value: "",       label: "전체 유형" },
+  { value: "아파트",   label: "아파트" },
+  { value: "빌라",    label: "빌라" },
+  { value: "오피스텔", label: "오피스텔" },
+  { value: "단독주택", label: "단독주택" },
+  { value: "원룸/투룸", label: "원룸/투룸" },
+];
+
+const ROOM_TYPE_TABS = [
+  { value: "",       label: "전체" },
+  { value: "아파트",   label: "아파트" },
+  { value: "빌라",    label: "빌라" },
+  { value: "오피스텔", label: "오피스텔" },
+  { value: "단독주택", label: "단독주택" },
+  { value: "원룸/투룸", label: "원룸" },
+];
+
+const SIZE_OPTIONS = [
+  { label: "전체 평형", min: undefined, max: undefined },
+  { label: "10평 이하", min: undefined, max: 33 },
+  { label: "10~20평",   min: 33,        max: 66 },
+  { label: "20~30평",   min: 66,        max: 99 },
+  { label: "30평 이상", min: 99,        max: undefined },
+];
+
+const SEL =
+  "rounded-lg border border-[#DDE3EF] bg-white px-3 py-[7px] text-[13px] text-[#1d1d1f] " +
+  "hover:border-[#8e8e93] focus:border-[#0071e3] focus:outline-none transition-colors cursor-pointer shrink-0";
 
 // ────────────────────────────────────────────────────────────
-// 가격 포맷 (마커 라벨용)
+// 가격 포맷
 // ────────────────────────────────────────────────────────────
 function formatMarkerLabel(deposit: string): string {
   const num = parseInt(deposit, 10);
   if (!num) return "문의";
   if (num >= 100_000_000) {
-    const eok = Math.floor(num / 100_000_000);
+    const eok  = Math.floor(num / 100_000_000);
     const rest = Math.floor((num % 100_000_000) / 10_000);
     return rest > 0 ? `${eok}억${rest}만` : `${eok}억`;
   }
@@ -33,164 +64,7 @@ function formatMarkerLabel(deposit: string): string {
 }
 
 // ────────────────────────────────────────────────────────────
-// 카카오맵 마커 컴포넌트 (내부용)
-// ────────────────────────────────────────────────────────────
-interface KakaoMarkersMapProps {
-  markers: Marker[];
-  activeId: string | null;
-  onMarkerClick: (id: string) => void;
-  panTo: { lat: number; lng: number } | null;
-  onRegionChange?: (region: string) => void;
-}
-
-function KakaoMarkersMap({ markers, activeId, onMarkerClick, panTo, onRegionChange }: KakaoMarkersMapProps) {
-  const mapRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapInstanceRef = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const overlaysRef = useRef<any[]>([]);
-  const [mapReady, setMapReady] = useState(false);
-
-  // 지도 초기화 — KakaoRoadview 방식의 retry 로직
-  useEffect(() => {
-    let cancelled = false;
-
-    function initMap() {
-      if (cancelled || !mapRef.current || mapInstanceRef.current) return;
-      const map = new window.kakao.maps.Map(mapRef.current, {
-        center: new window.kakao.maps.LatLng(37.5172, 127.0473),
-        level: 7,
-      });
-      mapInstanceRef.current = map;
-      if (!cancelled) {
-        setMapReady(true);
-        // 초기 위치 시군구 조회 (closure로 onRegionChange capture)
-        if (onRegionChange && window.kakao?.maps?.services?.Geocoder) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const geocoder = new (window.kakao.maps.services as any).Geocoder();
-          const center = map.getCenter();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          geocoder.coord2RegionCode(center.getLng(), center.getLat(), (result: any[], status: string) => {
-            if (status === window.kakao.maps.services.Status.OK) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const r = result.find((r: any) => r.region_type === "H") || result[0];
-              if (r && !cancelled) {
-                const text = [r.region_1depth_name, r.region_2depth_name].filter(Boolean).join(" ");
-                onRegionChange(text);
-              }
-            }
-          });
-        }
-      }
-    }
-
-    function tryInit() {
-      // kakao.maps.Map이 이미 사용 가능하면 바로 초기화
-      if (window.kakao?.maps?.Map) {
-        initMap();
-      } else if (window.kakao?.maps?.load) {
-        window.kakao.maps.load(() => { if (!cancelled) initMap(); });
-      } else {
-        // SDK 로드 완료 이벤트 대기
-        const handler = () => { if (!cancelled) tryInit(); };
-        window.addEventListener("kakao-maps-ready", handler, { once: true });
-
-        // 폴링 fallback (최대 15초)
-        const t0 = Date.now();
-        const timer = setInterval(() => {
-          if (cancelled) { clearInterval(timer); return; }
-          if (window.kakao?.maps?.Map) {
-            clearInterval(timer); initMap();
-          } else if (Date.now() - t0 > 15000) {
-            clearInterval(timer);
-          }
-        }, 300);
-        return () => { window.removeEventListener("kakao-maps-ready", handler); clearInterval(timer); };
-      }
-    }
-
-    const cleanup = tryInit();
-    return () => { cancelled = true; cleanup?.(); };
-  }, []);
-
-  // 시군구 역지오코딩 — idle 이벤트
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map || !mapReady || !onRegionChange || !window.kakao?.maps?.services?.Geocoder) return;
-    const cb = onRegionChange;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const geocoder = new (window.kakao.maps.services as any).Geocoder();
-    function fetchRegion() {
-      const center = map.getCenter();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      geocoder.coord2RegionCode(center.getLng(), center.getLat(), (result: any[], status: string) => {
-        if (status === window.kakao.maps.services.Status.OK) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const r = result.find((r: any) => r.region_type === "H") || result[0];
-          if (r) {
-            const text = [r.region_1depth_name, r.region_2depth_name].filter(Boolean).join(" ");
-            cb(text);
-          }
-        }
-      });
-    }
-    // idle 이벤트 — 지도 이동 완료 시 시군구 업데이트
-    window.kakao.maps.event.addListener(map, "idle", fetchRegion);
-    return () => { window.kakao.maps.event.removeListener(map, "idle", fetchRegion); };
-  }, [mapReady, onRegionChange]);
-
-  // 마커 갱신
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map || !window.kakao?.maps || !mapReady) return;
-
-    // 기존 오버레이 제거
-    overlaysRef.current.forEach((ov) => ov.setMap(null));
-    overlaysRef.current = [];
-
-    markers.forEach((m) => {
-      const isActive = m.id === activeId;
-      const content = `
-        <div style="
-          display:inline-flex;align-items:center;padding:5px 10px;
-          background:${isActive ? "#0071e3" : "#fff"};
-          color:${isActive ? "#fff" : "#1d1d1f"};
-          border:2px solid ${isActive ? "#0071e3" : "#d1d1d6"};
-          border-radius:20px;font-size:12px;font-weight:700;
-          box-shadow:0 2px 8px rgba(0,0,0,0.15);
-          cursor:pointer;white-space:nowrap;
-          transform:translateY(-50%);
-        ">${m.label}</div>
-      `;
-      const overlay = new window.kakao.maps.CustomOverlay({
-        position: new window.kakao.maps.LatLng(m.lat, m.lng),
-        content,
-        yAnchor: 1,
-        clickable: true,
-      });
-      overlay.setMap(map);
-      overlaysRef.current.push(overlay);
-
-      // 클릭 이벤트 (DOM에 직접)
-      const el = overlay.getContent();
-      if (el && typeof el !== "string") {
-        el.addEventListener("click", () => onMarkerClick(m.id));
-      }
-    });
-  }, [markers, activeId, onMarkerClick, mapReady]);
-
-  // panTo
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map || !panTo || !window.kakao?.maps || !mapReady) return;
-    map.panTo(new window.kakao.maps.LatLng(panTo.lat, panTo.lng));
-  }, [panTo, mapReady]);
-
-  return <div ref={mapRef} className="h-full w-full" />;
-}
-
-// ────────────────────────────────────────────────────────────
-// 사이드바 카드 리스트
+// 사이드바 카드
 // ────────────────────────────────────────────────────────────
 function ListingCardSmall({
   listing,
@@ -201,7 +75,6 @@ function ListingCardSmall({
   isActive: boolean;
   onClick: () => void;
 }) {
-  const depositNum = parseInt(listing.deposit, 10);
   const depositStr = formatMarkerLabel(listing.deposit);
   const typeLabel  = listing.listingType === "JEONSE" ? "전세" : "매매";
   const photos     = listing.photos as string[] | null;
@@ -214,7 +87,6 @@ function ListingCardSmall({
         isActive ? "bg-[#EFF5FF]" : "bg-white hover:bg-[#f9f9fb]",
       ].join(" ")}
     >
-      {/* 썸네일 */}
       <div className="shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-[#EEF1F8]">
         {photos?.[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -225,7 +97,6 @@ function ListingCardSmall({
           </div>
         )}
       </div>
-      {/* 정보 */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-0.5">
           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${listing.listingType === "JEONSE" ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-600"}`}>
@@ -235,9 +106,7 @@ function ListingCardSmall({
             <span className="text-[10px] text-[#aeaeb2]">{listing.roomType}</span>
           )}
         </div>
-        <p className="text-[13px] font-bold text-[#1d1d1f]">
-          {depositStr}원
-        </p>
+        <p className="text-[13px] font-bold text-[#1d1d1f]">{depositStr}</p>
         <p className="text-[11px] text-[#6e6e73] truncate mt-0.5">{listing.address}</p>
         {listing.isCertified && (
           <span className="inline-block mt-1 text-[10px] font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">
@@ -250,37 +119,63 @@ function ListingCardSmall({
 }
 
 // ────────────────────────────────────────────────────────────
-// 메인 컴포넌트
+// Props
 // ────────────────────────────────────────────────────────────
 interface ListingsMapViewProps {
-  onRegionChange?: (region: string) => void;
+  onClose: () => void;
+  canRegister?: boolean;
 }
 
-export function ListingsMapView({ onRegionChange }: ListingsMapViewProps = {}) {
-  const [typeFilter,  setTypeFilter]  = useState<ListingType | "ALL">("ALL");
+// ────────────────────────────────────────────────────────────
+// 메인
+// ────────────────────────────────────────────────────────────
+export function ListingsMapView({ onClose, canRegister }: ListingsMapViewProps) {
+  const [listingType, setListingType] = useState<ListingType | "ALL">("ALL");
+  const [roomTypeFilter, setRoomTypeFilter] = useState("");
+  const [sidebarRoomType, setSidebarRoomType] = useState("");
+  const [selectedSi, setSelectedSi] = useState("서울특별시");
+  const [selectedGu, setSelectedGu] = useState("강남구");
+  const [sizeIdx,  setSizeIdx]  = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeId,    setActiveId]    = useState<string | null>(null);
-  const [panTo,       setPanTo]       = useState<{ lat: number; lng: number } | null>(null);
-  const [panelData,   setPanelData]   = useState<ListingSlideData | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [panTo, setPanTo] = useState<{ lat: number; lng: number } | null>(null);
+  const [panelData, setPanelData] = useState<ListingSlideData | null>(null);
   const [panelLoading, setPanelLoading] = useState(false);
-  const [panelError,  setPanelError]  = useState<string | null>(null);
+  const [panelError, setPanelError] = useState<string | null>(null);
+  const [currentDong, setCurrentDong] = useState("");
+  const [currentGu,   setCurrentGu]   = useState("");
   const isPanelOpen = activeId !== null;
 
-  const { listings, loading } = useListings(typeFilter === "ALL" ? undefined : typeFilter);
+  const regionData = REGIONS.find((r) => r.si === selectedSi);
+  const size = SIZE_OPTIONS[sizeIdx];
 
-  const markers = useMemo<Marker[]>(() => {
-    return listings
+  // 필터 드롭다운(roomType) + 시/구를 합쳐 API에 전달
+  const effectiveRoomType = roomTypeFilter || sidebarRoomType || undefined;
+  const effectiveRegion   = selectedGu || selectedSi || undefined;
+
+  const { listings, loading } = useListings(
+    listingType === "ALL" ? undefined : listingType,
+    {
+      roomType: effectiveRoomType,
+      region:   effectiveRegion,
+      minSize:  size.min,
+      maxSize:  size.max,
+    },
+  );
+
+  const markers = useMemo<MapMarker[]>(() =>
+    listings
       .filter((l) => l.latitude && l.longitude)
       .map((l) => ({
-        id:      l.id,
-        lat:     l.latitude!,
-        lng:     l.longitude!,
-        label:   formatMarkerLabel(l.deposit),
-        listing: l,
-      }));
-  }, [listings]);
+        id:    l.id,
+        lat:   l.latitude!,
+        lng:   l.longitude!,
+        label: formatMarkerLabel(l.deposit),
+      })),
+    [listings],
+  );
 
-  // 초기 지도 중심 자동 이동
+  // 초기 지도 이동
   const initialRef = useRef(false);
   useEffect(() => {
     if (!initialRef.current && markers.length > 0) {
@@ -289,17 +184,23 @@ export function ListingsMapView({ onRegionChange }: ListingsMapViewProps = {}) {
     }
   }, [markers]);
 
+  const handleRegionChange = useCallback((dong: string, gu: string, si: string) => {
+    setCurrentDong(dong);
+    setCurrentGu(gu);
+    // 지도 이동 시 시/구 드롭다운 자동 동기화
+    if (si && si !== selectedSi) setSelectedSi(si);
+    if (gu && gu !== selectedGu) setSelectedGu(gu);
+  }, [selectedSi, selectedGu]);
+
   const openPanel = useCallback(async (id: string) => {
     setActiveId(id);
     setPanelData(null);
     setPanelError(null);
     setPanelLoading(true);
-
     const listing = listings.find((l) => l.id === id);
     if (listing?.latitude && listing?.longitude) {
       setPanTo({ lat: listing.latitude, lng: listing.longitude });
     }
-
     try {
       const res = await fetch(`/api/listings/${id}`);
       if (!res.ok) throw new Error("매물을 불러오지 못했습니다.");
@@ -339,81 +240,175 @@ export function ListingsMapView({ onRegionChange }: ListingsMapViewProps = {}) {
   }, []);
 
   const handleReset = useCallback(() => {
-    setTypeFilter("ALL");
+    setListingType("ALL");
+    setRoomTypeFilter("");
+    setSidebarRoomType("");
+    setSelectedSi("서울특별시");
+    setSelectedGu("강남구");
+    setSizeIdx(0);
     initialRef.current = false;
   }, []);
 
-  const TYPE_TABS: { value: ListingType | "ALL"; label: string }[] = [
-    { value: "ALL",    label: "전체" },
-    { value: "JEONSE", label: "전세" },
-    { value: "SALE",   label: "매매" },
-  ];
+  const displayRegion = currentDong
+    ? `${currentDong}`
+    : currentGu || selectedGu || selectedSi || "전국";
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-white">
+    <div style={{ position: "fixed", inset: 0, zIndex: 30, display: "flex", flexDirection: "column", background: "#fff", overflow: "hidden" }}>
 
-      {/* 필터 바 */}
-      <div className="z-20 flex shrink-0 items-center gap-2 border-b border-[#e8e8ed] bg-white px-4 py-2">
-        {TYPE_TABS.map((t) => (
+      {/* Row 1: 닫기 + 유형 탭 + 매물등록/목록보기 */}
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #E8EDF5", background: "#fff", padding: "0 16px", height: 52, flexShrink: 0, zIndex: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
           <button
-            key={t.value}
-            onClick={() => setTypeFilter(t.value)}
-            className={[
-              "px-3 py-1.5 rounded-full text-[13px] font-semibold transition-colors border",
-              typeFilter === t.value
-                ? "bg-[#0071e3] text-white border-[#0071e3]"
-                : "bg-white text-[#3d3d3f] border-[#d1d1d6] hover:border-[#0071e3]/50",
-            ].join(" ")}
+            onClick={onClose}
+            style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "8px 12px 8px 0", fontSize: 13, fontWeight: 500, color: "#6e6e73", background: "none", border: "none", cursor: "pointer" }}
           >
-            {t.label}
+            <X size={16} strokeWidth={1.8} />닫기
           </button>
-        ))}
-        <button
-          onClick={handleReset}
-          title="필터 초기화"
-          className="ml-auto flex items-center justify-center rounded-lg border border-[#e8e8ed] p-[7px] text-[#6e6e73] hover:border-[#6e6e73] hover:text-[#1d1d1f] transition-colors"
-        >
-          <RefreshCw className="h-3.5 w-3.5" strokeWidth={1.5} />
-        </button>
-        <span className="text-[12px] text-[#aeaeb2]">
-          {loading ? "검색 중…" : `${markers.length}건`}
+          <div style={{ width: 1, height: 18, background: "#E8EDF5", margin: "0 8px" }} />
+          <nav style={{ display: "flex" }}>
+            {LISTING_TABS.map((t) => (
+              <button
+                key={t.value}
+                onClick={() => setListingType(t.value)}
+                style={{
+                  padding: "14px 14px",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  borderTop: "none",
+                  borderLeft: "none",
+                  borderRight: "none",
+                  borderBottom: listingType === t.value ? "2px solid #1d1d1f" : "2px solid transparent",
+                  color: listingType === t.value ? "#1d1d1f" : "#8e8e93",
+                  background: "none",
+                  cursor: "pointer",
+                  transition: "color 0.15s",
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {canRegister && (
+            <Link href="/listings/new" style={{ textDecoration: "none" }}>
+              <button style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 13px", borderRadius: 10, background: "#0071e3", color: "#fff", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer" }}>
+                <Plus size={13} strokeWidth={2} />매물 등록
+              </button>
+            </Link>
+          )}
+          <button
+            onClick={onClose}
+            style={{ padding: "7px 13px", borderRadius: 10, background: "#f5f5f7", color: "#3d3d3f", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer" }}
+          >
+            목록
+          </button>
+        </div>
+      </header>
+
+      {/* Row 2: 필터 바 */}
+      <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid #E8EDF5", background: "#fff", flexShrink: 0, zIndex: 9 }}>
+        <div style={{ display: "flex", flex: 1, alignItems: "center", gap: 8, padding: "8px 12px", overflowX: "auto" }}>
+          <select value={roomTypeFilter} onChange={(e) => setRoomTypeFilter(e.target.value)} className={SEL}>
+            {ROOM_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+          <div style={{ width: 1, height: 18, background: "#E8EDF5", flexShrink: 0 }} />
+          <label style={{ display: "flex", alignItems: "center", gap: 6, borderRadius: 8, border: "1px solid #DDE3EF", background: "#F8FAFF", padding: "7px 10px", cursor: "pointer", flexShrink: 0 }}>
+            <select
+              value={selectedSi}
+              onChange={(e) => { setSelectedSi(e.target.value); setSelectedGu(""); }}
+              style={{ background: "transparent", fontSize: 13, color: "#1d1d1f", outline: "none", cursor: "pointer", border: "none" }}
+            >
+              <option value="">시/도 전체</option>
+              {REGIONS.map((r) => <option key={r.si} value={r.si}>{r.si}</option>)}
+            </select>
+            {regionData && regionData.gu.length > 0 && (
+              <>
+                <span style={{ color: "#DDE3EF" }}>/</span>
+                <select
+                  value={selectedGu}
+                  onChange={(e) => setSelectedGu(e.target.value)}
+                  style={{ background: "transparent", fontSize: 13, color: "#1d1d1f", outline: "none", cursor: "pointer", border: "none" }}
+                >
+                  <option value="">구/군 전체</option>
+                  {regionData.gu.map((g) => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </>
+            )}
+          </label>
+          <select value={sizeIdx} onChange={(e) => setSizeIdx(Number(e.target.value))} className={SEL}>
+            {SIZE_OPTIONS.map((s, i) => <option key={s.label} value={i}>{s.label}</option>)}
+          </select>
+          <button onClick={handleReset} title="필터 초기화" style={{ display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid #DDE3EF", padding: 8, color: "#6e6e73", background: "#fff", cursor: "pointer", flexShrink: 0 }}>
+            <RefreshCw size={14} strokeWidth={1.5} />
+          </button>
+        </div>
+        <span style={{ flexShrink: 0, paddingRight: 16, fontSize: 12, color: "#8e8e93" }}>
+          {loading ? "검색 중…" : `지도 내 ${markers.length}건`}
         </span>
       </div>
 
       {/* 바디: 사이드바 + 지도 */}
-      <div className="flex flex-1 overflow-hidden">
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
 
         {/* 사이드바 */}
-        <aside className={[
-          "shrink-0 flex-col overflow-hidden border-r border-[#e8e8ed] bg-white",
-          "transition-[width] duration-300",
-          "hidden md:flex",
-          sidebarOpen ? "md:w-[340px]" : "md:w-0",
-        ].join(" ")}>
-          <div className="shrink-0 flex items-center gap-2 border-b border-[#EEF1F8] px-4 py-2.5">
-            <span className="text-[14px] font-bold text-[#1d1d1f]">매물 목록</span>
-            <span className="text-[12px] text-[#6e6e73]">
+        <aside style={{
+          flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          borderRight: "1px solid #E8EDF5",
+          background: "#fff",
+          width: sidebarOpen ? 380 : 0,
+          transition: "width 0.3s",
+        }}>
+          {/* 사이드바 타이틀 */}
+          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid #EEF1F8", padding: "10px 16px" }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f", whiteSpace: "nowrap" }}>
+              {displayRegion}
+            </span>
+            <span style={{ fontSize: 13, color: "#8e8e93", whiteSpace: "nowrap" }}>
               {loading ? "…" : `${listings.length}건`}
             </span>
           </div>
-          <div className="flex-1 overflow-y-auto">
+          {/* 건물유형 탭 */}
+          <div style={{ flexShrink: 0, display: "flex", gap: 6, padding: "10px 12px", borderBottom: "1px solid #EEF1F8", overflowX: "auto" }}>
+            {ROOM_TYPE_TABS.map((t) => (
+              <button
+                key={t.value}
+                onClick={() => setSidebarRoomType(t.value)}
+                style={{
+                  padding: "5px 13px",
+                  borderRadius: 100,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  border: "none",
+                  flexShrink: 0,
+                  background: sidebarRoomType === t.value ? "#1d1d1f" : "#f5f5f7",
+                  color: sidebarRoomType === t.value ? "#fff" : "#3d3d3f",
+                  transition: "all 0.15s",
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          {/* 매물 카드 목록 */}
+          <div style={{ flex: 1, overflowY: "auto" }}>
             {loading ? (
-              <div className="flex h-32 items-center justify-center">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#d1d1d6] border-t-[#0071e3]" />
+              <div style={{ display: "flex", height: 128, alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 20, height: 20, borderRadius: "50%", border: "2px solid #d1d1d6", borderTop: "2px solid #0071e3", animation: "spin 0.8s linear infinite" }} />
               </div>
             ) : listings.length === 0 ? (
-              <div className="flex h-32 flex-col items-center justify-center gap-2 text-[#aeaeb2]">
-                <Building2 className="h-7 w-7" strokeWidth={1.5} />
-                <p className="text-[13px]">매물이 없습니다</p>
+              <div style={{ display: "flex", flexDirection: "column", height: 128, alignItems: "center", justifyContent: "center", gap: 8, color: "#aeaeb2" }}>
+                <Building2 size={28} strokeWidth={1.5} />
+                <p style={{ fontSize: 13 }}>매물이 없습니다</p>
               </div>
             ) : (
               listings.map((l) => (
-                <ListingCardSmall
-                  key={l.id}
-                  listing={l}
-                  isActive={l.id === activeId}
-                  onClick={() => openPanel(l.id)}
-                />
+                <ListingCardSmall key={l.id} listing={l} isActive={l.id === activeId} onClick={() => openPanel(l.id)} />
               ))
             )}
           </div>
@@ -423,30 +418,47 @@ export function ListingsMapView({ onRegionChange }: ListingsMapViewProps = {}) {
         <button
           onClick={() => setSidebarOpen((p) => !p)}
           title={sidebarOpen ? "목록 숨기기" : "목록 보기"}
-          className="z-20 hidden md:flex h-12 w-5 shrink-0 items-center justify-center self-center rounded-r-lg border border-l-0 border-[#e8e8ed] bg-white text-[#6e6e73] shadow-sm transition-colors hover:text-[#0071e3] focus:outline-none"
+          style={{
+            zIndex: 20,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            width: 20,
+            alignSelf: "center",
+            height: 48,
+            borderRadius: "0 8px 8px 0",
+            border: "1px solid #E8EDF5",
+            borderLeft: "none",
+            background: "#fff",
+            color: "#6e6e73",
+            boxShadow: "2px 0 6px rgba(0,0,0,0.06)",
+            cursor: "pointer",
+          }}
         >
-          {sidebarOpen
-            ? <ChevronLeft  className="h-3 w-3" strokeWidth={2.5} />
-            : <ChevronRight className="h-3 w-3" strokeWidth={2.5} />}
+          {sidebarOpen ? <ChevronLeft size={12} strokeWidth={2.5} /> : <ChevronRight size={12} strokeWidth={2.5} />}
         </button>
 
-        {/* 지도 영역 */}
-        <div className="relative flex-1 overflow-hidden">
+        {/* 지도 */}
+        <div style={{ position: "relative", flex: 1, overflow: "hidden" }}>
           <KakaoMarkersMap
             markers={markers}
             activeId={activeId}
             onMarkerClick={openPanel}
             panTo={panTo}
-            onRegionChange={onRegionChange}
+            onRegionChange={handleRegionChange}
           />
-
           {/* 슬라이드 패널 */}
-          <div className={[
-            "absolute inset-y-0 right-0 z-10 w-full md:w-[360px]",
-            "bg-white shadow-[-4px_0_28px_rgba(0,0,0,0.10)]",
-            "transition-transform duration-300 ease-in-out",
-            isPanelOpen ? "translate-x-0" : "translate-x-full",
-          ].join(" ")}>
+          <div style={{
+            position: "absolute",
+            inset: "0 0 0 auto",
+            zIndex: 10,
+            width: "min(360px, 100%)",
+            background: "#fff",
+            boxShadow: "-4px 0 28px rgba(0,0,0,0.10)",
+            transition: "transform 0.3s ease-in-out",
+            transform: isPanelOpen ? "translateX(0)" : "translateX(100%)",
+          }}>
             <MapSlidePanel
               listingId={activeId}
               data={panelData}

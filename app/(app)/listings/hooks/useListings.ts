@@ -37,7 +37,14 @@ export interface ListingItem {
   _count: { applications: number };
 }
 
-export function useListings(listingType?: ListingType) {
+export interface ListingExtraFilters {
+  roomType?: string;
+  minSize?: number;
+  maxSize?: number;
+  region?: string;
+}
+
+export function useListings(listingType?: ListingType, extra?: ListingExtraFilters) {
   const [listings, setListings] = useState<ListingItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -46,8 +53,12 @@ export function useListings(listingType?: ListingType) {
   const load = useCallback(async (p = 1) => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(p), limit: "12" });
+      const params = new URLSearchParams({ page: String(p), limit: "50" });
       if (listingType) params.set("listingType", listingType);
+      if (extra?.roomType) params.set("roomType", extra.roomType);
+      if (extra?.minSize)  params.set("minSize",  String(extra.minSize));
+      if (extra?.maxSize)  params.set("maxSize",  String(extra.maxSize));
+      if (extra?.region)   params.set("region",   extra.region);
       const res = await fetch(`/api/listings?${params}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -57,7 +68,7 @@ export function useListings(listingType?: ListingType) {
     } finally {
       setLoading(false);
     }
-  }, [listingType]);
+  }, [listingType, extra?.roomType, extra?.minSize, extra?.maxSize, extra?.region]);
 
   useEffect(() => { load(1); }, [load]);
 

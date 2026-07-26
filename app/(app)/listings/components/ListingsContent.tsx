@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, SlidersHorizontal, Map, List } from "lucide-react";
+import { Plus, SlidersHorizontal, Map } from "lucide-react";
 import { useListings, type ListingType } from "../hooks/useListings";
 import { ListingCard } from "./ListingCard";
 import { useSession } from "next-auth/react";
@@ -21,37 +21,9 @@ export function ListingsContent() {
   const { listings, total, loading } = useListings(typeFilter === "ALL" ? undefined : typeFilter);
 
   const canRegister = session && session.user?.userType !== "TENANT";
-  const [currentRegion, setCurrentRegion] = useState<string>("");
 
   if (view === "map") {
-    return (
-      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: 0, zIndex: 30, display: "flex", flexDirection: "column", background: "#fff", overflow: "hidden" }}>
-        {/* 지도 헤더 */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: "1px solid #e8e8ed", background: "#fff", flexShrink: 0 }}>
-          <h1 style={{ fontSize: 16, fontWeight: 700, color: "#1d1d1f" }}>
-            {currentRegion || "매물 지도"}
-          </h1>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {canRegister && (
-              <Link href="/listings/new" style={{ textDecoration: "none" }}>
-                <button style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 13px", borderRadius: 10, background: "#0071e3", color: "#fff", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer" }}>
-                  <Plus size={13} strokeWidth={2} />매물 등록
-                </button>
-              </Link>
-            )}
-            <button
-              onClick={() => setView("list")}
-              style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 13px", borderRadius: 10, background: "#f5f5f7", color: "#3d3d3f", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer" }}
-            >
-              <List size={13} strokeWidth={2} />목록 보기
-            </button>
-          </div>
-        </div>
-        <div style={{ flex: 1, overflow: "hidden" }}>
-          <ListingsMapView onRegionChange={setCurrentRegion} />
-        </div>
-      </div>
-    );
+    return <ListingsMapView onClose={() => setView("list")} canRegister={!!canRegister} />;
   }
 
   return (
