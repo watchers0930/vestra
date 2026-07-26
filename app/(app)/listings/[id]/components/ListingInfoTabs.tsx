@@ -4,7 +4,7 @@ import {
   useState, useEffect, useId, useRef,
   useCallback, useMemo, useReducer,
 } from "react";
-import { MapPin, GraduationCap, TrendingUp } from "lucide-react";
+import { MapPin, GraduationCap, TrendingUp, Loader2 } from "lucide-react";
 
 type TabKey = "location" | "infra" | "school" | "market";
 const TABS: { key: TabKey; label: string }[] = [
@@ -15,9 +15,116 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 export interface ListingInfoTabsProps {
+  listingId: string;
   address: string;
   latitude: number | null;
   longitude: number | null;
+}
+
+// ── 시세 탭 ──────────────────────────────────────────────────────────────────
+interface MarketData {
+  avgPrice: number; minPrice: number; maxPrice: number;
+  transactionCount: number; period: string;
+  monthly: { month: string; avg: number; count: number }[];
+  recent: { date: string; price: number; area: number; floor: number }[];
+}
+
+function formatManWon(won: number) {
+  if (won >= 100_000_000) {
+    const e = Math.floor(won / 100_000_000);
+    const r = Math.floor((won % 100_000_000) / 10_000);
+    return r > 0 ? `${e}억 ${r.toLocaleString()}만` : `${e}억`;
+  }
+  if (won >= 10_000) return `${Math.floor(won / 10_000).toLocaleString()}만`;
+  return `${won.toLocaleString()}원`;
+}
+
+function MarketTab({ listingId }: { listingId: string }) {
+  const [data, setData] = useState<MarketData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch(`/api/listings/${listingId}/market-price`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.error) setError(d.error);
+        else setData(d);
+      })
+      .catch(() => setError("시세 데이터를 불러오지 못했습니다."))
+      .finally(() => setLoading(false));
+  }, [listingId]);
+
+  if (loading) return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 0", gap: 10, color: "#aeaeb2" }}>
+      <Loader2 size={20} strokeWidth={1.5} style={{ animation: "spin 1s linear infinite" }} />
+      <span style={{ fontSize: 13 }}>시세 조회 중...</span>
+    </div>
+  );
+  if (error || !data) return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 0", color: "#aeaeb2", gap: 8 }}>
+      <TrendingUp size={32} strokeWidth={1.2} />
+      <p style={{ fontSize: 13, margin: 0 }}>{error || "조회 가능한 실거래가 없습니다."}</p>
+    </div>
+  );
+
+  const maxAvg = Math.max(...data.monthly.map((m) => m.avg), 1);
+
+  return (
+    <div>
+      {/* 요약 카드 */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
+        {[
+          { label: "평균 실거래가", value: formatManWon(data.avgPrice), color: "#0071e3" },
+          { label: "최저가", value: formatManWon(data.minPrice), color: "#22a75e" },
+          { label: "최고가", value: formatManWon(data.maxPrice), color: "#c0392b" },
+        ].map(({ label, value, color }) => (
+          <div key={label} style={{ background: "#f7f7fa", borderRadius: 12, padding: "12px 14px", textAlign: "center" }}>
+            <p style={{ fontSize: 10, color: "#aeaeb2", margin: "0 0 4px", fontWeight: 600 }}>{label}</p>
+            <p style={{ fontSize: 15, fontWeight: 700, color, margin: 0, letterSpacing: "-0.02em" }}>{value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* 월별 바차트 */}
+      {data.monthly.length > 0 && (
+        <div style={{ background: "#f7f7fa", borderRadius: 14, padding: 16, marginBottom: 16 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "#aeaeb2", margin: "0 0 12px", letterSpacing: "0.04em" }}>월별 평균 실거래가 ({data.period})</p>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80 }}>
+            {data.monthly.map((m) => {
+              const pct = (m.avg / maxAvg) * 100;
+              return (
+                <div key={m.month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                  <div style={{ width: "100%", height: `${Math.max(pct, 4)}%`, background: "#0071e3", borderRadius: "4px 4px 0 0", minHeight: 4 }} />
+                  <span style={{ fontSize: 9, color: "#aeaeb2", whiteSpace: "nowrap" }}>{m.month.slice(5)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 최근 실거래 목록 */}
+      {data.recent.length > 0 && (
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "#aeaeb2", margin: "0 0 8px", letterSpacing: "0.04em" }}>최근 실거래 내역</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {data.recent.map((r, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "#f7f7fa", borderRadius: 10 }}>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "#1d1d1f", margin: 0 }}>{formatManWon(r.price)}</p>
+                  <p style={{ fontSize: 11, color: "#8e8e93", margin: 0, marginTop: 2 }}>{r.area}㎡ · {r.floor}층</p>
+                </div>
+                <span style={{ fontSize: 11, color: "#aeaeb2" }}>{r.date}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <p style={{ fontSize: 10, color: "#c7c7cc", marginTop: 12 }}>국토교통부 실거래가 공개시스템 기준 · 참고용</p>
+    </div>
+  );
 }
 
 // ── Kakao SDK 대기 유틸 ──────────────────────────────────────────────────────
@@ -264,9 +371,14 @@ function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
       mapRef.current = map;
       setTimeout(() => map.relayout(), 100);
       new ResizeObserver(() => map.relayout()).observe(el);
-      const pinEl = document.createElement("div");
-      Object.assign(pinEl.style, { width: "12px", height: "12px", borderRadius: "50%", background: "#0F2547", border: "3px solid #fff", boxShadow: "0 2px 6px rgba(15,37,71,.5)" });
-      new kakao.maps.CustomOverlay({ map, position: pos, content: pinEl, yAnchor: 0.5, zIndex: 10 });
+      // 건물 핀
+      const sBuildPin = document.createElement("div");
+      const sBShape = document.createElement("div");
+      Object.assign(sBShape.style, { width: "22px", height: "22px", borderRadius: "50% 50% 50% 0", background: "#0F2547", transform: "rotate(-45deg)", boxShadow: "0 3px 10px rgba(15,37,71,.55)", border: "2.5px solid #fff", position: "relative" });
+      const sBDot = document.createElement("div");
+      Object.assign(sBDot.style, { width: "7px", height: "7px", borderRadius: "50%", background: "#fff", position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)" });
+      sBShape.appendChild(sBDot); sBuildPin.appendChild(sBShape);
+      new kakao.maps.CustomOverlay({ map, position: pos, content: sBuildPin, yAnchor: 1.15, zIndex: 20 });
       SCHOOL_TYPES.forEach((t) => dots.set(t.key, []));
       const ps = new kakao.maps.services.Places();
       const found: Record<string, SchoolItem> = {};
@@ -279,9 +391,15 @@ function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
             const dist = parseInt(p.distance, 10);
             const school: SchoolItem = { name: p.place_name, type, color: conf.color, distance: dist <= 800 ? `도보 ${Math.max(1, Math.round(dist / 67))}분` : `버스 ${Math.max(1, Math.round(dist / 250))}분`, lat: parseFloat(p.y), lng: parseFloat(p.x) };
             found[type] = school;
-            const dotEl = document.createElement("div");
-            Object.assign(dotEl.style, { width: "9px", height: "9px", borderRadius: "50%", background: conf.color, border: "2px solid #fff", boxShadow: "0 1px 4px rgba(0,0,0,.25)" });
-            const ov = new kakao.maps.CustomOverlay({ map, position: new kakao.maps.LatLng(school.lat, school.lng), content: dotEl, yAnchor: 0.5, zIndex: 2 });
+            // 학교 핀 마커
+            const sMarker = document.createElement("div");
+            Object.assign(sMarker.style, { display: "flex", flexDirection: "column", alignItems: "center", cursor: "default" });
+            const sMShape = document.createElement("div");
+            Object.assign(sMShape.style, { width: "18px", height: "18px", borderRadius: "50% 50% 50% 0", background: conf.color, transform: "rotate(-45deg)", boxShadow: `0 2px 8px ${conf.color}88`, border: "2px solid #fff", position: "relative" });
+            const sMDot = document.createElement("div");
+            Object.assign(sMDot.style, { width: "5px", height: "5px", borderRadius: "50%", background: "#fff", position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)" });
+            sMShape.appendChild(sMDot); sMarker.appendChild(sMShape);
+            const ov = new kakao.maps.CustomOverlay({ map, position: new kakao.maps.LatLng(school.lat, school.lng), content: sMarker, yAnchor: 1.15, zIndex: 5 });
             dots.get(type)!.push(ov);
             if (Object.keys(found).length === 3) break;
           }
@@ -340,7 +458,7 @@ function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
 }
 
 // ── 메인 탭 컴포넌트 ─────────────────────────────────────────────────────────
-export function ListingInfoTabs({ address, latitude, longitude }: ListingInfoTabsProps) {
+export function ListingInfoTabs({ listingId, address, latitude, longitude }: ListingInfoTabsProps) {
   const [tab, setTab] = useState<TabKey>("location");
   const lat = latitude  ?? 37.5665;
   const lng = longitude ?? 126.978;
@@ -360,13 +478,7 @@ export function ListingInfoTabs({ address, latitude, longitude }: ListingInfoTab
       {tab === "location" && <LocationMap lat={lat} lng={lng} address={address} />}
       {tab === "infra"    && <InfraMap lat={lat} lng={lng} />}
       {tab === "school"   && <SchoolMap lat={lat} lng={lng} />}
-      {tab === "market"   && (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 0", color: "#aeaeb2", gap: 12 }}>
-          <TrendingUp size={36} strokeWidth={1.2} />
-          <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>시세 분석 준비 중</p>
-          <p style={{ fontSize: 12, margin: 0 }}>실거래가 기반 시세 정보를 곧 제공합니다</p>
-        </div>
-      )}
+      {tab === "market"   && <MarketTab listingId={listingId} />}
     </div>
   );
 }

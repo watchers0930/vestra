@@ -136,6 +136,7 @@ export function ListingDetail({ listing, onReload }: Props) {
 
           {/* 위치/인프라/학군/시세 탭 */}
           <ListingInfoTabs
+            listingId={listing.id}
             address={listing.address}
             latitude={listing.latitude}
             longitude={listing.longitude}
