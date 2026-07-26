@@ -40,6 +40,7 @@ function waitKakao(cb: () => void): () => void {
 function LocationMap({ lat, lng, address }: { lat: number; lng: number; address: string }) {
   const uid = useId();
   const domId = `kmap-loc-${uid.replace(/:/g, "")}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
 
   useEffect(() => {
@@ -91,7 +92,9 @@ interface PlaceItem { name: string; distance: string; catCode: string; lat: numb
 function InfraMap({ lat, lng }: { lat: number; lng: number }) {
   const uid   = useId();
   const domId = `kmap-infra-${uid.replace(/:/g, "")}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef      = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dotsByCat   = useRef<Map<string, any[]>>(new Map());
   const placesByCat = useRef<Map<string, PlaceItem[]>>(new Map());
   const [selected, setSelected] = useState<InfraCatCode>("ALL");
@@ -132,6 +135,7 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
       let done = 0;
       INFRA_CATS.forEach((cat) => {
         dots.set(cat.code, []); places.set(cat.code, []);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ps.categorySearch(cat.code, (data: any[], status: any) => {
           done++;
           if (status === kakao.maps.services.Status.OK) {
@@ -222,7 +226,9 @@ function schType(cat: string): typeof SCHOOL_TYPES[number]["key"] | null {
 function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
   const uid   = useId();
   const domId = `kmap-school-${uid.replace(/:/g, "")}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef  = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dotsRef = useRef<Map<string, any[]>>(new Map());
   const [selected, setSelected] = useState<SchoolKey>("ALL");
   const [{ allItems, loaded }, dispatch] = useReducer(
@@ -253,6 +259,7 @@ function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
       SCHOOL_TYPES.forEach((t) => dots.set(t.key, []));
       const ps = new kakao.maps.services.Places();
       const found: Record<string, SchoolItem> = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ps.categorySearch("SC4", (data: any[], status: any) => {
         if (status === kakao.maps.services.Status.OK) {
           for (const p of data) {
