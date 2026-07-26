@@ -44,10 +44,6 @@ const SIZE_OPTIONS = [
   { label: "30평 이상", min: 99,        max: undefined },
 ];
 
-const SEL =
-  "rounded-lg border border-[#DDE3EF] bg-white px-3 py-[7px] text-[13px] text-[#1d1d1f] " +
-  "hover:border-[#8e8e93] focus:border-[#0071e3] focus:outline-none transition-colors cursor-pointer shrink-0";
-
 // ────────────────────────────────────────────────────────────
 // 가격 포맷
 // ────────────────────────────────────────────────────────────
@@ -83,7 +79,7 @@ function ListingCardSmall({
     <button
       onClick={onClick}
       className={[
-        "w-full flex gap-3 px-4 py-3 text-left transition-colors border-b border-[#f0f0f5]",
+        "w-full flex gap-3 px-4 py-3 text-left transition-colors border-b border-black/30",
         isActive ? "bg-[#EFF5FF]" : "bg-white hover:bg-[#f9f9fb]",
       ].join(" ")}
     >
@@ -310,9 +306,11 @@ export function ListingsMapView({ onClose, canRegister }: ListingsMapViewProps) 
       {/* Row 2: 필터 바 */}
       <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid #E8EDF5", background: "#fff", flexShrink: 0, zIndex: 9 }}>
         <div style={{ display: "flex", flex: 1, alignItems: "center", gap: 8, padding: "8px 12px", overflowX: "auto" }}>
-          <select value={roomTypeFilter} onChange={(e) => setRoomTypeFilter(e.target.value)} className={SEL}>
-            {ROOM_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
+          <label style={{ display: "flex", alignItems: "center", borderRadius: 8, border: "1px solid #DDE3EF", background: "#F8FAFF", padding: "7px 10px", cursor: "pointer", flexShrink: 0 }}>
+            <select value={roomTypeFilter} onChange={(e) => setRoomTypeFilter(e.target.value)} style={{ background: "transparent", fontSize: 13, color: "#1d1d1f", outline: "none", cursor: "pointer", border: "none" }}>
+              {ROOM_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </label>
           <div style={{ width: 1, height: 18, background: "#E8EDF5", flexShrink: 0 }} />
           <label style={{ display: "flex", alignItems: "center", gap: 6, borderRadius: 8, border: "1px solid #DDE3EF", background: "#F8FAFF", padding: "7px 10px", cursor: "pointer", flexShrink: 0 }}>
             <select
@@ -337,9 +335,11 @@ export function ListingsMapView({ onClose, canRegister }: ListingsMapViewProps) 
               </>
             )}
           </label>
-          <select value={sizeIdx} onChange={(e) => setSizeIdx(Number(e.target.value))} className={SEL}>
-            {SIZE_OPTIONS.map((s, i) => <option key={s.label} value={i}>{s.label}</option>)}
-          </select>
+          <label style={{ display: "flex", alignItems: "center", borderRadius: 8, border: "1px solid #DDE3EF", background: "#F8FAFF", padding: "7px 10px", cursor: "pointer", flexShrink: 0 }}>
+            <select value={sizeIdx} onChange={(e) => setSizeIdx(Number(e.target.value))} style={{ background: "transparent", fontSize: 13, color: "#1d1d1f", outline: "none", cursor: "pointer", border: "none" }}>
+              {SIZE_OPTIONS.map((s, i) => <option key={s.label} value={i}>{s.label}</option>)}
+            </select>
+          </label>
           <button onClick={handleReset} title="필터 초기화" style={{ display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid #DDE3EF", padding: 8, color: "#6e6e73", background: "#fff", cursor: "pointer", flexShrink: 0 }}>
             <RefreshCw size={14} strokeWidth={1.5} />
           </button>
