@@ -24,7 +24,7 @@ export function ListingsContent() {
 
   if (view === "map") {
     return (
-      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
+      <div className="fixed inset-0 lg:left-[272px] z-30 flex flex-col bg-white overflow-hidden">
         {/* 지도 헤더 */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: "1px solid #e8e8ed", background: "#fff", flexShrink: 0 }}>
           <h1 style={{ fontSize: 16, fontWeight: 700, color: "#1d1d1f" }}>매물 지도</h1>
