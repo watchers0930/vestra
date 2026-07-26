@@ -85,6 +85,9 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
     },
   ];
 
+  // 비오너 + 미인증 → 섹션 전체 숨김
+  if (!isOwner && !listing.isCertified) return null;
+
   return (
     <div style={{
       border: listing.isCertified ? "1.5px solid #22a75e" : "1.5px solid #e5e5ea",
@@ -92,7 +95,7 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
       background: listing.isCertified ? "rgba(34,167,94,0.04)" : "#fafafa",
     }}>
       {/* 헤더 */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: isOwner ? 16 : 0 }}>
         {listing.isCertified ? (
           <div style={{
             background: "linear-gradient(135deg,#1a7f4b,#22a75e)",
@@ -122,8 +125,8 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
         </div>
       </div>
 
-      {/* 서류 체크리스트 */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+      {/* 서류 체크리스트 — 오너만 */}
+      {isOwner && <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
         {docItems.map((doc) => {
           const done = checks[doc.key];
           return (
@@ -187,7 +190,7 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
             </div>
           );
         })}
-      </div>
+      </div>}
 
       {/* 인증 실행 버튼 (임대인만, 미인증 시) */}
       {isOwner && !listing.isCertified && (
@@ -210,8 +213,8 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
         </button>
       )}
 
-      {/* 인증 결과 메시지 */}
-      {certResult && !certResult.isCertified && (
+      {/* 인증 결과 메시지 — 오너만 */}
+      {isOwner && certResult && !certResult.isCertified && (
         <div style={{
           marginTop: 12, padding: "10px 14px", borderRadius: 10,
           background: "rgba(255,59,48,0.06)", fontSize: 12, color: "#c0392b",
@@ -222,8 +225,8 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
         </div>
       )}
 
-      {/* 안전인증 4단계 가이드 */}
-      <div style={{ marginTop: 20, paddingTop: 18, borderTop: "1px solid #f2f2f7" }}>
+      {/* 안전인증 4단계 가이드 — 오너만 */}
+      {isOwner && <div style={{ marginTop: 20, paddingTop: 18, borderTop: "1px solid #f2f2f7" }}>
         <p style={{ fontSize: 12, fontWeight: 700, color: "#aeaeb2", letterSpacing: "0.04em", marginBottom: 14 }}>
           안전인증 받는 방법
         </p>
@@ -281,7 +284,7 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
             </div>
           ))}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
