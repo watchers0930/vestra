@@ -27,14 +27,6 @@ const ROOM_TYPES = [
   { value: "원룸/투룸", label: "원룸/투룸" },
 ];
 
-const ROOM_TYPE_TABS = [
-  { value: "",       label: "전체" },
-  { value: "아파트",   label: "아파트" },
-  { value: "빌라",    label: "빌라" },
-  { value: "오피스텔", label: "오피스텔" },
-  { value: "단독주택", label: "단독주택" },
-  { value: "원룸/투룸", label: "원룸" },
-];
 
 const SIZE_OPTIONS = [
   { label: "전체 평형", min: undefined, max: undefined },
@@ -79,11 +71,11 @@ function ListingCardSmall({
     <button
       onClick={onClick}
       className={[
-        "w-full flex gap-3 px-4 py-3 text-left transition-colors border-b border-black/30",
+        "w-full flex gap-3 px-4 py-3 text-left transition-colors border-b border-[#e8e8ed]",
         isActive ? "bg-[#EFF5FF]" : "bg-white hover:bg-[#f9f9fb]",
       ].join(" ")}
     >
-      <div className="shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-[#EEF1F8]">
+      <div className="shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-[#EEF1F8] border border-[#e8e8ed]">
         {photos?.[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={photos[0]} alt="" className="w-full h-full object-cover" loading="lazy" />
@@ -128,7 +120,6 @@ interface ListingsMapViewProps {
 export function ListingsMapView({ onClose, canRegister }: ListingsMapViewProps) {
   const [listingType, setListingType] = useState<ListingType | "ALL">("ALL");
   const [roomTypeFilter, setRoomTypeFilter] = useState("");
-  const [sidebarRoomType, setSidebarRoomType] = useState("");
   const [selectedSi, setSelectedSi] = useState("서울특별시");
   const [selectedGu, setSelectedGu] = useState("강남구");
   const [sizeIdx,  setSizeIdx]  = useState(0);
@@ -146,7 +137,7 @@ export function ListingsMapView({ onClose, canRegister }: ListingsMapViewProps) 
   const size = SIZE_OPTIONS[sizeIdx];
 
   // 필터 드롭다운(roomType) + 시/구를 합쳐 API에 전달
-  const effectiveRoomType = roomTypeFilter || sidebarRoomType || undefined;
+  const effectiveRoomType = roomTypeFilter || undefined;
   const effectiveRegion   = selectedGu || selectedSi || undefined;
 
   const { listings, loading } = useListings(
@@ -238,7 +229,6 @@ export function ListingsMapView({ onClose, canRegister }: ListingsMapViewProps) 
   const handleReset = useCallback(() => {
     setListingType("ALL");
     setRoomTypeFilter("");
-    setSidebarRoomType("");
     setSelectedSi("서울특별시");
     setSelectedGu("강남구");
     setSizeIdx(0);
@@ -371,29 +361,6 @@ export function ListingsMapView({ onClose, canRegister }: ListingsMapViewProps) 
             <span style={{ fontSize: 13, color: "#8e8e93", whiteSpace: "nowrap" }}>
               {loading ? "…" : `${listings.length}건`}
             </span>
-          </div>
-          {/* 건물유형 탭 */}
-          <div style={{ flexShrink: 0, display: "flex", gap: 6, padding: "10px 12px", borderBottom: "1px solid #EEF1F8", overflowX: "auto" }}>
-            {ROOM_TYPE_TABS.map((t) => (
-              <button
-                key={t.value}
-                onClick={() => setSidebarRoomType(t.value)}
-                style={{
-                  padding: "5px 13px",
-                  borderRadius: 100,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  border: "none",
-                  flexShrink: 0,
-                  background: sidebarRoomType === t.value ? "#1d1d1f" : "#f5f5f7",
-                  color: sidebarRoomType === t.value ? "#fff" : "#3d3d3f",
-                  transition: "all 0.15s",
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
           </div>
           {/* 매물 카드 목록 */}
           <div style={{ flex: 1, overflowY: "auto" }}>
