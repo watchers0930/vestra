@@ -145,24 +145,37 @@ export async function POST(req: NextRequest) {
       select: { id: true, status: true, createdAt: true },
     });
 
-    // 주소 → 좌표 geocoding (fire-and-forget)
+    // 주소 → 좌표 geocoding (fire-and-forget, 축약 폴백 포함)
     const kakaoRestKey = process.env.KAKAO_REST_KEY;
     if (kakaoRestKey && parsed.data.address) {
-      fetch(
-        `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(parsed.data.address)}&size=1`,
-        { headers: { Authorization: `KakaoAK ${kakaoRestKey}` } }
-      )
-        .then((r) => r.json())
-        .then((json) => {
-          const doc = json.documents?.[0];
+      const tryGeocode = async (query: string) => {
+        const res = await fetch(
+          `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(query)}&size=1`,
+          { headers: { Authorization: `KakaoAK ${kakaoRestKey}` } }
+        );
+        const json = await res.json();
+        return json.documents?.[0] ?? null;
+      };
+      (async () => {
+        try {
+          const addr = parsed.data.address;
+          // 1차: 전체 주소
+          let doc = await tryGeocode(addr);
+          // 2차: 마지막 토큰(건물명 등) 제거
+          if (!doc) doc = await tryGeocode(addr.replace(/\s+\S+$/, ""));
+          // 3차: 번지 제거 후 동이름까지만
+          if (!doc) {
+            const dongOnly = addr.match(/(.*?[가-힣]+동)/)?.[1];
+            if (dongOnly) doc = await tryGeocode(dongOnly);
+          }
           if (doc) {
-            prisma.listing.update({
+            await prisma.listing.update({
               where: { id: listing.id },
               data: { latitude: parseFloat(doc.y), longitude: parseFloat(doc.x) },
-            }).catch(() => {});
+            });
           }
-        })
-        .catch(() => {});
+        } catch { /* geocoding 실패는 무시 */ }
+      })();
     }
 
     return NextResponse.json({ listing }, { status: 201 });
