@@ -254,7 +254,7 @@ export function ListingsMapView({ onClose, canRegister }: ListingsMapViewProps) 
     : currentGu || selectedGu || selectedSi || "전국";
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", flexDirection: "column", background: "#fff", overflow: "hidden" }}>
+    <div className="fixed inset-0 z-40 lg:left-[272px] flex flex-col bg-white overflow-hidden">
 
       {/* Row 1: 닫기 + 유형 탭 + 매물등록/목록보기 */}
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #E8EDF5", background: "#fff", padding: "0 16px", height: 52, flexShrink: 0, zIndex: 10 }}>
