@@ -20,6 +20,8 @@ export function ListingsContent() {
   const [view, setView] = useState<"list" | "map">("list");
   const { listings, total, loading } = useListings(typeFilter === "ALL" ? undefined : typeFilter);
 
+  const canRegister = session && session.user?.userType !== "TENANT";
+
   if (view === "map") {
     return (
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
@@ -27,7 +29,7 @@ export function ListingsContent() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: "1px solid #e8e8ed", background: "#fff", flexShrink: 0 }}>
           <h1 style={{ fontSize: 16, fontWeight: 700, color: "#1d1d1f" }}>매물 지도</h1>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {session && (
+            {canRegister && (
               <Link href="/listings/new" style={{ textDecoration: "none" }}>
                 <button style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 13px", borderRadius: 10, background: "#0071e3", color: "#fff", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer" }}>
                   <Plus size={13} strokeWidth={2} />매물 등록
@@ -66,7 +68,7 @@ export function ListingsContent() {
           >
             <Map size={14} strokeWidth={1.8} />지도 보기
           </button>
-          {session && (
+          {canRegister && (
             <Link href="/listings/new" style={{ textDecoration: "none" }}>
               <button
                 style={{
@@ -114,7 +116,7 @@ export function ListingsContent() {
           <SlidersHorizontal size={36} strokeWidth={1.2} style={{ marginBottom: 12, color: "#c7c7cc" }} />
           <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>등록된 매물이 없습니다</p>
           <p style={{ fontSize: 13 }}>첫 번째 매물을 등록해보세요</p>
-          {session && (
+          {canRegister && (
             <Link href="/listings/new" style={{ textDecoration: "none" }}>
               <button
                 style={{
