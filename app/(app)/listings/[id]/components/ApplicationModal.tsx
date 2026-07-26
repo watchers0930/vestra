@@ -138,7 +138,7 @@ export function ApplicationModal({ listingId, deposit, listingType, onClose, onS
                   fontSize: 14, color: "#6e6e73", background: "#f5f5f7",
                 }}
               >
-                {deposit} {deposit && <span style={{ fontSize: 11, color: "#aeaeb2" }}>({toKorean(deposit)})</span>}
+                {deposit ? Number(deposit).toLocaleString() : ""} {deposit && <span style={{ fontSize: 11, color: "#aeaeb2" }}>({toKorean(deposit)})</span>}
               </div>
             </div>
 
