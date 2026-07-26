@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react";
 import type { ListingItem } from "../../hooks/useListings";
 import { ApplicationModal } from "./ApplicationModal";
 import { CertificationSection } from "./CertificationSection";
+import styles from "./ListingDetail.module.css";
 
 function formatWon(val: string | null) {
   if (!val) return "-";
@@ -81,7 +82,7 @@ export function ListingDetail({ listing, onReload }: Props) {
       </div>
 
       {/* 2-컬럼 레이아웃: 갤러리(좌) + 정보패널(우) */}
-      <div className="listing-detail-grid">
+      <div className={styles.grid}>
 
         {/* ── 좌: 갤러리 ── */}
         <div>
@@ -179,7 +180,7 @@ export function ListingDetail({ listing, onReload }: Props) {
         </div>
 
         {/* ── 우: sticky 정보 패널 ── */}
-        <div className="listing-detail-sticky">
+        <div className={styles.sticky}>
           <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 22, padding: 28, boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
 
             {/* 조회수 */}
