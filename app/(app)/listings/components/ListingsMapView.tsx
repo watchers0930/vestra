@@ -62,7 +62,26 @@ function KakaoMarkersMap({ markers, activeId, onMarkerClick, panTo, onRegionChan
         level: 7,
       });
       mapInstanceRef.current = map;
-      if (!cancelled) setMapReady(true);
+      if (!cancelled) {
+        setMapReady(true);
+        // 초기 위치 시군구 조회 (closure로 onRegionChange capture)
+        if (onRegionChange && window.kakao?.maps?.services?.Geocoder) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const geocoder = new (window.kakao.maps.services as any).Geocoder();
+          const center = map.getCenter();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          geocoder.coord2RegionCode(center.getLng(), center.getLat(), (result: any[], status: string) => {
+            if (status === window.kakao.maps.services.Status.OK) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const r = result.find((r: any) => r.region_type === "H") || result[0];
+              if (r && !cancelled) {
+                const text = [r.region_1depth_name, r.region_2depth_name].filter(Boolean).join(" ");
+                onRegionChange(text);
+              }
+            }
+          });
+        }
+      }
     }
 
     function tryInit() {
@@ -106,15 +125,16 @@ function KakaoMarkersMap({ markers, activeId, onMarkerClick, panTo, onRegionChan
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       geocoder.coord2RegionCode(center.getLng(), center.getLat(), (result: any[], status: string) => {
         if (status === window.kakao.maps.services.Status.OK) {
-          const h = result.find((r: any) => r.region_type === "H");
-          if (h) {
-            const text = [h.region_1depth_name, h.region_2depth_name].filter(Boolean).join(" ");
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const r = result.find((r: any) => r.region_type === "H") || result[0];
+          if (r) {
+            const text = [r.region_1depth_name, r.region_2depth_name].filter(Boolean).join(" ");
             cb(text);
           }
         }
       });
     }
-    fetchRegion();
+    // idle 이벤트 — 지도 이동 완료 시 시군구 업데이트
     window.kakao.maps.event.addListener(map, "idle", fetchRegion);
     return () => { window.kakao.maps.event.removeListener(map, "idle", fetchRegion); };
   }, [mapReady, onRegionChange]);
