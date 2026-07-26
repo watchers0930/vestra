@@ -56,7 +56,8 @@ export function MapSlidePanelPhotos({ photos, alt, lat, lng }: MapSlidePanelPhot
               <button
                 key={i}
                 onClick={() => setLightboxIdx(i)}
-                className="shrink-0 h-20 w-20 overflow-hidden rounded-lg border border-[#e8e8ed] bg-[#EEF1F8] transition-opacity hover:opacity-80"
+                style={{ border: "1px solid #e8e8ed" }}
+                className="shrink-0 h-20 w-20 overflow-hidden rounded-lg bg-[#EEF1F8] transition-opacity hover:opacity-80"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt={`${alt} ${i + 1}`} className="h-full w-full object-cover" loading="lazy" />

@@ -107,7 +107,7 @@ export function MapSlidePanelInfo({ data }: { data: ListingSlideData }) {
       )}
 
       {/* 등록자 */}
-      <div className="border-t border-[#e8e8ed] pt-3">
+      <div style={{ borderTop: "1px solid #e8e8ed" }} className="pt-3">
         <p className="text-[11px] text-[#aeaeb2]">
           등록인 · {data.owner.companyName ?? data.owner.name ?? "비공개"}
         </p>
