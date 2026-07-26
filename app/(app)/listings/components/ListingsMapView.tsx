@@ -70,12 +70,10 @@ function ListingCardSmall({
   return (
     <button
       onClick={onClick}
-      className={[
-        "w-full flex gap-3 px-4 py-3 text-left transition-colors border-b border-[#e8e8ed]",
-        isActive ? "bg-[#EFF5FF]" : "bg-white hover:bg-[#f9f9fb]",
-      ].join(" ")}
+      style={{ borderBottom: "1px solid #e8e8ed", background: isActive ? "#EFF5FF" : "#fff" }}
+      className="w-full flex gap-3 px-4 py-3 text-left transition-colors hover:bg-[#f9f9fb]"
     >
-      <div className="shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-[#EEF1F8] border border-[#e8e8ed]">
+      <div style={{ border: "1px solid #e8e8ed" }} className="shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-[#EEF1F8]">
         {photos?.[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={photos[0]} alt="" className="w-full h-full object-cover" loading="lazy" />
