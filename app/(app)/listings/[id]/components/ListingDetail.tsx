@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Building2, AreaChart, Layers, Calendar, Eye, FileCheck2,
-  ChevronLeft, ChevronRight, FileText, ShieldCheck,
+  ChevronLeft, FileText, ShieldCheck,
   ExternalLink, Edit2, Trash2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -18,6 +18,12 @@ function formatWon(val: string | null) {
   if (n >= 100_000_000) return `${(n / 100_000_000).toFixed(n % 100_000_000 === 0 ? 0 : 1)}억`;
   if (n >= 10_000) return `${Math.floor(n / 10_000).toLocaleString()}만`;
   return `${n.toLocaleString()}원`;
+}
+
+// 주소 마지막 한글 건물명 추출 ("강남구 대치동 966 대치아이파크" → "대치아이파크")
+function extractBuildingName(address: string): string {
+  const match = address.match(/(?:\d+[-\d]*\s+)([가-힣][\가-힣\s\w]+)$/);
+  return match?.[1]?.trim() ?? address;
 }
 
 const TYPE_LABEL: Record<string, string> = { JEONSE: "전세", SALE: "매매" };
@@ -88,118 +94,108 @@ export function ListingDetail({ listing, onReload }: Props) {
         )}
       </div>
 
-      {/* 사진 슬라이더 */}
-      <div
-        style={{
-          width: "100%", height: 300, borderRadius: 20, background: "#f5f5f7",
-          position: "relative", overflow: "hidden", marginBottom: 24,
-        }}
-      >
-        {photos.length > 0 ? (
-          <>
+      {/* 갤러리 — 메인 이미지 + 썸네일 스트립 */}
+      <div style={{ marginBottom: 24 }}>
+        {/* 메인 이미지 */}
+        <div style={{ width: "100%", height: 320, borderRadius: 20, background: "#f0f0f5", position: "relative", overflow: "hidden" }}>
+          {photos.length > 0 ? (
             <img
               src={photos[photoIdx]}
               alt={`사진 ${photoIdx + 1}`}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              style={{ width: "100%", height: "100%", objectFit: "cover", transition: "opacity 0.2s" }}
             />
-            {photos.length > 1 && (
-              <>
-                <button
-                  onClick={() => setPhotoIdx((i) => (i - 1 + photos.length) % photos.length)}
-                  style={{
-                    position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
-                    background: "rgba(255,255,255,0.85)", border: "none", borderRadius: "50%",
-                    width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
-                    cursor: "pointer",
-                  }}
-                >
-                  <ChevronLeft size={18} strokeWidth={2.5} style={{ color: "#1d1d1f" }} />
-                </button>
-                <button
-                  onClick={() => setPhotoIdx((i) => (i + 1) % photos.length)}
-                  style={{
-                    position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-                    background: "rgba(255,255,255,0.85)", border: "none", borderRadius: "50%",
-                    width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
-                    cursor: "pointer",
-                  }}
-                >
-                  <ChevronRight size={18} strokeWidth={2.5} style={{ color: "#1d1d1f" }} />
-                </button>
-                <div style={{ position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 5 }}>
-                  {photos.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setPhotoIdx(i)}
-                      style={{
-                        width: 6, height: 6, borderRadius: "50%", border: "none", cursor: "pointer",
-                        background: i === photoIdx ? "#fff" : "rgba(255,255,255,0.5)",
-                        padding: 0,
-                      }}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </>
-        ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Building2 size={48} strokeWidth={1.2} style={{ color: "#c7c7cc" }} />
+          ) : (
+            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Building2 size={48} strokeWidth={1.2} style={{ color: "#c7c7cc" }} />
+            </div>
+          )}
+          {/* 좌상단 배지 */}
+          <div style={{ position: "absolute", top: 12, left: 12, display: "flex", gap: 6 }}>
+            <span style={{ padding: "3px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700, background: listing.listingType === "JEONSE" ? "rgba(0,113,227,0.9)" : "rgba(100,60,180,0.9)", color: "#fff" }}>
+              {TYPE_LABEL[listing.listingType]}
+            </span>
+            <span style={{ padding: "3px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700, background: "rgba(0,0,0,0.45)", color: "#fff" }}>
+              {STATUS_LABEL[listing.status] ?? listing.status}
+            </span>
           </div>
-        )}
-
-        {/* 배지 */}
-        <div style={{ position: "absolute", top: 12, left: 12, display: "flex", gap: 6 }}>
-          <span
-            style={{
-              padding: "3px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700,
-              background: listing.listingType === "JEONSE" ? "rgba(0,113,227,0.9)" : "rgba(100,60,180,0.9)",
-              color: "#fff",
-            }}
-          >
-            {TYPE_LABEL[listing.listingType]}
-          </span>
-          <span
-            style={{
-              padding: "3px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700,
-              background: "rgba(0,0,0,0.45)", color: "#fff",
-            }}
-          >
-            {STATUS_LABEL[listing.status] ?? listing.status}
-          </span>
+          {listing.analysisId && (
+            <span style={{ position: "absolute", top: 12, right: 12, background: "rgba(52,199,89,0.9)", color: "#fff", borderRadius: 100, padding: "3px 10px", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+              <FileCheck2 size={11} strokeWidth={2} />AI분석 첨부
+            </span>
+          )}
+          {/* 사진 카운터 */}
+          {photos.length > 1 && (
+            <span style={{ position: "absolute", bottom: 12, right: 14, background: "rgba(0,0,0,0.5)", color: "#fff", borderRadius: 100, padding: "3px 10px", fontSize: 11, fontWeight: 600 }}>
+              {photoIdx + 1} / {photos.length}
+            </span>
+          )}
         </div>
-        {listing.analysisId && (
-          <span
-            style={{
-              position: "absolute", top: 12, right: 12,
-              background: "rgba(52,199,89,0.9)", color: "#fff",
-              borderRadius: 100, padding: "3px 10px",
-              fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", gap: 4,
-            }}
-          >
-            <FileCheck2 size={11} strokeWidth={2} />AI분석 첨부
-          </span>
+
+        {/* 썸네일 스트립 */}
+        {photos.length > 1 && (
+          <div style={{ display: "flex", gap: 8, marginTop: 10, overflowX: "auto", paddingBottom: 2 }}>
+            {photos.map((url, i) => (
+              <button
+                key={i}
+                onClick={() => setPhotoIdx(i)}
+                style={{
+                  flexShrink: 0, width: 68, height: 68, borderRadius: 12, overflow: "hidden",
+                  border: i === photoIdx ? "2.5px solid #0071e3" : "2.5px solid transparent",
+                  cursor: "pointer", padding: 0, background: "none",
+                  boxShadow: i === photoIdx ? "0 0 0 1px rgba(0,113,227,0.25)" : "none",
+                  transition: "border-color 0.15s",
+                  opacity: i === photoIdx ? 1 : 0.65,
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt={`썸네일 ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              </button>
+            ))}
+          </div>
         )}
       </div>
 
       {/* 핵심 정보 */}
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 20, padding: 24, marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
-          <div>
-            <p style={{ fontSize: 28, fontWeight: 900, color: "#1d1d1f", letterSpacing: "-0.03em", marginBottom: 4 }}>
-              {formatWon(listing.deposit)}
-              {listing.listingType === "JEONSE" && listing.duration && (
-                <span style={{ fontSize: 14, fontWeight: 500, color: "#6e6e73", marginLeft: 8 }}>
-                  {listing.duration}개월
-                </span>
-              )}
-            </p>
-            <p style={{ fontSize: 15, color: "#3d3d3f", fontWeight: 500 }}>{listing.address}</p>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, color: "#aeaeb2", fontSize: 12 }}>
+        {/* 조회수 */}
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#aeaeb2", fontSize: 12 }}>
             <Eye size={12} strokeWidth={1.5} />{listing.viewCount}
-          </div>
+          </span>
         </div>
+
+        {/* 아파트명 + 안심뱃지 */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+          {listing.isCertified && (
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0,
+              padding: "5px 11px", borderRadius: 100,
+              background: "linear-gradient(135deg, #0f6e3a 0%, #1db954 60%, #22c55e 100%)",
+              color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: "0.04em",
+              boxShadow: "0 2px 12px rgba(29,185,84,0.45), inset 0 1px 0 rgba(255,255,255,0.2)",
+            }}>
+              <ShieldCheck size={12} strokeWidth={2.5} />안심매물
+            </span>
+          )}
+          <p style={{ fontSize: 26, fontWeight: 400, color: "#1d1d1f", letterSpacing: "-0.02em", margin: 0, lineHeight: 1.2 }}>
+            {extractBuildingName(listing.address)}
+          </p>
+        </div>
+
+        {/* 주소 (소형) */}
+        <p style={{ fontSize: 13, color: "#8e8e93", fontWeight: 400, margin: "0 0 14px 0" }}>
+          {listing.address}
+        </p>
+
+        {/* 금액 */}
+        <p style={{ fontSize: 20, fontWeight: 400, color: "#3d3d3f", letterSpacing: "-0.02em", margin: "0 0 14px 0" }}>
+          {formatWon(listing.deposit)}원
+          {listing.listingType === "JEONSE" && listing.duration && (
+            <span style={{ fontSize: 13, fontWeight: 400, color: "#aeaeb2", marginLeft: 8 }}>
+              {listing.duration}개월
+            </span>
+          )}
+        </p>
 
         {/* 속성 칩 */}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
