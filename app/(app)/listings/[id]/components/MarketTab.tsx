@@ -12,9 +12,10 @@ interface MarketData {
   period: string;
   listingDeposit: number;
   listingType: string;
+  barLabel: string;
 }
 
-interface ChartPoint { label: string; 평균보증금: number; 평균월세: number; }
+interface ChartPoint { label: string; avgDeposit: number; avgWolse: number; }
 
 function formatTick(value: number): string {
   if (value >= 10000) return `${Math.floor(value / 10000)}억`;
@@ -58,8 +59,8 @@ export function MarketTab({ listingId }: { listingId: string }) {
 
   const chartData: ChartPoint[] = data.monthly.map((m) => ({
     label: `${parseInt(m.month.slice(5), 10)}월`,
-    평균보증금: m.avgDeposit,
-    평균월세: m.avgWolse,
+    avgDeposit: m.avgDeposit,
+    avgWolse: m.avgWolse,
   }));
 
   const lastMonth = data.monthly[data.monthly.length - 1];
@@ -105,8 +106,10 @@ export function MarketTab({ listingId }: { listingId: string }) {
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #DDE3EF", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}
               />
               <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} iconType="circle" iconSize={8} />
-              <Bar dataKey="평균보증금" fill="#93C5FD" radius={[3, 3, 0, 0]} maxBarSize={32} />
-              <Bar dataKey="평균월세" fill="#3B82F6" radius={[3, 3, 0, 0]} maxBarSize={32} />
+              <Bar dataKey="avgDeposit" name={data.barLabel} fill="#93C5FD" radius={[3, 3, 0, 0]} maxBarSize={32} />
+              {data.monthly.some((m) => m.avgWolse > 0) && (
+                <Bar dataKey="avgWolse" name="평균월세" fill="#3B82F6" radius={[3, 3, 0, 0]} maxBarSize={32} />
+              )}
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -117,7 +120,7 @@ export function MarketTab({ listingId }: { listingId: string }) {
         <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1.5px solid #e5e5ea" }}>
-              {(["월", "평균보증금", "평균월세", "건수"] as const).map((h, i) => (
+              {([`월`, data.barLabel, "평균월세", "건수"]).map((h, i) => (
                 <th key={h} style={{ padding: "6px 0", fontWeight: 600, color: "#8e8e93", textAlign: i === 0 ? "left" : "right" }}>{h}</th>
               ))}
             </tr>

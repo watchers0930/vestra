@@ -96,28 +96,34 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
   const uid   = useId();
   const domId = `kmap-infra-${uid.replace(/:/g, "")}`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapRef      = useRef<any>(null);
+  const mapRef         = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const dotsByCat   = useRef<Map<string, { ov: any; shape: HTMLDivElement }[]>>(new Map());
-  const placesByCat = useRef<Map<string, PlaceItem[]>>(new Map());
+  const dotsByCat      = useRef<Map<string, { ov: any; shape: HTMLDivElement }[]>>(new Map());
+  const placesByCat    = useRef<Map<string, PlaceItem[]>>(new Map());
+  const selectedShape  = useRef<HTMLDivElement | null>(null);
   const [selected, setSelected] = useState<InfraCatCode>("ALL");
   const [items, setItems]       = useState<PlaceItem[]>([]);
   const [loaded, setLoaded]     = useState(0);
 
+  const clearSelectedShape = useCallback(() => {
+    if (selectedShape.current) {
+      selectedShape.current.style.background = "#c7c7cc";
+      selectedShape.current.style.boxShadow = "0 2px 8px rgba(0,0,0,.2)";
+      selectedShape.current = null;
+    }
+  }, []);
+
   const applyFilter = useCallback((code: InfraCatCode) => {
     const map = mapRef.current; if (!map) return;
+    clearSelectedShape();
     dotsByCat.current.forEach((entries, catCode) => {
-      const cat = INFRA_CATS.find((c) => c.code === catCode);
-      const active = code === "ALL" || code === catCode;
-      const color = active && code !== "ALL" ? (cat?.color ?? "#c7c7cc") : "#c7c7cc";
-      const shadow = color !== "#c7c7cc" ? `0 2px 8px ${color}88` : "0 2px 8px rgba(0,0,0,.2)";
+      const vis = code === "ALL" || code === catCode;
       entries.forEach(({ ov, shape }) => {
-        ov.setMap(map);
-        shape.style.background = color;
-        shape.style.boxShadow = shadow;
+        ov.setMap(vis ? map : null);
+        if (vis) { shape.style.background = "#c7c7cc"; shape.style.boxShadow = "0 2px 8px rgba(0,0,0,.2)"; }
       });
     });
-  }, []);
+  }, [clearSelectedShape]);
 
   function handleSelect(code: InfraCatCode) {
     setSelected(code); applyFilter(code);
@@ -126,6 +132,21 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
       INFRA_CATS.forEach((c) => (placesByCat.current.get(c.code) ?? []).forEach((p) => all.push(p)));
       setItems(all);
     } else setItems(placesByCat.current.get(code) ?? []);
+  }
+
+  function handleItemClick(item: PlaceItem) {
+    mapRef.current?.panTo(new window.kakao.maps.LatLng(item.lat, item.lng));
+    clearSelectedShape();
+    const catItems = placesByCat.current.get(item.catCode) ?? [];
+    const idx = catItems.findIndex((p) => p.lat === item.lat && p.lng === item.lng);
+    if (idx < 0) return;
+    const entries = dotsByCat.current.get(item.catCode) ?? [];
+    const cat = INFRA_CATS.find((c) => c.code === item.catCode);
+    if (entries[idx] && cat) {
+      entries[idx].shape.style.background = cat.color;
+      entries[idx].shape.style.boxShadow = `0 2px 8px ${cat.color}88`;
+      selectedShape.current = entries[idx].shape;
+    }
   }
 
   useEffect(() => {
@@ -209,7 +230,7 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
                 const ic = INFRA_CATS.find((c) => c.code === item.catCode);
                 return (
                   <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 6, padding: "8px 12px", borderBottom: "1px solid #f0f3fa", cursor: "pointer" }}
-                    onClick={() => mapRef.current?.panTo(new window.kakao.maps.LatLng(item.lat, item.lng))}>
+                    onClick={() => handleItemClick(item)}>
                     <MapPin size={10} strokeWidth={2} style={{ color: ic?.color, flexShrink: 0, marginTop: 2 }} />
                     <div style={{ minWidth: 0 }}>
                       <p style={{ fontSize: 11, fontWeight: 600, color: "#1d1d1f", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</p>
@@ -251,6 +272,7 @@ function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
   const mapRef  = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dotsRef = useRef<Map<string, { ov: any; shape: HTMLDivElement }[]>>(new Map());
+  const selectedSchoolShape = useRef<HTMLDivElement | null>(null);
   const [selected, setSelected] = useState<SchoolKey>("ALL");
   const [{ allItems, loaded }, dispatch] = useReducer(
     (_: { allItems: SchoolItem[]; loaded: boolean }, a: { type: "done"; items: SchoolItem[] }) => ({ allItems: a.items, loaded: true }),
@@ -258,20 +280,38 @@ function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
   );
   const listItems = useMemo(() => selected === "ALL" ? allItems : allItems.filter((s) => s.type === selected), [allItems, selected]);
 
+  const clearSelectedSchoolShape = useCallback(() => {
+    if (selectedSchoolShape.current) {
+      selectedSchoolShape.current.style.background = "#c7c7cc";
+      selectedSchoolShape.current.style.boxShadow = "0 2px 8px rgba(0,0,0,.2)";
+      selectedSchoolShape.current = null;
+    }
+  }, []);
+
   const applyFilter = useCallback((key: SchoolKey) => {
     const map = mapRef.current; if (!map) return;
+    clearSelectedSchoolShape();
     dotsRef.current.forEach((entries, type) => {
-      const conf = SCHOOL_TYPES.find((t) => t.key === type);
-      const active = key === "ALL" || key === type;
-      const color = active && key !== "ALL" ? (conf?.color ?? "#c7c7cc") : "#c7c7cc";
-      const shadow = color !== "#c7c7cc" ? `0 2px 8px ${color}88` : "0 2px 8px rgba(0,0,0,.2)";
+      const vis = key === "ALL" || key === type;
       entries.forEach(({ ov, shape }) => {
-        ov.setMap(map);
-        shape.style.background = color;
-        shape.style.boxShadow = shadow;
+        ov.setMap(vis ? map : null);
+        if (vis) { shape.style.background = "#c7c7cc"; shape.style.boxShadow = "0 2px 8px rgba(0,0,0,.2)"; }
       });
     });
-  }, []);
+  }, [clearSelectedSchoolShape]);
+
+  function handleSchoolItemClick(item: SchoolItem) {
+    mapRef.current?.panTo(new window.kakao.maps.LatLng(item.lat, item.lng));
+    clearSelectedSchoolShape();
+    const entries = dotsRef.current.get(item.type) ?? [];
+    const conf = SCHOOL_TYPES.find((t) => t.key === item.type);
+    if (entries[0] && conf) {
+      entries[0].shape.style.background = conf.color;
+      entries[0].shape.style.boxShadow = `0 2px 8px ${conf.color}88`;
+      selectedSchoolShape.current = entries[0].shape;
+    }
+  }
+
   function handleSelect(key: SchoolKey) { setSelected(key); applyFilter(key); }
 
   useEffect(() => {
@@ -350,7 +390,7 @@ function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
               ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", padding: "0 12px" }}><p style={{ fontSize: 11, color: "#aeaeb2", textAlign: "center" }}>반경 3km 내<br/>학교 없음</p></div>
               : listItems.map((item, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 6, padding: "8px 12px", borderBottom: "1px solid #f0f3fa", cursor: "pointer" }}
-                  onClick={() => mapRef.current?.panTo(new window.kakao.maps.LatLng(item.lat, item.lng))}>
+                  onClick={() => handleSchoolItemClick(item)}>
                   <GraduationCap size={10} strokeWidth={2} style={{ color: item.color, flexShrink: 0, marginTop: 2 }} />
                   <div style={{ minWidth: 0 }}>
                     <p style={{ fontSize: 11, fontWeight: 600, color: "#1d1d1f", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</p>
