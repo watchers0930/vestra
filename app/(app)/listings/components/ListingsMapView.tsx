@@ -48,31 +48,54 @@ function KakaoMarkersMap({ markers, activeId, onMarkerClick, panTo }: KakaoMarke
   const mapInstanceRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const overlaysRef = useRef<any[]>([]);
+  const [mapReady, setMapReady] = useState(false);
 
-  // 지도 초기화
+  // 지도 초기화 — KakaoRoadview 방식의 retry 로직
   useEffect(() => {
-    if (!mapRef.current || !window.kakao?.maps) return;
+    let cancelled = false;
 
-    const init = () => {
-      if (mapInstanceRef.current) return;
-      const map = new window.kakao.maps.Map(mapRef.current!, {
+    function initMap() {
+      if (cancelled || !mapRef.current || mapInstanceRef.current) return;
+      const map = new window.kakao.maps.Map(mapRef.current, {
         center: new window.kakao.maps.LatLng(37.5172, 127.0473),
         level: 7,
       });
       mapInstanceRef.current = map;
-    };
-
-    if (typeof window.kakao.maps.load === "function") {
-      window.kakao.maps.load(init);
-    } else {
-      init();
+      if (!cancelled) setMapReady(true);
     }
+
+    function tryInit() {
+      if (window.__kakaoMapsReady && window.kakao?.maps?.Map) {
+        initMap();
+      } else if (window.kakao?.maps?.load) {
+        window.kakao.maps.load(() => { if (!cancelled) initMap(); });
+      } else {
+        // SDK 로드 완료 이벤트 대기
+        const handler = () => { if (!cancelled) tryInit(); };
+        window.addEventListener("kakao-maps-ready", handler, { once: true });
+
+        // 폴링 fallback (최대 15초)
+        const t0 = Date.now();
+        const timer = setInterval(() => {
+          if (cancelled) { clearInterval(timer); return; }
+          if (window.__kakaoMapsReady && window.kakao?.maps?.Map) {
+            clearInterval(timer); initMap();
+          } else if (Date.now() - t0 > 15000) {
+            clearInterval(timer);
+          }
+        }, 300);
+        return () => { window.removeEventListener("kakao-maps-ready", handler); clearInterval(timer); };
+      }
+    }
+
+    const cleanup = tryInit();
+    return () => { cancelled = true; cleanup?.(); };
   }, []);
 
   // 마커 갱신
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !window.kakao?.maps) return;
+    if (!map || !window.kakao?.maps || !mapReady) return;
 
     // 기존 오버레이 제거
     overlaysRef.current.forEach((ov) => ov.setMap(null));
@@ -107,14 +130,14 @@ function KakaoMarkersMap({ markers, activeId, onMarkerClick, panTo }: KakaoMarke
         el.addEventListener("click", () => onMarkerClick(m.id));
       }
     });
-  }, [markers, activeId, onMarkerClick]);
+  }, [markers, activeId, onMarkerClick, mapReady]);
 
   // panTo
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !panTo || !window.kakao?.maps) return;
+    if (!map || !panTo || !window.kakao?.maps || !mapReady) return;
     map.panTo(new window.kakao.maps.LatLng(panTo.lat, panTo.lng));
-  }, [panTo]);
+  }, [panTo, mapReady]);
 
   return <div ref={mapRef} className="h-full w-full" />;
 }
