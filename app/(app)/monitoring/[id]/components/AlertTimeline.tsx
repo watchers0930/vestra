@@ -1,8 +1,11 @@
 "use client";
 
-import { CheckCircle, FileSearch, Info } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle, FileSearch, Info, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardContent } from "@/components/common/Card";
+import { EmergencyResponseModal } from "@/components/common/EmergencyResponseModal";
+import { isEmergencyAlert } from "@/lib/emergency-checklist";
 import type { AlertItem } from "../hooks/usePropertyDetail";
 
 interface Props {
@@ -119,9 +122,18 @@ function formatDateTime(dateStr: string): string {
   });
 }
 
+type SelectedEmergencyAlert = {
+  id: string;
+  changeType: string;
+  summary: string;
+  riskLevel: string;
+  createdAt: string;
+};
+
 export function AlertTimeline({ alerts, deposit, property, onMarkRead }: Props) {
   const router = useRouter();
   const canIssueRegistry = !!property.commUniqueNo && !!property.ownerName;
+  const [selectedEmergencyAlert, setSelectedEmergencyAlert] = useState<SelectedEmergencyAlert | null>(null);
 
   function openRegistryIssue() {
     if (!canIssueRegistry) return;
@@ -152,6 +164,7 @@ export function AlertTimeline({ alerts, deposit, property, onMarkRead }: Props) 
   }
 
   return (
+    <>
     <Card>
       <CardHeader title="변동 알림" description={`총 ${alerts.length}건의 변동 감지`} className="px-5 pt-4" />
       <CardContent className="px-5 pb-5 pt-0">
@@ -166,6 +179,7 @@ export function AlertTimeline({ alerts, deposit, property, onMarkRead }: Props) 
               const showIssueCta =
                 canIssueRegistry &&
                 (alert.summary.includes("처리 완료") || alert.changeType !== "case_detected");
+              const showEmergency = isEmergencyAlert(alert.changeType, alert.riskLevel);
               return (
                 <div key={alert.id} className="relative pl-8 py-3 group">
                   {/* 점 */}
@@ -208,16 +222,41 @@ export function AlertTimeline({ alerts, deposit, property, onMarkRead }: Props) 
                         {formatDateTime(alert.createdAt)}
                       </span>
 
-                      {showIssueCta && (
-                        <button
-                          type="button"
-                          onClick={openRegistryIssue}
-                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#1d1d1f] px-3 py-1.5 text-[11px] font-bold text-white transition-colors hover:bg-[#333336]"
-                        >
-                          <FileSearch size={12} />
-                          최신 등기부 확인하기
-                        </button>
-                      )}
+                      <div className="flex gap-2 flex-wrap">
+                        {showIssueCta && (
+                          <button
+                            type="button"
+                            onClick={openRegistryIssue}
+                            className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#1d1d1f] px-3 py-1.5 text-[11px] font-bold text-white transition-colors hover:bg-[#333336]"
+                          >
+                            <FileSearch size={12} />
+                            최신 등기부 확인하기
+                          </button>
+                        )}
+                        {showEmergency && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedEmergencyAlert({
+                                id: alert.id,
+                                changeType: alert.changeType,
+                                summary: alert.summary,
+                                riskLevel: alert.riskLevel,
+                                createdAt: alert.createdAt,
+                              })
+                            }
+                            className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-colors"
+                            style={{
+                              background: alert.riskLevel === "critical" ? "rgba(255,59,48,0.10)" : "rgba(255,149,0,0.10)",
+                              color: alert.riskLevel === "critical" ? "#ff3b30" : "#ff9500",
+                              border: `1px solid ${alert.riskLevel === "critical" ? "rgba(255,59,48,0.25)" : "rgba(255,149,0,0.25)"}`,
+                            }}
+                          >
+                            <ShieldAlert size={12} />
+                            긴급대응 보기
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {!alert.isRead && (
@@ -237,5 +276,19 @@ export function AlertTimeline({ alerts, deposit, property, onMarkRead }: Props) 
         </div>
       </CardContent>
     </Card>
+
+    {selectedEmergencyAlert && (
+      <EmergencyResponseModal
+        open={!!selectedEmergencyAlert}
+        onClose={() => setSelectedEmergencyAlert(null)}
+        alertId={selectedEmergencyAlert.id}
+        changeType={selectedEmergencyAlert.changeType}
+        summary={selectedEmergencyAlert.summary}
+        riskLevel={selectedEmergencyAlert.riskLevel}
+        createdAt={selectedEmergencyAlert.createdAt}
+        propertyAddress={property.address}
+      />
+    )}
+    </>
   );
 }

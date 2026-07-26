@@ -19,6 +19,7 @@ import { SafetyChecklist } from "./components/SafetyChecklist";
 import { RecommendedTermsCard } from "./components/RecommendedTermsCard";
 import { ContractExecutiveSummary } from "./components/ContractExecutiveSummary";
 import { getScoreLabel, riskBadgeLabel } from "./constants";
+import { SourceBadge } from "@/components/common/SourceBadge";
 
 export default function ContractReviewPage() {
   const {
@@ -181,6 +182,8 @@ export default function ContractReviewPage() {
             </span>
           </div>
           <IntegrityBadge />
+
+          <SourceBadge pageKey="contract" />
 
           {/* NER 하이라이트 */}
           {contractText && (

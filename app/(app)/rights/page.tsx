@@ -13,6 +13,7 @@ import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { AnalysisStepIndicator } from "./components/AnalysisStepIndicator";
 import { RightsInputCard } from "./components/RightsInputCard";
 import { MonitoringRegisterButton } from "./components/MonitoringRegisterButton";
+import { SourceBadge } from "@/components/common/SourceBadge";
 import { useRightsAnalysis } from "./hooks/useRightsAnalysis";
 
 const RightsResult = dynamic(
@@ -211,6 +212,8 @@ export default function RightsAnalysisPage() {
           </div>
 
           {analysisId && <FeedbackWidget analysisId={analysisId} analysisType="rights" className="mt-4" />}
+
+          <SourceBadge pageKey="rights" className="mt-2" />
 
           {/* 연관 분석 CTA */}
           <div

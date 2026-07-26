@@ -2,6 +2,7 @@
 
 import { CategoryHero } from "@/components/common/CategoryHero";
 import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
+import { SourceBadge } from "@/components/common/SourceBadge";
 import { JeonseInputForm } from "./components/JeonseInputForm";
 import { JeonseResultPanel } from "./components/JeonseResultPanel";
 import { useJeonseAnalysis } from "./hooks/useJeonseAnalysis";
@@ -54,6 +55,7 @@ export default function JeonsePage() {
           onCopy={copyToClipboard}
         />
       </div>
+      {analysis && <SourceBadge pageKey="jeonse_analysis" className="mt-4" />}
     </div>
   );
 }

@@ -24,6 +24,7 @@ import { TransactionTrendChart } from "./components/TransactionTrendChart";
 import { ChartTab } from "./components/ChartTab";
 import { TransactionTable } from "./components/TransactionTable";
 import { KaptInfoCard } from "@/components/common/KaptInfoCard";
+import { SourceBadge } from "@/components/common/SourceBadge";
 
 const TransactionMap = dynamic(
   () => import("@/components/prediction/TransactionMap"),
@@ -375,6 +376,8 @@ export default function PredictionPage() {
           )}
 
           <ScholarPapers keywords={["부동산 가격예측", "실거래가", addressInfo?.admin?.split(" ").slice(0, 2).join(" ") || "부동산"].filter(Boolean)} />
+
+          <SourceBadge pageKey="prediction" />
 
           {/* 면책 조항 */}
           <div
