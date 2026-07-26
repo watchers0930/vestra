@@ -23,21 +23,40 @@ export interface ListingInfoTabsProps {
 
 // ── 시세 탭 ──────────────────────────────────────────────────────────────────
 interface MarketData {
-  avgPrice: number; minPrice: number; maxPrice: number;
-  transactionCount: number; period: string;
-  monthly: { month: string; avg: number; count: number }[];
-  recent: { date: string; price: number; area: number; floor: number }[];
+  avgDeposit: number;
+  monthly: { month: string; avgDeposit: number; avgWolse: number; count: number }[];
+  period: string;
+  listingDeposit: number;
+  listingType: string;
 }
 
-function formatManWon(won: number) {
-  if (won >= 100_000_000) {
-    const e = Math.floor(won / 100_000_000);
-    const r = Math.floor((won % 100_000_000) / 10_000);
-    return r > 0 ? `${e}억 ${r.toLocaleString()}만` : `${e}억`;
-  }
-  if (won >= 10_000) return `${Math.floor(won / 10_000).toLocaleString()}만`;
-  return `${won.toLocaleString()}원`;
+function roundUpNice(v: number): number {
+  if (v <= 0) return 10_000_000;
+  const mag = Math.pow(10, Math.floor(Math.log10(v)));
+  const n = v / mag;
+  const nice = n <= 1.5 ? 1.5 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 3 ? 3 : n <= 5 ? 5 : 10;
+  return Math.ceil(v / (nice * mag / 4)) * (nice * mag / 4);
 }
+
+function formatYAxis(won: number): string {
+  if (won === 0) return "0만";
+  const il = Math.floor(won / 100_000_000);
+  const rem = won % 100_000_000;
+  const cm = Math.floor(rem / 10_000_000);
+  if (il > 0 && cm > 0) return `${il}억${cm}천만`;
+  if (il > 0) return `${il}억`;
+  if (cm > 0) return `${cm}천만`;
+  return `${Math.round(won / 10_000).toLocaleString()}만`;
+}
+
+function formatManWonTable(won: number): string {
+  if (won <= 0) return "-";
+  const man = Math.round(won / 10_000);
+  return `${man.toLocaleString()}만`;
+}
+
+const CHART_H = 180;
+const NUM_TICKS = 5;
 
 function MarketTab({ listingId }: { listingId: string }) {
   const [data, setData] = useState<MarketData | null>(null);
@@ -47,10 +66,7 @@ function MarketTab({ listingId }: { listingId: string }) {
   useEffect(() => {
     fetch(`/api/listings/${listingId}/market-price`)
       .then((r) => r.json())
-      .then((d) => {
-        if (d.error) setError(d.error);
-        else setData(d);
-      })
+      .then((d) => { if (d.error) setError(d.error); else setData(d); })
       .catch(() => setError("시세 데이터를 불러오지 못했습니다."))
       .finally(() => setLoading(false));
   }, [listingId]);
@@ -64,65 +80,112 @@ function MarketTab({ listingId }: { listingId: string }) {
   if (error || !data) return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 0", color: "#aeaeb2", gap: 8 }}>
       <TrendingUp size={32} strokeWidth={1.2} />
-      <p style={{ fontSize: 13, margin: 0 }}>{error || "조회 가능한 실거래가 없습니다."}</p>
+      <p style={{ fontSize: 13, margin: 0 }}>{error || "조회 가능한 시세 데이터가 없습니다."}</p>
     </div>
   );
 
-  const maxAvg = Math.max(...data.monthly.map((m) => m.avg), 1);
+  const maxDep = Math.max(...data.monthly.map((m) => m.avgDeposit), 1);
+  const niceMax = roundUpNice(maxDep * 1.05);
+  const ticks = Array.from({ length: NUM_TICKS }, (_, i) => (niceMax / (NUM_TICKS - 1)) * i);
+  const ratio = data.avgDeposit > 0 ? Math.round(((data.listingDeposit - data.avgDeposit) / data.avgDeposit) * 100) : null;
 
   return (
     <div>
-      {/* 요약 카드 */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
-        {[
-          { label: "평균 실거래가", value: formatManWon(data.avgPrice), color: "#0071e3" },
-          { label: "최저가", value: formatManWon(data.minPrice), color: "#22a75e" },
-          { label: "최고가", value: formatManWon(data.maxPrice), color: "#c0392b" },
-        ].map(({ label, value, color }) => (
-          <div key={label} style={{ background: "#f7f7fa", borderRadius: 12, padding: "12px 14px", textAlign: "center" }}>
-            <p style={{ fontSize: 10, color: "#aeaeb2", margin: "0 0 4px", fontWeight: 600 }}>{label}</p>
-            <p style={{ fontSize: 15, fontWeight: 700, color, margin: 0, letterSpacing: "-0.02em" }}>{value}</p>
-          </div>
-        ))}
+      {/* 헤더 */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+        <TrendingUp size={17} strokeWidth={2} style={{ color: "#0071e3" }} />
+        <span style={{ fontSize: 14, fontWeight: 700, color: "#1d1d1f" }}>인근 시세 추이 ({data.period})</span>
       </div>
 
-      {/* 월별 바차트 */}
-      {data.monthly.length > 0 && (
-        <div style={{ background: "#f7f7fa", borderRadius: 14, padding: 16, marginBottom: 16 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#aeaeb2", margin: "0 0 12px", letterSpacing: "0.04em" }}>월별 평균 실거래가 ({data.period})</p>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80 }}>
-            {data.monthly.map((m) => {
-              const pct = (m.avg / maxAvg) * 100;
-              return (
-                <div key={m.month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <div style={{ width: "100%", height: `${Math.max(pct, 4)}%`, background: "#0071e3", borderRadius: "4px 4px 0 0", minHeight: 4 }} />
-                  <span style={{ fontSize: 9, color: "#aeaeb2", whiteSpace: "nowrap" }}>{m.month.slice(5)}</span>
-                </div>
-              );
-            })}
-          </div>
+      {/* 시세 대비 배너 */}
+      {ratio !== null && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 14px", background: ratio > 0 ? "#fff5f5" : "#f0f8f0", borderRadius: 10, marginBottom: 14 }}>
+          <span style={{ fontSize: 12, color: "#8e8e93" }}>시세 대비 현재 보증금</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: ratio > 0 ? "#c0392b" : "#22a75e" }}>
+            {ratio > 0 ? `+${ratio}% ↑ 시세 초과` : ratio < 0 ? `${ratio}% ↓ 시세 이하` : "시세 수준"}
+          </span>
         </div>
       )}
 
-      {/* 최근 실거래 목록 */}
-      {data.recent.length > 0 && (
-        <div>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#aeaeb2", margin: "0 0 8px", letterSpacing: "0.04em" }}>최근 실거래 내역</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {data.recent.map((r, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "#f7f7fa", borderRadius: 10 }}>
-                <div>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: "#1d1d1f", margin: 0 }}>{formatManWon(r.price)}</p>
-                  <p style={{ fontSize: 11, color: "#8e8e93", margin: 0, marginTop: 2 }}>{r.area}㎡ · {r.floor}층</p>
+      {/* 바차트 */}
+      {data.monthly.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ display: "flex" }}>
+            {/* Y축 */}
+            <div style={{ width: 44, flexShrink: 0, position: "relative", height: CHART_H, marginBottom: 24 }}>
+              {ticks.map((t, i) => (
+                <div key={i} style={{ position: "absolute", bottom: `${(i / (NUM_TICKS - 1)) * 100}%`, right: 6, transform: "translateY(50%)", fontSize: 9, color: "#aeaeb2", whiteSpace: "nowrap" }}>
+                  {formatYAxis(t)}
                 </div>
-                <span style={{ fontSize: 11, color: "#aeaeb2" }}>{r.date}</span>
+              ))}
+            </div>
+            {/* 차트 영역 */}
+            <div style={{ flex: 1, position: "relative" }}>
+              {/* 격자선 */}
+              <div style={{ position: "relative", height: CHART_H }}>
+                {ticks.map((_, i) => (
+                  <div key={i} style={{ position: "absolute", left: 0, right: 0, bottom: `${(i / (NUM_TICKS - 1)) * 100}%`, borderTop: i === 0 ? "1px solid #d1d1d6" : "1px dashed #e8edf5" }} />
+                ))}
+                {/* 바 */}
+                <div style={{ display: "flex", alignItems: "flex-end", height: "100%", gap: 6, paddingLeft: 2 }}>
+                  {data.monthly.map((m) => {
+                    const depH = Math.max((m.avgDeposit / niceMax) * CHART_H, 2);
+                    const wolH = m.avgWolse > 0 ? Math.max((m.avgWolse / niceMax) * CHART_H, 2) : 0;
+                    return (
+                      <div key={m.month} style={{ flex: 1, display: "flex", gap: 2, alignItems: "flex-end", height: "100%" }}>
+                        <div style={{ flex: 5, height: depH, background: "#93c5fd", borderRadius: "3px 3px 0 0" }} />
+                        {wolH > 0
+                          ? <div style={{ flex: 1, height: wolH, background: "#3b82f6", borderRadius: "3px 3px 0 0" }} />
+                          : <div style={{ flex: 1 }} />
+                        }
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
+              {/* X축 월 레이블 */}
+              <div style={{ display: "flex", gap: 6, paddingLeft: 2, marginTop: 4 }}>
+                {data.monthly.map((m) => (
+                  <div key={m.month} style={{ flex: 1, textAlign: "center" }}>
+                    <span style={{ fontSize: 10, color: "#8e8e93" }}>{parseInt(m.month.slice(5))}월</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 범례 */}
+          <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 10 }}>
+            {[{ color: "#93c5fd", label: "평균보증금" }, { color: "#3b82f6", label: "평균월세" }].map(({ color, label }) => (
+              <span key={label} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#8e8e93" }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, display: "inline-block" }} />
+                {label}
+              </span>
             ))}
           </div>
         </div>
       )}
 
-      <p style={{ fontSize: 10, color: "#c7c7cc", marginTop: 12 }}>국토교통부 실거래가 공개시스템 기준 · 참고용</p>
+      {/* 테이블 */}
+      {data.monthly.length > 0 && (
+        <div style={{ marginBottom: 4 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr 1fr 0.8fr", padding: "7px 4px", borderBottom: "1.5px solid #e5e5ea" }}>
+            {["월", "평균보증금", "평균월세", "건수"].map((h) => (
+              <span key={h} style={{ fontSize: 11, color: "#8e8e93", fontWeight: 600 }}>{h}</span>
+            ))}
+          </div>
+          {data.monthly.map((m) => (
+            <div key={m.month} style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr 1fr 0.8fr", padding: "9px 4px", borderBottom: "1px solid #f0f3fa" }}>
+              <span style={{ fontSize: 12, color: "#1d1d1f" }}>{m.month}</span>
+              <span style={{ fontSize: 12, color: "#1d1d1f" }}>{formatManWonTable(m.avgDeposit)}</span>
+              <span style={{ fontSize: 12, color: "#1d1d1f" }}>{formatManWonTable(m.avgWolse)}</span>
+              <span style={{ fontSize: 12, color: "#aeaeb2" }}>{m.count}건</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <p style={{ fontSize: 10, color: "#aeaeb2", marginTop: 12 }}>국토교통부 실거래가 공개데이터 기반. 실제 거래가와 다를 수 있습니다.</p>
     </div>
   );
 }
@@ -202,7 +265,7 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef      = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const dotsByCat   = useRef<Map<string, any[]>>(new Map());
+  const dotsByCat   = useRef<Map<string, { ov: any; shape: HTMLDivElement }[]>>(new Map());
   const placesByCat = useRef<Map<string, PlaceItem[]>>(new Map());
   const [selected, setSelected] = useState<InfraCatCode>("ALL");
   const [items, setItems]       = useState<PlaceItem[]>([]);
@@ -210,9 +273,14 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
 
   const applyFilter = useCallback((code: InfraCatCode) => {
     const map = mapRef.current; if (!map) return;
-    dotsByCat.current.forEach((ovs, cat) => {
-      const vis = code === "ALL" || code === cat;
-      ovs.forEach((o) => o.setMap(vis ? map : null));
+    dotsByCat.current.forEach((entries, catCode) => {
+      const cat = INFRA_CATS.find((c) => c.code === catCode);
+      const vis = code === "ALL" || code === catCode;
+      const color = code === "ALL" ? "#c7c7cc" : (cat?.color ?? "#c7c7cc");
+      entries.forEach(({ ov, shape }) => {
+        ov.setMap(vis ? map : null);
+        if (vis) { shape.style.background = color; shape.style.boxShadow = code === "ALL" ? "0 2px 8px rgba(0,0,0,.2)" : `0 2px 8px ${color}88`; }
+      });
     });
   }, []);
 
@@ -257,12 +325,12 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
               const markerEl = document.createElement("div");
               Object.assign(markerEl.style, { display: "flex", flexDirection: "column", alignItems: "center", cursor: "default" });
               const mShape = document.createElement("div");
-              Object.assign(mShape.style, { width: "18px", height: "18px", borderRadius: "50% 50% 50% 0", background: cat.color, transform: "rotate(-45deg)", boxShadow: `0 2px 8px ${cat.color}88`, border: "2px solid #fff", position: "relative" });
+              Object.assign(mShape.style, { width: "18px", height: "18px", borderRadius: "50% 50% 50% 0", background: "#c7c7cc", transform: "rotate(-45deg)", boxShadow: "0 2px 8px rgba(0,0,0,.2)", border: "2px solid #fff", position: "relative" });
               const mDot = document.createElement("div");
               Object.assign(mDot.style, { width: "5px", height: "5px", borderRadius: "50%", background: "#fff", position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)" });
               mShape.appendChild(mDot); markerEl.appendChild(mShape);
               const ov = new kakao.maps.CustomOverlay({ map, position: pPos, content: markerEl, yAnchor: 1.15, zIndex: 5 });
-              dots.get(cat.code)!.push(ov);
+              dots.get(cat.code)!.push({ ov, shape: mShape });
               const d = parseInt(p.distance);
               places.get(cat.code)!.push({ name: p.place_name, distance: d >= 1000 ? `${(d / 1000).toFixed(1)}km` : `${d}m`, catCode: cat.code, lat: parseFloat(p.y), lng: parseFloat(p.x) });
             });
@@ -271,7 +339,7 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
         }, { location: pos, radius: 500, sort: kakao.maps.services.SortBy.DISTANCE });
       });
     });
-    return () => { c(); dots.forEach((os) => os.forEach((o) => o.setMap(null))); dots.clear(); places.clear(); mapRef.current = null; };
+    return () => { c(); dots.forEach((entries) => entries.forEach(({ ov }) => ov.setMap(null))); dots.clear(); places.clear(); mapRef.current = null; };
   }, [domId, lat, lng]);
 
   useEffect(() => {
@@ -347,7 +415,7 @@ function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef  = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const dotsRef = useRef<Map<string, any[]>>(new Map());
+  const dotsRef = useRef<Map<string, { ov: any; shape: HTMLDivElement }[]>>(new Map());
   const [selected, setSelected] = useState<SchoolKey>("ALL");
   const [{ allItems, loaded }, dispatch] = useReducer(
     (_: { allItems: SchoolItem[]; loaded: boolean }, a: { type: "done"; items: SchoolItem[] }) => ({ allItems: a.items, loaded: true }),
@@ -357,7 +425,15 @@ function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
 
   const applyFilter = useCallback((key: SchoolKey) => {
     const map = mapRef.current; if (!map) return;
-    dotsRef.current.forEach((os, type) => { const vis = key === "ALL" || key === type; os.forEach((o) => o.setMap(vis ? map : null)); });
+    dotsRef.current.forEach((entries, type) => {
+      const conf = SCHOOL_TYPES.find((t) => t.key === type);
+      const vis = key === "ALL" || key === type;
+      const color = key === "ALL" ? "#c7c7cc" : (conf?.color ?? "#c7c7cc");
+      entries.forEach(({ ov, shape }) => {
+        ov.setMap(vis ? map : null);
+        if (vis) { shape.style.background = color; shape.style.boxShadow = key === "ALL" ? "0 2px 8px rgba(0,0,0,.2)" : `0 2px 8px ${color}88`; }
+      });
+    });
   }, []);
   function handleSelect(key: SchoolKey) { setSelected(key); applyFilter(key); }
 
@@ -395,19 +471,19 @@ function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
             const sMarker = document.createElement("div");
             Object.assign(sMarker.style, { display: "flex", flexDirection: "column", alignItems: "center", cursor: "default" });
             const sMShape = document.createElement("div");
-            Object.assign(sMShape.style, { width: "18px", height: "18px", borderRadius: "50% 50% 50% 0", background: conf.color, transform: "rotate(-45deg)", boxShadow: `0 2px 8px ${conf.color}88`, border: "2px solid #fff", position: "relative" });
+            Object.assign(sMShape.style, { width: "18px", height: "18px", borderRadius: "50% 50% 50% 0", background: "#c7c7cc", transform: "rotate(-45deg)", boxShadow: "0 2px 8px rgba(0,0,0,.2)", border: "2px solid #fff", position: "relative" });
             const sMDot = document.createElement("div");
             Object.assign(sMDot.style, { width: "5px", height: "5px", borderRadius: "50%", background: "#fff", position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)" });
             sMShape.appendChild(sMDot); sMarker.appendChild(sMShape);
             const ov = new kakao.maps.CustomOverlay({ map, position: new kakao.maps.LatLng(school.lat, school.lng), content: sMarker, yAnchor: 1.15, zIndex: 5 });
-            dots.get(type)!.push(ov);
+            dots.get(type)!.push({ ov, shape: sMShape });
             if (Object.keys(found).length === 3) break;
           }
         }
         dispatch({ type: "done", items: Object.values(found).sort((a, b) => SCHOOL_TYPES.findIndex((t) => t.key === a.type) - SCHOOL_TYPES.findIndex((t) => t.key === b.type)) });
       }, { location: pos, radius: 3000, size: 15, sort: kakao.maps.services.SortBy.DISTANCE });
     });
-    return () => { c(); dots.forEach((os) => os.forEach((o) => o.setMap(null))); dots.clear(); mapRef.current = null; };
+    return () => { c(); dots.forEach((entries) => entries.forEach(({ ov }) => ov.setMap(null))); dots.clear(); mapRef.current = null; };
   }, [domId, lat, lng]);
 
   return (
