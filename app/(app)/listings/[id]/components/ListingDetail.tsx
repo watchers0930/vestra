@@ -89,7 +89,7 @@ export function ListingDetail({ listing, onReload }: Props) {
         {/* ── 좌: 갤러리 ── */}
         <div>
           {/* 메인 이미지 */}
-          <div style={{ borderRadius: 20, overflow: "hidden", background: "#f0f0f5", position: "relative", aspectRatio: "4/3" }}>
+          <div style={{ borderRadius: 20, overflow: "hidden", background: "#f0f0f5", position: "relative", aspectRatio: "40/27" }}>
             {photos.length > 0 ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={photos[photoIdx]} alt={`사진 ${photoIdx + 1}`}
