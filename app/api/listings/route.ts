@@ -81,6 +81,8 @@ export async function GET(req: NextRequest) {
           status: true,
           viewCount: true,
           analysisId: true,
+          latitude: true,
+          longitude: true,
           createdAt: true,
           owner: { select: { id: true, name: true, role: true, companyName: true } },
           _count: { select: { applications: true } },
@@ -130,6 +132,26 @@ export async function POST(req: NextRequest) {
       },
       select: { id: true, status: true, createdAt: true },
     });
+
+    // 주소 → 좌표 geocoding (fire-and-forget)
+    const kakaoRestKey = process.env.KAKAO_REST_KEY;
+    if (kakaoRestKey && parsed.data.address) {
+      fetch(
+        `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(parsed.data.address)}&size=1`,
+        { headers: { Authorization: `KakaoAK ${kakaoRestKey}` } }
+      )
+        .then((r) => r.json())
+        .then((json) => {
+          const doc = json.documents?.[0];
+          if (doc) {
+            prisma.listing.update({
+              where: { id: listing.id },
+              data: { latitude: parseFloat(doc.y), longitude: parseFloat(doc.x) },
+            }).catch(() => {});
+          }
+        })
+        .catch(() => {});
+    }
 
     return NextResponse.json({ listing }, { status: 201 });
   } catch (e) {

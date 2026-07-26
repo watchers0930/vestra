@@ -30,6 +30,8 @@ export interface ListingItem {
   status: ListingStatus;
   viewCount: number;
   analysisId: string | null;
+  latitude: number | null;
+  longitude: number | null;
   createdAt: string;
   owner: { id: string; name: string | null; role: string; companyName: string | null };
   _count: { applications: number };

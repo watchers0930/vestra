@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Search, SlidersHorizontal } from "lucide-react";
+import { Plus, SlidersHorizontal, Map, List } from "lucide-react";
 import { useListings, type ListingType } from "../hooks/useListings";
 import { ListingCard } from "./ListingCard";
 import { useSession } from "next-auth/react";
+import { ListingsMapView } from "./ListingsMapView";
 
 const TYPES: { value: ListingType | "ALL"; label: string }[] = [
   { value: "ALL",    label: "전체" },
@@ -16,7 +17,37 @@ const TYPES: { value: ListingType | "ALL"; label: string }[] = [
 export function ListingsContent() {
   const { data: session } = useSession();
   const [typeFilter, setTypeFilter] = useState<ListingType | "ALL">("ALL");
+  const [view, setView] = useState<"list" | "map">("list");
   const { listings, total, loading } = useListings(typeFilter === "ALL" ? undefined : typeFilter);
+
+  if (view === "map") {
+    return (
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
+        {/* 지도 헤더 */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: "1px solid #e8e8ed", background: "#fff", flexShrink: 0 }}>
+          <h1 style={{ fontSize: 16, fontWeight: 700, color: "#1d1d1f" }}>매물 지도</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {session && (
+              <Link href="/listings/new" style={{ textDecoration: "none" }}>
+                <button style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 13px", borderRadius: 10, background: "#0071e3", color: "#fff", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer" }}>
+                  <Plus size={13} strokeWidth={2} />매물 등록
+                </button>
+              </Link>
+            )}
+            <button
+              onClick={() => setView("list")}
+              style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 13px", borderRadius: 10, background: "#f5f5f7", color: "#3d3d3f", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer" }}
+            >
+              <List size={13} strokeWidth={2} />목록 보기
+            </button>
+          </div>
+        </div>
+        <div style={{ flex: 1, overflow: "hidden" }}>
+          <ListingsMapView />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ paddingBottom: 48, paddingTop: 8 }}>
@@ -28,20 +59,28 @@ export function ListingsContent() {
             총 {total}개 매물
           </p>
         </div>
-        {session && (
-          <Link href="/listings/new" style={{ textDecoration: "none" }}>
-            <button
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 6,
-                padding: "9px 16px", borderRadius: 12,
-                background: "#0071e3", color: "#fff",
-                fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer",
-              }}
-            >
-              <Plus size={15} strokeWidth={2} />매물 등록
-            </button>
-          </Link>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            onClick={() => setView("map")}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 12, background: "#f5f5f7", color: "#3d3d3f", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}
+          >
+            <Map size={14} strokeWidth={1.8} />지도 보기
+          </button>
+          {session && (
+            <Link href="/listings/new" style={{ textDecoration: "none" }}>
+              <button
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "9px 16px", borderRadius: 12,
+                  background: "#0071e3", color: "#fff",
+                  fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer",
+                }}
+              >
+                <Plus size={15} strokeWidth={2} />매물 등록
+              </button>
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* 필터 탭 */}

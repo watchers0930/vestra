@@ -717,6 +717,9 @@ model Listing {
   managementFee BigInt? // 관리비
   duration      Int?    // 전세 계약 기간 (개월)
 
+  latitude      Float?    // 카카오 geocoding
+  longitude     Float?
+
   availableFrom DateTime?
   description   String?   @db.Text
   photos        Json?     // String[] — Vercel Blob URL 배열
@@ -750,6 +753,7 @@ model Listing {
   @@index([listingType, status])
   @@index([address])
   @@index([createdAt(sort: Desc)])
+  @@index([latitude, longitude])
 }
 
 // ---------------------------------------------------------------------------
