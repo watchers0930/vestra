@@ -114,19 +114,34 @@ export function KakaoMarkersMap({ markers, activeId, onMarkerClick, panTo, onReg
     overlaysRef.current = [];
     markers.forEach((m) => {
       const isActive = m.id === activeId;
-      const content = `<div style="display:inline-flex;align-items:center;padding:5px 10px;background:${isActive ? "#0071e3" : "#fff"};color:${isActive ? "#fff" : "#1d1d1f"};border:2px solid ${isActive ? "#0071e3" : "#d1d1d6"};border-radius:20px;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.15);cursor:pointer;white-space:nowrap;transform:translateY(-50%)">${m.label}</div>`;
+      // DOM 엘리먼트로 생성해야 클릭 리스너가 정상 동작 (문자열 content는 getContent()가 string 반환)
+      const el = document.createElement("div");
+      el.style.cssText = [
+        "display:inline-flex",
+        "align-items:center",
+        `padding:5px 10px`,
+        `background:${isActive ? "#0071e3" : "#fff"}`,
+        `color:${isActive ? "#fff" : "#1d1d1f"}`,
+        `border:2px solid ${isActive ? "#0071e3" : "#d1d1d6"}`,
+        "border-radius:20px",
+        "font-size:12px",
+        "font-weight:700",
+        "box-shadow:0 2px 8px rgba(0,0,0,0.15)",
+        "cursor:pointer",
+        "white-space:nowrap",
+        "transform:translateY(-50%)",
+        "user-select:none",
+      ].join(";");
+      el.textContent = m.label;
+      el.addEventListener("click", () => onMarkerClick(m.id));
       const overlay = new window.kakao.maps.CustomOverlay({
         position: new window.kakao.maps.LatLng(m.lat, m.lng),
-        content,
+        content: el,
         yAnchor: 1,
         clickable: true,
       });
       overlay.setMap(map);
       overlaysRef.current.push(overlay);
-      const el = overlay.getContent();
-      if (el && typeof el !== "string") {
-        el.addEventListener("click", () => onMarkerClick(m.id));
-      }
     });
   }, [markers, activeId, onMarkerClick, mapReady]);
 
