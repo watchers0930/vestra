@@ -141,8 +141,8 @@ export function ListingDetail({ listing, onReload }: Props) {
             longitude={listing.longitude}
           />
 
-          {/* 안전인증 + 임차인 안전정보 */}
-          <CertificationSection listing={listing} isOwner={isOwner} onReload={onReload} />
+          {/* 안전인증 (오너 전용 — 비오너는 우측 패널 박스로 표시) */}
+          {isOwner && <CertificationSection listing={listing} isOwner={isOwner} onReload={onReload} />}
 
           {listing.isCertified && listing.listingType === "JEONSE" && !isOwner && (
             <div style={{ border: "1.5px solid rgba(34,167,94,0.25)", borderRadius: 18, padding: 20, marginTop: 12, background: "rgba(34,167,94,0.03)" }}>

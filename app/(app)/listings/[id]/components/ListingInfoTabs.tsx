@@ -72,7 +72,7 @@ function LocationMap({ lat, lng, address }: { lat: number; lng: number; address:
         <span style={{ fontSize: 13, fontWeight: 600, color: "#1d1d1f" }}>건물 위치</span>
       </div>
       <p style={{ fontSize: 12, color: "#6e6e73", margin: "0 0 10px" }}>{address}</p>
-      <div id={domId} style={{ width: "100%", height: 380, borderRadius: 14, border: "1px solid #e8edf5", overflow: "hidden" }} />
+      <div id={domId} style={{ width: "100%", height: 437, borderRadius: 14, border: "1px solid #e8edf5", overflow: "hidden" }} />
     </div>
   );
 }
@@ -176,7 +176,7 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
           </button>
         ))}
       </div>
-      <div style={{ display: "flex", gap: 10, height: 360 }}>
+      <div style={{ display: "flex", gap: 10, height: 414 }}>
         <div style={{ width: 140, flexShrink: 0, borderRadius: 12, border: "1px solid #e8edf5", background: "#fff", display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <div style={{ padding: "8px 12px", borderBottom: "1px solid #eef1f8", flexShrink: 0 }}>
             <p style={{ fontSize: 12, fontWeight: 600, color: "#1d1d1f", margin: 0 }}>{selected === "ALL" ? "전체 시설" : `${cat?.name ?? ""} (${items.length})`}</p>
@@ -296,7 +296,7 @@ function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
           );
         })}
       </div>
-      <div style={{ display: "flex", gap: 10, height: 360 }}>
+      <div style={{ display: "flex", gap: 10, height: 414 }}>
         <div style={{ width: 140, flexShrink: 0, borderRadius: 12, border: "1px solid #e8edf5", background: "#fff", display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <div style={{ padding: "8px 12px", borderBottom: "1px solid #eef1f8", flexShrink: 0 }}>
             <p style={{ fontSize: 12, fontWeight: 600, color: "#1d1d1f", margin: 0 }}>{selected === "ALL" ? "전체 학교" : `${selected} (${listItems.length})`}</p>
