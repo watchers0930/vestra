@@ -88,9 +88,9 @@ export function ListingDetail({ listing, onReload }: Props) {
       <div className={styles.grid}>
 
         {/* ── 좌: 갤러리 ── */}
-        <div>
+        <div style={{ display: "flex", flexDirection: "column" }}>
           {/* 메인 이미지 */}
-          <div style={{ borderRadius: 20, overflow: "hidden", background: "#f0f0f5", position: "relative", aspectRatio: "40/27" }}>
+          <div style={{ borderRadius: 20, overflow: "hidden", background: "#f0f0f5", position: "relative", flex: "1 0 0", minHeight: 260 }}>
             {photos.length > 0 ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={photos[photoIdx]} alt={`사진 ${photoIdx + 1}`}
@@ -134,50 +134,6 @@ export function ListingDetail({ listing, onReload }: Props) {
             </div>
           )}
 
-          {/* 위치/인프라/학군/시세 탭 */}
-          <ListingInfoTabs
-            listingId={listing.id}
-            address={listing.address}
-            latitude={listing.latitude}
-            longitude={listing.longitude}
-          />
-
-          {/* 안전인증 (오너 전용 — 비오너는 우측 패널 박스로 표시) */}
-          {isOwner && <CertificationSection listing={listing} isOwner={isOwner} onReload={onReload} />}
-
-          {listing.isCertified && listing.listingType === "JEONSE" && !isOwner && (
-            <div style={{ border: "1.5px solid rgba(34,167,94,0.25)", borderRadius: 18, padding: 20, marginTop: 12, background: "rgba(34,167,94,0.03)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 16 }}>
-                <ShieldCheck size={16} strokeWidth={2} color="#22a75e" />
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#1d1d1f" }}>임차인 안전 정보</span>
-              </div>
-              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                {listing.jeonseRatio != null && (() => {
-                  const r = listing.jeonseRatio!;
-                  const safe = r <= 80; const warn = r > 80 && r <= 100;
-                  return (
-                    <div style={{ flex: 1, minWidth: 120, borderRadius: 14, padding: "14px 16px", background: safe ? "rgba(52,199,89,0.08)" : warn ? "rgba(255,149,0,0.08)" : "rgba(255,59,48,0.08)" }}>
-                      <p style={{ fontSize: 10, color: "#aeaeb2", margin: "0 0 4px" }}>전세가율</p>
-                      <p style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: 0, color: safe ? "#1a9e45" : warn ? "#b45309" : "#c0392b" }}>{r.toFixed(1)}%</p>
-                      <p style={{ fontSize: 11, color: "#6e6e73", margin: "4px 0 0" }}>{safe ? "✓ 안전" : warn ? "⚠ 주의 — 80% 초과" : "✕ 위험"}</p>
-                    </div>
-                  );
-                })()}
-                {listing.insuranceResult && (() => {
-                  const ins = listing.insuranceResult!;
-                  const eligible = ins.hugEligible || ins.sgiEligible || ins.hfEligible;
-                  return (
-                    <div style={{ flex: 1, minWidth: 120, borderRadius: 14, padding: "14px 16px", background: eligible ? "rgba(52,199,89,0.08)" : "rgba(255,59,48,0.06)" }}>
-                      <p style={{ fontSize: 10, color: "#aeaeb2", margin: "0 0 4px" }}>전세보증보험</p>
-                      <p style={{ fontSize: 13, fontWeight: 800, margin: 0, color: eligible ? "#1a9e45" : "#c0392b" }}>
-                        {ins.hugEligible ? "HUG 가입 가능" : ins.sgiEligible ? "SGI 가입 가능" : ins.hfEligible ? "HF 가입 가능" : "가입 어려움"}
-                      </p>
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* ── 우: sticky 정보 패널 ── */}
@@ -335,6 +291,51 @@ export function ListingDetail({ listing, onReload }: Props) {
           )}
         </div>
       </div>
+
+      {/* 위치/인프라/학군/시세 탭 */}
+      <ListingInfoTabs
+        listingId={listing.id}
+        address={listing.address}
+        latitude={listing.latitude}
+        longitude={listing.longitude}
+      />
+
+      {/* 안전인증 (오너 전용 — 비오너는 우측 패널 박스로 표시) */}
+      {isOwner && <CertificationSection listing={listing} isOwner={isOwner} onReload={onReload} />}
+
+      {listing.isCertified && listing.listingType === "JEONSE" && !isOwner && (
+        <div style={{ border: "1.5px solid rgba(34,167,94,0.25)", borderRadius: 18, padding: 20, marginTop: 12, background: "rgba(34,167,94,0.03)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 16 }}>
+            <ShieldCheck size={16} strokeWidth={2} color="#22a75e" />
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#1d1d1f" }}>임차인 안전 정보</span>
+          </div>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            {listing.jeonseRatio != null && (() => {
+              const r = listing.jeonseRatio!;
+              const safe = r <= 80; const warn = r > 80 && r <= 100;
+              return (
+                <div style={{ flex: 1, minWidth: 120, borderRadius: 14, padding: "14px 16px", background: safe ? "rgba(52,199,89,0.08)" : warn ? "rgba(255,149,0,0.08)" : "rgba(255,59,48,0.08)" }}>
+                  <p style={{ fontSize: 10, color: "#aeaeb2", margin: "0 0 4px" }}>전세가율</p>
+                  <p style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: 0, color: safe ? "#1a9e45" : warn ? "#b45309" : "#c0392b" }}>{r.toFixed(1)}%</p>
+                  <p style={{ fontSize: 11, color: "#6e6e73", margin: "4px 0 0" }}>{safe ? "✓ 안전" : warn ? "⚠ 주의 — 80% 초과" : "✕ 위험"}</p>
+                </div>
+              );
+            })()}
+            {listing.insuranceResult && (() => {
+              const ins = listing.insuranceResult!;
+              const eligible = ins.hugEligible || ins.sgiEligible || ins.hfEligible;
+              return (
+                <div style={{ flex: 1, minWidth: 120, borderRadius: 14, padding: "14px 16px", background: eligible ? "rgba(52,199,89,0.08)" : "rgba(255,59,48,0.06)" }}>
+                  <p style={{ fontSize: 10, color: "#aeaeb2", margin: "0 0 4px" }}>전세보증보험</p>
+                  <p style={{ fontSize: 13, fontWeight: 800, margin: 0, color: eligible ? "#1a9e45" : "#c0392b" }}>
+                    {ins.hugEligible ? "HUG 가입 가능" : ins.sgiEligible ? "SGI 가입 가능" : ins.hfEligible ? "HF 가입 가능" : "가입 어려움"}
+                  </p>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <ApplicationModal
