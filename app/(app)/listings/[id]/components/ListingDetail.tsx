@@ -4,12 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Building2, AreaChart, Layers, Calendar, Eye, FileCheck2,
-  ChevronLeft, FileText, ShieldCheck, Edit2, Trash2, MapPin, Clock,
+  ChevronLeft, FileText, ShieldCheck, Edit2, Trash2, MapPin, Clock, MessageCircle,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import type { ListingItem } from "../../hooks/useListings";
 import { ApplicationModal } from "./ApplicationModal";
 import { CertificationSection } from "./CertificationSection";
+import { ChatModal } from "./ChatModal";
 import styles from "./ListingDetail.module.css";
 
 function formatWon(val: string | null) {
@@ -36,6 +37,7 @@ export function ListingDetail({ listing, onReload }: Props) {
   const router = useRouter();
   const [photoIdx, setPhotoIdx] = useState(0);
   const [showModal, setShowModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [applicationSent, setApplicationSent] = useState(false);
 
@@ -272,7 +274,7 @@ export function ListingDetail({ listing, onReload }: Props) {
 
             {/* CTA */}
             {canApply && (
-              <div style={{ marginTop: 22 }}>
+              <div style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 10 }}>
                 {applicationSent ? (
                   <div style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.25)", borderRadius: 14, padding: "15px 20px", textAlign: "center", fontSize: 13, fontWeight: 600, color: "#1a9e45" }}>
                     계약의향서를 전달했습니다
@@ -283,6 +285,10 @@ export function ListingDetail({ listing, onReload }: Props) {
                     <FileText size={16} strokeWidth={2} />계약 의향서 보내기
                   </button>
                 )}
+                <button onClick={() => setShowChatModal(true)}
+                  style={{ width: "100%", padding: "14px 0", borderRadius: 14, background: "#fff", color: "#0071e3", fontSize: 14, fontWeight: 600, border: "1.5px solid #0071e3", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, transition: "all 0.15s" }}>
+                  <MessageCircle size={15} strokeWidth={2} />메신저 보내기
+                </button>
               </div>
             )}
           </div>
@@ -296,6 +302,15 @@ export function ListingDetail({ listing, onReload }: Props) {
           listingType={listing.listingType}
           onClose={() => setShowModal(false)}
           onSuccess={() => { setShowModal(false); setApplicationSent(true); }}
+        />
+      )}
+
+      {showChatModal && (
+        <ChatModal
+          listingId={listing.id}
+          partnerName={listing.owner.companyName ?? listing.owner.name ?? "임대인"}
+          address={listing.address}
+          onClose={() => setShowChatModal(false)}
         />
       )}
     </div>
