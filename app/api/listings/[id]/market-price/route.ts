@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: "시세 데이터를 조회할 수 없습니다." }, { status: 404 });
     }
 
-    // 월별 집계
+    // 월별 집계 (만원 단위)
     const byMonth: Record<string, { deposits: number[]; wolses: number[] }> = {};
     result.transactions.forEach((t) => {
       const key = `${t.dealYear}-${String(t.dealMonth).padStart(2, "0")}`;
@@ -35,20 +35,21 @@ export async function GET(
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([month, { deposits, wolses }]) => ({
         month,
+        // 만원 단위로 반환
         avgDeposit: deposits.length > 0
-          ? Math.round(deposits.reduce((s, v) => s + v, 0) / deposits.length)
+          ? Math.round(deposits.reduce((s, v) => s + v, 0) / deposits.length / 10000)
           : 0,
         avgWolse: wolses.length > 0
-          ? Math.round(wolses.reduce((s, v) => s + v, 0) / wolses.length)
+          ? Math.round(wolses.reduce((s, v) => s + v, 0) / wolses.length / 10000)
           : 0,
         count: deposits.length,
       }));
 
     return NextResponse.json({
-      avgDeposit: result.avgDeposit,
+      avgDeposit: Math.round(result.avgDeposit / 10000),           // 만원
       monthly,
       period: result.period,
-      listingDeposit: Number(listing.deposit),
+      listingDeposit: Math.round(Number(listing.deposit) / 10000), // 만원
       listingType: listing.listingType,
     });
   } catch (e) {

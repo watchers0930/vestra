@@ -4,7 +4,8 @@ import {
   useState, useEffect, useId, useRef,
   useCallback, useMemo, useReducer,
 } from "react";
-import { MapPin, GraduationCap, TrendingUp, Loader2 } from "lucide-react";
+import { MapPin, GraduationCap } from "lucide-react";
+import { MarketTab } from "./MarketTab";
 
 type TabKey = "location" | "infra" | "school" | "market";
 const TABS: { key: TabKey; label: string }[] = [
@@ -21,174 +22,6 @@ export interface ListingInfoTabsProps {
   longitude: number | null;
 }
 
-// ── 시세 탭 ──────────────────────────────────────────────────────────────────
-interface MarketData {
-  avgDeposit: number;
-  monthly: { month: string; avgDeposit: number; avgWolse: number; count: number }[];
-  period: string;
-  listingDeposit: number;
-  listingType: string;
-}
-
-function roundUpNice(v: number): number {
-  if (v <= 0) return 10_000_000;
-  const mag = Math.pow(10, Math.floor(Math.log10(v)));
-  const n = v / mag;
-  const nice = n <= 1.5 ? 1.5 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 3 ? 3 : n <= 5 ? 5 : 10;
-  return Math.ceil(v / (nice * mag / 4)) * (nice * mag / 4);
-}
-
-function formatYAxis(won: number): string {
-  if (won === 0) return "0만";
-  const il = Math.floor(won / 100_000_000);
-  const rem = won % 100_000_000;
-  const cm = Math.floor(rem / 10_000_000);
-  if (il > 0 && cm > 0) return `${il}억${cm}천만`;
-  if (il > 0) return `${il}억`;
-  if (cm > 0) return `${cm}천만`;
-  return `${Math.round(won / 10_000).toLocaleString()}만`;
-}
-
-function formatManWonTable(won: number): string {
-  if (won <= 0) return "-";
-  const man = Math.round(won / 10_000);
-  return `${man.toLocaleString()}만`;
-}
-
-const CHART_H = 180;
-const NUM_TICKS = 5;
-
-function MarketTab({ listingId }: { listingId: string }) {
-  const [data, setData] = useState<MarketData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    fetch(`/api/listings/${listingId}/market-price`)
-      .then((r) => r.json())
-      .then((d) => { if (d.error) setError(d.error); else setData(d); })
-      .catch(() => setError("시세 데이터를 불러오지 못했습니다."))
-      .finally(() => setLoading(false));
-  }, [listingId]);
-
-  if (loading) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 0", gap: 10, color: "#aeaeb2" }}>
-      <Loader2 size={20} strokeWidth={1.5} style={{ animation: "spin 1s linear infinite" }} />
-      <span style={{ fontSize: 13 }}>시세 조회 중...</span>
-    </div>
-  );
-  if (error || !data) return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 0", color: "#aeaeb2", gap: 8 }}>
-      <TrendingUp size={32} strokeWidth={1.2} />
-      <p style={{ fontSize: 13, margin: 0 }}>{error || "조회 가능한 시세 데이터가 없습니다."}</p>
-    </div>
-  );
-
-  const maxDep = Math.max(...data.monthly.map((m) => m.avgDeposit), 1);
-  const niceMax = roundUpNice(maxDep * 1.05);
-  const ticks = Array.from({ length: NUM_TICKS }, (_, i) => (niceMax / (NUM_TICKS - 1)) * i);
-  const ratio = data.avgDeposit > 0 ? Math.round(((data.listingDeposit - data.avgDeposit) / data.avgDeposit) * 100) : null;
-
-  return (
-    <div>
-      {/* 헤더 */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-        <TrendingUp size={17} strokeWidth={2} style={{ color: "#0071e3" }} />
-        <span style={{ fontSize: 14, fontWeight: 700, color: "#1d1d1f" }}>인근 시세 추이 ({data.period})</span>
-      </div>
-
-      {/* 시세 대비 배너 */}
-      {ratio !== null && (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 14px", background: ratio > 0 ? "#fff5f5" : "#f0f8f0", borderRadius: 10, marginBottom: 14 }}>
-          <span style={{ fontSize: 12, color: "#8e8e93" }}>시세 대비 현재 보증금</span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: ratio > 0 ? "#c0392b" : "#22a75e" }}>
-            {ratio > 0 ? `+${ratio}% ↑ 시세 초과` : ratio < 0 ? `${ratio}% ↓ 시세 이하` : "시세 수준"}
-          </span>
-        </div>
-      )}
-
-      {/* 바차트 */}
-      {data.monthly.length > 0 && (
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ display: "flex" }}>
-            {/* Y축 */}
-            <div style={{ width: 44, flexShrink: 0, position: "relative", height: CHART_H, marginBottom: 24 }}>
-              {ticks.map((t, i) => (
-                <div key={i} style={{ position: "absolute", bottom: `${(i / (NUM_TICKS - 1)) * 100}%`, right: 6, transform: "translateY(50%)", fontSize: 9, color: "#aeaeb2", whiteSpace: "nowrap" }}>
-                  {formatYAxis(t)}
-                </div>
-              ))}
-            </div>
-            {/* 차트 영역 */}
-            <div style={{ flex: 1, position: "relative" }}>
-              {/* 격자선 */}
-              <div style={{ position: "relative", height: CHART_H }}>
-                {ticks.map((_, i) => (
-                  <div key={i} style={{ position: "absolute", left: 0, right: 0, bottom: `${(i / (NUM_TICKS - 1)) * 100}%`, borderTop: i === 0 ? "1px solid #d1d1d6" : "1px dashed #e8edf5" }} />
-                ))}
-                {/* 바 */}
-                <div style={{ display: "flex", alignItems: "flex-end", height: "100%", gap: 6, paddingLeft: 2 }}>
-                  {data.monthly.map((m) => {
-                    const depH = Math.max((m.avgDeposit / niceMax) * CHART_H, 2);
-                    const wolH = m.avgWolse > 0 ? Math.max((m.avgWolse / niceMax) * CHART_H, 2) : 0;
-                    return (
-                      <div key={m.month} style={{ flex: 1, display: "flex", gap: 2, alignItems: "flex-end", height: "100%" }}>
-                        <div style={{ flex: 5, height: depH, background: "#93c5fd", borderRadius: "3px 3px 0 0" }} />
-                        {wolH > 0
-                          ? <div style={{ flex: 1, height: wolH, background: "#3b82f6", borderRadius: "3px 3px 0 0" }} />
-                          : <div style={{ flex: 1 }} />
-                        }
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              {/* X축 월 레이블 */}
-              <div style={{ display: "flex", gap: 6, paddingLeft: 2, marginTop: 4 }}>
-                {data.monthly.map((m) => (
-                  <div key={m.month} style={{ flex: 1, textAlign: "center" }}>
-                    <span style={{ fontSize: 10, color: "#8e8e93" }}>{parseInt(m.month.slice(5))}월</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* 범례 */}
-          <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 10 }}>
-            {[{ color: "#93c5fd", label: "평균보증금" }, { color: "#3b82f6", label: "평균월세" }].map(({ color, label }) => (
-              <span key={label} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#8e8e93" }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, display: "inline-block" }} />
-                {label}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 테이블 */}
-      {data.monthly.length > 0 && (
-        <div style={{ marginBottom: 4 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr 1fr 0.8fr", padding: "7px 4px", borderBottom: "1.5px solid #e5e5ea" }}>
-            {["월", "평균보증금", "평균월세", "건수"].map((h) => (
-              <span key={h} style={{ fontSize: 11, color: "#8e8e93", fontWeight: 600 }}>{h}</span>
-            ))}
-          </div>
-          {data.monthly.map((m) => (
-            <div key={m.month} style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr 1fr 0.8fr", padding: "9px 4px", borderBottom: "1px solid #f0f3fa" }}>
-              <span style={{ fontSize: 12, color: "#1d1d1f" }}>{m.month}</span>
-              <span style={{ fontSize: 12, color: "#1d1d1f" }}>{formatManWonTable(m.avgDeposit)}</span>
-              <span style={{ fontSize: 12, color: "#1d1d1f" }}>{formatManWonTable(m.avgWolse)}</span>
-              <span style={{ fontSize: 12, color: "#aeaeb2" }}>{m.count}건</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <p style={{ fontSize: 10, color: "#aeaeb2", marginTop: 12 }}>국토교통부 실거래가 공개데이터 기반. 실제 거래가와 다를 수 있습니다.</p>
-    </div>
-  );
-}
 
 // ── Kakao SDK 대기 유틸 ──────────────────────────────────────────────────────
 function waitKakao(cb: () => void): () => void {
@@ -275,11 +108,13 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
     const map = mapRef.current; if (!map) return;
     dotsByCat.current.forEach((entries, catCode) => {
       const cat = INFRA_CATS.find((c) => c.code === catCode);
-      const vis = code === "ALL" || code === catCode;
-      const color = code === "ALL" ? "#c7c7cc" : (cat?.color ?? "#c7c7cc");
+      const active = code === "ALL" || code === catCode;
+      const color = active && code !== "ALL" ? (cat?.color ?? "#c7c7cc") : "#c7c7cc";
+      const shadow = color !== "#c7c7cc" ? `0 2px 8px ${color}88` : "0 2px 8px rgba(0,0,0,.2)";
       entries.forEach(({ ov, shape }) => {
-        ov.setMap(vis ? map : null);
-        if (vis) { shape.style.background = color; shape.style.boxShadow = code === "ALL" ? "0 2px 8px rgba(0,0,0,.2)" : `0 2px 8px ${color}88`; }
+        ov.setMap(map);
+        shape.style.background = color;
+        shape.style.boxShadow = shadow;
       });
     });
   }, []);
@@ -427,11 +262,13 @@ function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
     const map = mapRef.current; if (!map) return;
     dotsRef.current.forEach((entries, type) => {
       const conf = SCHOOL_TYPES.find((t) => t.key === type);
-      const vis = key === "ALL" || key === type;
-      const color = key === "ALL" ? "#c7c7cc" : (conf?.color ?? "#c7c7cc");
+      const active = key === "ALL" || key === type;
+      const color = active && key !== "ALL" ? (conf?.color ?? "#c7c7cc") : "#c7c7cc";
+      const shadow = color !== "#c7c7cc" ? `0 2px 8px ${color}88` : "0 2px 8px rgba(0,0,0,.2)";
       entries.forEach(({ ov, shape }) => {
-        ov.setMap(vis ? map : null);
-        if (vis) { shape.style.background = color; shape.style.boxShadow = key === "ALL" ? "0 2px 8px rgba(0,0,0,.2)" : `0 2px 8px ${color}88`; }
+        ov.setMap(map);
+        shape.style.background = color;
+        shape.style.boxShadow = shadow;
       });
     });
   }, []);
