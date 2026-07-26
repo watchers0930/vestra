@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { CheckCircle2, XCircle, Clock, Building2, FileText, MessageCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Building2, FileText, MessageCircle, Trash2 } from "lucide-react";
 
 interface MyApplication {
   id: string;
@@ -43,6 +43,7 @@ export function MyApplicationsContent() {
   const [applications, setApplications] = useState<MyApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -58,6 +59,22 @@ export function MyApplicationsContent() {
   }
 
   useEffect(() => { load(); }, []);
+
+  async function handleDelete(id: string) {
+    if (!confirm("이 의향서를 삭제하시겠습니까? 복구할 수 없습니다.")) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/contract-applications/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setApplications((prev) => prev.filter((a) => a.id !== id));
+      } else {
+        const j = await res.json().catch(() => ({}));
+        alert(j.error ?? "삭제에 실패했습니다.");
+      }
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   async function handleWithdraw(id: string) {
     if (!confirm("이 의향서를 철회하시겠습니까?")) return;
@@ -260,6 +277,21 @@ export function MyApplicationsContent() {
                         }}
                       >
                         {withdrawingId === a.id ? "처리 중..." : "철회"}
+                      </button>
+                    )}
+                    {a.status === "WITHDRAWN" && (
+                      <button
+                        onClick={() => handleDelete(a.id)}
+                        disabled={deletingId === a.id}
+                        style={{
+                          padding: "6px 12px", borderRadius: 10,
+                          border: "1px solid rgba(255,59,48,0.3)", background: "rgba(255,59,48,0.05)",
+                          fontSize: 12, fontWeight: 600, color: "#c0392b", cursor: "pointer",
+                          display: "flex", alignItems: "center", gap: 4,
+                        }}
+                      >
+                        <Trash2 size={12} strokeWidth={2} />
+                        {deletingId === a.id ? "삭제 중..." : "삭제"}
                       </button>
                     )}
                   </div>

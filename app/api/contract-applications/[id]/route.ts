@@ -106,3 +106,37 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
   }
 }
+
+// DELETE /api/contract-applications/[id] — 철회된 의향서 삭제 (신청자 본인만)
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const application = await prisma.contractApplication.findUnique({
+      where: { id },
+      select: { applicantId: true, status: true },
+    });
+    if (!application) {
+      return NextResponse.json({ error: "의향서를 찾을 수 없습니다." }, { status: 404 });
+    }
+    if (application.applicantId !== session.user.id) {
+      return NextResponse.json({ error: "본인 의향서만 삭제 가능합니다." }, { status: 403 });
+    }
+    if (application.status !== "WITHDRAWN") {
+      return NextResponse.json({ error: "철회된 의향서만 삭제할 수 있습니다." }, { status: 409 });
+    }
+
+    await prisma.contractApplication.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
+  }
+}
