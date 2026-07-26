@@ -21,13 +21,16 @@ export function ListingsContent() {
   const { listings, total, loading } = useListings(typeFilter === "ALL" ? undefined : typeFilter);
 
   const canRegister = session && session.user?.userType !== "TENANT";
+  const [currentRegion, setCurrentRegion] = useState<string>("");
 
   if (view === "map") {
     return (
       <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: 0, zIndex: 30, display: "flex", flexDirection: "column", background: "#fff", overflow: "hidden" }}>
         {/* 지도 헤더 */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: "1px solid #e8e8ed", background: "#fff", flexShrink: 0 }}>
-          <h1 style={{ fontSize: 16, fontWeight: 700, color: "#1d1d1f" }}>매물 지도</h1>
+          <h1 style={{ fontSize: 16, fontWeight: 700, color: "#1d1d1f" }}>
+            {currentRegion || "매물 지도"}
+          </h1>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {canRegister && (
               <Link href="/listings/new" style={{ textDecoration: "none" }}>
@@ -45,7 +48,7 @@ export function ListingsContent() {
           </div>
         </div>
         <div style={{ flex: 1, overflow: "hidden" }}>
-          <ListingsMapView />
+          <ListingsMapView onRegionChange={setCurrentRegion} />
         </div>
       </div>
     );

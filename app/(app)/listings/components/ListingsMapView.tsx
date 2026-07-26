@@ -40,9 +40,10 @@ interface KakaoMarkersMapProps {
   activeId: string | null;
   onMarkerClick: (id: string) => void;
   panTo: { lat: number; lng: number } | null;
+  onRegionChange?: (region: string) => void;
 }
 
-function KakaoMarkersMap({ markers, activeId, onMarkerClick, panTo }: KakaoMarkersMapProps) {
+function KakaoMarkersMap({ markers, activeId, onMarkerClick, panTo, onRegionChange }: KakaoMarkersMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapInstanceRef = useRef<any>(null);
@@ -92,6 +93,31 @@ function KakaoMarkersMap({ markers, activeId, onMarkerClick, panTo }: KakaoMarke
     const cleanup = tryInit();
     return () => { cancelled = true; cleanup?.(); };
   }, []);
+
+  // 시군구 역지오코딩 — idle 이벤트
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !mapReady || !onRegionChange || !window.kakao?.maps?.services?.Geocoder) return;
+    const cb = onRegionChange;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const geocoder = new (window.kakao.maps.services as any).Geocoder();
+    function fetchRegion() {
+      const center = map.getCenter();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      geocoder.coord2RegionCode(center.getLng(), center.getLat(), (result: any[], status: string) => {
+        if (status === window.kakao.maps.services.Status.OK) {
+          const h = result.find((r: any) => r.region_type === "H");
+          if (h) {
+            const text = [h.region_1depth_name, h.region_2depth_name].filter(Boolean).join(" ");
+            cb(text);
+          }
+        }
+      });
+    }
+    fetchRegion();
+    window.kakao.maps.event.addListener(map, "idle", fetchRegion);
+    return () => { window.kakao.maps.event.removeListener(map, "idle", fetchRegion); };
+  }, [mapReady, onRegionChange]);
 
   // 마커 갱신
   useEffect(() => {
@@ -206,7 +232,11 @@ function ListingCardSmall({
 // ────────────────────────────────────────────────────────────
 // 메인 컴포넌트
 // ────────────────────────────────────────────────────────────
-export function ListingsMapView() {
+interface ListingsMapViewProps {
+  onRegionChange?: (region: string) => void;
+}
+
+export function ListingsMapView({ onRegionChange }: ListingsMapViewProps = {}) {
   const [typeFilter,  setTypeFilter]  = useState<ListingType | "ALL">("ALL");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeId,    setActiveId]    = useState<string | null>(null);
@@ -387,6 +417,7 @@ export function ListingsMapView() {
             activeId={activeId}
             onMarkerClick={openPanel}
             panTo={panTo}
+            onRegionChange={onRegionChange}
           />
 
           {/* 슬라이드 패널 */}
