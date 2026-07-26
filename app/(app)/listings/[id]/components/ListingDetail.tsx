@@ -11,6 +11,7 @@ import type { ListingItem } from "../../hooks/useListings";
 import { ApplicationModal } from "./ApplicationModal";
 import { CertificationSection } from "./CertificationSection";
 import { ChatModal } from "./ChatModal";
+import { ListingInfoTabs } from "./ListingInfoTabs";
 import styles from "./ListingDetail.module.css";
 
 function formatWon(val: string | null) {
@@ -133,15 +134,12 @@ export function ListingDetail({ listing, onReload }: Props) {
             </div>
           )}
 
-          {/* 설명 */}
-          {listing.description && (
-            <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.07)", borderRadius: 16, padding: 22, marginTop: 20 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: "#aeaeb2", marginBottom: 10, letterSpacing: "0.03em" }}>매물 설명</p>
-              <p style={{ fontSize: 14, color: "#3d3d3f", lineHeight: 1.75, whiteSpace: "pre-wrap", margin: 0 }}>
-                {listing.description}
-              </p>
-            </div>
-          )}
+          {/* 위치/인프라/학군/시세 탭 */}
+          <ListingInfoTabs
+            address={listing.address}
+            latitude={listing.latitude}
+            longitude={listing.longitude}
+          />
 
           {/* 안전인증 + 임차인 안전정보 */}
           <CertificationSection listing={listing} isOwner={isOwner} onReload={onReload} />
@@ -292,6 +290,48 @@ export function ListingDetail({ listing, onReload }: Props) {
               </div>
             )}
           </div>
+
+          {/* 안전인증 박스 */}
+          {listing.isCertified && (
+            <div style={{ background: "#fff", border: "1.5px solid #22a75e", borderRadius: 18, padding: 20, marginTop: 12, boxShadow: "0 2px 12px rgba(34,167,94,0.08)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#1a7f4b,#22a75e)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 2px 8px rgba(26,127,75,.3)" }}>
+                  <ShieldCheck size={18} strokeWidth={2.5} color="#fff" />
+                </div>
+                <div>
+                  <p style={{ fontSize: 14, fontWeight: 800, color: "#1a7f4b", margin: 0 }}>✓ 안전인증 완료</p>
+                  {listing.certifiedAt && (
+                    <p style={{ fontSize: 11, color: "#6e6e73", margin: 0, marginTop: 2 }}>
+                      {new Date(listing.certifiedAt).toLocaleDateString("ko-KR")} 인증
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {[
+                  { label: "등기사항전부증명서", desc: "권리관계 확인 완료" },
+                  { label: "건축물대장",         desc: "건물 정보 확인 완료" },
+                  { label: "재산세납부확인서",    desc: "납세 이력 확인 완료" },
+                ].map(({ label, desc }) => (
+                  <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: "rgba(34,167,94,.05)", border: "1px solid rgba(34,167,94,.15)" }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22a75e", flexShrink: 0 }} />
+                    <div>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: "#1a7f4b", margin: 0 }}>{label}</p>
+                      <p style={{ fontSize: 11, color: "#6e6e73", margin: 0 }}>{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 매물설명 박스 */}
+          {listing.description && (
+            <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 18, padding: 20, marginTop: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#aeaeb2", letterSpacing: "0.04em", margin: "0 0 10px" }}>매물 설명</p>
+              <p style={{ fontSize: 13, color: "#3d3d3f", lineHeight: 1.75, whiteSpace: "pre-wrap", margin: 0 }}>{listing.description}</p>
+            </div>
+          )}
         </div>
       </div>
 
