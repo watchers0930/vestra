@@ -90,7 +90,7 @@ export function ListingDetail({ listing, onReload }: Props) {
         {/* ── 좌: 갤러리 ── */}
         <div>
           {/* 메인 이미지 */}
-          <div style={{ borderRadius: 20, overflow: "hidden", background: "#f0f0f5", position: "relative", height: 0, paddingBottom: "calc(67.5% - 50px)" }}>
+          <div style={{ borderRadius: 20, overflow: "hidden", background: "#f0f0f5", position: "relative", height: 0, paddingBottom: "calc(67.5% - 45px)" }}>
             <div style={{ position: "absolute", inset: 0 }}>
             {photos.length > 0 ? (
               // eslint-disable-next-line @next/next/no-img-element
