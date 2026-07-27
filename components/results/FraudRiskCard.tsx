@@ -22,11 +22,11 @@ const RISK_COLORS: Record<string, string> = {
 };
 
 const RISK_BG: Record<string, string> = {
-  safe: "bg-green-50 dark:bg-green-950/30",
-  caution: "bg-lime-50 dark:bg-lime-950/30",
-  warning: "bg-amber-50 dark:bg-amber-950/30",
-  danger: "bg-red-50 dark:bg-red-950/30",
-  critical: "bg-red-100 dark:bg-red-950/50",
+  safe: "bg-green-50",
+  caution: "bg-lime-50",
+  warning: "bg-amber-50",
+  danger: "bg-red-50",
+  critical: "bg-red-100",
 };
 
 export default function FraudRiskCard({ result }: FraudRiskCardProps) {
@@ -67,7 +67,7 @@ export default function FraudRiskCard({ result }: FraudRiskCardProps) {
         </div>
 
         {/* 프로그레스 바 */}
-        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-200">
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
@@ -131,7 +131,7 @@ export default function FraudRiskCard({ result }: FraudRiskCardProps) {
             {result.similarCases.map((c, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between rounded bg-gray-50 px-3 py-1.5 text-xs dark:bg-gray-800"
+                className="flex items-center justify-between rounded bg-gray-50 px-3 py-1.5 text-xs"
               >
                 <span className="truncate">{c.address}</span>
                 <div className="flex items-center gap-2">
@@ -145,7 +145,7 @@ export default function FraudRiskCard({ result }: FraudRiskCardProps) {
       )}
 
       {/* 권고사항 */}
-      <div className="mx-4 mb-4 rounded bg-[#f5f5f7] p-3 text-xs dark:bg-gray-800">
+      <div className="mx-4 mb-4 rounded bg-[#f5f5f7] p-3 text-xs">
         {result.recommendation}
       </div>
     </Card>

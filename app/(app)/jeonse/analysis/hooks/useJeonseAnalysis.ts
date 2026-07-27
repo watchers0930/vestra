@@ -80,7 +80,12 @@ export function useJeonseAnalysis() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          jeonseRatio: Math.min(100, (formData.deposit / (formData.deposit * 1.25)) * 100),
+          jeonseRatio: formData.propertyPrice > 0
+            ? Math.min(100, (formData.deposit / formData.propertyPrice) * 100)
+            : 50,
+          mortgageRatio: formData.propertyPrice > 0
+            ? Math.min(100, (formData.seniorLiens / formData.propertyPrice) * 100)
+            : 0,
           isBrokerRegistered: true,
           hasDepositInsurance: false,
         }),
