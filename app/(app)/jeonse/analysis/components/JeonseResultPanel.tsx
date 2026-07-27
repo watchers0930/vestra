@@ -3,7 +3,7 @@
 import { RefObject } from "react";
 import Link from "next/link";
 import {
-  Shield, FileText, CheckCircle, AlertTriangle, Copy, Download, TrendingUp, Loader2,
+  Shield, FileText, CheckCircle, AlertTriangle, Copy, Download, TrendingUp, Loader2, ClipboardList,
 } from "lucide-react";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
 import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
@@ -303,6 +303,44 @@ export function JeonseResultPanel({
                 {docLoading && activeDocType === "lease" ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} strokeWidth={2} />}
                 임차권등기명령 신청서
               </button>
+            </div>
+
+            {/* 전세권설정 신청서 자동완성 바로가기 */}
+            <div style={{
+              padding: "12px 14px",
+              background: "rgba(0,113,227,0.05)",
+              border: "1px solid rgba(0,113,227,0.14)",
+              borderRadius: "12px",
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
+            }}>
+              <p style={{ fontSize: "12.5px", color: "#444", lineHeight: 1.5 }}>
+                분석 데이터로 법원 제출용 신청서 양식을 바로 채울 수 있습니다.
+              </p>
+              <Link
+                href="/jeonse/jeonse-right"
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem("vestra_jeonse_form_data", JSON.stringify({
+                      propertyAddress: formData.propertyAddress,
+                      deposit: String(formData.deposit),
+                      startDate: formData.startDate,
+                      endDate: formData.endDate,
+                      landlordName: parsedOwner,
+                    }));
+                  } catch {}
+                }}
+                style={{
+                  flexShrink: 0,
+                  display: "inline-flex", alignItems: "center", gap: "6px",
+                  padding: "8px 14px", borderRadius: "10px",
+                  background: "#0071e3", color: "#fff",
+                  fontSize: "12.5px", fontWeight: 600, textDecoration: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <ClipboardList size={13} strokeWidth={2} />
+                신청서 작성
+              </Link>
             </div>
 
             {generatedDoc && (

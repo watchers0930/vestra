@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 8pt;
+    color: #111;
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page { size: A4; margin: 0; }
+
+  .page {
+    width: 210mm;
+    height: 297mm;
+    padding: 16mm 16mm 13mm;
+    background: #fff;
+    overflow: hidden;
+    page-break-after: always;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  td {
+    border: 0.7pt solid #111;
+    padding: 2px 5px;
+    vertical-align: middle;
+    font-size: 8pt;
+    line-height: 1.4;
+    background: #fff;
+  }
+
+  .lbl { text-align: center; }
+  .SH  { text-align: center; letter-spacing: .38em; padding: 4px 0; font-size: 8pt; }
+  .stitch { margin-top: -.7pt; }
+
+  .VL {
+    writing-mode: vertical-lr;
+    text-orientation: mixed;
+    letter-spacing: .2em;
+    text-align: center;
+    font-size: 7.8pt;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 값 표시 span */
+  .val {
+    display: inline;
+    min-height: 1.2em;
+  }
+
+  /* 금액 행 */
+  .MR { display: flex; align-items: baseline; gap: 4px; padding: 1px 7px; }
+
+  /* 인라인 값 */
+  .iv {
+    display: inline-block;
+    min-width: 3em;
+    border-bottom: .5pt solid #111;
+    text-align: center;
+    vertical-align: baseline;
+    padding: 0 2px;
+    font-size: 8pt;
+  }
+
+  /* 첨부서면 */
+  .atch { vertical-align: top; padding: 5px 8px; font-size: 7.8pt; }
+  .arow { display: flex; align-items: baseline; margin-bottom: 4px; }
+  .an   { flex: 1; }
+  .acnt { min-width: 14px; border-bottom: .5pt solid #111; text-align: center; margin: 0 2px; display: inline-block; font-size: 7.8pt; }
+
+  /* 서명 */
+  .sig  { border: .7pt solid #111; padding: 10px 14px; font-size: 8pt; margin-top: 7px; }
+  .srow { display: flex; align-items: baseline; gap: 5px; margin-bottom: 7px; }
+  .sf   { flex: 1; border-bottom: .5pt solid #111; min-height: 1em; padding: 0 2px; }
+  .sn   { white-space: nowrap; }
+  .ste  { min-width: 9em; border-bottom: .5pt solid #111; padding: 0 2px; display: inline-block; }
+
+  /* 작성요령 */
+  .ntc  { border: .7pt solid #111; padding: 7px 12px; margin-top: 6px; font-size: 7.5pt; line-height: 1.7; }
+  .ntc-h{ text-align: center; font-weight: 700; margin-bottom: 4px; font-size: 8pt; letter-spacing: .1em; }
+
+  /* 인쇄 버튼 (화면 전용) */
+  .print-bar {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: #1d1d1f; color: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 20px; font-size: 13px; z-index: 9999;
+  }
+  .print-btn {
+    background: #0071e3; color: #fff; border: none;
+    padding: 7px 18px; border-radius: 8px; font-size: 13px;
+    font-weight: 600; cursor: pointer;
+  }
+  @media print { .print-bar { display: none; } }
+</style>
+</head>
+<body>
+
+<!-- 인쇄 버튼 바 -->
+<div class="print-bar">
+  <span>전세권설정등기신청서 — VESTRA</span>
+  <button class="print-btn" onclick="window.print()">🖨️ 인쇄</button>
+</div>
+<div style="height:44px;"></div>
+
+<!-- ═══════════════════════ PAGE 1 ═══════════════════════ -->
+<div class="page" id="p1">
+
+  <!-- 우상단 접수 박스 -->
+  <div style="display:flex;justify-content:flex-end;margin-bottom:3px;">
+    <table style="width:56mm;border-collapse:collapse;">
+      <tr>
+        <td style="border:.7pt solid #111;text-align:center;font-size:7.8pt;height:7mm;letter-spacing:.05em;">즉시접수</td>
+        <td style="border:.7pt solid #111;text-align:center;font-size:7.8pt;height:7mm;letter-spacing:.05em;">당일접수</td>
+      </tr>
+      <tr><td colspan="2" style="border:.7pt solid #111;height:9mm;background:#fff;"></td></tr>
+      <tr>
+        <td style="border:.7pt solid #111;text-align:center;font-size:7.8pt;height:7mm;letter-spacing:.2em;">제 출 자</td>
+        <td style="border:.7pt solid #111;height:7mm;background:#fff;"></td>
+      </tr>
+      <tr>
+        <td style="border:.7pt solid #111;text-align:center;font-size:7.8pt;height:7mm;letter-spacing:.45em;">총</td>
+        <td style="border:.7pt solid #111;text-align:center;font-size:7.8pt;height:7mm;letter-spacing:.45em;">건</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 제목 -->
+  <div style="border:.7pt solid #111;text-align:center;font-size:13pt;font-weight:700;letter-spacing:.45em;padding:7px 0;">
+    전세권설정등기신청
+  </div>
+
+  <!-- 접수 행 -->
+  <table class="stitch">
+    <colgroup><col style="width:9%"><col style="width:19%"><col style="width:13%"><col style="width:29.5%"><col style="width:29.5%"></colgroup>
+    <tr>
+      <td rowspan="2" class="lbl" style="letter-spacing:.28em;font-size:8.5pt;">접&nbsp;수</td>
+      <td class="lbl" style="height:8mm;letter-spacing:.2em;">년 &nbsp; 월 &nbsp; 일</td>
+      <td rowspan="2" class="lbl" style="letter-spacing:.12em;">처 리 인</td>
+      <td class="lbl">등기관 확인</td>
+      <td class="lbl">각종 통지</td>
+    </tr>
+    <tr>
+      <td class="lbl" style="height:9mm;letter-spacing:.12em;">제 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 호</td>
+      <td></td>
+      <td></td>
+    </tr>
+  </table>
+
+  <!-- 부동산의 표시 -->
+  <table class="stitch">
+    <tr><td class="SH">부 동 산 의 &nbsp;&nbsp; 표 시</td></tr>
+    <tr>
+      <td style="height:62mm;vertical-align:top;padding:6px;font-size:8pt;line-height:1.8;" id="td_real_estate"></td>
+    </tr>
+  </table>
+
+  <!-- 등기 정보 -->
+  <table class="stitch">
+    <colgroup><col style="width:27%"><col style="width:73%"></colgroup>
+    <tr>
+      <td class="lbl" style="height:7mm;">등기원인과 그 연월일</td>
+      <td style="padding:2px 8px;">
+        <span class="iv" id="v_cause_year" style="min-width:4em;"></span>&nbsp;년&nbsp;
+        <span class="iv" id="v_cause_month" style="min-width:2.5em;"></span>&nbsp;월&nbsp;
+        <span class="iv" id="v_cause_day" style="min-width:2.5em;"></span>&nbsp;일&nbsp;&nbsp;설정계약
+      </td>
+    </tr>
+    <tr>
+      <td class="lbl" style="height:7mm;letter-spacing:.2em;">등 기 의 목 적</td>
+      <td style="padding:2px 8px;letter-spacing:.1em;">전세권설정</td>
+    </tr>
+    <tr>
+      <td class="lbl" style="height:7mm;letter-spacing:.32em;">전 &nbsp;&nbsp; 세 &nbsp;&nbsp; 금</td>
+      <td><div class="MR"><span>금</span><span id="v_amount" style="flex:1;"></span><span>원</span></div></td>
+    </tr>
+    <tr>
+      <td class="lbl" style="height:7mm;">전세권의 목적인 범위</td>
+      <td style="padding:2px 8px;"><span id="v_scope" class="val"></span></td>
+    </tr>
+    <tr>
+      <td class="lbl" style="height:7mm;letter-spacing:.2em;">존 &nbsp; 속 &nbsp; 기 &nbsp; 간</td>
+      <td style="padding:2px 8px;">
+        <span class="iv" id="v_start_date" style="min-width:40%;text-align:left;"></span>&nbsp;&nbsp;
+        <span class="iv" id="v_end_date" style="min-width:40%;text-align:left;"></span>
+      </td>
+    </tr>
+  </table>
+
+  <div style="height:5px;"></div>
+
+  <!-- 신청인 테이블 -->
+  <table>
+    <colgroup><col style="width:6.5%"><col style="width:17%"><col style="width:23%"><col style="width:53.5%"></colgroup>
+    <tr>
+      <td class="lbl" style="font-size:7.5pt;">구분</td>
+      <td class="lbl" style="font-size:7.5pt;line-height:1.5;">성 &nbsp;&nbsp; 명<br><span style="font-size:6.8pt;letter-spacing:0;">(상호·명칭)</span></td>
+      <td class="lbl" style="font-size:7.5pt;line-height:1.5;">주민등록번호<br><span style="font-size:6.8pt;letter-spacing:0;">(등기용등록번호)</span></td>
+      <td class="lbl" style="font-size:7.5pt;">주 &nbsp;&nbsp; 소 &nbsp; ( 소 재 지 )</td>
+    </tr>
+    <tr style="height:28mm;">
+      <td class="lbl" style="padding:0;"><div class="VL">등기의무자</div></td>
+      <td style="vertical-align:top;padding:4px;font-size:8pt;line-height:1.7;" id="v_ob_name"></td>
+      <td style="vertical-align:top;padding:4px;font-size:8pt;line-height:1.7;" id="v_ob_id"></td>
+      <td style="vertical-align:top;padding:4px;font-size:8pt;line-height:1.7;" id="v_ob_addr"></td>
+    </tr>
+    <tr style="height:28mm;">
+      <td class="lbl" style="padding:0;"><div class="VL">등기권리자</div></td>
+      <td style="vertical-align:top;padding:4px;font-size:8pt;line-height:1.7;" id="v_hl_name"></td>
+      <td style="vertical-align:top;padding:4px;font-size:8pt;line-height:1.7;" id="v_hl_id"></td>
+      <td style="vertical-align:top;padding:4px;font-size:8pt;line-height:1.7;" id="v_hl_addr"></td>
+    </tr>
+  </table>
+
+</div><!-- /p1 -->
+
+
+<!-- ═══════════════════════ PAGE 2 ═══════════════════════ -->
+<div class="page" id="p2">
+
+  <!-- 세금 -->
+  <table>
+    <colgroup><col style="width:31%"><col style="width:69%"></colgroup>
+    <tr>
+      <td class="lbl" style="height:7mm;letter-spacing:.18em;">등 &nbsp; 록 &nbsp; 면 &nbsp; 허 &nbsp; 세</td>
+      <td><div class="MR"><span>금</span><span id="v_reg_tax" style="flex:1;"></span><span>원</span></div></td>
+    </tr>
+    <tr>
+      <td class="lbl" style="height:7mm;letter-spacing:.18em;">지 &nbsp; 방 &nbsp; 교 &nbsp; 육 &nbsp; 세</td>
+      <td><div class="MR"><span>금</span><span id="v_edu_tax" style="flex:1;"></span><span>원</span></div></td>
+    </tr>
+    <tr>
+      <td class="lbl" style="height:7mm;letter-spacing:.18em;">농 &nbsp; 어 &nbsp; 촌 &nbsp; 특 &nbsp; 별 &nbsp; 세</td>
+      <td><div class="MR"><span>금</span><span id="v_rural_tax" style="flex:1;"></span><span>원</span></div></td>
+    </tr>
+    <tr>
+      <td class="lbl" style="height:7mm;letter-spacing:.3em;">세 &nbsp;&nbsp;&nbsp; 액 &nbsp;&nbsp;&nbsp; 합 &nbsp;&nbsp;&nbsp; 계</td>
+      <td><div class="MR"><span>금</span><span id="v_tax_total" style="flex:1;"></span><span>원</span></div></td>
+    </tr>
+    <tr>
+      <td class="lbl" style="height:7mm;"></td>
+      <td><div class="MR"><span>금</span><span id="v_fee_cash" style="flex:1;"></span><span>원</span></div></td>
+    </tr>
+    <tr>
+      <td class="lbl" style="letter-spacing:.14em;height:16mm;vertical-align:middle;">등 기 신 청 수 수 료</td>
+      <td style="padding:4px 8px;">
+        <div style="margin-bottom:4px;">납부번호 :&nbsp;<span class="iv" id="v_fee_payno" style="min-width:calc(100% - 65px);"></span></div>
+        <div>일괄납부 :&nbsp;<span class="iv" id="v_bulk_count" style="min-width:3em;"></span>&nbsp;건&nbsp;<span class="iv" id="v_bulk_amt" style="min-width:6em;"></span>&nbsp;원</div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- 등기의무자 등기필정보 -->
+  <table style="margin-top:8px;">
+    <tr><td class="SH">등 기 의 무 자 의 &nbsp;&nbsp; 등 기 필 정 보</td></tr>
+  </table>
+  <table class="stitch">
+    <colgroup><col style="width:31%"><col style="width:69%"></colgroup>
+    <tr>
+      <td class="lbl" style="height:7mm;letter-spacing:.14em;">부 동 산 고 유 번 호</td>
+      <td style="padding:2px 7px;"><span id="v_prop_uid" class="val"></span></td>
+    </tr>
+  </table>
+  <table class="stitch">
+    <colgroup><col style="width:31%"><col style="width:34.5%"><col style="width:34.5%"></colgroup>
+    <tr>
+      <td class="lbl" style="height:8mm;">성명(명칭)</td>
+      <td class="lbl" style="height:8mm;letter-spacing:.18em;">일 &nbsp; 련 &nbsp; 번 &nbsp; 호</td>
+      <td class="lbl" style="height:8mm;letter-spacing:.18em;">비 &nbsp; 밀 &nbsp; 번 &nbsp; 호</td>
+    </tr>
+    <tr style="height:11mm;">
+      <td style="padding:2px 7px;"><span id="v_reg_name" class="val"></span></td>
+      <td style="padding:2px 7px;"><span id="v_serial" class="val"></span></td>
+      <td style="padding:2px 7px;"><span id="v_secret" class="val"></span></td>
+    </tr>
+  </table>
+
+  <!-- 첨부서면 -->
+  <table style="margin-top:8px;">
+    <tr><td class="SH">첨 &nbsp;&nbsp;&nbsp;&nbsp; 부 &nbsp;&nbsp;&nbsp;&nbsp; 서 &nbsp;&nbsp;&nbsp;&nbsp; 면</td></tr>
+  </table>
+  <table class="stitch">
+    <tr>
+      <td class="atch" style="width:50%;">
+        <div class="arow"><span class="an">·전세권설정계약서</span><span class="acnt" id="v_ac1"></span><span>통</span></div>
+        <div class="arow"><span class="an">·도면</span><span class="acnt" id="v_ac2"></span><span>통</span></div>
+        <div class="arow"><span class="an">·위임장</span><span class="acnt" id="v_ac3"></span><span>통</span></div>
+        <div class="arow"><span class="an">·등록면허세영수필확인서</span><span class="acnt" id="v_ac4"></span><span>통</span></div>
+        <div class="arow"><span class="an">·등기신청수수료 영수필확인서</span><span class="acnt" id="v_ac5"></span><span>통</span></div>
+        <div class="arow"><span class="an">·등기필증</span><span class="acnt" id="v_ac6"></span><span>통</span></div>
+      </td>
+      <td class="atch" style="width:50%;">
+        <div class="arow"><span class="an">·주민등록표초본(또는 등본)</span><span class="acnt" id="v_bc1"></span><span>통</span></div>
+        <div style="line-height:1.6;margin-bottom:5px;">·인감증명서나 본인서명사실확인서<br>&nbsp;&nbsp;또는 전자본인서명확인서 발급증<span class="acnt" id="v_bc2"></span>통</div>
+        <div style="margin-top:6px;">〈기 &nbsp; 타〉</div>
+        <div style="border-bottom:.5pt solid #999;margin-top:4px;height:16mm;"></div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- 서명 -->
+  <div class="sig">
+    <div style="text-align:center;margin-bottom:9px;letter-spacing:.2em;font-size:8.5pt;">
+      <span class="iv" id="v_sig_year" style="min-width:4em;"></span>&nbsp;년&nbsp;
+      <span class="iv" id="v_sig_month" style="min-width:2.5em;"></span>&nbsp;월&nbsp;
+      <span class="iv" id="v_sig_day" style="min-width:2.5em;"></span>&nbsp;일
+    </div>
+    <div class="srow">
+      <span class="sn">위 &nbsp;&nbsp; 신청인 &nbsp;</span>
+      <span class="sf" id="v_app1"></span>
+      <span class="sn">㊞ &nbsp;&nbsp;(전화 :&nbsp;</span>
+      <span class="ste" id="v_tel1"></span>
+      <span class="sn">&nbsp;)</span>
+    </div>
+    <div class="srow" style="padding-left:6.5em;">
+      <span class="sf" id="v_app2"></span>
+      <span class="sn">㊞ &nbsp;&nbsp;(전화 :&nbsp;</span>
+      <span class="ste" id="v_tel2"></span>
+      <span class="sn">&nbsp;)</span>
+    </div>
+    <div class="srow" style="margin-bottom:10px;">
+      <span class="sn">(또는)위 대리인 &nbsp;</span>
+      <span class="sf" id="v_agent"></span>
+      <span class="sn">(전화 :&nbsp;</span>
+      <span class="ste" id="v_agent_tel"></span>
+      <span class="sn">&nbsp;)</span>
+    </div>
+    <div style="font-size:8.5pt;letter-spacing:.05em;">
+      <span class="iv" id="v_court" style="min-width:6em;"></span>&nbsp;지방법원 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 등기국 귀중
+    </div>
+  </div>
+
+  <!-- 작성요령 -->
+  <div class="ntc">
+    <div class="ntc-h">- 신청서 작성요령 -</div>
+    <p style="margin-left:6px;">＊ 1. 부동산표시란에 2개 이상의 부동산을 기재하는 경우에는 그 부동산의 일련번호를 기재하여야 합니다.</p>
+    <p style="margin-left:18px;">2. 신청인란 등 해당란에 기재할 여백이 없을 경우에는 별지를 이용합니다.</p>
+    <p style="margin-left:18px;">3. 담당 등기관이 판단하여 위의 첨부서면 외에 추가적인 서면을 요구할 수 있습니다.</p>
+  </div>
+
+</div><!-- /p2 -->
+
+<script>
+window.fillForm = function(data) {
+  function set(id, val) {
+    var el = document.getElementById(id)
+    if (!el || val == null) return
+    if (id === 'td_real_estate') {
+      el.innerHTML = String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')
+    } else {
+      el.textContent = String(val)
+    }
+  }
+  set('td_real_estate', data.realEstate)
+  set('v_cause_year',   data.causeYear)
+  set('v_cause_month',  data.causeMonth)
+  set('v_cause_day',    data.causeDay)
+  set('v_amount',       data.amount)
+  set('v_scope',        data.scope)
+  set('v_start_date',   data.startDate)
+  set('v_end_date',     data.endDate)
+  set('v_ob_name',      data.obligorName)
+  set('v_ob_id',        data.obligorId)
+  set('v_ob_addr',      data.obligorAddr)
+  set('v_hl_name',      data.holderName)
+  set('v_hl_id',        data.holderId)
+  set('v_hl_addr',      data.holderAddr)
+  set('v_reg_tax',      data.regTax)
+  set('v_edu_tax',      data.eduTax)
+  set('v_rural_tax',    data.ruralTax)
+  set('v_tax_total',    data.taxTotal)
+  set('v_fee_cash',     data.feeCash)
+  set('v_fee_payno',    data.feePayno)
+  set('v_bulk_count',   data.bulkCount)
+  set('v_bulk_amt',     data.bulkAmt)
+  set('v_prop_uid',     data.propUid)
+  set('v_reg_name',     data.regName)
+  set('v_serial',       data.serial)
+  set('v_secret',       data.secret)
+  set('v_ac1', data.attContract);  set('v_ac2', data.attMap)
+  set('v_ac3', data.attPow);       set('v_ac4', data.attRegTax)
+  set('v_ac5', data.attFee);       set('v_ac6', data.attCert)
+  set('v_bc1', data.attId);        set('v_bc2', data.attSeal)
+  set('v_sig_year',  data.sigYear)
+  set('v_sig_month', data.sigMonth)
+  set('v_sig_day',   data.sigDay)
+  set('v_app1',      data.applicant1)
+  set('v_tel1',      data.tel1)
+  set('v_app2',      data.applicant2)
+  set('v_tel2',      data.tel2)
+  set('v_agent',     data.agent)
+  set('v_agent_tel', data.agentTel)
+  set('v_court',     data.court)
+}
+
+// Vestra 자동완성: localStorage에서 데이터 읽어 fillForm 호출
+;(function() {
+  try {
+    var raw = localStorage.getItem('vestra_jeonse_filldata')
+    if (raw) {
+      var data = JSON.parse(raw)
+      window.fillForm(data)
+      localStorage.removeItem('vestra_jeonse_filldata')
+    }
+  } catch(e) {}
+})()
+</script>
+</body>
+</html>

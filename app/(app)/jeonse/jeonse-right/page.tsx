@@ -3,6 +3,7 @@
 import { ShieldCheck, Users, FileStack, Building, FileSignature, Clock, CheckCircle, ExternalLink, Bot } from "lucide-react";
 import { ProcedurePageLayout, FlowChart, DocumentChecklist, TipBox, GovernmentLink } from "@/components/jeonse";
 import type { FlowStepData } from "@/components/jeonse";
+import { JeonseRightForm } from "./components/JeonseRightForm";
 
 const steps: FlowStepData[] = [
   {
@@ -137,6 +138,13 @@ export default function JeonseRightPage() {
         <TipBox variant="tip" title="비용 안내">
           등록면허세는 보증금의 약 0.2%입니다. 보증금 3억 기준 약 60만원 정도입니다.
         </TipBox>
+      </div>
+
+      {/* 신청서 자동완성 폼 */}
+      <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" }}>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "4px" }}>신청서 자동완성</h3>
+        <p style={{ fontSize: "13px", color: "#6e6e73" }}>정보를 입력하면 법원 제출용 양식을 자동으로 채워 출력합니다.</p>
+        <JeonseRightForm />
       </div>
     </ProcedurePageLayout>
   );
