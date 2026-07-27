@@ -31,34 +31,38 @@ export default function JeonsePage() {
         description={<>계약 정보를 입력하면 전세권 설정 필요성과<br />사기 위험도를 AI가 자동 분석합니다.</>}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <JeonseInputForm
-          formData={formData}
-          setFormData={setFormData}
-          loading={loading}
-          registryLoading={registryLoading}
-          parsedOwner={parsedOwner}
-          onAnalyze={handleAnalyze}
-          onRegistryUpload={handleRegistryUpload}
-        />
-        <JeonseResultPanel
-          loading={loading}
-          analysis={analysis}
-          fraudRisk={fraudRisk}
-          fraudLoading={fraudLoading}
-          generatedDoc={generatedDoc}
-          activeDocType={activeDocType}
-          guaranteeResult={guaranteeResult}
-          kaptInfo={kaptInfo}
-          checklist={checklist}
-          setChecklist={setChecklist}
-          resultRef={resultRef}
-          formData={formData}
-          parsedOwner={parsedOwner}
-          docLoading={docLoading}
-          onGenerateDoc={handleGenerateDoc}
-          onCopy={copyToClipboard}
-        />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:items-start">
+        <div className="lg:sticky lg:top-5">
+          <JeonseInputForm
+            formData={formData}
+            setFormData={setFormData}
+            loading={loading}
+            registryLoading={registryLoading}
+            parsedOwner={parsedOwner}
+            onAnalyze={handleAnalyze}
+            onRegistryUpload={handleRegistryUpload}
+          />
+        </div>
+        <div className="lg:sticky lg:top-5">
+          <JeonseResultPanel
+            loading={loading}
+            analysis={analysis}
+            fraudRisk={fraudRisk}
+            fraudLoading={fraudLoading}
+            generatedDoc={generatedDoc}
+            activeDocType={activeDocType}
+            guaranteeResult={guaranteeResult}
+            kaptInfo={kaptInfo}
+            checklist={checklist}
+            setChecklist={setChecklist}
+            resultRef={resultRef}
+            formData={formData}
+            parsedOwner={parsedOwner}
+            docLoading={docLoading}
+            onGenerateDoc={handleGenerateDoc}
+            onCopy={copyToClipboard}
+          />
+        </div>
       </div>
       {analysis && <SourceBadge pageKey="jeonse_analysis" className="mt-4" />}
     </div>

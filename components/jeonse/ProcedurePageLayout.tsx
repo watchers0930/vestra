@@ -32,15 +32,12 @@ export default function ProcedurePageLayout({
       />
 
       {sidebar ? (
-        <>
-          <style>{`@media (min-width: 1024px) { .procedure-grid { display: grid !important; grid-template-columns: 1fr 360px !important; } }`}</style>
-          <div className="procedure-grid" style={{ display: "flex", flexDirection: "column", gap: "20px", alignItems: "start" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px", minWidth: 0 }}>{children}</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>{sidebar}</div>
-          </div>
-        </>
+        <div className="flex flex-col lg:flex-row items-start gap-5">
+          <div className="flex flex-col gap-5 min-w-0 flex-1 lg:sticky lg:top-5">{children}</div>
+          <div className="flex flex-col gap-5 w-full lg:w-[360px] lg:sticky lg:top-5">{sidebar}</div>
+        </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>{children}</div>
+        <div className="flex flex-col gap-5">{children}</div>
       )}
     </div>
   );
