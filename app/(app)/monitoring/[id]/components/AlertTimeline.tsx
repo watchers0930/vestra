@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CheckCircle, FileSearch, Info, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardContent } from "@/components/common/Card";
@@ -134,6 +134,28 @@ export function AlertTimeline({ alerts, deposit, property, onMarkRead }: Props) 
   const router = useRouter();
   const canIssueRegistry = !!property.commUniqueNo && !!property.ownerName;
   const [selectedEmergencyAlert, setSelectedEmergencyAlert] = useState<SelectedEmergencyAlert | null>(null);
+
+  // 페이지 진입 시 미읽음 긴급 알림이 있으면 자동 팝업 (세션당 1회)
+  useEffect(() => {
+    const sessionKey = `vestra_auto_emergency_shown_${property.id}`;
+    if (sessionStorage.getItem(sessionKey)) return;
+
+    const firstUnread = alerts.find(
+      (a) => !a.isRead && isEmergencyAlert(a.changeType, a.riskLevel)
+    );
+    if (!firstUnread) return;
+
+    sessionStorage.setItem(sessionKey, "1");
+    queueMicrotask(() =>
+      setSelectedEmergencyAlert({
+        id: firstUnread.id,
+        changeType: firstUnread.changeType,
+        summary: firstUnread.summary,
+        riskLevel: firstUnread.riskLevel,
+        createdAt: firstUnread.createdAt,
+      })
+    );
+  }, [alerts, property.id]);
 
   function openRegistryIssue() {
     if (!canIssueRegistry) return;
