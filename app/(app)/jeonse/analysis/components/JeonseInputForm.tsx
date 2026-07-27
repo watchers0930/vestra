@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { Shield, FileText, Loader2, UploadCloud, CheckCircle2, User } from "lucide-react";
-import { FormInput, SliderInput, TabButtons } from "@/components/forms";
+import { FormInput, TabButtons } from "@/components/forms";
 import { propertyTypes } from "../constants";
 import type { JeonseFormData } from "../types";
 
@@ -15,6 +15,36 @@ interface Props {
   onAnalyze: () => void;
   onRegistryUpload: (file: File) => void;
 }
+
+function formatWon(value: number): string {
+  return value > 0 ? value.toLocaleString("ko-KR") : "";
+}
+
+function parseWon(raw: string): number {
+  const digits = raw.replace(/[^0-9]/g, "");
+  return digits ? Number(digits) : 0;
+}
+
+const MONEY_INPUT_STYLE: React.CSSProperties = {
+  width: "100%",
+  padding: "10px 12px",
+  borderRadius: "10px",
+  border: "1px solid rgba(0,0,0,0.12)",
+  fontSize: "14px",
+  fontWeight: 600,
+  color: "#1d1d1f",
+  background: "#fff",
+  textAlign: "right" as const,
+  outline: "none",
+};
+
+const MONEY_LABEL_STYLE: React.CSSProperties = {
+  display: "block",
+  fontSize: "12px",
+  fontWeight: 600,
+  color: "#6e6e73",
+  marginBottom: "6px",
+};
 
 export function JeonseInputForm({ formData, setFormData, loading, registryLoading, parsedOwner, onAnalyze, onRegistryUpload }: Props) {
   const update = (patch: Partial<JeonseFormData>) => setFormData({ ...formData, ...patch });
@@ -138,32 +168,51 @@ export function JeonseInputForm({ formData, setFormData, loading, registryLoadin
         />
       </div>
 
-      <SliderInput
-        label="보증금"
-        value={formData.deposit}
-        onChange={(v) => update({ deposit: v })}
-        min={10000000}
-        max={2000000000}
-        step={10000000}
-      />
-
-      <SliderInput
-        label="주택 시세 (매매가)"
-        value={formData.propertyPrice}
-        onChange={(v) => update({ propertyPrice: v })}
-        min={100000000}
-        max={3000000000}
-        step={10000000}
-      />
-
-      <SliderInput
-        label="선순위 채권액 (근저당 등)"
-        value={formData.seniorLiens}
-        onChange={(v) => update({ seniorLiens: v })}
-        min={0}
-        max={2000000000}
-        step={10000000}
-      />
+      {/* 보증금 / 주택시세 / 선순위채권 3열 입력 */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+        <div>
+          <label style={MONEY_LABEL_STYLE}>보증금</label>
+          <div style={{ position: "relative" }}>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={formatWon(formData.deposit)}
+              onChange={(e) => update({ deposit: parseWon(e.target.value) })}
+              placeholder="0"
+              style={MONEY_INPUT_STYLE}
+            />
+            <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", fontSize: "12px", color: "#aeaeb2", pointerEvents: "none" }}>원</span>
+          </div>
+        </div>
+        <div>
+          <label style={MONEY_LABEL_STYLE}>주택시세 (매매가)</label>
+          <div style={{ position: "relative" }}>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={formatWon(formData.propertyPrice)}
+              onChange={(e) => update({ propertyPrice: parseWon(e.target.value) })}
+              placeholder="0"
+              style={MONEY_INPUT_STYLE}
+            />
+            <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", fontSize: "12px", color: "#aeaeb2", pointerEvents: "none" }}>원</span>
+          </div>
+        </div>
+        <div>
+          <label style={MONEY_LABEL_STYLE}>선순위채권액 (근저당 등)</label>
+          <div style={{ position: "relative" }}>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={formatWon(formData.seniorLiens)}
+              onChange={(e) => update({ seniorLiens: parseWon(e.target.value) })}
+              placeholder="0"
+              style={MONEY_INPUT_STYLE}
+            />
+            <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", fontSize: "12px", color: "#aeaeb2", pointerEvents: "none" }}>원</span>
+          </div>
+        </div>
+      </div>
 
       <div>
         <label style={{ display: "block", fontSize: "12.5px", fontWeight: 600, color: "#1d1d1f", marginBottom: "8px" }}>
