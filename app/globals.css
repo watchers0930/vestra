@@ -307,3 +307,28 @@ body {
     top: 24px;
   }
 }
+
+/* Procedure page two-column sticky layout */
+.two-col-flex {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+}
+.two-col-sidebar {
+  width: 100%;
+}
+@media (min-width: 1024px) {
+  .two-col-flex {
+    flex-direction: row;
+  }
+  .two-col-sidebar {
+    width: 360px;
+    flex-shrink: 0;
+  }
+  .col-sticky {
+    position: sticky;
+    top: 20px;
+    align-self: flex-start;
+  }
+}

@@ -32,7 +32,7 @@ export default function JeonsePage() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:items-start">
-        <div className="lg:sticky lg:top-5">
+        <div className="col-sticky">
           <JeonseInputForm
             formData={formData}
             setFormData={setFormData}
@@ -43,7 +43,7 @@ export default function JeonsePage() {
             onRegistryUpload={handleRegistryUpload}
           />
         </div>
-        <div className="lg:sticky lg:top-5">
+        <div className="col-sticky">
           <JeonseResultPanel
             loading={loading}
             analysis={analysis}

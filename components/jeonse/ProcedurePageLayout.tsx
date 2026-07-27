@@ -32,9 +32,9 @@ export default function ProcedurePageLayout({
       />
 
       {sidebar ? (
-        <div className="flex flex-col lg:flex-row items-start gap-5">
-          <div className="flex flex-col gap-5 min-w-0 flex-1 lg:sticky lg:top-5">{children}</div>
-          <div className="flex flex-col gap-5 w-full lg:w-[360px] lg:sticky lg:top-5">{sidebar}</div>
+        <div className="two-col-flex">
+          <div className="col-sticky flex flex-col gap-5 min-w-0 flex-1">{children}</div>
+          <div className="col-sticky two-col-sidebar flex flex-col gap-5">{sidebar}</div>
         </div>
       ) : (
         <div className="flex flex-col gap-5">{children}</div>
