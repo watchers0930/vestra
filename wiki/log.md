@@ -1,5 +1,29 @@
 # Wiki Compile Log
 
+## 2026-07-27 — 증분 컴파일
+
+- 모드: codebase
+- 소스 파일 변경: 코드 파일 직접 반영 (knowledge_files 외 세션 변경 사항 포함)
+- 업데이트 토픽: 3개 (frontend, api, features)
+- 신규 토픽/개념: 없음
+
+### 토픽별 변경 요약
+
+| 토픽 | 변경 유형 | 주요 추가 내용 |
+|------|-----------|----------------|
+| frontend | 섹션 업데이트 | 500줄 분리 완료 상태 갱신, Tailwind v4 lg: prefix 미작동 이슈, overflow-x sticky 차단 이슈, 금액 입력 padding 이슈 |
+| api | 항목 추가 | generate-document jeonse/lease 법원 공식 양식 Key Decision(8번), analyze vs jeonse/lease 분기 Gotcha |
+| features | 항목 확장 | 보증보험 딥링크(HUG/HF/SGI), 법원 공식 양식 생성(임차권등기명령+전세권설정등기), 등기부→임대인 자동 입력 |
+
+### 구현 변경 내역 (이번 세션)
+- `app/globals.css`: `overflow-x: hidden` → 모바일(`max-width: 1023px`) 전용 제한, `.two-col-flex` / `.two-col-sidebar` / `.col-sticky` 클래스 추가
+- `components/jeonse/ProcedurePageLayout.tsx`: `lg:flex-row` / `lg:sticky` → 커스텀 CSS 클래스로 교체
+- `app/api/generate-document/route.ts`: `type=jeonse` / `type=lease` OpenAI 제거 → 법원 공식 양식 정적 템플릿
+- `app/(app)/jeonse/analysis/hooks/useJeonseAnalysis.ts`: `handleGenerateDoc`에 `landlordName: parsedOwner` 전달
+- `app/(app)/jeonse/analysis/components/JeonseInputForm.tsx`: `MONEY_INPUT_STYLE.padding` `"10px 12px"` → `"10px 32px 10px 12px"`
+
+---
+
 ## 2026-06-22 — 증분 컴파일
 
 - 모드: codebase

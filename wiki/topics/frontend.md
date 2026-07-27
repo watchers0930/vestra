@@ -1,6 +1,6 @@
 ---
 topic: frontend
-last_compiled: 2026-04-18
+last_compiled: 2026-07-27
 sources: 5
 ---
 
@@ -182,27 +182,29 @@ SCR 서울신용평가 사업성평가보고서와 동일한 5장+부록 구조(
 
 ## Gotchas [coverage: high -- 5 sources]
 
-### 500줄 초과 파일 (리팩토링 대기)
+### 500줄 초과 파일 리팩토링 완료 (2026-06)
 
-`CLAUDE.md`에 명시된 파일 분리 원칙(500줄 제한)에 따라 아래 파일들이 리팩토링 대기 중. `refactor/file-split` 브랜치에서 파일 하나씩 순서대로 진행, 완료 후 빌드 확인(`npm run build`) 후 다음 파일로 이동.
+`CLAUDE.md`에 명시된 파일 분리 원칙(500줄 제한)에 따라 리팩토링 완료됨. 분리된 컴포넌트는 해당 라우트 아래 `components/`, `hooks/`, `lib/`으로 배치.
 
-| 파일 | 현재 줄 수 | 상태 |
-|------|-----------|------|
-| `app/(app)/admin/page.tsx` | 1,099줄 | 작업 대기 |
-| `app/(app)/prediction/page.tsx` | 950줄 | 작업 대기 |
-| `app/(app)/contract/page.tsx` | 882줄 | 작업 대기 |
-| `app/(app)/dashboard/page.tsx` | 664줄 | 작업 대기 |
-| `app/(app)/expert-connect/page.tsx` | 621줄 | 작업 대기 |
-| `app/(map)/price-map/page.tsx` | 616줄 | 작업 대기 |
-| `app/(app)/rights/page.tsx` | 597줄 | 작업 대기 |
-| `app/(app)/jeonse/analysis/page.tsx` | 518줄 | 작업 대기 |
-| `app/(app)/feasibility/page.tsx` | 508줄 | 작업 대기 |
-
-분리된 컴포넌트는 해당 라우트 아래 `components/` 폴더에 배치, 상태·로직은 `hooks/` 또는 `lib/`으로 분리.
+| 파일 | 분리 전 | 분리 후 | 상태 |
+|------|--------|--------|------|
+| `app/(app)/admin/page.tsx` | 1,099줄 | 173줄 | ✅ 완료 |
+| `app/(app)/prediction/page.tsx` | 950줄 | 432줄 | ✅ 완료 |
+| `app/(app)/contract/page.tsx` | 882줄 | 232줄 | ✅ 완료 |
+| `app/(app)/dashboard/page.tsx` | 664줄 | 222줄 | ✅ 완료 |
+| `app/(app)/expert-connect/page.tsx` | 621줄 | 52줄 | ✅ 완료 |
+| `app/(map)/price-map/page.tsx` | 616줄 | 85줄 | ✅ 완료 |
+| `app/(app)/rights/page.tsx` | 597줄 | 236줄 | ✅ 완료 |
+| `app/(app)/jeonse/analysis/page.tsx` | 518줄 | 57줄 | ✅ 완료 |
+| `app/(app)/feasibility/page.tsx` | 508줄 | 87줄 | ✅ 완료 |
 
 ### Tailwind CSS v4 arbitrary value 미적용 이슈
 
 `CLAUDE.md`에 명시된 스타일링 방식: Tailwind CSS v4 (postcss 플러그인 방식). v4에서는 `w-[123px]` 같은 arbitrary value 클래스가 동적으로 생성될 때 JIT 컴파일에 포함되지 않는 경우가 있음. **우회 방법: `style={{ width: '123px' }}` 형태의 인라인 스타일로 대체.** 동적으로 계산된 크기값이나 런타임에 결정되는 값에는 항상 인라인 스타일 사용.
+
+**Tailwind v4 responsive prefix 미작동 (2026-07 확인)**: `lg:sticky`, `lg:flex-row` 같은 responsive prefix 클래스도 v4 JIT에서 생성되지 않는 경우가 있음. **우회 방법: `globals.css`에 `@media (min-width: 1024px)` 블록으로 직접 작성.** 이 프로젝트에서는 `.two-col-flex`, `.two-col-sidebar`, `.col-sticky` 커스텀 클래스를 `globals.css`에 추가하여 해결함.
+
+**`overflow-x: hidden` on body → `position: sticky` 차단 (2026-07 확인)**: `overflow-x: hidden`을 html/body에 적용하면 브라우저가 `overflow-y: auto`를 강제하여 body가 스크롤 컨테이너가 됨 → `position: sticky`가 body 기준으로 동작하여 뷰포트 기준 sticky가 차단됨. `overflow-x: clip`도 Chromium bug(crbug.com/1090435)로 동일하게 차단. **해결: `@media (max-width: 1023px)`에만 `overflow-x: hidden` 적용** — 데스크톱에서는 overflow 제한 없이 sticky 정상 작동.
 
 ### 카카오 지도 SDK SSR 주의
 
@@ -219,6 +221,10 @@ SCR 서울신용평가 사업성평가보고서와 동일한 5장+부록 구조(
 ### 구독 취소 UI 미연결
 
 `POST /api/subscription/cancel` API는 완성되어 있으나, 프로필 페이지에 취소 버튼 UI가 없음. 구독 플랜 전환 버튼도 onClick 핸들러 없음 (display only). "결제 시스템 준비 중" 상태.
+
+### 금액 입력 필드 "원" 레이블 겹침 방지
+
+`JeonseInputForm.tsx`의 금액 입력 필드(`MONEY_INPUT_STYLE`)는 우측에 절대 위치된 "원" 레이블(`right: 10px`)과 겹치지 않도록 `padding-right: 32px`을 적용해야 함. `padding: "10px 12px"` 형태로 설정 시 대형 금액(300,000,000원 등) 입력에서 레이블 겹침 발생.
 
 ### PWA 서비스 워커 부재
 

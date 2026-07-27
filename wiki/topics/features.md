@@ -1,6 +1,6 @@
 ---
 topic: features
-last_compiled: 2026-06-22
+last_compiled: 2026-07-27
 sources: 14
 ---
 
@@ -115,7 +115,13 @@ VESTRA는 AI 기반 부동산 자산관리 플랫폼으로, 등기부등본 권�
 | `/jeonse/lease-registration` | 임차권등기명령 안내 |
 | `/jeonse/lease-report` | 주택임대차 신고 안내 |
 
-전세 분석 결과에 보증보험 가입 가능성 카드(`GuaranteeInsuranceCard`) 통합 — HUG/HF/SGI 3개 기관 자동 판정 및 예상 보증료 산출
+전세 분석 결과에 보증보험 가입 가능성 카드(`GuaranteeInsuranceCard`) 통합 — HUG/HF/SGI 3개 기관 자동 판정 및 예상 보증료 산출, 각 기관 신청 페이지 딥링크 제공 (HUG: khug.or.kr, HF: hf.go.kr, SGI: sgic.co.kr)
+
+법원 공식 양식 문서 자동 생성:
+- **임차권등기명령 신청서**: 주택임대차보호법 제3조의3 기반 공식 양식. 등기부등본 파싱 결과(`parsedOwner`)를 피신청인(임대인) 성명에 자동 입력.
+- **전세권설정등기 신청서**: 부동산등기법 기반 공식 양식. 보증금·계약기간·임대인 성명 자동 입력.
+
+관련 API: `POST /api/generate-document` (`type=jeonse`, `type=lease`) — OpenAI 미호출, 결정적 템플릿 반환.
 
 ---
 
@@ -198,13 +204,13 @@ NextAuth v5 기반 소셜 로그인 (Google, 네이버 — 카카오 설정 중)
 | 시세지도 | `/price-map` | MOLIT 실거래가 + 카카오 지오코딩 |
 | 신용 조회 | `credit-api.ts` | KCB/NICE Strategy 패턴, Mock 우선 |
 | 등기 모니터링 | Cron `/api/cron/registry-monitor` | 매일 09:00, 배치 50건, SHA-256 해시 비교 |
-| 보증보험 안내 | `guarantee-insurance.ts` | HUG/HF/SGI 규칙 엔진 + 보증료 계산 + DB 규칙 관리 |
+| 보증보험 안내 | `guarantee-insurance.ts` | HUG/HF/SGI 규칙 엔진 + 보증료 계산 + DB 규칙 관리 + 각 기관 신청 딥링크 |
 | 상호검증 | `/verification` | 임대인/임차인 교차 검증, 공유 리포트 |
 | 알림 인프라 | `notification-sender.ts` (217줄) | 카카오 알림톡 (Bizm API), Mock 모드 폴백 |
 | 뉴스·정책 수집 | `news-collector.ts` + Cron 매일 06:00 | RSS 5개 피드, 키워드 자동 분류, 90일 보관 정책 |
 | 대시보드 | `/dashboard` | 보유 자산 포트폴리오 |
 | 학술 검색 | `/api/scholar/search` | 법률 판례/논문 검색 |
-| 문서 생성 | `/api/generate-document` | 전세권설정등기 신청서 등 |
+| 문서 생성 | `/api/generate-document` | 임차권등기명령 신청서, 전세권설정등기 신청서 (법원 공식 양식, 등기부 파싱 데이터 자동 입력) |
 | API 데이터 허브 | `/api-hub` | 공공 API 통합 대시보드 |
 | 임대인 추적 | `landlord-profiler.ts` | 동일 임대인 소유 물건 자동 수집, 안전 등급(A~F) 산정 |
 

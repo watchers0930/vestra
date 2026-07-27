@@ -1,6 +1,6 @@
 ---
 topic: api
-last_compiled: 2026-06-22
+last_compiled: 2026-07-27
 sources: 6
 ---
 
@@ -263,6 +263,8 @@ middleware.ts
 
 7. **`analyze-unified` Rate Limit 특별 설정** — 다른 분석 API(30/min)의 1/3인 10/min으로 제한한다. 내부적으로 V-Score, 교차분석, 사기위험도 등 복수의 무거운 엔진을 모두 실행하기 때문이다.
 
+8. **`generate-document` jeonse/lease 타입 — 법원 공식 양식 적용 (2026-07)** — `/api/generate-document`의 `type=jeonse`(전세권설정등기 신청서)와 `type=lease`(임차권등기명령 신청서)는 OpenAI 호출을 제거하고 법원 서식 기반 정적 템플릿으로 대체됨. 비결정적 AI 생성 대신 부동산등기법/주택임대차보호법 제3조의3 기반의 공식 법원 양식을 반환. 등기부등본에서 파싱된 `landlordName`(임대인 성명)과 `propertyAddress`를 자동 삽입하며, 미입력 필드는 `(기재 필요)` 플레이스홀더로 표시. `type=analyze`는 여전히 OpenAI GPT-4.1-mini를 사용.
+
 ---
 
 ## Gotchas
@@ -284,6 +286,8 @@ middleware.ts
 - **CRON_SECRET 검증** — cron 엔드포인트는 프로덕션 환경에서 `Authorization: Bearer ${CRON_SECRET}` 헤더 검증을 강제한다. 개발 환경에서는 무제한.
 
 - **파라미터 실증 미검증** — V-Score 가중치, 감점 수치(30/25/20점), 증폭계수(1.3~1.7), 15-피처 가중치 등은 전문가 휴리스틱 초기값이며 실제 사고 데이터 기반 캘리브레이션이 완료되지 않았다. API 응답의 위험도 수치는 참고용으로 해석해야 한다.
+
+- **`generate-document` analyze vs jeonse/lease 분기** — `type=analyze`는 OpenAI + Cost Guard 적용. `type=jeonse`/`type=lease`는 OpenAI 미호출 — Cost Guard가 트리거되어도 법원 양식 문서는 항상 반환됨. 단, Rate Limit(30/min)은 모든 타입에 동일하게 적용.
 
 ---
 

@@ -1,6 +1,6 @@
 # VESTRA Wiki INDEX
 
-> **컴파일 날짜**: 2026-06-22
+> **컴파일 날짜**: 2026-07-27
 > **프로젝트 버전**: v5.11.0
 > **배포 URL**: https://vestra-plum.vercel.app
 > **총 토픽**: 7개 | **개념 아티클**: 2개 | **소스 문서**: 51개
@@ -45,7 +45,10 @@
 | API 엔드포인트 목록이 필요하다 | api |
 | Rate Limit 정책은? | api, security |
 | 페이지 라우팅 구조는? | frontend |
-| Tailwind v4 arbitrary value 이슈? | frontend |
+| Tailwind v4 arbitrary value / responsive prefix 이슈? | frontend |
+| overflow-x: hidden이 sticky를 차단하는 이슈? | frontend |
+| 법원 공식 양식 (임차권등기명령, 전세권설정등기)? | features, api |
+| 보증보험 HUG/HF/SGI 신청 딥링크? | features |
 | OWASP Top 10 커버리지는? | security |
 | 암호화·CSRF·XSS 방어는? | security |
 | 접근 권한 매트릭스(역할별)? | security |
@@ -136,6 +139,10 @@
 
 ## 최근 변경 이력
 
+- **2026-07-27**: 3개 토픽 증분 업데이트 (코드 구현 반영)
+  - frontend: 500줄 파일 분리 완료 상태 갱신, Tailwind v4 responsive prefix 미작동 이슈 + overflow-x sticky 차단 이슈 추가, 금액 입력 padding 이슈 추가
+  - api: generate-document jeonse/lease 타입 법원 공식 양식 적용 Key Decision 추가
+  - features: 보증보험 기관별 신청 딥링크, 법원 공식 양식 자동 생성(임차권등기명령/전세권설정등기), 등기부 파싱→임대인 자동 입력 반영
 - **2026-06-22**: 신규 소스 16개 추가 반영 (총 51개) — 6개 토픽 업데이트, 개념 아티클 2개 신규 생성
   - deployment: 2단계 배포 흐름(preview→promote), 환경변수 전체 목록(15종), smoke check 추가
   - platform-overview: v4.5.1 기준 스케일 지표 갱신(51 API / 27 pages / 80 components / 28 DB models), 9.2/10 A등급 추가
