@@ -132,7 +132,7 @@ export default function VScoreRadar({
                 x={p.x}
                 y={p.y - 6}
                 textAnchor="middle"
-                className="fill-current text-[10px] font-medium opacity-70"
+                className="fill-current text-[12px] font-medium opacity-70"
               >
                 {AXIS_LABELS[i]}
               </text>
@@ -141,7 +141,7 @@ export default function VScoreRadar({
                 y={p.y + 8}
                 textAnchor="middle"
                 fill={AXIS_COLORS[i]}
-                className="text-[11px] font-bold"
+                className="text-[12px] font-bold"
               >
                 {score}
               </text>

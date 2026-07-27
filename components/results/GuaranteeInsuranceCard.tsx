@@ -188,7 +188,7 @@ export function GuaranteeInsuranceCard({ result, formData }: GuaranteeInsuranceC
       )}
 
       {/* 면책 */}
-      <p className="mt-3 text-[10px] text-[#8e8e93] leading-relaxed">
+      <p className="mt-3 text-[12px] text-[#8e8e93] leading-relaxed">
         판단 기준일: {result.checkedAt} | {result.disclaimer}
       </p>
     </Card>

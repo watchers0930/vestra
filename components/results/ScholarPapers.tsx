@@ -118,7 +118,7 @@ export function ScholarPapers({ keywords }: ScholarPapersProps) {
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`inline-flex text-[10px] font-medium px-1.5 py-0.5 rounded ${sourceBadgeColor(paper.source)}`}>
+                  <span className={`inline-flex text-[12px] font-medium px-1.5 py-0.5 rounded ${sourceBadgeColor(paper.source)}`}>
                     {sourceLabel(paper.source)}
                   </span>
                   {paper.year && (
@@ -184,7 +184,7 @@ export function ScholarPapers({ keywords }: ScholarPapersProps) {
         ))}
       </div>
 
-      <p className="text-[11px] text-gray-400 mt-4 border-t border-gray-100 pt-3">
+      <p className="text-[12px] text-gray-400 mt-4 border-t border-gray-100 pt-3">
         위 논문은 자동 검색된 결과이며, 분석 내용과 직접적 관련이 없을 수 있습니다.
         학술 자료의 정확성은 원문을 직접 확인하시기 바랍니다.
       </p>

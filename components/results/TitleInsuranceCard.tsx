@@ -117,7 +117,7 @@ export default function TitleInsuranceCard({ result }: TitleInsuranceCardProps) 
         </div>
 
         {/* 면책 */}
-        <p className="mt-4 text-[10px] text-muted text-center">
+        <p className="mt-4 text-[12px] text-muted text-center">
           예상 보험료는 참고용이며, 실제 보험료는 보험사 심사 후 확정됩니다.
           VESTRA는 보험 중개·판매를 하지 않습니다.
         </p>

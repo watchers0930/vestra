@@ -96,7 +96,7 @@ export default function IntegratedReport({ data }: IntegratedReportProps) {
                 )}
               </div>
 
-              <div className="text-[10px] text-muted">
+              <div className="text-[12px] text-muted">
                 리포트 ID: {data.reportId} | 생성: {new Date(data.generatedAt).toLocaleString("ko-KR")} | v{data.version}
               </div>
             </div>
@@ -181,7 +181,7 @@ export default function IntegratedReport({ data }: IntegratedReportProps) {
                 </div>
               )}
 
-              <div className="mt-2 text-[10px] text-muted">
+              <div className="mt-2 text-[12px] text-muted">
                 알고리즘: {data.vScore.metadata.algorithmId} | 신뢰도: {(data.vScore.metadata.confidenceLevel * 100).toFixed(0)}%
               </div>
             </CardContent>
@@ -365,7 +365,7 @@ export default function IntegratedReport({ data }: IntegratedReportProps) {
         )}
 
         {/* ─── 7. 면책조항 ─── */}
-        <div className="text-[10px] text-muted text-center py-4 border-t">
+        <div className="text-[12px] text-muted text-center py-4 border-t">
           본 리포트는 AI 기반 자동 분석 결과이며, 법률적 효력이 없습니다.
           정확한 판단을 위해 전문가(법무사/변호사/공인중개사) 상담을 권고합니다.
           | VESTRA v{data.version}

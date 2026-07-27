@@ -112,9 +112,9 @@ function DiagnosisRow({ item }: { item: DiagnosisItem }) {
           {/* 근거 */}
           {item.evidence && item.evidence.length > 0 && (
             <div className="ml-10 space-y-1">
-              <p className="text-[10px] font-medium text-muted">근거</p>
+              <p className="text-[12px] font-medium text-muted">근거</p>
               {item.evidence.map((e, i) => (
-                <div key={i} className="text-[11px] text-muted pl-2 border-l-2 border-gray-200">
+                <div key={i} className="text-[12px] text-muted pl-2 border-l-2 border-gray-200">
                   {e}
                 </div>
               ))}
