@@ -27,7 +27,7 @@ function parseWon(raw: string): number {
 
 const MONEY_INPUT_STYLE: React.CSSProperties = {
   width: "100%",
-  padding: "10px 12px",
+  padding: "10px 32px 10px 12px",
   borderRadius: "10px",
   border: "1px solid rgba(0,0,0,0.12)",
   fontSize: "14px",
