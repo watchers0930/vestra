@@ -69,7 +69,7 @@ export function useJeonseAnalysis() {
       const res = await fetch("/api/generate-document", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "analyze", ...formData, registrySummary }),
+        body: JSON.stringify({ type: "analyze", ...formData, registrySummary, landlordName: parsedOwner || undefined }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
