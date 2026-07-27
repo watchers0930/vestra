@@ -110,10 +110,14 @@ export function GuaranteeInsuranceCard({ result, formData }: GuaranteeInsuranceC
               {/* 스마트 딥링크 패널 */}
               {r.status !== "ineligible" && isOpen && (
                 <div className="border-t border-[#e5e5e7] bg-[#f9fafb] p-4 space-y-4">
+                  {/* 안내 문구 */}
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 leading-relaxed">
+                    아래 정보를 <span className="font-semibold">복사(📋)</span>해서 신청 페이지 각 항목에 붙여넣으세요.
+                  </p>
                   {/* 입력 정보 요약 */}
                   {formData && (
                     <div>
-                      <p className="text-xs font-semibold text-[#3c3c43] mb-2">신청 시 입력할 정보</p>
+                      <p className="text-xs font-semibold text-[#3c3c43] mb-2">신청 페이지 입력값</p>
                       <div className="space-y-1.5">
                         {[
                           { label: "부동산 주소", value: formData.propertyAddress || "미입력" },
