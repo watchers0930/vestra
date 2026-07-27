@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Printer, Info } from "lucide-react";
+import { findCourtFromAddress } from "@/lib/court-jurisdiction";
 
 interface FormState {
   propertyAddress: string;
@@ -79,7 +80,14 @@ export function JeonseRightForm() {
   const [fromAnalysis] = useState<boolean>(initState.fromAnalysis);
 
   const set = (key: keyof FormState, val: string) =>
-    setForm(prev => ({ ...prev, [key]: val }));
+    setForm(prev => {
+      const next = { ...prev, [key]: val };
+      if (key === "propertyAddress" && val) {
+        const detected = findCourtFromAddress(val);
+        if (detected) next.court = detected;
+      }
+      return next;
+    });
 
   const depositNum = parseInt(form.deposit.replace(/[^0-9]/g, ""), 10) || 0;
   const regTax = Math.floor(depositNum * 0.002);
