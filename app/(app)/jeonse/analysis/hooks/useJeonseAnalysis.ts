@@ -38,6 +38,7 @@ export function useJeonseAnalysis() {
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [registryLoading, setRegistryLoading] = useState(false);
   const [parsedOwner, setParsedOwner] = useState("");
+  const [registrySummary, setRegistrySummary] = useState<Record<string, unknown> | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
   // localStorage 주소 프리필
@@ -68,7 +69,7 @@ export function useJeonseAnalysis() {
       const res = await fetch("/api/generate-document", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "analyze", ...formData }),
+        body: JSON.stringify({ type: "analyze", ...formData, registrySummary }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -86,6 +87,10 @@ export function useJeonseAnalysis() {
           mortgageRatio: formData.propertyPrice > 0
             ? Math.min(100, (formData.seniorLiens / formData.propertyPrice) * 100)
             : 0,
+          ...(registrySummary && {
+            seizureCount: registrySummary.hasSeizure ? 1 : 0,
+            provisionalSeizureCount: registrySummary.hasProvisionalSeizure ? 1 : 0,
+          }),
           isBrokerRegistered: true,
           hasDepositInsurance: false,
         }),
@@ -158,6 +163,7 @@ export function useJeonseAnalysis() {
         setFormData((prev) => ({ ...prev, seniorLiens: data.totalMortgage }));
       }
       if (data.ownerName) setParsedOwner(data.ownerName);
+      if (data.registrySummary) setRegistrySummary(data.registrySummary);
       showToast("등기부등본에서 정보를 가져왔습니다.", "success");
     } catch {
       showToast("등기부등본 파싱에 실패했습니다. 텍스트 기반 PDF인지 확인해 주세요.");

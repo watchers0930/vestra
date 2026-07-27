@@ -31,7 +31,20 @@ export async function POST(req: NextRequest) {
     // 선순위 채권액: summary에서 직접 가져옴 (이미 말소 제외 합계)
     const totalMortgage = parsed.summary.totalMortgageAmount ?? 0;
 
-    return NextResponse.json({ address, ownerName, totalMortgage });
+    // 등기 위험 요소 요약 (전세권 설정 판단에 활용)
+    const registrySummary = {
+      hasSeizure: parsed.summary.hasSeizure,
+      hasProvisionalSeizure: parsed.summary.hasProvisionalSeizure,
+      hasProvisionalDisposition: parsed.summary.hasProvisionalDisposition,
+      hasAuctionOrder: parsed.summary.hasAuctionOrder,
+      hasTrust: parsed.summary.hasTrust,
+      activeGapguEntries: parsed.summary.activeGapguEntries,
+      activeEulguEntries: parsed.summary.activeEulguEntries,
+      ownershipTransferCount: parsed.summary.ownershipTransferCount,
+      totalJeonseAmount: parsed.summary.totalJeonseAmount ?? 0,
+    };
+
+    return NextResponse.json({ address, ownerName, totalMortgage, registrySummary });
   } catch {
     return NextResponse.json({ error: "등기부등본 파싱 중 오류가 발생했습니다." }, { status: 500 });
   }

@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
       monthlyRent,
       propertyPrice,
       seniorLiens,
+      registrySummary,
       startDate: rawStartDate,
       endDate: rawEndDate,
       propertyType: rawPropertyType,
@@ -73,7 +74,18 @@ export async function POST(req: NextRequest) {
 - 전세가율: ${propertyPrice > 0 ? ((deposit / propertyPrice) * 100).toFixed(1) + "%" : "미산출"}
 - 월세: ${monthlyRent?.toLocaleString()}원
 - 계약기간: ${startDate} ~ ${endDate}
-
+${registrySummary ? `
+[등기부등본 파싱 결과]
+- 압류 여부: ${registrySummary.hasSeizure ? "있음 ⚠️" : "없음"}
+- 가압류 여부: ${registrySummary.hasProvisionalSeizure ? "있음 ⚠️" : "없음"}
+- 가처분 여부: ${registrySummary.hasProvisionalDisposition ? "있음 ⚠️" : "없음"}
+- 경매개시결정 여부: ${registrySummary.hasAuctionOrder ? "있음 🚨" : "없음"}
+- 신탁등기 여부: ${registrySummary.hasTrust ? "있음 ⚠️" : "없음"}
+- 활성 갑구 건수: ${registrySummary.activeGapguEntries}건
+- 활성 을구 건수: ${registrySummary.activeEulguEntries}건
+- 소유권 이전 횟수: ${registrySummary.ownershipTransferCount}회
+- 기등록 전세금 합계: ${registrySummary.totalJeonseAmount ? Number(registrySummary.totalJeonseAmount).toLocaleString() + "원" : "없음"}
+` : ""}
 전세권 설정 필요 여부를 판단하고 JSON 형식으로 응답하세요.`,
           },
         ],
