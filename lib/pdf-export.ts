@@ -50,11 +50,22 @@ export async function exportToPdf({
       backgroundColor: "#ffffff",
       logging: false,
       ignoreElements: (el) => {
-        // 카카오 지도 관련 요소 무시
         const tag = el.tagName?.toLowerCase();
         if (tag === "iframe") return true;
         if (el.classList?.contains("kakao") || el.id?.includes("kakao")) return true;
         return false;
+      },
+      onclone: (_doc, cloned) => {
+        // Tailwind v4 oklch 색상을 html2canvas가 파싱 못하므로 fallback 제거
+        cloned.querySelectorAll<HTMLElement>("*").forEach((el) => {
+          const s = el.style;
+          for (const prop of Array.from(s)) {
+            const val = s.getPropertyValue(prop);
+            if (val.includes("oklch")) {
+              s.setProperty(prop, "");
+            }
+          }
+        });
       },
     });
   } finally {

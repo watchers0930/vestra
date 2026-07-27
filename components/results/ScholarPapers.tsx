@@ -15,6 +15,8 @@ export function ScholarPapers({ keywords }: ScholarPapersProps) {
   const [loading, setLoading] = useState(() => keywords.length > 0);
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
+  const keywordsKey = keywords.join("|");
+
   useEffect(() => {
     if (!keywords.length) return;
 
@@ -44,7 +46,8 @@ export function ScholarPapers({ keywords }: ScholarPapersProps) {
     return () => {
       cancelled = true;
     };
-  }, [keywords]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [keywordsKey]);
 
   // 로딩 중이면 스켈레톤
   if (loading) {
