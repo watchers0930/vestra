@@ -29,6 +29,8 @@ export async function POST(req: NextRequest) {
       propertyAddress: rawAddress,
       deposit,
       monthlyRent,
+      propertyPrice,
+      seniorLiens,
       startDate: rawStartDate,
       endDate: rawEndDate,
       propertyType: rawPropertyType,
@@ -66,6 +68,9 @@ export async function POST(req: NextRequest) {
 - 부동산: ${propertyAddress}
 - 유형: ${propertyType}
 - 보증금: ${deposit?.toLocaleString()}원
+- 주택 시세(매매가): ${propertyPrice ? propertyPrice.toLocaleString() + "원" : "미입력"}
+- 선순위 채권액(근저당 등): ${seniorLiens ? seniorLiens.toLocaleString() + "원" : "0원"}
+- 전세가율: ${propertyPrice > 0 ? ((deposit / propertyPrice) * 100).toFixed(1) + "%" : "미산출"}
 - 월세: ${monthlyRent?.toLocaleString()}원
 - 계약기간: ${startDate} ~ ${endDate}
 
