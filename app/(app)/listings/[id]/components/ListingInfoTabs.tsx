@@ -104,6 +104,7 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
   const [selected, setSelected] = useState<InfraCatCode>("ALL");
   const [items, setItems]       = useState<PlaceItem[]>([]);
   const [loaded, setLoaded]     = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   const clearSelectedShape = useCallback(() => {
     if (selectedShape.current) {
@@ -191,8 +192,8 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
               places.get(cat.code)!.push({ name: p.place_name, distance: d >= 1000 ? `${(d / 1000).toFixed(1)}km` : `${d}m`, catCode: cat.code, lat: parseFloat(p.y), lng: parseFloat(p.x) });
             });
           }
-          if (done === INFRA_CATS.length) setLoaded(INFRA_CATS.length);
-        }, { location: pos, radius: 500, sort: kakao.maps.services.SortBy.DISTANCE });
+          if (done === INFRA_CATS.length) { setLoaded(INFRA_CATS.length); setIsLoading(false); }
+        }, { location: pos, radius: cat.code === "SW8" ? 1500 : 500, sort: kakao.maps.services.SortBy.DISTANCE });
       });
     });
     return () => { c(); dots.forEach((entries) => entries.forEach(({ ov }) => ov.setMap(null))); dots.clear(); places.clear(); mapRef.current = null; };
@@ -225,7 +226,9 @@ function InfraMap({ lat, lng }: { lat: number; lng: number }) {
           </div>
           <div style={{ flex: 1, overflowY: "auto" }}>
             {items.length === 0
-              ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}><p style={{ fontSize: 11, color: "#aeaeb2" }}>로딩 중...</p></div>
+              ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                  <p style={{ fontSize: 11, color: "#aeaeb2" }}>{isLoading ? "로딩 중..." : "주변에 없습니다"}</p>
+                </div>
               : items.map((item, i) => {
                 const ic = INFRA_CATS.find((c) => c.code === item.catCode);
                 return (
