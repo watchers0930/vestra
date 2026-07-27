@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
 import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
-import { JEONSE_ANALYSIS_PROMPT, DOCUMENT_GENERATION_PROMPT } from "@/lib/prompts";
+import { JEONSE_ANALYSIS_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
 import { validateOrigin } from "@/lib/csrf";
@@ -102,65 +102,108 @@ ${registrySummary ? `
     }
 
     if (type === "jeonse") {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4.1-mini",
-        messages: [
-          { role: "system", content: DOCUMENT_GENERATION_PROMPT },
-          {
-            role: "user",
-            content: `전세권설정등기 신청서를 작성해주세요. 대법원 양식에 맞춰 정확하게 작성하세요.
+      const fmtDate = (d: string) => {
+        if (!d) return "(날짜 기재)";
+        const [y, m, day] = d.split("-");
+        return `${y}년 ${parseInt(m)}월 ${parseInt(day)}일`;
+      };
+      const addr = propertyAddress || "(부동산 주소 기재)";
+      const content = `전세권설정등기신청
 
-정보:
-- 임대인(등기의무자): ${landlordName || "홍길동"}
-- 임차인(등기권리자): ${tenantName || "김철수"}
-- 부동산 주소: ${propertyAddress || "서울특별시 강남구 역삼동 123-45 래미안 101동 1502호"}
-- 전세금: ${deposit?.toLocaleString() || "300,000,000"}원
-- 계약기간: ${startDate || "2025-03-01"} ~ ${endDate || "2027-02-28"}
+접  수          ____년 ____월 ____일    접수번호
 
-JSON 형식으로 응답하세요: { "title": "전세권설정등기 신청서", "content": "문서 전체 내용" }`,
-          },
-        ],
-        temperature: 0.2,
-        response_format: { type: "json_object" },
-      });
+【부동산의 표시】
+  소재지: ${addr}
 
-      const content = completion.choices[0]?.message?.content;
-      if (!content) {
-        return NextResponse.json({ error: "AI 응답이 없습니다." }, { status: 500 });
-      }
+【등기원인과 그 연월일】
+  ${fmtDate(startDate)} 설정계약
 
-      return NextResponse.json(JSON.parse(content));
+【등기목적】전세권설정
+
+【전세금】금 ${Number(deposit).toLocaleString()}원
+
+【범    위】건물 전부
+
+【존속기간】${fmtDate(startDate)}부터 ${fmtDate(endDate)}까지
+
+【등기의무자】(임대인)
+  성  명: ${landlordName || "(임대인 성명 기재)"}
+  주  소: (임대인 주소 기재)
+  주민등록번호: ________ - _______
+
+【등기권리자】(전세권자/임차인)
+  성  명: (임차인 성명 기재)
+  주  소: ${addr}
+  주민등록번호: ________ - _______
+
+【첨부서면】
+  1. 전세권설정계약서(임대차계약서)  1통
+  2. 등기의무자의 인감증명서         1통
+  3. 등기의무자의 주소증명서면       1통
+  4. 건축물대장                      1통
+  5. 등록면허세납부서                1통
+
+                          ____년 ____월 ____일
+
+등기의무자(임대인): ${landlordName || "(임대인 성명)"}   (인)
+등기권리자(임차인): (임차인 성명)   (인)
+
+________________________ 등기소 귀중`;
+      return NextResponse.json({ title: "전세권설정등기 신청서", content });
     }
 
     if (type === "lease") {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4.1-mini",
-        messages: [
-          { role: "system", content: DOCUMENT_GENERATION_PROMPT },
-          {
-            role: "user",
-            content: `임차권등기명령 신청서를 작성해주세요. 대법원 양식에 맞춰 정확하게 작성하세요.
+      const fmtDate = (d: string) => {
+        if (!d) return "(날짜 기재)";
+        const [y, m, day] = d.split("-");
+        return `${y}년 ${parseInt(m)}월 ${parseInt(day)}일`;
+      };
+      const addr = propertyAddress || "(부동산 주소 기재)";
+      const content = `임차권등기명령 신청서
 
-정보:
-- 임대인(피신청인): ${landlordName || "홍길동"}
-- 임차인(신청인): ${tenantName || "김철수"}
-- 부동산 주소: ${propertyAddress || "서울특별시 강남구 역삼동 123-45 래미안 101동 1502호"}
-- 보증금: ${deposit?.toLocaleString() || "300,000,000"}원
-- 계약기간: ${startDate || "2025-03-01"} ~ ${endDate || "2027-02-28"}
+신 청 인(임차인)  성  명: (임차인 성명 기재)
+                  주  소: ${addr}
+                  연 락 처: (연락처 기재)
 
-JSON 형식으로 응답하세요: { "title": "임차권등기명령 신청서", "content": "문서 전체 내용" }`,
-          },
-        ],
-        temperature: 0.2,
-        response_format: { type: "json_object" },
-      });
+피신청인(임대인)  성  명: ${landlordName || "(임대인 성명 기재)"}
+                  주  소: (임대인 주소 기재)
 
-      const content = completion.choices[0]?.message?.content;
-      if (!content) {
-        return NextResponse.json({ error: "AI 응답이 없습니다." }, { status: 500 });
-      }
+신  청  취  지
+  별지 목록 기재 부동산에 관하여 임차권등기를 명한다.
+  라는 결정을 구합니다.
 
-      return NextResponse.json(JSON.parse(content));
+신  청  이  유
+  1. 신청인은 피신청인 소유의 별지목록 기재 부동산에 대하여
+     임대차보증금 금 ${Number(deposit).toLocaleString()}원,
+     임대차기간 ${fmtDate(startDate)}부터 ${fmtDate(endDate)}까지로
+     하는 임대차계약을 체결하였습니다.
+
+  2. 신청인은 위 임대차계약에 따라 임대차보증금 전액을 지급하고
+     위 부동산을 인도받아 주민등록을 마쳤습니다.
+
+  3. 임대차기간이 만료되었음에도 피신청인이 임대차보증금을
+     반환하지 않으므로, 주택임대차보호법 제3조의3 제1항에 따라
+     임차권등기를 신청합니다.
+
+입  증  방  법
+  1. 임대차계약서 사본
+
+첨  부  서  류
+  1. 임대차계약서 사본           1통
+  2. 주민등록등본(또는 초본)     1통
+  3. 건물등기사항증명서          1통
+  4. 납부서(신청수수료)          1통
+
+                              ____년 ____월 ____일
+
+                  신청인(임차인)  (임차인 성명)   (인)
+
+________________________지방법원 귀중
+
+[별지]
+부동산의 표시
+  소재지: ${addr}`;
+      return NextResponse.json({ title: "임차권등기명령 신청서", content });
     }
 
     return NextResponse.json({ error: "잘못된 요청 타입입니다." }, { status: 400 });
