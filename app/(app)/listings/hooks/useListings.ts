@@ -12,6 +12,7 @@ export interface ListingItem {
   roomType: string | null;
   size: number | null;
   floor: number | null;
+  totalFloor: number | null;
   deposit: string;
   managementFee: string | null;
   duration: number | null;

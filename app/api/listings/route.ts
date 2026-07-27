@@ -75,6 +75,7 @@ export async function GET(req: NextRequest) {
           roomType: true,
           size: true,
           floor: true,
+          totalFloor: true,
           deposit: true,
           managementFee: true,
           duration: true,

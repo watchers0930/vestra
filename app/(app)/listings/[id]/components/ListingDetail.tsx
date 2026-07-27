@@ -241,7 +241,9 @@ export function ListingDetail({ listing, onReload }: Props) {
               {listing.floor && (
                 <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 12px", borderRadius: 12, background: "#f7f7fa" }}>
                   <Layers size={14} strokeWidth={1.5} style={{ color: "#6e6e73", flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, color: "#3d3d3f" }}>{listing.floor}층</span>
+                  <span style={{ fontSize: 13, color: "#3d3d3f" }}>
+                    {listing.floor}층{listing.totalFloor ? ` / 전체 ${listing.totalFloor}층` : ""}
+                  </span>
                 </div>
               )}
               {listing.availableFrom && (
