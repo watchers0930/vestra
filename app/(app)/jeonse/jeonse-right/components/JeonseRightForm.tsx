@@ -18,6 +18,9 @@ interface FormState {
   tenantAddr: string;
   tenantTel: string;
   court: string;
+  propUid: string;
+  serial: string;
+  secret: string;
 }
 
 const STORAGE_KEY = "vestra_jeonse_form_data";
@@ -28,6 +31,7 @@ const DEFAULT: FormState = {
   landlordName: "", landlordId: "", landlordAddr: "",
   tenantName: "", tenantId: "", tenantAddr: "", tenantTel: "",
   court: "",
+  propUid: "", serial: "", secret: "",
 };
 
 function numFmt(n: number) {
@@ -68,7 +72,12 @@ function loadStorage(): { form: FormState; fromAnalysis: boolean } {
     const stored = sessionStorage.getItem(STORAGE_KEY);
     if (stored) {
       sessionStorage.removeItem(STORAGE_KEY);
-      return { form: { ...DEFAULT, ...JSON.parse(stored) }, fromAnalysis: true };
+      const parsed: FormState = { ...DEFAULT, ...JSON.parse(stored) };
+      if (parsed.propertyAddress && !parsed.court) {
+        const detected = findCourtFromAddress(parsed.propertyAddress);
+        if (detected) parsed.court = detected;
+      }
+      return { form: parsed, fromAnalysis: true };
     }
   } catch {}
   return { form: DEFAULT, fromAnalysis: false };
@@ -120,6 +129,10 @@ export function JeonseRightForm() {
       applicant2: form.landlordName,
       tel2: "",
       court: form.court,
+      propUid: form.propUid,
+      regName: form.landlordName,
+      serial: form.serial,
+      secret: form.secret,
       attContract: "1", attId: "1", attSeal: "1",
       attRegTax: "1", attFee: "1",
     };
@@ -237,6 +250,25 @@ export function JeonseRightForm() {
           </div>
         </div>
       )}
+
+      {/* 등기의무자 등기필정보 */}
+      <div style={card}>
+        <div style={title}>등기의무자 등기필정보</div>
+        <div style={{ marginBottom: "12px" }}>
+          <label style={lbl}>부동산 고유번호</label>
+          <input style={inp} value={form.propUid} onChange={e => set("propUid", e.target.value)} placeholder="0000-0000-000000" />
+        </div>
+        <div style={grid2}>
+          <div>
+            <label style={lbl}>일련번호</label>
+            <input style={inp} value={form.serial} onChange={e => set("serial", e.target.value)} placeholder="등기필증 일련번호" />
+          </div>
+          <div>
+            <label style={lbl}>비밀번호</label>
+            <input style={inp} value={form.secret} onChange={e => set("secret", e.target.value)} placeholder="등기필증 비밀번호" />
+          </div>
+        </div>
+      </div>
 
       {/* 관할 법원 */}
       <div style={card}>
