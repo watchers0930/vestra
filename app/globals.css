@@ -332,7 +332,7 @@ body {
   }
   .col-sticky {
     position: sticky;
-    top: 20px;
+    top: 72px; /* fixed header 52px + gap 20px */
     align-self: flex-start;
   }
 }
