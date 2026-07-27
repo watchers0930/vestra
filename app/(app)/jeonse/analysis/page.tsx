@@ -17,8 +17,9 @@ export default function JeonsePage() {
     guaranteeResult,
     kaptInfo,
     checklist, setChecklist,
+    registryLoading, parsedOwner,
     resultRef,
-    handleAnalyze, handleGenerateDoc, copyToClipboard,
+    handleAnalyze, handleGenerateDoc, handleRegistryUpload, copyToClipboard,
   } = useJeonseAnalysis();
 
   return (
@@ -35,7 +36,10 @@ export default function JeonsePage() {
           formData={formData}
           setFormData={setFormData}
           loading={loading}
+          registryLoading={registryLoading}
+          parsedOwner={parsedOwner}
           onAnalyze={handleAnalyze}
+          onRegistryUpload={handleRegistryUpload}
         />
         <JeonseResultPanel
           loading={loading}
@@ -50,6 +54,7 @@ export default function JeonsePage() {
           setChecklist={setChecklist}
           resultRef={resultRef}
           formData={formData}
+          parsedOwner={parsedOwner}
           docLoading={docLoading}
           onGenerateDoc={handleGenerateDoc}
           onCopy={copyToClipboard}

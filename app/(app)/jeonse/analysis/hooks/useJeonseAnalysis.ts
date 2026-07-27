@@ -11,8 +11,6 @@ import type { KaptInfoData } from "@/components/common/KaptInfoCard";
 import type { JeonseFormData, JeonseAnalysis, GeneratedDocument } from "../types";
 
 const DEFAULT_FORM: JeonseFormData = {
-  landlordName: "",
-  tenantName: "",
   propertyAddress: "",
   deposit: 300000000,
   monthlyRent: 0,
@@ -38,6 +36,8 @@ export function useJeonseAnalysis() {
   const [guaranteeResult, setGuaranteeResult] = useState<GuaranteeInsuranceResult | null>(null);
   const [kaptInfo, setKaptInfo] = useState<KaptInfoData | null>(null);
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
+  const [registryLoading, setRegistryLoading] = useState(false);
+  const [parsedOwner, setParsedOwner] = useState("");
   const resultRef = useRef<HTMLDivElement>(null);
 
   // localStorage 주소 프리필
@@ -140,6 +140,27 @@ export function useJeonseAnalysis() {
     }
   };
 
+  const handleRegistryUpload = async (file: File) => {
+    setRegistryLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/jeonse/parse-registry", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      if (data.address) setFormData((prev) => ({ ...prev, propertyAddress: data.address }));
+      if (typeof data.totalMortgage === "number" && data.totalMortgage > 0) {
+        setFormData((prev) => ({ ...prev, seniorLiens: data.totalMortgage }));
+      }
+      if (data.ownerName) setParsedOwner(data.ownerName);
+      showToast("등기부등본에서 정보를 가져왔습니다.", "success");
+    } catch {
+      showToast("등기부등본 파싱에 실패했습니다. 텍스트 기반 PDF인지 확인해 주세요.");
+    } finally {
+      setRegistryLoading(false);
+    }
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     showToast("클립보드에 복사되었습니다.", "success");
@@ -154,7 +175,8 @@ export function useJeonseAnalysis() {
     guaranteeResult,
     kaptInfo,
     checklist, setChecklist,
+    registryLoading, parsedOwner,
     resultRef,
-    handleAnalyze, handleGenerateDoc, copyToClipboard,
+    handleAnalyze, handleGenerateDoc, handleRegistryUpload, copyToClipboard,
   };
 }

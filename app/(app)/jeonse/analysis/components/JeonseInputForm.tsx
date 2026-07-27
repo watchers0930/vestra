@@ -1,6 +1,7 @@
 "use client";
 
-import { Shield, FileText, Loader2 } from "lucide-react";
+import { useRef } from "react";
+import { Shield, FileText, Loader2, UploadCloud, CheckCircle2, User } from "lucide-react";
 import { FormInput, SliderInput, TabButtons } from "@/components/forms";
 import { propertyTypes } from "../constants";
 import type { JeonseFormData } from "../types";
@@ -9,11 +10,29 @@ interface Props {
   formData: JeonseFormData;
   setFormData: (data: JeonseFormData) => void;
   loading: boolean;
+  registryLoading: boolean;
+  parsedOwner: string;
   onAnalyze: () => void;
+  onRegistryUpload: (file: File) => void;
 }
 
-export function JeonseInputForm({ formData, setFormData, loading, onAnalyze }: Props) {
+export function JeonseInputForm({ formData, setFormData, loading, registryLoading, parsedOwner, onAnalyze, onRegistryUpload }: Props) {
   const update = (patch: Partial<JeonseFormData>) => setFormData({ ...formData, ...patch });
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) onRegistryUpload(file);
+    e.target.value = "";
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file) onRegistryUpload(file);
+  }
+
+  const hasRegistry = !!parsedOwner || !!formData.propertyAddress;
 
   return (
     <div
@@ -39,20 +58,67 @@ export function JeonseInputForm({ formData, setFormData, loading, onAnalyze }: P
         계약 정보 입력
       </h3>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <FormInput
-          label="임대인 (집주인)"
-          value={formData.landlordName}
-          onChange={(e) => update({ landlordName: e.target.value })}
-          placeholder="홍길동"
-        />
-        <FormInput
-          label="임차인 (세입자)"
-          value={formData.tenantName}
-          onChange={(e) => update({ tenantName: e.target.value })}
-          placeholder="김철수"
-        />
+      {/* 등기부등본 업로드 */}
+      <div>
+        <label style={{ display: "block", fontSize: "12.5px", fontWeight: 600, color: "#1d1d1f", marginBottom: "8px" }}>
+          등기부등본 <span style={{ fontWeight: 400, color: "#6e6e73" }}>(PDF 업로드 시 주소·근저당 자동 입력)</span>
+        </label>
+        <div
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+          onClick={() => fileRef.current?.click()}
+          style={{
+            border: `2px dashed ${hasRegistry ? "#30d158" : "#d2d2d7"}`,
+            borderRadius: "12px",
+            padding: "16px 20px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            cursor: "pointer",
+            background: hasRegistry ? "rgba(48,209,88,0.04)" : "#fafafa",
+            transition: "all 0.15s",
+          }}
+        >
+          {registryLoading ? (
+            <Loader2 size={20} className="animate-spin" style={{ color: "#0071e3", flexShrink: 0 }} />
+          ) : hasRegistry ? (
+            <CheckCircle2 size={20} style={{ color: "#30d158", flexShrink: 0 }} />
+          ) : (
+            <UploadCloud size={20} style={{ color: "#aeaeb2", flexShrink: 0 }} />
+          )}
+          <div style={{ minWidth: 0 }}>
+            {registryLoading ? (
+              <p style={{ fontSize: "13px", color: "#0071e3", margin: 0 }}>등기부등본 분석 중...</p>
+            ) : hasRegistry ? (
+              <>
+                <p style={{ fontSize: "13px", fontWeight: 600, color: "#30d158", margin: 0 }}>등기부등본 파싱 완료</p>
+                {parsedOwner && (
+                  <p style={{ fontSize: "11px", color: "#6e6e73", margin: "2px 0 0" }}>소유자: {parsedOwner}</p>
+                )}
+              </>
+            ) : (
+              <>
+                <p style={{ fontSize: "13px", fontWeight: 600, color: "#3d3d3f", margin: 0 }}>등기부등본 PDF 업로드</p>
+                <p style={{ fontSize: "11px", color: "#aeaeb2", margin: "2px 0 0" }}>클릭하거나 파일을 여기에 끌어다 놓으세요</p>
+              </>
+            )}
+          </div>
+          {hasRegistry && !registryLoading && (
+            <span style={{ marginLeft: "auto", fontSize: "11px", color: "#aeaeb2", flexShrink: 0 }}>재업로드</span>
+          )}
+        </div>
+        <input ref={fileRef} type="file" accept=".pdf" style={{ display: "none" }} onChange={handleFileChange} />
       </div>
+
+      {/* 소유자(임대인) 표시 */}
+      {parsedOwner && (
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px", borderRadius: "10px", background: "rgba(48,209,88,0.06)", border: "1px solid rgba(48,209,88,0.2)" }}>
+          <User size={13} style={{ color: "#30d158", flexShrink: 0 }} />
+          <span style={{ fontSize: "12.5px", color: "#1d1d1f" }}>
+            등기상 소유자(임대인): <strong>{parsedOwner}</strong>
+          </span>
+        </div>
+      )}
 
       <FormInput
         label="부동산 주소"

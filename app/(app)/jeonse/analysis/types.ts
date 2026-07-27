@@ -1,6 +1,4 @@
 export interface JeonseFormData {
-  landlordName: string;
-  tenantName: string;
   propertyAddress: string;
   deposit: number;
   monthlyRent: number;

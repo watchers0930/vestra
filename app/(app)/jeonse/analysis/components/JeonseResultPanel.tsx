@@ -31,6 +31,7 @@ interface Props {
   setChecklist: (v: Record<string, boolean>) => void;
   resultRef: RefObject<HTMLDivElement | null>;
   formData: JeonseFormData;
+  parsedOwner: string;
   docLoading: boolean;
   onGenerateDoc: (type: "jeonse" | "lease") => void;
   onCopy: (text: string) => void;
@@ -55,7 +56,7 @@ export function JeonseResultPanel({
   guaranteeResult,
   kaptInfo,
   checklist, setChecklist,
-  resultRef, formData,
+  resultRef, formData, parsedOwner,
   docLoading, onGenerateDoc, onCopy,
 }: Props) {
   return (
@@ -238,7 +239,7 @@ export function JeonseResultPanel({
           {guaranteeResult && <GuaranteeInsuranceCard result={guaranteeResult} />}
 
           {/* 임대인 종합 프로파일 */}
-          <LandlordTracker ownerName={formData.landlordName} baseAddress={formData.propertyAddress} />
+          <LandlordTracker ownerName={parsedOwner} baseAddress={formData.propertyAddress} />
 
           {/* 문서 자동 생성 */}
           <div
