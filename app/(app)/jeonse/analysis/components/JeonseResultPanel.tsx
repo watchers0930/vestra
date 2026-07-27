@@ -236,7 +236,7 @@ export function JeonseResultPanel({
           {fraudRisk && !fraudLoading && <FraudRiskCard result={fraudRisk} />}
 
           {/* 보증보험 가입 가능성 */}
-          {guaranteeResult && <GuaranteeInsuranceCard result={guaranteeResult} />}
+          {guaranteeResult && <GuaranteeInsuranceCard result={guaranteeResult} formData={formData} />}
 
           {/* 임대인 종합 프로파일 */}
           <LandlordTracker ownerName={parsedOwner} baseAddress={formData.propertyAddress} />
