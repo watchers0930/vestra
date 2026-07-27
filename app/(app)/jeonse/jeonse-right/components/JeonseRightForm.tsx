@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Printer, Info } from "lucide-react";
 
 interface FormState {
@@ -61,21 +61,22 @@ const grid2: React.CSSProperties = {
   display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px",
 };
 
-export function JeonseRightForm() {
-  const [form, setForm] = useState<FormState>(DEFAULT);
-  const [fromAnalysis, setFromAnalysis] = useState(false);
+function loadStorage(): { form: FormState; fromAnalysis: boolean } {
+  if (typeof window === "undefined") return { form: DEFAULT, fromAnalysis: false };
+  try {
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      sessionStorage.removeItem(STORAGE_KEY);
+      return { form: { ...DEFAULT, ...JSON.parse(stored) }, fromAnalysis: true };
+    }
+  } catch {}
+  return { form: DEFAULT, fromAnalysis: false };
+}
 
-  useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const data = JSON.parse(stored);
-        setForm(prev => ({ ...prev, ...data }));
-        setFromAnalysis(true);
-        sessionStorage.removeItem(STORAGE_KEY);
-      }
-    } catch {}
-  }, []);
+export function JeonseRightForm() {
+  const [initState] = useState<{ form: FormState; fromAnalysis: boolean }>(loadStorage);
+  const [form, setForm] = useState<FormState>(initState.form);
+  const [fromAnalysis] = useState<boolean>(initState.fromAnalysis);
 
   const set = (key: keyof FormState, val: string) =>
     setForm(prev => ({ ...prev, [key]: val }));
