@@ -31,6 +31,7 @@ export function parseTitle(raw: string): TitleSection {
     exclusiveArea: "",
     totalFloors: "",
     isApartment: false,
+    propUid: "",
   };
 
   if (!raw) return result;

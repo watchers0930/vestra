@@ -38,6 +38,7 @@ export function useJeonseAnalysis() {
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [registryLoading, setRegistryLoading] = useState(false);
   const [parsedOwner, setParsedOwner] = useState("");
+  const [parsedPropUid, setParsedPropUid] = useState("");
   const [registrySummary, setRegistrySummary] = useState<Record<string, unknown> | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
@@ -163,6 +164,7 @@ export function useJeonseAnalysis() {
         setFormData((prev) => ({ ...prev, seniorLiens: data.totalMortgage }));
       }
       if (data.ownerName) setParsedOwner(data.ownerName);
+      if (data.propUid) setParsedPropUid(data.propUid);
       if (data.registrySummary) setRegistrySummary(data.registrySummary);
       showToast("등기부등본에서 정보를 가져왔습니다.", "success");
     } catch {
@@ -186,7 +188,7 @@ export function useJeonseAnalysis() {
     guaranteeResult,
     kaptInfo,
     checklist, setChecklist,
-    registryLoading, parsedOwner,
+    registryLoading, parsedOwner, parsedPropUid,
     resultRef,
     handleAnalyze, handleGenerateDoc, handleRegistryUpload, copyToClipboard,
   };

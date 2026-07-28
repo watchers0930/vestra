@@ -22,6 +22,8 @@ export interface TitleSection {
   exclusiveArea: string;
   totalFloors: string;
   isApartment: boolean;
+  /** 부동산 고유번호 (예: 1101-2024-012345) */
+  propUid: string;
 }
 
 export interface GapguEntry {
@@ -103,6 +105,10 @@ export function parseRegistry(rawText: string): ParsedRegistry {
   const { titleRaw, gapguRaw, eulguRaw } = splitSections(normalized);
 
   const title = parseTitle(titleRaw);
+
+  const propUidMatch = normalized.match(/고유번호\s*[:：]\s*([\d\-]+)/);
+  if (propUidMatch) title.propUid = propUidMatch[1].trim();
+
   const gapgu = resolveCancellations(parseGapgu(gapguRaw));
   const eulgu = resolveCancellations(parseEulgu(eulguRaw));
   const summary = buildSummary(gapgu, eulgu);

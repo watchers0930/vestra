@@ -44,7 +44,8 @@ export async function POST(req: NextRequest) {
       totalJeonseAmount: parsed.summary.totalJeonseAmount ?? 0,
     };
 
-    return NextResponse.json({ address, ownerName, totalMortgage, registrySummary });
+    const propUid = parsed.title.propUid ?? "";
+    return NextResponse.json({ address, ownerName, totalMortgage, registrySummary, propUid });
   } catch {
     return NextResponse.json({ error: "등기부등본 파싱 중 오류가 발생했습니다." }, { status: 500 });
   }

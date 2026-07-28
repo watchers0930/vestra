@@ -32,6 +32,7 @@ interface Props {
   resultRef: RefObject<HTMLDivElement | null>;
   formData: JeonseFormData;
   parsedOwner: string;
+  parsedPropUid?: string;
   docLoading: boolean;
   onGenerateDoc: (type: "jeonse" | "lease") => void;
   onCopy: (text: string) => void;
@@ -56,7 +57,7 @@ export function JeonseResultPanel({
   guaranteeResult,
   kaptInfo,
   checklist, setChecklist,
-  resultRef, formData, parsedOwner,
+  resultRef, formData, parsedOwner, parsedPropUid,
   docLoading, onGenerateDoc, onCopy,
 }: Props) {
   return (
@@ -326,6 +327,7 @@ export function JeonseResultPanel({
                       startDate: formData.startDate,
                       endDate: formData.endDate,
                       landlordName: parsedOwner,
+                      propUid: parsedPropUid ?? "",
                     }));
                   } catch {}
                 }}
