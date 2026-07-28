@@ -66,7 +66,7 @@ export const userMenuItems: MenuItem[] = [
 export const userMenuGroups: MenuGroup[] = [
   { label: "메인",       items: [userMenuItems[0]] },
   { label: "매물 거래",   items: [userMenuItems[15]] },
-  { label: "분석 서비스", items: [userMenuItems[2], userMenuItems[3], userMenuItems[4], userMenuItems[7], userMenuItems[1], userMenuItems[8], userMenuItems[9]] },
+  { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[2], userMenuItems[3], userMenuItems[4], userMenuItems[7], userMenuItems[8], userMenuItems[9]] },
   { label: "도구",       items: [userMenuItems[10], userMenuItems[11], userMenuItems[5], userMenuItems[6], userMenuItems[12]] },
   { label: "중개사 도구", items: [userMenuItems[13], userMenuItems[14]] },
 ];
@@ -84,7 +84,7 @@ const tenantListings: MenuItem = {
 export const tenantMenuGroups: MenuGroup[] = [
   { label: "메인",       items: [userMenuItems[0]] },
   { label: "매물 거래",   items: [tenantListings] },
-  { label: "분석 서비스", items: [userMenuItems[2], userMenuItems[3], userMenuItems[4], userMenuItems[7], userMenuItems[1], userMenuItems[8]] },
+  { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[2], userMenuItems[3], userMenuItems[4], userMenuItems[7], userMenuItems[8]] },
   { label: "도구",       items: [userMenuItems[10], userMenuItems[11], userMenuItems[5], userMenuItems[6]] },
 ];
 
