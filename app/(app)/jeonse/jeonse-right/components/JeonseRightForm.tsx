@@ -12,9 +12,12 @@ interface FormState {
   scope: string;
   landlordName: string;
   landlordId: string;
+  landlordZip: string;
   landlordAddr: string;
+  landlordTel: string;
   tenantName: string;
   tenantId: string;
+  tenantZip: string;
   tenantAddr: string;
   tenantTel: string;
   court: string;
@@ -28,8 +31,8 @@ const STORAGE_KEY = "vestra_jeonse_form_data";
 const DEFAULT: FormState = {
   propertyAddress: "", deposit: "", startDate: "", endDate: "",
   scope: "건물 전부",
-  landlordName: "", landlordId: "", landlordAddr: "",
-  tenantName: "", tenantId: "", tenantAddr: "", tenantTel: "",
+  landlordName: "", landlordId: "", landlordZip: "", landlordAddr: "", landlordTel: "",
+  tenantName: "", tenantId: "", tenantZip: "", tenantAddr: "", tenantTel: "",
   court: "",
   propUid: "", serial: "", secret: "",
 };
@@ -193,9 +196,19 @@ export function JeonseRightForm() {
             <input style={inp} value={form.landlordId} onChange={e => set("landlordId", e.target.value)} placeholder="000000-0000000" />
           </div>
         </div>
+        <div style={{ ...grid2, marginBottom: "12px" }}>
+          <div>
+            <label style={lbl}>우편번호</label>
+            <input style={inp} value={form.landlordZip} onChange={e => set("landlordZip", e.target.value)} placeholder="00000" />
+          </div>
+          <div>
+            <label style={lbl}>주소</label>
+            <input style={inp} value={form.landlordAddr} onChange={e => set("landlordAddr", e.target.value)} placeholder="서울시 ..." />
+          </div>
+        </div>
         <div>
-          <label style={lbl}>주소</label>
-          <input style={inp} value={form.landlordAddr} onChange={e => set("landlordAddr", e.target.value)} placeholder="서울시 ..." />
+          <label style={lbl}>전화번호</label>
+          <input style={inp} value={form.landlordTel} onChange={e => set("landlordTel", e.target.value)} placeholder="010-0000-0000" />
         </div>
       </div>
 
@@ -212,9 +225,15 @@ export function JeonseRightForm() {
             <input style={inp} value={form.tenantId} onChange={e => set("tenantId", e.target.value)} placeholder="000000-0000000" />
           </div>
         </div>
-        <div style={{ marginBottom: "12px" }}>
-          <label style={lbl}>주소</label>
-          <input style={inp} value={form.tenantAddr} onChange={e => set("tenantAddr", e.target.value)} placeholder="서울시 ..." />
+        <div style={{ ...grid2, marginBottom: "12px" }}>
+          <div>
+            <label style={lbl}>우편번호</label>
+            <input style={inp} value={form.tenantZip} onChange={e => set("tenantZip", e.target.value)} placeholder="00000" />
+          </div>
+          <div>
+            <label style={lbl}>주소</label>
+            <input style={inp} value={form.tenantAddr} onChange={e => set("tenantAddr", e.target.value)} placeholder="서울시 ..." />
+          </div>
         </div>
         <div>
           <label style={lbl}>전화번호</label>
