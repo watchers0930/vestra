@@ -106,7 +106,7 @@ export function parseRegistry(rawText: string): ParsedRegistry {
 
   const title = parseTitle(titleRaw);
 
-  const propUidMatch = normalized.match(/고유번호\s*[:：]\s*([\d\-]+)/);
+  const propUidMatch = normalized.match(/고유번호\s*[:：]?\s*(\d{4}-\d{4}-\d{6})/);
   if (propUidMatch) title.propUid = propUidMatch[1].trim();
 
   const gapgu = resolveCancellations(parseGapgu(gapguRaw));
