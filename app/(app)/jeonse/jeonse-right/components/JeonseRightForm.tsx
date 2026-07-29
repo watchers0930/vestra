@@ -14,11 +14,13 @@ interface FormState {
   landlordId: string;
   landlordZip: string;
   landlordAddr: string;
+  landlordAddrDetail: string;
   landlordTel: string;
   tenantName: string;
   tenantId: string;
   tenantZip: string;
   tenantAddr: string;
+  tenantAddrDetail: string;
   tenantTel: string;
   court: string;
   propUid: string;
@@ -31,8 +33,8 @@ const STORAGE_KEY = "vestra_jeonse_form_data";
 const DEFAULT: FormState = {
   propertyAddress: "", deposit: "", startDate: "", endDate: "",
   scope: "건물 전부",
-  landlordName: "", landlordId: "", landlordZip: "", landlordAddr: "", landlordTel: "",
-  tenantName: "", tenantId: "", tenantZip: "", tenantAddr: "", tenantTel: "",
+  landlordName: "", landlordId: "", landlordZip: "", landlordAddr: "", landlordAddrDetail: "", landlordTel: "",
+  tenantName: "", tenantId: "", tenantZip: "", tenantAddr: "", tenantAddrDetail: "", tenantTel: "",
   court: "",
   propUid: "", serial: "", secret: "",
 };
@@ -216,13 +218,14 @@ export function JeonseRightForm() {
         <div style={{ marginBottom: "12px" }}>
           <label style={lbl}>주소</label>
           <div style={{ display: "flex", gap: "8px", marginBottom: "6px" }}>
-            <input style={{ ...inp, width: "110px", flexShrink: 0, background: "#f5f5f7", color: "#6e6e73" }} value={form.landlordZip} placeholder="우편번호" readOnly />
-            <button type="button" onClick={() => openPostcode((zip, addr) => { set("landlordZip", zip); set("landlordAddr", addr); })}
-              style={{ flex: 1, padding: "8px 0", borderRadius: "8px", background: "#0071e3", color: "#fff", fontSize: "13px", fontWeight: 600, border: "none", cursor: "pointer" }}>
+            <input style={{ ...inp, width: "100px", flexShrink: 0, background: "#f5f5f7", color: "#6e6e73" }} value={form.landlordZip} placeholder="우편번호" readOnly />
+            <button type="button" onClick={() => openPostcode((zip, addr) => { set("landlordZip", zip); set("landlordAddr", addr); set("landlordAddrDetail", ""); })}
+              style={{ padding: "8px 14px", borderRadius: "8px", background: "#0071e3", color: "#fff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
               주소 검색
             </button>
           </div>
-          <input style={{ ...inp, background: "#f5f5f7", color: "#1d1d1f" }} value={form.landlordAddr} placeholder="주소 검색 후 자동 입력" readOnly />
+          <input style={{ ...inp, background: "#f5f5f7", color: "#1d1d1f", marginBottom: "6px" }} value={form.landlordAddr} placeholder="기본주소 (검색 후 자동 입력)" readOnly />
+          <input style={inp} value={form.landlordAddrDetail} onChange={e => set("landlordAddrDetail", e.target.value)} placeholder="상세주소 (동·호수 등)" />
         </div>
         <div>
           <label style={lbl}>전화번호</label>
@@ -246,13 +249,14 @@ export function JeonseRightForm() {
         <div style={{ marginBottom: "12px" }}>
           <label style={lbl}>주소</label>
           <div style={{ display: "flex", gap: "8px", marginBottom: "6px" }}>
-            <input style={{ ...inp, width: "110px", flexShrink: 0, background: "#f5f5f7", color: "#6e6e73" }} value={form.tenantZip} placeholder="우편번호" readOnly />
-            <button type="button" onClick={() => openPostcode((zip, addr) => { set("tenantZip", zip); set("tenantAddr", addr); })}
-              style={{ flex: 1, padding: "8px 0", borderRadius: "8px", background: "#0071e3", color: "#fff", fontSize: "13px", fontWeight: 600, border: "none", cursor: "pointer" }}>
+            <input style={{ ...inp, width: "100px", flexShrink: 0, background: "#f5f5f7", color: "#6e6e73" }} value={form.tenantZip} placeholder="우편번호" readOnly />
+            <button type="button" onClick={() => openPostcode((zip, addr) => { set("tenantZip", zip); set("tenantAddr", addr); set("tenantAddrDetail", ""); })}
+              style={{ padding: "8px 14px", borderRadius: "8px", background: "#0071e3", color: "#fff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
               주소 검색
             </button>
           </div>
-          <input style={{ ...inp, background: "#f5f5f7", color: "#1d1d1f" }} value={form.tenantAddr} placeholder="주소 검색 후 자동 입력" readOnly />
+          <input style={{ ...inp, background: "#f5f5f7", color: "#1d1d1f", marginBottom: "6px" }} value={form.tenantAddr} placeholder="기본주소 (검색 후 자동 입력)" readOnly />
+          <input style={inp} value={form.tenantAddrDetail} onChange={e => set("tenantAddrDetail", e.target.value)} placeholder="상세주소 (동·호수 등)" />
         </div>
         <div>
           <label style={lbl}>전화번호</label>
