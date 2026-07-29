@@ -3,19 +3,21 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ChevronLeft, Send, Loader2 } from "lucide-react";
+import { ChevronLeft, Send, Loader2, MapPin } from "lucide-react";
 import { useChat } from "../hooks/useChat";
 
 function formatTime(iso: string) {
   const d = new Date(iso);
-  const hh = d.getHours().toString().padStart(2, "0");
-  const mm = d.getMinutes().toString().padStart(2, "0");
-  return `${hh}:${mm}`;
+  const h = d.getHours();
+  const m = d.getMinutes().toString().padStart(2, "0");
+  const ampm = h < 12 ? "오전" : "오후";
+  const h12 = h % 12 || 12;
+  return `${ampm} ${h12}:${m}`;
 }
 
 function formatDate(iso: string) {
   const d = new Date(iso);
-  return `${d.getFullYear()}.${(d.getMonth() + 1).toString().padStart(2, "0")}.${d.getDate().toString().padStart(2, "0")}`;
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
 }
 
 interface Props {
@@ -32,7 +34,6 @@ export function ChatContent({ applicationId, partnerName, address }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // 새 메시지 오면 스크롤 하단
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -41,6 +42,7 @@ export function ChatContent({ applicationId, partnerName, address }: Props) {
     if (!input.trim() || sending) return;
     const text = input;
     setInput("");
+    inputRef.current!.style.height = "auto";
     await send(text);
   }
 
@@ -51,38 +53,102 @@ export function ChatContent({ applicationId, partnerName, address }: Props) {
     }
   }
 
-  // 날짜 구분선 표시용
+  // 이니셜 색상 — 이름 첫 글자 기반으로 고정 색상
+  const AVATAR_COLORS = ["#0071e3", "#34c759", "#ff9500", "#af52de", "#ff3b30", "#5856d6"];
+  const avatarColor = AVATAR_COLORS[(partnerName.charCodeAt(0) || 0) % AVATAR_COLORS.length];
+
   let lastDate = "";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 60px)", maxWidth: 680 }}>
-      {/* 헤더 */}
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      height: "calc(100vh - 96px)",
+      maxWidth: 720,
+      margin: "0 auto",
+    }}>
+      {/* ── 헤더 ── */}
       <div style={{
-        display: "flex", alignItems: "center", gap: 12, padding: "12px 0 12px",
-        borderBottom: "1px solid #e5e5ea", flexShrink: 0,
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "14px 16px",
+        background: "#fff",
+        borderRadius: 16,
+        border: "1px solid rgba(0,0,0,0.07)",
+        boxShadow: "0 1px 8px rgba(0,0,0,0.06)",
+        flexShrink: 0,
+        marginBottom: 12,
       }}>
         <button
           onClick={() => router.back()}
-          style={{ background: "none", border: "none", cursor: "pointer", color: "#6e6e73", display: "flex", padding: 4 }}
+          style={{
+            width: 34, height: 34, borderRadius: 10,
+            background: "#f5f5f7", border: "none",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", flexShrink: 0,
+          }}
         >
-          <ChevronLeft size={20} strokeWidth={2} />
+          <ChevronLeft size={18} strokeWidth={2.5} style={{ color: "#3d3d3f" }} />
         </button>
-        <div>
-          <p style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f", margin: 0 }}>{partnerName}</p>
-          <p style={{ fontSize: 11, color: "#aeaeb2", margin: 0, marginTop: 1 }}>{address}</p>
+
+        {/* 아바타 */}
+        <div style={{
+          width: 40, height: 40, borderRadius: 12,
+          background: avatarColor,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "#fff", fontSize: 16, fontWeight: 800, flexShrink: 0,
+          letterSpacing: "-0.02em",
+        }}>
+          {(partnerName ?? "?")[0]}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f", margin: 0, lineHeight: 1.3 }}>
+            {partnerName}
+          </p>
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 3,
+            fontSize: 11, color: "#6e6e73", marginTop: 2,
+          }}>
+            <MapPin size={10} strokeWidth={2} style={{ color: "#aeaeb2" }} />
+            {address}
+          </span>
         </div>
       </div>
 
-      {/* 메시지 목록 */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px 0" }}>
+      {/* ── 메시지 목록 ── */}
+      <div style={{
+        flex: 1,
+        overflowY: "auto",
+        padding: "4px 4px 8px",
+        display: "flex",
+        flexDirection: "column",
+      }}>
         {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", paddingTop: 40 }}>
-            <Loader2 size={24} strokeWidth={1.5} style={{ animation: "spin 1s linear infinite", color: "#aeaeb2" }} />
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1 }}>
+            <Loader2 size={22} strokeWidth={1.5} style={{ animation: "spin 1s linear infinite", color: "#aeaeb2" }} />
           </div>
         ) : messages.length === 0 ? (
-          <div style={{ textAlign: "center", paddingTop: 60, color: "#aeaeb2", fontSize: 14 }}>
-            <p>아직 메시지가 없습니다.</p>
-            <p style={{ fontSize: 12, marginTop: 4 }}>계약 조건에 대해 자유롭게 문의해 보세요.</p>
+          <div style={{
+            flex: 1, display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            padding: "0 24px", textAlign: "center",
+          }}>
+            <div style={{
+              width: 60, height: 60, borderRadius: 18,
+              background: "#f0f5ff", display: "flex",
+              alignItems: "center", justifyContent: "center",
+              marginBottom: 14,
+            }}>
+              <Send size={24} strokeWidth={1.5} style={{ color: "#0071e3" }} />
+            </div>
+            <p style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f", marginBottom: 6 }}>
+              첫 메시지를 보내보세요
+            </p>
+            <p style={{ fontSize: 13, color: "#aeaeb2", lineHeight: 1.6 }}>
+              계약 조건이나 매물에 관해<br />자유롭게 문의하세요.
+            </p>
           </div>
         ) : (
           messages.map((msg) => {
@@ -93,40 +159,78 @@ export function ChatContent({ applicationId, partnerName, address }: Props) {
 
             return (
               <div key={msg.id}>
+                {/* 날짜 구분선 */}
                 {showDate && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "12px 0" }}>
-                    <div style={{ flex: 1, height: 1, background: "#e5e5ea" }} />
-                    <span style={{ fontSize: 11, color: "#aeaeb2", whiteSpace: "nowrap" }}>{dateStr}</span>
-                    <div style={{ flex: 1, height: 1, background: "#e5e5ea" }} />
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    margin: "16px 0 12px",
+                  }}>
+                    <div style={{ flex: 1, height: 1, background: "rgba(0,0,0,0.07)" }} />
+                    <span style={{
+                      fontSize: 11, color: "#aeaeb2", fontWeight: 500,
+                      padding: "3px 10px", borderRadius: 20,
+                      background: "#f5f5f7", whiteSpace: "nowrap",
+                    }}>
+                      {dateStr}
+                    </span>
+                    <div style={{ flex: 1, height: 1, background: "rgba(0,0,0,0.07)" }} />
                   </div>
                 )}
+
+                {/* 메시지 행 */}
                 <div style={{
-                  display: "flex", flexDirection: isMine ? "row-reverse" : "row",
-                  alignItems: "flex-end", gap: 6, marginBottom: 8,
+                  display: "flex",
+                  flexDirection: isMine ? "row-reverse" : "row",
+                  alignItems: "flex-end",
+                  gap: 8,
+                  marginBottom: 6,
+                  padding: "0 4px",
                 }}>
                   {/* 상대방 아바타 */}
                   {!isMine && (
                     <div style={{
-                      width: 32, height: 32, borderRadius: "50%", background: "#0071e3",
+                      width: 34, height: 34, borderRadius: 11,
+                      background: avatarColor,
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      color: "#fff", fontSize: 12, fontWeight: 700, flexShrink: 0,
+                      color: "#fff", fontSize: 13, fontWeight: 700, flexShrink: 0,
                     }}>
                       {(msg.sender.name ?? "?")[0]}
                     </div>
                   )}
-                  <div style={{ maxWidth: "70%", display: "flex", flexDirection: "column", alignItems: isMine ? "flex-end" : "flex-start", gap: 2 }}>
+
+                  <div style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: isMine ? "flex-end" : "flex-start",
+                    gap: 3,
+                    maxWidth: "72%",
+                  }}>
                     {!isMine && (
-                      <span style={{ fontSize: 11, color: "#6e6e73", marginLeft: 2 }}>{msg.sender.name ?? "상대방"}</span>
+                      <span style={{ fontSize: 11, color: "#6e6e73", fontWeight: 600, paddingLeft: 4 }}>
+                        {msg.sender.name ?? "상대방"}
+                      </span>
                     )}
-                    <div style={{
-                      padding: "10px 14px", borderRadius: isMine ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                      background: isMine ? "#0071e3" : "#f2f2f7",
-                      color: isMine ? "#fff" : "#1d1d1f",
-                      fontSize: 14, lineHeight: 1.5, wordBreak: "break-word", whiteSpace: "pre-wrap",
-                    }}>
-                      {msg.content}
+
+                    <div style={{ display: "flex", alignItems: "flex-end", gap: 5, flexDirection: isMine ? "row-reverse" : "row" }}>
+                      <div style={{
+                        padding: "10px 14px",
+                        borderRadius: isMine
+                          ? "18px 4px 18px 18px"
+                          : "4px 18px 18px 18px",
+                        background: isMine ? "#0071e3" : "#f2f2f7",
+                        color: isMine ? "#fff" : "#1d1d1f",
+                        fontSize: 14, lineHeight: 1.55,
+                        wordBreak: "break-word", whiteSpace: "pre-wrap",
+                        boxShadow: isMine
+                          ? "0 2px 8px rgba(0,113,227,0.25)"
+                          : "0 1px 4px rgba(0,0,0,0.07)",
+                      }}>
+                        {msg.content}
+                      </div>
+                      <span style={{ fontSize: 10, color: "#aeaeb2", whiteSpace: "nowrap", paddingBottom: 2 }}>
+                        {formatTime(msg.createdAt)}
+                      </span>
                     </div>
-                    <span style={{ fontSize: 10, color: "#aeaeb2" }}>{formatTime(msg.createdAt)}</span>
                   </div>
                 </div>
               </div>
@@ -136,49 +240,86 @@ export function ChatContent({ applicationId, partnerName, address }: Props) {
         <div ref={bottomRef} />
       </div>
 
-      {/* 에러 */}
+      {/* ── 에러 ── */}
       {error && (
-        <p style={{ fontSize: 12, color: "#c0392b", padding: "4px 0", flexShrink: 0 }}>{error}</p>
+        <div style={{
+          padding: "8px 14px", borderRadius: 10, fontSize: 12, color: "#c0392b",
+          background: "rgba(255,59,48,0.06)", margin: "4px 0", flexShrink: 0,
+        }}>
+          {error}
+        </div>
       )}
 
-      {/* 입력창 */}
+      {/* ── 입력창 ── */}
       <div style={{
-        display: "flex", gap: 8, alignItems: "flex-end",
-        borderTop: "1px solid #e5e5ea", paddingTop: 12, flexShrink: 0, paddingBottom: 8,
+        display: "flex",
+        alignItems: "flex-end",
+        gap: 10,
+        padding: "10px 14px",
+        background: "#fff",
+        borderRadius: 16,
+        border: "1px solid rgba(0,0,0,0.09)",
+        boxShadow: "0 -1px 8px rgba(0,0,0,0.05)",
+        flexShrink: 0,
+        marginTop: 8,
       }}>
         <textarea
           ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="메시지를 입력하세요 (Enter로 전송)"
+          placeholder="메시지를 입력하세요"
           rows={1}
           style={{
-            flex: 1, border: "1px solid #d2d2d7", borderRadius: 20,
-            padding: "10px 14px", fontSize: 14, outline: "none", resize: "none",
-            background: "#f5f5f7", lineHeight: 1.5, maxHeight: 100, overflowY: "auto",
+            flex: 1,
+            border: "1px solid #e5e5ea",
+            borderRadius: 12,
+            padding: "10px 14px",
+            fontSize: 14,
+            outline: "none",
+            resize: "none",
+            background: "#f9f9f9",
+            lineHeight: 1.55,
+            maxHeight: 120,
+            overflowY: "auto",
             fontFamily: "inherit",
+            color: "#1d1d1f",
+            transition: "border-color 0.15s, background 0.15s",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "#0071e3";
+            e.currentTarget.style.background = "#fff";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "#e5e5ea";
+            e.currentTarget.style.background = "#f9f9f9";
           }}
           onInput={(e) => {
             const t = e.currentTarget;
             t.style.height = "auto";
-            t.style.height = `${Math.min(t.scrollHeight, 100)}px`;
+            t.style.height = `${Math.min(t.scrollHeight, 120)}px`;
           }}
         />
         <button
           onClick={handleSend}
           disabled={sending || !input.trim()}
           style={{
-            width: 40, height: 40, borderRadius: "50%",
-            background: sending || !input.trim() ? "#d2d2d7" : "#0071e3",
-            border: "none", cursor: sending || !input.trim() ? "not-allowed" : "pointer",
+            width: 42, height: 42,
+            borderRadius: 13,
+            background: sending || !input.trim() ? "#e5e5ea" : "#0071e3",
+            border: "none",
+            cursor: sending || !input.trim() ? "not-allowed" : "pointer",
             display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#fff", flexShrink: 0, transition: "background 0.15s",
+            color: "#fff", flexShrink: 0,
+            transition: "background 0.15s, transform 0.1s",
+            boxShadow: sending || !input.trim() ? "none" : "0 2px 8px rgba(0,113,227,0.3)",
           }}
+          onMouseDown={(e) => { if (!sending && input.trim()) e.currentTarget.style.transform = "scale(0.93)"; }}
+          onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
         >
           {sending
-            ? <Loader2 size={16} strokeWidth={2} style={{ animation: "spin 1s linear infinite" }} />
-            : <Send size={16} strokeWidth={2} />
+            ? <Loader2 size={17} strokeWidth={2.2} style={{ animation: "spin 1s linear infinite" }} />
+            : <Send size={17} strokeWidth={2.2} style={{ marginLeft: 1 }} />
           }
         </button>
       </div>

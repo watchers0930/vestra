@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { CheckCircle2, XCircle, Clock, Building2, Calendar, FileText, MessageCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Building2, FileText, MessageCircle, Trash2 } from "lucide-react";
 
 interface Application {
   id: string;
@@ -42,6 +42,7 @@ export function ReceivedApplicationsContent() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"ALL" | Application["status"]>("ALL");
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -79,6 +80,22 @@ export function ReceivedApplicationsContent() {
       }
     } finally {
       setProcessingId(null);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("이 의향서를 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.")) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/contract-applications/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setApplications((prev) => prev.filter((a) => a.id !== id));
+      } else {
+        const j = await res.json().catch(() => ({}));
+        alert(j.error ?? "삭제에 실패했습니다.");
+      }
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -267,6 +284,20 @@ export function ReceivedApplicationsContent() {
                           {processingId === a.id ? "처리 중..." : "수락"}
                         </button>
                       </>
+                    )}
+                    {(a.status === "REJECTED" || a.status === "WITHDRAWN") && (
+                      <button
+                        onClick={() => handleDelete(a.id)}
+                        disabled={deletingId === a.id}
+                        title="의향서 삭제"
+                        style={{
+                          width: 32, height: 32, borderRadius: 8, border: "1px solid rgba(255,59,48,0.25)",
+                          background: "rgba(255,59,48,0.05)", display: "flex", alignItems: "center",
+                          justifyContent: "center", cursor: "pointer", flexShrink: 0,
+                        }}
+                      >
+                        <Trash2 size={14} strokeWidth={2} style={{ color: "#c0392b" }} />
+                      </button>
                     )}
                   </div>
                 </div>
