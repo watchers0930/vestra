@@ -2,8 +2,9 @@
 
 import { RefObject } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  Shield, FileText, CheckCircle, AlertTriangle, Copy, Download, TrendingUp, Loader2, ClipboardList,
+  Shield, FileText, CheckCircle, AlertTriangle, Copy, Download, TrendingUp, Loader2,
 } from "lucide-react";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
 import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
@@ -60,6 +61,22 @@ export function JeonseResultPanel({
   resultRef, formData, parsedOwner, parsedPropUid,
   docLoading, onGenerateDoc, onCopy,
 }: Props) {
+  const router = useRouter();
+
+  function goToJeonseRight() {
+    try {
+      sessionStorage.setItem("vestra_jeonse_form_data", JSON.stringify({
+        propertyAddress: formData.propertyAddress,
+        deposit: String(formData.deposit),
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        landlordName: parsedOwner,
+        propUid: parsedPropUid ?? "",
+      }));
+    } catch {}
+    router.push("/jeonse/jeonse-right");
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {/* 로딩 */}
@@ -255,8 +272,7 @@ export function JeonseResultPanel({
             <h4 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", marginBottom: "14px" }}>문서 자동 생성</h4>
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "16px" }}>
               <button
-                onClick={() => onGenerateDoc("jeonse")}
-                disabled={docLoading}
+                onClick={goToJeonseRight}
                 style={{
                   flex: 1,
                   minWidth: "160px",
@@ -267,16 +283,16 @@ export function JeonseResultPanel({
                   padding: "10px 16px",
                   borderRadius: "12px",
                   border: "none",
-                  background: docLoading && activeDocType === "jeonse" ? "rgba(0,0,0,0.07)" : "#0071e3",
-                  color: docLoading && activeDocType === "jeonse" ? "#aeaeb2" : "#fff",
+                  background: "#0071e3",
+                  color: "#fff",
                   fontSize: "13px",
                   fontWeight: 600,
-                  cursor: docLoading ? "not-allowed" : "pointer",
-                  boxShadow: docLoading ? "none" : "0 2px 10px rgba(0,113,227,0.25)",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 10px rgba(0,113,227,0.25)",
                   transition: "all 0.15s",
                 }}
               >
-                {docLoading && activeDocType === "jeonse" ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} strokeWidth={2} />}
+                <FileText size={13} strokeWidth={2} />
                 전세권설정등기 신청서
               </button>
               <button
@@ -304,45 +320,6 @@ export function JeonseResultPanel({
                 {docLoading && activeDocType === "lease" ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} strokeWidth={2} />}
                 임차권등기명령 신청서
               </button>
-            </div>
-
-            {/* 전세권설정 신청서 자동완성 바로가기 */}
-            <div style={{
-              padding: "12px 14px",
-              background: "rgba(0,113,227,0.05)",
-              border: "1px solid rgba(0,113,227,0.14)",
-              borderRadius: "12px",
-              display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
-            }}>
-              <p style={{ fontSize: "12.5px", color: "#444", lineHeight: 1.5 }}>
-                분석 데이터로 법원 제출용 신청서 양식을 바로 채울 수 있습니다.
-              </p>
-              <Link
-                href="/jeonse/jeonse-right"
-                onClick={() => {
-                  try {
-                    sessionStorage.setItem("vestra_jeonse_form_data", JSON.stringify({
-                      propertyAddress: formData.propertyAddress,
-                      deposit: String(formData.deposit),
-                      startDate: formData.startDate,
-                      endDate: formData.endDate,
-                      landlordName: parsedOwner,
-                      propUid: parsedPropUid ?? "",
-                    }));
-                  } catch {}
-                }}
-                style={{
-                  flexShrink: 0,
-                  display: "inline-flex", alignItems: "center", gap: "6px",
-                  padding: "8px 14px", borderRadius: "10px",
-                  background: "#0071e3", color: "#fff",
-                  fontSize: "12.5px", fontWeight: 600, textDecoration: "none",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <ClipboardList size={13} strokeWidth={2} />
-                신청서 작성
-              </Link>
             </div>
 
             {generatedDoc && (
