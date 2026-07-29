@@ -766,9 +766,10 @@ model ContractApplication {
   applicantId String // User.id
 
   moveInDate      DateTime
-  duration        Int?    // 전세만 해당 (개월)
-  memo            String? @db.Text
-  proposedDeposit BigInt? // 제안 보증금/매매가 (네고)
+  duration        Int?      // 전세만 해당 (개월)
+  memo            String?   @db.Text
+  proposedDeposit BigInt?   // 제안 보증금/매매가 (네고)
+  visitDateTime   DateTime? // 매물 임장 방문 희망 일시
 
   status          String  @default("PENDING") // PENDING | ACCEPTED | REJECTED | WITHDRAWN
   rejectionReason String? @db.Text

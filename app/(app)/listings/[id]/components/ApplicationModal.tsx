@@ -42,9 +42,16 @@ export function ApplicationModal({ listingId, deposit, listingType, onClose, onS
   const [duration, setDuration] = useState("12");
   const [proposedDeposit, setProposedDeposit] = useState("");
   const [memo, setMemo] = useState("");
+  const [visitDate, setVisitDate] = useState("");
+  const [visitHour, setVisitHour] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+
+  const VISIT_HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17];
+  function fmtHour(h: number) {
+    return h < 12 ? `오전 ${h}시` : h === 12 ? "오후 12시" : `오후 ${h - 12}시`;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -61,6 +68,9 @@ export function ApplicationModal({ listingId, deposit, listingType, onClose, onS
           duration: listingType === "JEONSE" ? Number(duration) : undefined,
           proposedDeposit: proposedDeposit ? Number(proposedDeposit.replace(/,/g, "")) : undefined,
           memo: memo.trim() || undefined,
+          visitDateTime: (visitDate && visitHour !== null)
+            ? new Date(`${visitDate}T${String(visitHour).padStart(2, "0")}:00:00`).toISOString()
+            : undefined,
         }),
       });
       if (!res.ok) {
@@ -187,6 +197,40 @@ export function ApplicationModal({ listingId, deposit, listingType, onClose, onS
                 />
                 {proposedDeposit && (
                   <p style={{ fontSize: 11, color: "#0071e3", marginTop: 4 }}>{toKorean(proposedDeposit)}</p>
+                )}
+              </div>
+
+              {/* 임장 방문 일시 */}
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#3d3d3f", marginBottom: 6 }}>
+                  부동산 방문 희망 일시 (선택)
+                </label>
+                <input
+                  type="date"
+                  style={{ ...inputStyle, marginBottom: 8 }}
+                  min={today}
+                  value={visitDate}
+                  onChange={(e) => { setVisitDate(e.target.value); setVisitHour(null); }}
+                />
+                {visitDate && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {VISIT_HOURS.map((h) => (
+                      <button
+                        key={h}
+                        type="button"
+                        onClick={() => setVisitHour(h === visitHour ? null : h)}
+                        style={{
+                          padding: "6px 10px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                          border: visitHour === h ? "none" : "1px solid #d2d2d7",
+                          background: visitHour === h ? "#0071e3" : "#fff",
+                          color: visitHour === h ? "#fff" : "#3d3d3f",
+                          cursor: "pointer", transition: "all 0.12s",
+                        }}
+                      >
+                        {fmtHour(h)}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
 

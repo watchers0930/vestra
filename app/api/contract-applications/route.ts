@@ -15,6 +15,7 @@ const createSchema = z.object({
   duration: z.number().int().min(1).max(36).optional().nullable(),
   memo: z.string().max(500).optional().nullable(),
   proposedDeposit: z.number().int().min(0).optional().nullable(),
+  visitDateTime: z.string().datetime().optional().nullable(),
 });
 
 // GET /api/contract-applications?owner=me — 임대인: 내 매물로 온 의향서
@@ -41,6 +42,7 @@ export async function GET(req: NextRequest) {
         duration: true,
         memo: true,
         proposedDeposit: true,
+        visitDateTime: true,
         status: true,
         rejectionReason: true,
         createdAt: true,
@@ -82,7 +84,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { listingId, moveInDate, duration, memo, proposedDeposit } = parsed.data;
+    const { listingId, moveInDate, duration, memo, proposedDeposit, visitDateTime } = parsed.data;
 
     // 매물 존재 및 활성 확인
     const listing = await prisma.listing.findUnique({
@@ -113,6 +115,7 @@ export async function POST(req: NextRequest) {
         duration: duration ?? null,
         memo: memo ?? null,
         proposedDeposit: proposedDeposit != null ? BigInt(proposedDeposit) : null,
+        visitDateTime: visitDateTime ? new Date(visitDateTime) : null,
       },
       select: { id: true, status: true, createdAt: true },
     });
