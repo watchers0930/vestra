@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Printer, Info } from "lucide-react";
 import { findCourtFromAddress } from "@/lib/court-jurisdiction";
 
@@ -91,6 +91,14 @@ export function JeonseRightForm() {
   const [form, setForm] = useState<FormState>(initState.form);
   const [fromAnalysis] = useState<boolean>(initState.fromAnalysis);
 
+  useEffect(() => {
+    if (document.getElementById("daum-postcode-script")) return;
+    const script = document.createElement("script");
+    script.id = "daum-postcode-script";
+    script.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+    document.head.appendChild(script);
+  }, []);
+
   const set = (key: keyof FormState, val: string) =>
     setForm(prev => {
       const next = { ...prev, [key]: val };
@@ -100,6 +108,15 @@ export function JeonseRightForm() {
       }
       return next;
     });
+
+  function openPostcode(onSelect: (zip: string, addr: string) => void) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    new (window as any).daum.Postcode({
+      oncomplete: (data: { roadAddress: string; jibunAddress: string; zonecode: string }) => {
+        onSelect(data.zonecode, data.roadAddress || data.jibunAddress);
+      },
+    }).open();
+  }
 
   const depositNum = parseInt(form.deposit.replace(/[^0-9]/g, ""), 10) || 0;
   const regTax = Math.floor(depositNum * 0.002);
@@ -196,15 +213,16 @@ export function JeonseRightForm() {
             <input style={inp} value={form.landlordId} onChange={e => set("landlordId", e.target.value)} placeholder="000000-0000000" />
           </div>
         </div>
-        <div style={{ ...grid2, marginBottom: "12px" }}>
-          <div>
-            <label style={lbl}>우편번호</label>
-            <input style={inp} value={form.landlordZip} onChange={e => set("landlordZip", e.target.value)} placeholder="00000" />
+        <div style={{ marginBottom: "12px" }}>
+          <label style={lbl}>주소</label>
+          <div style={{ display: "flex", gap: "8px", marginBottom: "6px" }}>
+            <input style={{ ...inp, width: "110px", flexShrink: 0, background: "#f5f5f7", color: "#6e6e73" }} value={form.landlordZip} placeholder="우편번호" readOnly />
+            <button type="button" onClick={() => openPostcode((zip, addr) => { set("landlordZip", zip); set("landlordAddr", addr); })}
+              style={{ flex: 1, padding: "8px 0", borderRadius: "8px", background: "#0071e3", color: "#fff", fontSize: "13px", fontWeight: 600, border: "none", cursor: "pointer" }}>
+              주소 검색
+            </button>
           </div>
-          <div>
-            <label style={lbl}>주소</label>
-            <input style={inp} value={form.landlordAddr} onChange={e => set("landlordAddr", e.target.value)} placeholder="서울시 ..." />
-          </div>
+          <input style={{ ...inp, background: "#f5f5f7", color: "#1d1d1f" }} value={form.landlordAddr} placeholder="주소 검색 후 자동 입력" readOnly />
         </div>
         <div>
           <label style={lbl}>전화번호</label>
@@ -225,15 +243,16 @@ export function JeonseRightForm() {
             <input style={inp} value={form.tenantId} onChange={e => set("tenantId", e.target.value)} placeholder="000000-0000000" />
           </div>
         </div>
-        <div style={{ ...grid2, marginBottom: "12px" }}>
-          <div>
-            <label style={lbl}>우편번호</label>
-            <input style={inp} value={form.tenantZip} onChange={e => set("tenantZip", e.target.value)} placeholder="00000" />
+        <div style={{ marginBottom: "12px" }}>
+          <label style={lbl}>주소</label>
+          <div style={{ display: "flex", gap: "8px", marginBottom: "6px" }}>
+            <input style={{ ...inp, width: "110px", flexShrink: 0, background: "#f5f5f7", color: "#6e6e73" }} value={form.tenantZip} placeholder="우편번호" readOnly />
+            <button type="button" onClick={() => openPostcode((zip, addr) => { set("tenantZip", zip); set("tenantAddr", addr); })}
+              style={{ flex: 1, padding: "8px 0", borderRadius: "8px", background: "#0071e3", color: "#fff", fontSize: "13px", fontWeight: 600, border: "none", cursor: "pointer" }}>
+              주소 검색
+            </button>
           </div>
-          <div>
-            <label style={lbl}>주소</label>
-            <input style={inp} value={form.tenantAddr} onChange={e => set("tenantAddr", e.target.value)} placeholder="서울시 ..." />
-          </div>
+          <input style={{ ...inp, background: "#f5f5f7", color: "#1d1d1f" }} value={form.tenantAddr} placeholder="주소 검색 후 자동 입력" readOnly />
         </div>
         <div>
           <label style={lbl}>전화번호</label>
