@@ -177,7 +177,11 @@ export async function generateResearchJournalFromGit(cwd: string): Promise<Resea
 }
 
 export async function generateResearchJournalFromGitHub(): Promise<ResearchJournalEntry[]> {
-  const repo = process.env.RESEARCH_JOURNAL_GITHUB_REPO || process.env.VERCEL_GIT_REPO_SLUG || "watchers0930/vestra";
+  // VERCEL_GIT_REPO_SLUG은 owner 없이 "vestra"만 포함되므로 owner와 조합 필요
+  const vercelRepo = process.env.VERCEL_GIT_REPO_OWNER && process.env.VERCEL_GIT_REPO_SLUG
+    ? `${process.env.VERCEL_GIT_REPO_OWNER}/${process.env.VERCEL_GIT_REPO_SLUG}`
+    : "";
+  const repo = process.env.RESEARCH_JOURNAL_GITHUB_REPO || vercelRepo || "watchers0930/vestra";
   const branch = process.env.RESEARCH_JOURNAL_GITHUB_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || "main";
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
