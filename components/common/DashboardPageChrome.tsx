@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Bell, Plus } from "lucide-react";
+import SessionTimer from "@/components/auth/session-timer";
 
 interface DashboardPageTopbarProps {
   current: string;
@@ -48,6 +49,7 @@ export function DashboardPageTopbar({
       </div>
 
       <div className="flex items-center gap-2">
+        <SessionTimer />
         <Link
           href="/profile"
           className="flex items-center gap-[5px] rounded-full border border-black/[0.08] bg-white px-[14px] py-[6px] text-[12.5px] font-medium text-[#1d1d1f] shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-colors hover:bg-[#ebebed]"
