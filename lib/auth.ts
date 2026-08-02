@@ -182,6 +182,22 @@ function buildProviders(settings: Record<string, string>) {
   return providers;
 }
 
+// ─── 브라우저 닫힘 = 로그아웃: maxAge 없는 세션 쿠키로 설정 ───
+
+const isSecure = process.env.NODE_ENV === "production";
+const SESSION_COOKIE_CONFIG: NextAuthConfig["cookies"] = {
+  sessionToken: {
+    name: `${isSecure ? "__Secure-" : ""}next-auth.session-token`,
+    options: {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      secure: isSecure,
+      // maxAge 없음 → 브라우저 세션 쿠키 → 닫히면 삭제
+    },
+  },
+};
+
 // ─── 동적 Auth (소셜 로그인 라우트용 — DB에서 키 로드) ───
 
 export async function createDynamicAuth() {
@@ -195,6 +211,7 @@ export async function createDynamicAuth() {
     pages: { signIn: "/login" },
     callbacks: authCallbacks,
     events: authEvents,
+    cookies: SESSION_COOKIE_CONFIG,
   });
 }
 
@@ -209,6 +226,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: { signIn: "/login" },
   callbacks: authCallbacks,
   events: authEvents,
+  cookies: SESSION_COOKIE_CONFIG,
 });
 
 // ---------------------------------------------------------------------------

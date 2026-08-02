@@ -3,6 +3,7 @@ import Sidebar from "@/components/layout/sidebar";
 import Footer from "@/components/layout/footer";
 import OnboardingModal from "@/components/common/OnboardingModal";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
+import SessionGuard from "@/components/auth/session-guard";
 
 export default function AppLayout({
   children,
@@ -17,6 +18,7 @@ export default function AppLayout({
       >
         본문으로 건너뛰기
       </a>
+      <SessionGuard />
       <Suspense><Sidebar /></Suspense>
       <OnboardingModal />
       <div className="min-h-screen lg:ml-[272px] transition-all duration-300">
