@@ -45,7 +45,7 @@ export default function SessionTimer() {
 
   return (
     <div
-      className={`flex items-center gap-[5px] rounded-full border px-[10px] py-[5px] text-[11px] font-medium tabular-nums transition-colors ${
+      className={`flex items-center gap-[5px] rounded-full border px-[14px] py-[5px] text-[11px] font-medium tabular-nums transition-colors ${
         isCritical
           ? "border-red-200 bg-red-50 text-red-500"
           : isLow
