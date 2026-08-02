@@ -17,10 +17,12 @@ const ACTIVITY_EVENTS = [
 
 export default function SessionGuard() {
   const { status } = useSession();
-  const lastActivityRef = useRef<number>(Date.now());
+  const lastActivityRef = useRef<number>(0);
 
   useEffect(() => {
     if (status !== "authenticated") return;
+
+    lastActivityRef.current = Date.now();
 
     const updateActivity = () => {
       lastActivityRef.current = Date.now();

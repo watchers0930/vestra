@@ -12,7 +12,7 @@ const ACTIVITY_EVENTS = [
 
 export default function SessionTimer() {
   const { status } = useSession();
-  const lastActivityRef = useRef<number>(Date.now());
+  const lastActivityRef = useRef<number>(0);
   const [remaining, setRemaining] = useState(INACTIVITY_MS);
 
   useEffect(() => {
