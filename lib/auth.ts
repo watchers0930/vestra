@@ -187,7 +187,8 @@ function buildProviders(settings: Record<string, string>) {
 const isSecure = process.env.NODE_ENV === "production";
 const SESSION_COOKIE_CONFIG: NextAuthConfig["cookies"] = {
   sessionToken: {
-    // name 미지정 → Auth.js v5 기본값(authjs.session-token) 사용 — 미들웨어와 일치
+    // 미들웨어(proxy.ts)와 동일한 이름 — Auth.js v5 기본값
+    name: isSecure ? "__Secure-authjs.session-token" : "authjs.session-token",
     options: {
       httpOnly: true,
       sameSite: "lax",
