@@ -6,7 +6,7 @@ import { getAssets, getAnalyses, removeAnalysis, removeAsset, ensureUserIsolatio
 import { useToast } from "@/components/common/toast";
 
 export function useDashboardData() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { showToast } = useToast();
   const [assets, setAssets] = useState<StoredAsset[]>([]);
   const [analyses, setAnalyses] = useState<AnalysisRecord[]>([]);
@@ -20,6 +20,7 @@ export function useDashboardData() {
   const [alertAddressMap, setAlertAddressMap] = useState<Record<string, { monitoredPropertyId: string; summary: string; riskLevel: string }>>({});
 
   useEffect(() => {
+    if (status === "loading") return;
     async function loadData() {
       if (session?.user) {
         // 계정 전환 시 이전 계정의 localStorage 데이터 격리
@@ -71,7 +72,7 @@ export function useDashboardData() {
       setLoading(false);
     }
     loadData();
-  }, [session]);
+  }, [session, status]);
 
   const totalAssets = assets.length;
   const totalValue = useMemo(() => assets.reduce((sum, a) => sum + a.estimatedPrice, 0), [assets]);
