@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, startTransition } from "react";
 import { signOut, useSession } from "next-auth/react";
 
 const INACTIVITY_MS = 60 * 60 * 1000;
@@ -41,7 +41,7 @@ export default function SessionGuard({ children }: { children: React.ReactNode }
       sessionStorage.setItem("vestra_alive", "1");
       updateHeartbeat();
       lastActivityRef.current = Date.now();
-      setChecked(true); // 검증 통과 → 오버레이 제거
+      startTransition(() => setChecked(true)); // 검증 통과 → 오버레이 제거
 
       const updateActivity = () => { lastActivityRef.current = Date.now(); };
       ACTIVITY_EVENTS.forEach((e) => window.addEventListener(e, updateActivity, { passive: true }));
@@ -62,7 +62,7 @@ export default function SessionGuard({ children }: { children: React.ReactNode }
     }
 
     // 비로그인 상태 → 오버레이 제거 (미들웨어가 보호)
-    setChecked(true);
+    startTransition(() => setChecked(true));
   }, [status]);
 
   return (
