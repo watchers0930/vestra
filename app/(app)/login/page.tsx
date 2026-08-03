@@ -15,6 +15,7 @@ export default function LoginPage() {
   // 이미 로그인된 상태: localStorage 초기화 후 역할별 리다이렉트
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
+      try { sessionStorage.setItem("vestra_alive", "1"); } catch {}
       clearAll();
       if (session.user.role === "ADMIN") {
         router.push("/admin");
@@ -29,6 +30,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const handleSocialLogin = (provider: "google" | "naver") => {
+    try { sessionStorage.setItem("vestra_alive", "1"); } catch {}
     signIn(provider, { callbackUrl: "/dashboard" });
   };
 
@@ -45,6 +47,7 @@ export default function LoginPage() {
     if (res?.error) {
       setError("이메일 또는 비밀번호가 올바르지 않습니다");
     } else {
+      try { sessionStorage.setItem("vestra_alive", "1"); } catch {}
       router.push("/admin");
     }
   };
