@@ -21,11 +21,14 @@ const tossDomains = "https://js.tosspayments.com";
 const tossConnect = "https://*.tosspayments.com https://*.toss.im";
 const tossFrame = "https://*.tosspayments.com https://*.toss.im";
 const isDev = process.env.NODE_ENV !== "production";
+// Vercel 프리뷰 환경에서 Live Feedback 스크립트 허용
+const isVercelPreview = process.env.VERCEL_ENV === "preview";
+const vercelLive = isVercelPreview ? " https://vercel.live" : "";
 
 // 기본 CSP (unsafe-eval 없음)
 const baseCSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${kakaoDomains} ${googleTagDomains} ${tossDomains}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}${vercelLive} ${kakaoDomains} ${googleTagDomains} ${tossDomains}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   `img-src 'self' data: blob: ${kakaoImg} https://lh3.googleusercontent.com https://images.unsplash.com`,
   "font-src 'self' data: https://fastly.jsdelivr.net https://fonts.gstatic.com",
