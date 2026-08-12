@@ -4,11 +4,12 @@ import { useEffect, useRef } from "react";
 interface Props {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
   direction?: "up" | "left" | "right";
   delay?: number;
 }
 
-export function ScrollReveal({ children, className = "", direction = "up", delay = 0 }: Props) {
+export function ScrollReveal({ children, className = "", style, direction = "up", delay = 0 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export function ScrollReveal({ children, className = "", direction = "up", delay
   const delayStyle = delay ? { transitionDelay: `${delay}s` } : {};
 
   return (
-    <div ref={ref} className={`${cls} ${className}`} style={delayStyle}>
+    <div ref={ref} className={`${cls} ${className}`} style={{ ...delayStyle, ...style }}>
       {children}
     </div>
   );

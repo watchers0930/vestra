@@ -1,172 +1,74 @@
-"use client";
-
-import { useState } from "react";
-import Link from "next/link";
 import { ScrollReveal } from "./ScrollReveal";
 
-type Tier = "OPEN" | "TRIAL" | "AUTH_REQUIRED";
-
-const FEATURES_DATA: { icon: string; label: string; title: string; desc: string; href: string; tier: Tier }[] = [
+const FEATURES = [
   {
-    icon: "gavel",
-    label: "Rights Analysis",
-    title: "권리 분석",
+    tier: "tt", label: "Rights Analysis", title: "권리 분석",
     desc: "등기부등본을 AI가 종합 분석하여 권리관계, 위험요소, 안전지수를 한눈에 파악합니다.",
-    href: "/rights",
-    tier: "TRIAL",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>,
   },
   {
-    icon: "query_stats",
-    label: "Market Prediction",
-    title: "시세 전망",
+    tier: "tt", label: "Market Prediction", title: "시세 전망",
     desc: "공공데이터와 AI 분석을 결합하여 부동산 시세 추이와 향후 전망을 제공합니다.",
-    href: "/prediction",
-    tier: "TRIAL",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>,
   },
   {
-    icon: "shield",
-    label: "Tenant Protection",
-    title: "전세 보호",
-    desc: "전세 사기 예방을 위한 안전 분석, 전입신고, 확정일자, 전세권설정까지 원스톱 가이드.",
-    href: "/jeonse/analysis",
-    tier: "TRIAL",
+    tier: "tt", label: "Tenant Protection", title: "전세 보호",
+    desc: "전세사기 예방을 위한 안전 분석, 전입신고, 확정일자, 전세권설정까지 원스톱 가이드.",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
   },
   {
-    icon: "verified_user",
-    label: "Registry Guard",
-    title: "등기부 AI 보호",
-    desc: "인공지능이 하루 2회 등기부등본의 변경사항을 자동으로 확인합니다. 소유권 이전, 근저당 설정 등 이상 징후 발견 시 즉시 알려드려 당신의 부동산을 지켜드립니다.",
-    href: "/registry",
-    tier: "AUTH_REQUIRED",
+    tier: "", label: "Registry Guard", title: "등기부 AI 보호",
+    desc: "AI가 하루 2회 등기부등본 변경사항을 자동 확인합니다. 이상 징후 발견 시 즉시 알립니다.",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><polyline points="9 12 11 14 15 10" /></svg>,
   },
   {
-    icon: "contract",
-    label: "Contract Review",
-    title: "계약서 AI 검토",
+    tier: "", label: "Contract Review", title: "계약서 AI 검토",
     desc: "부동산 계약서를 업로드하면 불리한 조항, 누락 사항, 위험 요소를 자동 검출합니다.",
-    href: "/contract",
-    tier: "AUTH_REQUIRED",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /></svg>,
   },
   {
-    icon: "calculate",
-    label: "Tax Simulation",
-    title: "세무 시뮬레이션",
+    tier: "tf", label: "Tax Simulation", title: "세무 시뮬레이션",
     desc: "취득세, 양도소득세, 종합부동산세를 실시간으로 계산하고 절세 전략을 제안합니다.",
-    href: "/tax",
-    tier: "OPEN",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>,
   },
   {
-    icon: "analytics",
-    label: "Business Analysis",
-    title: "사업성 분석",
+    tier: "", label: "Business Analysis", title: "사업성 분석",
     desc: "다중 문서 기반으로 사업성을 검증하고 SCR 수준의 분석 보고서를 자동 생성합니다.",
-    href: "/feasibility",
-    tier: "AUTH_REQUIRED",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>,
   },
   {
-    icon: "smart_toy",
-    label: "AI Assistant",
-    title: "AI 어시스턴트",
+    tier: "", label: "AI Assistant", title: "AI 어시스턴트",
     desc: "부동산 관련 궁금한 점을 AI에게 자유롭게 질문하세요. 법률, 세무, 시장 동향까지.",
-    href: "/assistant",
-    tier: "AUTH_REQUIRED",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>,
   },
 ];
 
-const iconStyle = { fontVariationSettings: "'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24" };
-
 export function FeaturesSection() {
-  const [expanded, setExpanded] = useState(false);
-
-  const visible = expanded ? FEATURES_DATA : FEATURES_DATA.slice(0, 6);
-
   return (
-    <section id="features" className="py-16 px-5 lg:py-40 lg:px-12 bg-[#fbf8ff]">
-      <div className="max-w-[1440px] mx-auto">
-
-        {/* Header */}
-        <ScrollReveal className="flex items-end justify-between mb-10 lg:mb-24">
-          <div>
-            <div className="flex items-center gap-3 mb-4 lg:mb-5">
-              <div className="landing-accent-line" />
-              <span className="landing-section-label">Core Services</span>
-            </div>
-            <h2 className="text-3xl lg:text-5xl font-extrabold text-[#00042a] leading-tight tracking-tight">
-              전문가의 시각을<br />AI로 구현했습니다
-            </h2>
-          </div>
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="hidden lg:flex items-center gap-2 text-[11px] font-bold text-[#454651] tracking-widest uppercase hover:text-[#00042a] transition-colors group"
-          >
-            {expanded ? "간략히 보기" : "전체 서비스 보기"}
-            <span
-              className={`material-symbols-outlined text-sm transition-transform ${
-                expanded ? "rotate-90 group-hover:-translate-x-1" : "group-hover:translate-x-1"
-              }`}
-              style={iconStyle}
-            >
-              arrow_forward
-            </span>
-          </button>
+    <section className="lnd-features" aria-labelledby="feat-h">
+      <div className="lnd-feat-wrap">
+        <ScrollReveal className="lnd-sh">
+          <div className="lnd-sh-eye"><span className="lnd-sh-line" aria-hidden="true" />Core Services</div>
+          <h2 className="lnd-sh-h" id="feat-h">전문가의 시각을<br />AI로 구현했습니다</h2>
+          <p className="lnd-sh-p">부동산 거래의 모든 단계를 커버하는 8가지 AI 분석 서비스</p>
         </ScrollReveal>
-
-        {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {visible.map((f, i) => (
-            <ScrollReveal key={f.title} delay={(i + 1) * 0.1}>
-              <div className="landing-feature-card rounded-xl p-6 lg:p-10 bg-white cursor-default h-full relative">
-
-                {/* Tier 배지 */}
-                {f.tier === "OPEN" && (
-                  <span className="absolute top-4 right-4 lg:top-6 lg:right-6 text-[9px] font-bold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 tracking-wide">FREE</span>
-                )}
-                {f.tier === "TRIAL" && (
-                  <span className="absolute top-4 right-4 lg:top-6 lg:right-6 text-[9px] font-bold px-2.5 py-1 rounded-lg bg-amber-50 text-amber-600 tracking-wide">무료 체험</span>
-                )}
-
-                {/* Icon */}
-                <div className="w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center bg-[#f5f2fa] rounded-xl mb-5 lg:mb-8">
-                  <span className="material-symbols-outlined text-2xl text-[#00042a]" style={iconStyle}>
-                    {f.icon}
+        <div className="lnd-feat-grid">
+          {FEATURES.map((f, i) => (
+            <ScrollReveal key={f.title} delay={(i % 3) * 0.06}>
+              <div className="lnd-feat-card">
+                {f.tier && (
+                  <span className={`lnd-tier-badge lnd-${f.tier}`}>
+                    {f.tier === "tf" ? "FREE" : "무료 체험"}
                   </span>
-                </div>
-
-                {/* Label */}
-                <span className="landing-section-label block mb-3">{f.label}</span>
-
-                {/* Title */}
-                <h3 className="text-xl font-extrabold text-[#00042a] mb-4 tracking-tight">{f.title}</h3>
-
-                {/* Description */}
-                <p className="text-[#454651] font-normal leading-[1.8] text-[15px]">{f.desc}</p>
-
-                {/* Link */}
-                <Link href={f.href} className="mt-5 lg:mt-8 flex items-center gap-2 text-[#00042a] font-bold text-[11px] tracking-widest uppercase group">
-                  {f.tier === "OPEN" ? "바로 사용하기" : f.tier === "TRIAL" ? "무료 체험하기" : "자세히 보기"}
-                  <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform" style={iconStyle}>
-                    arrow_forward
-                  </span>
-                </Link>
-
+                )}
+                <div className="lnd-feat-ico" aria-hidden="true">{f.icon}</div>
+                <div className="lnd-feat-lbl">{f.label}</div>
+                <div className="lnd-feat-title">{f.title}</div>
+                <div className="lnd-feat-desc">{f.desc}</div>
               </div>
             </ScrollReveal>
           ))}
         </div>
-
-        {/* Mobile expand button */}
-        <div className="flex lg:hidden justify-center mt-10">
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="flex items-center gap-2 text-[11px] font-bold text-[#454651] tracking-widest uppercase hover:text-[#00042a] transition-colors"
-          >
-            {expanded ? "간략히 보기" : "전체 서비스 보기"}
-            <span className="material-symbols-outlined text-sm" style={iconStyle}>
-              {expanded ? "expand_less" : "expand_more"}
-            </span>
-          </button>
-        </div>
-
       </div>
     </section>
   );

@@ -1,92 +1,53 @@
+import "./landing.css";
 import Link from "next/link";
 
-export default function LandingLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function LandingLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      {/* ─── Glass Nav ─── */}
-      <header className="fixed top-0 left-0 right-0 z-50 landing-glass-nav">
-        <div className="max-w-[1440px] mx-auto px-5 py-3.5 lg:px-12 lg:py-5 flex items-center justify-between">
-          <Link href="/" className="text-xl font-thin tracking-[0.25em] text-[#00042a]">
-            VESTRA
-          </Link>
-
-          <div className="flex items-center gap-2 lg:gap-4">
-            <Link
-              href="/login"
-              className="hidden lg:block landing-ghost-btn text-[11px] font-bold tracking-widest uppercase px-6 py-2.5 rounded"
-            >
-              로그인
-            </Link>
-            <Link
-              href="/login"
-              className="landing-grad-btn text-white text-[10px] lg:text-[11px] font-bold tracking-widest uppercase px-5 py-2 lg:px-7 lg:py-2.5 rounded"
-            >
-              시작하기
-            </Link>
+      <nav className="lnd-nav" aria-label="메인 내비게이션">
+        <div className="lnd-nav-inner">
+          <Link href="/" className="lnd-logo">VESTRA</Link>
+          <div className="lnd-nav-r">
+            <Link href="/login" className="lnd-login">로그인</Link>
+            <Link href="/login" className="lnd-start">시작하기</Link>
           </div>
         </div>
-      </header>
-
-      {/* Content */}
-      <main className="pt-[14px]">{children}</main>
-
-      {/* ─── Dark Footer ─── */}
-      <footer className="text-white px-5 py-12 lg:px-12 lg:py-20" style={{ backgroundColor: '#222222' }}>
-        <div className="max-w-[1440px] mx-auto">
-          <div className="flex flex-col md:flex-row justify-between gap-8 lg:gap-16 mb-10 lg:mb-16">
-            {/* Company */}
-            <div className="max-w-xs">
-              <div className="text-2xl font-thin tracking-[0.25em] mb-6 text-white">VESTRA</div>
-              <p className="text-white/40 text-sm leading-relaxed">
-                The Digital Curator of Real Estate.<br />AI 기반 부동산 자산관리 플랫폼.
-              </p>
-              <div className="mt-5 space-y-2 text-xs text-white/30 tracking-normal leading-relaxed">
-                <p>BMI C&amp;S | 대표이사 김동의</p>
-                <p>사업자등록번호 263-87-03481</p>
-                <p>통신판매신고번호 2025-경기광명-0189</p>
-                <p>서울시 강남구 강남대로 354(역삼동, 혜천빌딩) 1126-5호</p>
-                <p>고객센터 010-8490-9271</p>
+      </nav>
+      <main>{children}</main>
+      <footer className="lnd-footer">
+        <div className="lnd-ft-inner">
+          <div className="lnd-ft-top">
+            <div>
+              <div className="lnd-ft-logo">VESTRA</div>
+              <div className="lnd-ft-tag">The Digital Curator of Real Estate.<br />AI 기반 부동산 자산관리 플랫폼.</div>
+              <div className="lnd-ft-biz">
+                BMI C&amp;S | 대표이사 김동의<br />
+                사업자등록번호 263-87-03481<br />
+                통신판매신고번호 2025-경기광명-0189<br />
+                서울시 강남구 강남대로 354(역삼동, 혜천빌딩) 1126-5호<br />
+                고객센터 010-8490-9271
               </div>
             </div>
-            {/* Links */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
-              <div>
-                <h5 className="text-[9px] font-bold uppercase tracking-widest text-white/40 mb-6">Legal</h5>
-                <ul className="space-y-3">
-                  <li><Link href="/privacy" className="text-white/60 text-sm hover:text-white transition-colors">개인정보 처리방침</Link></li>
-                  <li><Link href="/terms" className="text-white/60 text-sm hover:text-white transition-colors">이용약관</Link></li>
+            <div className="lnd-ft-cols">
+              <div className="lnd-ft-col">
+                <h5>Legal</h5>
+                <ul>
+                  <li><Link href="/privacy">개인정보 처리방침</Link></li>
+                  <li><Link href="/terms">이용약관</Link></li>
                 </ul>
               </div>
-              <div>
-                <h5 className="text-[9px] font-bold uppercase tracking-widest text-white/40 mb-6">Product</h5>
-                <ul className="space-y-3">
-                  <li><Link href="/login" className="text-white/60 text-sm hover:text-white transition-colors">기능 소개</Link></li>
-                  <li><Link href="/login" className="text-white/60 text-sm hover:text-white transition-colors">요금제</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h5 className="text-[9px] font-bold uppercase tracking-widest text-white/40 mb-6">Company</h5>
-                <ul className="space-y-3">
-                  <li><Link href="/login" className="text-white/60 text-sm hover:text-white transition-colors">회사 소개</Link></li>
-                  <li><Link href="/login" className="text-white/60 text-sm hover:text-white transition-colors">채용</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h5 className="text-[9px] font-bold uppercase tracking-widest text-white/40 mb-6">Connect</h5>
-                <ul className="space-y-3">
-                  <li><a href="#" className="text-white/60 text-sm hover:text-white transition-colors">LinkedIn</a></li>
-                  <li><a href="#" className="text-white/60 text-sm hover:text-white transition-colors">뉴스레터</a></li>
+              <div className="lnd-ft-col">
+                <h5>Product</h5>
+                <ul>
+                  <li><Link href="/login">기능 소개</Link></li>
+                  <li><Link href="/login">요금제</Link></li>
                 </ul>
               </div>
             </div>
           </div>
-          <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-white/30 text-xs tracking-widest">© 2026 BMI C&amp;S All rights reserved.</p>
-            <p className="text-white/20 text-xs">The Digital Curator of Real Estate</p>
+          <div className="lnd-ft-bottom">
+            <span className="lnd-ft-copy">© 2026 BMI C&amp;S All rights reserved.</span>
+            <span className="lnd-ft-copy">The Digital Curator of Real Estate</span>
           </div>
         </div>
       </footer>

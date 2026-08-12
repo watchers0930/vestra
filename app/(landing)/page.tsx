@@ -1,6 +1,8 @@
 import { HeroSection } from "./components/HeroSection";
+import { TrustBar } from "./components/TrustBar";
+import { SituationSection } from "./components/SituationSection";
 import { FeaturesSection } from "./components/FeaturesSection";
-import { EditorialSection } from "./components/EditorialSection";
+import { HowItWorks } from "./components/HowItWorks";
 import { PricingSection } from "./components/PricingSection";
 import { TestimonialsSection } from "./components/TestimonialsSection";
 import { CtaSection } from "./components/CtaSection";
@@ -17,23 +19,18 @@ const jsonLd = {
   url: "https://vestra-plum.vercel.app",
   description: "AI 기반 부동산 자산관리 플랫폼. 전세사기 예방, 권리분석, 계약서 검토, 세금 시뮬레이션.",
   sameAs: [],
-  contactPoint: {
-    "@type": "ContactPoint",
-    contactType: "customer service",
-    availableLanguage: "Korean",
-  },
+  contactPoint: { "@type": "ContactPoint", contactType: "customer service", availableLanguage: "Korean" },
 };
 
 export default function LandingPage() {
   return (
     <div>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HeroSection />
+      <TrustBar />
+      <SituationSection />
       <FeaturesSection />
-      <EditorialSection />
+      <HowItWorks />
       <PricingSection />
       <TestimonialsSection />
       <CtaSection />

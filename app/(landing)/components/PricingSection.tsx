@@ -1,72 +1,53 @@
 import Link from "next/link";
 import { ScrollReveal } from "./ScrollReveal";
-import { PLANS } from "../constants";
+
+const PLANS = [
+  {
+    name: "Lite", price: "₩29,000", unit: "/mo",
+    desc: "개인 투자자를 위한 시작 플랜", hot: false, cta: "시작하기",
+    features: ["월 5회 정밀 권리 분석", "실시간 시세 모니터링", "기본 시장 트렌드 리포트"],
+  },
+  {
+    name: "Professional", price: "₩89,000", unit: "/mo",
+    desc: "활발한 투자자를 위한 전문 플랜", hot: true, cta: "지금 시작하기",
+    features: ["월 무제한 권리 분석", "24개월 가치 예측 AI 모델", "심층 법률 리스크 검토", "우선 고객 지원"],
+  },
+  {
+    name: "Enterprise", price: "별도 문의", unit: "",
+    desc: "기업 및 기관 투자자를 위한 플랜", hot: false, cta: "상담 신청하기",
+    features: ["맞춤형 API 통합", "전담 분석 매니저 배정", "법인용 화이트 라벨링"],
+  },
+];
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-16 px-5 lg:py-40 lg:px-12 bg-[#fbf8ff]">
-      <div className="max-w-[1440px] mx-auto">
-        <ScrollReveal className="text-center mb-10 lg:mb-24">
-          <div className="flex items-center justify-center gap-3 mb-4 lg:mb-5">
-            <div className="landing-accent-line" />
-            <span className="landing-section-label">Pricing</span>
-            <div className="landing-accent-line" />
+    <section className="lnd-pricing" aria-labelledby="price-h">
+      <div className="lnd-price-wrap">
+        <ScrollReveal className="lnd-sh" style={{ textAlign: "center" }}>
+          <div className="lnd-sh-eye" style={{ justifyContent: "center" }}>
+            <span className="lnd-sh-line" aria-hidden="true" />Pricing<span className="lnd-sh-line" aria-hidden="true" />
           </div>
-          <h2 className="text-3xl lg:text-5xl font-extrabold text-[#00042a] mb-4 lg:mb-5 tracking-tight">비즈니스에 최적화된 플랜</h2>
-          <p className="text-[#454651] text-lg">자산 규모와 목적에 맞는 최적의 분석 도구를<br />선택하세요.</p>
+          <h2 className="lnd-sh-h" id="price-h">자산 규모에 맞는<br />플랜을 선택하세요</h2>
         </ScrollReveal>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start pt-[20px]">
-          {PLANS.map((plan, i) => (
-            <ScrollReveal key={plan.name} delay={i * 0.1}>
-              <div className={`landing-pricing-card rounded-xl p-6 lg:p-10 flex flex-col relative ${
-                plan.highlight
-                  ? "bg-[#00042a] landing-pricing-featured mt-6"
-                  : "bg-[#f5f2fa]"
-              }`}>
-                {plan.highlight && (
-                  <>
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32" />
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white text-[#00042a] px-5 py-1.5 text-[9px] font-extrabold tracking-widest uppercase rounded-full shadow-lg z-10">
-                      Most Popular
-                    </div>
-                  </>
-                )}
-                <div className="mb-6 lg:mb-10 relative z-10">
-                  <p className={`landing-section-label mb-5 ${plan.highlight ? "text-white/50" : ""}`}>{plan.name}</p>
-                  <div className="flex items-baseline gap-1 mb-2">
-                    <span className={`text-4xl font-extrabold ${plan.highlight ? "text-white" : "text-[#00042a]"}`}>
-                      {plan.price !== "별도 문의" ? `₩${plan.price}` : plan.price}
-                    </span>
-                    {plan.price !== "별도 문의" && (
-                      <span className={`text-sm ${plan.highlight ? "text-white/50" : "text-[#454651]"}`}>/mo</span>
-                    )}
-                  </div>
-                  <p className={`text-xs ${plan.highlight ? "text-white/60" : "text-[#454651]"}`}>{plan.description}</p>
+        <div className="lnd-price-grid">
+          {PLANS.map((p, i) => (
+            <ScrollReveal key={p.name} delay={i * 0.1}>
+              <div className={`lnd-p-card${p.hot ? " lnd-hot" : ""}`}>
+                {p.hot && <div className="lnd-hot-badge">Most Popular</div>}
+                <div className="lnd-p-name">{p.name}</div>
+                <div className="lnd-p-price">
+                  {p.price}
+                  <span style={p.hot ? { color: "rgba(255,255,255,.45)" } : {}}>{p.unit}</span>
                 </div>
-                <ul className="space-y-3 lg:space-y-4 mb-8 lg:mb-12 flex-grow relative z-10">
-                  {plan.features.map((f) => (
-                    <li key={f} className={`flex items-start gap-3 text-sm ${plan.highlight ? "text-white/80" : "text-[#454651]"}`}>
-                      <span
-                        className={`material-symbols-outlined text-sm mt-0.5 ${plan.highlight ? "text-white" : "text-[#00042a]"}`}
-                        style={{ fontVariationSettings: "'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24" }}
-                      >
-                        check
-                      </span>
-                      {f}
+                <div className="lnd-p-desc">{p.desc}</div>
+                <ul className="lnd-p-list">
+                  {p.features.map((f) => (
+                    <li key={f} className="lnd-p-li">
+                      <span className="lnd-p-check">✓</span>{f}
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href="/login"
-                  className={`relative z-10 block w-full py-4 rounded text-center text-[11px] font-extrabold tracking-widest uppercase transition-colors ${
-                    plan.highlight
-                      ? "bg-white text-[#00042a] hover:bg-blue-50"
-                      : "landing-ghost-btn"
-                  }`}
-                >
-                  {plan.highlight ? "지금 시작하기" : plan.name === "Enterprise" ? "상담 신청하기" : "시작하기"}
-                </Link>
+                <Link href="/login" className="lnd-p-btn">{p.cta}</Link>
               </div>
             </ScrollReveal>
           ))}
