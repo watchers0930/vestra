@@ -6,6 +6,7 @@ interface Blip {
   y: number;
   alpha: number;
   size: number;
+  special: boolean;
 }
 
 export function RadarCanvas() {
@@ -24,9 +25,10 @@ export function RadarCanvas() {
     resize();
     window.addEventListener("resize", resize);
 
-    const blipDefs = Array.from({ length: 16 }, () => ({
+    const blipDefs = Array.from({ length: 16 }, (_, i) => ({
       a: Math.random() * Math.PI * 2,
       r: 0.18 + Math.random() * 0.72,
+      special: i === 4,
     }));
 
     let angle = -Math.PI / 2;
@@ -104,7 +106,7 @@ export function RadarCanvas() {
       ctx.fill();
 
       // Detect and spawn blips
-      blipDefs.forEach(({ a, r }) => {
+      blipDefs.forEach(({ a, r, special }) => {
         let diff = (angle - a) % (Math.PI * 2);
         if (diff < 0) diff += Math.PI * 2;
         if (diff < 0.05) {
@@ -112,7 +114,8 @@ export function RadarCanvas() {
             x: cx + Math.cos(a) * r * maxR,
             y: cy + Math.sin(a) * r * maxR,
             alpha: 1,
-            size: 2 + Math.random() * 2.5,
+            size: special ? 3.5 : 2 + Math.random() * 2.5,
+            special,
           });
         }
       });
@@ -121,9 +124,13 @@ export function RadarCanvas() {
       for (let i = blips.length - 1; i >= 0; i--) {
         const b = blips[i];
         const glowR = b.size * 5;
+        const coreColor = b.special ? "rgba(251,146,60," : "rgba(160,210,255,";
+        const glowInner = b.special ? `rgba(251,146,60,${b.alpha * 0.6})` : `rgba(100,160,255,${b.alpha * 0.55})`;
+        const glowOuter = b.special ? "rgba(251,100,0,0)" : "rgba(37,99,235,0)";
+
         const glow = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, glowR);
-        glow.addColorStop(0, `rgba(100,160,255,${b.alpha * 0.55})`);
-        glow.addColorStop(1, "rgba(37,99,235,0)");
+        glow.addColorStop(0, glowInner);
+        glow.addColorStop(1, glowOuter);
         ctx.beginPath();
         ctx.arc(b.x, b.y, glowR, 0, Math.PI * 2);
         ctx.fillStyle = glow;
@@ -131,14 +138,14 @@ export function RadarCanvas() {
 
         ctx.beginPath();
         ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(160,210,255,${b.alpha})`;
+        ctx.fillStyle = `${coreColor}${b.alpha})`;
         ctx.fill();
 
         b.alpha -= 0.0045;
         if (b.alpha <= 0) blips.splice(i, 1);
       }
 
-      angle += 0.016;
+      angle += 0.008;
       rafId = requestAnimationFrame(draw);
     };
 
