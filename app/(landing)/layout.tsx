@@ -1,18 +1,11 @@
 import "./landing.css";
 import Link from "next/link";
+import { LandingNav } from "./components/LandingNav";
 
 export default function LandingLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <nav className="lnd-nav" aria-label="메인 내비게이션">
-        <div className="lnd-nav-inner">
-          <Link href="/" className="lnd-logo">VESTRA</Link>
-          <div className="lnd-nav-r">
-            <Link href="/login" className="lnd-login">로그인</Link>
-            <Link href="/login" className="lnd-start">시작하기</Link>
-          </div>
-        </div>
-      </nav>
+      <LandingNav />
       <main>{children}</main>
       <footer className="lnd-footer">
         <div className="lnd-ft-inner">

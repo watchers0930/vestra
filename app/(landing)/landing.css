@@ -12,9 +12,15 @@
 /* NAV */
 .lnd-nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-  background: rgba(8,12,26,.78);
+  background: transparent;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  border-bottom: 1px solid transparent;
+  transition: background .35s ease, border-color .35s ease, backdrop-filter .35s ease;
+}
+.lnd-nav--scrolled {
+  background: rgba(8,12,26,.88);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(255,255,255,.07);
+  border-bottom-color: rgba(255,255,255,.07);
 }
 .lnd-nav-inner {
   max-width: var(--lnd-max); margin: 0 auto; padding: 0 var(--lnd-px);
