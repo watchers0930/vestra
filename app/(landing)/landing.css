@@ -194,9 +194,10 @@
 .lnd-feat-wrap { max-width: var(--lnd-max); margin: 0 auto; }
 .lnd-feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-top: 44px; }
 .lnd-feat-card {
+  display: block; text-decoration: none; color: inherit;
   border: 1px solid rgba(8,12,26,.10); border-radius: 14px;
   padding: 26px 22px; position: relative; overflow: hidden;
-  transition: border-color .22s, background .22s;
+  transition: border-color .22s, background .22s; cursor: pointer;
 }
 .lnd-feat-card:hover { border-color: #2563eb; background: rgba(37,99,235,.04); }
 .lnd-feat-ico {
@@ -228,11 +229,11 @@
   .lnd-step { border-left: none; border-top: 1px solid rgba(255,255,255,.08); }
   .lnd-step:first-child { border-top: none; }
 }
-.lnd-step-n {
-  font-size: 52px; font-weight: 900; color: rgba(37,99,235,.18);
-  line-height: 1; letter-spacing: -.04em; margin-bottom: 18px;
-  font-variant-numeric: tabular-nums;
+.lnd-step-img {
+  width: 100%; aspect-ratio: 1/4; border-radius: 10px;
+  overflow: hidden; margin-bottom: 20px;
 }
+.lnd-step-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .lnd-step-t { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 10px; }
 .lnd-step-d { font-size: 14px; color: rgba(255,255,255,.4); line-height: 1.72; }
 
