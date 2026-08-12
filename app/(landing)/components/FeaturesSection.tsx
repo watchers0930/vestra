@@ -17,7 +17,7 @@ const FEATURES = [
     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
   },
   {
-    tier: "", label: "Registry Guard", title: "등기부 AI 보호",
+    tier: "", label: "Registry Guard", title: "AI 등기부 변동위험감지",
     desc: "AI가 하루 2회 등기부등본 변경사항을 자동 확인합니다. 이상 징후 발견 시 즉시 알립니다.",
     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><polyline points="9 12 11 14 15 10" /></svg>,
   },
