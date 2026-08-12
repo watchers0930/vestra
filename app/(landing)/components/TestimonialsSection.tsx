@@ -30,7 +30,7 @@ export function TestimonialsSection() {
                 <div className="lnd-t-stars" aria-label="별점 5점">
                   {Array(5).fill(0).map((_, j) => <div key={j} className="lnd-t-star" />)}
                 </div>
-                <p className="lnd-t-q">"{t.quote}"</p>
+                <p className="lnd-t-q">&ldquo;{t.quote}&rdquo;</p>
                 <div className="lnd-t-auth">
                   <div className="lnd-t-av" style={{ background: t.avBg }}>{t.av}</div>
                   <div>
