@@ -30,7 +30,7 @@ export function TrustBar() {
           <div className="lnd-t-value">공공기관 10종 연동</div>
           <div className="lnd-t-desc">
             국토교통부 · 한국은행 · 금융감독원<br />
-            대법원 · DART · CODEF 등
+            대법원 · DART 등
           </div>
         </ScrollReveal>
       </div>

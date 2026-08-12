@@ -2,15 +2,15 @@ import { ScrollReveal } from "./ScrollReveal";
 
 const STEPS = [
   {
-    img: "https://images.unsplash.com/photo-1627912814693-08745056e704?w=800&h=200&fit=crop&q=80",
-    alt: "한국 아파트 단지 전경",
+    img: "https://images.unsplash.com/photo-1568317711805-97917847953d?w=800&h=200&fit=crop&q=80",
+    alt: "지도 위치 검색",
     t: "주소 입력",
     d1: "분석할 부동산 주소를 입력합니다.",
     d2: "로그인 없이도 기본 분석을 시작할 수 있습니다.",
   },
   {
-    img: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=200&fit=crop&q=80",
-    alt: "AI 자동 분석 기술 화면",
+    img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=200&fit=crop&q=80",
+    alt: "데이터 분석 대시보드",
     t: "AI 자동 분석",
     d1: "등기부등본, 실거래가, 공시지가, 건축물대장을 AI가 수초 내에",
     d2: "종합 분석합니다.",
