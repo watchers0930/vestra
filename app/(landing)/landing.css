@@ -230,7 +230,7 @@
   .lnd-step:first-child { border-top: none; }
 }
 .lnd-step-img {
-  width: 100%; aspect-ratio: 1/4; border-radius: 10px;
+  width: 100%; aspect-ratio: 4/1; border-radius: 10px;
   overflow: hidden; margin-bottom: 20px;
 }
 .lnd-step-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
