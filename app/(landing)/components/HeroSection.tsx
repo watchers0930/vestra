@@ -1,10 +1,10 @@
 import { ScrollReveal } from "./ScrollReveal";
+import { RadarCanvas } from "./RadarCanvas";
 
 export function HeroSection() {
   return (
     <section className="lnd-hero" aria-label="히어로 섹션">
-      <div className="lnd-orb1" aria-hidden="true" />
-      <div className="lnd-orb2" aria-hidden="true" />
+      <RadarCanvas />
       <div className="lnd-hero-body">
         <ScrollReveal>
           <div className="lnd-eyebrow-pill">
