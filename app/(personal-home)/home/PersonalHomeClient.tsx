@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import s from "./personal-home.module.css";
 
 const REGIONS: Record<string, Record<string, string[]>> = {
@@ -329,25 +330,25 @@ export default function PersonalHomeClient() {
       {/* ─── NAV ─── */}
       <nav className={s.nav}>
         <div className={s.navInner}>
-          <a href="/home" className={s.navLogo}>
+          <Link href="/home" className={s.navLogo}>
             <div className={s.logoIcon}>V</div>
             <span className={s.logoText}>VESTRA</span>
-          </a>
+          </Link>
           <ul className={s.navMenu}>
-            <li><a href="/listings">매물검색</a></li>
-            <li><a href="/jeonse">전세보호</a></li>
-            <li><a href="/rights">관리분석</a></li>
-            <li><a href="/monitoring">등기감시</a></li>
-            <li><a href="/contract">계약검토</a></li>
-            <li><a href="/prediction">시세전망</a></li>
-            <li><a href="/expert-connect">전문가상담</a></li>
+            <li><Link href="/listings">매물검색</Link></li>
+            <li><Link href="/jeonse">전세보호</Link></li>
+            <li><Link href="/rights">관리분석</Link></li>
+            <li><Link href="/monitoring">등기감시</Link></li>
+            <li><Link href="/contract">계약검토</Link></li>
+            <li><Link href="/prediction">시세전망</Link></li>
+            <li><Link href="/expert-connect">전문가상담</Link></li>
           </ul>
           <div className={s.navAuth}>
-            <a href="/login">로그인</a>
+            <Link href="/login">로그인</Link>
             <span className={s.navAuthDivider}>|</span>
-            <a href="/profile">마이페이지</a>
+            <Link href="/profile">마이페이지</Link>
             <span className={s.navAuthDivider}>|</span>
-            <a href="/signup">회원가입</a>
+            <Link href="/signup">회원가입</Link>
           </div>
           <button
             className={`${s.navHamburger} ${menuOpen ? s.open : ""}`}
@@ -358,18 +359,18 @@ export default function PersonalHomeClient() {
           </button>
         </div>
         <ul className={`${s.navMobileMenu} ${menuOpen ? s.open : ""}`}>
-          <li><a href="/listings">매물검색</a></li>
-          <li><a href="/jeonse">전세보호</a></li>
-          <li><a href="/rights">관리분석</a></li>
-          <li><a href="/monitoring">등기감시</a></li>
-          <li><a href="/contract">계약검토</a></li>
-          <li><a href="/prediction">시세전망</a></li>
-          <li><a href="/expert-connect">전문가상담</a></li>
+          <li><Link href="/listings">매물검색</Link></li>
+          <li><Link href="/jeonse">전세보호</Link></li>
+          <li><Link href="/rights">관리분석</Link></li>
+          <li><Link href="/monitoring">등기감시</Link></li>
+          <li><Link href="/contract">계약검토</Link></li>
+          <li><Link href="/prediction">시세전망</Link></li>
+          <li><Link href="/expert-connect">전문가상담</Link></li>
           <li>
             <div className={s.navMobileAuth}>
-              <a href="/login">로그인</a>
-              <a href="/profile">마이페이지</a>
-              <a href="/signup">회원가입</a>
+              <Link href="/login">로그인</Link>
+              <Link href="/profile">마이페이지</Link>
+              <Link href="/signup">회원가입</Link>
             </div>
           </li>
         </ul>
@@ -594,29 +595,29 @@ export default function PersonalHomeClient() {
           <div>
             <p className={s.footerColTitle}>Legal</p>
             <ul className={s.footerLinks}>
-              <li><a href="/privacy">개인정보처리방침</a></li>
-              <li><a href="/terms">이용약관</a></li>
+              <li><Link href="/privacy">개인정보처리방침</Link></li>
+              <li><Link href="/terms">이용약관</Link></li>
             </ul>
           </div>
           <div>
             <p className={s.footerColTitle}>Product</p>
             <ul className={s.footerLinks}>
-              <li><a href="#">기능 소개</a></li>
-              <li><a href="/pricing">요금제</a></li>
+              <li><Link href="#">기능 소개</Link></li>
+              <li><Link href="/pricing">요금제</Link></li>
             </ul>
           </div>
           <div>
             <p className={s.footerColTitle}>Company</p>
             <ul className={s.footerLinks}>
-              <li><a href="#">회사 소개</a></li>
-              <li><a href="#">채용</a></li>
-              <li><a href="#">뉴스레터</a></li>
+              <li><Link href="#">회사 소개</Link></li>
+              <li><Link href="#">채용</Link></li>
+              <li><Link href="#">뉴스레터</Link></li>
             </ul>
           </div>
           <div>
             <p className={s.footerColTitle}>Connect</p>
             <ul className={s.footerLinks}>
-              <li><a href="#">LinkedIn</a></li>
+              <li><Link href="#">LinkedIn</Link></li>
             </ul>
           </div>
         </div>
