@@ -40,7 +40,7 @@ function waitKakao(cb: () => void): () => void {
 }
 
 // ── 위치 지도 ────────────────────────────────────────────────────────────────
-function LocationMap({ lat, lng, address }: { lat: number; lng: number; address: string }) {
+export function LocationMap({ lat, lng, address }: { lat: number; lng: number; address: string }) {
   const uid = useId();
   const domId = `kmap-loc-${uid.replace(/:/g, "")}`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -92,7 +92,7 @@ const INFRA_CATS = [
 type InfraCatCode = typeof INFRA_CATS[number]["code"] | "ALL";
 interface PlaceItem { name: string; distance: string; catCode: string; lat: number; lng: number; }
 
-function InfraMap({ lat, lng }: { lat: number; lng: number }) {
+export function InfraMap({ lat, lng }: { lat: number; lng: number }) {
   const uid   = useId();
   const domId = `kmap-infra-${uid.replace(/:/g, "")}`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -268,7 +268,7 @@ function schType(cat: string): typeof SCHOOL_TYPES[number]["key"] | null {
   return null;
 }
 
-function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
+export function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
   const uid   = useId();
   const domId = `kmap-school-${uid.replace(/:/g, "")}`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

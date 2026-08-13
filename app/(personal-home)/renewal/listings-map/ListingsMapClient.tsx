@@ -257,7 +257,7 @@ export default function ListingsMapClient() {
       {/* NAV */}
       <nav className={s.nav}>
         <div className={s.navInner}>
-          <Link href="/home" className={s.navLogo}>
+          <Link href="/" className={s.navLogo}>
             <div className={s.logoIcon}>V</div>
             <span className={s.logoText}>VESTRA</span>
           </Link>
@@ -291,7 +291,7 @@ export default function ListingsMapClient() {
             <span className={s.divider}>|</span>
             <Link href="/login">마이페이지</Link>
             <span className={s.divider}>|</span>
-            <Link href="/register">회원가입</Link>
+            <Link href="/signup">회원가입</Link>
           </div>
           <button
             className={`${s.navHamburger} ${menuOpen ? s.open : ""}`}
@@ -329,7 +329,7 @@ export default function ListingsMapClient() {
             <div className={s.navMobileAuth}>
               <Link href="/login">로그인</Link>
               <Link href="/login">마이페이지</Link>
-              <Link href="/register">회원가입</Link>
+              <Link href="/signup">회원가입</Link>
             </div>
           </li>
         </ul>

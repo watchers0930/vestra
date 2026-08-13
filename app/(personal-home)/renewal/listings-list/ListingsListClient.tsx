@@ -82,8 +82,8 @@ export default function ListingsListClient() {
   const [openDropdown, setOpenDropdown] = useState<DropdownKey>(null);
   const router = useRouter();
   const [dropdownLabels, setDropdownLabels] = useState({
-    type: '건물유형',
-    trade: '거래유형',
+    type: '아파트',
+    trade: '매매',
     size: '전체 평형',
   });
   const [sido, setSido] = useState('서울특별시');
@@ -235,7 +235,7 @@ export default function ListingsListClient() {
             <span className={s.divider}>|</span>
             <a href="#">마이페이지</a>
             <span className={s.divider}>|</span>
-            <Link href="/register">회원가입</Link>
+            <Link href="/signup">회원가입</Link>
           </div>
           <button
             className={`${s.navHamburger} ${menuOpen ? s.open : ''}`}
@@ -257,7 +257,7 @@ export default function ListingsListClient() {
             <div className={s.navMobileAuth}>
               <Link href="/login">로그인</Link>
               <a href="#">마이페이지</a>
-              <Link href="/register">회원가입</Link>
+              <Link href="/signup">회원가입</Link>
             </div>
           </li>
         </ul>
