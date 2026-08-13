@@ -313,3 +313,11 @@
   .ovGrid{grid-template-columns:1fr}
   .guideSteps{grid-template-columns:1fr}
 }
+
+/* 분석 로딩 스피너 */
+.spinner{
+  width:38px;height:38px;margin:0 auto;
+  border:3px solid #e8eaf0;border-top-color:#2563eb;border-radius:50%;
+  animation:rightsSpin .8s linear infinite;
+}
+@keyframes rightsSpin{to{transform:rotate(360deg)}}
