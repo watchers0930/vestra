@@ -299,16 +299,16 @@ export default function ListingsMapClient() {
               </Link>
             </li>
             <li>
-              <Link href="/jeonse">전세보호</Link>
+              <Link href="/renewal/jeonse">전세보호</Link>
             </li>
             <li>
-              <Link href="/rights">관리분석</Link>
+              <Link href="/renewal/rights">권리분석</Link>
             </li>
             <li>
-              <Link href="/monitoring">등기감시</Link>
+              <Link href="/renewal/monitoring">등기감시</Link>
             </li>
             <li>
-              <Link href="/contract">계약검토</Link>
+              <Link href="/renewal/contract">계약검토</Link>
             </li>
             <li>
               <Link href="/prediction">시세전망</Link>
@@ -336,19 +336,19 @@ export default function ListingsMapClient() {
         </div>
         <ul className={`${s.navMobileMenu} ${menuOpen ? s.open : ""}`}>
           <li>
-            <Link href="/listings">매물검색</Link>
+            <Link href="/renewal/listings-list">매물검색</Link>
           </li>
           <li>
-            <Link href="/jeonse">전세보호</Link>
+            <Link href="/renewal/jeonse">전세보호</Link>
           </li>
           <li>
-            <Link href="/rights">관리분석</Link>
+            <Link href="/renewal/rights">권리분석</Link>
           </li>
           <li>
-            <Link href="/monitoring">등기감시</Link>
+            <Link href="/renewal/monitoring">등기감시</Link>
           </li>
           <li>
-            <Link href="/contract">계약검토</Link>
+            <Link href="/renewal/contract">계약검토</Link>
           </li>
           <li>
             <Link href="/prediction">시세전망</Link>

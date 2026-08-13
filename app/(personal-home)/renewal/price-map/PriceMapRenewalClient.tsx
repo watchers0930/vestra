@@ -88,12 +88,12 @@ export default function PriceMapRenewalClient() {
             <span className={s.logoText}>VESTRA</span>
           </a>
           <ul className={s.navMenu}>
-            <li><Link href="/listings">매물검색</Link></li>
-            <li><Link href="/jeonse">전세보호</Link></li>
-            <li><Link href="/rights">권리분석</Link></li>
-            <li><Link href="/monitoring">등기감시</Link></li>
-            <li><Link href="/contract">계약검토</Link></li>
-            <li><a href="#" className="active">시세지도</a></li>
+            <li><Link href="/renewal/listings-list">매물검색</Link></li>
+            <li><Link href="/renewal/jeonse">전세보호</Link></li>
+            <li><Link href="/renewal/rights">권리분석</Link></li>
+            <li><Link href="/renewal/monitoring">등기감시</Link></li>
+            <li><Link href="/renewal/contract">계약검토</Link></li>
+            <li><a href="/renewal/price-map" className="active">시세지도</a></li>
             <li><Link href="/expert-connect">전문가상담</Link></li>
           </ul>
           <div className={s.navAuth}>

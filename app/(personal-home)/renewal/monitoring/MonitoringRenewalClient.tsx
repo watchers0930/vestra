@@ -51,12 +51,12 @@ export default function MonitoringRenewalClient() {
             <span className={s.logoText}>VESTRA</span>
           </Link>
           <ul className={s.navMenu}>
-            <li><Link href="/listings">매물검색</Link></li>
-            <li><Link href="/jeonse">전세보호</Link></li>
-            <li><Link href="/rights">권리분석</Link></li>
-            <li><Link href="/monitoring" className="active">등기감시</Link></li>
-            <li><Link href="/contract">계약검토</Link></li>
-            <li><Link href="/prediction">시세지도</Link></li>
+            <li><Link href="/renewal/listings-list">매물검색</Link></li>
+            <li><Link href="/renewal/jeonse">전세보호</Link></li>
+            <li><Link href="/renewal/rights">권리분석</Link></li>
+            <li><Link href="/renewal/monitoring" className="active">등기감시</Link></li>
+            <li><Link href="/renewal/contract">계약검토</Link></li>
+            <li><Link href="/renewal/price-map">시세지도</Link></li>
             <li><Link href="/expert-connect">전문가상담</Link></li>
           </ul>
           <div className={s.navAuth}>

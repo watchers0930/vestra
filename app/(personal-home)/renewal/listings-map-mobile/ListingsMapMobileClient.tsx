@@ -117,11 +117,11 @@ export default function ListingsMapMobileClient() {
           </button>
         </div>
         <ul className={`${s.navMobileMenu} ${menuOpen ? s.open : ""}`}>
-          <li><a href="#">매물검색</a></li>
-          <li><a href="#">전세보호</a></li>
-          <li><a href="#">관리분석</a></li>
-          <li><a href="#">등기감시</a></li>
-          <li><a href="#">계약검토</a></li>
+          <li><a href="/renewal/listings-list">매물검색</a></li>
+          <li><a href="/renewal/jeonse">전세보호</a></li>
+          <li><a href="/renewal/rights">권리분석</a></li>
+          <li><a href="/renewal/monitoring">등기감시</a></li>
+          <li><a href="/renewal/contract">계약검토</a></li>
           <li><a href="#">시세전망</a></li>
           <li><a href="#">전문가상담</a></li>
         </ul>
