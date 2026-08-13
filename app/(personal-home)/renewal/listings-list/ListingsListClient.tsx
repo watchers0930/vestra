@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import s from "./listings-list.module.css";
 import { useListings, type ListingType } from "@/app/(app)/listings/hooks/useListings";
 import { ListingCard } from "@/app/(app)/listings/components/ListingCard";
-import { ListingsMapView } from "@/app/(app)/listings/components/ListingsMapView";
-import { ApartmentMapView } from "./ApartmentMapView";
 
 const REGIONS: Record<string, string[]> = {
   '서울특별시': ['강남구','강동구','강북구','강서구','관악구','광진구','구로구','금천구','노원구','도봉구','동대문구','동작구','마포구','서대문구','서초구','성동구','성북구','송파구','양천구','영등포구','용산구','은평구','종로구','중구','중랑구'],
@@ -81,14 +80,14 @@ type DropdownKey = 'type' | 'trade' | 'size' | null;
 export default function ListingsListClient() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<DropdownKey>(null);
-  const [view, setView] = useState<'list' | 'map'>('list');
+  const router = useRouter();
   const [dropdownLabels, setDropdownLabels] = useState({
     type: '건물유형',
     trade: '거래유형',
     size: '전체 평형',
   });
-  const [sido, setSido] = useState('');
-  const [sigungu, setSigungu] = useState('');
+  const [sido, setSido] = useState('서울특별시');
+  const [sigungu, setSigungu] = useState('강남구');
 
   const sigunguList = sido && REGIONS[sido] ? REGIONS[sido] : [];
 
@@ -168,20 +167,12 @@ export default function ListingsListClient() {
     (key === 'trade' && value === '거래유형') ||
     (key === 'size' && value === '전체 평형');
 
-  if (view === 'map') {
-    // 아파트 모드 → 국토부 실거래 아파트 전체를 좌표 지오코딩해 지도에 표시
-    if (showMolit) {
-      return <ApartmentMapView region={molitRegion} onClose={() => setView('list')} />;
-    }
-    return (
-      <ListingsMapView
-        appSidebar={false}
-        onClose={() => setView('list')}
-        initialSi={sido || undefined}
-        initialGu={sigungu || undefined}
-      />
-    );
-  }
+  // 지도 페이지(01-1-1-2 구성)로 이동. 물건 선택 시 apt/dong으로 포커스 전달.
+  const goToMap = (apt?: { aptName: string; dong: string }) => {
+    const q = new URLSearchParams({ region: molitRegion });
+    if (apt) { q.set('apt', apt.aptName); q.set('dong', apt.dong); }
+    router.push(`/renewal/listings-map?${q.toString()}`);
+  };
 
   const renderDropdown = (
     key: 'type' | 'trade' | 'size',
@@ -322,14 +313,14 @@ export default function ListingsListClient() {
               </div>
 
               <div className={s.viewToggle}>
-                <button className={`${s.viewBtn} ${s.active}`} title="목록보기" onClick={() => setView('list')}>
+                <button className={`${s.viewBtn} ${s.active}`} title="목록보기" type="button">
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1">
                     <line x1="1" y1="3" x2="14" y2="3" />
                     <line x1="1" y1="7.5" x2="14" y2="7.5" />
                     <line x1="1" y1="12" x2="14" y2="12" />
                   </svg>
                 </button>
-                <button className={s.viewBtn} title="지도보기" onClick={() => setView('map')}>
+                <button className={s.viewBtn} title="지도보기" type="button" onClick={() => goToMap()}>
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1">
                     <path d="M7.5 1C5.3 1 3.5 2.8 3.5 5c0 3.2 4 9 4 9s4-5.8 4-9c0-2.2-1.8-4-4-4Z" />
                     <circle cx="7.5" cy="5" r="1.4" />
@@ -355,7 +346,12 @@ export default function ListingsListClient() {
             ) : (
               <div className={s.subListingsGrid}>
                 {displayMolit.map((m, i) => (
-                  <div className={s.propertyCard} key={m.id}>
+                  <div
+                    className={s.propertyCard}
+                    key={m.id}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => goToMap({ aptName: m.aptName, dong: m.dong })}
+                  >
                     <div className={`${s.propImg} ${s[PIMG[i % PIMG.length]]}`}>
                       <span className={`${s.badgeType} ${s.badgeSale}`}>매매</span>
                       <span className={s.badgeTrust}>안심인증</span>
