@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Shield, FileText, TrendingUp, Building2, Banknote, AlertTriangle, ClipboardList } from "lucide-react";
 import { formatKRW } from "@/lib/utils";
@@ -15,6 +18,16 @@ import { AssetList } from "./components/AssetList";
 import { AnalysisHistory } from "./components/AnalysisHistory";
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const { data: sessionData } = useSession();
+
+  // PERSONAL 회원은 개인 홈으로 리다이렉트
+  useEffect(() => {
+    if (sessionData?.user?.role === "PERSONAL") {
+      router.replace("/home");
+    }
+  }, [sessionData, router]);
+
   const {
     session, assets, analyses, mounted, loading,
     cascadeLoading, monitoredAddresses, monitoringLoading, alertAddressMap,
