@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import s from "./listing-detail.module.css";
 import DetailTabs from "./DetailTabs";
+import { ApplicationModal } from "@/app/(app)/listings/[id]/components/ApplicationModal";
 
 const PHOTOS = [
   "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=900&auto=format&fit=crop&q=80",
@@ -41,6 +42,7 @@ export default function ListingDetailContent() {
 
   const [activePhoto, setActivePhoto] = useState(0);
   const [info, setInfo] = useState<AptInfo | null>(null);
+  const [showIntent, setShowIntent] = useState(false);
 
   useEffect(() => {
     const q = new URLSearchParams({ region, dong, apt: aptName });
@@ -144,12 +146,23 @@ export default function ListingDetailContent() {
             </div>
 
             <div className={s.ctaSection}>
-              <button className={s.ctaPrimary} onClick={() => router.push("/login")}>의향서 보내기</button>
+              <button className={s.ctaPrimary} onClick={() => setShowIntent(true)}>의향서 보내기</button>
               <button className={s.ctaSecondary} onClick={() => router.push("/rights")}>AI 권리분석 해보기</button>
             </div>
           </div>
         </div>
       </div>
+
+      {showIntent && (
+        <ApplicationModal
+          demoMode
+          listingId=""
+          deposit={String(amount)}
+          listingType="SALE"
+          onClose={() => setShowIntent(false)}
+          onSuccess={() => {}}
+        />
+      )}
     </section>
   );
 }

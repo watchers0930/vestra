@@ -9,6 +9,8 @@ interface Props {
   listingType: "JEONSE" | "SALE";
   onClose: () => void;
   onSuccess: () => void;
+  /** 데모(리뉴얼 공개 흐름): 실제 저장/전달(POST) 없이 UI만 동작 */
+  demoMode?: boolean;
 }
 
 function formatCommas(val: string) {
@@ -36,7 +38,7 @@ const inputStyle: React.CSSProperties = {
   background: "#fff", color: "#1d1d1f",
 };
 
-export function ApplicationModal({ listingId, deposit, listingType, onClose, onSuccess }: Props) {
+export function ApplicationModal({ listingId, deposit, listingType, onClose, onSuccess, demoMode = false }: Props) {
   const today = new Date().toISOString().split("T")[0];
   const [moveInDate, setMoveInDate] = useState("");
   const [duration, setDuration] = useState("12");
@@ -58,6 +60,12 @@ export function ApplicationModal({ listingId, deposit, listingType, onClose, onS
     if (!moveInDate) { setError("입주 희망일을 선택해주세요."); return; }
     setSubmitting(true);
     setError("");
+    // 데모 모드: 운영 DB 쓰기 없이 UI만 (실제 전달 X)
+    if (demoMode) {
+      setSubmitted(true);
+      onSuccess();
+      return;
+    }
     try {
       const res = await fetch("/api/contract-applications", {
         method: "POST",
