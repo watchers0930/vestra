@@ -102,7 +102,7 @@ export function ApartmentMapView({ region, onClose }: Props) {
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
                   <span style={{ fontSize: 10, fontWeight: 600, color: "#fff", background: "#e04444", padding: "1px 6px", borderRadius: 4 }}>매매</span>
-                  <span style={{ fontSize: 10, fontWeight: 500, color: "#16a34a" }}>안심인증</span>
+                  <span style={{ fontSize: 10, color: "#8e8e93" }}>국토부 실거래</span>
                   {a.lat == null && <span style={{ fontSize: 10, color: "#c8cad4" }}>(위치정보 없음)</span>}
                 </div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1d2e" }}>{formatEok(a.dealAmount)}</div>
