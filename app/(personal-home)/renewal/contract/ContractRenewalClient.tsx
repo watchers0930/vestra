@@ -396,7 +396,7 @@ export default function ContractRenewalClient() {
                   </div>
                   <div className={`${s.shSumCard} ${s.scWarning}`}>
                     <span className={`${s.shSumSev} ${s.sscWarning}`}>확인</span>
-                    <span className={s.shSumText}>보증금 반환 기한 모호 — "상당한 기간" 분쟁 위험</span>
+                    <span className={s.shSumText}>보증금 반환 기한 모호 — &quot;상당한 기간&quot; 분쟁 위험</span>
                   </div>
                 </div>
               </div>
@@ -510,8 +510,8 @@ export default function ContractRenewalClient() {
                     </div>
                     <div className={s.issueInfo}>
                       <div className={s.issueTitle}>보증금 반환 시기 모호</div>
-                      <div className={s.issueDesc}>제5조의 "계약 종료 후 상당한 기간 내" 표현은 법적으로 불명확합니다. 반환 지연 시 분쟁 가능성이 있습니다.</div>
-                      <div className={s.issueRecommend}>💡 "계약 종료일로부터 30일 이내" 등 명확한 기간을 특약으로 명시하세요.</div>
+                      <div className={s.issueDesc}>제5조의 &quot;계약 종료 후 상당한 기간 내&quot; 표현은 법적으로 불명확합니다. 반환 지연 시 분쟁 가능성이 있습니다.</div>
+                      <div className={s.issueRecommend}>💡 &quot;계약 종료일로부터 30일 이내&quot; 등 명확한 기간을 특약으로 명시하세요.</div>
                     </div>
                   </div>
 
@@ -522,7 +522,7 @@ export default function ContractRenewalClient() {
                     </div>
                     <div className={s.issueInfo}>
                       <div className={s.issueTitle}>수선 의무 범위 불명확</div>
-                      <div className={s.issueDesc}>제6조 수선 의무 조항이 "임차인 귀책에 의한 손상"만 언급하고 있어, 자연 노후화에 대한 임대인 의무가 명시되지 않았습니다.</div>
+                      <div className={s.issueDesc}>제6조 수선 의무 조항이 &quot;임차인 귀책에 의한 손상&quot;만 언급하고 있어, 자연 노후화에 대한 임대인 의무가 명시되지 않았습니다.</div>
                       <div className={s.issueRecommend}>💡 주요 설비(보일러, 수도 등)에 대한 임대인 수선 의무를 명시하는 조항을 추가하세요.</div>
                     </div>
                   </div>
@@ -555,7 +555,7 @@ export default function ContractRenewalClient() {
                         <div className={s.clauseOriginalLabel}>원문</div>
                         <div className={s.clauseOriginal}>임대인은 임차 목적물의 현재 상태를 고지하며, 임차인은 이를 확인하고 임차함을 인정한다. 임차인은 현 상태를 충분히 인지한 것으로 본다.</div>
                         <div className={s.clauseAnalysisLabel} style={{ marginTop: "12px" }}>AI 분석</div>
-                        <div className={s.clauseAnalysis}>근저당 설정(채권최고액 2억 4천만 원)에 대한 명시적 고지가 없음에도 불구하고 "임차인이 현 상태를 충분히 인지"했다고 규정하고 있습니다. 이는 임차인의 권리를 크게 침해할 수 있으며, 경매 발생 시 보증금 보호에 심각한 문제가 될 수 있습니다. 등기부등본상의 권리 현황을 계약서에 명시하도록 수정이 필요합니다.</div>
+                        <div className={s.clauseAnalysis}>근저당 설정(채권최고액 2억 4천만 원)에 대한 명시적 고지가 없음에도 불구하고 &quot;임차인이 현 상태를 충분히 인지&quot;했다고 규정하고 있습니다. 이는 임차인의 권리를 크게 침해할 수 있으며, 경매 발생 시 보증금 보호에 심각한 문제가 될 수 있습니다. 등기부등본상의 권리 현황을 계약서에 명시하도록 수정이 필요합니다.</div>
                       </div>
                     )}
                   </div>
@@ -601,7 +601,7 @@ export default function ContractRenewalClient() {
                         <div className={s.clauseOriginalLabel}>원문</div>
                         <div className={s.clauseOriginal}>계약 종료 후 임차인이 목적물을 인도한 때로부터 상당한 기간 내에 임대인은 보증금을 반환한다.</div>
                         <div className={s.clauseAnalysisLabel} style={{ marginTop: "12px" }}>AI 분석</div>
-                        <div className={s.clauseAnalysis}>"상당한 기간"은 법적으로 불확정 개념으로, 실제 분쟁 시 해석 차이가 발생할 수 있습니다. 특약으로 "계약 종료일로부터 30일 이내"로 명확히 정하고, 지연 시 이자 지급 조항을 추가하세요.</div>
+                        <div className={s.clauseAnalysis}>&quot;상당한 기간&quot;은 법적으로 불확정 개념으로, 실제 분쟁 시 해석 차이가 발생할 수 있습니다. 특약으로 &quot;계약 종료일로부터 30일 이내&quot;로 명확히 정하고, 지연 시 이자 지급 조항을 추가하세요.</div>
                       </div>
                     )}
                   </div>
@@ -624,7 +624,7 @@ export default function ContractRenewalClient() {
                         <div className={s.clauseOriginalLabel}>원문</div>
                         <div className={s.clauseOriginal}>임대 기간은 2026년 9월 1일부터 2028년 8월 31일까지(24개월)로 한다. 계약 만료 3개월 전까지 당사자 일방이 갱신 거절 의사를 서면으로 통지하지 않는 경우, 동일한 조건으로 묵시적 갱신된 것으로 본다.</div>
                         <div className={s.clauseAnalysisLabel} style={{ marginTop: "12px" }}>AI 분석</div>
-                        <div className={s.clauseAnalysis}>주택임대차보호법 기준(최단 2년)을 준수하고 있으며, 묵시적 갱신 조항도 법률에 부합합니다. 다만 "서면 통지" 방법(이메일/문자 포함 여부)을 특약으로 구체화하면 분쟁 예방에 도움이 됩니다.</div>
+                        <div className={s.clauseAnalysis}>주택임대차보호법 기준(최단 2년)을 준수하고 있으며, 묵시적 갱신 조항도 법률에 부합합니다. 다만 &quot;서면 통지&quot; 방법(이메일/문자 포함 여부)을 특약으로 구체화하면 분쟁 예방에 도움이 됩니다.</div>
                       </div>
                     )}
                   </div>
@@ -703,7 +703,7 @@ export default function ContractRenewalClient() {
                     {openTerms[1] && (
                       <div className={s.termBody}>
                         <div className={s.termText}>임대인은 임대차 계약 종료일로부터 30일 이내에 임차인의 보증금 전액을 반환하여야 하며, 반환이 지연될 경우 지연일수에 대하여 연 12%의 비율로 계산한 지연손해금을 가산하여 지급한다.</div>
-                        <div className={s.termReason}>📌 이유: 제5조의 "상당한 기간"을 명확히 하고, 지연 시 패널티를 규정하여 임차인 보호를 강화합니다.</div>
+                        <div className={s.termReason}>📌 이유: 제5조의 &quot;상당한 기간&quot;을 명확히 하고, 지연 시 패널티를 규정하여 임차인 보호를 강화합니다.</div>
                       </div>
                     )}
                   </div>
