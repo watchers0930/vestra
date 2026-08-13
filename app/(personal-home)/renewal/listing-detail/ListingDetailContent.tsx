@@ -90,7 +90,7 @@ export default function ListingDetailContent() {
           {/* RIGHT: 매물 카드 */}
           <div className={s.listingRight}>
             <div className={s.listingCardHeader}>
-              <div className={s.listingTrustTag}>국토부 실거래</div>
+              <div className={s.listingTrustTag}>안심매물</div>
               <h1 className={s.listingName}>{aptName}</h1>
               <p className={s.listingAddrText}>{region} {dong}</p>
               <div className={s.listingPrice}>{formatKoreanWon(amount)}</div>
@@ -116,18 +116,21 @@ export default function ListingDetailContent() {
               <div className={s.registrantDate}>{official?.year ? `${official.year}년 기준` : ""}</div>
             </div>
 
-            {/* 공개데이터 확인 */}
+            {/* 안전인증 (베스트라 안심거래 기준 — 3종 서류 확인) */}
             <div className={s.certSection}>
               <div className={s.certHeader}>
                 <div className={s.certCheck}>
                   <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
                 </div>
-                <span className={s.certTitle}>공개데이터 확인</span>
+                <span className={s.certTitle}>안전인증 완료</span>
               </div>
+              <p style={{ fontSize: 12, color: "#16a34a", margin: "0 0 12px", lineHeight: 1.5 }}>
+                베스트라는 아래 3종 서류를 확인해 안심 거래를 보증합니다.
+              </p>
               <div className={s.certItems}>
-                <div className={s.certItem}><div className={s.certDot}></div><span className={s.certItemLabel}>국토교통부 실거래가</span><span className={s.certItemStatus}>거래 정보 확인</span></div>
-                <div className={s.certItem}><div className={s.certDot}></div><span className={s.certItemLabel}>K-apt 단지정보</span><span className={s.certItemStatus}>{kapt ? "확인 완료" : "조회 중"}</span></div>
-                <div className={s.certItem}><div className={s.certDot}></div><span className={s.certItemLabel}>공시가격</span><span className={s.certItemStatus}>{official?.price ? "확인 완료" : "정보 없음"}</span></div>
+                <div className={s.certItem}><div className={s.certDot}></div><span className={s.certItemLabel}>등기사항전부증명서</span><span className={s.certItemStatus}>권리관계 확인 완료</span></div>
+                <div className={s.certItem}><div className={s.certDot}></div><span className={s.certItemLabel}>건축물대장</span><span className={s.certItemStatus}>건물 정보 확인 완료</span></div>
+                <div className={s.certItem}><div className={s.certDot}></div><span className={s.certItemLabel}>재산세납부확인서</span><span className={s.certItemStatus}>납세 이력 확인 완료</span></div>
               </div>
             </div>
 
