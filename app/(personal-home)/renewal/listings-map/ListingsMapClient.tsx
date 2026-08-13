@@ -601,7 +601,9 @@ export default function ListingsMapClient() {
           <div className={s.mapCenter}>
             <ClusterMarkerMap
               items={markers}
-              selectedId={activeItem != null ? String(activeItem) : null}
+              selected={activeItem != null && items[activeItem]?.lat != null
+                ? { lat: items[activeItem].lat!, lng: items[activeItem].lng!, label: formatEok(items[activeItem].dealAmount) }
+                : null}
               onMarkerClick={(id) => openDetail(Number(id))}
               panTo={panTo}
             />

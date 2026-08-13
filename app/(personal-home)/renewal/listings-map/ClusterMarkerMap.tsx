@@ -11,7 +11,7 @@ export interface ClusterItem {
 
 interface Props {
   items: ClusterItem[];
-  selectedId: string | null;
+  selected: { lat: number; lng: number; label: string } | null;
   onMarkerClick: (id: string) => void;
   panTo: { lat: number; lng: number } | null;
 }
@@ -33,7 +33,7 @@ function teardropEl(label: string): HTMLDivElement {
   return wrap;
 }
 
-export function ClusterMarkerMap({ items, selectedId, onMarkerClick, panTo }: Props) {
+export function ClusterMarkerMap({ items, selected, onMarkerClick, panTo }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapInst = useRef<any>(null);
@@ -90,18 +90,15 @@ export function ClusterMarkerMap({ items, selectedId, onMarkerClick, panTo }: Pr
     markersRef.current = [];
     if (selOverlayRef.current) { selOverlayRef.current.setMap(null); selOverlayRef.current = null; }
 
-    if (selectedId != null) {
+    if (selected) {
       // 선택 → 선택된 곳만 물방울 마커
-      const it = items.find((i) => i.id === selectedId);
-      if (it) {
-        selOverlayRef.current = new kakao.maps.CustomOverlay({
-          position: new kakao.maps.LatLng(it.lat, it.lng),
-          content: teardropEl(it.label),
-          yAnchor: 1,
-          zIndex: 10,
-        });
-        selOverlayRef.current.setMap(map);
-      }
+      selOverlayRef.current = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(selected.lat, selected.lng),
+        content: teardropEl(selected.label),
+        yAnchor: 1,
+        zIndex: 10,
+      });
+      selOverlayRef.current.setMap(map);
       return;
     }
 
@@ -125,7 +122,7 @@ export function ClusterMarkerMap({ items, selectedId, onMarkerClick, panTo }: Pr
     });
     markersRef.current = markers;
     clustererRef.current.addMarkers(markers);
-  }, [items, selectedId, ready, onMarkerClick]);
+  }, [items, selected, ready, onMarkerClick]);
 
   // panTo
   useEffect(() => {
