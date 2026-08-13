@@ -336,11 +336,11 @@ export default function PersonalHomeClient() {
           </Link>
           <ul className={s.navMenu}>
             <li><Link href="/listings">매물검색</Link></li>
-            <li><Link href="/jeonse">전세보호</Link></li>
-            <li><Link href="/rights">관리분석</Link></li>
-            <li><Link href="/monitoring">등기감시</Link></li>
-            <li><Link href="/contract">계약검토</Link></li>
-            <li><Link href="/prediction">시세전망</Link></li>
+            <li><Link href="/renewal/jeonse">전세보호</Link></li>
+            <li><Link href="/renewal/rights">권리분석</Link></li>
+            <li><Link href="/renewal/monitoring">등기감시</Link></li>
+            <li><Link href="/renewal/contract">계약검토</Link></li>
+            <li><Link href="/renewal/price-map">시세전망</Link></li>
             <li><Link href="/expert-connect">전문가상담</Link></li>
           </ul>
           <div className={s.navAuth}>
@@ -360,11 +360,11 @@ export default function PersonalHomeClient() {
         </div>
         <ul className={`${s.navMobileMenu} ${menuOpen ? s.open : ""}`}>
           <li><Link href="/listings">매물검색</Link></li>
-          <li><Link href="/jeonse">전세보호</Link></li>
-          <li><Link href="/rights">관리분석</Link></li>
-          <li><Link href="/monitoring">등기감시</Link></li>
-          <li><Link href="/contract">계약검토</Link></li>
-          <li><Link href="/prediction">시세전망</Link></li>
+          <li><Link href="/renewal/jeonse">전세보호</Link></li>
+          <li><Link href="/renewal/rights">권리분석</Link></li>
+          <li><Link href="/renewal/monitoring">등기감시</Link></li>
+          <li><Link href="/renewal/contract">계약검토</Link></li>
+          <li><Link href="/renewal/price-map">시세전망</Link></li>
           <li><Link href="/expert-connect">전문가상담</Link></li>
           <li>
             <div className={s.navMobileAuth}>
