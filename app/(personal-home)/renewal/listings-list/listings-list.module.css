@@ -1,4 +1,10 @@
+/* BASE (원본 HTML body / reset / a 그대로 — .page 로 스코프) */
+.page { font-family: 'Paperlogy', 'Apple SD Gothic Neo', 'Noto Sans KR', -apple-system, sans-serif; color: #1a1d2e; background: #fff; font-size: 14px; line-height: 1.05; -webkit-font-smoothing: antialiased; }
+.page *, .page *::before, .page *::after { margin: 0; padding: 0; box-sizing: border-box; }
+.page a { text-decoration: none; color: inherit; }
+
 /* NAV */
+.page nav { position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid #e8eaf0; }
 .navInner { max-width: 1200px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; }
 .navLogo { display: flex; align-items: center; gap: 7px; margin-right: 52px; flex-shrink: 0; }
 .logoIcon { width: 28px; height: 28px; background: #2e4bd8; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 14px; letter-spacing: -0.5px; }
@@ -102,6 +108,7 @@
 .propLikes { padding-left: 16px; background: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%23c8cad4' stroke-width='1.4' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 10C6 10 1 7 1 4a2.5 2.5 0 0 1 5-1 2.5 2.5 0 0 1 5 1C11 7 6 10 6 10Z'/%3E%3C/svg%3E") no-repeat left center; background-size: 12px 12px; }
 
 /* FOOTER */
+.page footer { background: #080c28; color: rgba(255,255,255,0.9); padding: 56px 32px 0; }
 .footerInner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 420px 1fr 1fr 1fr 1fr; gap: 40px; padding-bottom: 52px; }
 .footerLogo { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
 .flogoIcon { width: 26px; height: 26px; background: #2e4bd8; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 13px; }
@@ -125,7 +132,8 @@
   .filterTab { padding: 7px 14px; font-size: 12px; }
   .subListingsGrid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .propImg { height: 130px; }
-  .footerInner { grid-template-columns: 1fr; gap: 28px; padding: 36px 20px 0; }
+  .page footer { padding: 36px 20px 0; }
+  .footerInner { grid-template-columns: 1fr; gap: 28px; }
   .footerContact { white-space: normal; }
   .footerBottom { flex-direction: column; gap: 6px; text-align: center; padding: 16px 0; }
 }

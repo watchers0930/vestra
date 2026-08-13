@@ -85,7 +85,7 @@ export default function ListingsListClient() {
   };
 
   return (
-    <>
+    <div className={s.page}>
       {/* NAV */}
       <nav>
         <div className={s.navInner}>
@@ -94,7 +94,7 @@ export default function ListingsListClient() {
             <span className={s.logoText}>VESTRA</span>
           </Link>
           <ul className={s.navMenu}>
-            <li><Link href="/listings" className="active">매물검색</Link></li>
+            <li><Link href="/listings" className={s.active}>매물검색</Link></li>
             <li><Link href="/jeonse">전세보호</Link></li>
             <li><Link href="/monitoring">관리분석</Link></li>
             <li><a href="#">등기감시</a></li>
@@ -523,6 +523,6 @@ export default function ListingsListClient() {
           <span>The Digital Curator of Real Estate</span>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
