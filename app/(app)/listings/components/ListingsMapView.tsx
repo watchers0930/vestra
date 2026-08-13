@@ -110,12 +110,14 @@ function ListingCardSmall({
 interface ListingsMapViewProps {
   onClose: () => void;
   canRegister?: boolean;
+  /** 앱 사이드바(272px) 옆에 붙일지 여부. 사이드바 없는 공개 페이지에서는 false. */
+  appSidebar?: boolean;
 }
 
 // ────────────────────────────────────────────────────────────
 // 메인
 // ────────────────────────────────────────────────────────────
-export function ListingsMapView({ onClose, canRegister }: ListingsMapViewProps) {
+export function ListingsMapView({ onClose, canRegister, appSidebar = true }: ListingsMapViewProps) {
   const [listingType, setListingType] = useState<ListingType | "ALL">("ALL");
   const [roomTypeFilter, setRoomTypeFilter] = useState("");
   const [selectedSi, setSelectedSi] = useState("서울특별시");
@@ -238,7 +240,7 @@ export function ListingsMapView({ onClose, canRegister }: ListingsMapViewProps) 
     : currentGu || selectedGu || selectedSi || "전국";
 
   return (
-    <div className="fixed inset-0 z-40 lg:left-[272px] flex flex-col bg-white overflow-hidden">
+    <div className={`fixed inset-0 z-40 ${appSidebar ? "lg:left-[272px]" : ""} flex flex-col bg-white overflow-hidden`}>
 
       {/* Row 1: 닫기 + 유형 탭 + 매물등록/목록보기 */}
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #E8EDF5", background: "#fff", padding: "0 16px", height: 52, flexShrink: 0, zIndex: 10 }}>
