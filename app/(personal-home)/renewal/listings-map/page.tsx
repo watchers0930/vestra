@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import ListingsMapClient from "./ListingsMapClient";
 
 export const metadata = {
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function ListingsMapPage() {
-  return <ListingsMapClient />;
+  return (
+    <Suspense fallback={null}>
+      <ListingsMapClient />
+    </Suspense>
+  );
 }

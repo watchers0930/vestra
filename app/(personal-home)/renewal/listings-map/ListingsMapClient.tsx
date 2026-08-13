@@ -1,47 +1,38 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import s from "./listings-map.module.css";
+import { KakaoMarkersMap, type MapMarker } from "@/app/(app)/listings/components/KakaoMarkersMap";
 
-const PROPS = [
-  {
-    lat: 37.4946,
-    lng: 127.0614,
-    label: "13억5000만",
-    badges: ["매매", "전세"],
-    price: "13억 5,000만원",
-    priceNote: "(대지면적 기준)",
-    addr: "서울시 강남구 대치동 966 대치아이파크",
-    area: "84.9㎡",
-    floor: "12/25층",
-    trust: true,
-    desc: "강남구 대치동 하이엔드 아파트단지입니다. 남향 배치와 채광이 우수하며 인근 초등학교 도보 5분 이내입니다. 전용 84.9㎡, 고층 남향 세대로 한강 조망 가능합니다.",
-    agency: "서울공인중개사",
-    mainPhoto:
-      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&auto=format&fit=crop&q=80",
-    sub1: "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=200&auto=format&fit=crop&q=80",
-    sub2: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=200&auto=format&fit=crop&q=80",
-  },
-  {
-    lat: 37.5499,
-    lng: 126.9145,
-    label: "2억8000만",
-    badges: ["전세"],
-    price: "2억 8,000만원",
-    priceNote: "(24개월)",
-    addr: "서울시 마포구 합정동 402-5",
-    area: "59.4㎡",
-    floor: "3/5층",
-    trust: true,
-    desc: "합정역 도보 4분 역세권 빌라입니다. 풀옵션 인테리어 시공 완료, 즉시 입주 가능하며 주변 카페거리와 인접해 생활 편의성이 높습니다.",
-    agency: "마포공인중개사",
-    mainPhoto:
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&auto=format&fit=crop&q=80",
-    sub1: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=200&auto=format&fit=crop&q=80",
-    sub2: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=200&auto=format&fit=crop&q=80",
-  },
+const SAMPLE_PHOTOS = [
+  "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=400&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1555636222-cae831e670b3?w=400&auto=format&fit=crop&q=80",
 ];
+
+interface Apt {
+  aptName: string; dong: string; area: number; floor: number;
+  buildYear: number; dealAmount: number; dealDate: string; lat?: number; lng?: number;
+}
+
+function formatEok(won: number): string {
+  if (!won) return "-";
+  if (won >= 100_000_000) { const v = (won / 100_000_000).toFixed(1); return `${v.endsWith(".0") ? v.slice(0, -2) : v}억`; }
+  if (won >= 10_000) return `${Math.floor(won / 10_000)}만`;
+  return `${won.toLocaleString()}원`;
+}
+function formatKoreanWon(won: number): string {
+  if (!won) return "-";
+  const eok = Math.floor(won / 100_000_000);
+  const man = Math.floor((won % 100_000_000) / 10_000);
+  if (eok > 0) return man > 0 ? `${eok}억 ${man.toLocaleString()}만원` : `${eok}억원`;
+  return `${man.toLocaleString()}만원`;
+}
 
 type FilterKey = "type" | "trade" | "size";
 
@@ -97,10 +88,85 @@ export default function ListingsMapClient() {
   ]);
   const [sigungu, setSigungu] = useState("강남구");
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const region = sigungu || "강남구";
+  const focusApt = searchParams.get("apt");
+
+  // 진입 쿼리(region)로 시군구 초기화 (이후 select로 변경 가능)
+  const regionInitRef = useRef(false);
+  useEffect(() => {
+    if (regionInitRef.current) return;
+    regionInitRef.current = true;
+    const r = searchParams.get("region");
+    if (r && r !== sigungu) setSigungu(r);
+  }, [searchParams, sigungu]);
+
+  // 지역 아파트 실거래 (지오코딩 포함)
+  const [items, setItems] = useState<Apt[]>([]);
+  const [loadingItems, setLoadingItems] = useState(true);
+
+  const loadItems = useCallback(async (regionName: string) => {
+    setLoadingItems(true);
+    try {
+      const res = await fetch(`/api/listings/apartments?region=${encodeURIComponent(regionName)}&limit=60&geocode=1`);
+      const data = res.ok ? await res.json() : { items: [] };
+      setItems(data.items ?? []);
+    } catch { setItems([]); }
+    finally { setLoadingItems(false); }
+  }, []);
+  useEffect(() => { loadItems(region); }, [region, loadItems]);
+
   // Detail panel
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeItem, setActiveItem] = useState<number | null>(null);
-  const [detailData, setDetailData] = useState(PROPS[0]);
+
+  const toDisplay = (a: Apt, i: number) => ({
+    lat: a.lat, lng: a.lng,
+    badges: ["매매"],
+    price: formatKoreanWon(a.dealAmount),
+    priceNote: `${a.dealDate} 실거래`,
+    addr: `${region} ${a.dong} ${a.aptName}`,
+    area: `${a.area}㎡`,
+    floor: `${a.floor}층`,
+    buildYear: a.buildYear,
+    desc: `${region} ${a.dong} ${a.aptName} 단지의 국토교통부 실거래 기록입니다. 전용 ${a.area}㎡, ${a.floor}층, ${a.dealDate} 거래가 ${formatKoreanWon(a.dealAmount)}입니다. 주변 인프라·학군·시세는 상세 페이지에서 확인하세요.`,
+    agency: "국토부 실거래",
+    mainPhoto: SAMPLE_PHOTOS[i % SAMPLE_PHOTOS.length],
+    sub1: SAMPLE_PHOTOS[(i + 1) % SAMPLE_PHOTOS.length],
+    sub2: SAMPLE_PHOTOS[(i + 2) % SAMPLE_PHOTOS.length],
+  });
+
+  const EMPTY_DETAIL = {
+    lat: undefined as number | undefined, lng: undefined as number | undefined,
+    badges: [] as string[], price: "", priceNote: "", addr: "", area: "", floor: "",
+    buildYear: 0, desc: "", agency: "", mainPhoto: "", sub1: "", sub2: "",
+  };
+  const detailData = activeItem != null && items[activeItem]
+    ? toDisplay(items[activeItem], activeItem)
+    : EMPTY_DETAIL;
+
+  // 마커
+  const markers = useMemo<MapMarker[]>(
+    () => items
+      .filter((a) => a.lat != null && a.lng != null)
+      .map((a) => ({ id: String(items.indexOf(a)), lat: a.lat!, lng: a.lng!, label: formatEok(a.dealAmount) })),
+    [items],
+  );
+  const [panTo, setPanTo] = useState<{ lat: number; lng: number } | null>(null);
+
+  // focus 파라미터로 진입 시 해당 물건 상세 자동 오픈
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenedRef.current || !focusApt || items.length === 0) return;
+    const idx = items.findIndex((a) => a.aptName === focusApt);
+    if (idx >= 0) {
+      autoOpenedRef.current = true;
+      setActiveItem(idx);
+      setDetailOpen(true);
+      if (items[idx].lat != null) setPanTo({ lat: items[idx].lat!, lng: items[idx].lng! });
+    }
+  }, [focusApt, items]);
 
   // Close dropdown when clicking outside
   const filterRowRef = useRef<HTMLDivElement>(null);
@@ -156,9 +222,24 @@ export default function ListingsMapClient() {
   };
 
   const openDetail = (idx: number) => {
-    setDetailData(PROPS[idx]);
     setActiveItem(idx);
     setDetailOpen(true);
+    const a = items[idx];
+    if (a?.lat != null) setPanTo({ lat: a.lat, lng: a.lng! });
+  };
+
+  // 상세 페이지로 이동 (계약의향서/상세보기)
+  const goToDetail = () => {
+    if (activeItem == null || !items[activeItem]) return;
+    const a = items[activeItem];
+    const q = new URLSearchParams({
+      region, apt: a.aptName, dong: a.dong,
+      area: String(a.area), floor: String(a.floor),
+      amount: String(a.dealAmount), dealDate: a.dealDate,
+      buildYear: String(a.buildYear),
+    });
+    if (a.lat != null) { q.set("lat", String(a.lat)); q.set("lng", String(a.lng)); }
+    router.push(`/renewal/listing-detail?${q.toString()}`);
   };
 
   const closeDetail = () => {
@@ -450,78 +531,43 @@ export default function ListingsMapClient() {
           {/* LEFT: LIST PANEL */}
           <div className={s.mapListPanel}>
             <div className={s.listGroupHeader}>
-              <span className={s.listGroupTitle}>대치2동</span>
-              <span className={s.listGroupCount}>1건</span>
+              <span className={s.listGroupTitle}>{region}</span>
+              <span className={s.listGroupCount}>{loadingItems ? "…" : `${items.length}건`}</span>
             </div>
 
-            <div
-              className={`${s.listItem} ${activeItem === 0 ? s.active : ""}`}
-              onClick={() => openDetail(0)}
-            >
-              <div className={s.listThumb}></div>
-              <div className={s.listInfo}>
-                <div className={s.listBadges}>
-                  <span className={`${s.listBadge} ${s.lbSale}`}>매매</span>
-                  <span className={`${s.listBadge} ${s.lbJeonse}`}>전세</span>
-                </div>
-                <div className={s.listPrice}>13억 5,000만</div>
-                <div className={s.listAddr}>
-                  서울시 강남구 대치동 966 대치아이파크
-                </div>
-                <span className={s.listTrustBadge}>안심인증</span>
-              </div>
-            </div>
-
-            <div
-              className={`${s.listItem} ${activeItem === 1 ? s.active : ""}`}
-              onClick={() => openDetail(1)}
-            >
+            {items.map((a, idx) => (
               <div
-                className={s.listThumb}
-                style={{
-                  backgroundImage:
-                    "url('https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=200&auto=format&fit=crop&q=80')",
-                }}
-              ></div>
-              <div className={s.listInfo}>
-                <div className={s.listBadges}>
-                  <span className={`${s.listBadge} ${s.lbJeonse}`}>전세</span>
+                key={`${a.aptName}-${a.dealDate}-${idx}`}
+                className={`${s.listItem} ${activeItem === idx ? s.active : ""}`}
+                onClick={() => openDetail(idx)}
+              >
+                <div
+                  className={s.listThumb}
+                  style={{ backgroundImage: `url('${SAMPLE_PHOTOS[idx % SAMPLE_PHOTOS.length]}')` }}
+                ></div>
+                <div className={s.listInfo}>
+                  <div className={s.listBadges}>
+                    <span className={`${s.listBadge} ${s.lbSale}`}>매매</span>
+                  </div>
+                  <div className={s.listPrice}>{formatEok(a.dealAmount)}</div>
+                  <div className={s.listAddr}>{region} {a.dong} {a.aptName}</div>
+                  <span className={s.listTrustBadge}>국토부 실거래</span>
                 </div>
-                <div className={s.listPrice}>2억 8,000만</div>
-                <div className={s.listAddr}>서울시 마포구 합정동 402-5</div>
-                <span className={s.listTrustBadge}>안심인증</span>
               </div>
-            </div>
+            ))}
+            {!loadingItems && items.length === 0 && (
+              <div style={{ padding: 24, textAlign: "center", color: "#aeaeb2", fontSize: 13 }}>매물이 없습니다</div>
+            )}
           </div>
 
-          {/* CENTER: MAP PLACEHOLDER */}
+          {/* CENTER: MAP */}
           <div className={s.mapCenter}>
-            <div className={s.mapPlaceholder}>
-              <div className={s.mapPlaceholderInner}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
-                    fill="#2e4bd8"
-                    opacity="0.5"
-                  />
-                </svg>
-                <span
-                  style={{
-                    color: "#888",
-                    fontSize: "14px",
-                    marginTop: "8px",
-                  }}
-                >
-                  지도 영역
-                </span>
-              </div>
-            </div>
-
-            {/* Map controls */}
-            <div className={s.mapControls}>
-              <button className={s.mapCtrlBtn}>+</button>
-              <button className={s.mapCtrlBtn}>−</button>
-            </div>
+            <KakaoMarkersMap
+              markers={markers}
+              activeId={activeItem != null ? String(activeItem) : null}
+              onMarkerClick={(id) => openDetail(Number(id))}
+              panTo={panTo}
+            />
           </div>
 
           {/* OVERLAY BACKDROP */}
@@ -614,7 +660,7 @@ export default function ListingsMapClient() {
               {/* Trust badge */}
               <div style={{ marginBottom: "14px" }}>
                 <span className={s.detailTrustBadge}>
-                  VESTRA 안심인증 매물
+                  국토부 실거래 정보
                 </span>
               </div>
 
@@ -630,7 +676,7 @@ export default function ListingsMapClient() {
               </div>
 
               {/* CTA */}
-              <button className={s.detailCtaBtn}>
+              <button className={s.detailCtaBtn} onClick={goToDetail}>
                 상세보기 · 계약의향서 받아보기
               </button>
             </div>
