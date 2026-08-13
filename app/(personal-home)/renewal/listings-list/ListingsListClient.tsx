@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import s from "./listings-list.module.css";
 import { useListings, type ListingType } from "@/app/(app)/listings/hooks/useListings";
 import { ListingCard } from "@/app/(app)/listings/components/ListingCard";
@@ -38,6 +38,30 @@ const SIZE_RANGES: Record<string, { min?: number; max?: number }> = {
 };
 
 const BUILDING_TYPES = ['아파트', '단독', '다가구', '연립', '빌라'];
+
+const PIMG = ['pimg1', 'pimg2', 'pimg3', 'pimg4', 'pimg5', 'pimg6'] as const;
+
+interface MolitApt {
+  id: string;
+  aptName: string;
+  dong: string;
+  area: number;
+  floor: number;
+  buildYear: number;
+  dealAmount: number;
+  dealDate: string;
+}
+
+function formatEok(won: number): string {
+  if (!won) return '-';
+  if (won >= 100_000_000) {
+    const eok = won / 100_000_000;
+    const s = eok.toFixed(1); // 천만 단위 반올림
+    return `${s.endsWith('.0') ? s.slice(0, -2) : s}억`;
+  }
+  if (won >= 10_000) return `${Math.floor(won / 10_000)}만`;
+  return `${won.toLocaleString()}원`;
+}
 
 type DropdownKey = 'type' | 'trade' | 'size' | null;
 
@@ -80,6 +104,36 @@ export default function ListingsListClient() {
     region,
     minSize: sizeRange.min,
     maxSize: sizeRange.max,
+  });
+
+  // ── 건물유형=아파트 → 국토교통부 실거래가 아파트 연동 ──
+  const showMolit = dropdownLabels.type === '아파트';
+  const molitRegion = sigungu || '강남구'; // 국토부는 시군구(법정동코드) 단위 조회
+  const [molitItems, setMolitItems] = useState<MolitApt[]>([]);
+  const [molitLoading, setMolitLoading] = useState(false);
+
+  const loadMolit = useCallback(async (regionName: string) => {
+    setMolitLoading(true);
+    try {
+      const res = await fetch(`/api/listings/apartments?region=${encodeURIComponent(regionName)}&limit=30`);
+      const data = res.ok ? await res.json() : { items: [] };
+      setMolitItems(data.items ?? []);
+    } catch {
+      setMolitItems([]);
+    } finally {
+      setMolitLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showMolit) loadMolit(molitRegion);
+  }, [showMolit, molitRegion, loadMolit]);
+
+  // 평형(면적) 필터를 실거래 아파트에도 적용
+  const molitFiltered = molitItems.filter((m) => {
+    if (sizeRange.min != null && m.area < sizeRange.min) return false;
+    if (sizeRange.max != null && m.area > sizeRange.max) return false;
+    return true;
   });
 
   const toggleDropdown = (key: DropdownKey) =>
@@ -206,7 +260,10 @@ export default function ListingsListClient() {
 
           {/* 결과 헤더 */}
           <div className={s.resultsHeader}>
-            <p className={s.resultsCount}>총 <strong>{total}개</strong> 매물</p>
+            <p className={s.resultsCount}>
+              총 <strong>{showMolit ? molitFiltered.length : total}개</strong>{' '}
+              {showMolit ? `${molitRegion} 아파트 실거래` : '매물'}
+            </p>
             <div className={s.resultsRight}>
               {renderDropdown('type', '건물유형', ['아파트', '단독', '다가구', '연립', '빌라'])}
               {renderDropdown('trade', '거래유형', ['매매', '전세', '단기임대', '초단기임대'])}
@@ -253,12 +310,43 @@ export default function ListingsListClient() {
           </div>
 
           {/* 카드 그리드 (실데이터) */}
-          {loading ? (
+          {(showMolit ? molitLoading : loading) ? (
             <div className={s.subListingsGrid}>
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} style={{ height: 280, borderRadius: 10, background: '#f5f5f7' }} />
               ))}
             </div>
+          ) : showMolit ? (
+            molitFiltered.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '80px 0', color: '#aeaeb2' }}>
+                <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{molitRegion} 실거래가 없습니다</p>
+                <p style={{ fontSize: 13 }}>시/군/구를 변경해 다시 검색해보세요</p>
+              </div>
+            ) : (
+              <div className={s.subListingsGrid}>
+                {molitFiltered.map((m, i) => (
+                  <div className={s.propertyCard} key={m.id}>
+                    <div className={`${s.propImg} ${s[PIMG[i % PIMG.length]]}`}>
+                      <span className={`${s.badgeType} ${s.badgeSale}`}>매매</span>
+                    </div>
+                    <div className={s.propBody}>
+                      <div className={s.propPrice}>{formatEok(m.dealAmount)}</div>
+                      <div className={s.propAddr}>{molitRegion} {m.dong} {m.aptName}</div>
+                      <div className={s.propMeta}>
+                        <span className={s.mType}>아파트</span>
+                        <span className={s.mArea}>{m.area}㎡</span>
+                        <span className={s.mFloor}>{m.floor}층</span>
+                        <span className={s.mDate}>{m.dealDate} 거래</span>
+                      </div>
+                      <div className={s.propFooter}>
+                        <span>{m.buildYear ? `${m.buildYear}년 준공` : ''}</span>
+                        <span>국토부 실거래</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
           ) : listings.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 0', color: '#aeaeb2' }}>
               <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>조건에 맞는 매물이 없습니다</p>
