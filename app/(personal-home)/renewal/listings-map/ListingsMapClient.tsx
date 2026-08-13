@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import s from "./listings-map.module.css";
-import { KakaoMarkersMap, type MapMarker } from "@/app/(app)/listings/components/KakaoMarkersMap";
+import type { MapMarker } from "@/app/(app)/listings/components/KakaoMarkersMap";
+import { ClusterMarkerMap } from "./ClusterMarkerMap";
 import { MapSlidePanelPhotos } from "@/app/(app)/listings/components/MapSlidePanelPhotos";
 import { MapSlidePanelInfo, type ListingSlideData } from "@/app/(app)/listings/components/MapSlidePanelInfo";
 
@@ -596,11 +597,11 @@ export default function ListingsMapClient() {
             )}
           </div>
 
-          {/* CENTER: MAP */}
+          {/* CENTER: MAP (클러스터 + 선택 시 물방울) */}
           <div className={s.mapCenter}>
-            <KakaoMarkersMap
-              markers={markers}
-              activeId={activeItem != null ? String(activeItem) : null}
+            <ClusterMarkerMap
+              items={markers}
+              selectedId={activeItem != null ? String(activeItem) : null}
               onMarkerClick={(id) => openDetail(Number(id))}
               panTo={panTo}
             />
