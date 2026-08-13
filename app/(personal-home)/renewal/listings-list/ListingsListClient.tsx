@@ -224,8 +224,8 @@ export default function ListingsListClient() {
           <ul className={s.navMenu}>
             <li><Link href="/listings" className={s.active}>매물검색</Link></li>
             <li><Link href="/jeonse">전세보호</Link></li>
-            <li><Link href="/monitoring">관리분석</Link></li>
-            <li><a href="#">등기감시</a></li>
+            <li><Link href="/rights">관리분석</Link></li>
+            <li><Link href="/monitoring">등기감시</Link></li>
             <li><Link href="/contract">계약검토</Link></li>
             <li><Link href="/prediction">시세전망</Link></li>
             <li><Link href="/expert-connect">전문가상담</Link></li>
@@ -233,7 +233,7 @@ export default function ListingsListClient() {
           <div className={s.navAuth}>
             <Link href="/login">로그인</Link>
             <span className={s.divider}>|</span>
-            <a href="#">마이페이지</a>
+            <Link href="/profile">마이페이지</Link>
             <span className={s.divider}>|</span>
             <Link href="/signup">회원가입</Link>
           </div>
@@ -248,15 +248,15 @@ export default function ListingsListClient() {
         <ul className={`${s.navMobileMenu} ${menuOpen ? s.open : ''}`}>
           <li><Link href="/listings">매물검색</Link></li>
           <li><Link href="/jeonse">전세보호</Link></li>
-          <li><Link href="/monitoring">관리분석</Link></li>
-          <li><a href="#">등기감시</a></li>
+          <li><Link href="/rights">관리분석</Link></li>
+          <li><Link href="/monitoring">등기감시</Link></li>
           <li><Link href="/contract">계약검토</Link></li>
           <li><Link href="/prediction">시세전망</Link></li>
           <li><Link href="/expert-connect">전문가상담</Link></li>
           <li>
             <div className={s.navMobileAuth}>
               <Link href="/login">로그인</Link>
-              <a href="#">마이페이지</a>
+              <Link href="/profile">마이페이지</Link>
               <Link href="/signup">회원가입</Link>
             </div>
           </li>

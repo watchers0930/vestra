@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import s from "./listings-map.module.css";
 import { KakaoMarkersMap, type MapMarker } from "@/app/(app)/listings/components/KakaoMarkersMap";
+import { MapSlidePanelPhotos } from "@/app/(app)/listings/components/MapSlidePanelPhotos";
+import { MapSlidePanelInfo, type ListingSlideData } from "@/app/(app)/listings/components/MapSlidePanelInfo";
 
 const SAMPLE_PHOTOS = [
   "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&auto=format&fit=crop&q=80",
@@ -146,6 +148,34 @@ export default function ListingsMapClient() {
     ? toDisplay(items[activeItem], activeItem)
     : EMPTY_DETAIL;
 
+  // 앱 MapSlidePanel 형식용 데이터
+  const curApt = activeItem != null ? items[activeItem] : null;
+  const slideData: ListingSlideData | null = curApt ? {
+    id: "molit",
+    listingType: "SALE",
+    address: `${region} ${curApt.dong} ${curApt.aptName}`,
+    roomType: "아파트",
+    size: curApt.area,
+    floor: curApt.floor,
+    totalFloor: null,
+    deposit: String(curApt.dealAmount),
+    managementFee: null,
+    duration: null,
+    photos: [
+      SAMPLE_PHOTOS[activeItem! % SAMPLE_PHOTOS.length],
+      SAMPLE_PHOTOS[(activeItem! + 1) % SAMPLE_PHOTOS.length],
+      SAMPLE_PHOTOS[(activeItem! + 2) % SAMPLE_PHOTOS.length],
+    ],
+    description: `${region} ${curApt.dong} ${curApt.aptName} · ${curApt.dealDate} 실거래 ${formatKoreanWon(curApt.dealAmount)} · 국토교통부 공개데이터 기반 (사진은 예시)`,
+    isCertified: false,
+    jeonseRatio: null,
+    officialPrice: null,
+    latitude: curApt.lat ?? null,
+    longitude: curApt.lng ?? null,
+    availableFrom: null,
+    owner: { id: "", name: "국토부 실거래", companyName: null },
+  } : null;
+
   // 마커
   const markers = useMemo<MapMarker[]>(
     () => items
@@ -271,7 +301,7 @@ export default function ListingsMapClient() {
               <Link href="/jeonse">전세보호</Link>
             </li>
             <li>
-              <Link href="/monitoring">관리분석</Link>
+              <Link href="/rights">관리분석</Link>
             </li>
             <li>
               <Link href="/monitoring">등기감시</Link>
@@ -289,7 +319,7 @@ export default function ListingsMapClient() {
           <div className={s.navAuth}>
             <Link href="/login">로그인</Link>
             <span className={s.divider}>|</span>
-            <Link href="/login">마이페이지</Link>
+            <Link href="/profile">마이페이지</Link>
             <span className={s.divider}>|</span>
             <Link href="/signup">회원가입</Link>
           </div>
@@ -311,7 +341,7 @@ export default function ListingsMapClient() {
             <Link href="/jeonse">전세보호</Link>
           </li>
           <li>
-            <Link href="/monitoring">관리분석</Link>
+            <Link href="/rights">관리분석</Link>
           </li>
           <li>
             <Link href="/monitoring">등기감시</Link>
@@ -328,7 +358,7 @@ export default function ListingsMapClient() {
           <li>
             <div className={s.navMobileAuth}>
               <Link href="/login">로그인</Link>
-              <Link href="/login">마이페이지</Link>
+              <Link href="/profile">마이페이지</Link>
               <Link href="/signup">회원가입</Link>
             </div>
           </li>
@@ -586,105 +616,34 @@ export default function ListingsMapClient() {
           <div
             className={`${s.mapDetailPanel} ${detailOpen ? s.open : ""}`}
           >
-            <button
-              className={s.detailCloseBtn}
-              onClick={closeDetail}
-              title="닫기"
-            >
-              ✕
-            </button>
-
-            {/* Photo grid */}
-            <div className={s.detailPhotos}>
-              <div
-                className={s.detailMainPhoto}
-                style={{ backgroundImage: `url(${detailData.mainPhoto})` }}
-              ></div>
-              <div
-                className={s.detailSubPhoto1}
-                style={{ backgroundImage: `url(${detailData.sub1})` }}
-              ></div>
-              <div
-                className={s.detailSubPhoto2}
-                style={{ backgroundImage: `url(${detailData.sub2})` }}
-              ></div>
-            </div>
-
-            {/* Body */}
-            <div className={s.detailBody}>
-              {/* Address row */}
-              <div className={s.detailAddrRow}>
-                {detailData.badges.map((b) => (
-                  <span
-                    key={b}
-                    className={`${s.detailBadge} ${BADGE_CLASS[b] || ""}`}
-                  >
-                    {b}
-                  </span>
-                ))}
-                <span className={s.detailAddr}>{detailData.addr}</span>
+            {/* 앱 MapSlidePanel 형식 */}
+            <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden", background: "#fff" }}>
+              {/* 헤더 */}
+              <div style={{ display: "flex", flexShrink: 0, alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #EEF1F8", padding: "14px 20px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0071e3" strokeWidth="1.5"><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11Z" /><circle cx="12" cy="10" r="2.5" /></svg>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1d1d1f", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>매매 · 아파트</span>
+                </div>
+                <button onClick={closeDetail} title="닫기" style={{ borderRadius: 8, padding: 6, color: "#6e6e73", background: "none", border: "none", cursor: "pointer" }}>✕</button>
               </div>
 
-              {/* Price */}
-              <div className={s.detailPriceSection}>
-                <div className={s.detailPrice}>{detailData.price}</div>
-                <div className={s.detailPriceNote}>{detailData.priceNote}</div>
+              {/* 콘텐츠 */}
+              <div style={{ flex: 1, overflowY: "auto" }}>
+                {slideData && (
+                  <>
+                    <MapSlidePanelPhotos photos={slideData.photos} alt={slideData.address} lat={slideData.latitude} lng={slideData.longitude} />
+                    <MapSlidePanelInfo data={slideData} />
+                    <div style={{ borderTop: "1px solid #EEF1F8", padding: "16px 20px" }}>
+                      <button
+                        onClick={goToDetail}
+                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 12, background: "#0071e3", padding: "12px 0", fontSize: 13, fontWeight: 600, color: "#fff", border: "none", cursor: "pointer" }}
+                      >
+                        상세보기 · 계약의향서 보내기
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
-
-              {/* Meta */}
-              <div className={s.detailMetaRow}>
-                <span className={s.detailMetaItem}>
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 12 12"
-                    fill="none"
-                    stroke="#b0b4c0"
-                    strokeWidth="1.3"
-                  >
-                    <rect x="1" y="1" width="10" height="10" rx="0.5" />
-                    <line x1="4" y1="1" x2="4" y2="11" />
-                  </svg>
-                  {detailData.area}
-                </span>
-                <span className={s.detailMetaItem}>
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 12 12"
-                    fill="none"
-                    stroke="#b0b4c0"
-                    strokeWidth="1.3"
-                  >
-                    <rect x="1.5" y="1.5" width="9" height="4" rx="0.5" />
-                    <rect x="1.5" y="7" width="9" height="4" rx="0.5" />
-                  </svg>
-                  {detailData.floor}
-                </span>
-              </div>
-
-              {/* Trust badge */}
-              <div style={{ marginBottom: "14px" }}>
-                <span className={s.detailTrustBadge}>
-                  국토부 실거래 정보
-                </span>
-              </div>
-
-              {/* Description */}
-              <div className={s.detailDescLabel}>매물 설명</div>
-              <p className={s.detailDesc}>{detailData.desc}</p>
-
-              {/* Agency */}
-              <div className={s.detailAgencyRow}>
-                <span>
-                  연락처 | <a href="#">{detailData.agency}</a>
-                </span>
-              </div>
-
-              {/* CTA */}
-              <button className={s.detailCtaBtn} onClick={goToDetail}>
-                상세보기 · 계약의향서 받아보기
-              </button>
             </div>
           </div>
         </div>

@@ -13,25 +13,25 @@ export default function ListingDetailClient() {
       {/* NAV */}
       <nav>
         <div className={s.navInner}>
-          <a href="#" className={s.navLogo}>
+          <Link href="/" className={s.navLogo}>
             <div className={s.logoIcon}>V</div>
             <span className={s.logoText}>VESTRA</span>
-          </a>
+          </Link>
           <ul className={s.navMenu}>
-            <li><a href="#" className="active">매물검색</a></li>
-            <li><a href="#">전세보호</a></li>
-            <li><a href="#">관리분석</a></li>
-            <li><a href="#">등기감시</a></li>
-            <li><a href="#">계약검토</a></li>
-            <li><a href="#">시세전망</a></li>
-            <li><a href="#">전문가상담</a></li>
+            <li><Link href="/listings" className="active">매물검색</Link></li>
+            <li><Link href="/jeonse">전세보호</Link></li>
+            <li><Link href="/rights">관리분석</Link></li>
+            <li><Link href="/monitoring">등기감시</Link></li>
+            <li><Link href="/contract">계약검토</Link></li>
+            <li><Link href="/prediction">시세전망</Link></li>
+            <li><Link href="/expert-connect">전문가상담</Link></li>
           </ul>
           <div className={s.navAuth}>
-            <a href="#">로그인</a>
+            <Link href="/login">로그인</Link>
             <span className={s.divider}>|</span>
-            <a href="#">마이페이지</a>
+            <Link href="/profile">마이페이지</Link>
             <span className={s.divider}>|</span>
-            <a href="#">회원가입</a>
+            <Link href="/signup">회원가입</Link>
           </div>
           <button
             className={`${s.navHamburger} ${menuOpen ? s.open : ""}`}
@@ -44,18 +44,18 @@ export default function ListingDetailClient() {
           </button>
         </div>
         <ul className={`${s.navMobileMenu} ${menuOpen ? s.open : ""}`}>
-          <li><a href="#">매물검색</a></li>
-          <li><a href="#">전세보호</a></li>
-          <li><a href="#">관리분석</a></li>
-          <li><a href="#">등기감시</a></li>
-          <li><a href="#">계약검토</a></li>
-          <li><a href="#">시세전망</a></li>
-          <li><a href="#">전문가상담</a></li>
+          <li><Link href="/listings">매물검색</Link></li>
+          <li><Link href="/jeonse">전세보호</Link></li>
+          <li><Link href="/rights">관리분석</Link></li>
+          <li><Link href="/monitoring">등기감시</Link></li>
+          <li><Link href="/contract">계약검토</Link></li>
+          <li><Link href="/prediction">시세전망</Link></li>
+          <li><Link href="/expert-connect">전문가상담</Link></li>
           <li>
             <div className={s.navMobileAuth}>
-              <a href="#">로그인</a>
-              <a href="#">마이페이지</a>
-              <a href="#">회원가입</a>
+              <Link href="/login">로그인</Link>
+              <Link href="/profile">마이페이지</Link>
+              <Link href="/signup">회원가입</Link>
             </div>
           </li>
         </ul>
