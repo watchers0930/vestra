@@ -168,7 +168,7 @@ export default function ListingsMapClient() {
       SAMPLE_PHOTOS[(activeItem! + 2) % SAMPLE_PHOTOS.length],
     ],
     description: `${region} ${curApt.dong} ${curApt.aptName} · ${curApt.dealDate} 실거래 ${formatKoreanWon(curApt.dealAmount)} · 국토교통부 공개데이터 기반 (사진은 예시)`,
-    isCertified: false,
+    isCertified: true,
     jeonseRatio: null,
     officialPrice: null,
     latitude: curApt.lat ?? null,
@@ -578,17 +578,16 @@ export default function ListingsMapClient() {
                 }}
               >
                 <div style={{
-                  width: 56, height: 56, borderRadius: 12, overflow: "hidden", flexShrink: 0,
+                  width: 62, height: 62, borderRadius: 8, overflow: "hidden", flexShrink: 0,
                   background: `#EEF1F8 url('${SAMPLE_PHOTOS[idx % SAMPLE_PHOTOS.length]}') center/cover no-repeat`,
                 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
-                    <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 10, background: "#fef3c7", color: "#b45309" }}>매매</span>
-                    <span style={{ fontSize: 10, color: "#8e8e93" }}>아파트</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 5 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: "#e04444", color: "#fff" }}>매매</span>
                   </div>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1a1d2e", margin: 0 }}>{formatEok(a.dealAmount)}</p>
-                  <p style={{ fontSize: 11, color: "#6e6e73", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: "2px 0 0" }}>{region} {a.dong} {a.aptName}</p>
-                  <span style={{ display: "inline-block", marginTop: 4, fontSize: 10, fontWeight: 600, color: "#16a34a", background: "#dcfce7", padding: "1px 7px", borderRadius: 10 }}>국토부 실거래</span>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: "#1a1d2e", margin: 0 }}>{formatKoreanWon(a.dealAmount).replace(/원$/, "")}</p>
+                  <p style={{ fontSize: 12, color: "#8a8f9c", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: "3px 0 6px" }}>{region} {a.dong} {a.aptName}</p>
+                  <span style={{ display: "inline-block", fontSize: 11, fontWeight: 600, color: "#16a34a", background: "#dcfce7", padding: "2px 9px", borderRadius: 12 }}>안심인증</span>
                 </div>
               </button>
             ))}

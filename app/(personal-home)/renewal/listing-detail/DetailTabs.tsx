@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import s from "./listing-detail.module.css";
 import { LocationMap, InfraMap, SchoolMap } from "@/app/(app)/listings/[id]/components/ListingInfoTabs";
 
@@ -23,6 +23,7 @@ function formatEok(won: number): string {
 export default function DetailTabs({ region, dong, aptName, lat, lng }: Props) {
   const [tab, setTab] = useState<TabId>("map");
   const [priceRows, setPriceRows] = useState<{ month: string; count: number; avg: number }[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const hasCoord = lat != null && lng != null;
 
   // 시세 (지역 실거래에서 동일 단지/동 월별 집계)
@@ -46,6 +47,55 @@ export default function DetailTabs({ region, dong, aptName, lat, lng }: Props) {
       })
       .catch(() => setPriceRows([]));
   }, [tab, region, aptName, dong, priceRows.length]);
+
+  // 시세 막대그래프
+  useEffect(() => {
+    if (tab !== "price" || priceRows.length === 0) return;
+    const canvas = canvasRef.current;
+    if (!canvas?.getContext) return;
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.parentElement?.clientWidth ?? 300;
+    const cssH = 200;
+    canvas.style.width = cssW + "px";
+    canvas.style.height = cssH + "px";
+    canvas.width = cssW * dpr;
+    canvas.height = cssH * dpr;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.scale(dpr, dpr);
+    const padL = 54, padR = 16, padT = 14, padB = 34;
+    const W = cssW - padL - padR, H = cssH - padT - padB;
+    const vals = priceRows.map((d) => d.avg);
+    const maxV = Math.max(...vals);
+    const chartMax = Math.ceil(maxV / 100_000_000) * 100_000_000 + 100_000_000;
+    const steps = 4;
+    ctx.textAlign = "right";
+    ctx.font = "10px -apple-system, sans-serif";
+    for (let i = 0; i <= steps; i++) {
+      const v = (chartMax / steps) * i;
+      const y = padT + H - (H * v) / chartMax;
+      ctx.fillStyle = "#aaa";
+      ctx.fillText(v === 0 ? "0" : `${(v / 100_000_000).toFixed(0)}억`, padL - 6, y + 3.5);
+      ctx.strokeStyle = "#e8eaf0";
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + W, y); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    const slotW = W / priceRows.length;
+    const barW = Math.min(46, slotW * 0.5);
+    ctx.textAlign = "center";
+    priceRows.forEach((d, i) => {
+      const x = padL + slotW * i + slotW / 2;
+      const barH = (H * d.avg) / chartMax;
+      const barY = padT + H - barH;
+      ctx.fillStyle = "#bfdbfe";
+      ctx.beginPath();
+      ctx.roundRect(x - barW / 2, barY, barW, barH, [4, 4, 0, 0]);
+      ctx.fill();
+      ctx.fillStyle = "#888";
+      ctx.fillText(d.month.slice(5), x, padT + H + 16);
+    });
+  }, [tab, priceRows]);
 
   const noCoord = (
     <div className={s.mapPlaceholder}>
@@ -75,6 +125,14 @@ export default function DetailTabs({ region, dong, aptName, lat, lng }: Props) {
           <div className={s.tabPrice}>
             <div className={s.tabContentInner}>
               <div className={s.priceTrendHeader}>{aptName} 인근 실거래 추이</div>
+              {priceRows.length > 0 && (
+                <>
+                  <div className={s.priceChartArea}>
+                    <canvas ref={canvasRef} height={200} className={s.priceChartCanvas} />
+                  </div>
+                  <div className={s.priceLegend}><span className={s.priceLegendDot}></span> 평균거래가</div>
+                </>
+              )}
               <div className={s.priceTableWrap}>
                 <table className={s.priceTable}>
                   <thead><tr><th>월</th><th>평균거래가</th><th>건수</th></tr></thead>
