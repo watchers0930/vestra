@@ -47,10 +47,11 @@ const META_ICONS = {
 
 type MetaKey = keyof typeof META_ICONS;
 
-interface Props { listing: ListingItem; }
+interface Props { listing: ListingItem; forceCertified?: boolean; }
 
-export function ListingCard({ listing }: Props) {
+export function ListingCard({ listing, forceCertified }: Props) {
   const thumb = listing.photos?.[0] ?? null;
+  const showCertified = listing.isCertified || forceCertified;
 
   const metaItems: { key: MetaKey; value: string }[] = [
     listing.roomType ? { key: "type" as MetaKey, value: listing.roomType } : null,
@@ -82,7 +83,7 @@ export function ListingCard({ listing }: Props) {
           </span>
 
           {/* Trust badge */}
-          {listing.isCertified && (
+          {showCertified && (
             <span style={{
               position: "absolute", top: 10, right: 10,
               background: "#22c55e", color: "#fff",

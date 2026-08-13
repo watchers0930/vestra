@@ -112,16 +112,19 @@ interface ListingsMapViewProps {
   canRegister?: boolean;
   /** 앱 사이드바(272px) 옆에 붙일지 여부. 사이드바 없는 공개 페이지에서는 false. */
   appSidebar?: boolean;
+  /** 진입 시 초기 시/도·시군구 (목록에서 선택한 지역과 동기화) */
+  initialSi?: string;
+  initialGu?: string;
 }
 
 // ────────────────────────────────────────────────────────────
 // 메인
 // ────────────────────────────────────────────────────────────
-export function ListingsMapView({ onClose, canRegister, appSidebar = true }: ListingsMapViewProps) {
+export function ListingsMapView({ onClose, canRegister, appSidebar = true, initialSi, initialGu }: ListingsMapViewProps) {
   const [listingType, setListingType] = useState<ListingType | "ALL">("ALL");
   const [roomTypeFilter, setRoomTypeFilter] = useState("");
-  const [selectedSi, setSelectedSi] = useState("서울특별시");
-  const [selectedGu, setSelectedGu] = useState("강남구");
+  const [selectedSi, setSelectedSi] = useState(initialSi || "서울특별시");
+  const [selectedGu, setSelectedGu] = useState(initialGu ?? (initialSi ? "" : "강남구"));
   const [sizeIdx,  setSizeIdx]  = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import s from "./listings-list.module.css";
 import { useListings, type ListingType } from "@/app/(app)/listings/hooks/useListings";
 import { ListingCard } from "@/app/(app)/listings/components/ListingCard";
@@ -51,6 +51,18 @@ interface MolitApt {
   dealAmount: number;
   dealDate: string;
 }
+
+// Fisher-Yates 셔플 (원본 불변)
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const MAX_CARDS = 9;
 
 function formatEok(won: number): string {
   if (!won) return '-';
@@ -129,12 +141,18 @@ export default function ListingsListClient() {
     if (showMolit) loadMolit(molitRegion);
   }, [showMolit, molitRegion, loadMolit]);
 
-  // 평형(면적) 필터를 실거래 아파트에도 적용
-  const molitFiltered = molitItems.filter((m) => {
-    if (sizeRange.min != null && m.area < sizeRange.min) return false;
-    if (sizeRange.max != null && m.area > sizeRange.max) return false;
-    return true;
-  });
+  // 평형(면적) 필터 적용 → 랜덤 셔플 → 최대 9개
+  const displayMolit = useMemo(() => {
+    const filtered = molitItems.filter((m) => {
+      if (sizeRange.min != null && m.area < sizeRange.min) return false;
+      if (sizeRange.max != null && m.area > sizeRange.max) return false;
+      return true;
+    });
+    return shuffle(filtered).slice(0, MAX_CARDS);
+  }, [molitItems, sizeRange.min, sizeRange.max]);
+
+  // DB 매물도 랜덤 셔플 → 최대 9개
+  const displayListings = useMemo(() => shuffle(listings).slice(0, MAX_CARDS), [listings]);
 
   const toggleDropdown = (key: DropdownKey) =>
     setOpenDropdown((prev) => (prev === key ? null : key));
@@ -150,7 +168,14 @@ export default function ListingsListClient() {
     (key === 'size' && value === '전체 평형');
 
   if (view === 'map') {
-    return <ListingsMapView appSidebar={false} onClose={() => setView('list')} />;
+    return (
+      <ListingsMapView
+        appSidebar={false}
+        onClose={() => setView('list')}
+        initialSi={sido || undefined}
+        initialGu={sigungu || undefined}
+      />
+    );
   }
 
   const renderDropdown = (
@@ -256,13 +281,13 @@ export default function ListingsListClient() {
       {/* LISTINGS */}
       <section className={s.subListings}>
         <div className={s.subListingsInner}>
-          <h2 className={s.subSectionTitle}>베스트라 인증 안심전세 매물</h2>
+          <h2 className={s.subSectionTitle}>베스트라 인증 안심 매물</h2>
 
           {/* 결과 헤더 */}
           <div className={s.resultsHeader}>
             <p className={s.resultsCount}>
-              총 <strong>{showMolit ? molitFiltered.length : total}개</strong>{' '}
-              {showMolit ? `${molitRegion} 아파트 실거래` : '매물'}
+              총 <strong>{showMolit ? displayMolit.length : displayListings.length}개</strong>{' '}
+              {showMolit ? `${molitRegion} 안심 매물` : '안심 매물'}
             </p>
             <div className={s.resultsRight}>
               {renderDropdown('type', '건물유형', ['아파트', '단독', '다가구', '연립', '빌라'])}
@@ -317,17 +342,18 @@ export default function ListingsListClient() {
               ))}
             </div>
           ) : showMolit ? (
-            molitFiltered.length === 0 ? (
+            displayMolit.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '80px 0', color: '#aeaeb2' }}>
-                <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{molitRegion} 실거래가 없습니다</p>
+                <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{molitRegion} 매물이 없습니다</p>
                 <p style={{ fontSize: 13 }}>시/군/구를 변경해 다시 검색해보세요</p>
               </div>
             ) : (
               <div className={s.subListingsGrid}>
-                {molitFiltered.map((m, i) => (
+                {displayMolit.map((m, i) => (
                   <div className={s.propertyCard} key={m.id}>
                     <div className={`${s.propImg} ${s[PIMG[i % PIMG.length]]}`}>
                       <span className={`${s.badgeType} ${s.badgeSale}`}>매매</span>
+                      <span className={s.badgeTrust}>안심인증</span>
                     </div>
                     <div className={s.propBody}>
                       <div className={s.propPrice}>{formatEok(m.dealAmount)}</div>
@@ -347,14 +373,14 @@ export default function ListingsListClient() {
                 ))}
               </div>
             )
-          ) : listings.length === 0 ? (
+          ) : displayListings.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 0', color: '#aeaeb2' }}>
               <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>조건에 맞는 매물이 없습니다</p>
               <p style={{ fontSize: 13 }}>필터를 변경해 다시 검색해보세요</p>
             </div>
           ) : (
             <div className={s.subListingsGrid}>
-              {listings.map((l) => <ListingCard key={l.id} listing={l} />)}
+              {displayListings.map((l) => <ListingCard key={l.id} listing={l} forceCertified />)}
             </div>
           )}
         </div>

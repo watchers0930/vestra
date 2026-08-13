@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     if (listingType === "JEONSE" || listingType === "SALE") {
       where.listingType = listingType;
     }
-    if (roomType) where.roomType = roomType;
+    if (roomType) where.roomType = { contains: roomType };
     if (region)   where.address  = { contains: region };
     if (minSize || maxSize) {
       const sizeFilter: Record<string, number> = {};
