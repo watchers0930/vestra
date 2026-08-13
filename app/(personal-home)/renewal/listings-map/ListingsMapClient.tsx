@@ -649,6 +649,9 @@ export default function ListingsMapClient() {
         </div>
       </section>
 
+      {/* 콘텐츠-푸터 사이 여백 */}
+      <div style={{ height: 50 }} />
+
       {/* FOOTER */}
       <footer className={s.footer}>
         <div className={s.footerInner}>
