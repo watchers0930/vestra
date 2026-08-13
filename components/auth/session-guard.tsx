@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef, startTransition } from "react";
+import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { isPublicPath } from "@/lib/public-paths";
 
 const INACTIVITY_MS = 60 * 60 * 1000;
 const CHECK_INTERVAL_MS = 60 * 1000;
@@ -25,6 +27,7 @@ function updateHeartbeat() {
 
 export default function SessionGuard({ children }: { children: React.ReactNode }) {
   const { status } = useSession();
+  const pathname = usePathname();
   const [checked, setChecked] = useState(false);
   const lastActivityRef = useRef<number>(0);
 
@@ -32,8 +35,11 @@ export default function SessionGuard({ children }: { children: React.ReactNode }
     if (status === "loading") return;
 
     if (status === "authenticated") {
+      // 공개 페이지(매물·분석 체험)는 단일탭 강제 로그아웃 예외 —
+      // 새 탭으로 둘러보기만 하는 경우까지 로그인 세션을 끊지 않는다.
+      const isPublic = isPublicPath(pathname);
       const isTabAlive = sessionStorage.getItem("vestra_alive") === "1";
-      if (!isTabAlive && !isAnotherTabAlive()) {
+      if (!isPublic && !isTabAlive && !isAnotherTabAlive()) {
         signOut({ redirectTo: "/login" });
         return; // checked 유지 → 오버레이 유지 → 리다이렉트 완료까지 콘텐츠 노출 없음
       }
@@ -63,7 +69,7 @@ export default function SessionGuard({ children }: { children: React.ReactNode }
 
     // 비로그인 상태 → 오버레이 제거 (미들웨어가 보호)
     startTransition(() => setChecked(true));
-  }, [status]);
+  }, [status, pathname]);
 
   return (
     <>
