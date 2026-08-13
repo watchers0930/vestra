@@ -6,6 +6,7 @@ import s from "./listings-list.module.css";
 import { useListings, type ListingType } from "@/app/(app)/listings/hooks/useListings";
 import { ListingCard } from "@/app/(app)/listings/components/ListingCard";
 import { ListingsMapView } from "@/app/(app)/listings/components/ListingsMapView";
+import { ApartmentMapView } from "./ApartmentMapView";
 
 const REGIONS: Record<string, string[]> = {
   '서울특별시': ['강남구','강동구','강북구','강서구','관악구','광진구','구로구','금천구','노원구','도봉구','동대문구','동작구','마포구','서대문구','서초구','성동구','성북구','송파구','양천구','영등포구','용산구','은평구','종로구','중구','중랑구'],
@@ -168,6 +169,10 @@ export default function ListingsListClient() {
     (key === 'size' && value === '전체 평형');
 
   if (view === 'map') {
+    // 아파트 모드 → 국토부 실거래 아파트 전체를 좌표 지오코딩해 지도에 표시
+    if (showMolit) {
+      return <ApartmentMapView region={molitRegion} onClose={() => setView('list')} />;
+    }
     return (
       <ListingsMapView
         appSidebar={false}
