@@ -535,25 +535,31 @@ export default function ListingsMapClient() {
               <span className={s.listGroupCount}>{loadingItems ? "…" : `${items.length}건`}</span>
             </div>
 
+            {/* 앱 ListingsMapView(ListingCardSmall) 스타일 카드 */}
             {items.map((a, idx) => (
-              <div
+              <button
                 key={`${a.aptName}-${a.dealDate}-${idx}`}
-                className={`${s.listItem} ${activeItem === idx ? s.active : ""}`}
                 onClick={() => openDetail(idx)}
+                style={{
+                  width: "100%", display: "flex", gap: 12, padding: "12px 14px",
+                  textAlign: "left", border: "none", borderBottom: "1px solid #eef0f4",
+                  cursor: "pointer", background: activeItem === idx ? "#EFF5FF" : "#fff",
+                }}
               >
-                <div
-                  className={s.listThumb}
-                  style={{ backgroundImage: `url('${SAMPLE_PHOTOS[idx % SAMPLE_PHOTOS.length]}')` }}
-                ></div>
-                <div className={s.listInfo}>
-                  <div className={s.listBadges}>
-                    <span className={`${s.listBadge} ${s.lbSale}`}>매매</span>
+                <div style={{
+                  width: 56, height: 56, borderRadius: 12, overflow: "hidden", flexShrink: 0,
+                  background: `#EEF1F8 url('${SAMPLE_PHOTOS[idx % SAMPLE_PHOTOS.length]}') center/cover no-repeat`,
+                }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 10, background: "#fef3c7", color: "#b45309" }}>매매</span>
+                    <span style={{ fontSize: 10, color: "#8e8e93" }}>아파트</span>
                   </div>
-                  <div className={s.listPrice}>{formatEok(a.dealAmount)}</div>
-                  <div className={s.listAddr}>{region} {a.dong} {a.aptName}</div>
-                  <span className={s.listTrustBadge}>국토부 실거래</span>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1a1d2e", margin: 0 }}>{formatEok(a.dealAmount)}</p>
+                  <p style={{ fontSize: 11, color: "#6e6e73", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: "2px 0 0" }}>{region} {a.dong} {a.aptName}</p>
+                  <span style={{ display: "inline-block", marginTop: 4, fontSize: 10, fontWeight: 600, color: "#16a34a", background: "#dcfce7", padding: "1px 7px", borderRadius: 10 }}>국토부 실거래</span>
                 </div>
-              </div>
+              </button>
             ))}
             {!loadingItems && items.length === 0 && (
               <div style={{ padding: 24, textAlign: "center", color: "#aeaeb2", fontSize: 13 }}>매물이 없습니다</div>
