@@ -10,14 +10,18 @@ export async function GET(req: NextRequest) {
     const region = (searchParams.get("region") || "").trim();
     const dong = (searchParams.get("dong") || "").trim();
     const apt = (searchParams.get("apt") || "").trim();
+    const latP = searchParams.get("lat");
+    const lngP = searchParams.get("lng");
+    const coord = latP && lngP ? { lat: Number(latP), lng: Number(lngP) } : undefined;
     if (!region || !apt) {
       return NextResponse.json({ kapt: null, official: null });
     }
-    const address = `서울 ${region} ${dong}`.trim();
 
     const [kapt, official] = await Promise.all([
+      // KAPT: 시군구 추출용 주소 + 단지명 힌트
       fetchKaptInfoByAddress(`${region} ${dong} ${apt}`, apt).catch(() => null),
-      fetchOfficialPrices(`${address} ${apt}`).catch(() => null),
+      // 공시가격: 주소(동) + 좌표 폴백 (지번 없어도 좌표로 PNU 확보)
+      fetchOfficialPrices(`${region} ${dong}`, undefined, coord).catch(() => null),
     ]);
 
     return NextResponse.json({

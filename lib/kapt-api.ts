@@ -106,8 +106,10 @@ export async function fetchKaptAptList(
   const json = await kaptFetchJson(`${baseUrl}?${params.toString()}`);
   if (!json) return [];
 
-  const rawItems = json?.response?.body?.items;
-  if (!rawItems || !Array.isArray(rawItems)) return [];
+  // data.go.kr 응답은 보통 body.items.item(배열), 단건이면 객체일 수 있음
+  const rawItemsRaw = json?.response?.body?.items?.item ?? json?.response?.body?.items;
+  const rawItems = Array.isArray(rawItemsRaw) ? rawItemsRaw : rawItemsRaw ? [rawItemsRaw] : [];
+  if (rawItems.length === 0) return [];
 
   const items: KaptAptListItem[] = rawItems
     .filter((item: { kaptCode?: string; kaptName?: string }) => item.kaptCode && item.kaptName)

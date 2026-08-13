@@ -44,11 +44,12 @@ export default function ListingDetailContent() {
 
   useEffect(() => {
     const q = new URLSearchParams({ region, dong, apt: aptName });
+    if (lat != null && lng != null) { q.set("lat", String(lat)); q.set("lng", String(lng)); }
     fetch(`/api/listings/apt-info?${q.toString()}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setInfo(d))
       .catch(() => setInfo(null));
-  }, [region, dong, aptName]);
+  }, [region, dong, aptName, lat, lng]);
 
   const kapt = info?.kapt;
   const official = info?.official;
