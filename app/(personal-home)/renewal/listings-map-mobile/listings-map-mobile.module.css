@@ -1,0 +1,99 @@
+/* ── NAV ── */
+.nav{flex-shrink:0;position:relative;z-index:300;background:#fff;border-bottom:1px solid #e8eaf0;height:52px;display:flex;align-items:center;padding:0 14px}
+.navLogo{display:flex;align-items:center;gap:6px;flex:1}
+.navLogoIcon{width:22px;height:22px;background:#2e4bd8;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;flex-shrink:0}
+.navLogoText{font-weight:700;font-size:14px;color:#1a1d2e;letter-spacing:.5px}
+.navRight{display:flex;align-items:center;gap:6px}
+.navListBtn{display:flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid #dde0ec;border-radius:20px;font-size:12px;font-weight:600;color:#555;background:#fff;cursor:pointer;font-family:inherit;line-height:1;flex-shrink:0;text-decoration:none}
+.navHam{display:flex;flex-direction:column;gap:4px;background:none;border:none;cursor:pointer;padding:6px;margin-right:-6px}
+.navHam span{display:block;width:18px;height:2px;background:#1a1d2e;border-radius:2px;transition:transform .2s,opacity .2s}
+.navHam.open span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.navHam.open span:nth-child(2){opacity:0}
+.navHam.open span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+.navMobileMenu{display:none;position:absolute;top:52px;left:0;right:0;background:#fff;border-top:1px solid #e8eaf0;padding:6px 0 14px;z-index:299;box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.navMobileMenu.open{display:block}
+.navMobileMenu li{list-style:none;border-bottom:1px solid #f4f5f9}
+.navMobileMenu li:last-child{border-bottom:none}
+.navMobileMenu a{display:block;padding:12px 18px;font-size:14.5px;color:#1a1d2e;font-weight:500;text-decoration:none}
+
+/* ── MAP AREA ── */
+.mapArea{flex:1;position:relative;overflow:hidden}
+
+/* ── MAP PLACEHOLDER ── */
+.mapPlaceholder{width:100%;height:100%;background:#e8edf5;display:flex;align-items:center;justify-content:center}
+.mapPlaceholderInner{display:flex;flex-direction:column;align-items:center;gap:8px}
+
+/* ── FLOATING FILTERS ── */
+.floatFilters{position:absolute;top:12px;left:12px;right:12px;z-index:200;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;pointer-events:none}
+.floatFilters::-webkit-scrollbar{display:none}
+.fChip{display:flex;align-items:center;gap:4px;padding:7px 13px;background:#fff;border:1px solid #dde0ec;border-radius:20px;font-size:12px;font-weight:600;font-family:inherit;color:#333;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.12);cursor:pointer;pointer-events:all;transition:border-color .15s,color .15s}
+.fChip.active{background:#2e4bd8;border-color:#2e4bd8;color:#fff}
+.fChip svg{flex-shrink:0}
+
+/* ── BOTTOM SHEET ── */
+.bottomSheet{position:absolute;left:0;right:0;bottom:0;z-index:200;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.14);transform:translateY(calc(100% - 108px));transition:transform .3s cubic-bezier(.32,.72,0,1);will-change:transform}
+.bottomSheet.expanded{transform:translateY(0)}
+.bsHandleArea{padding:12px 16px 10px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.bsHandle{width:36px;height:4px;background:#d8dae8;border-radius:4px}
+.bsCount{font-size:12px;color:#888}
+.bsCount strong{color:#1a1d2e;font-weight:600}
+.bsList{overflow-y:auto;max-height:320px;padding:0 16px 20px;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+.bsListScroll{display:flex;flex-direction:column;gap:12px}
+
+/* peek row: shows first card horizontally when collapsed */
+.peekScroll{overflow-x:auto;scrollbar-width:none;display:flex;gap:12px;padding:4px 16px 16px;-webkit-overflow-scrolling:touch}
+.peekScroll::-webkit-scrollbar{display:none}
+.peekCard{flex-shrink:0;width:250px;background:#fff;border:1px solid #e8eaf2;border-radius:12px;overflow:hidden;display:flex;cursor:pointer;transition:box-shadow .15s}
+.peekCard:active{opacity:.85}
+.peekCardImg{width:90px;flex-shrink:0;background-size:cover;background-position:center}
+.peekCardBody{padding:12px 14px;flex:1;min-width:0}
+.peekBadges{display:flex;gap:4px;margin-bottom:5px}
+.peekBadge{font-size:10px;font-weight:600;color:#fff;padding:2px 7px;border-radius:3px}
+.pbSale{background:#e04444}
+.pbJeonse{background:#2e4bd8}
+.pbTrust{background:#22c55e;display:flex;align-items:center;gap:2px}
+.pbTrust::before{content:'';width:9px;height:9px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.5'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3C/svg%3E");background-size:contain;background-repeat:no-repeat;background-position:center}
+.peekPrice{font-size:16px;font-weight:700;color:#1a1d2e;margin-bottom:2px}
+.peekMonths{font-size:11px;font-weight:400;color:#999;margin-left:2px}
+.peekAddr{font-size:11px;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px}
+.peekMeta{font-size:11px;color:#b0b4c0}
+
+/* ── DETAIL SHEET ── */
+.detailSheet{position:absolute;left:0;right:0;bottom:0;z-index:300;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.18);transform:translateY(100%);transition:transform .35s cubic-bezier(.32,.72,0,1);will-change:transform;max-height:88dvh;display:flex;flex-direction:column;overflow:hidden}
+.detailSheet.open{transform:translateY(0)}
+.dsHeader{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;border-bottom:1px solid #f0f2f6;flex-shrink:0}
+.dsHeaderHandle{width:36px;height:4px;background:#d8dae8;border-radius:4px}
+.dsClose{width:30px;height:30px;background:none;border:1px solid #e8eaf0;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:#888;flex-shrink:0}
+.dsBody{overflow-y:auto;flex:1;padding-bottom:calc(env(safe-area-inset-bottom) + 80px)}
+
+/* detail: photo */
+.dsPhotoMain{width:100%;height:200px;background-size:cover;background-position:center}
+.dsThumbs{display:flex;gap:6px;padding:8px 16px}
+.dsThumb{width:56px;height:42px;border-radius:5px;background-size:cover;background-position:center;border:2px solid transparent;cursor:pointer;flex-shrink:0;transition:border-color .15s}
+.dsThumb.active{border-color:#2e4bd8}
+
+/* detail: info */
+.dsInfo{padding:14px 18px}
+.dsBadges{display:flex;gap:5px;margin-bottom:8px}
+.dsBadge{font-size:11px;font-weight:600;color:#fff;padding:3px 9px;border-radius:4px}
+.dsbSale{background:#e04444}
+.dsbJeonse{background:#2e4bd8}
+.dsTrustTag{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#22c55e;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:3px 10px}
+.dsTrustTag::before{content:'';width:10px;height:10px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322c55e' stroke-width='2.5'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3C/svg%3E");background-size:contain;background-repeat:no-repeat;background-position:center}
+.dsPrice{font-size:22px;font-weight:700;color:#1a1d2e;margin-bottom:2px}
+.dsPriceNote{font-size:12px;color:#999;margin-bottom:6px}
+.dsAddr{font-size:13px;color:#444;margin-bottom:10px;line-height:1.4}
+.dsMetaGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.dsMetaItem{background:#f7f8fc;border-radius:8px;padding:10px 12px;font-size:12px;color:#666}
+.dsMetaItem strong{display:block;font-size:14px;color:#1a1d2e;font-weight:600;margin-bottom:2px}
+.dsDescLabel{font-size:11.5px;font-weight:600;color:#888;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+.dsDesc{font-size:13px;color:#444;line-height:1.65;margin-bottom:14px}
+.dsAgency{font-size:12.5px;color:#666;margin-bottom:20px}
+.dsAgency a{color:#2e4bd8;font-weight:600;text-decoration:none}
+
+/* detail: CTA */
+.dsCta{position:sticky;bottom:0;background:#fff;border-top:1px solid #f0f2f6;padding:14px 18px;padding-bottom:calc(14px + env(safe-area-inset-bottom));display:flex;gap:10px;flex-shrink:0}
+.ctaBtn{flex:1;padding:14px 0;border-radius:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:opacity .15s}
+.ctaBtn:active{opacity:.8}
+.ctaPrimary{background:#2e4bd8;color:#fff}
+.ctaSecondary{background:#fff;color:#2e4bd8;border:1.5px solid #2e4bd8}

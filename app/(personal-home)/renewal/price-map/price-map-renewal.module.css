@@ -1,0 +1,325 @@
+/* DEMO BAR */
+.demoBar{background:#0f1428;padding:0 24px;height:44px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:300}
+.demoLabel{font-size:11px;font-weight:600;color:rgba(255,255,255,.35);letter-spacing:1.5px;text-transform:uppercase;margin-right:8px;flex-shrink:0}
+.demoBtn{font-size:12px;font-weight:600;padding:5px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.55);cursor:pointer;font-family:inherit;transition:all .15s}
+.demoBtn:hover{color:#fff;border-color:rgba(255,255,255,.4)}
+.demoBtn.on{background:#2e4bd8;color:#fff;border-color:#2e4bd8}
+
+/* NAV */
+.navInner{max-width:1200px;margin:0 auto;padding:0 32px;height:80px;display:flex;align-items:center}
+.navLogo{display:flex;align-items:center;gap:7px;margin-right:48px;flex-shrink:0}
+.logoIcon{width:28px;height:28px;background:#2e4bd8;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px}
+.logoText{font-weight:700;font-size:15.5px;letter-spacing:.6px}
+.navMenu{display:flex;list-style:none;gap:2px;flex:1}
+.navMenu a{display:block;font-size:17px;padding:6px 20px;border-radius:4px;transition:color .15s,background .15s}
+.navMenu a:hover{color:#2e4bd8;background:#f0f2fd}
+.navMenu a.active{color:#2e4bd8}
+.navAuth{display:flex;align-items:center;gap:2px;font-size:12.5px}
+.navAuth a{padding:4px 8px;color:#555;transition:color .15s}
+.navAuth a:hover{color:#2e4bd8}
+.navAuth .div{color:#d4d6de;font-size:12px}
+
+/* PAGE SHELL */
+.pageShell{display:flex;flex-direction:column;height:100vh}
+.mapShell{display:flex;flex:1;overflow:hidden;position:relative}
+
+/* LEFT PANEL */
+.leftPanel{width:280px;flex-shrink:0;background:#0f1420;display:flex;flex-direction:column;overflow:hidden;border-right:1px solid #1e2640}
+.lpHeader{padding:20px 18px 16px;background:linear-gradient(148deg,#141820 0%,#0c1527 50%,#0a1020 100%);border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.lpTitle{font-size:15px;font-weight:700;color:#fff;margin-bottom:14px}
+.tradeToggle{display:flex;background:rgba(255,255,255,.07);border-radius:8px;padding:3px;gap:3px;margin-bottom:14px}
+.ttBtn{flex:1;height:32px;border:none;border-radius:6px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s;color:rgba(255,255,255,.5);background:transparent}
+.ttBtn.on{background:#2e4bd8;color:#fff}
+.regionRow{display:flex;gap:6px}
+.lpSelect{flex:1;height:34px;padding:0 10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:7px;font-size:12.5px;font-family:inherit;color:rgba(255,255,255,.8);outline:none;cursor:pointer;-webkit-appearance:none}
+.lpSelect option{background:#1a1d2e;color:#fff}
+.lpFilters{padding:12px 18px;display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid rgba(255,255,255,.05);flex-shrink:0}
+.lpChip{font-size:11.5px;font-weight:500;padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.5);cursor:pointer;font-family:inherit;transition:all .15s}
+.lpChip.on{background:rgba(46,75,216,.2);border-color:rgba(46,75,216,.4);color:#818cf8}
+.lpListHead{padding:14px 18px 8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.lpListTitle{font-size:11px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:1.5px;text-transform:uppercase}
+.lpList{flex:1;overflow-y:auto;padding:0 10px 12px}
+.lpList::-webkit-scrollbar{width:3px}
+.lpList::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+.lpItem{display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:10px;cursor:pointer;transition:background .12s;margin-bottom:2px}
+.lpItem:hover{background:rgba(255,255,255,.06)}
+.lpItem.on{background:rgba(46,75,216,.18)}
+.lpRank{width:18px;font-size:11px;font-weight:700;color:rgba(255,255,255,.3);flex-shrink:0;text-align:center}
+.lpItemInfo{flex:1;min-width:0}
+.lpAptName{font-size:13px;font-weight:600;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.lpAptSub{font-size:11px;color:rgba(255,255,255,.35)}
+.lpAptPrice{font-size:12.5px;font-weight:700;color:#fff;text-align:right}
+.lpChg{font-size:11px;font-weight:700;margin-top:2px;text-align:right}
+.lpChgUp{color:#ff6b6b}
+.lpChgDn{color:#5b9cf6}
+.lpDivider{height:1px;background:rgba(255,255,255,.05);margin:8px 8px 10px}
+.lpSectionLabel{font-size:10.5px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:1.2px;text-transform:uppercase;padding:0 8px 6px}
+
+/* MAP CENTER */
+.mapCenter{flex:1;position:relative;overflow:hidden;background:#e8e0d8}
+.mapLegend{position:absolute;bottom:16px;left:16px;background:rgba(255,255,255,.95);border-radius:10px;padding:10px 14px;box-shadow:0 2px 12px rgba(0,0,0,.12);z-index:10}
+.mlTitle{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.mlItems{display:flex;flex-direction:column;gap:5px}
+.mlItem{display:flex;align-items:center;gap:7px;font-size:11px;color:#555}
+.mlDot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.mapControls{position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:2px;z-index:10}
+.mapCtrlBtn{width:32px;height:32px;background:#fff;border:1px solid #ccc;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:#555;font-weight:300;box-shadow:0 1px 4px rgba(0,0,0,.12);font-family:inherit;line-height:1}
+
+/* MAP PLACEHOLDER */
+.mapPlaceholder{width:100%;height:100%;background:#e8edf5;display:flex;align-items:center;justify-content:center}
+.mapPlaceholderInner{display:flex;flex-direction:column;align-items:center;gap:8px}
+
+/* APT SLIDE PANEL */
+.aptPanel{width:340px;flex-shrink:0;background:#fff;border-left:1px solid #e8eaf0;display:flex;flex-direction:column;overflow:hidden;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);position:absolute;right:0;top:0;bottom:0;z-index:20;box-shadow:-6px 0 20px rgba(0,0,0,.1)}
+.aptPanel.open{transform:translateX(0)}
+.aptRoadview{height:180px;background:linear-gradient(160deg,#1a2040 0%,#0c1527 100%);position:relative;overflow:hidden;flex-shrink:0}
+.aptRoadviewBg{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=500&auto=format&fit=crop&q=80') center/cover no-repeat;opacity:.4}
+.aptRoadviewLabel{position:absolute;bottom:10px;left:12px;font-size:11px;color:rgba(255,255,255,.6);background:rgba(0,0,0,.3);padding:3px 8px;border-radius:4px}
+.aptCloseBtn{position:absolute;top:10px;right:10px;width:28px;height:28px;background:rgba(0,0,0,.4);border:none;border-radius:50%;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1;line-height:1}
+.aptHead{padding:16px 18px 14px;border-bottom:1px solid #eef1f8;flex-shrink:0}
+.aptNameRow{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px}
+.aptName{font-size:16px;font-weight:700;color:#1a1d2e}
+.aptChgBadge{font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;flex-shrink:0}
+.acbUp{background:rgba(255,59,48,.08);color:#ff3b30}
+.acbDn{background:rgba(0,113,227,.08);color:#0071e3}
+.aptSub{font-size:12px;color:#aeaeb2}
+.aptInfoGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 18px;border-bottom:1px solid #eef1f8;flex-shrink:0}
+.aptInfoTile{background:#f5f5f7;border-radius:10px;padding:10px 12px}
+.aitLabel{font-size:10px;color:#aeaeb2;margin-bottom:5px}
+.aitVal{font-size:14px;font-weight:700;color:#1d1d1f}
+.aitSub{font-size:11px;color:#6e6e73;margin-top:2px}
+.aptBtns{padding:14px 18px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.aptRiskBtn{width:100%;height:46px;background:#0071e3;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .15s;box-shadow:0 2px 10px rgba(0,113,227,.3)}
+.aptRiskBtn:hover{background:#0058b0}
+.aptForecastBtn{width:100%;height:46px;background:#1a1d2e;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .15s}
+.aptForecastBtn:hover{background:#2e4bd8}
+
+/* RISK POPUP */
+.popupOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .2s}
+.popupOverlay.open{opacity:1;pointer-events:auto}
+.riskPopup{background:#fff;border-radius:24px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.25);transform:translateY(16px);transition:transform .2s}
+.popupOverlay.open .riskPopup{transform:translateY(0)}
+.rpHeader{background:linear-gradient(148deg,#141820 0%,#0c1527 50%,#0a1020 100%);padding:22px 22px 20px;position:relative}
+.rpClose{position:absolute;top:14px;right:14px;width:28px;height:28px;background:rgba(255,255,255,.1);border:none;border-radius:50%;color:rgba(255,255,255,.7);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;line-height:1}
+.rpAptName{font-size:13px;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:14px}
+.rpScoreRow{display:flex;align-items:center;gap:16px}
+.rpGauge{position:relative;width:64px;height:64px;flex-shrink:0}
+.rpGauge svg{transform:rotate(-90deg)}
+.rpGaugeNum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.rpGaugeN{font-size:19px;font-weight:800;color:#fff;line-height:1}
+.rpGaugeL{font-size:9.5px;font-weight:600;color:rgba(255,255,255,.5);margin-top:2px}
+.rpGrade{font-size:18px;font-weight:700;color:#f59e0b;margin-bottom:4px}
+.rpGradeSub{font-size:12px;color:rgba(255,255,255,.45);line-height:1.5}
+.rpBody{padding:16px 18px 20px;display:flex;flex-direction:column;gap:8px}
+.riskItem{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px}
+.riLabel{font-size:12.5px;font-weight:600;color:#1d1d1f;flex:1}
+.riVal{font-size:12px;color:#6e6e73;margin-right:8px}
+.riLevel{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+.rilSafe{background:#dcfce7;color:#15803d}
+.rilCaution{background:#fef3c7;color:#92400e}
+.rpNote{font-size:11.5px;color:#aeaeb2;line-height:1.7;padding:0 18px 18px;text-align:center}
+
+/* FORECAST OVERLAY */
+.forecastOverlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:stretch;justify-content:flex-end;backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .2s}
+.forecastOverlay.open{opacity:1;pointer-events:auto}
+.forecastPanel{width:560px;background:#fff;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:-12px 0 40px rgba(0,0,0,.15);overflow:hidden}
+.forecastOverlay.open .forecastPanel{transform:translateX(0)}
+
+/* FP Header */
+.fpHeader{padding:18px 20px 0;border-bottom:1px solid #eef1f8;flex-shrink:0}
+.fpTopRow{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.fpEyebrow{font-size:10px;font-weight:700;color:#2e4bd8;letter-spacing:2px;text-transform:uppercase}
+.fpClose{width:32px;height:32px;border:none;background:#f4f5f9;border-radius:50%;cursor:pointer;font-size:16px;color:#666;display:flex;align-items:center;justify-content:center;font-family:inherit;line-height:1}
+.fpAptName{font-size:17px;font-weight:700;color:#1a1d2e;letter-spacing:-.3px;margin-bottom:2px}
+.fpAptSub{font-size:12px;color:#aaa;margin-bottom:12px}
+.fpTabs{display:flex;gap:0;overflow-x:auto;-ms-overflow-style:none;scrollbar-width:none}
+.fpTabs::-webkit-scrollbar{display:none}
+.fpTab{font-size:12.5px;font-weight:500;padding:9px 14px;border:none;border-bottom:2.5px solid transparent;cursor:pointer;color:#888;font-family:inherit;background:none;transition:color .15s,border-color .15s;white-space:nowrap}
+.fpTab.on{color:#2e4bd8;font-weight:700;border-bottom-color:#2e4bd8}
+
+/* FP Body */
+.fpBody{flex:1;overflow-y:auto;padding:18px 20px 28px}
+.fpBody::-webkit-scrollbar{width:4px}
+.fpBody::-webkit-scrollbar-thumb{background:#e8eaf0;border-radius:4px}
+.fpSec{font-size:10.5px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.12em;margin:16px 0 9px}
+
+/* KPI */
+.fpKpiGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.fpKpiCard{background:#f8f9fc;border-radius:12px;padding:12px 14px}
+.fpKpiLabel{font-size:10px;color:#aaa;font-weight:600;letter-spacing:.04em;margin-bottom:6px}
+.fpKpiVal{font-size:18px;font-weight:800;color:#1a1d2e;letter-spacing:-.5px;line-height:1}
+.fpKpiChg{font-size:11px;font-weight:700;margin-top:4px}
+.fpKpiUp{color:#ef4444}
+.fpKpiDn{color:#3b82f6}
+.fpKpiN{color:#888}
+.fpConfBar{height:6px;background:#e8eaf0;border-radius:3px;margin-top:8px;overflow:hidden}
+.fpConfFill{height:100%;background:#2e4bd8;border-radius:3px}
+
+/* Scenario bars */
+.fpScenarioOuter{background:#f8f9fc;border-radius:14px;padding:14px 16px;margin-bottom:4px}
+.fpScenarioChart{display:flex;gap:8px;align-items:flex-end;height:100px}
+.fpScenarioPeriod{flex:1;display:flex;flex-direction:column;align-items:center}
+.fpScenarioBars{display:flex;gap:3px;align-items:flex-end;height:78px;width:100%;margin-bottom:6px}
+.fpBar{flex:1;border-radius:4px 4px 0 0;min-height:3px}
+.fpScenarioPlabel{font-size:10px;color:#aaa}
+.fpScenarioLegend{display:flex;justify-content:center;gap:12px;margin-top:10px}
+.fpLegItem{display:flex;align-items:center;gap:5px;font-size:11px;color:#555}
+.fpLegDot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* Market cycle */
+.fpCycleBox{background:#f8f9fc;border-radius:12px;padding:12px 14px;margin-bottom:4px}
+.fpCycleHead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.fpCycleBadge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
+.fpCycUp{background:#dcfce7;color:#15803d}
+.fpCycleSub{font-size:11.5px;color:#555;flex:1}
+.fpCycleConfRow{display:flex;align-items:center;gap:8px}
+.fpCycleConfLabel{font-size:10px;color:#aaa;flex-shrink:0}
+.fpCycleBarBg{flex:1;height:5px;background:#e8eaf0;border-radius:3px;overflow:hidden}
+.fpCycleBarFill{height:100%;background:#22c55e;border-radius:3px}
+.fpCycleConfVal{font-size:10.5px;font-weight:700;color:#1a1d2e;flex-shrink:0}
+
+/* Macro */
+.fpMacroGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.fpMacroItem{background:#f8f9fc;border-radius:10px;padding:10px 12px}
+.fpMacroLabel{font-size:10px;color:#aaa;font-weight:600;margin-bottom:5px}
+.fpMacroVal{font-size:14px;font-weight:700;color:#1a1d2e}
+.fpMacroChg{font-size:10.5px;margin-top:2px}
+
+/* Model donut */
+.fpModelBox{background:#f8f9fc;border-radius:12px;padding:12px 14px;margin-bottom:4px}
+.fpModelInner{display:flex;align-items:center;gap:16px}
+.fpDonutWrap{position:relative;width:64px;height:64px;flex-shrink:0}
+.fpDonutCircle{width:64px;height:64px;border-radius:50%;background:conic-gradient(#2e4bd8 0% 30%,#22c55e 30% 55%,#f59e0b 55% 75%,#8b5cf6 75% 90%,#94a3b8 90% 100%)}
+.fpDonutHole{position:absolute;inset:14px;background:#f8f9fc;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.fpDonutInnerText{font-size:8px;font-weight:700;color:#888;text-align:center;line-height:1.4}
+.fpModelLegend{display:flex;flex-direction:column;gap:5px;flex:1}
+.fpMlItem{display:flex;align-items:center;gap:7px;font-size:11px;color:#555}
+.fpMlDot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.fpMlPct{font-weight:700;color:#1a1d2e;margin-left:auto;font-size:11px}
+
+/* Backtest mini */
+.fpBtMini{background:#f8f9fc;border-radius:12px;padding:12px 14px}
+.fpBtMiniRow{display:flex;align-items:center;justify-content:space-between}
+.fpBtMiniLabel{font-size:11px;color:#aaa}
+.fpBtMiniVal{font-size:26px;font-weight:800;color:#1a1d2e;letter-spacing:-1px}
+.fpBtMiniGrade{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#dcfce7;color:#15803d}
+.fpBtMiniSub{font-size:11px;color:#aaa;margin-top:4px}
+
+/* Chart wrap */
+.fpChartWrap{background:#f8f9fc;border-radius:14px;padding:14px 14px 10px;margin-bottom:4px}
+.fpChartTitleRow{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.fpChartTitle{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.08em}
+.fpChartPeriod{font-size:10.5px;color:#aaa}
+.fpChartXLabels{display:flex;justify-content:space-between;padding:0 2px;margin-top:5px}
+.fpChartXLabel{font-size:9.5px;color:#bbb}
+
+/* Factor cards */
+.fpFactorGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.fpFactorCard{background:#f8f9fc;border-radius:12px;padding:12px 14px}
+.fpFcTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.fpFcName{font-size:12px;font-weight:700;color:#1a1d2e}
+.fpFcDir{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.fpFcUp{background:#dcfce7;color:#15803d}
+.fpFcDn{background:#fee2e2;color:#b91c1c}
+.fpFcNeutral{background:#f4f5f9;color:#666}
+.fpFcVal{font-size:11px;color:#6e6e73;line-height:1.5}
+
+/* Scenario table */
+.fpStab{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px}
+.fpStab th{font-size:10.5px;color:#aaa;font-weight:600;padding:6px 8px;border-bottom:1px solid #eef1f8;text-align:left}
+.fpStab td{padding:9px 8px;border-bottom:1px solid #f4f5f9}
+.fpStabOpt{color:#15803d;font-weight:700}
+.fpStabBase{color:#2e4bd8;font-weight:700}
+.fpStabPess{color:#b91c1c;font-weight:700}
+
+/* Compare tab */
+.fpCompareRegionList{display:flex;flex-direction:column;gap:6px;margin-bottom:4px}
+.fpCregionItem{background:#f8f9fc;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.fpCregionNum{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
+.fpCregionInfo{flex:1;min-width:0}
+.fpCregionName{font-size:12.5px;font-weight:600;color:#1a1d2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fpCregionSub{font-size:10.5px;color:#aaa;margin-top:1px}
+.fpCregionPrice{font-size:13px;font-weight:700;color:#1a1d2e;text-align:right;flex-shrink:0}
+.fpCregionChg{font-size:10.5px;font-weight:700;text-align:right;margin-top:2px}
+.fpCbarWrap{margin-bottom:4px}
+.fpCbarItem{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.fpCbarLabel{font-size:11px;color:#555;width:86px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fpCbarTrack{flex:1;height:22px;background:#f4f5f9;border-radius:6px;overflow:hidden;position:relative}
+.fpCbarCur{height:100%;display:flex;align-items:center;padding:0 8px;border-radius:6px}
+.fpCbarCurText{font-size:10.5px;font-weight:700;color:#fff}
+.fpCbarPredLine{position:absolute;top:0;bottom:0;width:2px;background:#1a1d2e;opacity:.35}
+.fpCompareTable{width:100%;border-collapse:collapse;font-size:12px}
+.fpCompareTable th{font-size:10.5px;color:#aaa;font-weight:600;padding:6px 8px;border-bottom:1px solid #eef1f8;text-align:left}
+.fpCompareTable td{padding:9px 8px;border-bottom:1px solid #f4f5f9}
+
+/* Backtest tab */
+.fpAccuracyHero{text-align:center;padding:20px 0 16px;border-bottom:1px solid #eef1f8;margin-bottom:14px}
+.fpAccuracyNum{font-size:52px;font-weight:800;color:#1a1d2e;letter-spacing:-2px;line-height:1}
+.fpAccuracyPct{font-size:24px;font-weight:700;color:#1a1d2e}
+.fpAccuracyLabel{font-size:13px;color:#aaa;margin-top:6px}
+.fpAccuracyGrade{display:inline-block;font-size:12px;font-weight:700;padding:4px 16px;border-radius:20px;background:#dcfce7;color:#15803d;margin-top:8px}
+.fpBtMetrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.fpBtMetric{background:#f8f9fc;border-radius:12px;padding:12px 14px}
+.fpBtMetricLabel{font-size:10px;color:#aaa;font-weight:600;letter-spacing:.04em;margin-bottom:6px}
+.fpBtMetricVal{font-size:17px;font-weight:800;color:#1a1d2e}
+.fpBtMetricSub{font-size:10.5px;color:#6e6e73;margin-top:3px}
+.fpBtExplain{background:#f0f2fd;border-radius:12px;padding:14px 16px}
+.fpBtExplainTitle{font-size:11px;font-weight:700;color:#2e4bd8;margin-bottom:7px;letter-spacing:.05em;text-transform:uppercase}
+.fpBtExplainText{font-size:12px;color:#555;line-height:1.8}
+
+/* Anomaly tab */
+.fpAnomalyBadgeRow{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.fpAnomalyTrend{font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px}
+.fpAtUp{background:#dcfce7;color:#15803d}
+.fpAnomalyChartWrap{background:#f8f9fc;border-radius:14px;padding:14px 14px 10px;margin-bottom:12px}
+.fpAnomalyLegend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+.fpAlegItem{display:flex;align-items:center;gap:5px;font-size:10.5px;color:#666}
+.fpAlegLine{width:18px;height:2.5px;border-radius:2px;flex-shrink:0}
+.fpAlegDot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.fpAnomalyListTitle{font-size:10.5px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.1em;margin:14px 0 8px}
+.fpAnomalyItem{background:#fff3f3;border:1px solid rgba(239,68,68,.15);border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px}
+.fpAnomalyDot{width:7px;height:7px;background:#ef4444;border-radius:50%;flex-shrink:0;margin-top:5px}
+.fpAnomalyInfo{flex:1}
+.fpAnomalyDate{font-size:12px;font-weight:700;color:#1a1d2e}
+.fpAnomalyDetail{font-size:11px;color:#6e6e73;margin-top:2px;line-height:1.5}
+.fpAnomalySev{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:#fee2e2;color:#b91c1c;flex-shrink:0}
+.fpChangepointItem{background:#faf5ff;border:1px solid rgba(139,92,246,.15);border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px}
+.fpCpDot{width:7px;height:7px;background:#8b5cf6;border-radius:50%;flex-shrink:0;margin-top:5px}
+.fpMethodBox{background:#f0f2fd;border-radius:12px;padding:14px 16px;margin-top:14px}
+.fpMethodTitle{font-size:11px;font-weight:700;color:#2e4bd8;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
+.fpMethodList{list-style:none;display:flex;flex-direction:column;gap:5px}
+.fpMethodList li{font-size:11.5px;color:#555;line-height:1.6;padding-left:14px;position:relative}
+.fpMethodList li::before{content:'·';position:absolute;left:4px;color:#2e4bd8;font-weight:900;font-size:14px;top:-1px}
+
+/* 하단 공통 */
+.fpSectionDivider{height:1px;background:#eef1f8;margin:20px 0 16px}
+.fpAiBox{background:#f0f2fd;border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.fpAiLabel{font-size:10px;font-weight:700;color:#2e4bd8;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px}
+.fpAiText{font-size:13px;color:#1a1d2e;line-height:1.85}
+.fpVarWrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.fpVarTag{font-size:11.5px;font-weight:600;padding:5px 12px;border-radius:20px;background:#eef1fd;color:#2e4bd8;border:1px solid rgba(46,75,216,.12)}
+.fpTxTable{width:100%;border-collapse:collapse;font-size:12px}
+.fpTxTable th{font-size:10.5px;color:#aaa;font-weight:600;padding:6px 0;border-bottom:1px solid #eef1f8;text-align:left}
+.fpTxTable td{padding:9px 0;border-bottom:1px solid #f4f5f9;color:#555}
+.fpTxTable td:first-child{color:#1a1d2e;font-weight:600}
+.fpTxPrice{font-size:13px;font-weight:700;color:#1a1d2e}
+.txUp{color:#ef4444;font-size:10.5px;font-weight:700}
+.txDn{color:#3b82f6;font-size:10.5px;font-weight:700}
+.fpOfficialGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+.fpOfficialCard{background:#f8f9fc;border-radius:12px;padding:12px 14px}
+.fpOfficialLabel{font-size:10px;color:#aaa;font-weight:600;letter-spacing:.03em;margin-bottom:6px;line-height:1.4}
+.fpOfficialVal{font-size:13px;font-weight:700;color:#1a1d2e}
+.fpOfficialSub{font-size:10px;color:#6e6e73;margin-top:3px}
+.fpSourceWrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.fpSourceBadge{font-size:10.5px;font-weight:500;padding:4px 10px;border-radius:20px;background:#f4f5f9;color:#666;border:1px solid #e8eaf0}
+.fpCtaSection{border:1px solid #eef1f8;border-radius:16px;padding:16px;margin-bottom:16px}
+.fpCtaEyebrow{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px}
+.fpCtaGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fpCtaBtn{padding:14px;border-radius:12px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .15s;border:none;text-align:left;display:flex;flex-direction:column;gap:3px}
+.fpCtaIcon{font-size:20px}
+.fpCtaSub{font-size:10px;opacity:.65;font-weight:400;margin-top:1px}
+.fpCtaJeonse{background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd}
+.fpCtaJeonse:hover{background:#e0f2fe}
+.fpCtaRights{background:#f5f3ff;color:#5b21b6;border:1px solid #ddd6fe}
+.fpCtaRights:hover{background:#ede9fe}
+.fpDisclaimer{font-size:11px;color:#bbb;line-height:1.8}

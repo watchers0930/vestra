@@ -1,0 +1,206 @@
+/* NAV */
+.navInner { max-width: 1200px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; }
+.navLogo { display: flex; align-items: center; gap: 7px; margin-right: 52px; flex-shrink: 0; }
+.logoIcon { width: 28px; height: 28px; background: #2e4bd8; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 14px; }
+.logoText { font-weight: 700; font-size: 15.5px; color: #1a1d2e; letter-spacing: 0.6px; }
+.navMenu { display: flex; list-style: none; gap: 2px; flex: 1; }
+.navMenu a { display: block; font-size: 17px; color: #000; padding: 6px 20px; border-radius: 4px; transition: color 0.15s, background 0.15s; }
+.navMenu a:hover { color: #2e4bd8; background: #f0f2fd; }
+.navMenu a.active { color: #2e4bd8; }
+.navAuth { display: flex; align-items: center; gap: 2px; font-size: 12.5px; color: #666; }
+.navAuth a { padding: 4px 8px; color: #555; transition: color 0.15s; }
+.navAuth a:hover { color: #2e4bd8; }
+.navAuth .divider { color: #d4d6de; font-size: 12px; }
+.navHamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; margin-left: auto; background: none; border: none; }
+.navHamburger span { display: block; width: 22px; height: 2px; background: #1a1d2e; border-radius: 2px; }
+.navHamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.navHamburger.open span:nth-child(2) { opacity: 0; }
+.navHamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.navMobileMenu { display: none; position: absolute; top: 80px; left: 0; right: 0; background: #fff; border-top: 1px solid #e8eaf0; padding: 8px 24px 20px; z-index: 99; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+.navMobileMenu.open { display: block; }
+.navMobileMenu li { list-style: none; border-bottom: 1px solid #f4f5f9; }
+.navMobileMenu a { display: block; padding: 13px 0; font-size: 15px; color: #1a1d2e; font-weight: 500; }
+.navMobileAuth { display: flex; gap: 12px; padding: 16px 0 4px; font-size: 13px; }
+.navMobileAuth a { color: #555; }
+
+/* SUB HERO */
+.subHero { position: relative; height: 196px; background: #060c2a; overflow: hidden; }
+.subHeroBg {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(rgba(4,8,30,0.78), rgba(4,8,30,0.78)),
+    url('https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1600&auto=format&fit=crop&q=80') center/cover no-repeat;
+}
+.subHeroInner { position: relative; z-index: 1; height: 100%; display: flex; align-items: center; justify-content: center; }
+.subHeroText { text-align: center; font-size: 19px; font-weight: 300; color: rgba(255,255,255,0.93); line-height: 1.65; }
+
+/* LISTING SECTION */
+.listingSection { background: #f8f9fc; padding: 32px 0 64px; min-height: 600px; }
+.listingContainer { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+
+/* 뒤로가기 */
+.backBtn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #666; background: none; border: none; cursor: pointer; padding: 0; margin-bottom: 20px; font-family: inherit; transition: color 0.15s; }
+.backBtn:hover { color: #2e4bd8; }
+.backBtn svg { flex-shrink: 0; }
+
+/* 레이아웃 */
+.listingLayout { display: grid; grid-template-columns: 1fr 360px; gap: 28px; align-items: start; }
+
+/* LEFT */
+.listingLeft { display: flex; flex-direction: column; gap: 0; }
+
+/* 사진 갤러리 */
+.photoGallery { border-radius: 12px; overflow: hidden; background: #e8eaf0; position: relative; }
+.photoMain { width: 100%; height: 380px; object-fit: cover; display: block; }
+.photoBadgeRow { position: absolute; top: 16px; left: 16px; display: flex; gap: 6px; }
+.photoBadge { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 4px; color: #fff; }
+.pbSale { background: #e04444; }
+.pbStatus { background: #444; }
+.photoCounter { position: absolute; bottom: 14px; right: 14px; background: rgba(0,0,0,0.45); color: #fff; font-size: 11px; padding: 3px 9px; border-radius: 12px; }
+.photoThumbs { display: flex; gap: 6px; padding: 8px 0 0; }
+.photoThumb { width: 80px; height: 60px; border-radius: 6px; overflow: hidden; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; }
+.photoThumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photoThumb.active { border-color: #2e4bd8; }
+
+/* 탭 + 지도 */
+.listingTabs { display: flex; gap: 0; border: 1px solid #e8eaf0; border-radius: 8px 8px 0 0; overflow: hidden; margin-top: 20px; background: #fff; }
+.tabBtn { flex: 1; padding: 11px 0; font-size: 13px; font-weight: 500; color: #666; background: none; border: none; cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; }
+.tabBtn.active { color: #2e4bd8; border-bottom-color: #2e4bd8; font-weight: 600; }
+.tabBtn:hover:not(.active) { color: #333; background: #f8f9fc; }
+
+.listingMapWrap { border: 1px solid #e8eaf0; border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; background: #f2ede5; }
+.tabMap { display: flex; flex-direction: column; height: 534px; }
+.tabMapInner { width: 100%; flex: 1; min-height: 0; }
+.mapAddrRow { padding: 12px 16px; background: #fff; border-top: 1px solid #f0f2f6; display: flex; align-items: center; gap: 6px; }
+.mapAddrPin { width: 16px; height: 16px; flex-shrink: 0; color: #e04444; }
+.mapAddrText { font-size: 12.5px; color: #444; line-height: 1.4; }
+
+/* RIGHT */
+.listingRight { position: sticky; top: 100px; background: #fff; border-radius: 12px; border: 1px solid #e8eaf0; }
+
+.listingCardHeader { padding: 20px 20px 0; }
+.listingNum { font-size: 11px; color: #aaa; margin-bottom: 6px; }
+.listingTrustTag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: #16a34a; background: #dcfce7; padding: 3px 9px; border-radius: 12px; margin-bottom: 10px; }
+.listingTrustTag::before { content: ''; display: inline-block; width: 10px; height: 10px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2316a34a' stroke-width='2.5'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3C/svg%3E") no-repeat center/contain; }
+.listingName { font-size: 20px; font-weight: 700; color: #1a1d2e; margin-bottom: 4px; }
+.listingAddrText { font-size: 12.5px; color: #888; margin-bottom: 16px; }
+.listingPrice { font-size: 26px; font-weight: 800; color: #1a1d2e; margin-bottom: 4px; }
+.listingTypeBadge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; color: #fff; background: #e04444; margin-bottom: 14px; }
+
+.listingMeta { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-top: 1px solid #f0f2f6; border-bottom: 1px solid #f0f2f6; }
+.metaItem { padding: 11px 20px; }
+.metaItem:nth-child(odd) { border-right: 1px solid #f0f2f6; }
+.metaItem:nth-child(n+3) { border-top: 1px solid #f0f2f6; }
+.metaLabel { font-size: 11px; color: #aaa; margin-bottom: 3px; }
+.metaValue { font-size: 13px; font-weight: 600; color: #1a1d2e; }
+
+.listingRegistrant { padding: 12px 20px; border-bottom: 1px solid #f0f2f6; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.registrantInfo { font-size: 12px; color: #666; }
+.registrantName { font-size: 13px; font-weight: 600; color: #1a1d2e; margin-top: 2px; }
+.registrantDate { font-size: 11px; color: #aaa; white-space: nowrap; }
+
+/* 안심인증 */
+.certSection { padding: 14px 20px; background: #f8fff8; border-bottom: 1px solid #e8f5e9; }
+.certHeader { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.certCheck { width: 18px; height: 18px; background: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.certCheck svg { width: 10px; height: 10px; stroke: #fff; fill: none; stroke-width: 2.5; }
+.certTitle { font-size: 13px; font-weight: 700; color: #16a34a; }
+.certDate { font-size: 11px; color: #aaa; margin-left: auto; }
+.certItems { display: flex; flex-direction: column; gap: 6px; }
+.certItem { display: flex; align-items: center; gap: 8px; }
+.certDot { width: 5px; height: 5px; border-radius: 50%; background: #86efac; flex-shrink: 0; }
+.certItemLabel { font-size: 12px; color: #444; }
+.certItemStatus { font-size: 11px; color: #16a34a; margin-left: auto; }
+
+/* 설명 */
+.descSection { padding: 14px 20px; border-bottom: 1px solid #f0f2f6; }
+.descLabel { font-size: 11px; font-weight: 600; color: #999; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; }
+.descText { font-size: 13px; color: #555; line-height: 1.7; }
+
+/* CTA */
+.ctaSection { padding: 16px 20px 20px; }
+.ctaPrimary { display: block; width: 100%; background: #2e4bd8; color: #fff; border: none; border-radius: 8px; padding: 14px 0; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; text-align: center; transition: background 0.15s; margin-bottom: 8px; }
+.ctaPrimary:hover { background: #2641c0; }
+.ctaSecondary { display: block; width: 100%; background: #f4f5f9; color: #444; border: none; border-radius: 8px; padding: 12px 0; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; text-align: center; transition: background 0.15s; }
+.ctaSecondary:hover { background: #e8eaf0; }
+
+/* FOOTER */
+.footer { background: #080c28; color: rgba(255,255,255,0.9); padding: 56px 32px 0; }
+.footerInner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 420px 1fr 1fr 1fr 1fr; gap: 40px; padding-bottom: 52px; }
+.footerLogo { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+.flogoIcon { width: 26px; height: 26px; background: #2e4bd8; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 13px; }
+.flogoText { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+.footerTagline { font-size: 12px; line-height: 1.23; color: rgba(255,255,255,0.7); margin-bottom: 22px; }
+.footerContact { font-size: 12px; line-height: 1.7; color: rgba(255,255,255,0.62); white-space: nowrap; }
+.footerColTitle { font-size: 12px; letter-spacing: 1.4px; text-transform: uppercase; color: rgba(255,255,255,0.75); font-weight: 600; margin-bottom: 16px; }
+.footerLinks { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.footerLinks a { font-size: 13px; color: rgba(255,255,255,0.80); transition: color 0.15s; }
+.footerLinks a:hover { color: rgba(255,255,255,0.9); }
+.footerBottom { max-width: 1200px; margin: 0 auto; border-top: 1px solid rgba(255,255,255,0.07); padding: 18px 0; display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: rgba(255,255,255,0.55); }
+
+/* TAB FILTER */
+.tabFilterRow { display: flex; gap: 6px; padding: 12px 16px; border-bottom: 1px solid #e8eaf0; overflow-x: auto; background-color: #fff; }
+.tabFilterChip { display: inline-flex; align-items: center; padding: 6px 14px; border: 1px solid #dde0ec; border-radius: 20px; font-size: 13px; font-weight: 500; color: #555; background: #fff; cursor: pointer; white-space: nowrap; font-family: inherit; transition: all 0.12s; }
+.tabFilterChip.active { background: #1a1d2e; color: #fff; border-color: #1a1d2e; }
+.tabFilterChip:hover:not(.active) { border-color: #2e4bd8; color: #2e4bd8; }
+
+/* TAB 지도+목록 레이아웃 */
+.tabMapLayout { display: flex; height: 480px; }
+.tabListPanel { width: 190px; border-right: 1px solid #e8eaf0; overflow-y: auto; flex-shrink: 0; background: #fff; }
+.tabListHeader { padding: 10px 14px 8px; font-size: 12px; font-weight: 600; color: #888; border-bottom: 1px solid #f0f2f6; position: sticky; top: 0; background: #fff; }
+.tabListItem { display: flex; align-items: flex-start; gap: 8px; padding: 9px 14px; border-bottom: 1px solid #f4f5f9; cursor: pointer; transition: background 0.1s; }
+.tabListItem:hover { background: #f8f9fe; }
+.tabListItem:last-child { border-bottom: none; }
+.tabListDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.tabListDot.cTransit { background: #2e4bd8; }
+.tabListDot.cShop { background: #f59e0b; }
+.tabListDot.cHospital { background: #e04444; }
+.tabListDot.cElem { background: #3b82f6; }
+.tabListDot.cMid { background: #16a34a; }
+.tabListDot.cHigh { background: #ea580c; }
+.tabListDot.cAcademy { background: #9333ea; }
+.tabListName { font-size: 12px; font-weight: 500; color: #1a1d2e; line-height: 1.35; }
+.tabListDist { font-size: 11px; color: #aaa; margin-top: 1px; }
+.tabMapPanel { flex: 1; }
+.tabMapPanel > div { width: 100%; height: 100%; }
+
+/* 시세 */
+.tabPrice { height: 534px; overflow-y: auto; }
+.tabContentInner { padding: 20px; background-color: #fff; box-sizing: border-box; width: 100%; overflow: hidden; }
+.priceTrendHeader { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: #1a1d2e; margin-bottom: 12px; }
+.priceCompareBanner { display: flex; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 12px; color: #166534; }
+.priceCompareValue { font-weight: 700; color: #15803d; }
+.priceChartArea { background: #fff; border: 1px solid #e8eaf0; border-radius: 10px; padding: 16px 16px 8px; margin-bottom: 4px; overflow: hidden; }
+.priceChartCanvas { width: 100% !important; max-width: 100%; display: block; }
+.priceLegend { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11px; color: #888; margin-bottom: 14px; }
+.priceLegendDot { width: 8px; height: 8px; border-radius: 50%; background: #93c5fd; display: inline-block; }
+.priceTableWrap { border: 1px solid #e8eaf0; border-radius: 8px; overflow: hidden; }
+.priceTable { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 12px; }
+.priceTable th { background: #f8f9fc; color: #888; font-weight: 600; padding: 9px 14px; text-align: left; border-bottom: 1px solid #e8eaf0; }
+.priceTable th:not(:first-child) { text-align: right; }
+.priceTable td { padding: 9px 14px; border-bottom: 1px solid #f4f5f9; color: #444; }
+.priceTable td:not(:first-child) { text-align: right; }
+.priceTable tr:last-child td { border-bottom: none; }
+.priceTable .priceCol { font-weight: 600; color: #1a1d2e; }
+.priceDisclaimer { font-size: 10px; color: #aaa; margin: 8px 0 0; }
+
+/* Map placeholder */
+.mapPlaceholder { width: 100%; height: 460px; background: #e8edf5; border-radius: 0; display: flex; align-items: center; justify-content: center; }
+.mapPlaceholderInner { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+@media (max-width: 900px) {
+  .listingLayout { grid-template-columns: 1fr; }
+  .listingRight { position: static; }
+}
+@media (max-width: 768px) {
+  .navMenu, .navAuth { display: none; }
+  .navHamburger { display: flex; }
+  .subHero { height: 150px; }
+  .subHeroText { font-size: 15px; }
+  .listingContainer { padding: 0 16px; }
+  .photoMain { height: 240px; }
+  .footer { padding: 36px 20px 0; }
+  .footerInner { grid-template-columns: 1fr; gap: 28px; }
+  .footerContact { white-space: normal; }
+  .footerBottom { flex-direction: column; gap: 6px; text-align: center; padding: 16px 0; }
+}
