@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import ListingDetailClient from "./ListingDetailClient";
 
 export const metadata = {
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function ListingDetailPage() {
-  return <ListingDetailClient />;
+  return (
+    <Suspense fallback={null}>
+      <ListingDetailClient />
+    </Suspense>
+  );
 }
