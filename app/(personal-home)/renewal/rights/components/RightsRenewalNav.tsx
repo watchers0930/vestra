@@ -19,7 +19,7 @@ export default function RightsRenewalNav() {
   ];
 
   return (
-    <nav>
+    <nav className={s.navBar}>
       <div className={s.navInner}>
         <Link href="/home" className={s.navLogo}>
           <div className={s.logoIcon}>V</div>
