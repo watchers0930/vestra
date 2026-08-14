@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import s from "./jeonse-renewal.module.css";
+import JeonseRenewalNav from "./components/JeonseRenewalNav";
 
 const ADDR_DB = [
   { zip: "06253", road: "서울특별시 강남구 강남대로 354", jibun: "역삼동 837-34", bldg: "혜천빌딩" },
@@ -114,6 +115,18 @@ export default function JeonseRenewalContent() {
 
   return (
     <>
+      <JeonseRenewalNav />
+
+      {/* SUB HERO */}
+      <section className={s.subHero}>
+        <div className={s.subHeroBg}></div>
+        <div className={s.subHeroIn}>
+          <span className={s.heroChip}>AI Jeonse Protection</span>
+          <h1>전세보호</h1>
+          <p className={s.subHeroSub}>계약 전 AI가 전세 위험 요소를 빠짐없이 검사합니다</p>
+        </div>
+      </section>
+
       {/* SUB NAV */}
       <div className={s.snavWrap} ref={snavRef}>
         <div className={s.snavIn}>
