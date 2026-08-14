@@ -144,23 +144,27 @@ function generateScenarios(
   currentPrice: number,
   trend: TrendResult,
 ): PredictionResult["predictions"] {
+  const LT = ECONOMIC_DEFAULTS.longTermAvgGrowth;  // 장기 평균 성장률 (연 3%)
+  const INF = ECONOMIC_DEFAULTS.inflationRate;      // 물가 (연 2.5%)
+  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
   const baseRate = trend.dataPoints >= 3
-    ? trend.annualGrowthRate * 0.7 + ECONOMIC_DEFAULTS.longTermAvgGrowth * 0.3
-    : ECONOMIC_DEFAULTS.longTermAvgGrowth;
+    ? trend.annualGrowthRate * 0.7 + LT * 0.3
+    : LT;
 
-  const base1y = baseRate;
-  const base5y = baseRate * 0.85;
-  const base10y = baseRate * 0.7 + ECONOMIC_DEFAULTS.inflationRate * 0.3;
+  // 기간이 길수록 최근 추세 비중↓ + 장기평균(LT) 회귀(mean reversion) + 연 성장률 상한
+  // → 최근 급등을 10년 복리로 무한 연장하는 비현실적 폭등 방지
+  const base1y = clamp(baseRate, -0.15, 0.20);
+  const base5y = clamp(baseRate * 0.35 + LT * 0.65, -0.05, 0.07);
+  const base10y = clamp(baseRate * 0.15 + LT * 0.85, -0.03, 0.055);
 
-  const optimisticMultiplier = 1.3;
-  const opt1y = Math.max(base1y * optimisticMultiplier, ECONOMIC_DEFAULTS.inflationRate + 0.02);
-  const opt5y = Math.max(base5y * optimisticMultiplier, ECONOMIC_DEFAULTS.inflationRate + 0.015);
-  const opt10y = Math.max(base10y * optimisticMultiplier, ECONOMIC_DEFAULTS.inflationRate + 0.01);
+  const opt1y = clamp(Math.max(base1y * 1.3, INF + 0.02), -0.10, 0.25);
+  const opt5y = clamp(Math.max(base5y * 1.3, INF + 0.015), -0.03, 0.09);
+  const opt10y = clamp(Math.max(base10y * 1.3, INF + 0.01), -0.02, 0.07);
 
-  const pessimisticMultiplier = 0.5;
-  const pes1y = Math.max(base1y * pessimisticMultiplier, -0.05);
-  const pes5y = Math.max(base5y * pessimisticMultiplier, -0.03);
-  const pes10y = Math.max(base10y * pessimisticMultiplier, -0.01);
+  const pes1y = clamp(Math.min(base1y * 0.5, INF), -0.12, 0.10);
+  const pes5y = clamp(Math.min(base5y * 0.5, INF - 0.005), -0.06, 0.05);
+  const pes10y = clamp(Math.min(base10y * 0.5, INF - 0.01), -0.05, 0.04);
 
   return {
     optimistic: {
