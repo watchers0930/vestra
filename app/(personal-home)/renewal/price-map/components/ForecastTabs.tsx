@@ -1,8 +1,10 @@
 "use client";
 
 import s from "../price-map-renewal.module.css";
-import { formatPrice } from "@/lib/format";
 import type { usePredictionData } from "@/app/(app)/prediction/hooks/usePredictionData";
+
+// 원 단위 금액 → "N.N억" (predict-value/실거래 dealAmount는 원 단위)
+const toEok = (won: number) => `${(won / 100000000).toFixed(1)}억`;
 
 type FpTab = "dashboard" | "chart" | "compare" | "backtest" | "anomaly";
 type Prediction = ReturnType<typeof usePredictionData>;
@@ -48,9 +50,9 @@ function DashboardTab({ prediction }: { prediction: Prediction }) {
   const base = result.predictions.base;
 
   const kpis = [
-    { label: "1년 전망", val: formatPrice(base["1y"]), chg: pct(cur, base["1y"]), conf: result.confidence, up: base["1y"] >= cur },
-    { label: "5년 전망", val: formatPrice(base["5y"]), chg: pct(cur, base["5y"]), conf: Math.max(30, result.confidence - 15), up: base["5y"] >= cur },
-    { label: "10년 전망", val: formatPrice(base["10y"]), chg: pct(cur, base["10y"]), conf: Math.max(20, result.confidence - 30), up: base["10y"] >= cur },
+    { label: "1년 전망", val: toEok(base["1y"]), chg: pct(cur, base["1y"]), conf: result.confidence, up: base["1y"] >= cur },
+    { label: "5년 전망", val: toEok(base["5y"]), chg: pct(cur, base["5y"]), conf: Math.max(30, result.confidence - 15), up: base["5y"] >= cur },
+    { label: "10년 전망", val: toEok(base["10y"]), chg: pct(cur, base["10y"]), conf: Math.max(20, result.confidence - 30), up: base["10y"] >= cur },
     { label: "신뢰도", val: `${result.confidence}%`, chg: result.confidence >= 70 ? "High Confidence" : "Moderate", conf: result.confidence, neutral: true },
   ];
 
@@ -207,7 +209,7 @@ function CompareTab({ prediction }: { prediction: Prediction }) {
               <div className={s.fpCregionSub}>{r.dong || `${filteredTransactions.length}건 실거래`}</div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <div className={s.fpCregionPrice}>{formatPrice(r.avg)}</div>
+              <div className={s.fpCregionPrice}>{toEok(r.avg)}</div>
             </div>
           </div>
         ))}
@@ -219,7 +221,7 @@ function CompareTab({ prediction }: { prediction: Prediction }) {
             <span className={s.fpCbarLabel}>{r.name}</span>
             <div className={s.fpCbarTrack}>
               <div className={s.fpCbarCur} style={{ width: `${Math.round((r.avg / maxAvg) * 100)}%`, background: r.color }}>
-                <span className={s.fpCbarCurText}>{formatPrice(r.avg)}</span>
+                <span className={s.fpCbarCurText}>{toEok(r.avg)}</span>
               </div>
             </div>
           </div>
@@ -335,7 +337,7 @@ function AnomalyTab({ prediction }: { prediction: Prediction }) {
             <div className={s.fpAnomalyDot} />
             <div className={s.fpAnomalyInfo}>
               <div className={s.fpAnomalyDate}>{p.t.dealYear}-{String(p.t.dealMonth).padStart(2, "0")}-{String(p.t.dealDay).padStart(2, "0")}</div>
-              <div className={s.fpAnomalyDetail}>{p.t.aptName} {formatPrice(p.t.dealAmount)} (Z={p.z.toFixed(1)})</div>
+              <div className={s.fpAnomalyDetail}>{p.t.aptName} {toEok(p.t.dealAmount)} (Z={p.z.toFixed(1)})</div>
             </div>
             <div className={s.fpAnomalySev}>{Math.abs(p.z) >= 3 ? "High" : "Medium"}</div>
           </div>
