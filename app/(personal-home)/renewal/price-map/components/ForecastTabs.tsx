@@ -181,16 +181,24 @@ function ChartTab({ prediction }: { prediction: Prediction }) {
 }
 
 function CompareTab({ prediction }: { prediction: Prediction }) {
-  const { result, availableApts, filteredTransactions } = prediction;
+  const { result } = prediction;
   if (!result) return null;
 
-  // 실거래 아파트별 평균가 비교 (상위 3개)
-  const colors = ["#2e4bd8", "#22c55e", "#f59e0b"];
-  const aptStats = availableApts.slice(0, 3).map((name, i) => {
-    const txs = result.realTransactions.filter((t) => t.aptName === name);
-    const avg = txs.length ? Math.round(txs.reduce((sum, t) => sum + t.dealAmount, 0) / txs.length) : 0;
-    return { name, avg, color: colors[i], num: i + 1, dong: txs[0]?.dong ?? "" };
-  });
+  // 동 전체 실거래(regionTransactions)를 단지별로 집계해 상위 5개 비교
+  const colors = ["#2e4bd8", "#22c55e", "#f59e0b", "#8b5cf6", "#ef4444"];
+  const region = result.regionTransactions ?? result.realTransactions;
+  const byApt = new Map<string, { sum: number; cnt: number; dong: string }>();
+  for (const t of region) {
+    const e = byApt.get(t.aptName) ?? { sum: 0, cnt: 0, dong: t.dong ?? "" };
+    e.sum += t.dealAmount;
+    e.cnt += 1;
+    byApt.set(t.aptName, e);
+  }
+  const aptStats = [...byApt.entries()]
+    .map(([name, e]) => ({ name, avg: Math.round(e.sum / e.cnt), dong: e.dong, cnt: e.cnt }))
+    .sort((a, b) => b.avg - a.avg)
+    .slice(0, 5)
+    .map((a, i) => ({ ...a, color: colors[i % colors.length], num: i + 1 }));
   const maxAvg = Math.max(...aptStats.map((a) => a.avg), 1);
 
   if (aptStats.length === 0) {
@@ -206,7 +214,7 @@ function CompareTab({ prediction }: { prediction: Prediction }) {
             <div className={s.fpCregionNum} style={{ background: r.color }}>{r.num}</div>
             <div className={s.fpCregionInfo}>
               <div className={s.fpCregionName}>{r.name}</div>
-              <div className={s.fpCregionSub}>{r.dong || `${filteredTransactions.length}건 실거래`}</div>
+              <div className={s.fpCregionSub}>{r.dong || `${r.cnt}건 실거래`}</div>
             </div>
             <div style={{ textAlign: "right" }}>
               <div className={s.fpCregionPrice}>{toEok(r.avg)}</div>

@@ -317,13 +317,20 @@ export async function POST(req: NextRequest) {
         isValid: integrityResult.report.isValid,
         stages: integrityResult.stages.map((s) => ({ name: s.name, hash: s.stepHash.slice(0, 16) })),
       },
-      // 테이블/지도용: 최신 50건
+      // 테이블/지도용: 최신 50건 (대상 단지)
       realTransactions: [...filteredTx]
         .sort((a, b) =>
           b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay -
           (a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay)
         )
         .slice(0, 50),
+      // 지역비교용: 동 전체 실거래(단지 무관) 최신 300건
+      regionTransactions: [...allTx]
+        .sort((a, b) =>
+          b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay -
+          (a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay)
+        )
+        .slice(0, 300),
       // 추이 차트용: 전체 기간 월별 집계
       monthlyTrend: (() => {
         const map = new Map<string, { total: number; count: number; min: number; max: number }>();
