@@ -209,6 +209,13 @@ export async function POST(req: NextRequest) {
     );
     if (backtestStage.output) {
       predictionResult.backtestResult = backtestStage.output;
+      // 신뢰도 캘리브레이션: 백테스트 실측 정확도 + 표본 수 반영 (부풀림 없이 정직하게)
+      // - 표본이 적으면 신뢰도 상한을 낮춰 과신 방지, 실제로 맞은 정도(accuracy12m)를 결합
+      const bt = backtestStage.output;
+      const n = bt.sampleCount ?? 0;
+      const sampleCap = n < 8 ? 55 : n < 15 ? 70 : n < 30 ? 82 : 90;
+      const blended = Math.round(predictionResult.confidence * 0.5 + (bt.accuracy12m ?? 0) * 0.5);
+      predictionResult.confidence = Math.max(20, Math.min(blended, sampleCap));
     }
 
     // 3.55단계: 이상탐지 (단지 필터링 데이터 사용)
