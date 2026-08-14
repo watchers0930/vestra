@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Link from "next/link";
 import s from "./jeonse-renewal.module.css";
 import JeonseRenewalNav from "./components/JeonseRenewalNav";
 import { JeonseEnvAnalysis } from "./components/JeonseEnvAnalysis";
@@ -215,7 +216,7 @@ export default function JeonseRenewalContent() {
             <div className={s.istep}><div className={s.istepNum}>2</div><div><div className={s.istepT}>오프라인 신고 — 주민센터 방문</div><div className={s.istepD}>새 주소지 관할 주민센터에 방문합니다. 신분증(주민등록증 또는 여권)만 있으면 됩니다. 가족이 대신 신고할 경우 위임장이 필요합니다.</div></div></div>
             <div className={s.istep}><div className={s.istepNum}>3</div><div><div className={s.istepT}>주민등록등본으로 확인</div><div className={s.istepD}>신고 완료 후 주민등록등본을 발급해 새 주소가 정확히 기재되었는지 반드시 확인하세요.</div></div></div>
           </div>
-          <a href="#" className={s.actionLink}>정부24 전입신고 바로가기 →</a>
+          <a href="https://www.gov.kr" target="_blank" rel="noopener noreferrer" className={s.actionLink}>정부24 전입신고 바로가기 →</a>
         </div>
       </div>
 
@@ -242,7 +243,7 @@ export default function JeonseRenewalContent() {
             <div className={s.istep}><div className={s.istepNum}>2</div><div><div className={s.istepT}>인터넷등기소 온라인 신청</div><div className={s.istepD}>대법원 인터넷등기소(iros.go.kr)에서 온라인으로도 신청할 수 있습니다. 계약서 파일 업로드 후 전자결제로 수수료를 납부합니다.</div></div></div>
             <div className={s.istep}><div className={s.istepNum}>3</div><div><div className={s.istepT}>공증사무소 (계약서 원본 불필요 시)</div><div className={s.istepD}>공증사무소에서도 확정일자를 받을 수 있습니다. 영업시간이 주민센터보다 유연한 경우가 많습니다.</div></div></div>
           </div>
-          <a href="#" className={s.actionLink}>인터넷등기소 바로가기 →</a>
+          <a href="https://www.iros.go.kr" target="_blank" rel="noopener noreferrer" className={s.actionLink}>인터넷등기소 바로가기 →</a>
         </div>
       </div>
 
@@ -270,7 +271,7 @@ export default function JeonseRenewalContent() {
               <tr><td>권리 양도</td><td>불가</td><td>가능</td></tr>
             </tbody>
           </table>
-          <a href="#" className={s.actionLink}>법무사 연결하기 →</a>
+          <Link href="/expert-connect" className={s.actionLink}>법무사 연결하기 →</Link>
         </div>
       </div>
 
@@ -298,7 +299,7 @@ export default function JeonseRenewalContent() {
             <div className={s.istep}><div className={s.istepNum}>3</div><div><div className={s.istepT}>등기 완료 후 이사</div><div className={s.istepD}>법원 결정 후 등기부에 임차권이 등재됩니다. 등기 완료를 확인한 뒤 이사하면 대항력이 유지됩니다.</div></div></div>
             <div className={s.istep}><div className={s.istepNum}>4</div><div><div className={s.istepT}>보증금 반환 소송 또는 경매 신청</div><div className={s.istepD}>임차권등기 후에도 반환하지 않으면 보증금반환청구소송 또는 강제집행을 진행합니다.</div></div></div>
           </div>
-          <a href="#" className={s.actionLink}>전문가 상담 연결 →</a>
+          <Link href="/expert-connect" className={s.actionLink}>전문가 상담 연결 →</Link>
         </div>
       </div>
 
@@ -325,7 +326,7 @@ export default function JeonseRenewalContent() {
             <div className={s.istep}><div className={s.istepNum}>2</div><div><div className={s.istepT}>임대차 계약 정보 입력</div><div className={s.istepD}>임대인·임차인 정보, 계약 기간, 보증금·월세 금액, 계약 갱신 여부 등을 입력합니다.</div></div></div>
             <div className={s.istep}><div className={s.istepNum}>3</div><div><div className={s.istepT}>확정일자 자동 부여 확인</div><div className={s.istepD}>신고 완료 시 확정일자가 자동으로 부여됩니다. 별도로 주민센터를 방문할 필요가 없습니다.</div></div></div>
           </div>
-          <a href="#" className={s.actionLink}>부동산거래관리시스템 바로가기 →</a>
+          <a href="https://rtms.molit.go.kr" target="_blank" rel="noopener noreferrer" className={s.actionLink}>부동산거래관리시스템 바로가기 →</a>
         </div>
       </div>
 
