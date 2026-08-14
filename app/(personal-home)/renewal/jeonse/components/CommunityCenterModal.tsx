@@ -190,8 +190,8 @@ export function CommunityCenterModal({ open, onClose }: Props) {
                           <a href={`tel:${c.phone}`} onClick={(e) => e.stopPropagation()} style={{ color: "#2e4bd8", fontWeight: 600, textDecoration: "none" }}>{c.phone}</a>
                         </div>
                       )}
-                      <a href={`https://map.kakao.com/?sName=${encodeURIComponent(address)}&eName=${encodeURIComponent(c.name)}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "11.5px", fontWeight: 600, color: "#2e4bd8", textDecoration: "none" }}>
-                        <Navigation size={12} />카카오맵 길찾기 (출발→도착)
+                      <a href={`https://map.kakao.com/link/to/${encodeURIComponent(c.name)},${c.lat},${c.lng}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "11.5px", fontWeight: 600, color: "#2e4bd8", textDecoration: "none" }}>
+                        <Navigation size={12} />카카오맵 길찾기
                       </a>
                     </button>
                   ))}
