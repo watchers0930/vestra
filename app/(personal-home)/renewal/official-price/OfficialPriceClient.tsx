@@ -154,6 +154,9 @@ export default function OfficialPriceClient() {
                   { lbl: "전용면적", val: result.aptPrice.area ? `${result.aptPrice.area}㎡` : "-" },
                   { lbl: "동 / 호", val: [result.aptPrice.dong, result.aptPrice.ho].filter(Boolean).join(" ") || "-" },
                 ] : []}
+                note={result.aptPrice?.matched === false
+                  ? "입력하신 동/호를 찾지 못해 단지 대표 세대의 공시가격을 표시합니다. 정확한 세대를 조회하려면 주소에 동·호를 포함해 입력해 주세요."
+                  : undefined}
               />
 
               {/* 개별주택 공시가격 */}
@@ -261,7 +264,7 @@ export default function OfficialPriceClient() {
 
 // ── 가격 카드 컴포넌트 ──
 
-function PriceCard({ tone, title, sub, icon, price, priceLabel, rows }: {
+function PriceCard({ tone, title, sub, icon, price, priceLabel, rows, note }: {
   tone: "blue" | "green" | "amber";
   title: string;
   sub: string;
@@ -269,6 +272,7 @@ function PriceCard({ tone, title, sub, icon, price, priceLabel, rows }: {
   price: number | null;
   priceLabel?: string;
   rows: { lbl: string; val: string }[];
+  note?: string;
 }) {
   const hasData = price !== null && price > 0;
 
@@ -292,6 +296,7 @@ function PriceCard({ tone, title, sub, icon, price, priceLabel, rows }: {
               </div>
             ))}
           </div>
+          {note && <p className={s.pcNote}>{note}</p>}
         </>
       ) : (
         <p className={s.pcEmpty}>데이터 없음</p>
