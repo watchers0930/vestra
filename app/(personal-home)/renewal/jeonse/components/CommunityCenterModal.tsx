@@ -22,6 +22,7 @@ export function CommunityCenterModal({ open, onClose }: Props) {
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [centers, setCenters] = useState<Center[] | null>(null);
+  const [origin, setOrigin] = useState<{ lat: number; lng: number } | null>(null);
   const [error, setError] = useState("");
 
   const mapRef = useRef<HTMLDivElement>(null);
@@ -73,6 +74,18 @@ export function CommunityCenterModal({ open, onClose }: Props) {
     markersRef.current.forEach((m) => m.setMap(null));
     markersRef.current = [];
     const bounds = new kakao.maps.LatLngBounds();
+    // 출발지(입력 주소) 마커
+    if (origin) {
+      const opos = new kakao.maps.LatLng(origin.lat, origin.lng);
+      const oOverlay = new kakao.maps.CustomOverlay({
+        map: mapInst.current,
+        position: opos,
+        yAnchor: 1.35,
+        content: `<div style="background:#0071e3;color:#fff;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.22);border:2px solid #fff">📍 출발 (내 주소)</div>`,
+      });
+      markersRef.current.push(oOverlay);
+      bounds.extend(opos);
+    }
     centers.forEach((c) => {
       const pos = new kakao.maps.LatLng(c.lat, c.lng);
       const marker = new kakao.maps.Marker({ map: mapInst.current, position: pos });
@@ -87,7 +100,7 @@ export function CommunityCenterModal({ open, onClose }: Props) {
     });
     mapInst.current.setBounds(bounds);
     if (centers.length === 1) mapInst.current.setLevel(4);
-  }, [centers]);
+  }, [centers, origin]);
 
   const focusCenter = (c: Center) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,10 +116,12 @@ export function CommunityCenterModal({ open, onClose }: Props) {
     setLoading(true);
     setError("");
     setCenters(null);
+    setOrigin(null);
     try {
       const res = await fetch(`/api/community-center?address=${encodeURIComponent(q)}`);
       const json = await res.json();
       if (!res.ok) { setError(json.error ?? "조회에 실패했습니다."); return; }
+      setOrigin(json.origin ?? null);
       setCenters(json.centers ?? []);
     } catch {
       setError("서버 연결에 실패했습니다.");

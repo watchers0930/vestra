@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "인근 주민센터를 찾지 못했습니다." }, { status: 404 });
     }
 
-    return NextResponse.json({ dong, centers });
+    return NextResponse.json({ dong, origin: { lat: parseFloat(lat), lng: parseFloat(lng) }, centers });
   } catch {
     return NextResponse.json({ error: "조회 중 오류가 발생했습니다." }, { status: 500 });
   }
