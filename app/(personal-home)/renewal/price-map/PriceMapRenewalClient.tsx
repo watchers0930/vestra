@@ -22,7 +22,7 @@ export default function PriceMapRenewalClient() {
   } = pm;
 
   const prediction = usePredictionData();
-  const { roadResult, setRoadResult, buildingName, setBuildingName, handleAnalyze } = prediction;
+  const { roadResult, setRoadResult, buildingName, setBuildingName, setBasePrice, handleAnalyze } = prediction;
   const [forecastOpen, setForecastOpen] = useState(false);
   // 분석 대기 중인 지역·단지 — ref로 관리(리렌더/cascading setState 방지)
   const pendingRef = useRef<{ region: string; apt: string } | null>(null);
@@ -50,6 +50,8 @@ export default function PriceMapRenewalClient() {
     if (analyzedKeyRef.current === key) return; // 이미 분석한 물건이면 재호출 생략
     analyzedKeyRef.current = key;
     setBuildingName(selectedApt.name);
+    // 시세지도에서 본 가격(price는 만원 단위)을 예측 기준가(원)로 전달 → 화면 시세와 예측 기준 일치
+    setBasePrice(Math.round((selectedApt.price ?? 0) * 10000));
     setRoadResult(region);
     pendingRef.current = { region, apt: selectedApt.name };
   }

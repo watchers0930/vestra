@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { address: rawAddress, buildingName: rawBuildingName } = await req.json();
+    const { address: rawAddress, buildingName: rawBuildingName, basePrice: rawBasePrice } = await req.json();
     const address = sanitizeField(rawAddress || "", 200);
     const buildingName = sanitizeField(rawBuildingName || "", 100);
 
@@ -187,7 +187,10 @@ export async function POST(req: NextRequest) {
         filteredRent,
       ),
     );
-    const currentPrice = priceEstimation.output.estimatedPrice;
+    // 시세지도에서 선택한 실거래가(basePrice, 원)가 오면 예측 기준가로 우선 사용
+    // → 사용자가 화면에서 본 시세와 예측 기준을 일치시켜 변동률 혼란 방지
+    const bp = Number(rawBasePrice);
+    const currentPrice = (Number.isFinite(bp) && bp > 0) ? bp : priceEstimation.output.estimatedPrice;
 
     // 2.5단계: 인구·연령·정책 기반 장기 성장률 보정 계수 산출
     // - 인구/연령은 KOSIS 실데이터(각 실패 시 kosis-api 내장 fallback), 정책은 POLICY_TIMELINE 실제값

@@ -25,6 +25,7 @@ export function usePredictionData() {
   const [activeScenario, setActiveScenario] = useState<string>("all");
   const [selectedArea, setSelectedArea] = useState<number | null>(null);
   const [selectedApt, setSelectedApt] = useState<string | null>(null);
+  const [basePrice, setBasePrice] = useState<number | null>(null); // 외부(시세지도)에서 지정한 예측 기준가(원)
   const [addressTab, setAddressTab] = useState<AddressTab>("admin");
   const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null);
   const [activeTab, setActiveTab] = useState<PredictionTabId>("dashboard");
@@ -107,7 +108,7 @@ export function usePredictionData() {
       const res = await fetch("/api/predict-value", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: builtAddress, buildingName: buildingName || undefined }),
+        body: JSON.stringify({ address: builtAddress, buildingName: buildingName || undefined, basePrice: basePrice ?? undefined }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -323,6 +324,7 @@ export function usePredictionData() {
     resultRef,
     roadResult, setRoadResult,
     buildingName, setBuildingName,
+    setBasePrice,
     address,
     loading,
     result,
