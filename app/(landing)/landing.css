@@ -33,6 +33,7 @@
   border: 1px solid rgba(255,255,255,.22); border-radius: 5px;
   color: rgba(255,255,255,.75); font-size: 11px; font-weight: 700;
   letter-spacing: .1em; text-transform: uppercase; transition: all .2s; text-decoration: none;
+  background: transparent; font-family: inherit; cursor: pointer;
 }
 @media (min-width: 640px) { .lnd-login { display: block; } }
 .lnd-login:hover { border-color: rgba(255,255,255,.55); color: #fff; }
