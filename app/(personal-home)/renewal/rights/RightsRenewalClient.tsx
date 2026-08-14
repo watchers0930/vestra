@@ -12,11 +12,11 @@ import RightsSecondaryTabs from "./components/RightsSecondaryTabs";
 
 type TabId = "analysis" | "owner" | "history" | "guide";
 
-const TABS: { id: TabId; label: string }[] = [
+const TABS: { id: TabId; label: string; gated?: boolean }[] = [
   { id: "analysis", label: "권리관계 분석" },
-  { id: "owner", label: "소유자 · 매도인 확인" },
-  { id: "history", label: "등기이력 조회" },
-  { id: "guide", label: "이용 안내" },
+  { id: "owner", label: "소유자 · 매도인 확인", gated: true },
+  { id: "history", label: "등기이력 조회", gated: true },
+  { id: "guide", label: "이용 안내", gated: true },
 ];
 
 export default function RightsRenewalClient() {
@@ -32,6 +32,11 @@ export default function RightsRenewalClient() {
     handleFileChange, handleAddressAnalyze, handleAnalyze,
     ownerMatch, registryOwnerMasked,
   } = useRightsAnalysis();
+
+  // 권리관계 분석 결과가 나온 뒤에만 보조 탭(소유자·등기이력·이용안내) 노출
+  const hasResult = !!result && step === "done";
+  // 결과가 없으면 보조 탭에 머물지 않고 분석 탭으로 복귀
+  const effectiveTab: TabId = !hasResult && activeTab !== "analysis" ? "analysis" : activeTab;
 
   const scrollToNav = () => {
     if (snavRef.current) {
@@ -62,10 +67,10 @@ export default function RightsRenewalClient() {
       <div className={s.snavWrap} ref={snavRef}>
         <div className={s.snavIn}>
           <nav className={s.snav}>
-            {TABS.map((t) => (
+            {TABS.filter((t) => !t.gated || hasResult).map((t) => (
               <button
                 key={t.id}
-                className={`${s.snavBtn} ${activeTab === t.id ? s.on : ""}`}
+                className={`${s.snavBtn} ${effectiveTab === t.id ? s.on : ""}`}
                 onClick={() => handleTabClick(t.id)}
               >
                 {t.label}
@@ -76,7 +81,7 @@ export default function RightsRenewalClient() {
       </div>
 
       {/* PANEL: 권리관계 분석 */}
-      <div className={`${s.tab} ${activeTab === "analysis" ? s.on : ""}`}>
+      <div className={`${s.tab} ${effectiveTab === "analysis" ? s.on : ""}`}>
         <div className={s.panelWrap}>
           <div className={s.analysisGrid}>
             {/* Left: 입력 폼 */}
@@ -116,7 +121,7 @@ export default function RightsRenewalClient() {
       </div>
 
       {/* 보조 탭 */}
-      <RightsSecondaryTabs activeTab={activeTab} />
+      <RightsSecondaryTabs activeTab={effectiveTab} />
 
       <RightsRenewalFooter />
     </>

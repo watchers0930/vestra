@@ -54,6 +54,12 @@ export default function RightsAnalysisForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
+  // 하드코딩 기본 시세(8.5억) 제거 — 빈 값으로 시작, 실입력·MOLIT 자동반영만 사용
+  useEffect(() => {
+    setEstimatedPrice(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const switchMode = (m: Mode) => {
     setMode(m);
     if (m === "file") setTilkoSource(false);
