@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import s from "./listings-map-mobile.module.css";
 
 /* ── Data ── */

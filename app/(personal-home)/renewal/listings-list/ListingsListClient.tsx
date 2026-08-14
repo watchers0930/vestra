@@ -110,7 +110,7 @@ export default function ListingsListClient() {
   const region = sigungu
     || (sido ? sido.replace(/(특별시|광역시|특별자치시|특별자치도|도)$/, '') : undefined);
 
-  const { listings, total, loading } = useListings(listingType, {
+  const { listings, loading } = useListings(listingType, {
     roomType,
     region,
     minSize: sizeRange.min,

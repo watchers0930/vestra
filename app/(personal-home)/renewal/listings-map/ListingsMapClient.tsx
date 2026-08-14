@@ -122,30 +122,6 @@ export default function ListingsMapClient() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeItem, setActiveItem] = useState<number | null>(null);
 
-  const toDisplay = (a: Apt, i: number) => ({
-    lat: a.lat, lng: a.lng,
-    badges: ["매매"],
-    price: formatKoreanWon(a.dealAmount),
-    priceNote: `${a.dealDate} 실거래`,
-    addr: `${region} ${a.dong} ${a.aptName}`,
-    area: `${a.area}㎡`,
-    floor: `${a.floor}층`,
-    buildYear: a.buildYear,
-    desc: `${region} ${a.dong} ${a.aptName} 단지의 국토교통부 실거래 기록입니다. 전용 ${a.area}㎡, ${a.floor}층, ${a.dealDate} 거래가 ${formatKoreanWon(a.dealAmount)}입니다. 주변 인프라·학군·시세는 상세 페이지에서 확인하세요.`,
-    agency: "국토부 실거래",
-    mainPhoto: SAMPLE_PHOTOS[i % SAMPLE_PHOTOS.length],
-    sub1: SAMPLE_PHOTOS[(i + 1) % SAMPLE_PHOTOS.length],
-    sub2: SAMPLE_PHOTOS[(i + 2) % SAMPLE_PHOTOS.length],
-  });
-
-  const EMPTY_DETAIL = {
-    lat: undefined as number | undefined, lng: undefined as number | undefined,
-    badges: [] as string[], price: "", priceNote: "", addr: "", area: "", floor: "",
-    buildYear: 0, desc: "", agency: "", mainPhoto: "", sub1: "", sub2: "",
-  };
-  const detailData = activeItem != null && items[activeItem]
-    ? toDisplay(items[activeItem], activeItem)
-    : EMPTY_DETAIL;
 
   // 앱 MapSlidePanel 형식용 데이터
   const curApt = activeItem != null ? items[activeItem] : null;
@@ -228,17 +204,6 @@ export default function ListingsMapClient() {
     setOpenDropdown(null);
   };
 
-  const resetFilters = () => {
-    setFilterLabels({ type: "건물유형", trade: "거래유형", size: "전체 평형" });
-    setFilterActive({ type: false, trade: false, size: false });
-    setSelectedOpts({
-      type: "건물유형 (전체)",
-      trade: "거래유형 (전체)",
-      size: "전체 평형",
-    });
-    setOpenDropdown(null);
-  };
-
   const updateSigungu = (value: string) => {
     setSido(value);
     const map: Record<string, string[]> = {
@@ -274,11 +239,6 @@ export default function ListingsMapClient() {
   const closeDetail = () => {
     setDetailOpen(false);
     setActiveItem(null);
-  };
-
-  const BADGE_CLASS: Record<string, string> = {
-    매매: s.dbSale,
-    전세: s.dbJeonse,
   };
 
   return (
