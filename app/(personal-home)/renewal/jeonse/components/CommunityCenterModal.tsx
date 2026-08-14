@@ -82,9 +82,8 @@ export function CommunityCenterModal({ open, onClose }: Props) {
         position: opos,
         yAnchor: 1.0,
         content: `<div style="display:flex;flex-direction:column;align-items:center;pointer-events:none">
-          <div style="background:#0071e3;color:#fff;padding:3px 9px;border-radius:12px;font-size:10.5px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.22);border:2px solid #fff">내 주소</div>
-          <div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:9px solid #0071e3;margin-top:-1px;filter:drop-shadow(0 2px 1px rgba(0,0,0,0.15))"></div>
-          <div style="width:9px;height:9px;border-radius:50%;background:#0071e3;border:2px solid #fff;margin-top:2px;box-shadow:0 2px 5px rgba(0,0,0,0.2)"></div>
+          <div style="width:16px;height:16px;border-radius:50%;background:#0071e3;border:2.5px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,0.3)"></div>
+          <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #0071e3;margin-top:-2px;filter:drop-shadow(0 2px 1px rgba(0,0,0,0.15))"></div>
         </div>`,
       });
       markersRef.current.push(oOverlay);
