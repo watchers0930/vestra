@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import KakaoScript from "@/components/common/KakaoScript";
 import {
   useNeighborhoodData,
@@ -40,7 +40,7 @@ interface AddrSuggestion {
   sub: string;
 }
 
-export function JeonseEnvAnalysis() {
+export function JeonseEnvAnalysis({ active = true }: { active?: boolean }) {
   const {
     mapRef,
     address,
@@ -54,7 +54,15 @@ export function JeonseEnvAnalysis() {
     handleAnalyze,
     toggleFacility,
     toggleAllFacilities,
+    relayout,
   } = useNeighborhoodData();
+
+  // 탭이 숨김→표시로 전환될 때 지도 크기 재계산 (타일 깨짐 방지)
+  useEffect(() => {
+    if (!active) return;
+    const t = setTimeout(() => relayout(), 150);
+    return () => clearTimeout(t);
+  }, [active, relayout]);
 
   // ── 주소 자동완성 (서버 프록시 /api/address-search) ──
   const [drop, setDrop] = useState<AddrSuggestion[]>([]);

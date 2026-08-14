@@ -647,7 +647,7 @@ export default function JeonseRenewalContent() {
 
       {/* ████ PANEL: 주변환경분석 ████ */}
       <div className={`${s.tab}${activeTab === "env" ? " " + s.on : ""}`}>
-        <JeonseEnvAnalysis />
+        {activeTab === "env" && <JeonseEnvAnalysis active />}
       </div>
 
       {/* ADDRESS MODAL */}

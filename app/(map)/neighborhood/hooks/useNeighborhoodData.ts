@@ -241,6 +241,17 @@ export function useNeighborhoodData() {
     }
   };
 
+  // 숨김→표시 전환 시 지도 크기 재계산 (탭 UI에서 필요)
+  const relayout = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any;
+    if (!kakaoMapRef.current || !w.kakao?.maps) return;
+    kakaoMapRef.current.relayout();
+    if (result) {
+      kakaoMapRef.current.setCenter(new w.kakao.maps.LatLng(result.lat, result.lng));
+    }
+  }, [result]);
+
   const navigateTo = (lat: number, lng: number) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!kakaoMapRef.current || !(window as any).kakao?.maps) return;
@@ -311,5 +322,6 @@ export function useNeighborhoodData() {
     toggleAllFacilities,
     navigateTo,
     highlightItem,
+    relayout,
   };
 }
