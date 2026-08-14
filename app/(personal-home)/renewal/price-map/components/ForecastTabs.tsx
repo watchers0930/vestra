@@ -251,7 +251,7 @@ function BacktestTab({ prediction }: { prediction: Prediction }) {
   const grade = accuracy >= 80 ? "우수" : accuracy >= 60 ? "양호" : "보통";
   const metrics = [
     { label: "평균 오차율", val: `±${(bt.mape ?? 0).toFixed(1)}%`, sub: "실거래가 기준" },
-    { label: "RMSE", val: `${(bt.rmse ?? 0).toFixed(1)}`, sub: "예측 오차" },
+    { label: "예측 오차(RMSE)", val: `±${toEok(bt.rmse ?? 0)}`, sub: "실제가 대비 평균 오차" },
     { label: "데이터 포인트", val: `${filteredTransactions.length.toLocaleString()}`, sub: "실거래 건수" },
     { label: "표본 수", val: `${(bt.sampleCount ?? 0).toLocaleString()}`, sub: bt.period || "백테스트 범위" },
   ];
