@@ -121,7 +121,12 @@ export default function RightsRenewalClient() {
       </div>
 
       {/* 보조 탭 */}
-      <RightsSecondaryTabs activeTab={effectiveTab} />
+      <RightsSecondaryTabs
+        activeTab={effectiveTab}
+        result={result}
+        ownerMatch={ownerMatch}
+        registryOwnerMasked={registryOwnerMasked}
+      />
 
       <RightsRenewalFooter />
     </>
