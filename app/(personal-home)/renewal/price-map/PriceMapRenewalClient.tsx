@@ -22,22 +22,20 @@ export default function PriceMapRenewalClient() {
   } = pm;
 
   const prediction = usePredictionData();
-  const { roadResult, setRoadResult, handleAnalyze } = prediction;
+  const { roadResult, setRoadResult, buildingName, setBuildingName, handleAnalyze } = prediction;
   const [forecastOpen, setForecastOpen] = useState(false);
-  // 분석 대기 중인 주소 — ref로 관리(리렌더/cascading setState 방지)
-  const pendingAddrRef = useRef<string | null>(null);
-  // 이미 조회한 물건 주소 — 동일 물건 재클릭 시 중복 API 호출 방지
-  const analyzedAddrRef = useRef<string>("");
+  // 분석 대기 중인 지역·단지 — ref로 관리(리렌더/cascading setState 방지)
+  const pendingRef = useRef<{ region: string; apt: string } | null>(null);
+  // 이미 조회한 지역|단지 키 — 동일 물건 재클릭 시 중복 API 호출 방지
+  const analyzedKeyRef = useRef<string>("");
 
-  // roadResult가 요청 주소로 반영된 시점(fresh closure)에 분석 실행
+  // roadResult+buildingName이 요청값으로 반영된 시점(fresh closure)에 분석 실행
   useEffect(() => {
-    const pending = pendingAddrRef.current;
-    if (!pending || roadResult !== pending) return;
-    pendingAddrRef.current = null;
-    if (analyzedAddrRef.current === pending) return; // 중복 호출 방지
-    analyzedAddrRef.current = pending;
+    const p = pendingRef.current;
+    if (!p || roadResult !== p.region || buildingName !== p.apt) return;
+    pendingRef.current = null;
     handleAnalyze();
-  }, [roadResult, handleAnalyze]);
+  }, [roadResult, buildingName, handleAnalyze]);
 
   function handleSelectApt(apt: AptData) {
     selectAndMoveToApt(apt);
@@ -46,10 +44,14 @@ export default function PriceMapRenewalClient() {
   function openForecast() {
     if (!selectedApt) return;
     setForecastOpen(true);
-    const address = `${selectedSido === "서울" ? "서울특별시" : selectedSido} ${selectedGu} ${selectedApt.dong} ${selectedApt.name}`;
-    if (analyzedAddrRef.current === address) return; // 이미 분석한 물건이면 재호출 생략
-    setRoadResult(address);
-    pendingAddrRef.current = address;
+    // 지역비교를 위해 동 단위 주소로 조회(지역 전체 실거래) + 대상 단지는 buildingName으로 특정
+    const region = `${selectedSido === "서울" ? "서울특별시" : selectedSido} ${selectedGu} ${selectedApt.dong}`;
+    const key = `${region}|${selectedApt.name}`;
+    if (analyzedKeyRef.current === key) return; // 이미 분석한 물건이면 재호출 생략
+    analyzedKeyRef.current = key;
+    setBuildingName(selectedApt.name);
+    setRoadResult(region);
+    pendingRef.current = { region, apt: selectedApt.name };
   }
 
   return (

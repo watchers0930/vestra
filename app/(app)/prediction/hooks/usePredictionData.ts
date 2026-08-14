@@ -322,7 +322,7 @@ export function usePredictionData() {
   return {
     resultRef,
     roadResult, setRoadResult,
-    buildingName,
+    buildingName, setBuildingName,
     address,
     loading,
     result,
