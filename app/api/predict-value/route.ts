@@ -287,7 +287,7 @@ export async function POST(req: NextRequest) {
             }),
           },
         ],
-        temperature: 0.3,
+        temperature: 0.5,
         response_format: { type: "json_object" },
       });
 
