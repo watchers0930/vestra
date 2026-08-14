@@ -86,7 +86,7 @@
 .regTextarea::placeholder{color:#b0b4c4}
 
 /* price slider mock */
-.priceBox{padding:14px 16px;background:rgba(46,75,216,.04);border-radius:12px;border:1px solid rgba(46,75,216,.10)}
+.priceBox{padding:14px 16px;background:#fff;border-radius:12px;border:1px solid #e0e3ef}
 .priceLabel{font-size:12px;font-weight:600;color:#2e4bd8;margin-bottom:8px}
 .priceInputRow{display:flex;align-items:center;gap:8px}
 .priceInput{flex:1;height:42px;padding:0 12px;border:1.5px solid #d0d4e8;border-radius:10px;font-size:15px;font-weight:600;font-family:inherit;color:#1a1d2e;outline:none;transition:border-color .15s;text-align:right}
