@@ -80,11 +80,8 @@ export function CommunityCenterModal({ open, onClose }: Props) {
       const oOverlay = new kakao.maps.CustomOverlay({
         map: mapInst.current,
         position: opos,
-        yAnchor: 1.0,
-        content: `<div style="display:flex;flex-direction:column;align-items:center;pointer-events:none">
-          <div style="width:16px;height:16px;border-radius:50%;background:#0071e3;border:2.5px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,0.3)"></div>
-          <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #0071e3;margin-top:-2px;filter:drop-shadow(0 2px 1px rgba(0,0,0,0.15))"></div>
-        </div>`,
+        yAnchor: 0.5,
+        content: `<div style="width:16px;height:16px;border-radius:50%;background:#0071e3;border:2.5px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,0.3);pointer-events:none"></div>`,
       });
       markersRef.current.push(oOverlay);
       bounds.extend(opos);
@@ -193,8 +190,8 @@ export function CommunityCenterModal({ open, onClose }: Props) {
                           <a href={`tel:${c.phone}`} onClick={(e) => e.stopPropagation()} style={{ color: "#2e4bd8", fontWeight: 600, textDecoration: "none" }}>{c.phone}</a>
                         </div>
                       )}
-                      <a href={`https://map.kakao.com/link/to/${encodeURIComponent(c.name)},${c.lat},${c.lng}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "11.5px", fontWeight: 600, color: "#2e4bd8", textDecoration: "none" }}>
-                        <Navigation size={12} />카카오맵 길찾기
+                      <a href={`https://map.kakao.com/?sName=${encodeURIComponent(address)}&eName=${encodeURIComponent(c.name)}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "11.5px", fontWeight: 600, color: "#2e4bd8", textDecoration: "none" }}>
+                        <Navigation size={12} />카카오맵 길찾기 (출발→도착)
                       </a>
                     </button>
                   ))}
