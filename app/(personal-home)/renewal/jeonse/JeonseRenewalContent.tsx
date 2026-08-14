@@ -6,6 +6,7 @@ import s from "./jeonse-renewal.module.css";
 import JeonseRenewalNav from "./components/JeonseRenewalNav";
 import { JeonseEnvAnalysis } from "./components/JeonseEnvAnalysis";
 import { JeonseSafetyAnalysis } from "./components/JeonseSafetyAnalysis";
+import { CommunityCenterModal } from "./components/CommunityCenterModal";
 
 interface ChecklistState {
   [key: number]: boolean;
@@ -13,6 +14,7 @@ interface ChecklistState {
 
 export default function JeonseRenewalContent() {
   const [activeTab, setActiveTab] = useState("analysis");
+  const [centerOpen, setCenterOpen] = useState(false);
   const [checklist, setChecklist] = useState<ChecklistState>({});
   const snavRef = useRef<HTMLDivElement>(null);
 
@@ -216,8 +218,12 @@ export default function JeonseRenewalContent() {
             <div>
               <div style={{ fontSize: "11.5px", fontWeight: 700, color: "#8a90a6", letterSpacing: ".02em", marginBottom: "9px", paddingLeft: "2px" }}>신고 방법 <span style={{ color: "#2e4bd8" }}>· 둘 중 택1</span></div>
               <div className={s.infoSteps} style={{ marginBottom: 0 }}>
-                <div className={s.istep}><div><div className={s.istepT}>온라인 신고 — 정부24</div><div className={s.istepD}>정부24(gov.kr) → 전입신고 → 공동인증서 또는 간편인증 로그인 → 이전 주소·새 주소 입력 → 제출. 24시간 가능합니다.</div></div></div>
-                <div className={s.istep}><div><div className={s.istepT}>오프라인 신고 — 주민센터 방문</div><div className={s.istepD}>새 주소지 관할 주민센터에 방문합니다. 신분증(주민등록증 또는 여권)만 있으면 됩니다. 가족이 대신 신고할 경우 위임장이 필요합니다.</div></div></div>
+                <div className={s.istep}><div><div className={s.istepT}>온라인 신고 — 정부24</div><div className={s.istepD}>정부24(gov.kr) → 전입신고 → 공동인증서 또는 간편인증 로그인 → 이전 주소·새 주소 입력 → 제출. 24시간 가능합니다.</div>
+                  <a href="https://www.gov.kr/mw/AA020InfoCappView.do?CappBizCD=13100000016" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "5px", marginTop: "12px", padding: "8px 14px", borderRadius: "10px", background: "#2e4bd8", color: "#fff", fontSize: "12.5px", fontWeight: 600, textDecoration: "none" }}>정부24 전입신고 바로가기 →</a>
+                </div></div>
+                <div className={s.istep}><div><div className={s.istepT}>오프라인 신고 — 주민센터 방문</div><div className={s.istepD}>새 주소지 관할 주민센터에 방문합니다. 신분증(주민등록증 또는 여권)만 있으면 됩니다. 가족이 대신 신고할 경우 위임장이 필요합니다.</div>
+                  <button type="button" onClick={() => setCenterOpen(true)} style={{ display: "inline-flex", alignItems: "center", gap: "5px", marginTop: "12px", padding: "8px 14px", borderRadius: "10px", background: "#fff", color: "#2e4bd8", border: "1.5px solid #2e4bd8", fontSize: "12.5px", fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>관할 주민센터 찾기</button>
+                </div></div>
               </div>
             </div>
 
@@ -242,7 +248,6 @@ export default function JeonseRenewalContent() {
               </div>
             </div>
           </div>
-          <a href="https://www.gov.kr/mw/AA020InfoCappView.do?CappBizCD=13100000016" target="_blank" rel="noopener noreferrer" className={s.actionLink}>정부24 전입신고 바로가기 →</a>
         </div>
       </div>
 
@@ -440,6 +445,7 @@ export default function JeonseRenewalContent() {
         {activeTab === "env" && <JeonseEnvAnalysis active />}
       </div>
 
+      <CommunityCenterModal open={centerOpen} onClose={() => setCenterOpen(false)} />
     </>
   );
 }
