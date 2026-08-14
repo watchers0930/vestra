@@ -52,7 +52,7 @@
 
 /* ── PANEL SHARED ── */
 .panelWrap{max-width:1200px;margin:0 auto;padding:56px 32px 80px}
-.panelWrap.narrow{max-width:860px}
+.panelWrap.narrow{max-width:1080px}
 .secEyebrow{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#2e4bd8;margin-bottom:8px}
 .secTitle{font-size:22px;font-weight:700;color:#1a1d2e;margin-bottom:8px}
 .secDesc{font-size:13px;color:#888;line-height:1.75;margin-bottom:36px}
@@ -171,7 +171,7 @@
 .infoIconBox svg{width:26px;height:26px;stroke:#2e4bd8;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .infoHeroTitle{font-size:18px;font-weight:700;color:#1a1d2e;margin-bottom:6px}
 .infoHeroDesc{font-size:13px;color:#666;line-height:1.75}
-.infoSteps{display:flex;flex-direction:column;gap:12px;margin-bottom:40px}
+.infoSteps{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:40px}
 .istep{display:flex;gap:16px;align-items:flex-start;padding:20px;border:1px solid #e8eaf2;border-radius:12px}
 .istepNum{width:32px;height:32px;background:#2e4bd8;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;margin-top:2px}
 .istepT{font-size:13.5px;font-weight:600;color:#1a1d2e;margin-bottom:4px}
@@ -219,17 +219,16 @@
 .envPlaceholder small{font-size:12px;color:#c0c4d0}
 
 /* ── 절차안내 PANEL ── */
-.guideTimeline{display:flex;flex-direction:column;gap:0}
-.gtItem{display:grid;grid-template-columns:100px 1fr;gap:0}
+.guideTimeline{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.gtItem{display:grid;grid-template-columns:auto 1fr;gap:0;align-items:start;border:1px solid #e8eaf2;border-radius:12px;padding:20px}
 .gtLeft{display:flex;flex-direction:column;align-items:center;padding-top:4px}
 .gtBadge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:12px;white-space:nowrap;margin-bottom:0}
 .gtBadge.pre{color:#2e4bd8;background:#eef1fd;border:1px solid #c4cdf0}
 .gtBadge.on{color:#b45309;background:#fef3c7;border:1px solid #fde68a}
 .gtBadge.post{color:#15803d;background:#dcfce7;border:1px solid #bbf7d0}
 .gtBadge.opt{color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb}
-.gtLine{flex:1;width:2px;background:#e8eaf2;margin:8px 0}
-.gtItem:last-child .gtLine{display:none}
-.gtRight{padding:2px 0 36px 20px}
+.gtLine{display:none}
+.gtRight{padding:0 0 0 16px}
 .gtTitle{font-size:14px;font-weight:600;color:#1a1d2e;margin-bottom:6px}
 .gtDesc{font-size:13px;color:#666;line-height:1.7}
 .gtChips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
@@ -402,6 +401,8 @@
   .procSteps{grid-template-columns:repeat(2,1fr);gap:24px}
   .procSteps::before{display:none}
   .infoGrid{grid-template-columns:1fr}
+  .infoSteps{grid-template-columns:1fr}
+  .guideTimeline{grid-template-columns:1fr}
   .ckGroupsGrid{grid-template-columns:repeat(2,1fr)}
   .envLayout{flex-direction:column;height:auto;min-height:unset}
   .envPanel{width:100%;border-right:none;border-bottom:1px solid rgba(0,0,0,.08);max-height:70vh}

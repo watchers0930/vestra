@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Link from "next/link";
 import s from "./jeonse-renewal.module.css";
 import JeonseRenewalNav from "./components/JeonseRenewalNav";
+import { JeonseEnvAnalysis } from "./components/JeonseEnvAnalysis";
 
 const ADDR_DB = [
   { zip: "06253", road: "서울특별시 강남구 강남대로 354", jibun: "역삼동 837-34", bldg: "혜천빌딩" },
@@ -647,55 +647,7 @@ export default function JeonseRenewalContent() {
 
       {/* ████ PANEL: 주변환경분석 ████ */}
       <div className={`${s.tab}${activeTab === "env" ? " " + s.on : ""}`}>
-        <div className={s.envLayout}>
-          {/* 좌측 패널 */}
-          <div className={s.envPanel}>
-            <div className={s.envPanelHead}>
-              <div className={s.envHeadIn}>
-                <div className={s.envChipHd}>
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                  주변환경분석
-                </div>
-                <h2 className={s.envHeadTitle}>주변 환경 분석</h2>
-                <p className={s.envHeadSub}>교통 · 교육 · 의료 · 편의 · 생활 환경을<br />AI가 종합 점수로 분석합니다</p>
-                <div className={s.envHdChips}>
-                  <span className={s.envHdChip} style={{ color: "#4da6ff" }}>🚇 교통</span>
-                  <span className={s.envHdChip} style={{ color: "#b388ff" }}>🎓 교육</span>
-                  <span className={s.envHdChip} style={{ color: "#ff8080" }}>🏥 의료</span>
-                  <span className={s.envHdChip} style={{ color: "#69e08a" }}>🛒 편의</span>
-                  <span className={s.envHdChip} style={{ color: "#ffcc66" }}>🌿 생활</span>
-                </div>
-              </div>
-            </div>
-            <div className={s.envPanelSearch}>
-              <div className={s.envSearchRow}>
-                <input className={s.envSi} type="text" placeholder="도로명·지번·건물명 입력" autoComplete="off" />
-                <button className={s.envAb}>분석</button>
-              </div>
-            </div>
-            <div className={s.envPanelBody}>
-              <div className={s.envEmpty}>
-                <div className={s.envEi}>
-                  <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                </div>
-                <p className={s.envEt}>주소를 입력해 주세요</p>
-                <p className={s.envEd}>교통·교육·의료·편의·생활 환경을<br />AI가 종합 점수로 분석합니다</p>
-              </div>
-            </div>
-          </div>
-
-          {/* 우측 지도 플레이스홀더 */}
-          <div className={s.envMapArea}>
-            <div className={s.mapPlaceholder}>
-              <div className={s.mapPlaceholderInner}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#2e4bd8" opacity="0.5" />
-                </svg>
-                <span style={{ color: "#888", fontSize: "14px", marginTop: "8px" }}>지도 영역</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <JeonseEnvAnalysis />
       </div>
 
       {/* ADDRESS MODAL */}
