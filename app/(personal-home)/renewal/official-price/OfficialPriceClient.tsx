@@ -22,6 +22,10 @@ export default function OfficialPriceClient() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<OfficialPriceResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // 공동주택 세대 지정(동/호 2칸)
+  const [dong, setDong] = useState("");
+  const [ho, setHo] = useState("");
+  const [unitLoading, setUnitLoading] = useState(false);
 
   // 기존 (app)/official-price/page.tsx 의 조회 로직과 동일한 방식 (GET /api/official-price)
   const handleSearch = useCallback(async () => {
@@ -31,6 +35,8 @@ export default function OfficialPriceClient() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setDong("");
+    setHo("");
 
     try {
       const res = await fetch(`/api/official-price?address=${encodeURIComponent(query)}`);
@@ -50,9 +56,38 @@ export default function OfficialPriceClient() {
     }
   }, [address]);
 
+  // 동/호로 특정 세대 공시가 재조회 (지번 주소는 유지)
+  const handleUnitSearch = useCallback(async () => {
+    const query = address.trim();
+    if (query.length < 3 || (!dong && !ho)) return;
+
+    setUnitLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams({ address: query });
+      if (dong) params.set("dong", dong);
+      if (ho) params.set("ho", ho);
+      const res = await fetch(`/api/official-price?${params.toString()}`);
+      const json = await res.json();
+
+      if (!res.ok) {
+        setError(json.error || "조회에 실패했습니다");
+        return;
+      }
+      setResult(json);
+    } catch {
+      setError("네트워크 오류가 발생했습니다");
+    } finally {
+      setUnitLoading(false);
+    }
+  }, [address, dong, ho]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") handleSearch();
   };
+
+  const onlyDigits = (v: string) => v.replace(/[^\d]/g, "");
 
   return (
     <>
@@ -132,6 +167,55 @@ export default function OfficialPriceClient() {
               {result.pnu && <div className={s.rmPnu}>PNU {result.pnu}</div>}
             </div>
 
+            {/* UNIT SELECTOR — 공동주택 감지 시 동/호 입력 노출 */}
+            {result.aptPrice && (
+              <div className={s.unitCard}>
+                <div className={s.unitHead}>
+                  <svg viewBox="0 0 24 24" className={s.unitHeadIco}>
+                    <rect x="4" y="2" width="16" height="20" rx="2" />
+                    <path d="M9 22v-4h6v4" />
+                    <line x1="9" y1="6" x2="9" y2="6" /><line x1="15" y1="6" x2="15" y2="6" />
+                    <line x1="9" y1="10" x2="9" y2="10" /><line x1="15" y1="10" x2="15" y2="10" />
+                  </svg>
+                  <div>
+                    <b>{result.aptPrice.complexName || "공동주택"}</b> · 세대 지정
+                    <span>동·호를 입력하면 해당 세대의 정확한 공시가격을 조회합니다</span>
+                  </div>
+                </div>
+                <div className={s.unitRow}>
+                  <input
+                    className={s.unitInput}
+                    inputMode="numeric"
+                    placeholder="동"
+                    value={dong}
+                    onChange={(e) => setDong(onlyDigits(e.target.value))}
+                    onKeyDown={(e) => e.key === "Enter" && handleUnitSearch()}
+                  />
+                  <span className={s.unitDash}>-</span>
+                  <input
+                    className={s.unitInput}
+                    inputMode="numeric"
+                    placeholder="호"
+                    value={ho}
+                    onChange={(e) => setHo(onlyDigits(e.target.value))}
+                    onKeyDown={(e) => e.key === "Enter" && handleUnitSearch()}
+                  />
+                  <button
+                    className={s.unitBtn}
+                    onClick={handleUnitSearch}
+                    disabled={unitLoading || (!dong && !ho)}
+                  >
+                    {unitLoading ? "조회 중…" : "세대 조회"}
+                  </button>
+                </div>
+                {result.aptPrice.matched === true && (
+                  <div className={s.unitOk}>
+                    ✓ {[result.aptPrice.dong, result.aptPrice.ho].filter(Boolean).join("-")} 세대 공시가격을 표시하고 있습니다
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* PRICE CARDS */}
             <div className={s.priceGrid}>
               {/* 공동주택 공시가격 */}
@@ -152,7 +236,7 @@ export default function OfficialPriceClient() {
                 rows={result.aptPrice ? [
                   { lbl: "단지명", val: result.aptPrice.complexName || "-" },
                   { lbl: "전용면적", val: result.aptPrice.area ? `${result.aptPrice.area}㎡` : "-" },
-                  { lbl: "동 / 호", val: [result.aptPrice.dong, result.aptPrice.ho].filter(Boolean).join(" ") || "-" },
+                  { lbl: "동 / 호", val: [result.aptPrice.dong, result.aptPrice.ho].filter(Boolean).join("-") || "-" },
                 ] : []}
                 note={result.aptPrice?.matched === false
                   ? "입력하신 동/호를 찾지 못해 단지 대표 세대의 공시가격을 표시합니다. 정확한 세대를 조회하려면 주소에 동·호를 포함해 입력해 주세요."

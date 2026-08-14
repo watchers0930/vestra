@@ -447,6 +447,7 @@ export async function fetchOfficialPrices(
   address: string,
   year?: number,
   coord?: { lat: number; lng: number },
+  unit?: { dong: string; ho: string },
 ): Promise<OfficialPriceResult | null> {
   const stdrYear = year || new Date().getFullYear();
 
@@ -457,13 +458,13 @@ export async function fetchOfficialPrices(
 
   const pnu = buildPnu(detail.bCode, detail.mainNo, detail.subNo, detail.mountainYn);
 
-  // 주소에 동/호가 있으면 해당 세대의 공동주택 공시가를 특정
-  const unit = parseUnit(address) ?? undefined;
+  // 동/호 지정(별도 파라미터 우선, 없으면 주소 내 동/호 파싱)이 있으면 해당 세대의 공동주택 공시가를 특정
+  const resolvedUnit = unit ?? parseUnit(address) ?? undefined;
 
   // 3가지 API 병렬 호출
   const [landPrice, aptPrice, housePrice] = await Promise.all([
     fetchLandPrice(pnu, stdrYear),
-    fetchAptPrice(pnu, stdrYear, unit),
+    fetchAptPrice(pnu, stdrYear, resolvedUnit),
     fetchHousePrice(pnu, stdrYear),
   ]);
 
@@ -474,7 +475,7 @@ export async function fetchOfficialPrices(
       const prevYear = stdrYear - 1;
       const [landPrev, aptPrev, housePrev] = await Promise.all([
         fetchLandPrice(pnu, prevYear),
-        fetchAptPrice(pnu, prevYear, unit),
+        fetchAptPrice(pnu, prevYear, resolvedUnit),
         fetchHousePrice(pnu, prevYear),
       ]);
 

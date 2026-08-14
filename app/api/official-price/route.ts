@@ -14,6 +14,8 @@ export async function GET(req: NextRequest) {
   const yearParam = req.nextUrl.searchParams.get("year");
   const latParam = req.nextUrl.searchParams.get("lat");
   const lngParam = req.nextUrl.searchParams.get("lng");
+  const dongParam = req.nextUrl.searchParams.get("dong")?.trim() ?? "";
+  const hoParam = req.nextUrl.searchParams.get("ho")?.trim() ?? "";
 
   if (address.length < 3) {
     return NextResponse.json(
@@ -34,8 +36,13 @@ export async function GET(req: NextRequest) {
     ? { lat: parseFloat(latParam), lng: parseFloat(lngParam) }
     : undefined;
 
+  // 동/호 파라미터(숫자만 허용) → 특정 세대 공시가 조회
+  const dong = /^\d+$/.test(dongParam) ? dongParam : "";
+  const ho = /^\d+$/.test(hoParam) ? hoParam : "";
+  const unit = dong || ho ? { dong, ho } : undefined;
+
   try {
-    const result = await fetchOfficialPrices(address, year, coord);
+    const result = await fetchOfficialPrices(address, year, coord, unit);
 
     if (!result) {
       return NextResponse.json(
