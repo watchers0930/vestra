@@ -43,6 +43,7 @@ export interface PredictionResult {
   aiOpinion: string;
   realTransactions: RealTransaction[];
   regionTransactions?: RealTransaction[];
+  aiOpinionSections?: { summary: string; intro: string; body: string; conclusion: string } | null;
   monthlyTrend?: { month: string; avgPrice: number; minPrice: number; maxPrice: number; count: number }[];
   priceStats: {
     avgPrice: number;

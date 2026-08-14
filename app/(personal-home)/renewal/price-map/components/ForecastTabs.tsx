@@ -70,10 +70,34 @@ function DashboardTab({ prediction }: { prediction: Prediction }) {
         ))}
       </div>
       <div className={s.fpSectionDivider} />
-      <div className={s.fpAiBox}>
-        <div className={s.fpAiLabel}>AI 종합 의견</div>
-        <div className={s.fpAiText}>{result.aiOpinion}</div>
-      </div>
+      {result.aiOpinionSections ? (
+        <>
+          {result.aiOpinionSections.summary && (
+            <div className={s.fpAiSummary}>
+              <div className={s.fpAiSummaryLabel}>핵심 요약</div>
+              <div className={s.fpAiSummaryText}>{result.aiOpinionSections.summary}</div>
+            </div>
+          )}
+          <div className={s.fpAiBox}>
+            <div className={s.fpAiLabel}>AI 종합 의견</div>
+            {([
+              { t: "서론", v: result.aiOpinionSections.intro },
+              { t: "본론", v: result.aiOpinionSections.body },
+              { t: "결론", v: result.aiOpinionSections.conclusion },
+            ] as const).filter((x) => x.v).map((x) => (
+              <div key={x.t} className={s.fpAiPara}>
+                <span className={s.fpAiParaTag}>{x.t}</span>
+                <p className={s.fpAiParaText}>{x.v}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className={s.fpAiBox}>
+          <div className={s.fpAiLabel}>AI 종합 의견</div>
+          <div className={s.fpAiText}>{result.aiOpinion}</div>
+        </div>
+      )}
       {result.variables?.length > 0 && (
         <>
           <p className={s.fpSec}>주요 영향 변수</p>

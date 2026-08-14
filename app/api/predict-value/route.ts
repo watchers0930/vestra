@@ -257,6 +257,7 @@ export async function POST(req: NextRequest) {
 
     // 5단계: LLM으로 종합 의견만 생성
     let aiOpinion = "";
+    let aiOpinionSections: { summary: string; intro: string; body: string; conclusion: string } | null = null;
     try {
       const openai = getOpenAIClient();
       const completion = await openai.chat.completions.create({
@@ -293,7 +294,13 @@ export async function POST(req: NextRequest) {
       const content = completion.choices[0]?.message?.content;
       if (content) {
         const parsed = JSON.parse(content);
-        aiOpinion = parsed.aiOpinion || parsed.opinion || "";
+        aiOpinionSections = {
+          summary: parsed.summary || "",
+          intro: parsed.intro || "",
+          body: parsed.body || "",
+          conclusion: parsed.conclusion || "",
+        };
+        aiOpinion = parsed.aiOpinion || [parsed.intro, parsed.body, parsed.conclusion].filter(Boolean).join("\n\n") || parsed.opinion || "";
       }
     } catch {
       aiOpinion = "AI 의견 생성에 실패했습니다. 자체 분석 결과를 참고해주세요.";
@@ -318,6 +325,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ...predictionResult,
       aiOpinion,
+      aiOpinionSections,
       integrity: {
         merkleRoot: integrityResult.merkleRoot,
         totalSteps: integrityResult.report.totalSteps,
