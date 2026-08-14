@@ -211,12 +211,38 @@ export default function JeonseRenewalContent() {
             <div className={s.icard}><div className={s.icardLabel}>비용</div><div className={s.icardVal}>무료</div><div className={s.icardDesc}>별도 수수료 없이 무료로 신고할 수 있습니다.</div></div>
             <div className={s.icard}><div className={s.icardLabel}>대항력 발생</div><div className={s.icardVal}>신고 다음날 0시</div><div className={s.icardDesc}>전입신고 당일이 아닌 다음날 0시부터 효력이 발생합니다.</div></div>
           </div>
-          <div className={s.infoSteps}>
-            <div className={s.istep}><div className={s.istepNum}>1</div><div><div className={s.istepT}>온라인 신고 — 정부24</div><div className={s.istepD}>정부24(gov.kr) → 전입신고 → 공동인증서 또는 간편인증 로그인 → 이전 주소·새 주소 입력 → 제출. 24시간 가능합니다.</div></div></div>
-            <div className={s.istep}><div className={s.istepNum}>2</div><div><div className={s.istepT}>오프라인 신고 — 주민센터 방문</div><div className={s.istepD}>새 주소지 관할 주민센터에 방문합니다. 신분증(주민등록증 또는 여권)만 있으면 됩니다. 가족이 대신 신고할 경우 위임장이 필요합니다.</div></div></div>
-            <div className={s.istep}><div className={s.istepNum}>3</div><div><div className={s.istepT}>주민등록등본으로 확인</div><div className={s.istepD}>신고 완료 후 주민등록등본을 발급해 새 주소가 정확히 기재되었는지 반드시 확인하세요.</div></div></div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "22px", marginBottom: "40px" }}>
+            {/* 신고 방법 (택1) */}
+            <div>
+              <div style={{ fontSize: "11.5px", fontWeight: 700, color: "#8a90a6", letterSpacing: ".02em", marginBottom: "9px", paddingLeft: "2px" }}>신고 방법 <span style={{ color: "#2e4bd8" }}>· 둘 중 택1</span></div>
+              <div className={s.infoSteps} style={{ marginBottom: 0 }}>
+                <div className={s.istep}><div><div className={s.istepT}>온라인 신고 — 정부24</div><div className={s.istepD}>정부24(gov.kr) → 전입신고 → 공동인증서 또는 간편인증 로그인 → 이전 주소·새 주소 입력 → 제출. 24시간 가능합니다.</div></div></div>
+                <div className={s.istep}><div><div className={s.istepT}>오프라인 신고 — 주민센터 방문</div><div className={s.istepD}>새 주소지 관할 주민센터에 방문합니다. 신분증(주민등록증 또는 여권)만 있으면 됩니다. 가족이 대신 신고할 경우 위임장이 필요합니다.</div></div></div>
+              </div>
+            </div>
+
+            {/* 신고 후 확인 */}
+            <div>
+              <div style={{ fontSize: "11.5px", fontWeight: 700, color: "#8a90a6", letterSpacing: ".02em", marginBottom: "9px", paddingLeft: "2px" }}>신고 후 확인</div>
+              <div className={s.istep}><div><div className={s.istepT}>주민등록등본으로 확인</div><div className={s.istepD}>신고 완료 후 주민등록등본을 발급해 새 주소가 정확히 기재되었는지 반드시 확인하세요.</div></div></div>
+            </div>
+
+            {/* 추가 권장 */}
+            <div>
+              <div style={{ fontSize: "11.5px", fontWeight: 700, color: "#2e4bd8", letterSpacing: ".02em", marginBottom: "9px", paddingLeft: "2px" }}>추가 권장</div>
+              <div className={s.istep} style={{ background: "rgba(46,75,216,0.05)", borderColor: "rgba(46,75,216,0.20)" }}>
+                <div>
+                  <div className={s.istepT} style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                    등기변동 감시 신청
+                    <span style={{ fontSize: "10px", fontWeight: 700, color: "#2e4bd8", background: "rgba(46,75,216,0.12)", padding: "2px 7px", borderRadius: "10px" }}>전입 후 권장</span>
+                  </div>
+                  <div className={s.istepD}>전입신고·확정일자로 대항력과 우선변제권을 확보했더라도, 계약 기간 중 임대인이 근저당을 새로 설정하거나 소유권이 이전되면 보증금이 위험해질 수 있습니다. VESTRA 등기변동감시를 신청하면 등기부에 변동이 생기는 즉시 알림을 받아 잔금 중단·계약 대응 등 선제 조치를 할 수 있습니다.</div>
+                  <Link href="/renewal/monitoring" style={{ display: "inline-flex", alignItems: "center", gap: "5px", marginTop: "10px", padding: "8px 14px", borderRadius: "10px", background: "#2e4bd8", color: "#fff", fontSize: "12.5px", fontWeight: 600, textDecoration: "none" }}>등기변동감시 신청하기 →</Link>
+                </div>
+              </div>
+            </div>
           </div>
-          <a href="https://www.gov.kr" target="_blank" rel="noopener noreferrer" className={s.actionLink}>정부24 전입신고 바로가기 →</a>
+          <a href="https://www.gov.kr/mw/AA020InfoCappView.do?CappBizCD=13100000016" target="_blank" rel="noopener noreferrer" className={s.actionLink}>정부24 전입신고 바로가기 →</a>
         </div>
       </div>
 
@@ -326,7 +352,7 @@ export default function JeonseRenewalContent() {
             <div className={s.istep}><div className={s.istepNum}>2</div><div><div className={s.istepT}>임대차 계약 정보 입력</div><div className={s.istepD}>임대인·임차인 정보, 계약 기간, 보증금·월세 금액, 계약 갱신 여부 등을 입력합니다.</div></div></div>
             <div className={s.istep}><div className={s.istepNum}>3</div><div><div className={s.istepT}>확정일자 자동 부여 확인</div><div className={s.istepD}>신고 완료 시 확정일자가 자동으로 부여됩니다. 별도로 주민센터를 방문할 필요가 없습니다.</div></div></div>
           </div>
-          <a href="https://rtms.molit.go.kr" target="_blank" rel="noopener noreferrer" className={s.actionLink}>부동산거래관리시스템 바로가기 →</a>
+          <a href="https://rtms.molit.go.kr/cm/lss/CmLssSttemntProcessD.do" target="_blank" rel="noopener noreferrer" className={s.actionLink}>부동산거래관리시스템 바로가기 →</a>
         </div>
       </div>
 
