@@ -4,7 +4,7 @@ import s from "../rights-renewal.module.css";
 /** 랜딩형 푸터 (회사 정보 + 링크 그룹). 정적. */
 export default function RightsRenewalFooter() {
   return (
-    <footer>
+    <footer className={s.footerBar}>
       <div className={s.footerIn}>
         <div>
           <div className={s.flogo}>
