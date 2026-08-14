@@ -144,6 +144,7 @@ export function calculateTrend(transactions: RealTransaction[]): TrendResult {
 function generateScenarios(
   currentPrice: number,
   trend: TrendResult,
+  extraGrowthFactor = 1,
 ): PredictionResult["predictions"] {
   const LT = ECONOMIC_DEFAULTS.longTermAvgGrowth;  // 장기 평균 성장률 (연 3%)
   const INF = ECONOMIC_DEFAULTS.inflationRate;      // 물가 (연 2.5%)
@@ -159,10 +160,11 @@ function generateScenarios(
 
   // 기간이 길수록 최근 추세 비중↓ + 장기평균(LT) 회귀(mean reversion) + 연 성장률 상한
   // → 최근 급등을 10년 복리로 무한 연장하는 비현실적 폭등 방지
-  // 장기(5y·10y)에는 구매력 계수를 곱해 초고가 물건의 상승 여력을 현실화
+  // 장기(5y·10y)에는 구매력 계수 + 인구/정책 계수(extraGrowthFactor)를 곱해
+  //   초고가 물건의 상승 여력과 인구 감소·고령화·규제 영향을 현실화 (단기 1y는 제외)
   const base1y = clamp(baseRate, -0.15, 0.20);
-  const base5y = clamp((baseRate * 0.35 + LT * 0.65) * ppFactor, -0.05, 0.07);
-  const base10y = clamp((baseRate * 0.15 + LT * 0.85) * ppFactor, -0.03, 0.055);
+  const base5y = clamp((baseRate * 0.35 + LT * 0.65) * ppFactor * extraGrowthFactor, -0.05, 0.07);
+  const base10y = clamp((baseRate * 0.15 + LT * 0.85) * ppFactor * extraGrowthFactor, -0.03, 0.055);
 
   const opt1y = clamp(Math.max(base1y * 1.3, INF + 0.02), -0.10, 0.25);
   const opt5y = clamp(Math.max(base5y * 1.3, INF + 0.015), -0.03, 0.09);
@@ -426,9 +428,10 @@ export function predictValue(
   rentData: RentPriceResult | null,
   jeonseRatio: number | null,
   macroFactors?: MacroEconomicFactors,
+  extraGrowthFactor = 1,
 ): PredictionResult {
   const trend = calculateTrend(transactions);
-  const predictions = generateScenarios(currentPrice, trend);
+  const predictions = generateScenarios(currentPrice, trend, extraGrowthFactor);
   const factors = generateFactors(trend, transactions.length, jeonseRatio);
   const variables = ["기준금리", "인구변동", "공급물량", "정책변화", "경제성장률", "물가상승률"];
 

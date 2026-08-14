@@ -21,6 +21,10 @@ import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { formatKRW } from "@/lib/utils";
 import { buildPolicyContext, logNewsUsage } from "@/lib/news-query";
 import { validateOrigin } from "@/lib/csrf";
+import { fetchPopulationTrends, fetchAgeGroupPopulation } from "@/lib/feasibility/api/kosis-api";
+import { POLICY_TIMELINE } from "@/lib/feasibility/static-data-policy";
+import { demandFactor, policyFactor } from "@/lib/prediction/demand-factor";
+import { buildingAgeFactor } from "@/lib/prediction/building-age-factor";
 
 const formatKoreanPrice = (won: number) => formatKRW(won, "없음");
 
@@ -185,16 +189,36 @@ export async function POST(req: NextRequest) {
     );
     const currentPrice = priceEstimation.output.estimatedPrice;
 
+    // 2.5단계: 인구·연령·정책 기반 장기 성장률 보정 계수 산출
+    // - 인구/연령은 KOSIS 실데이터(각 실패 시 kosis-api 내장 fallback), 정책은 POLICY_TIMELINE 실제값
+    // - extraGrowthFactor = demandFactor(0.90~1.05) * policyFactor(0.95~1.03)
+    // - 장기(5·10년) 시나리오에만 곱해 인구 감소·고령화·규제 영향을 반영 (단기 1년 제외)
+    const [popResult, ageGroups] = await Promise.all([
+      fetchPopulationTrends(address).catch((e) => {
+        console.warn("KOSIS 인구 추이 조회 실패 (계속 진행):", e);
+        return null;
+      }),
+      fetchAgeGroupPopulation(address).catch((e) => {
+        console.warn("KOSIS 연령대 인구 조회 실패 (계속 진행):", e);
+        return null;
+      }),
+    ]);
+    const demand = demandFactor(popResult?.trends ?? [], ageGroups ?? []);
+    const policy = policyFactor(POLICY_TIMELINE);
+    const bldgAge = buildingAgeFactor(macroFactors.buildingAge);
+    const extraGrowthFactor = demand * policy * bldgAge;
+
     // 3단계: 자체 엔진으로 가치 전망 산출 (단지 필터링 데이터 사용)
     const predictionStage = await pipeline.executeStage(
       "가치전망",
-      { currentPrice, macroFactors },
+      { currentPrice, macroFactors, demand, policy, extraGrowthFactor },
       async () => predictValue(
         currentPrice,
         filteredTx,
         filteredRent,
         filteredJeonseRatio,
         macroFactors,
+        extraGrowthFactor,
       ),
     );
     const predictionResult = predictionStage.output;
