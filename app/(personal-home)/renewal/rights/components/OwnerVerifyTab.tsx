@@ -1,3 +1,4 @@
+import { User, House, AlertTriangle } from "lucide-react";
 import s from "../rights-renewal.module.css";
 import type { UnifiedResult } from "@/components/rights/RightsResult";
 
@@ -74,7 +75,7 @@ export default function OwnerVerifyTab({ result, ownerMatch, registryOwnerMasked
         )}
         {ownerMatch === false && (
           <div className={`${s.matchBanner} ${s.matchFail}`}>
-            <span className={s.matchIco}>⚠</span>
+            <span className={s.matchIco}><AlertTriangle size={30} /></span>
             <div>
               <div className={s.matchTitle}>소유자 불일치</div>
               <div className={s.matchDesc}>입력하신 소유자명이 등기부상 소유자({registryOwner})와 다릅니다. 임대인이 실소유자가 아닐 수 있습니다.</div>
@@ -91,7 +92,7 @@ export default function OwnerVerifyTab({ result, ownerMatch, registryOwnerMasked
         {/* 소유자 / 부동산 정보 */}
         <div className={s.ovGrid}>
           <div className={s.ovCard}>
-            <div className={s.ovCardHead}>👤 등기부상 소유자</div>
+            <div className={s.ovCardHead}><User size={16} /> 등기부상 소유자</div>
             <div className={s.ovCardBody}>
               <div className={s.ovField}>
                 <div className={s.ovLabel}>소유자</div>
@@ -105,7 +106,7 @@ export default function OwnerVerifyTab({ result, ownerMatch, registryOwnerMasked
             </div>
           </div>
           <div className={s.ovCard}>
-            <div className={s.ovCardHead}>🏠 부동산 정보</div>
+            <div className={s.ovCardHead}><House size={16} /> 부동산 정보</div>
             <div className={s.ovCardBody}>
               <div className={s.ovField}>
                 <div className={s.ovLabel}>소재지</div>

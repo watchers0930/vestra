@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
+import { AlertTriangle, CheckCircle2, FileText, Siren, Lightbulb, Pin, ShieldCheck, Search, RadioTower } from "lucide-react";
 import s from "./contract-renewal.module.css";
 
 // Sample contract texts
@@ -151,7 +152,7 @@ export default function ContractRenewalClient() {
 
         <div className={s.pageWrap}>
           <div className={s.inputNotice}>
-            <span className={s.inputNoticeIco}>⚠️</span>
+            <span className={s.inputNoticeIco}><AlertTriangle size={18} /></span>
             <div>
               <div className={s.inputNoticeT}>부동산 관련 계약서만 분석이 가능합니다</div>
               <div className={s.inputNoticeS}>임대차계약서(전세·월세), 매매계약서, 분양계약서 등 부동산 거래와 직접 관련된 계약서를 입력해 주세요. 다른 종류의 계약서는 분석 결과가 부정확할 수 있습니다.</div>
@@ -213,7 +214,7 @@ export default function ContractRenewalClient() {
               <div>
                 <div className={s.inputBody}>
                   <div className={s.fileDrop} onClick={() => alert("파일 선택 (시안)")}>
-                    <div className={s.fileDropIco}>📄</div>
+                    <div className={s.fileDropIco}><FileText size={36} /></div>
                     <div className={s.fileDropT}>계약서 파일을 여기에 끌어다 놓거나 클릭하세요</div>
                     <div className={s.fileDropS}>지원 형식: PDF, DOCX, HWP · 최대 20MB</div>
                   </div>
@@ -336,7 +337,7 @@ export default function ContractRenewalClient() {
                   </div>
                 </div>
                 <div className={s.shGradeInfo}>
-                  <span className={`${s.shGradeBadge} ${s.sgbCaution}`}>⚠️ 주의 — 계약 전 검토 필요</span>
+                  <span className={`${s.shGradeBadge} ${s.sgbCaution}`}><AlertTriangle size={12} /> 주의 — 계약 전 검토 필요</span>
                   <div className={s.shProp}>전세 임대차 계약서</div>
                   <div className={s.shMeta}>역삼파크빌 101동 1504호 · 보증금 3억</div>
                 </div>
@@ -477,7 +478,7 @@ export default function ContractRenewalClient() {
                   <div className={s.secSub}>즉시 확인이 필요한 위험 요소입니다</div>
                 </div>
                 <div className={s.secBody}>
-                  <div className={`${s.issueCountBadge} ${s.icbRed}`}>🚨 긴급 1건 · 중요 1건 · 확인 2건</div>
+                  <div className={`${s.issueCountBadge} ${s.icbRed}`}><Siren size={12} /> 긴급 1건 · 중요 1건 · 확인 2건</div>
 
                   <div className={s.issueItem}>
                     <div className={s.issueSevCol}>
@@ -487,7 +488,7 @@ export default function ContractRenewalClient() {
                     <div className={s.issueInfo}>
                       <div className={s.issueTitle}>근저당 설정 미고지</div>
                       <div className={s.issueDesc}>해당 물건에 채권최고액 2억 4천만 원의 근저당이 설정되어 있으나 계약서에 이에 대한 고지가 없습니다. 경매 시 보증금 전액 회수가 불가능할 수 있습니다.</div>
-                      <div className={s.issueRecommend}>💡 권리분석 및 등기부 확인 후 특약 명시 또는 계약 재검토를 권고합니다.</div>
+                      <div className={s.issueRecommend}><Lightbulb size={12} /> 권리분석 및 등기부 확인 후 특약 명시 또는 계약 재검토를 권고합니다.</div>
                     </div>
                   </div>
 
@@ -499,7 +500,7 @@ export default function ContractRenewalClient() {
                     <div className={s.issueInfo}>
                       <div className={s.issueTitle}>계약 해지 조항 불균형</div>
                       <div className={s.issueDesc}>임대인의 해지 조건(제8조)이 임차인 해지 조건보다 광범위하게 설정되어 있습니다. 임대인이 일방적으로 계약을 종료할 수 있는 상황이 다수 포함되어 있습니다.</div>
-                      <div className={s.issueRecommend}>💡 해지 조건을 상호 대등하게 수정하거나, 위약금 조항을 추가하는 특약을 권고합니다.</div>
+                      <div className={s.issueRecommend}><Lightbulb size={12} /> 해지 조건을 상호 대등하게 수정하거나, 위약금 조항을 추가하는 특약을 권고합니다.</div>
                     </div>
                   </div>
 
@@ -511,7 +512,7 @@ export default function ContractRenewalClient() {
                     <div className={s.issueInfo}>
                       <div className={s.issueTitle}>보증금 반환 시기 모호</div>
                       <div className={s.issueDesc}>제5조의 &quot;계약 종료 후 상당한 기간 내&quot; 표현은 법적으로 불명확합니다. 반환 지연 시 분쟁 가능성이 있습니다.</div>
-                      <div className={s.issueRecommend}>💡 &quot;계약 종료일로부터 30일 이내&quot; 등 명확한 기간을 특약으로 명시하세요.</div>
+                      <div className={s.issueRecommend}><Lightbulb size={12} /> &quot;계약 종료일로부터 30일 이내&quot; 등 명확한 기간을 특약으로 명시하세요.</div>
                     </div>
                   </div>
 
@@ -523,7 +524,7 @@ export default function ContractRenewalClient() {
                     <div className={s.issueInfo}>
                       <div className={s.issueTitle}>수선 의무 범위 불명확</div>
                       <div className={s.issueDesc}>제6조 수선 의무 조항이 &quot;임차인 귀책에 의한 손상&quot;만 언급하고 있어, 자연 노후화에 대한 임대인 의무가 명시되지 않았습니다.</div>
-                      <div className={s.issueRecommend}>💡 주요 설비(보일러, 수도 등)에 대한 임대인 수선 의무를 명시하는 조항을 추가하세요.</div>
+                      <div className={s.issueRecommend}><Lightbulb size={12} /> 주요 설비(보일러, 수도 등)에 대한 임대인 수선 의무를 명시하는 조항을 추가하세요.</div>
                     </div>
                   </div>
                 </div>
@@ -688,7 +689,7 @@ export default function ContractRenewalClient() {
                     {openTerms[0] && (
                       <div className={s.termBody}>
                         <div className={s.termText}>임대인은 임대차 기간 중 본 계약 체결일 이후 이 건물에 추가로 근저당권·전세권·가압류 등 어떠한 담보권도 설정하지 아니하며, 이를 위반할 경우 임차인은 즉시 계약을 해제하고 임대인은 위약금으로 보증금의 10%를 임차인에게 지급한다.</div>
-                        <div className={s.termReason}>📌 이유: 계약 후 임대인이 근저당을 추가 설정하면 임차인의 보증금 순위가 밀려 경매 시 손해를 입을 수 있습니다.</div>
+                        <div className={s.termReason}><Pin size={12} /> 이유: 계약 후 임대인이 근저당을 추가 설정하면 임차인의 보증금 순위가 밀려 경매 시 손해를 입을 수 있습니다.</div>
                       </div>
                     )}
                   </div>
@@ -703,7 +704,7 @@ export default function ContractRenewalClient() {
                     {openTerms[1] && (
                       <div className={s.termBody}>
                         <div className={s.termText}>임대인은 임대차 계약 종료일로부터 30일 이내에 임차인의 보증금 전액을 반환하여야 하며, 반환이 지연될 경우 지연일수에 대하여 연 12%의 비율로 계산한 지연손해금을 가산하여 지급한다.</div>
-                        <div className={s.termReason}>📌 이유: 제5조의 &quot;상당한 기간&quot;을 명확히 하고, 지연 시 패널티를 규정하여 임차인 보호를 강화합니다.</div>
+                        <div className={s.termReason}><Pin size={12} /> 이유: 제5조의 &quot;상당한 기간&quot;을 명확히 하고, 지연 시 패널티를 규정하여 임차인 보호를 강화합니다.</div>
                       </div>
                     )}
                   </div>
@@ -718,7 +719,7 @@ export default function ContractRenewalClient() {
                     {openTerms[2] && (
                       <div className={s.termBody}>
                         <div className={s.termText}>임대인은 임차인이 주택도시보증공사(HUG) 또는 SGI서울보증의 전세보증보험에 가입할 수 있도록 필요한 서류 제출에 적극 협조한다. 임대인의 협조 거부로 인해 임차인이 보험 가입에 실패할 경우, 임차인은 계약을 해제할 수 있다.</div>
-                        <div className={s.termReason}>📌 이유: 보증금 3억 원 규모에서 전세보증보험은 사실상 필수입니다.</div>
+                        <div className={s.termReason}><Pin size={12} /> 이유: 보증금 3억 원 규모에서 전세보증보험은 사실상 필수입니다.</div>
                       </div>
                     )}
                   </div>
@@ -733,7 +734,7 @@ export default function ContractRenewalClient() {
                     {openTerms[3] && (
                       <div className={s.termBody}>
                         <div className={s.termText}>임대인은 임대차 기간 중 보일러, 상·하수도 배관, 전기 배선, 엘리베이터 등 주요 설비의 노후화 및 자연 손상에 의한 수선을 부담한다. 다만 임차인의 고의 또는 과실로 인한 손상의 수선 비용은 임차인이 부담한다.</div>
-                        <div className={s.termReason}>📌 이유: 수선 의무 범위를 명시하지 않으면 분쟁 시 각자의 해석 차이로 갈등이 발생합니다.</div>
+                        <div className={s.termReason}><Pin size={12} /> 이유: 수선 의무 범위를 명시하지 않으면 분쟁 시 각자의 해석 차이로 갈등이 발생합니다.</div>
                       </div>
                     )}
                   </div>
@@ -750,7 +751,7 @@ export default function ContractRenewalClient() {
                 <div className={s.secBody}>
                   <div className={s.checklist}>
                     <div className={s.checkItem}>
-                      <div className={`${s.checkIco} ${s.checkIcoDone}`}>✅</div>
+                      <div className={`${s.checkIco} ${s.checkIcoDone}`}><CheckCircle2 size={13} /></div>
                       <div className={s.checkInfo}>
                         <div className={s.checkTitle}>등기부 말소 이력 확인</div>
                         <div className={s.checkDesc}>계약 당일 등기부등본을 직접 발급하여 최신 근저당·압류 현황을 확인하세요.</div>
@@ -758,7 +759,7 @@ export default function ContractRenewalClient() {
                       <span className={`${s.checkStatus} ${s.csManual}`}>직접 확인</span>
                     </div>
                     <div className={s.checkItem}>
-                      <div className={`${s.checkIco} ${s.checkIcoWarn}`}>⚠️</div>
+                      <div className={`${s.checkIco} ${s.checkIcoWarn}`}><AlertTriangle size={13} /></div>
                       <div className={s.checkInfo}>
                         <div className={s.checkTitle}>전세보증보험 가입 가능 여부</div>
                         <div className={s.checkDesc}>현재 근저당(2.4억) + 전세보증금(3억) 합산이 KB시세의 80%를 초과할 경우 HUG 보험 가입이 불가합니다. 사전 확인 필수.</div>
@@ -766,7 +767,7 @@ export default function ContractRenewalClient() {
                       <span className={`${s.checkStatus} ${s.csWarn}`}>확인 필요</span>
                     </div>
                     <div className={s.checkItem}>
-                      <div className={`${s.checkIco} ${s.checkIcoDone}`}>✅</div>
+                      <div className={`${s.checkIco} ${s.checkIcoDone}`}><CheckCircle2 size={13} /></div>
                       <div className={s.checkInfo}>
                         <div className={s.checkTitle}>세금 체납 확인</div>
                         <div className={s.checkDesc}>국세·지방세 완납증명서를 임대인에게 요청하세요. 세금 체납이 있으면 경매 시 국세가 보증금보다 우선합니다.</div>
@@ -774,7 +775,7 @@ export default function ContractRenewalClient() {
                       <span className={`${s.checkStatus} ${s.csManual}`}>직접 확인</span>
                     </div>
                     <div className={s.checkItem}>
-                      <div className={`${s.checkIco} ${s.checkIcoDone}`}>✅</div>
+                      <div className={`${s.checkIco} ${s.checkIcoDone}`}><CheckCircle2 size={13} /></div>
                       <div className={s.checkInfo}>
                         <div className={s.checkTitle}>전입신고 및 확정일자 수령</div>
                         <div className={s.checkDesc}>잔금 지급 당일 즉시 전입신고하고 주민센터에서 확정일자를 받으세요. 대항력 취득에 필수입니다.</div>
@@ -782,7 +783,7 @@ export default function ContractRenewalClient() {
                       <span className={`${s.checkStatus} ${s.csDone}`}>완료</span>
                     </div>
                     <div className={s.checkItem}>
-                      <div className={`${s.checkIco} ${s.checkIcoWarn}`}>⚠️</div>
+                      <div className={`${s.checkIco} ${s.checkIcoWarn}`}><AlertTriangle size={13} /></div>
                       <div className={s.checkInfo}>
                         <div className={s.checkTitle}>권원보험 가입 검토</div>
                         <div className={s.checkDesc}>등기부에 나타나지 않는 위험(이중 계약, 사기 임대 등)으로부터 보증금을 보호합니다. 고액 전세의 경우 추가 보호 수단으로 고려하세요.</div>
@@ -801,7 +802,7 @@ export default function ContractRenewalClient() {
                 </div>
                 <div className={s.secBody}>
                   <div className={s.integrityBadge}>
-                    <span className={s.ibIco}>🛡️</span>
+                    <span className={s.ibIco}><ShieldCheck size={20} /></span>
                     <div>
                       <div className={s.ibT}>분석 결과 암호화 보호 중</div>
                       <div className={s.ibS}>SHA-256 해시로 리포트 무결성 검증 완료</div>
@@ -809,19 +810,19 @@ export default function ContractRenewalClient() {
                     <span className={s.ibTime}>2026.08.11 14:32</span>
                   </div>
                   <div className={s.disclaimer}>
-                    <div className={s.disclaimerT}>⚠️ 주의사항</div>
+                    <div className={s.disclaimerT}><AlertTriangle size={12} /> 주의사항</div>
                     <div className={s.disclaimerD}>본 분석 결과는 AI가 계약서 텍스트를 기반으로 생성한 참고 자료이며, 법률 자문이 아닙니다. 중요한 계약 체결 전에는 반드시 자격을 갖춘 법률 전문가(변호사, 법무사)의 검토를 받으시기 바랍니다.</div>
                   </div>
                   <div style={{ marginTop: "20px", fontSize: "13.5px", fontWeight: 700, color: "#1a1d2e", marginBottom: "12px" }}>연관 분석 서비스</div>
                   <div className={s.relatedCta}>
                     <div className={s.rctaCard} onClick={() => alert("권리분석으로 이동")}>
-                      <div className={s.rctaIco}>🔍</div>
+                      <div className={s.rctaIco}><Search size={22} /></div>
                       <div className={s.rctaT}>권리관계 분석</div>
                       <div className={s.rctaS}>등기부등본 기반 근저당·압류·가처분 등 권리 현황을 상세히 분석합니다.</div>
                       <div className={s.rctaArrow}>분석하기 →</div>
                     </div>
                     <div className={s.rctaCard} onClick={() => alert("등기감시로 이동")}>
-                      <div className={s.rctaIco}>📡</div>
+                      <div className={s.rctaIco}><RadioTower size={22} /></div>
                       <div className={s.rctaT}>등기감시 시작</div>
                       <div className={s.rctaS}>계약 체결 후 등기 변동을 실시간으로 감시하고 이상 징후를 즉시 알립니다.</div>
                       <div className={s.rctaArrow}>감시 시작 →</div>

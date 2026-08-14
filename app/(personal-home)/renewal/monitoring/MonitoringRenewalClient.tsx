@@ -2,6 +2,22 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  ShieldCheck,
+  Search,
+  Zap,
+  Lock,
+  Bell,
+  MapPin,
+  Upload,
+  Trash2,
+  AlertTriangle,
+  Folder,
+  ClipboardList,
+  Landmark,
+  Sparkles,
+  CheckCircle2,
+} from "lucide-react";
 import s from "./monitoring-renewal.module.css";
 
 type ViewType = "empty" | "list" | "add" | "detail";
@@ -116,7 +132,7 @@ export default function MonitoringRenewalClient() {
 
           {/* Empty State */}
           <div className={s.emptyWrap}>
-            <div className={s.emptyIconBox}>🛡️</div>
+            <div className={s.emptyIconBox}><ShieldCheck size={32} /></div>
             <div className={s.emptyTitle}>아직 감시 중인 물건이 없습니다</div>
             <div className={s.emptyDesc}>
               주소를 등록하면 VESTRA AI가 4시간마다 등기부를 점검하고<br />
@@ -132,17 +148,17 @@ export default function MonitoringRenewalClient() {
 
             <div className={s.whyGrid}>
               <div className={s.whyCard}>
-                <div className={s.whyIco}>🔍</div>
+                <div className={s.whyIco}><Search size={22} /></div>
                 <div className={s.whyT}>4시간 주기 자동 감시</div>
                 <div className={s.whyD}>신청사건 프리체크로 이상징후를 조기 감지하고, 실제 변동 발생 시 확정조회로 즉시 전환합니다.</div>
               </div>
               <div className={s.whyCard}>
-                <div className={s.whyIco}>⚡</div>
+                <div className={s.whyIco}><Zap size={22} /></div>
                 <div className={s.whyT}>위험 즉시 알림</div>
                 <div className={s.whyD}>압류, 근저당 설정, 소유권 변동 등 9가지 위험 유형을 위험도별로 분류하여 즉시 통보합니다.</div>
               </div>
               <div className={s.whyCard}>
-                <div className={s.whyIco}>🔐</div>
+                <div className={s.whyIco}><Lock size={22} /></div>
                 <div className={s.whyT}>블록체인 무결성 보호</div>
                 <div className={s.whyD}>등기부 기록을 블록체인 방식으로 암호화 저장하여 위변조를 원천 차단하고 법적 증명서를 발급합니다.</div>
               </div>
@@ -257,7 +273,7 @@ export default function MonitoringRenewalClient() {
                 </div>
                 <div className={s.propFooter}>
                   <div className={s.palertRow}>
-                    <span>🔔</span>
+                    <span><Bell size={16} /></span>
                     <span className={s.palertCnt}>미확인 알림 1건</span>
                     <span className={`${s.riskB} ${s.rbHigh}`}>높음</span>
                   </div>
@@ -293,7 +309,7 @@ export default function MonitoringRenewalClient() {
                 <button className={s.propCtaBtn}>최신 등기부 확인하기</button>
                 <div className={s.propFooter}>
                   <div className={s.palertRow}>
-                    <span>🔔</span>
+                    <span><Bell size={16} /></span>
                     <span className={s.palertCnt}>미확인 알림 2건</span>
                     <span className={`${s.riskB} ${s.rbCritical}`}>위험</span>
                   </div>
@@ -425,7 +441,7 @@ export default function MonitoringRenewalClient() {
                 </div>
 
                 <div className={s.mAddrPreview}>
-                  📍 서울 서초구 방배동 2523-1 302호
+                  <MapPin size={13} /> 서울 서초구 방배동 2523-1 302호
                 </div>
 
                 <hr className={s.mDivider} />
@@ -468,7 +484,7 @@ export default function MonitoringRenewalClient() {
                   <strong>발급 후 바로 업로드하세요</strong><br />반드시 인터넷등기소(iros.go.kr)에서 직접 발급한 등기부등본 PDF를 업로드하세요.
                 </div>
                 <div className={s.mDropZone}>
-                  <div className={s.mDropIco}>📤</div>
+                  <div className={s.mDropIco}><Upload size={28} /></div>
                   <div className={s.mDropT}>PDF 파일을 여기에 드래그하거나 클릭하여 선택</div>
                   <div className={s.mDropS}>PDF · 최대 10MB</div>
                 </div>
@@ -490,7 +506,7 @@ export default function MonitoringRenewalClient() {
           <div className={s.detailTop}>
             <div className={s.detailBack} onClick={() => showView("list")}>‹ 목록으로</div>
             <div className={s.detailActions}>
-              <button className={s.dBtnDel}>🗑 삭제</button>
+              <button className={s.dBtnDel}><Trash2 size={13} /> 삭제</button>
               <button className={s.dBtnPdf}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -511,7 +527,7 @@ export default function MonitoringRenewalClient() {
                   <span className={`${s.picB} ${s.picbMode}`}>계약갭 강화감시</span>
                   <span className={`${s.picB} ${s.picbSignal}`}>신청사건 감지</span>
                   <span className={`${s.picB} ${s.picbStage}`}>접수</span>
-                  <span className={`${s.picB} ${s.picbUnverified}`}>⚠ 원본 미검증</span>
+                  <span className={`${s.picB} ${s.picbUnverified}`}><AlertTriangle size={12} /> 원본 미검증</span>
                 </div>
               </div>
               <div className={s.picDays}>
@@ -534,9 +550,9 @@ export default function MonitoringRenewalClient() {
               </div>
             </div>
             <div className={s.picStats}>
-              <div className={s.pis}>📁 스냅샷 <span className={s.pisN}>3건</span></div>
-              <div className={s.pis}>🔔 미확인 알림 <span className={s.pisN} style={{ color: "#ef4444" }}>2건</span></div>
-              <div className={s.pis}>🛡️ <span className={s.pisN} style={{ color: "#22c55e" }}>보호중</span></div>
+              <div className={s.pis}><Folder size={13} /> 스냅샷 <span className={s.pisN}>3건</span></div>
+              <div className={s.pis}><Bell size={13} /> 미확인 알림 <span className={s.pisN} style={{ color: "#ef4444" }}>2건</span></div>
+              <div className={s.pis}><ShieldCheck size={13} /> <span className={s.pisN} style={{ color: "#22c55e" }}>보호중</span></div>
             </div>
           </div>
 
@@ -545,12 +561,12 @@ export default function MonitoringRenewalClient() {
             <div className={s.detEyebrow}>Alert Timeline</div>
             <div className={s.detTitle}>변동 알림</div>
             <div className={s.detSub}>감시 기간 중 감지된 등기 변동 이력</div>
-            <div className={`${s.detCountBadge} ${s.dcbAmber}`}>🔔 총 3건의 변동 감지</div>
+            <div className={`${s.detCountBadge} ${s.dcbAmber}`}><Bell size={13} /> 총 3건의 변동 감지</div>
 
             {/* Alert 1: 압류 설정 [위험] unread — EXPANDED */}
             <div className={s.alertItem}>
               <div className={s.aiHead}>
-                <div className={`${s.aiIco} ${s.aiIcoCritical}`}>⚠️</div>
+                <div className={`${s.aiIco} ${s.aiIcoCritical}`}><AlertTriangle size={15} /></div>
                 <div className={s.aiInfo}>
                   <div className={s.aiType}>압류 설정</div>
                   <div className={s.aiSumm}>체납처분 국세 3,200만원 압류 설정됨</div>
@@ -564,7 +580,7 @@ export default function MonitoringRenewalClient() {
               <div className={s.aiBody}>
                 <div className={s.aiDetail}>갑구에 국세 체납에 따른 압류가 설정되었습니다. 채권자: 서초세무서 / 채권금액: 3,200만원 / 설정일: 2026.08.09</div>
                 <div className={s.aiWhy}>
-                  <span className={s.aiWhyIco}>✦</span>
+                  <span className={s.aiWhyIco}><Sparkles size={13} /></span>
                   <div className={s.aiWhyTxt}>소유자의 세금 미납으로 인한 압류입니다. 압류가 해소되지 않으면 경매로 이어질 수 있습니다. 소유자에게 즉시 확인하고, 계약을 보류하는 것을 권장합니다.</div>
                 </div>
                 <div className={s.aiBtns}>
@@ -577,7 +593,7 @@ export default function MonitoringRenewalClient() {
             {/* Alert 2: 신청사건 접수 [보통] unread */}
             <div className={s.alertItem}>
               <div className={s.aiHead}>
-                <div className={`${s.aiIco} ${s.aiIcoMedium}`}>📋</div>
+                <div className={`${s.aiIco} ${s.aiIcoMedium}`}><ClipboardList size={15} /></div>
                 <div className={s.aiInfo}>
                   <div className={s.aiType}>신청사건 접수</div>
                   <div className={s.aiSumm}>등기 신청사건이 법원에 접수됨</div>
@@ -593,7 +609,7 @@ export default function MonitoringRenewalClient() {
             {/* Alert 3: 근저당 설정 [높음] read */}
             <div className={s.alertItem}>
               <div className={s.aiHead}>
-                <div className={`${s.aiIco} ${s.aiIcoHigh}`}>🏦</div>
+                <div className={`${s.aiIco} ${s.aiIcoHigh}`}><Landmark size={15} /></div>
                 <div className={s.aiInfo}>
                   <div className={s.aiType}>근저당권 설정</div>
                   <div className={s.aiSumm}>채권최고액 6억원 근저당 설정됨 — ○○은행</div>
@@ -612,7 +628,7 @@ export default function MonitoringRenewalClient() {
             <div className={s.detEyebrow}>Registry Snapshot</div>
             <div className={s.detTitle}>등기부 기록 이력</div>
             <div className={s.detSub}>변동 감시 중 저장된 등기부 사본</div>
-            <div className={`${s.detCountBadge} ${s.dcbGreen}`}>🔐 총 3건의 등기부 사본이 안전하게 보관됨</div>
+            <div className={`${s.detCountBadge} ${s.dcbGreen}`}><Lock size={13} /> 총 3건의 등기부 사본이 안전하게 보관됨</div>
 
             <div className={s.snapChain}>
 
@@ -625,7 +641,7 @@ export default function MonitoringRenewalClient() {
                     <span className={s.snapT}>2026.08.09 · 15:31</span>
                   </div>
                   <div className={s.snapHash}>
-                    <span className={s.snapHashIco}>🔐</span>
+                    <span className={s.snapHashIco}><Lock size={13} /></span>
                     <div>
                       <div className={s.snapHashL}>디지털 지문</div>
                       <div className={s.snapHashV}>a9f2c831···e4b17d92</div>
@@ -634,7 +650,7 @@ export default function MonitoringRenewalClient() {
                   <div className={s.snapSecs}>
                     <span className={s.snapSec}>표제부</span>
                     <span className={s.snapSec}>전유부분</span>
-                    <span className={s.snapSec} style={{ background: "#fee2e2", color: "#b91c1c" }}>갑구 ⚠</span>
+                    <span className={s.snapSec} style={{ background: "#fee2e2", color: "#b91c1c" }}>갑구 <AlertTriangle size={12} /></span>
                     <span className={s.snapSec}>을구</span>
                   </div>
                 </div>
@@ -651,7 +667,7 @@ export default function MonitoringRenewalClient() {
                     <span className={s.snapT}>2026.07.15 · 16:02</span>
                   </div>
                   <div className={s.snapHash}>
-                    <span className={s.snapHashIco}>🔐</span>
+                    <span className={s.snapHashIco}><Lock size={13} /></span>
                     <div>
                       <div className={s.snapHashL}>디지털 지문</div>
                       <div className={s.snapHashV}>3c8d1a47···b29f6e01</div>
@@ -678,7 +694,7 @@ export default function MonitoringRenewalClient() {
                     <span className={s.snapT}>2026.07.15 · 09:14</span>
                   </div>
                   <div className={s.snapHash}>
-                    <span className={s.snapHashIco}>🔐</span>
+                    <span className={s.snapHashIco}><Lock size={13} /></span>
                     <div>
                       <div className={s.snapHashL}>디지털 지문</div>
                       <div className={s.snapHashV}>f14c9b2e···7a30d851</div>
@@ -703,7 +719,7 @@ export default function MonitoringRenewalClient() {
             <div className={s.detSub} style={{ marginBottom: "16px" }}>블록체인 암호화 기반으로 기록 변조 여부를 검증합니다</div>
 
             <div className={s.integWarn}>
-              <span className={s.integWarnIco}>⚠️</span>
+              <span className={s.integWarnIco}><AlertTriangle size={18} /></span>
               <div>
                 <div className={s.integWarnT}>원본 진위 미검증 물건</div>
                 <div className={s.integWarnD}>이 물건은 공식 등기 연계 없이 PDF로 직접 등록되었습니다. Vestra 내부 기록의 변조만 검증하며, 최초 PDF 원본 진위는 인터넷등기소에서 직접 확인하세요.</div>
@@ -723,23 +739,23 @@ export default function MonitoringRenewalClient() {
             {/* Result (shown after verification) */}
             <div className={s.integResult}>
               <div className={s.integResultRow}>
-                <span className={s.integResultIco}>✅</span>
+                <span className={s.integResultIco}><CheckCircle2 size={22} /></span>
                 <span className={s.integResultL}>위변조 없음 확인</span>
               </div>
               <div className={s.integResultS}>전체 3건의 기록을 검사했습니다 · 모든 스냅샷이 무결합니다</div>
               <div className={s.integChecks}>
                 <div className={s.integCheck}>
-                  <div className={s.integCheckIco}>✅</div>
+                  <div className={s.integCheckIco}><CheckCircle2 size={16} /></div>
                   <div className={s.integCheckT}>해시 체인 검증</div>
                   <div className={s.integCheckS}>블록체인 연결 무결성</div>
                 </div>
                 <div className={s.integCheck}>
-                  <div className={s.integCheckIco}>✅</div>
+                  <div className={s.integCheckIco}><CheckCircle2 size={16} /></div>
                   <div className={s.integCheckT}>전자 서명 확인</div>
                   <div className={s.integCheckS}>Ed25519 디지털 서명</div>
                 </div>
                 <div className={s.integCheck}>
-                  <div className={s.integCheckIco}>✅</div>
+                  <div className={s.integCheckIco}><CheckCircle2 size={16} /></div>
                   <div className={s.integCheckT}>내용 일치 확인</div>
                   <div className={s.integCheckS}>Merkle Tree 검증</div>
                 </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Train, GraduationCap, Hospital, ShoppingCart, Leaf, Sparkles, Eye, EyeOff } from "lucide-react";
 import KakaoScript from "@/components/common/KakaoScript";
 import {
   useNeighborhoodData,
@@ -10,11 +11,11 @@ import s from "../jeonse-renewal.module.css";
 
 // 카테고리 표시 메타 (시안 catMeta)
 const CAT_META = [
-  { key: "transport", label: "교통", icon: "🚇", color: "#0071e3", weight: "25%" },
-  { key: "education", label: "교육", icon: "🎓", color: "#6e3de8", weight: "20%" },
-  { key: "medical", label: "의료", icon: "🏥", color: "#ff3b30", weight: "20%" },
-  { key: "convenience", label: "편의", icon: "🛒", color: "#1a9e45", weight: "15%" },
-  { key: "living", label: "생활", icon: "🌿", color: "#b86f00", weight: "20%" },
+  { key: "transport", label: "교통", Icon: Train, color: "#0071e3", weight: "25%" },
+  { key: "education", label: "교육", Icon: GraduationCap, color: "#6e3de8", weight: "20%" },
+  { key: "medical", label: "의료", Icon: Hospital, color: "#ff3b30", weight: "20%" },
+  { key: "convenience", label: "편의", Icon: ShoppingCart, color: "#1a9e45", weight: "15%" },
+  { key: "living", label: "생활", Icon: Leaf, color: "#b86f00", weight: "20%" },
 ] as const;
 
 type CatKey = (typeof CAT_META)[number]["key"];
@@ -164,11 +165,11 @@ export function JeonseEnvAnalysis({ active = true }: { active?: boolean }) {
             <h2 className={s.envHeadTitle}>주변 환경 분석</h2>
             <p className={s.envHeadSub}>교통 · 교육 · 의료 · 편의 · 생활 환경을<br />AI가 종합 점수로 분석합니다</p>
             <div className={s.envHdChips}>
-              <span className={s.envHdChip} style={{ color: "#4da6ff" }}>🚇 교통</span>
-              <span className={s.envHdChip} style={{ color: "#b388ff" }}>🎓 교육</span>
-              <span className={s.envHdChip} style={{ color: "#ff8080" }}>🏥 의료</span>
-              <span className={s.envHdChip} style={{ color: "#69e08a" }}>🛒 편의</span>
-              <span className={s.envHdChip} style={{ color: "#ffcc66" }}>🌿 생활</span>
+              <span className={s.envHdChip} style={{ color: "#4da6ff" }}><Train size={12} /> 교통</span>
+              <span className={s.envHdChip} style={{ color: "#b388ff" }}><GraduationCap size={12} /> 교육</span>
+              <span className={s.envHdChip} style={{ color: "#ff8080" }}><Hospital size={12} /> 의료</span>
+              <span className={s.envHdChip} style={{ color: "#69e08a" }}><ShoppingCart size={12} /> 편의</span>
+              <span className={s.envHdChip} style={{ color: "#ffcc66" }}><Leaf size={12} /> 생활</span>
             </div>
           </div>
         </div>
@@ -269,7 +270,7 @@ export function JeonseEnvAnalysis({ active = true }: { active?: boolean }) {
                     const cat = result.categories[c.key];
                     return (
                       <span key={c.key} className={s.envCatBadge} style={{ background: `${c.color}22`, color: c.color }}>
-                        {c.icon} {c.label} {cat.score}
+                        <c.Icon size={12} /> {c.label} {cat.score}
                       </span>
                     );
                   })}
@@ -291,7 +292,7 @@ export function JeonseEnvAnalysis({ active = true }: { active?: boolean }) {
 
               {/* AI 코멘트 */}
               <div className={s.envAi}>
-                <span className={s.envAiIco}>✦</span>
+                <Sparkles size={14} className={s.envAiIco} />
                 <p className={s.envAiTxt}>{result.aiComment}</p>
               </div>
 
@@ -316,7 +317,7 @@ export function JeonseEnvAnalysis({ active = true }: { active?: boolean }) {
                         style={{ border: `1px solid ${f.color}`, color: f.color, background: `${f.color}22` }}
                         onClick={() => toggleFacility(key)}
                       >
-                        <span style={{ marginRight: 2 }}>{visible ? "👁" : "🚫"}</span> {f.label} ({f.count})
+                        {visible ? <Eye size={11} /> : <EyeOff size={11} />} {f.label} ({f.count})
                       </button>
                     );
                   })}
@@ -332,7 +333,7 @@ export function JeonseEnvAnalysis({ active = true }: { active?: boolean }) {
                   return (
                     <div key={c.key} className={s.envAcc}>
                       <button className={s.envAccBtn} onClick={() => toggleCat(c.key)}>
-                        <div className={s.envAccIco} style={{ background: `${c.color}22` }}>{c.icon}</div>
+                        <div className={s.envAccIco} style={{ background: `${c.color}22` }}><c.Icon size={15} color={c.color} /></div>
                         <div className={s.envAccLw}>
                           <div className={s.envAccLt}>{c.label}<span className={s.envAccWt}>{c.weight}</span></div>
                           <div className={s.envAccBr}>

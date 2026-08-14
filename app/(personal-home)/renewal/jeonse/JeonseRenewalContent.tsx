@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { MapPin, FileText, Paperclip, AlertTriangle } from "lucide-react";
 import s from "./jeonse-renewal.module.css";
 import JeonseRenewalNav from "./components/JeonseRenewalNav";
 import { JeonseEnvAnalysis } from "./components/JeonseEnvAnalysis";
@@ -158,13 +159,13 @@ export default function JeonseRenewalContent() {
                     className={`${s.amodeBtn}${mode === "addr" ? " " + s.on : ""}`}
                     onClick={() => setMode("addr")}
                   >
-                    📍 주소 입력
+                    <MapPin size={15} /> 주소 입력
                   </button>
                   <button
                     className={`${s.amodeBtn}${mode === "file" ? " " + s.on : ""}`}
                     onClick={() => setMode("file")}
                   >
-                    📄 등기부등본 업로드
+                    <FileText size={15} /> 등기부등본 업로드
                   </button>
                 </div>
 
@@ -217,7 +218,7 @@ export default function JeonseRenewalContent() {
                       handleFile(e.dataTransfer.files);
                     }}
                   >
-                    <div className={s.dropIcon}>📎</div>
+                    <div className={s.dropIcon}><Paperclip size={32} /></div>
                     <div className={s.dropTitle}>파일을 끌어다 놓거나 클릭하여 업로드</div>
                     <div className={s.dropDesc}>
                       등기부등본 PDF 또는 이미지 파일을 업로드하면<br />
@@ -238,7 +239,7 @@ export default function JeonseRenewalContent() {
                     onChange={(e) => handleFile(e.target.files)}
                   />
                   <div className={`${s.fileSelected}${fileSelected ? " " + s.show : ""}`}>
-                    <span>📄</span>
+                    <FileText size={14} />
                     <span className={s.fileName}>{fileName}</span>
                     <button className={s.fileDel} onClick={clearFile}>×</button>
                   </div>
@@ -267,7 +268,7 @@ export default function JeonseRenewalContent() {
                   <div className={s.resultKpiCard}>
                     <div className={s.resultKpiLabel}>안전 점수</div>
                     <div className={s.resultKpiVal}>72<span className={s.resultKpiUnit}>점</span></div>
-                    <div className={s.resultKpiTag} style={{ color: "#b45309" }}>⚠ 주의 필요</div>
+                    <div className={s.resultKpiTag} style={{ color: "#b45309" }}><AlertTriangle size={12} style={{ verticalAlign: "-2px" }} /> 주의 필요</div>
                   </div>
                   <div className={s.resultKpiCard}>
                     <div className={s.resultKpiLabel}>전세가율 (LTV)</div>
@@ -295,7 +296,7 @@ export default function JeonseRenewalContent() {
                         <div className={s.gaugeU}>/ 100점</div>
                       </div>
                     </div>
-                    <div style={{ marginTop: "8px" }}><span className={s.gaugeGrade}>⚠ 주의 필요</span></div>
+                    <div style={{ marginTop: "8px" }}><span className={s.gaugeGrade}><AlertTriangle size={14} style={{ verticalAlign: "-2px" }} /> 주의 필요</span></div>
                     <div className={s.rmeta} style={{ justifyContent: "center", gap: "10px", marginTop: "8px" }}>
                       <span>2026.08.10</span><span>6개 항목</span>
                     </div>

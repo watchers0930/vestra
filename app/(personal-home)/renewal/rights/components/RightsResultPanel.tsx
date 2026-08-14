@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { AlertTriangle, Ban } from "lucide-react";
 import s from "../rights-renewal.module.css";
 import type { UnifiedResult } from "@/components/rights/RightsResult";
 import { AiDisclaimer } from "@/components/common";
@@ -47,7 +48,7 @@ export default function RightsResultPanel({
     return (
       <div className={s.rcard}>
         <div style={{ textAlign: "center", padding: "32px 16px" }}>
-          <div style={{ fontSize: "34px", marginBottom: "12px" }}>⚠️</div>
+          <div style={{ fontSize: "34px", marginBottom: "12px" }}><AlertTriangle size={34} /></div>
           <p style={{ fontSize: "16px", fontWeight: 700, color: "#b91c1c", marginBottom: "8px" }}>
             분석에 실패했습니다
           </p>
@@ -86,7 +87,7 @@ export default function RightsResultPanel({
         style={{ border: "1.5px solid #ff3b30", background: "rgba(255,59,48,0.04)" }}
       >
         <div style={{ textAlign: "center", padding: "20px 8px" }}>
-          <div style={{ fontSize: "34px", marginBottom: "12px" }}>🚫</div>
+          <div style={{ fontSize: "34px", marginBottom: "12px" }}><Ban size={34} /></div>
           <p style={{ fontSize: "17px", fontWeight: 800, color: "#1d1d1f", marginBottom: "10px" }}>
             소유자 불일치 — 분석 결과 제공 불가
           </p>

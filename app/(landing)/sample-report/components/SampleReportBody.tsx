@@ -1,3 +1,5 @@
+import { AlertTriangle, Info, Zap } from "lucide-react";
+
 const RIGHTS_ITEMS = [
   { label: "소유권", status: "정상", detail: "단독 소유 (김○○), 이전 이력 없음", ok: true },
   { label: "근저당권", status: "없음", detail: "설정된 근저당 없음 — 매우 안전", ok: true },
@@ -8,9 +10,9 @@ const RIGHTS_ITEMS = [
 ];
 
 const RISK_ITEMS = [
-  { level: "주의", icon: "⚠️", title: "임대인 세금 체납 여부 미확인", desc: "국세·지방세 체납 여부는 임대인에게 직접 납세 증명서를 요청하세요." },
-  { level: "확인", icon: "ℹ️", title: "전입신고 및 확정일자 취득 필요", desc: "계약 후 즉시 전입신고하고 확정일자를 받아 대항력을 확보하세요." },
-  { level: "확인", icon: "ℹ️", title: "관리비 미납 이력 확인 권장", desc: "관리비 장기 미납 이력은 매도 의사 신호일 수 있어 관리사무소에 확인하세요." },
+  { level: "주의", Icon: AlertTriangle, title: "임대인 세금 체납 여부 미확인", desc: "국세·지방세 체납 여부는 임대인에게 직접 납세 증명서를 요청하세요." },
+  { level: "확인", Icon: Info, title: "전입신고 및 확정일자 취득 필요", desc: "계약 후 즉시 전입신고하고 확정일자를 받아 대항력을 확보하세요." },
+  { level: "확인", Icon: Info, title: "관리비 미납 이력 확인 권장", desc: "관리비 장기 미납 이력은 매도 의사 신호일 수 있어 관리사무소에 확인하세요." },
 ];
 
 const PRICE_DATA = [
@@ -97,7 +99,7 @@ export function SampleReportBody() {
               item.level === "주의" ? "bg-amber-50 border border-amber-100" : "bg-[#f5f5f7]"
             }`}>
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-sm">{item.icon}</span>
+                <span className="text-sm"><item.Icon size={15} className={item.level === "주의" ? "text-amber-600" : "text-[#6e6e73]"} /></span>
                 <span className={`text-[10px] font-bold tracking-widest uppercase ${
                   item.level === "주의" ? "text-amber-600" : "text-[#6e6e73]"
                 }`}>{item.level}</span>
@@ -123,7 +125,7 @@ export function SampleReportBody() {
           전세권 설정을 추가로 검토하시면 법적 보호가 한층 강화됩니다.
         </p>
         <div className="mt-5 flex items-center gap-2 text-xs text-[#86868b]">
-          <span>⚡</span>
+          <Zap size={14} />
           <span>본 리포트는 VESTRA AI가 공공데이터를 기반으로 생성한 참고용 분석입니다. 법적 효력이 없으며 전문가 상담을 병행하시기 바랍니다.</span>
         </div>
       </div>

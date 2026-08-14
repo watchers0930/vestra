@@ -60,7 +60,7 @@
 /* ── ANALYSIS INPUT CARD ── */
 .acard{background:#fff;border:1px solid #e0e3ef;border-radius:16px;padding:32px;margin-bottom:48px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
 .amodeToggle{display:flex;background:#f4f6fb;border-radius:10px;padding:4px;margin-bottom:28px;width:100%}
-.amodeBtn{flex:1;text-align:center;padding:9px 0;border-radius:8px;font-size:13.5px;font-family:inherit;font-weight:500;color:#888;background:none;border:none;cursor:pointer;transition:all .15s}
+.amodeBtn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 0;border-radius:8px;font-size:13.5px;font-family:inherit;font-weight:500;color:#888;background:none;border:none;cursor:pointer;transition:all .15s}
 .amodeBtn.on{background:#fff;color:#2e4bd8;font-weight:600;box-shadow:0 1px 6px rgba(0,0,0,.08)}
 
 /* address form */
