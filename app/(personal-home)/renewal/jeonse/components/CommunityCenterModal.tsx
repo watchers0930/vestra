@@ -80,8 +80,12 @@ export function CommunityCenterModal({ open, onClose }: Props) {
       const oOverlay = new kakao.maps.CustomOverlay({
         map: mapInst.current,
         position: opos,
-        yAnchor: 1.35,
-        content: `<div style="background:#0071e3;color:#fff;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.22);border:2px solid #fff">📍 출발 (내 주소)</div>`,
+        yAnchor: 1.0,
+        content: `<div style="display:flex;flex-direction:column;align-items:center;pointer-events:none">
+          <div style="background:#0071e3;color:#fff;padding:3px 9px;border-radius:12px;font-size:10.5px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.22);border:2px solid #fff">내 주소</div>
+          <div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:9px solid #0071e3;margin-top:-1px;filter:drop-shadow(0 2px 1px rgba(0,0,0,0.15))"></div>
+          <div style="width:9px;height:9px;border-radius:50%;background:#0071e3;border:2px solid #fff;margin-top:2px;box-shadow:0 2px 5px rgba(0,0,0,0.2)"></div>
+        </div>`,
       });
       markersRef.current.push(oOverlay);
       bounds.extend(opos);
@@ -89,13 +93,7 @@ export function CommunityCenterModal({ open, onClose }: Props) {
     centers.forEach((c) => {
       const pos = new kakao.maps.LatLng(c.lat, c.lng);
       const marker = new kakao.maps.Marker({ map: mapInst.current, position: pos });
-      const overlay = new kakao.maps.CustomOverlay({
-        map: mapInst.current,
-        position: pos,
-        yAnchor: 2.1,
-        content: `<div style="background:#2e4bd8;color:#fff;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.2)">${c.name.length > 12 ? c.name.slice(0, 12) + "…" : c.name}</div>`,
-      });
-      markersRef.current.push(marker, overlay);
+      markersRef.current.push(marker);
       bounds.extend(pos);
     });
     mapInst.current.setBounds(bounds);
