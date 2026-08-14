@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import s from "./listings-list.module.css";
+import RenewalGnb from "../_shared/RenewalGnb";
 import { useListings, type ListingType } from "@/app/(app)/listings/hooks/useListings";
 import { ListingCard } from "@/app/(app)/listings/components/ListingCard";
 
@@ -78,7 +78,6 @@ function formatEok(won: number): string {
 type DropdownKey = 'type' | 'trade' | 'size' | null;
 
 export default function ListingsListClient() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<DropdownKey>(null);
   const router = useRouter();
   const [dropdownLabels, setDropdownLabels] = useState({
@@ -215,53 +214,7 @@ export default function ListingsListClient() {
   return (
     <div className={s.page}>
       {/* NAV */}
-      <nav>
-        <div className={s.navInner}>
-          <Link href="/" className={s.navLogo}>
-            <div className={s.logoIcon}>V</div>
-            <span className={s.logoText}>VESTRA</span>
-          </Link>
-          <ul className={s.navMenu}>
-            <li><Link href="/renewal/listings-list" className={s.active}>매물검색</Link></li>
-            <li><Link href="/renewal/jeonse">전세보호</Link></li>
-            <li><Link href="/renewal/rights">권리분석</Link></li>
-            <li><Link href="/renewal/monitoring">등기감시</Link></li>
-            <li><Link href="/renewal/contract">계약검토</Link></li>
-            <li><Link href="/prediction">시세전망</Link></li>
-            <li><Link href="/expert-connect">전문가상담</Link></li>
-          </ul>
-          <div className={s.navAuth}>
-            <Link href="/login">로그인</Link>
-            <span className={s.divider}>|</span>
-            <Link href="/profile">마이페이지</Link>
-            <span className={s.divider}>|</span>
-            <Link href="/signup">회원가입</Link>
-          </div>
-          <button
-            className={`${s.navHamburger} ${menuOpen ? s.open : ''}`}
-            aria-label="메뉴"
-            onClick={() => setMenuOpen((o) => !o)}
-          >
-            <span></span><span></span><span></span>
-          </button>
-        </div>
-        <ul className={`${s.navMobileMenu} ${menuOpen ? s.open : ''}`}>
-          <li><Link href="/renewal/listings-list">매물검색</Link></li>
-          <li><Link href="/renewal/jeonse">전세보호</Link></li>
-          <li><Link href="/renewal/rights">권리분석</Link></li>
-          <li><Link href="/renewal/monitoring">등기감시</Link></li>
-          <li><Link href="/renewal/contract">계약검토</Link></li>
-          <li><Link href="/prediction">시세전망</Link></li>
-          <li><Link href="/expert-connect">전문가상담</Link></li>
-          <li>
-            <div className={s.navMobileAuth}>
-              <Link href="/login">로그인</Link>
-              <Link href="/profile">마이페이지</Link>
-              <Link href="/signup">회원가입</Link>
-            </div>
-          </li>
-        </ul>
-      </nav>
+      <RenewalGnb active="listings" />
 
       {/* SUB HERO */}
       <section className={s.subHero}>

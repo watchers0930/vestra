@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import s from "./rights-renewal.module.css";
 import { useRightsAnalysis } from "@/app/(app)/rights/hooks/useRightsAnalysis";
-import RightsRenewalNav from "./components/RightsRenewalNav";
+import RenewalGnb from "../_shared/RenewalGnb";
 import RightsRenewalFooter from "./components/RightsRenewalFooter";
 import RightsAnalysisForm from "./components/RightsAnalysisForm";
 import RightsResultPanel from "./components/RightsResultPanel";
@@ -51,7 +51,7 @@ export default function RightsRenewalClient() {
 
   return (
     <>
-      <RightsRenewalNav />
+      <RenewalGnb active="rights" />
 
       {/* SUB HERO */}
       <section className={s.subHero}>

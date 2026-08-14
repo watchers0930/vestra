@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import {
   ShieldCheck,
@@ -19,6 +18,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import s from "./monitoring-renewal.module.css";
+import RenewalGnb from "../_shared/RenewalGnb";
 
 type ViewType = "empty" | "list" | "add" | "detail";
 type ModalTabType = "addr" | "pdf";
@@ -60,28 +60,7 @@ export default function MonitoringRenewalClient() {
       </div>
 
       {/* NAV */}
-      <nav className={s.nav}>
-        <div className={s.navInner}>
-          <Link href="/home" className={s.navLogo}>
-            <div className={s.logoIcon}>V</div>
-            <span className={s.logoText}>VESTRA</span>
-          </Link>
-          <ul className={s.navMenu}>
-            <li><Link href="/renewal/listings-list">매물검색</Link></li>
-            <li><Link href="/renewal/jeonse">전세보호</Link></li>
-            <li><Link href="/renewal/rights">권리분석</Link></li>
-            <li><Link href="/renewal/monitoring" className="active">등기감시</Link></li>
-            <li><Link href="/renewal/contract">계약검토</Link></li>
-            <li><Link href="/renewal/price-map">시세지도</Link></li>
-            <li><Link href="/expert-connect">전문가상담</Link></li>
-          </ul>
-          <div className={s.navAuth}>
-            <a href="#">홍길동</a><span className={s.div}>|</span>
-            <a href="#">마이페이지</a><span className={s.div}>|</span>
-            <a href="#">로그아웃</a>
-          </div>
-        </div>
-      </nav>
+      <RenewalGnb active="monitoring" />
 
       {/* ██████████ VIEW: EMPTY LANDING ██████████ */}
       <div className={`${s.view} ${activeView === "empty" ? s.on : ""}`} id="view-empty">

@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import s from "./jeonse-renewal.module.css";
-import JeonseRenewalNav from "./components/JeonseRenewalNav";
+import RenewalGnb from "../_shared/RenewalGnb";
 import { JeonseEnvAnalysis } from "./components/JeonseEnvAnalysis";
 import { JeonseSafetyAnalysis } from "./components/JeonseSafetyAnalysis";
 import { CommunityCenterModal } from "./components/CommunityCenterModal";
@@ -49,7 +49,7 @@ export default function JeonseRenewalContent() {
 
   return (
     <>
-      <JeonseRenewalNav />
+      <RenewalGnb active="jeonse" />
 
       {/* SUB HERO */}
       <section className={s.subHero}>

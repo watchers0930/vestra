@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
 import s from "./price-map-renewal.module.css";
+import RenewalGnb from "../_shared/RenewalGnb";
 import KakaoScript from "@/components/common/KakaoScript";
 import { usePriceMap } from "@/app/(map)/price-map/hooks/usePriceMap";
 import { usePredictionData } from "@/app/(app)/prediction/hooks/usePredictionData";
@@ -57,28 +57,7 @@ export default function PriceMapRenewalClient() {
       <KakaoScript />
 
       {/* NAV */}
-      <nav>
-        <div className={s.navInner}>
-          <a href="#" className={s.navLogo}>
-            <div className={s.logoIcon}>V</div>
-            <span className={s.logoText}>VESTRA</span>
-          </a>
-          <ul className={s.navMenu}>
-            <li><Link href="/renewal/listings-list">매물검색</Link></li>
-            <li><Link href="/renewal/jeonse">전세보호</Link></li>
-            <li><Link href="/renewal/rights">권리분석</Link></li>
-            <li><Link href="/renewal/monitoring">등기감시</Link></li>
-            <li><Link href="/renewal/contract">계약검토</Link></li>
-            <li><a href="/renewal/price-map" className="active">시세지도</a></li>
-            <li><Link href="/expert-connect">전문가상담</Link></li>
-          </ul>
-          <div className={s.navAuth}>
-            <a href="#">홍길동</a><span className={s.div}>|</span>
-            <a href="#">마이페이지</a><span className={s.div}>|</span>
-            <a href="#">로그아웃</a>
-          </div>
-        </div>
-      </nav>
+      <RenewalGnb active="price-map" />
 
       {/* MAP SHELL */}
       <div className={s.mapShell}>

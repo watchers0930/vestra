@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import s from "./listings-map.module.css";
+import RenewalGnb from "../_shared/RenewalGnb";
 import type { MapMarker } from "@/app/(app)/listings/components/KakaoMarkersMap";
 import { ClusterMarkerMap } from "./ClusterMarkerMap";
 import { MapSlidePanelPhotos } from "@/app/(app)/listings/components/MapSlidePanelPhotos";
@@ -60,9 +61,6 @@ const FILTER_OPTIONS: Record<FilterKey, string[]> = {
 };
 
 export default function ListingsMapClient() {
-  // Nav hamburger
-  const [menuOpen, setMenuOpen] = useState(false);
-
   // Dropdown filter
   const [openDropdown, setOpenDropdown] = useState<FilterKey | null>(null);
   const [filterLabels, setFilterLabels] = useState<Record<FilterKey, string>>({
@@ -286,85 +284,7 @@ export default function ListingsMapClient() {
   return (
     <>
       {/* NAV */}
-      <nav className={s.nav}>
-        <div className={s.navInner}>
-          <Link href="/" className={s.navLogo}>
-            <div className={s.logoIcon}>V</div>
-            <span className={s.logoText}>VESTRA</span>
-          </Link>
-          <ul className={s.navMenu}>
-            <li>
-              <Link href="/listings" className="active">
-                매물검색
-              </Link>
-            </li>
-            <li>
-              <Link href="/renewal/jeonse">전세보호</Link>
-            </li>
-            <li>
-              <Link href="/renewal/rights">권리분석</Link>
-            </li>
-            <li>
-              <Link href="/renewal/monitoring">등기감시</Link>
-            </li>
-            <li>
-              <Link href="/renewal/contract">계약검토</Link>
-            </li>
-            <li>
-              <Link href="/prediction">시세전망</Link>
-            </li>
-            <li>
-              <Link href="/expert-connect">전문가상담</Link>
-            </li>
-          </ul>
-          <div className={s.navAuth}>
-            <Link href="/login">로그인</Link>
-            <span className={s.divider}>|</span>
-            <Link href="/profile">마이페이지</Link>
-            <span className={s.divider}>|</span>
-            <Link href="/signup">회원가입</Link>
-          </div>
-          <button
-            className={`${s.navHamburger} ${menuOpen ? s.open : ""}`}
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-label="메뉴"
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-        </div>
-        <ul className={`${s.navMobileMenu} ${menuOpen ? s.open : ""}`}>
-          <li>
-            <Link href="/renewal/listings-list">매물검색</Link>
-          </li>
-          <li>
-            <Link href="/renewal/jeonse">전세보호</Link>
-          </li>
-          <li>
-            <Link href="/renewal/rights">권리분석</Link>
-          </li>
-          <li>
-            <Link href="/renewal/monitoring">등기감시</Link>
-          </li>
-          <li>
-            <Link href="/renewal/contract">계약검토</Link>
-          </li>
-          <li>
-            <Link href="/prediction">시세전망</Link>
-          </li>
-          <li>
-            <Link href="/expert-connect">전문가상담</Link>
-          </li>
-          <li>
-            <div className={s.navMobileAuth}>
-              <Link href="/login">로그인</Link>
-              <Link href="/profile">마이페이지</Link>
-              <Link href="/signup">회원가입</Link>
-            </div>
-          </li>
-        </ul>
-      </nav>
+      <RenewalGnb active="listings" />
 
       {/* SUB HERO */}
       <section className={s.subHero}>
