@@ -1,24 +1,10 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { MapPin, FileText, Paperclip, AlertTriangle } from "lucide-react";
 import s from "./jeonse-renewal.module.css";
 import JeonseRenewalNav from "./components/JeonseRenewalNav";
 import { JeonseEnvAnalysis } from "./components/JeonseEnvAnalysis";
-
-const ADDR_DB = [
-  { zip: "06253", road: "서울특별시 강남구 강남대로 354", jibun: "역삼동 837-34", bldg: "혜천빌딩" },
-  { zip: "04084", road: "서울특별시 마포구 독막로 186", jibun: "합정동 402-5", bldg: "" },
-  { zip: "05551", road: "서울특별시 송파구 올림픽로35길 137", jibun: "잠실동 40", bldg: "잠실 롯데캐슬" },
-  { zip: "06612", road: "서울특별시 서초구 반포대로 201", jibun: "반포동 19-3", bldg: "" },
-  { zip: "04349", road: "서울특별시 용산구 이태원로 177", jibun: "이태원동 210", bldg: "" },
-  { zip: "06524", road: "서울특별시 서초구 서초대로 411", jibun: "서초동 1305-3", bldg: "" },
-  { zip: "03929", road: "서울특별시 마포구 월드컵북로 396", jibun: "상암동 1703", bldg: "DMC 디지털큐브" },
-  { zip: "06175", road: "서울특별시 강남구 테헤란로 152", jibun: "역삼동 737", bldg: "강남파이낸스센터" },
-  { zip: "04527", road: "서울특별시 중구 세종대로 110", jibun: "태평로1가 31", bldg: "서울시청" },
-];
-
-type AddrEntry = typeof ADDR_DB[0];
+import { JeonseSafetyAnalysis } from "./components/JeonseSafetyAnalysis";
 
 interface ChecklistState {
   [key: number]: boolean;
@@ -26,18 +12,7 @@ interface ChecklistState {
 
 export default function JeonseRenewalContent() {
   const [activeTab, setActiveTab] = useState("analysis");
-  const [mode, setMode] = useState<"addr" | "file">("addr");
-  const [addrZip, setAddrZip] = useState("");
-  const [addrBase, setAddrBase] = useState("");
-  const [addrBaseFilled, setAddrBaseFilled] = useState(false);
-  const [addrDetail, setAddrDetail] = useState("");
-  const [fileName, setFileName] = useState("");
-  const [fileSelected, setFileSelected] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalQuery, setModalQuery] = useState("");
-  const [modalResults, setModalResults] = useState<AddrEntry[] | null>(null);
   const [checklist, setChecklist] = useState<ChecklistState>({});
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const snavRef = useRef<HTMLDivElement>(null);
 
   const CK_TOTAL = 15;
@@ -49,51 +24,6 @@ export default function JeonseRenewalContent() {
       const top = snavRef.current.offsetTop - 80;
       window.scrollTo({ top, behavior: "smooth" });
     }
-  };
-
-  const analyzeReady = addrZip && addrBase && addrDetail.trim();
-  const fileAnalyzeReady = fileSelected;
-
-  const handleFile = (files: FileList | null) => {
-    if (files && files[0]) {
-      setFileName(files[0].name);
-      setFileSelected(true);
-    }
-  };
-
-  const clearFile = () => {
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    setFileName("");
-    setFileSelected(false);
-  };
-
-  const startAnalysis = () => {
-    alert("분석 요청이 접수되었습니다.\n\n실제 서비스에서는 AI 분석 결과 페이지로 이동합니다.");
-  };
-
-  const openModal = () => {
-    setModalQuery("");
-    setModalResults(null);
-    setModalOpen(true);
-  };
-
-  const closeModal = () => setModalOpen(false);
-
-  const doSearch = () => {
-    const q = modalQuery.trim();
-    if (!q) return;
-    let results = ADDR_DB.filter(
-      (a) => a.road.includes(q) || a.jibun.includes(q) || (a.bldg && a.bldg.includes(q))
-    );
-    if (results.length === 0) results = ADDR_DB;
-    setModalResults(results);
-  };
-
-  const selectAddr = (zip: string, road: string) => {
-    setAddrZip(zip);
-    setAddrBase(road);
-    setAddrBaseFilled(true);
-    closeModal();
   };
 
   const toggleCk = (idx: number) => {
@@ -148,175 +78,7 @@ export default function JeonseRenewalContent() {
       {/* ████ PANEL: 전세안전분석 ████ */}
       <div className={`${s.tab}${activeTab === "analysis" ? " " + s.on : ""}`}>
         <div className={s.panelWrap}>
-          <div className={s.analysisGrid}>
-            {/* Left: 입력 폼 */}
-            <div className={`${s.analysisLeft} ${s.analysisSticky}`}>
-              <div className={s.acard}>
-                <p className={s.secEyebrow} style={{ marginBottom: "6px" }}>전세안전분석</p>
-                <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "18px" }}>분석 방법을 선택하세요</h2>
-                <div className={s.amodeToggle}>
-                  <button
-                    className={`${s.amodeBtn}${mode === "addr" ? " " + s.on : ""}`}
-                    onClick={() => setMode("addr")}
-                  >
-                    <MapPin size={15} /> 주소 입력
-                  </button>
-                  <button
-                    className={`${s.amodeBtn}${mode === "file" ? " " + s.on : ""}`}
-                    onClick={() => setMode("file")}
-                  >
-                    <FileText size={15} /> 등기부등본 업로드
-                  </button>
-                </div>
-
-                {/* 주소 입력 폼 */}
-                <div className={`${s.addrForm}${mode === "addr" ? " " + s.on : ""}`}>
-                  <div className={s.addrRow}>
-                    <input
-                      className={s.addrZip}
-                      type="text"
-                      readOnly
-                      placeholder="우편번호"
-                      value={addrZip}
-                    />
-                    <button className={s.addrSearchBtn} onClick={openModal}>주소 검색</button>
-                  </div>
-                  <input
-                    className={`${s.addrBase}${addrBaseFilled ? " " + s.filled : ""}`}
-                    type="text"
-                    readOnly
-                    placeholder="도로명 주소 (주소 검색 후 자동 입력)"
-                    value={addrBase}
-                  />
-                  <input
-                    className={`${s.addrDetail}${addrBase ? " " + s.enabled : ""}`}
-                    type="text"
-                    placeholder="상세주소 예) 101동 1302호, 3층"
-                    value={addrDetail}
-                    onChange={(e) => setAddrDetail(e.target.value)}
-                  />
-                  <p className={s.addrHint}>※ 아파트·오피스텔은 동·호수까지, 빌라·단독주택은 층수를 입력해 주세요.</p>
-                  <button
-                    className={s.analyzeBtn}
-                    onClick={startAnalysis}
-                    disabled={!analyzeReady}
-                  >
-                    분석 시작하기
-                  </button>
-                </div>
-
-                {/* 파일 업로드 폼 */}
-                <div className={`${s.fileForm}${mode === "file" ? " " + s.on : ""}`}>
-                  <div
-                    className={s.dropZone}
-                    onClick={() => fileInputRef.current?.click()}
-                    onDragOver={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement).classList.add(s.drag); }}
-                    onDragLeave={(e) => { (e.currentTarget as HTMLElement).classList.remove(s.drag); }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      (e.currentTarget as HTMLElement).classList.remove(s.drag);
-                      handleFile(e.dataTransfer.files);
-                    }}
-                  >
-                    <div className={s.dropIcon}><Paperclip size={32} /></div>
-                    <div className={s.dropTitle}>파일을 끌어다 놓거나 클릭하여 업로드</div>
-                    <div className={s.dropDesc}>
-                      등기부등본 PDF 또는 이미지 파일을 업로드하면<br />
-                      AI가 자동으로 내용을 분석합니다
-                    </div>
-                    <div className={s.dropTypes}>
-                      <span className={s.dropType}>PDF</span>
-                      <span className={s.dropType}>JPG</span>
-                      <span className={s.dropType}>PNG</span>
-                      <span className={s.dropType}>최대 10MB</span>
-                    </div>
-                  </div>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    style={{ display: "none" }}
-                    onChange={(e) => handleFile(e.target.files)}
-                  />
-                  <div className={`${s.fileSelected}${fileSelected ? " " + s.show : ""}`}>
-                    <FileText size={14} />
-                    <span className={s.fileName}>{fileName}</span>
-                    <button className={s.fileDel} onClick={clearFile}>×</button>
-                  </div>
-                  <button
-                    className={s.analyzeBtn}
-                    onClick={startAnalysis}
-                    disabled={!fileAnalyzeReady}
-                  >
-                    분석 시작하기
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Right: 분석 결과 */}
-            <div className={s.analysisRight}>
-              <div className={s.acard}>
-                <p className={s.secEyebrow} style={{ marginBottom: "4px" }}>Sample Analysis</p>
-                <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1a1d2e", marginBottom: "6px", letterSpacing: "-.3px" }}>
-                  이런 형태로 결과가 제공됩니다
-                </h3>
-                <div className={s.rscoreAddr} style={{ marginBottom: "16px" }}>서울시 마포구 합정동 402-5 3층</div>
-
-                {/* KPI 요약 */}
-                <div className={s.resultKpi}>
-                  <div className={s.resultKpiCard}>
-                    <div className={s.resultKpiLabel}>안전 점수</div>
-                    <div className={s.resultKpiVal}>72<span className={s.resultKpiUnit}>점</span></div>
-                    <div className={s.resultKpiTag} style={{ color: "#b45309" }}><AlertTriangle size={12} style={{ verticalAlign: "-2px" }} /> 주의 필요</div>
-                  </div>
-                  <div className={s.resultKpiCard}>
-                    <div className={s.resultKpiLabel}>전세가율 (LTV)</div>
-                    <div className={s.resultKpiVal}>81<span className={s.resultKpiUnit}>%</span></div>
-                    <div className={s.resultKpiTag} style={{ color: "#b91c1c" }}>기준(80%) 초과</div>
-                  </div>
-                  <div className={s.resultKpiCard}>
-                    <div className={s.resultKpiLabel}>보증보험</div>
-                    <div className={s.resultKpiVal} style={{ fontSize: "14px" }}>HUG 불가</div>
-                    <div className={s.resultKpiTag} style={{ color: "#15803d" }}>SGI 가입 검토</div>
-                  </div>
-                </div>
-
-                {/* 점수 + 체크리스트 */}
-                <div className={s.resultSplit}>
-                  <div className={s.resultGaugeCol}>
-                    <div className={s.gaugeWrap}>
-                      <svg width="140" height="140" viewBox="0 0 156 156">
-                        <circle cx="78" cy="78" r="58" fill="none" stroke="#f0f2f6" strokeWidth="13" />
-                        <circle cx="78" cy="78" r="58" fill="none" stroke="#f59e0b" strokeWidth="13"
-                          strokeDasharray="262.9 364.4" strokeLinecap="round" transform="rotate(-90 78 78)" />
-                      </svg>
-                      <div className={s.gaugeMid}>
-                        <div className={s.gaugeN}>72</div>
-                        <div className={s.gaugeU}>/ 100점</div>
-                      </div>
-                    </div>
-                    <div style={{ marginTop: "8px" }}><span className={s.gaugeGrade}><AlertTriangle size={14} style={{ verticalAlign: "-2px" }} /> 주의 필요</span></div>
-                    <div className={s.rmeta} style={{ justifyContent: "center", gap: "10px", marginTop: "8px" }}>
-                      <span>2026.08.10</span><span>6개 항목</span>
-                    </div>
-                  </div>
-                  <div className={s.resultCheckCol}>
-                    <div className={s.rcheckTitle}>항목별 분석 결과</div>
-                    <div className={s.clist}>
-                      <div className={`${s.ci} ${s.d}`}><div className={s.cdot}></div><div className={s.clabel}>선순위 채권비율 초과</div><div className={s.cdetail}>근저당 1.2억 · 전세가 2.8억 → 78%</div><span className={s.cbadge}>위험</span></div>
-                      <div className={`${s.ci} ${s.w}`}><div className={s.cdot}></div><div className={s.clabel}>전세가율 기준 초과</div><div className={s.cdetail}>전세가율 81% · HUG 기준(80%) 초과</div><span className={s.cbadge}>주의</span></div>
-                      <div className={`${s.ci} ${s.w}`}><div className={s.cdot}></div><div className={s.clabel}>전세보증보험 가입 불가</div><div className={s.cdetail}>전세가율 초과로 HUG 보증 대상 제외</div><span className={s.cbadge}>주의</span></div>
-                      <div className={`${s.ci} ${s.s}`}><div className={s.cdot}></div><div className={s.clabel}>등기부등본 이상 없음</div><div className={s.cdetail}>압류·가압류·예고등기 없음</div><span className={s.cbadge}>안전</span></div>
-                      <div className={`${s.ci} ${s.s}`}><div className={s.cdot}></div><div className={s.clabel}>확정일자 취득 가능</div><div className={s.cdetail}>전입신고 후 주민센터 또는 인터넷등기소</div><span className={s.cbadge}>안전</span></div>
-                      <div className={`${s.ci} ${s.s}`}><div className={s.cdot}></div><div className={s.clabel}>건축물대장 이상 없음</div><div className={s.cdetail}>위반건축물 이력 없음 · 주거용 유지</div><span className={s.cbadge}>안전</span></div>
-                    </div>
-                    <div className={s.rnote}>※ 위 결과는 시안 예시입니다. AI 분석 결과는 참고용이며 법적 효력이 없습니다.</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <JeonseSafetyAnalysis />
 
           {/* 6대 보호항목 */}
           <p className={s.secEyebrow}>Protection Scope</p>
@@ -651,47 +413,6 @@ export default function JeonseRenewalContent() {
         {activeTab === "env" && <JeonseEnvAnalysis active />}
       </div>
 
-      {/* ADDRESS MODAL */}
-      <div className={`${s.modalBg}${modalOpen ? " " + s.open : ""}`} onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
-        <div className={s.modal}>
-          <div className={s.modalHead}>
-            <span className={s.modalHeadTitle}>주소 검색</span>
-            <button className={s.modalClose} onClick={closeModal}>×</button>
-          </div>
-          <div className={s.modalNotice}>도로명·지번·건물명으로 검색하세요. (예: 독막로 186, 합정동 402, 래미안)</div>
-          <div className={s.modalSearch}>
-            <input
-              className={s.modalInput}
-              type="text"
-              placeholder="검색어를 입력하세요"
-              value={modalQuery}
-              onChange={(e) => setModalQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") doSearch(); }}
-            />
-            <button className={s.modalSearchBtn} onClick={doSearch}>검색</button>
-          </div>
-          <div className={s.modalResults}>
-            {modalResults === null ? (
-              <div className={s.modalEmpty}>위 검색창에 주소를 입력하고 검색 버튼을 눌러주세요.</div>
-            ) : modalResults.length === 0 ? (
-              <div className={s.modalEmpty}>검색 결과가 없습니다.</div>
-            ) : (
-              <>
-                <div className={s.modalResultsHd}>{modalResults.length}개 검색결과 (시안 예시 데이터)</div>
-                {modalResults.map((a, i) => (
-                  <div key={i} className={s.modalResultItem} onClick={() => selectAddr(a.zip, a.road)}>
-                    <span className={s.mzip}>{a.zip}</span>
-                    <div>
-                      <div className={s.maddrRoad}>{a.road}{a.bldg && <span style={{ color: "#aaa", fontSize: "12px" }}> ({a.bldg})</span>}</div>
-                      <div className={s.maddrJibun}>지번 {a.jibun}</div>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-        </div>
-      </div>
     </>
   );
 }
