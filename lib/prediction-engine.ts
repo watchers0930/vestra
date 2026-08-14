@@ -11,6 +11,7 @@ import {
   ECONOMIC_DEFAULTS, compoundGrowth, toMonthlyTimeSeries, buildEnsembleV2,
 } from "./prediction/forecasting-models";
 import type { ScenarioPredictions, MacroEconomicFactors } from "./prediction/forecasting-models";
+import { purchasingPowerFactor } from "./prediction/purchasing-power";
 
 // ─── re-export (기존 import 경로 유지) ───
 
@@ -152,11 +153,16 @@ function generateScenarios(
     ? trend.annualGrowthRate * 0.7 + LT * 0.3
     : LT;
 
+  // 구매력(수요 풀) 계수: 초고가일수록 매입 가능 가구가 급감 → 장기 성장 제약
+  // (통계청 2024 가계금융복지조사 순자산 분위 기반)
+  const ppFactor = purchasingPowerFactor(currentPrice);
+
   // 기간이 길수록 최근 추세 비중↓ + 장기평균(LT) 회귀(mean reversion) + 연 성장률 상한
   // → 최근 급등을 10년 복리로 무한 연장하는 비현실적 폭등 방지
+  // 장기(5y·10y)에는 구매력 계수를 곱해 초고가 물건의 상승 여력을 현실화
   const base1y = clamp(baseRate, -0.15, 0.20);
-  const base5y = clamp(baseRate * 0.35 + LT * 0.65, -0.05, 0.07);
-  const base10y = clamp(baseRate * 0.15 + LT * 0.85, -0.03, 0.055);
+  const base5y = clamp((baseRate * 0.35 + LT * 0.65) * ppFactor, -0.05, 0.07);
+  const base10y = clamp((baseRate * 0.15 + LT * 0.85) * ppFactor, -0.03, 0.055);
 
   const opt1y = clamp(Math.max(base1y * 1.3, INF + 0.02), -0.10, 0.25);
   const opt5y = clamp(Math.max(base5y * 1.3, INF + 0.015), -0.03, 0.09);
