@@ -122,6 +122,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
 
+    // 매물 등록 권한: 임차인(TENANT)은 등록 불가.
+    // 클라이언트 게이트(ListingsContent: userType !== "TENANT")의 서버측 강제 — 클라 우회 방지.
+    if (session.user.userType === "TENANT") {
+      return NextResponse.json(
+        { error: "임차인 회원은 매물을 등록할 수 없습니다. 임대인 회원으로 전환 후 이용해주세요." },
+        { status: 403 },
+      );
+    }
+
     const body = await req.json();
     const parsed = createListingSchema.safeParse(body);
     if (!parsed.success) {

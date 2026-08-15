@@ -334,7 +334,7 @@ export default function ListingsListClient() {
             </div>
           ) : (
             <div className={s.subListingsGrid}>
-              {displayListings.map((l) => <ListingCard key={l.id} listing={l} forceCertified />)}
+              {displayListings.map((l) => <ListingCard key={l.id} listing={l} forceCertified href={`/renewal/listing-db-detail?id=${l.id}`} />)}
             </div>
           )}
         </div>

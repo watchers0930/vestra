@@ -47,9 +47,9 @@ const META_ICONS = {
 
 type MetaKey = keyof typeof META_ICONS;
 
-interface Props { listing: ListingItem; forceCertified?: boolean; }
+interface Props { listing: ListingItem; forceCertified?: boolean; href?: string; }
 
-export function ListingCard({ listing, forceCertified }: Props) {
+export function ListingCard({ listing, forceCertified, href }: Props) {
   const thumb = listing.photos?.[0] ?? null;
   const showCertified = listing.isCertified || forceCertified;
 
@@ -61,7 +61,7 @@ export function ListingCard({ listing, forceCertified }: Props) {
   ].filter(Boolean) as { key: MetaKey; value: string }[];
 
   return (
-    <Link href={`/listings/${listing.id}`} style={{ textDecoration: "none" }}>
+    <Link href={href ?? `/listings/${listing.id}`} style={{ textDecoration: "none" }}>
       <div
         style={{ border: "1px solid #e8eaf2", borderRadius: 10, overflow: "hidden", transition: "box-shadow 0.18s", cursor: "pointer", background: "#fff" }}
         onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"; }}
