@@ -85,7 +85,7 @@ function SignupCompleteContent() {
       .catch(() => {
         router.push("/home");
       });
-  }, [status, intendedRole, isValidRole, needsBusinessInfo, router]);
+  }, [status, intendedRole, isValidRole, needsBusinessInfo, selectedUserType, router]);
 
   // 로딩 중
   if (status === "loading") {
