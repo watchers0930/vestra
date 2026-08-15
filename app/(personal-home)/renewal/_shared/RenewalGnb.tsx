@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import s from "./RenewalGnb.module.css";
 import { RENEWAL_MAIN as MAIN, RENEWAL_SUPPORT as SUPPORT, RENEWAL_ROUTES, type RenewalKey } from "./renewal-config";
 
@@ -50,7 +51,7 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
           <span className={s.div}>|</span>
           <Link href={RENEWAL_ROUTES.profile}>마이페이지</Link>
           <span className={s.div}>|</span>
-          <Link href={RENEWAL_ROUTES.logout}>로그아웃</Link>
+          <a onClick={() => signOut({ redirectTo: RENEWAL_ROUTES.home })} style={{ cursor: "pointer" }}>로그아웃</a>
         </div>
         <button className={s.navBurger} aria-label="메뉴 열기" onClick={() => setMenuOpen((o) => !o)}>
           <span></span><span></span><span></span>
@@ -72,7 +73,7 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
           <div className={s.navMobAuth}>
             <span>홍길동님</span>
             <Link href={RENEWAL_ROUTES.profile}>마이페이지</Link>
-            <Link href={RENEWAL_ROUTES.logout}>로그아웃</Link>
+            <a onClick={() => signOut({ redirectTo: RENEWAL_ROUTES.home })} style={{ cursor: "pointer" }}>로그아웃</a>
           </div>
         </li>
       </ul>
