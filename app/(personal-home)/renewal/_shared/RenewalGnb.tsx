@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import s from "./RenewalGnb.module.css";
 import { RENEWAL_MAIN as MAIN, RENEWAL_SUPPORT as SUPPORT, RENEWAL_ROUTES, type RenewalKey } from "./renewal-config";
+import RenewalLoginModal from "./RenewalLoginModal";
 
 /**
  * renewal 공통 헤더 GNB — 모든 renewal 페이지에서 <RenewalGnb active="..." /> 로 사용.
@@ -19,8 +20,10 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
   const { data: session } = useSession();
   const isLoggedIn = !!session?.user;
   const userName = session?.user?.name || "회원";
+  const [showLogin, setShowLogin] = useState(false);
 
   return (
+    <>
     <nav className={s.navBar}>
       <div className={s.navInner}>
         <Link href={RENEWAL_ROUTES.home} className={s.navLogo}>
@@ -60,7 +63,7 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
             </>
           ) : (
             <>
-              <Link href={RENEWAL_ROUTES.login}>로그인</Link>
+              <a onClick={() => setShowLogin(true)} style={{ cursor: "pointer" }}>로그인</a>
               <span className={s.div}>|</span>
               <Link href={RENEWAL_ROUTES.signup}>회원가입</Link>
             </>
@@ -92,7 +95,7 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
               </>
             ) : (
               <>
-                <Link href={RENEWAL_ROUTES.login}>로그인</Link>
+                <a onClick={() => setShowLogin(true)} style={{ cursor: "pointer" }}>로그인</a>
                 <Link href={RENEWAL_ROUTES.signup}>회원가입</Link>
               </>
             )}
@@ -100,5 +103,7 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
         </li>
       </ul>
     </nav>
+    {showLogin && <RenewalLoginModal onClose={() => setShowLogin(false)} />}
+    </>
   );
 }

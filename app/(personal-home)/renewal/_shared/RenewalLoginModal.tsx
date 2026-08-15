@@ -7,8 +7,8 @@ import { X, Map, Landmark, Calculator } from "lucide-react";
 import { RENEWAL_ROUTES } from "./renewal-config";
 
 interface Props {
-  /** 로그인 안내에 노출할 기능명 */
-  featureName: string;
+  /** 로그인 안내에 노출할 기능명 (생략 시 일반 로그인 유도) */
+  featureName?: string;
   description?: string;
   /** 닫기 (액션 취소 — 원래 화면 유지) */
   onClose: () => void;
@@ -47,7 +47,9 @@ export default function RenewalLoginModal({ featureName, description, onClose }:
           <div style={{ display: "inline-block", fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", color: "#0071e3", background: "rgba(0,113,227,0.08)", borderRadius: 20, padding: "5px 12px", marginBottom: 14 }}>
             로그인이 필요해요
           </div>
-          <h3 style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1f", margin: "0 0 8px" }}>{featureName} 기능은 로그인 후 이용할 수 있어요</h3>
+          <h3 style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1f", margin: "0 0 8px" }}>
+            {featureName ? `${featureName} 기능은 로그인 후 이용할 수 있어요` : "로그인하고 시작하세요"}
+          </h3>
           <p style={{ fontSize: 13, color: "#6e6e73", lineHeight: 1.6, margin: 0 }}>
             {description || "로그인하면 내 정보를 안전하게 저장하고 관리할 수 있습니다."}
           </p>

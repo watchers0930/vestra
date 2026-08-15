@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
+import RenewalLoginModal from "../renewal/_shared/RenewalLoginModal";
 import s from "./personal-home.module.css";
 
 const REGIONS: Record<string, Record<string, string[]>> = {
@@ -296,6 +297,7 @@ export default function PersonalHomeClient() {
   const { data: session } = useSession();
   const isLoggedIn = !!session?.user;
   const userName = session?.user?.name || "회원";
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [sido, setSido] = useState("");
   const [sigungu, setSigungu] = useState("");
   const [dong, setDong] = useState("");
@@ -358,7 +360,7 @@ export default function PersonalHomeClient() {
               </>
             ) : (
               <>
-                <Link href="/login">로그인</Link>
+                <a onClick={() => setShowLoginModal(true)} style={{ cursor: "pointer" }}>로그인</a>
                 <span className={s.navAuthDivider}>|</span>
                 <Link href="/signup">회원가입</Link>
               </>
@@ -390,7 +392,7 @@ export default function PersonalHomeClient() {
                 </>
               ) : (
                 <>
-                  <Link href="/login">로그인</Link>
+                  <a onClick={() => setShowLoginModal(true)} style={{ cursor: "pointer" }}>로그인</a>
                   <Link href="/signup">회원가입</Link>
                 </>
               )}
@@ -650,6 +652,7 @@ export default function PersonalHomeClient() {
         </div>
       </footer>
 
+      {showLoginModal && <RenewalLoginModal onClose={() => setShowLoginModal(false)} />}
     </div>
   );
 }
