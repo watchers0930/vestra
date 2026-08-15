@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import RenewalLoginModal from "../renewal/_shared/RenewalLoginModal";
+import RenewalSignupModal from "../renewal/_shared/RenewalSignupModal";
 import s from "./personal-home.module.css";
 
 const REGIONS: Record<string, Record<string, string[]>> = {
@@ -298,6 +299,7 @@ export default function PersonalHomeClient() {
   const isLoggedIn = !!session?.user;
   const userName = session?.user?.name || "회원";
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
   const [sido, setSido] = useState("");
   const [sigungu, setSigungu] = useState("");
   const [dong, setDong] = useState("");
@@ -362,7 +364,7 @@ export default function PersonalHomeClient() {
               <>
                 <a onClick={() => setShowLoginModal(true)} style={{ cursor: "pointer" }}>로그인</a>
                 <span className={s.navAuthDivider}>|</span>
-                <Link href="/signup">회원가입</Link>
+                <a onClick={() => setShowSignupModal(true)} style={{ cursor: "pointer" }}>회원가입</a>
               </>
             )}
           </div>
@@ -393,7 +395,7 @@ export default function PersonalHomeClient() {
               ) : (
                 <>
                   <a onClick={() => setShowLoginModal(true)} style={{ cursor: "pointer" }}>로그인</a>
-                  <Link href="/signup">회원가입</Link>
+                  <a onClick={() => setShowSignupModal(true)} style={{ cursor: "pointer" }}>회원가입</a>
                 </>
               )}
             </div>
@@ -652,7 +654,18 @@ export default function PersonalHomeClient() {
         </div>
       </footer>
 
-      {showLoginModal && <RenewalLoginModal onClose={() => setShowLoginModal(false)} />}
+      {showLoginModal && (
+        <RenewalLoginModal
+          onClose={() => setShowLoginModal(false)}
+          onSwitchToSignup={() => { setShowLoginModal(false); setShowSignupModal(true); }}
+        />
+      )}
+      {showSignupModal && (
+        <RenewalSignupModal
+          onClose={() => setShowSignupModal(false)}
+          onSwitchToLogin={() => { setShowSignupModal(false); setShowLoginModal(true); }}
+        />
+      )}
     </div>
   );
 }

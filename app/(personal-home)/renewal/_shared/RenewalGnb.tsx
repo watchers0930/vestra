@@ -6,6 +6,7 @@ import { signOut, useSession } from "next-auth/react";
 import s from "./RenewalGnb.module.css";
 import { RENEWAL_MAIN as MAIN, RENEWAL_SUPPORT as SUPPORT, RENEWAL_ROUTES, type RenewalKey } from "./renewal-config";
 import RenewalLoginModal from "./RenewalLoginModal";
+import RenewalSignupModal from "./RenewalSignupModal";
 
 /**
  * renewal 공통 헤더 GNB — 모든 renewal 페이지에서 <RenewalGnb active="..." /> 로 사용.
@@ -21,6 +22,7 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
   const isLoggedIn = !!session?.user;
   const userName = session?.user?.name || "회원";
   const [showLogin, setShowLogin] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
 
   return (
     <>
@@ -65,7 +67,7 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
             <>
               <a onClick={() => setShowLogin(true)} style={{ cursor: "pointer" }}>로그인</a>
               <span className={s.div}>|</span>
-              <Link href={RENEWAL_ROUTES.signup}>회원가입</Link>
+              <a onClick={() => setShowSignup(true)} style={{ cursor: "pointer" }}>회원가입</a>
             </>
           )}
         </div>
@@ -96,14 +98,25 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
             ) : (
               <>
                 <a onClick={() => setShowLogin(true)} style={{ cursor: "pointer" }}>로그인</a>
-                <Link href={RENEWAL_ROUTES.signup}>회원가입</Link>
+                <a onClick={() => setShowSignup(true)} style={{ cursor: "pointer" }}>회원가입</a>
               </>
             )}
           </div>
         </li>
       </ul>
     </nav>
-    {showLogin && <RenewalLoginModal onClose={() => setShowLogin(false)} />}
+    {showLogin && (
+      <RenewalLoginModal
+        onClose={() => setShowLogin(false)}
+        onSwitchToSignup={() => { setShowLogin(false); setShowSignup(true); }}
+      />
+    )}
+    {showSignup && (
+      <RenewalSignupModal
+        onClose={() => setShowSignup(false)}
+        onSwitchToLogin={() => { setShowSignup(false); setShowLogin(true); }}
+      />
+    )}
     </>
   );
 }

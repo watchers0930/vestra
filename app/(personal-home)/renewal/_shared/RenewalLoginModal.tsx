@@ -12,6 +12,8 @@ interface Props {
   description?: string;
   /** 닫기 (액션 취소 — 원래 화면 유지) */
   onClose: () => void;
+  /** "회원가입" → 회원가입 모달로 전환 */
+  onSwitchToSignup?: () => void;
 }
 
 const PUBLIC_LINKS = [
@@ -25,7 +27,7 @@ const PUBLIC_LINKS = [
  * 진입은 자유롭게 두고, 저장·개인 데이터가 필요한 순간(예: 등기감시 물건 추가)에만 띄운다.
  * 닫으면 원래 화면으로 복귀(진입 차단 아님).
  */
-export default function RenewalLoginModal({ featureName, description, onClose }: Props) {
+export default function RenewalLoginModal({ featureName, description, onClose, onSwitchToSignup }: Props) {
   const pathname = usePathname();
   const callbackUrl = pathname || RENEWAL_ROUTES.home;
 
@@ -97,7 +99,11 @@ export default function RenewalLoginModal({ featureName, description, onClose }:
 
         <p style={{ textAlign: "center", fontSize: 13, color: "#6e6e73", margin: "22px 0 0" }}>
           아직 계정이 없으신가요?{" "}
-          <Link href={RENEWAL_ROUTES.signup} style={{ fontWeight: 600, color: "#0071e3" }}>회원가입</Link>
+          {onSwitchToSignup ? (
+            <span onClick={onSwitchToSignup} style={{ fontWeight: 600, color: "#0071e3", cursor: "pointer" }}>회원가입</span>
+          ) : (
+            <Link href={RENEWAL_ROUTES.signup} style={{ fontWeight: 600, color: "#0071e3" }}>회원가입</Link>
+          )}
         </p>
       </div>
     </div>
