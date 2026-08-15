@@ -554,7 +554,7 @@ export default function PersonalHomeClient() {
             <div className={s.specCard}>
               <div className={`${s.specAvatar} ${s.savatar3}`} />
               <span className={s.specRole}>대림법무법인</span>
-              <span className={s.specName}>법무사 유재석</span>
+              <span className={s.specName}>법무사 김도현</span>
               <button className={s.specBtn}>문의하기</button>
             </div>
             <div className={s.specCard}>
