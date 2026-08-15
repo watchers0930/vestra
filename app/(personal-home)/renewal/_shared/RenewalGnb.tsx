@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import s from "./RenewalGnb.module.css";
 import { RENEWAL_MAIN as MAIN, RENEWAL_SUPPORT as SUPPORT, RENEWAL_ROUTES, type RenewalKey } from "./renewal-config";
 
@@ -16,6 +16,9 @@ export type RenewalGnbKey = RenewalKey;
 export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const supportActive = SUPPORT.some((m) => m.key === active);
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
+  const userName = session?.user?.name || "회원";
 
   return (
     <nav className={s.navBar}>
@@ -47,11 +50,21 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
           </li>
         </ul>
         <div className={s.navAuth}>
-          <span className={s.greet}>홍길동님</span>
-          <span className={s.div}>|</span>
-          <Link href={RENEWAL_ROUTES.profile}>마이페이지</Link>
-          <span className={s.div}>|</span>
-          <a onClick={() => signOut({ redirectTo: RENEWAL_ROUTES.home })} style={{ cursor: "pointer" }}>로그아웃</a>
+          {isLoggedIn ? (
+            <>
+              <span className={s.greet}>{userName}님</span>
+              <span className={s.div}>|</span>
+              <Link href={RENEWAL_ROUTES.profile}>마이페이지</Link>
+              <span className={s.div}>|</span>
+              <a onClick={() => signOut({ redirectTo: RENEWAL_ROUTES.home })} style={{ cursor: "pointer" }}>로그아웃</a>
+            </>
+          ) : (
+            <>
+              <Link href={RENEWAL_ROUTES.login}>로그인</Link>
+              <span className={s.div}>|</span>
+              <Link href={RENEWAL_ROUTES.signup}>회원가입</Link>
+            </>
+          )}
         </div>
         <button className={s.navBurger} aria-label="메뉴 열기" onClick={() => setMenuOpen((o) => !o)}>
           <span></span><span></span><span></span>
@@ -71,9 +84,18 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
         ))}
         <li>
           <div className={s.navMobAuth}>
-            <span>홍길동님</span>
-            <Link href={RENEWAL_ROUTES.profile}>마이페이지</Link>
-            <a onClick={() => signOut({ redirectTo: RENEWAL_ROUTES.home })} style={{ cursor: "pointer" }}>로그아웃</a>
+            {isLoggedIn ? (
+              <>
+                <span>{userName}님</span>
+                <Link href={RENEWAL_ROUTES.profile}>마이페이지</Link>
+                <a onClick={() => signOut({ redirectTo: RENEWAL_ROUTES.home })} style={{ cursor: "pointer" }}>로그아웃</a>
+              </>
+            ) : (
+              <>
+                <Link href={RENEWAL_ROUTES.login}>로그인</Link>
+                <Link href={RENEWAL_ROUTES.signup}>회원가입</Link>
+              </>
+            )}
           </div>
         </li>
       </ul>
