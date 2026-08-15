@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import s from "./personal-home.module.css";
 
@@ -292,6 +293,9 @@ const REGIONS: Record<string, Record<string, string[]>> = {
 
 export default function PersonalHomeClient() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
+  const userName = session?.user?.name || "회원";
   const [sido, setSido] = useState("");
   const [sigungu, setSigungu] = useState("");
   const [dong, setDong] = useState("");
@@ -344,11 +348,21 @@ export default function PersonalHomeClient() {
             <li><Link href="/renewal/expert">전문가상담</Link></li>
           </ul>
           <div className={s.navAuth}>
-            <Link href="/login">로그인</Link>
-            <span className={s.navAuthDivider}>|</span>
-            <Link href="/profile">마이페이지</Link>
-            <span className={s.navAuthDivider}>|</span>
-            <Link href="/signup">회원가입</Link>
+            {isLoggedIn ? (
+              <>
+                <span>{userName}님</span>
+                <span className={s.navAuthDivider}>|</span>
+                <Link href="/profile">마이페이지</Link>
+                <span className={s.navAuthDivider}>|</span>
+                <a onClick={() => signOut({ redirectTo: "/" })} style={{ cursor: "pointer" }}>로그아웃</a>
+              </>
+            ) : (
+              <>
+                <Link href="/login">로그인</Link>
+                <span className={s.navAuthDivider}>|</span>
+                <Link href="/signup">회원가입</Link>
+              </>
+            )}
           </div>
           <button
             className={`${s.navHamburger} ${menuOpen ? s.open : ""}`}
@@ -368,9 +382,18 @@ export default function PersonalHomeClient() {
           <li><Link href="/renewal/expert">전문가상담</Link></li>
           <li>
             <div className={s.navMobileAuth}>
-              <Link href="/login">로그인</Link>
-              <Link href="/profile">마이페이지</Link>
-              <Link href="/signup">회원가입</Link>
+              {isLoggedIn ? (
+                <>
+                  <span>{userName}님</span>
+                  <Link href="/profile">마이페이지</Link>
+                  <a onClick={() => signOut({ redirectTo: "/" })} style={{ cursor: "pointer" }}>로그아웃</a>
+                </>
+              ) : (
+                <>
+                  <Link href="/login">로그인</Link>
+                  <Link href="/signup">회원가입</Link>
+                </>
+              )}
             </div>
           </li>
         </ul>
