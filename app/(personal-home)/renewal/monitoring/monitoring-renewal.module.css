@@ -208,6 +208,7 @@
 .picBadges{display:flex;flex-wrap:wrap;gap:7px}
 .picB{font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px}
 .picbActive{background:#dcfce7;color:#15803d}
+.picbPaused{background:#f1f5f9;color:#64748b}
 .picbMode{background:#eef1fd;color:#2e4bd8}
 .picbSignal{background:#dbeafe;color:#1d4ed8}
 .picbStage{background:#dbeafe;color:#1d4ed8}

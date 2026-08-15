@@ -11,6 +11,7 @@ import {
   AssistantFooter,
 } from "./components/AssistantChrome";
 import { ChatMessage, StreamingMessage, TypingIndicator } from "./components/ChatMessage";
+import AssistantSignupModal from "./components/AssistantSignupModal";
 
 // 빠른 시작 — 자주 묻는 질문 (시안 그대로)
 const QUICK_STARTS: { icon: React.ReactNode; text: string }[] = [
@@ -26,6 +27,7 @@ export default function AssistantClient() {
   const {
     messages, input, setInput, loading, streamingContent, messagesEndRef,
     sendMessage, isGuest, guestRemaining,
+    showSignupModal, setShowSignupModal,
   } = useAssistantData();
 
   // 새 메시지/스트리밍 시 하단으로 자동 스크롤
@@ -122,6 +124,8 @@ export default function AssistantClient() {
       </div>
 
       <AssistantFooter />
+
+      {showSignupModal && <AssistantSignupModal onClose={() => setShowSignupModal(false)} />}
     </div>
   );
 }

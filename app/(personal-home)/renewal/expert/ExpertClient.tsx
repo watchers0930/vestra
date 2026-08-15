@@ -3,6 +3,7 @@
 import s from "./expert.module.css";
 import { useExpertConsult } from "@/app/(app)/expert-connect/hooks/useExpertConsult";
 import RenewalGnb from "../_shared/RenewalGnb";
+import RenewalAuthGate from "../_shared/RenewalAuthGate";
 import ExpertFooter from "./components/ExpertFooter";
 import ExpertFields from "./components/ExpertFields";
 import ExpertList from "./components/ExpertList";
@@ -10,6 +11,14 @@ import ConsultForm from "./components/ConsultForm";
 import ProcessSection from "./components/ProcessSection";
 
 export default function ExpertClient() {
+  return (
+    <RenewalAuthGate active="expert" featureName="전문가 연결" description="부동산 전문가와 1:1 상담을 연결해 드립니다">
+      <ExpertInner />
+    </RenewalAuthGate>
+  );
+}
+
+function ExpertInner() {
   const {
     selectedExpert,
     formState, setFormState,

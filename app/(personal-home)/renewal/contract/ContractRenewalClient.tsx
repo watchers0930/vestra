@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { AlertTriangle, FileText } from "lucide-react";
 import s from "./contract-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
+import RenewalAuthGate from "../_shared/RenewalAuthGate";
 import { useContractAnalysis } from "@/app/(app)/contract/hooks/useContractAnalysis";
 import ContractResultSections, { SEC_IDS } from "./components/ContractResultSections";
 
@@ -15,6 +16,14 @@ const SAMPLES: Record<string, string> = {
 };
 
 export default function ContractRenewalClient() {
+  return (
+    <RenewalAuthGate active="contract" featureName="계약검토" description="AI가 계약서의 위험 조항과 독소 조항을 자동으로 분석합니다">
+      <ContractInner />
+    </RenewalAuthGate>
+  );
+}
+
+function ContractInner() {
   const {
     contractText, setContractText,
     fileName, isLoading, result,
