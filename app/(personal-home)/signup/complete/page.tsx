@@ -72,18 +72,18 @@ function SignupCompleteContent() {
         if (res.ok) {
           // 역할 전환 성공 (PERSONAL 또는 이미 business info 있는 경우)
           await update();
-          router.push("/dashboard");
+          router.push("/home");
         } else if (res.status === 422) {
           // business info 입력 필요
           setNeedsBusinessInfo(true);
           isProcessingRef.current = false;
         } else {
           // 기타 에러 → 대시보드로 이동
-          router.push("/dashboard");
+          router.push("/home");
         }
       })
       .catch(() => {
-        router.push("/dashboard");
+        router.push("/home");
       });
   }, [status, intendedRole, isValidRole, needsBusinessInfo, update, router]);
 
