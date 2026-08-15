@@ -341,7 +341,7 @@ export default function PersonalHomeClient() {
             <li><Link href="/renewal/monitoring">등기감시</Link></li>
             <li><Link href="/renewal/contract">계약검토</Link></li>
             <li><Link href="/renewal/price-map">시세전망</Link></li>
-            <li><Link href="/expert-connect">전문가상담</Link></li>
+            <li><Link href="/renewal/expert">전문가상담</Link></li>
           </ul>
           <div className={s.navAuth}>
             <Link href="/login">로그인</Link>
@@ -365,7 +365,7 @@ export default function PersonalHomeClient() {
           <li><Link href="/renewal/monitoring">등기감시</Link></li>
           <li><Link href="/renewal/contract">계약검토</Link></li>
           <li><Link href="/renewal/price-map">시세전망</Link></li>
-          <li><Link href="/expert-connect">전문가상담</Link></li>
+          <li><Link href="/renewal/expert">전문가상담</Link></li>
           <li>
             <div className={s.navMobileAuth}>
               <Link href="/login">로그인</Link>

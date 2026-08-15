@@ -302,7 +302,7 @@ export default function JeonseRenewalContent() {
               <tr><td>권리 양도</td><td>불가</td><td>가능</td></tr>
             </tbody>
           </table>
-          <Link href="/expert-connect" className={s.actionLink}>법무사 연결하기 →</Link>
+          <Link href="/renewal/expert" className={s.actionLink}>법무사 연결하기 →</Link>
         </div>
       </div>
 
@@ -330,7 +330,7 @@ export default function JeonseRenewalContent() {
             <div className={s.istep}><div className={s.istepNum}>3</div><div><div className={s.istepT}>등기 완료 후 이사</div><div className={s.istepD}>법원 결정 후 등기부에 임차권이 등재됩니다. 등기 완료를 확인한 뒤 이사하면 대항력이 유지됩니다.</div></div></div>
             <div className={s.istep}><div className={s.istepNum}>4</div><div><div className={s.istepT}>보증금 반환 소송 또는 경매 신청</div><div className={s.istepD}>임차권등기 후에도 반환하지 않으면 보증금반환청구소송 또는 강제집행을 진행합니다.</div></div></div>
           </div>
-          <Link href="/expert-connect" className={s.actionLink}>전문가 상담 연결 →</Link>
+          <Link href="/renewal/expert" className={s.actionLink}>전문가 상담 연결 →</Link>
         </div>
       </div>
 
