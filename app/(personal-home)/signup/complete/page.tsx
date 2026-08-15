@@ -10,7 +10,7 @@ import { VestraLogoMark } from "@/components/common/VestraLogo";
 function SignupCompleteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { status, update } = useSession();
+  const { status } = useSession();
 
   // URL searchParam 우선, OAuth 리다이렉트 후 없으면 sessionStorage에서 읽음
   const [intendedRole, setIntendedRole] = useState<string | null>(
@@ -70,8 +70,8 @@ function SignupCompleteContent() {
     })
       .then(async (res) => {
         if (res.ok) {
-          // 역할 전환 성공 (PERSONAL 또는 이미 business info 있는 경우)
-          await update();
+          // 역할 전환 성공 — 세션은 다음 이동 시 JWT 콜백이 자동 갱신하므로
+          // 무거운 update()를 기다리지 않고 즉시 이동 (로딩 지연 방지)
           router.push("/home");
         } else if (res.status === 422) {
           // business info 입력 필요
@@ -85,7 +85,7 @@ function SignupCompleteContent() {
       .catch(() => {
         router.push("/home");
       });
-  }, [status, intendedRole, isValidRole, needsBusinessInfo, update, router]);
+  }, [status, intendedRole, isValidRole, needsBusinessInfo, router]);
 
   // 로딩 중
   if (status === "loading") {
