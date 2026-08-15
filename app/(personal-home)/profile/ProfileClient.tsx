@@ -86,70 +86,75 @@ export default function ProfileClient() {
     </div>
   );
 
+  const tabLabel = PROFILE_TABS.find((t) => t.key === tab)?.label ?? "";
+
   return (
     <>
       <RenewalGnb />
-      <section className="bg-gradient-to-br from-[#1a1d2e] to-[#2a2f45] px-5 py-14 text-center text-white">
-        <h1 className="text-2xl font-bold">마이페이지</h1>
-        <p className="mt-2 text-sm text-white/70">내 자산 현황과 계정 정보를 관리하세요</p>
+
+      {/* SUB HERO */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#1a1d2e] to-[#2a2f45] px-5 py-16 text-center text-white">
+        <span className="mb-4 inline-block rounded-full border border-[#9db2ff]/25 bg-[#9db2ff]/10 px-3.5 py-1.5 text-xs font-semibold tracking-wider text-[#9db2ff]">
+          My Page
+        </span>
+        <h1 className="text-[30px] font-extrabold">마이페이지</h1>
+        <p className="mt-2.5 text-[15px] text-white/70">내 자산 현황과 등급·구독·알림을 한 곳에서 관리하세요</p>
       </section>
 
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        <div className="flex flex-col gap-6 md:flex-row">
-          {/* 좌측 메뉴 */}
-          <aside className="md:w-56 md:flex-shrink-0">
-            <nav className="flex gap-2 overflow-x-auto md:flex-col md:gap-1">
-              {PROFILE_TABS.map((t) => (
-                <button
-                  key={t.key}
-                  onClick={() => setTab(t.key)}
-                  className={`whitespace-nowrap rounded-lg px-4 py-2.5 text-left text-sm font-medium transition-colors md:w-full ${
-                    tab === t.key ? "bg-[#1a1d2e] text-white" : "text-muted hover:bg-[#f5f5f7]"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </nav>
-            <div className="mt-6 hidden md:block">{accountActions}</div>
-          </aside>
-
-          {/* 우측 콘텐츠 */}
-          <div className="min-w-0 flex-1">
-            {tab === "dashboard" && <ProfileDashboardPanel usage={usage} />}
-            {tab === "info" && <ProfileInfoPanel user={user} />}
-            {tab === "tier" && (
-              <ProfileTierPanel
-                role={role}
-                verifyStatus={user.verifyStatus}
-                businessNumber={businessNumber}
-                setBusinessNumber={setBusinessNumber}
-                selectedRole={selectedRole}
-                setSelectedRole={setSelectedRole}
-                upgradeLoading={upgradeLoading}
-                upgradeMessage={upgradeMessage}
-                handleUpgrade={handleUpgrade}
-                subscription={subscription}
-                cancelLoading={cancelLoading}
-                handleCancelSubscription={handleCancelSubscription}
-                showToast={showToast}
-              />
-            )}
-            {tab === "notif" && (
-              <ProfileNotifPanel
-                notifications={notifications}
-                notifLoading={notifLoading}
-                phoneSaving={phoneSaving}
-                handleToggleNotification={handleToggleNotification}
-                handlePhoneChange={handlePhoneChange}
-                handlePhoneSave={handlePhoneSave}
-              />
-            )}
-
-            {/* 모바일 계정 액션 */}
-            <div className="mt-8 md:hidden">{accountActions}</div>
-          </div>
+      <div className="mx-auto max-w-3xl px-4 py-8">
+        {/* 탭 필터칩 */}
+        <div className="mb-6 flex flex-wrap gap-2">
+          {PROFILE_TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
+                tab === t.key
+                  ? "bg-[#1a1d2e] text-white shadow-sm"
+                  : "border border-[#e5e5e7] bg-white text-[#6e6e73] hover:bg-[#f5f5f7]"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
+
+        {/* 섹션 제목 */}
+        <h2 className="mb-4 text-lg font-bold text-[#1d1d1f]">{tabLabel}</h2>
+
+        {/* 콘텐츠 */}
+        {tab === "dashboard" && <ProfileDashboardPanel usage={usage} />}
+        {tab === "info" && <ProfileInfoPanel user={user} />}
+        {tab === "tier" && (
+          <ProfileTierPanel
+            role={role}
+            verifyStatus={user.verifyStatus}
+            businessNumber={businessNumber}
+            setBusinessNumber={setBusinessNumber}
+            selectedRole={selectedRole}
+            setSelectedRole={setSelectedRole}
+            upgradeLoading={upgradeLoading}
+            upgradeMessage={upgradeMessage}
+            handleUpgrade={handleUpgrade}
+            subscription={subscription}
+            cancelLoading={cancelLoading}
+            handleCancelSubscription={handleCancelSubscription}
+            showToast={showToast}
+          />
+        )}
+        {tab === "notif" && (
+          <ProfileNotifPanel
+            notifications={notifications}
+            notifLoading={notifLoading}
+            phoneSaving={phoneSaving}
+            handleToggleNotification={handleToggleNotification}
+            handlePhoneChange={handlePhoneChange}
+            handlePhoneSave={handlePhoneSave}
+          />
+        )}
+
+        {/* 계정 액션 */}
+        <div className="mt-10 border-t border-[#f0f0f2] pt-6">{accountActions}</div>
       </div>
     </>
   );
