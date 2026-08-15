@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import s from "../listing-detail/listing-detail.module.css";
 import { ApplicationModal } from "@/app/(app)/listings/[id]/components/ApplicationModal";
+import RenewalLoginModal from "../_shared/RenewalLoginModal";
 import type { ListingItem } from "@/app/(app)/listings/hooks/useListings";
 
 function formatKoreanWon(won: number): string {
@@ -19,12 +21,20 @@ const centerBox: React.CSSProperties = { padding: "80px 20px", textAlign: "cente
 export default function ListingDbDetailContent() {
   const router = useRouter();
   const sp = useSearchParams();
+  const { status } = useSession();
   const id = sp.get("id") || "";
 
   const [listing, setListing] = useState<ListingItem | null>(null);
   const [loading, setLoading] = useState(!!id);
   const [notFound, setNotFound] = useState(!id);
   const [showIntent, setShowIntent] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+
+  // 의향서: 로그인 필요 — 비로그인 시 로그인 모달로 유도
+  const handleIntent = () => {
+    if (status !== "authenticated") { setShowLogin(true); return; }
+    setShowIntent(true);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -157,7 +167,7 @@ export default function ListingDbDetailContent() {
             )}
 
             <div className={s.ctaSection}>
-              <button className={s.ctaPrimary} onClick={() => setShowIntent(true)}>의향서 보내기</button>
+              <button className={s.ctaPrimary} onClick={handleIntent}>의향서 보내기</button>
               <button className={s.ctaSecondary} onClick={() => router.push("/rights")}>AI 권리분석 해보기</button>
             </div>
           </div>
@@ -171,6 +181,14 @@ export default function ListingDbDetailContent() {
           listingType={listing.listingType}
           onClose={() => setShowIntent(false)}
           onSuccess={() => {}}
+        />
+      )}
+
+      {showLogin && (
+        <RenewalLoginModal
+          featureName="의향서"
+          description="관심 매물에 계약 의향서를 보내려면 로그인이 필요해요."
+          onClose={() => setShowLogin(false)}
         />
       )}
     </section>
