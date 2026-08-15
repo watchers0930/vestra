@@ -43,8 +43,9 @@ export default function RoleTypeCard({
 
       {/* 아이콘 */}
       <div
+        style={{ marginBottom: 16 }}
         className={`
-          w-10 h-10 rounded-xl flex items-center justify-center mb-3
+          w-10 h-10 rounded-xl flex items-center justify-center
           ${selected ? "bg-primary/10 text-primary" : "bg-muted/10 text-muted"}
         `}
       >
@@ -52,15 +53,16 @@ export default function RoleTypeCard({
       </div>
 
       {/* 제목 & 설명 */}
-      <h3 className="text-sm font-semibold text-foreground mb-1">{title}</h3>
-      <p className="text-xs text-muted mb-3">{description}</p>
+      <h3 style={{ marginBottom: 6 }} className="text-sm font-semibold text-foreground">{title}</h3>
+      <p style={{ marginBottom: 16 }} className="text-xs text-muted">{description}</p>
 
       {/* 기능 목록 */}
-      <ul className="space-y-1.5">
+      <ul style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {features.map((feature) => (
           <li
             key={feature}
-            className="flex items-center gap-2 text-xs text-muted"
+            style={{ gap: 8 }}
+            className="flex items-center text-xs text-muted"
           >
             <div
               className={`w-1 h-1 rounded-full flex-shrink-0 ${
