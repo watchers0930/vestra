@@ -25,7 +25,7 @@ export default function RoleTypeCard({
       type="button"
       onClick={onSelect}
       className={`
-        relative w-full text-left rounded-2xl border p-2.5 transition-all cursor-pointer
+        relative w-full text-left rounded-2xl border p-6 transition-all cursor-pointer
         ${
           selected
             ? "border-primary ring-2 ring-primary/20 bg-primary/5"
