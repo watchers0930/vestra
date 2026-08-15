@@ -18,6 +18,7 @@ const PUBLIC_PREFIXES = [
   "/home",
   "/renewal",
   "/signup",
+  "/profile",
   // 분석 체험 (TRIAL)
   "/jeonse",
   "/rights",

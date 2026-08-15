@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { signOut } from "next-auth/react";
 import { clearAll } from "@/lib/store";
+import RenewalGnb from "../renewal/_shared/RenewalGnb";
 import {
   User,
   Shield,
@@ -83,8 +84,13 @@ export default function ProfilePage() {
   const VerifyIcon = verifyInfo.icon;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-[#1d1d1f]">내 프로필</h1>
+    <>
+      <RenewalGnb />
+      <section className="bg-gradient-to-br from-[#1a1d2e] to-[#2a2f45] px-5 py-14 text-center text-white">
+        <h1 className="text-2xl font-bold">마이페이지</h1>
+        <p className="mt-2 text-sm text-white/70">내 정보와 등급·알림을 관리하세요</p>
+      </section>
+      <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
 
       {/* 사용자 정보 */}
       <div className="bg-card rounded-2xl border border-border p-6">
@@ -425,6 +431,7 @@ export default function ProfilePage() {
         <LogOut size={16} strokeWidth={1.5} />
         로그아웃
       </button>
-    </div>
+      </div>
+    </>
   );
 }
