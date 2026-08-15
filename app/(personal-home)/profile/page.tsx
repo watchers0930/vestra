@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { signOut } from "next-auth/react";
 import { clearAll } from "@/lib/store";
@@ -67,6 +68,31 @@ export default function ProfilePage() {
     handlePhoneSave,
     showToast,
   } = useProfileData();
+
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
+
+  const handleWithdraw = async () => {
+    setWithdrawing(true);
+    try {
+      const res = await fetch("/api/user/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      if (res.ok) {
+        clearAll();
+        signOut({ redirectTo: "/" });
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || "탈퇴 처리에 실패했습니다.");
+        setWithdrawing(false);
+      }
+    } catch {
+      showToast("네트워크 오류가 발생했습니다.");
+      setWithdrawing(false);
+    }
+  };
 
   if (!session?.user) {
     return (
@@ -431,6 +457,35 @@ export default function ProfilePage() {
         <LogOut size={16} strokeWidth={1.5} />
         로그아웃
       </button>
+
+      {/* 회원 탈퇴 */}
+      {!confirmWithdraw ? (
+        <button
+          onClick={() => setConfirmWithdraw(true)}
+          className="w-full py-2 text-center text-xs text-[#aeaeb2] transition-colors hover:text-red-500"
+        >
+          회원 탈퇴
+        </button>
+      ) : (
+        <div className="space-y-3 rounded-xl border border-red-200 bg-red-50 p-4">
+          <p className="text-sm text-red-700">정말 탈퇴하시겠어요? 계정과 모든 데이터가 삭제되며 되돌릴 수 없습니다.</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirmWithdraw(false)}
+              className="flex-1 rounded-lg border border-border py-2 text-sm text-muted hover:bg-white"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleWithdraw}
+              disabled={withdrawing}
+              className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              {withdrawing ? "처리 중..." : "탈퇴하기"}
+            </button>
+          </div>
+        </div>
+      )}
       </div>
     </>
   );
