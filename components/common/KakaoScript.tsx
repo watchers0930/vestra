@@ -34,22 +34,29 @@ function tryLoadWithRetry(attempt: number) {
     window.dispatchEvent(new Event("kakao-maps-ready"));
   });
 
-  // 3초 안에 load 콜백이 안 불리면 서브 리소스 503 → 재시도
+  // 3초 안에 load 콜백이 안 불리면 재시도
   setTimeout(() => {
-    if (!loaded && !window.__kakaoMapsReady) {
-      // 기존 kakao.js 서브리소스 + sdk.js 본체 모두 제거 (재삽입 시 중복 누적 방지)
-      document.querySelectorAll('script[src*="daumcdn.net/mapjsapi"], script[src*="dapi.kakao.com"]').forEach(s => s.remove());
-      // kakao 객체 초기화
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (window as any).kakao;
-      // SDK 재삽입
-      const key = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY || document.querySelector('script[src*="dapi.kakao.com"]')?.getAttribute("src")?.match(/appkey=([^&]+)/)?.[1];
-      if (key) {
-        const s = document.createElement("script");
-        s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&libraries=services,clusterer,roadview&autoload=false&_retry=${attempt}`;
-        s.onload = () => tryLoadWithRetry(attempt + 1);
-        document.head.appendChild(s);
-      }
+    if (loaded || window.__kakaoMapsReady) return;
+
+    // SDK 본체는 살아있고 maps.load 콜백만 안 온 경우 → 재삽입 없이 load만 재호출
+    if (window.kakao?.maps?.load) {
+      window.kakao.maps.load(() => {
+        window.__kakaoMapsReady = true;
+        window.dispatchEvent(new Event("kakao-maps-ready"));
+      });
+      return;
+    }
+
+    // SDK 자체가 죽은 경우(503 등)에만 재삽입
+    document.querySelectorAll('script[src*="daumcdn.net/mapjsapi"], script[src*="dapi.kakao.com"]').forEach(s => s.remove());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (window as any).kakao;
+    const key = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY || document.querySelector('script[src*="dapi.kakao.com"]')?.getAttribute("src")?.match(/appkey=([^&]+)/)?.[1];
+    if (key) {
+      const s = document.createElement("script");
+      s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&libraries=services,clusterer,roadview&autoload=false&_retry=${attempt}`;
+      s.onload = () => tryLoadWithRetry(attempt + 1);
+      document.head.appendChild(s);
     }
   }, 3000);
 }
