@@ -14,6 +14,9 @@
 
 /** prefix 로 매칭하는 공개 경로 (해당 경로 및 그 하위 전체 공개) */
 const PUBLIC_PREFIXES = [
+  // renewal 사용자 화면 (진입 자유 — 저장·개인데이터 액션만 로그인 모달로 유도)
+  "/home",
+  "/renewal",
   // 분석 체험 (TRIAL)
   "/jeonse",
   "/rights",
