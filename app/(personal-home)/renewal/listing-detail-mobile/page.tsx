@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import ListingDetailMobileClient from "./ListingDetailMobileClient";
 
 export const metadata = {
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function ListingDetailMobilePage() {
-  return <ListingDetailMobileClient />;
+  return (
+    <Suspense fallback={null}>
+      <ListingDetailMobileClient />
+    </Suspense>
+  );
 }

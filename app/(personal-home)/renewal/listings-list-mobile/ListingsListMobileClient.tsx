@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import s from "./listings-list-mobile.module.css";
+import { useListings, type ListingType } from "@/app/(app)/listings/hooks/useListings";
+import MobileListingCard from "./components/MobileListingCard";
 
 const REGIONS: Record<string, string[]> = {
   "서울특별시": ["강남구","강동구","강북구","강서구","관악구","광진구","구로구","금천구","노원구","도봉구","동대문구","동작구","마포구","서대문구","서초구","성동구","성북구","송파구","양천구","영등포구","용산구","은평구","종로구","중구","중랑구"],
@@ -24,6 +26,16 @@ const REGIONS: Record<string, string[]> = {
   "제주특별자치도": ["서귀포시","제주시"],
 };
 
+const BUILDING_TYPES = ["아파트", "단독", "다가구", "연립", "빌라"];
+
+const SIZE_RANGES: Record<string, { min?: number; max?: number }> = {
+  "10평형": { max: 49 },
+  "20평형": { min: 49, max: 82 },
+  "30평형": { min: 82, max: 115 },
+  "40평형": { min: 115, max: 148 },
+  "50평형 이상": { min: 181 },
+};
+
 type DropdownKey = "type" | "trade" | "size" | null;
 
 interface FilterState {
@@ -38,6 +50,14 @@ const DEFAULT_LABELS: FilterState = {
   size: "전체 평형",
 };
 
+const emptyMsgStyle: React.CSSProperties = {
+  gridColumn: "1 / -1",
+  textAlign: "center",
+  padding: "48px 0",
+  color: "#999",
+  fontSize: "14px",
+};
+
 export default function ListingsListMobileClient() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<DropdownKey>(null);
@@ -46,6 +66,22 @@ export default function ListingsListMobileClient() {
   const [sigungu, setSigungu] = useState("");
 
   const sigunguList = REGIONS[sido] || [];
+
+  // ── 필터값 → useListings 파라미터 (PC listings-list와 동일 매핑) ──
+  const listingType: ListingType | undefined =
+    filterLabels.trade === "전세" ? "JEONSE" :
+    filterLabels.trade === "매매" ? "SALE" :
+    undefined;
+  const roomType = BUILDING_TYPES.includes(filterLabels.type) ? filterLabels.type : undefined;
+  const sizeRange = SIZE_RANGES[filterLabels.size] ?? {};
+  const region = sigungu || (sido ? sido.replace(/(특별시|광역시|특별자치시|특별자치도|도)$/, "") : undefined);
+
+  const { listings, loading } = useListings(listingType, {
+    roomType,
+    region,
+    minSize: sizeRange.min,
+    maxSize: sizeRange.max,
+  });
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -98,8 +134,8 @@ export default function ListingsListMobileClient() {
           <li>
             <div className={s.navMobileAuth}>
               <Link href="/login">로그인</Link>
-              <a href="#">마이페이지</a>
-              <Link href="/register">회원가입</Link>
+              <Link href="/profile">마이페이지</Link>
+              <Link href="/signup">회원가입</Link>
             </div>
           </li>
         </ul>
@@ -214,7 +250,7 @@ export default function ListingsListMobileClient() {
 
         {/* RESULTS BAR */}
         <div className={s.resultsHeader}>
-          <p className={s.resultsCount}>총 <strong>9개</strong> 매물</p>
+          <p className={s.resultsCount}>총 <strong>{listings.length}개</strong> 매물</p>
           <div className={s.resultsRight}>
             <button className={s.sortBtn}>
               최신순
@@ -224,7 +260,7 @@ export default function ListingsListMobileClient() {
               <button className={`${s.viewBtn} ${s.active}`} title="목록보기">
                 <svg width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.1"><line x1="1" y1="3" x2="14" y2="3" /><line x1="1" y1="7.5" x2="14" y2="7.5" /><line x1="1" y1="12" x2="14" y2="12" /></svg>
               </button>
-              <Link href="/listings" className={s.viewBtn} title="지도보기">
+              <Link href="/renewal/listings-map-mobile" className={s.viewBtn} title="지도보기">
                 <svg width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.1"><path d="M7.5 1C5.3 1 3.5 2.8 3.5 5c0 3.2 4 9 4 9s4-5.8 4-9c0-2.2-1.8-4-4-4Z" /><circle cx="7.5" cy="5" r="1.4" /></svg>
               </Link>
             </div>
@@ -233,153 +269,13 @@ export default function ListingsListMobileClient() {
 
         {/* CARD GRID */}
         <div className={s.subListingsGrid}>
-          {/* Card 1 */}
-          <Link href="/listings" className={s.propertyCard}>
-            <div className={`${s.propImg} ${s.pimg1}`}>
-              <span className={`${s.badgeType} ${s.badgeJeonse}`}>전세</span>
-            </div>
-            <div className={s.propBody}>
-              <div className={s.propPrice}>1.9억<span className={s.months}>12개월</span></div>
-              <div className={s.propAddr}>서울시 송파구 잠실동 40 잠실맨션</div>
-              <div className={s.propMeta}>
-                <span className={s.mType}>오피스텔</span>
-                <span className={s.mArea}>33.2㎡</span>
-                <span className={s.mFloor}>8층</span>
-              </div>
-              <div className={s.propFooter}><span className={s.propLikes}>2</span><span>서울공인중개사</span></div>
-            </div>
-          </Link>
-          {/* Card 2 */}
-          <Link href="/listings" className={s.propertyCard}>
-            <div className={`${s.propImg} ${s.pimg2}`}>
-              <span className={`${s.badgeType} ${s.badgeJeonse}`}>전세</span>
-            </div>
-            <div className={s.propBody}>
-              <div className={s.propPrice}>2.8억<span className={s.months}>24개월</span></div>
-              <div className={s.propAddr}>서울시 마포구 합정동 402-5</div>
-              <div className={s.propMeta}>
-                <span className={s.mType}>빌라</span>
-                <span className={s.mArea}>59.4㎡</span>
-                <span className={s.mFloor}>3층</span>
-              </div>
-              <div className={s.propFooter}><span className={s.propLikes}>6</span><span>마포공인중개사</span></div>
-            </div>
-          </Link>
-          {/* Card 3 */}
-          <Link href="/listings" className={s.propertyCard}>
-            <div className={`${s.propImg} ${s.pimg3}`}>
-              <span className={`${s.badgeType} ${s.badgeSale}`}>매매</span>
-              <span className={s.badgeTrust}>안심인증</span>
-            </div>
-            <div className={s.propBody}>
-              <div className={s.propPrice}>13.5억</div>
-              <div className={s.propAddr}>강남구 대치동 대치아이파크</div>
-              <div className={s.propMeta}>
-                <span className={s.mType}>아파트</span>
-                <span className={s.mArea}>84.9㎡</span>
-                <span className={s.mFloor}>9/12층</span>
-              </div>
-              <div className={s.propFooter}><span className={s.propLikes}>49</span><span>서울공인중개사</span></div>
-            </div>
-          </Link>
-          {/* Card 4 */}
-          <Link href="/listings" className={s.propertyCard}>
-            <div className={`${s.propImg} ${s.pimg4}`}>
-              <span className={`${s.badgeType} ${s.badgeJeonse}`}>전세</span>
-            </div>
-            <div className={s.propBody}>
-              <div className={s.propPrice}>3.2억<span className={s.months}>24개월</span></div>
-              <div className={s.propAddr}>서울시 용산구 이태원동</div>
-              <div className={s.propMeta}>
-                <span className={s.mType}>아파트</span>
-                <span className={s.mArea}>66.1㎡</span>
-                <span className={s.mFloor}>5층</span>
-              </div>
-              <div className={s.propFooter}><span className={s.propLikes}>14</span><span>서울공인중개사</span></div>
-            </div>
-          </Link>
-          {/* Card 5 */}
-          <Link href="/listings" className={s.propertyCard}>
-            <div className={`${s.propImg} ${s.pimg5}`}>
-              <span className={`${s.badgeType} ${s.badgeSale}`}>매매</span>
-              <span className={s.badgeTrust}>안심인증</span>
-            </div>
-            <div className={s.propBody}>
-              <div className={s.propPrice}>8.2억</div>
-              <div className={s.propAddr}>서울시 서초구 방배동</div>
-              <div className={s.propMeta}>
-                <span className={s.mType}>아파트</span>
-                <span className={s.mArea}>75.6㎡</span>
-                <span className={s.mFloor}>11층</span>
-              </div>
-              <div className={s.propFooter}><span className={s.propLikes}>31</span><span>서울공인중개사</span></div>
-            </div>
-          </Link>
-          {/* Card 6 */}
-          <Link href="/listings" className={s.propertyCard}>
-            <div className={`${s.propImg} ${s.pimg6}`}>
-              <span className={`${s.badgeType} ${s.badgeJeonse}`}>전세</span>
-            </div>
-            <div className={s.propBody}>
-              <div className={s.propPrice}>1.5억<span className={s.months}>12개월</span></div>
-              <div className={s.propAddr}>서울시 노원구 상계동</div>
-              <div className={s.propMeta}>
-                <span className={s.mType}>빌라</span>
-                <span className={s.mArea}>42.3㎡</span>
-                <span className={s.mFloor}>2층</span>
-              </div>
-              <div className={s.propFooter}><span className={s.propLikes}>3</span><span>서울공인중개사</span></div>
-            </div>
-          </Link>
-          {/* Card 7 */}
-          <Link href="/listings" className={s.propertyCard}>
-            <div className={`${s.propImg} ${s.pimg1}`}>
-              <span className={`${s.badgeType} ${s.badgeJeonse}`}>전세</span>
-            </div>
-            <div className={s.propBody}>
-              <div className={s.propPrice}>4.5억<span className={s.months}>24개월</span></div>
-              <div className={s.propAddr}>서울시 성동구 성수동</div>
-              <div className={s.propMeta}>
-                <span className={s.mType}>아파트</span>
-                <span className={s.mArea}>59.9㎡</span>
-                <span className={s.mFloor}>6층</span>
-              </div>
-              <div className={s.propFooter}><span className={s.propLikes}>22</span><span>서울공인중개사</span></div>
-            </div>
-          </Link>
-          {/* Card 8 */}
-          <Link href="/listings" className={s.propertyCard}>
-            <div className={`${s.propImg} ${s.pimg3}`}>
-              <span className={`${s.badgeType} ${s.badgeSale}`}>매매</span>
-              <span className={s.badgeTrust}>안심인증</span>
-            </div>
-            <div className={s.propBody}>
-              <div className={s.propPrice}>5.8억</div>
-              <div className={s.propAddr}>서울시 광진구 구의동</div>
-              <div className={s.propMeta}>
-                <span className={s.mType}>아파트</span>
-                <span className={s.mArea}>73.2㎡</span>
-                <span className={s.mFloor}>14층</span>
-              </div>
-              <div className={s.propFooter}><span className={s.propLikes}>17</span><span>서울공인중개사</span></div>
-            </div>
-          </Link>
-          {/* Card 9 */}
-          <Link href="/listings" className={s.propertyCard}>
-            <div className={`${s.propImg} ${s.pimg2}`}>
-              <span className={`${s.badgeType} ${s.badgeJeonse}`}>전세</span>
-            </div>
-            <div className={s.propBody}>
-              <div className={s.propPrice}>2.1억<span className={s.months}>12개월</span></div>
-              <div className={s.propAddr}>서울시 은평구 응암동</div>
-              <div className={s.propMeta}>
-                <span className={s.mType}>빌라</span>
-                <span className={s.mArea}>46.2㎡</span>
-                <span className={s.mFloor}>2층</span>
-              </div>
-              <div className={s.propFooter}><span className={s.propLikes}>5</span><span>서울공인중개사</span></div>
-            </div>
-          </Link>
+          {loading ? (
+            <p style={emptyMsgStyle}>매물을 불러오는 중…</p>
+          ) : listings.length === 0 ? (
+            <p style={emptyMsgStyle}>조건에 맞는 매물이 없습니다.</p>
+          ) : (
+            listings.map((l, i) => <MobileListingCard key={l.id} listing={l} index={i} />)
+          )}
         </div>
       </section>
 

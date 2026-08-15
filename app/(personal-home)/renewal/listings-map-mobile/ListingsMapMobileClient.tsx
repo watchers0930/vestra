@@ -1,64 +1,61 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import s from "./listings-map-mobile.module.css";
 
-/* ── Data ── */
-interface Property {
-  lat: number;
-  lng: number;
-  label: string;
-  badges: string[];
-  price: string;
-  priceNote: string;
-  addr: string;
-  area: string;
-  floor: string;
-  trust: boolean;
-  desc: string;
-  agency: string;
-  photos: string[];
+/* ── 국토교통부 실거래 아파트 ── */
+interface AptItem {
+  id: string;
+  aptName: string;
+  dong: string;
+  jibun: string | null;
+  area: number;
+  floor: number;
+  buildYear: number;
+  dealAmount: number;
+  dealDate: string;
+  lat?: number;
+  lng?: number;
 }
 
-const PROPS: Property[] = [
-  {
-    lat: 37.4946, lng: 127.0614,
-    label: "13억5000만",
-    badges: ["매매", "전세"],
-    price: "13억 5,000만원",
-    priceNote: "(대지면적 기준)",
-    addr: "서울시 강남구 대치동 966 대치아이파크",
-    area: "84.9㎡", floor: "12/25층",
-    trust: true,
-    desc: "강남구 대치동 하이엔드 아파트단지입니다. 남향 배치와 채광이 우수하며 인근 초등학교 도보 5분 이내입니다. 전용 84.9㎡, 고층 남향 세대로 한강 조망 가능합니다.",
-    agency: "서울공인중개사",
-    photos: [
-      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=400&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&auto=format&fit=crop&q=80",
-    ],
-  },
-  {
-    lat: 37.5499, lng: 126.9145,
-    label: "2억8000만",
-    badges: ["전세"],
-    price: "2억 8,000만원",
-    priceNote: "(24개월)",
-    addr: "서울시 마포구 합정동 402-5",
-    area: "59.4㎡", floor: "3/5층",
-    trust: true,
-    desc: "합정역 도보 4분 역세권 빌라입니다. 풀옵션 인테리어 시공 완료, 즉시 입주 가능하며 주변 카페거리와 인접해 생활 편의성이 높습니다.",
-    agency: "마포공인중개사",
-    photos: [
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400&auto=format&fit=crop&q=80",
-    ],
-  },
-];
-
+const REGION_NAME = "강남구";
 const CHIP_LABELS = ["전체", "매매", "전세", "단기임대", "아파트", "빌라", "안심인증"];
+
+/** 원 단위 → "13억 5,000만원" */
+function fullWon(won: number): string {
+  const eok = Math.floor(won / 1e8);
+  const man = Math.floor((won % 1e8) / 1e4);
+  if (eok > 0) return man > 0 ? `${eok}억 ${man.toLocaleString()}만원` : `${eok}억원`;
+  return `${man.toLocaleString()}만원`;
+}
+
+function detailHref(p: AptItem): string {
+  const q = new URLSearchParams({
+    region: REGION_NAME,
+    dong: p.dong,
+    apt: p.aptName,
+    area: String(p.area),
+    floor: String(p.floor),
+    amount: String(p.dealAmount),
+    dealDate: p.dealDate,
+    buildYear: String(p.buildYear),
+  });
+  if (p.lat != null && p.lng != null) {
+    q.set("lat", String(p.lat));
+    q.set("lng", String(p.lng));
+  }
+  return `/renewal/listing-detail?${q.toString()}`;
+}
+
+const imgPlaceholderStyle: React.CSSProperties = {
+  background: "#e2e8f0",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "#94a3b8",
+  fontSize: 11,
+};
 
 /* ── Component ── */
 export default function ListingsMapMobileClient() {
@@ -66,12 +63,20 @@ export default function ListingsMapMobileClient() {
   const [activeChip, setActiveChip] = useState("전체");
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [detailProp, setDetailProp] = useState<Property | null>(null);
-  const [activeThumbIdx, setActiveThumbIdx] = useState(0);
+  const [detailProp, setDetailProp] = useState<AptItem | null>(null);
+  const [items, setItems] = useState<AptItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  function openDetail(p: Property) {
+  useEffect(() => {
+    fetch(`/api/listings/apartments?region=${encodeURIComponent(REGION_NAME)}&limit=30&geocode=1`)
+      .then((r) => (r.ok ? r.json() : { items: [] }))
+      .then((d) => setItems(d.items ?? []))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  function openDetail(p: AptItem) {
     setDetailProp(p);
-    setActiveThumbIdx(0);
     setDetailOpen(true);
     if (sheetExpanded) setSheetExpanded(false);
   }
@@ -85,8 +90,30 @@ export default function ListingsMapMobileClient() {
     setSheetExpanded((v) => !v);
   }
 
-  function changePhoto(idx: number) {
-    setActiveThumbIdx(idx);
+  function renderCard(p: AptItem, expanded: boolean) {
+    return (
+      <div
+        key={p.id}
+        className={s.peekCard}
+        style={expanded ? { width: "100%", flexShrink: 1 } : undefined}
+        onClick={() => openDetail(p)}
+      >
+        <div
+          className={s.peekCardImg}
+          style={expanded ? { ...imgPlaceholderStyle, width: "120px", height: "90px" } : imgPlaceholderStyle}
+        >
+          사진 없음
+        </div>
+        <div className={s.peekCardBody}>
+          <div className={s.peekBadges}>
+            <span className={`${s.peekBadge} ${s.pbSale}`}>매매</span>
+          </div>
+          <div className={s.peekPrice}>{fullWon(p.dealAmount)}</div>
+          <div className={s.peekAddr}>{REGION_NAME} {p.dong} {p.aptName}</div>
+          <div className={s.peekMeta}>{p.area}㎡ · {p.floor}층 · {p.buildYear}년</div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -94,7 +121,7 @@ export default function ListingsMapMobileClient() {
 
       {/* NAV */}
       <nav className={s.nav}>
-        <a href="#" className={s.navLogo}>
+        <a href="/home" className={s.navLogo}>
           <div className={s.navLogoIcon}>V</div>
           <span className={s.navLogoText}>VESTRA</span>
         </a>
@@ -122,21 +149,21 @@ export default function ListingsMapMobileClient() {
           <li><a href="/renewal/rights">권리분석</a></li>
           <li><a href="/renewal/monitoring">등기감시</a></li>
           <li><a href="/renewal/contract">계약검토</a></li>
-          <li><a href="#">시세전망</a></li>
-          <li><a href="#">전문가상담</a></li>
+          <li><a href="/renewal/price-map">시세전망</a></li>
+          <li><a href="/renewal/expert">전문가상담</a></li>
         </ul>
       </nav>
 
       {/* MAP AREA */}
       <div className={s.mapArea}>
 
-        {/* MAP PLACEHOLDER (replaces Kakao map) */}
+        {/* MAP PLACEHOLDER */}
         <div className={s.mapPlaceholder}>
           <div className={s.mapPlaceholderInner}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#2e4bd8" opacity="0.5" />
             </svg>
-            <span style={{ color: "#888", fontSize: "14px", marginTop: "8px" }}>지도 영역</span>
+            <span style={{ color: "#888", fontSize: "14px", marginTop: "8px" }}>{REGION_NAME} 실거래 {items.length}건</span>
           </div>
         </div>
 
@@ -162,80 +189,21 @@ export default function ListingsMapMobileClient() {
         <div className={`${s.bottomSheet} ${sheetExpanded ? s.expanded : ""}`}>
           <div className={s.bsHandleArea} onClick={toggleSheet}>
             <div className={s.bsHandle}></div>
-            <p className={s.bsCount}>총 <strong>2개</strong> 매물</p>
+            <p className={s.bsCount}>총 <strong>{items.length}개</strong> 매물</p>
           </div>
 
-          {/* PEEK MODE: horizontal scroll */}
-          {!sheetExpanded && (
+          {loading ? (
+            <p style={{ textAlign: "center", padding: "24px 0", color: "#999", fontSize: 13 }}>불러오는 중…</p>
+          ) : items.length === 0 ? (
+            <p style={{ textAlign: "center", padding: "24px 0", color: "#999", fontSize: 13 }}>실거래 매물이 없습니다.</p>
+          ) : !sheetExpanded ? (
             <div className={s.peekScroll}>
-              {PROPS.map((p, idx) => (
-                <div
-                  key={idx}
-                  className={s.peekCard}
-                  onClick={() => openDetail(p)}
-                >
-                  <div
-                    className={s.peekCardImg}
-                    style={{ backgroundImage: `url(${p.photos[0]})` }}
-                  />
-                  <div className={s.peekCardBody}>
-                    <div className={s.peekBadges}>
-                      {p.badges.map((b) => (
-                        <span
-                          key={b}
-                          className={`${s.peekBadge} ${b === "매매" ? s.pbSale : s.pbJeonse}`}
-                        >
-                          {b}
-                        </span>
-                      ))}
-                      {p.trust && (
-                        <span className={`${s.peekBadge} ${s.pbTrust}`}>안심인증</span>
-                      )}
-                    </div>
-                    <div className={s.peekPrice}>{p.price}</div>
-                    <div className={s.peekAddr}>{p.addr}</div>
-                    <div className={s.peekMeta}>{p.area} · {p.floor}</div>
-                  </div>
-                </div>
-              ))}
+              {items.map((p) => renderCard(p, false))}
             </div>
-          )}
-
-          {/* EXPANDED MODE: vertical list */}
-          {sheetExpanded && (
+          ) : (
             <div className={s.bsList}>
               <div className={s.bsListScroll}>
-                {PROPS.map((p, idx) => (
-                  <div
-                    key={idx}
-                    className={s.peekCard}
-                    style={{ width: "100%", flexShrink: 1 }}
-                    onClick={() => openDetail(p)}
-                  >
-                    <div
-                      className={s.peekCardImg}
-                      style={{ backgroundImage: `url(${p.photos[0]})`, width: "120px", height: "90px" }}
-                    />
-                    <div className={s.peekCardBody}>
-                      <div className={s.peekBadges}>
-                        {p.badges.map((b) => (
-                          <span
-                            key={b}
-                            className={`${s.peekBadge} ${b === "매매" ? s.pbSale : s.pbJeonse}`}
-                          >
-                            {b}
-                          </span>
-                        ))}
-                        {p.trust && (
-                          <span className={`${s.peekBadge} ${s.pbTrust}`}>안심인증</span>
-                        )}
-                      </div>
-                      <div className={s.peekPrice}>{p.price}</div>
-                      <div className={s.peekAddr}>{p.addr}</div>
-                      <div className={s.peekMeta}>{p.area} · {p.floor}</div>
-                    </div>
-                  </div>
-                ))}
+                {items.map((p) => renderCard(p, true))}
               </div>
             </div>
           )}
@@ -249,59 +217,43 @@ export default function ListingsMapMobileClient() {
           </div>
           {detailProp && (
             <div className={s.dsBody}>
-              {/* Photo gallery */}
-              <div
-                className={s.dsPhotoMain}
-                style={{ backgroundImage: `url(${detailProp.photos[activeThumbIdx]})` }}
-              />
-              <div className={s.dsThumbs}>
-                {detailProp.photos.map((src, i) => (
-                  <div
-                    key={i}
-                    className={`${s.dsThumb} ${activeThumbIdx === i ? s.active : ""}`}
-                    style={{ backgroundImage: `url(${src})` }}
-                    onClick={() => changePhoto(i)}
-                  />
-                ))}
+              {/* Photo placeholder */}
+              <div className={s.dsPhotoMain} style={{ ...imgPlaceholderStyle, fontSize: 13, flexDirection: "column", gap: 6 }}>
+                등록된 사진이 없습니다
+                <span style={{ fontSize: 11 }}>국토교통부 실거래 기반 매물</span>
               </div>
               {/* Info */}
               <div className={s.dsInfo}>
                 <div className={s.dsBadges}>
-                  {detailProp.badges.map((b) => (
-                    <span
-                      key={b}
-                      className={`${s.dsBadge} ${b === "매매" ? s.dsbSale : s.dsbJeonse}`}
-                    >
-                      {b}
-                    </span>
-                  ))}
-                  {detailProp.trust && (
-                    <span className={s.dsTrustTag}>VESTRA 안심인증</span>
-                  )}
+                  <span className={`${s.dsBadge} ${s.dsbSale}`}>매매</span>
                 </div>
-                <div className={s.dsPrice}>{detailProp.price}</div>
-                <div className={s.dsPriceNote}>{detailProp.priceNote}</div>
-                <div className={s.dsAddr}>{detailProp.addr}</div>
+                <div className={s.dsPrice}>{fullWon(detailProp.dealAmount)}</div>
+                <div className={s.dsPriceNote}>{detailProp.dealDate} 실거래</div>
+                <div className={s.dsAddr}>{REGION_NAME} {detailProp.dong} {detailProp.aptName}</div>
                 <div className={s.dsMetaGrid}>
                   <div className={s.dsMetaItem}>
-                    <strong>{detailProp.area}</strong>
+                    <strong>{detailProp.area}㎡</strong>
                     전용면적
                   </div>
                   <div className={s.dsMetaItem}>
-                    <strong>{detailProp.floor}</strong>
+                    <strong>{detailProp.floor}층</strong>
                     층수
                   </div>
                 </div>
                 <div className={s.dsDescLabel}>매물 설명</div>
-                <p className={s.dsDesc}>{detailProp.desc}</p>
+                <p className={s.dsDesc}>
+                  {REGION_NAME} {detailProp.dong} {detailProp.aptName} 단지의 국토교통부 실거래 정보입니다.
+                  전용 {detailProp.area}㎡, {detailProp.floor}층, {detailProp.buildYear}년 준공.
+                  {detailProp.dealDate} 거래가 {fullWon(detailProp.dealAmount)}.
+                </p>
                 <p className={s.dsAgency}>
-                  연락처 | <a href="#">{detailProp.agency}</a>
+                  출처 | 국토교통부 실거래가
                 </p>
               </div>
             </div>
           )}
           <div className={s.dsCta}>
-            <Link href="/renewal/listing-detail" className={`${s.ctaBtn} ${s.ctaSecondary}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
+            <Link href={detailProp ? detailHref(detailProp) : "/renewal/listing-detail"} className={`${s.ctaBtn} ${s.ctaSecondary}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
               상세보기
             </Link>
             <button className={`${s.ctaBtn} ${s.ctaPrimary}`}>계약의향서 받아보기</button>
