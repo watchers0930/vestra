@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import s from "./price-map-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
-import KakaoScript from "@/components/common/KakaoScript";
 import { usePriceMap } from "@/app/(map)/price-map/hooks/usePriceMap";
 import { usePredictionData } from "@/app/(app)/prediction/hooks/usePredictionData";
 import PriceMapLeftPanel from "./components/PriceMapLeftPanel";
@@ -58,7 +57,6 @@ export default function PriceMapRenewalClient() {
 
   return (
     <div className={s.pageShell}>
-      <KakaoScript />
 
       {/* NAV */}
       <RenewalGnb active="price-map" />

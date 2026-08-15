@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Train, GraduationCap, Hospital, ShoppingCart, Leaf, Sparkles, Eye, EyeOff } from "lucide-react";
-import KakaoScript from "@/components/common/KakaoScript";
 import {
   useNeighborhoodData,
   type FacilityGroup,
@@ -151,7 +150,6 @@ export function JeonseEnvAnalysis({ active = true }: { active?: boolean }) {
 
   return (
     <div className={s.envLayout}>
-      <KakaoScript />
 
       {/* ─ 좌측 패널 ─ */}
       <div className={s.envPanel}>

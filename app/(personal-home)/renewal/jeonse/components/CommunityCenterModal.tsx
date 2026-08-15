@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X, MapPin, Phone, Search, Loader2, Navigation } from "lucide-react";
-import KakaoScript from "@/components/common/KakaoScript";
 
 interface Center {
   name: string;
@@ -134,7 +133,6 @@ export function CommunityCenterModal({ open, onClose }: Props) {
       aria-label="관할 주민센터 찾기"
       style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", background: "rgba(10,15,30,0.5)", backdropFilter: "blur(3px)" }}
     >
-      <KakaoScript />
       <div
         onClick={(e) => e.stopPropagation()}
         style={{ position: "relative", width: "100%", maxWidth: "900px", height: "78vh", maxHeight: "640px", display: "flex", flexDirection: "column", background: "#fff", borderRadius: "18px", overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.26)" }}

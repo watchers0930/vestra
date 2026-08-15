@@ -8,6 +8,7 @@ export default function KakaoScript() {
 
   return (
     <Script
+      id="kakao-maps-sdk"
       src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoKey}&libraries=services,clusterer,roadview&autoload=false`}
       strategy="afterInteractive"
       onReady={() => {
@@ -36,8 +37,8 @@ function tryLoadWithRetry(attempt: number) {
   // 3초 안에 load 콜백이 안 불리면 서브 리소스 503 → 재시도
   setTimeout(() => {
     if (!loaded && !window.__kakaoMapsReady) {
-      // 기존 kakao.js 스크립트 제거
-      document.querySelectorAll('script[src*="daumcdn.net/mapjsapi"]').forEach(s => s.remove());
+      // 기존 kakao.js 서브리소스 + sdk.js 본체 모두 제거 (재삽입 시 중복 누적 방지)
+      document.querySelectorAll('script[src*="daumcdn.net/mapjsapi"], script[src*="dapi.kakao.com"]').forEach(s => s.remove());
       // kakao 객체 초기화
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (window as any).kakao;
