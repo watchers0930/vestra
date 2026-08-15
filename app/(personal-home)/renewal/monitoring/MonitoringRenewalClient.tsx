@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import s from "./monitoring-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
+import RenewalAuthGate from "../_shared/RenewalAuthGate";
 import { useMonitoringData } from "@/app/(app)/monitoring/hooks/useMonitoringData";
 import MonitoringEmptyView from "./components/MonitoringEmptyView";
 import MonitoringListView from "./components/MonitoringListView";
@@ -10,8 +11,15 @@ import MonitoringDetailView from "./components/MonitoringDetailView";
 import AddPropertyModalRenewal from "./components/AddPropertyModalRenewal";
 
 export default function MonitoringRenewalClient() {
+  return (
+    <RenewalAuthGate active="monitoring" featureName="등기감시" description="등기부 변동을 실시간 감시하고 위험을 즉시 알려드립니다">
+      <MonitoringInner />
+    </RenewalAuthGate>
+  );
+}
+
+function MonitoringInner() {
   const {
-    session,
     properties,
     filteredProperties,
     loading,
@@ -29,8 +37,6 @@ export default function MonitoringRenewalClient() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const isLoggedIn = !!session?.user;
-
   const scrollTop = () => {
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -47,12 +53,8 @@ export default function MonitoringRenewalClient() {
   }, [refresh]);
 
   const handleAdd = useCallback(() => {
-    if (!isLoggedIn) {
-      if (typeof window !== "undefined") window.location.href = "/login";
-      return;
-    }
     setShowAddModal(true);
-  }, [isLoggedIn]);
+  }, []);
 
   // ── 상세 뷰 ──
   if (selectedId) {
@@ -98,7 +100,7 @@ export default function MonitoringRenewalClient() {
             불러오는 중...
           </div>
         ) : isEmpty ? (
-          <MonitoringEmptyView isLoggedIn={isLoggedIn} onAdd={handleAdd} />
+          <MonitoringEmptyView onAdd={handleAdd} />
         ) : (
           <MonitoringListView
             properties={properties}

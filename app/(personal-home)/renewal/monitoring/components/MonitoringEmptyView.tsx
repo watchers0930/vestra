@@ -1,20 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { ShieldCheck, Search, Zap, Lock } from "lucide-react";
 import s from "../monitoring-renewal.module.css";
 import MonitoringKpiRow from "./MonitoringKpiRow";
 
 interface Props {
-  isLoggedIn: boolean;
   onAdd: () => void;
 }
 
 /**
- * 등기감시 빈 상태 — 로그인 여부에 따라 CTA 분기.
- * 비로그인: 로그인 유도. 로그인+물건0건: 첫 물건 등록 유도.
+ * 등기감시 빈 상태 (로그인 사용자 · 물건 0건) — 첫 물건 등록 유도.
+ * 로그인 유도는 상위 RenewalAuthGate가 담당한다.
  */
-export default function MonitoringEmptyView({ isLoggedIn, onAdd }: Props) {
+export default function MonitoringEmptyView({ onAdd }: Props) {
   return (
     <>
       <MonitoringKpiRow empty activeCount={0} totalCount={0} unreadAlertCount={0} highRiskCount={0} />
@@ -23,36 +21,19 @@ export default function MonitoringEmptyView({ isLoggedIn, onAdd }: Props) {
         <div className={s.emptyIconBox}>
           <ShieldCheck size={32} />
         </div>
-        <div className={s.emptyTitle}>
-          {isLoggedIn ? "아직 감시 중인 물건이 없습니다" : "로그인하고 등기감시를 시작하세요"}
-        </div>
+        <div className={s.emptyTitle}>아직 감시 중인 물건이 없습니다</div>
         <div className={s.emptyDesc}>
-          {isLoggedIn ? (
-            <>
-              주소를 등록하면 VESTRA AI가 하루 2회 등기부를 점검하고<br />
-              소유권 변동, 압류, 근저당 설정 등 위험 이벤트를 즉시 알려드립니다.
-            </>
-          ) : (
-            <>
-              로그인하면 부동산 주소를 등록해 등기부 변동을 실시간 감시하고<br />
-              위험 이벤트 알림과 블록체인 무결성 증명서를 받아볼 수 있습니다.
-            </>
-          )}
+          주소를 등록하면 VESTRA AI가 하루 2회 등기부를 점검하고<br />
+          소유권 변동, 압류, 근저당 설정 등 위험 이벤트를 즉시 알려드립니다.
         </div>
 
-        {isLoggedIn ? (
-          <button className={s.emptyCta} onClick={onAdd}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            첫 물건 등록하기
-          </button>
-        ) : (
-          <Link className={s.emptyCta} href="/login">
-            로그인하고 시작하기
-          </Link>
-        )}
+        <button className={s.emptyCta} onClick={onAdd}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          첫 물건 등록하기
+        </button>
 
         <div className={s.whyGrid}>
           <div className={s.whyCard}>
