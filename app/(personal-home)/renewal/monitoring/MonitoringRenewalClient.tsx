@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import s from "./monitoring-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
-import RenewalAuthGate from "../_shared/RenewalAuthGate";
+import RenewalLoginModal from "../_shared/RenewalLoginModal";
 import { useMonitoringData } from "@/app/(app)/monitoring/hooks/useMonitoringData";
 import MonitoringEmptyView from "./components/MonitoringEmptyView";
 import MonitoringListView from "./components/MonitoringListView";
@@ -11,15 +11,8 @@ import MonitoringDetailView from "./components/MonitoringDetailView";
 import AddPropertyModalRenewal from "./components/AddPropertyModalRenewal";
 
 export default function MonitoringRenewalClient() {
-  return (
-    <RenewalAuthGate active="monitoring">
-      <MonitoringInner />
-    </RenewalAuthGate>
-  );
-}
-
-function MonitoringInner() {
   const {
+    session,
     properties,
     filteredProperties,
     loading,
@@ -34,8 +27,10 @@ function MonitoringInner() {
     refresh,
   } = useMonitoringData();
 
+  const isLoggedIn = !!session?.user;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const scrollTop = () => {
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
@@ -53,8 +48,12 @@ function MonitoringInner() {
   }, [refresh]);
 
   const handleAdd = useCallback(() => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return;
+    }
     setShowAddModal(true);
-  }, []);
+  }, [isLoggedIn]);
 
   // ── 상세 뷰 ──
   if (selectedId) {
@@ -124,6 +123,14 @@ function MonitoringInner() {
             setShowAddModal(false);
             refresh();
           }}
+        />
+      )}
+
+      {showLoginModal && (
+        <RenewalLoginModal
+          featureName="등기감시"
+          description="로그인하면 물건을 등록하고 등기 변동을 실시간 감시할 수 있습니다."
+          onClose={() => setShowLoginModal(false)}
         />
       )}
 

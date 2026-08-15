@@ -33,7 +33,7 @@ export const RENEWAL_ROUTES = {
  * 화면별 접근 등급.
  * - public   : 로그인 불필요 (완전 공개)
  * - trial    : 로그인 불필요, 게스트 일일/횟수 한도 (서버 rate-limit로 제어)
- * - required : 로그인 필수 (RenewalAuthGate 게이트 적용)
+ * - required : 로그인 필수 (현재 미사용 — 진입은 자유, 저장 액션 시 로그인 모달)
  */
 export type AccessLevel = "public" | "trial" | "required";
 
@@ -53,8 +53,8 @@ export const RENEWAL_MAIN: RenewalFeature[] = [
   { key: "listings", href: RENEWAL_ROUTES.listings, label: "매물검색", access: "public", featureName: "매물검색", description: "조건에 맞는 매물을 검색합니다" },
   { key: "jeonse", href: RENEWAL_ROUTES.jeonse, label: "전세보호", access: "trial", featureName: "전세보호", description: "전세 안전성을 분석하고 보호 절차를 안내합니다" },
   { key: "rights", href: RENEWAL_ROUTES.rights, label: "권리분석", access: "trial", featureName: "권리분석", description: "등기부 권리관계를 AI가 분석합니다" },
-  { key: "monitoring", href: RENEWAL_ROUTES.monitoring, label: "등기감시", access: "required", featureName: "등기감시", description: "등기부 변동을 실시간 감시하고 위험을 즉시 알려드립니다" },
-  { key: "contract", href: RENEWAL_ROUTES.contract, label: "계약검토", access: "required", featureName: "계약검토", description: "AI가 계약서의 위험 조항과 독소 조항을 자동으로 분석합니다" },
+  { key: "monitoring", href: RENEWAL_ROUTES.monitoring, label: "등기감시", access: "trial", featureName: "등기감시", description: "등기부 변동을 실시간 감시하고 위험을 즉시 알려드립니다" },
+  { key: "contract", href: RENEWAL_ROUTES.contract, label: "계약검토", access: "trial", featureName: "계약검토", description: "AI가 계약서의 위험 조항과 독소 조항을 자동으로 분석합니다" },
   { key: "price-map", href: RENEWAL_ROUTES.priceMap, label: "시세지도", access: "public", featureName: "시세지도", description: "지역별 시세와 전망을 지도로 확인합니다" },
 ];
 

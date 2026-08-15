@@ -9,8 +9,8 @@ interface Props {
 }
 
 /**
- * 등기감시 빈 상태 (로그인 사용자 · 물건 0건) — 첫 물건 등록 유도.
- * 로그인 유도는 상위 RenewalAuthGate가 담당한다.
+ * 등기감시 빈 상태 (물건 0건) — 첫 물건 등록 유도.
+ * 비로그인 상태에서 "물건 등록"을 누르면 상위 Client가 로그인 모달을 띄운다.
  */
 export default function MonitoringEmptyView({ onAdd }: Props) {
   return (

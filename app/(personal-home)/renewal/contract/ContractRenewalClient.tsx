@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { AlertTriangle, FileText } from "lucide-react";
 import s from "./contract-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
-import RenewalAuthGate from "../_shared/RenewalAuthGate";
 import { useContractAnalysis } from "@/app/(app)/contract/hooks/useContractAnalysis";
 import ContractResultSections, { SEC_IDS } from "./components/ContractResultSections";
 
@@ -16,14 +15,6 @@ const SAMPLES: Record<string, string> = {
 };
 
 export default function ContractRenewalClient() {
-  return (
-    <RenewalAuthGate active="contract">
-      <ContractInner />
-    </RenewalAuthGate>
-  );
-}
-
-function ContractInner() {
   const {
     contractText, setContractText,
     fileName, isLoading, result,
