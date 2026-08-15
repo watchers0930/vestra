@@ -22,12 +22,12 @@ export default function ListingDbDetailContent() {
   const id = sp.get("id") || "";
 
   const [listing, setListing] = useState<ListingItem | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const [loading, setLoading] = useState(!!id);
+  const [notFound, setNotFound] = useState(!id);
   const [showIntent, setShowIntent] = useState(false);
 
   useEffect(() => {
-    if (!id) { setLoading(false); setNotFound(true); return; }
+    if (!id) return;
     let alive = true;
     fetch(`/api/listings/${id}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
