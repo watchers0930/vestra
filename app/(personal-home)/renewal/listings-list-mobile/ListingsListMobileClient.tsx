@@ -93,7 +93,7 @@ export default function ListingsListMobileClient() {
           <li><a href="/renewal/rights">권리분석</a></li>
           <li><Link href="/renewal/monitoring">등기감시</Link></li>
           <li><Link href="/renewal/contract">계약검토</Link></li>
-          <li><Link href="/prediction">시세전망</Link></li>
+          <li><Link href="/renewal/price-map">시세전망</Link></li>
           <li><Link href="/renewal/expert">전문가상담</Link></li>
           <li>
             <div className={s.navMobileAuth}>
