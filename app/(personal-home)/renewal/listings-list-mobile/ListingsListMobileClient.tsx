@@ -110,7 +110,7 @@ export default function ListingsListMobileClient() {
       {/* NAV */}
       <nav>
         <div className={s.navInner}>
-          <Link href="/home" className={s.navLogo}>
+          <Link href="/" className={s.navLogo}>
             <div className={s.logoIcon}>V</div>
             <span className={s.logoText}>VESTRA</span>
           </Link>

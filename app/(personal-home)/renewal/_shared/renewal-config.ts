@@ -11,6 +11,7 @@ export type RenewalKey =
 /** renewal 및 공통 경로 단일 소스 */
 export const RENEWAL_ROUTES = {
   home: "/home",
+  landing: "/",
   listings: "/renewal/listings-list",
   listingsMobile: "/renewal/listings-list-mobile",
   jeonse: "/renewal/jeonse",

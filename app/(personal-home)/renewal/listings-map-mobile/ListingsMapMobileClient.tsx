@@ -121,7 +121,7 @@ export default function ListingsMapMobileClient() {
 
       {/* NAV */}
       <nav className={s.nav}>
-        <a href="/home" className={s.navLogo}>
+        <a href="/" className={s.navLogo}>
           <div className={s.navLogoIcon}>V</div>
           <span className={s.navLogoText}>VESTRA</span>
         </a>

@@ -26,7 +26,7 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
     <>
     <nav className={s.navBar}>
       <div className={s.navInner}>
-        <Link href={RENEWAL_ROUTES.home} className={s.navLogo}>
+        <Link href={RENEWAL_ROUTES.landing} className={s.navLogo}>
           <div className={s.logoIcon}>V</div>
           <span className={s.logoText}>VESTRA</span>
         </Link>
