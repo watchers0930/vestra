@@ -28,7 +28,7 @@ export default function RenewalSignupModal({ onClose, onSwitchToLogin }: Props) 
       style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", overflowY: "auto" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div style={{ width: "100%", maxWidth: 620, background: "#fff", borderRadius: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.20)", padding: "32px 28px", position: "relative", margin: "auto" }}>
+      <div style={{ width: "100%", maxWidth: 760, background: "#fff", borderRadius: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.20)", padding: "32px 28px", position: "relative", margin: "auto" }}>
         <button
           onClick={onClose}
           style={{ position: "absolute", top: 16, right: 16, width: 28, height: 28, borderRadius: "50%", background: "#f5f5f7", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
