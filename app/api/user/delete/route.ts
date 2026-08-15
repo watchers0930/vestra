@@ -26,13 +26,24 @@ export async function POST(req: NextRequest) {
       detail: { email: session.user.email, status: "requested" },
     });
 
-    await prisma.user.delete({ where: { id: userId } });
+    const email = session.user.email;
+    // 탈퇴이력 기록(재가입 30일 차단용) + 계정·관련 데이터 몽땅 삭제(Cascade)
+    await prisma.$transaction([
+      ...(email
+        ? [prisma.withdrawnEmail.upsert({
+            where: { email },
+            create: { email },
+            update: { withdrawnAt: new Date() },
+          })]
+        : []),
+      prisma.user.delete({ where: { id: userId } }),
+    ]);
 
-    return NextResponse.json({ message: "회원 탈퇴가 완료되었습니다." });
+    return NextResponse.json({ message: "회원 탈퇴가 완료되었습니다. 모든 정보가 삭제되었습니다." });
   } catch (e) {
     console.error("[user/delete] 탈퇴 실패:", e);
     return NextResponse.json(
-      { error: "탈퇴 처리 중 오류가 발생했습니다. 등록한 매물·계약 등 데이터가 있으면 먼저 정리해 주세요." },
+      { error: "탈퇴 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." },
       { status: 500 }
     );
   }

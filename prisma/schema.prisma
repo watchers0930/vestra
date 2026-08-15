@@ -872,3 +872,11 @@ model Message {
   @@index([applicationId, createdAt])
   @@index([senderId])
 }
+
+model WithdrawnEmail {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  withdrawnAt DateTime @default(now())
+
+  @@index([email])
+}

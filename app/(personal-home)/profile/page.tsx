@@ -468,7 +468,7 @@ export default function ProfilePage() {
         </button>
       ) : (
         <div className="space-y-3 rounded-xl border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-700">정말 탈퇴하시겠어요? 계정과 모든 데이터가 삭제되며 되돌릴 수 없습니다.</p>
+          <p className="text-sm text-red-700">정말 탈퇴하시겠어요? 회원 탈퇴 시 <strong>모든 정보(매물·계약·분석·자산 등)가 자동 삭제 처리</strong>되며 되돌릴 수 없습니다. 탈퇴 후 <strong>30일간 재가입이 제한</strong>됩니다.</p>
           <div className="flex gap-2">
             <button
               onClick={() => setConfirmWithdraw(false)}

@@ -69,6 +69,19 @@ const authEvents: NextAuthConfig["events"] = {
 // ─── 공통 콜백 + 페이지 설정 ───
 
 const authCallbacks: NextAuthConfig["callbacks"] = {
+  // 재가입 차단: 탈퇴 후 30일 이내면 로그인/가입 거부
+  async signIn({ user }) {
+    if (user.email) {
+      const withdrawn = await prisma.withdrawnEmail.findUnique({ where: { email: user.email } });
+      if (withdrawn) {
+        const days = (Date.now() - withdrawn.withdrawnAt.getTime()) / 86_400_000;
+        if (days < 30) return "/login?error=withdrawn";
+        // 30일 경과 → 이력 제거 후 재가입 허용
+        await prisma.withdrawnEmail.delete({ where: { email: user.email } }).catch(() => {});
+      }
+    }
+    return true;
+  },
   async jwt({ token, user }) {
     if (user) {
       token.id = user.id;
