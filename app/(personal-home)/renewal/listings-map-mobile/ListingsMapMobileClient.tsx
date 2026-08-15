@@ -121,10 +121,10 @@ export default function ListingsMapMobileClient() {
 
       {/* NAV */}
       <nav className={s.nav}>
-        <a href="/" className={s.navLogo}>
+        <Link href="/" className={s.navLogo}>
           <div className={s.navLogoIcon}>V</div>
           <span className={s.navLogoText}>VESTRA</span>
-        </a>
+        </Link>
         <div className={s.navRight}>
           <Link href="/renewal/listings-list" className={s.navListBtn}>
             <svg width="12" height="12" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.6">
