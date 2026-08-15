@@ -5,20 +5,22 @@ import { useSession, signIn } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { X, Map, Landmark, Calculator } from "lucide-react";
-import RenewalGnb, { type RenewalGnbKey } from "./RenewalGnb";
+import RenewalGnb from "./RenewalGnb";
+import { RENEWAL_FEATURES, RENEWAL_ROUTES, type RenewalKey } from "./renewal-config";
 
 interface Props {
-  active: RenewalGnbKey;
-  featureName: string;
-  /** 로그인 안내 부제 (기능 설명) */
+  active: RenewalKey;
+  /** 생략 시 renewal-config의 기능명을 사용 */
+  featureName?: string;
+  /** 생략 시 renewal-config의 설명을 사용 */
   description?: string;
   children: ReactNode;
 }
 
 const PUBLIC_LINKS = [
-  { href: "/renewal/price-map", label: "시세지도", Icon: Map },
-  { href: "/renewal/official-price", label: "공시가격", Icon: Landmark },
-  { href: "/renewal/tax", label: "세금계산", Icon: Calculator },
+  { href: RENEWAL_ROUTES.priceMap, label: "시세지도", Icon: Map },
+  { href: RENEWAL_ROUTES.officialPrice, label: "공시가격", Icon: Landmark },
+  { href: RENEWAL_ROUTES.tax, label: "세금계산", Icon: Calculator },
 ];
 
 /**
@@ -34,7 +36,10 @@ export default function RenewalAuthGate({ active, featureName, description, chil
   const { status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
-  const callbackUrl = pathname || "/renewal/monitoring";
+  const feature = RENEWAL_FEATURES[active];
+  const name = featureName ?? feature.featureName;
+  const desc = description ?? feature.description;
+  const callbackUrl = pathname || feature.href;
 
   // 로그인 확정 → 실제 페이지
   if (status === "authenticated") {
@@ -54,7 +59,7 @@ export default function RenewalAuthGate({ active, featureName, description, chil
   }
 
   // 비로그인 → 배경 + 로그인 모달
-  const closeToHome = () => router.push("/home");
+  const closeToHome = () => router.push(RENEWAL_ROUTES.home);
 
   return (
     <>
@@ -71,9 +76,9 @@ export default function RenewalAuthGate({ active, featureName, description, chil
           opacity: 0.85,
         }}
       >
-        <h1 style={{ fontSize: 28, fontWeight: 800, margin: "0 0 10px" }}>{featureName}</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 800, margin: "0 0 10px" }}>{name}</h1>
         <p style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", margin: 0 }}>
-          {description || `${featureName}은(는) 회원 전용 기능입니다`}
+          {desc}
         </p>
       </section>
 
@@ -95,9 +100,9 @@ export default function RenewalAuthGate({ active, featureName, description, chil
             <div style={{ display: "inline-block", fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", color: "#0071e3", background: "rgba(0,113,227,0.08)", borderRadius: 20, padding: "5px 12px", marginBottom: 14 }}>
               Members Only
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1f", margin: "0 0 8px" }}>{featureName}은 로그인 후 이용할 수 있어요</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1f", margin: "0 0 8px" }}>{name}은 로그인 후 이용할 수 있어요</h3>
             <p style={{ fontSize: 13, color: "#6e6e73", lineHeight: 1.6, margin: 0 }}>
-              {description || "로그인하면 이 기능을 바로 이용할 수 있습니다."}
+              {desc}
             </p>
           </div>
 
@@ -143,7 +148,7 @@ export default function RenewalAuthGate({ active, featureName, description, chil
 
           <p style={{ textAlign: "center", fontSize: 13, color: "#6e6e73", margin: "22px 0 0" }}>
             아직 계정이 없으신가요?{" "}
-            <Link href="/signup" style={{ fontWeight: 600, color: "#0071e3" }}>회원가입</Link>
+            <Link href={RENEWAL_ROUTES.signup} style={{ fontWeight: 600, color: "#0071e3" }}>회원가입</Link>
           </p>
         </div>
       </div>

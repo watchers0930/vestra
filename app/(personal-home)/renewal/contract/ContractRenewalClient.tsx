@@ -17,7 +17,7 @@ const SAMPLES: Record<string, string> = {
 
 export default function ContractRenewalClient() {
   return (
-    <RenewalAuthGate active="contract" featureName="계약검토" description="AI가 계약서의 위험 조항과 독소 조항을 자동으로 분석합니다">
+    <RenewalAuthGate active="contract">
       <ContractInner />
     </RenewalAuthGate>
   );

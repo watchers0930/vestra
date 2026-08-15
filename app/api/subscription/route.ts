@@ -5,8 +5,8 @@ import { validateOrigin } from "@/lib/csrf";
 
 const PLAN_CONFIG = {
   FREE: { price: 0, dailyLimit: 5, role: "PERSONAL" },
-  PRO: { price: 50000, dailyLimit: 50, role: "BUSINESS" },
-  BUSINESS: { price: 100000, dailyLimit: 100, role: "REALESTATE" },
+  PRO: { price: 29900, dailyLimit: 50, role: "BUSINESS" },
+  BUSINESS: { price: 99000, dailyLimit: 100, role: "REALESTATE" },
 } as const;
 
 /** GET: 현재 구독 상태 조회 */

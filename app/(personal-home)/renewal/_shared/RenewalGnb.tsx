@@ -3,31 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import s from "./RenewalGnb.module.css";
+import { RENEWAL_MAIN as MAIN, RENEWAL_SUPPORT as SUPPORT, RENEWAL_ROUTES, type RenewalKey } from "./renewal-config";
 
 /**
  * renewal 공통 헤더 GNB — 모든 renewal 페이지에서 <RenewalGnb active="..." /> 로 사용.
- * 메뉴/드롭다운을 한 곳에서 관리한다.
+ * 메뉴/경로/정책은 renewal-config.ts 단일 소스에서 관리한다.
  */
 
-export type RenewalGnbKey =
-  | "listings" | "jeonse" | "rights" | "monitoring" | "contract" | "price-map"
-  | "expert" | "assistant" | "official-price" | "tax";
-
-const MAIN: { key: RenewalGnbKey; href: string; label: string }[] = [
-  { key: "listings", href: "/renewal/listings-list", label: "매물검색" },
-  { key: "jeonse", href: "/renewal/jeonse", label: "전세보호" },
-  { key: "rights", href: "/renewal/rights", label: "권리분석" },
-  { key: "monitoring", href: "/renewal/monitoring", label: "등기감시" },
-  { key: "contract", href: "/renewal/contract", label: "계약검토" },
-  { key: "price-map", href: "/renewal/price-map", label: "시세지도" },
-];
-
-const SUPPORT: { key: RenewalGnbKey; href: string; label: string }[] = [
-  { key: "expert", href: "/renewal/expert", label: "전문가연결" },
-  { key: "assistant", href: "/renewal/assistant", label: "AI 어시스턴트" },
-  { key: "official-price", href: "/renewal/official-price", label: "공시가격조회" },
-  { key: "tax", href: "/renewal/tax", label: "세금계산" },
-];
+export type RenewalGnbKey = RenewalKey;
 
 export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -36,7 +19,7 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
   return (
     <nav className={s.navBar}>
       <div className={s.navInner}>
-        <Link href="/home" className={s.navLogo}>
+        <Link href={RENEWAL_ROUTES.home} className={s.navLogo}>
           <div className={s.logoIcon}>V</div>
           <span className={s.logoText}>VESTRA</span>
         </Link>
@@ -65,9 +48,9 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
         <div className={s.navAuth}>
           <span className={s.greet}>홍길동님</span>
           <span className={s.div}>|</span>
-          <Link href="/profile">마이페이지</Link>
+          <Link href={RENEWAL_ROUTES.profile}>마이페이지</Link>
           <span className={s.div}>|</span>
-          <Link href="/logout">로그아웃</Link>
+          <Link href={RENEWAL_ROUTES.logout}>로그아웃</Link>
         </div>
         <button className={s.navBurger} aria-label="메뉴 열기" onClick={() => setMenuOpen((o) => !o)}>
           <span></span><span></span><span></span>
@@ -88,8 +71,8 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
         <li>
           <div className={s.navMobAuth}>
             <span>홍길동님</span>
-            <Link href="/profile">마이페이지</Link>
-            <Link href="/logout">로그아웃</Link>
+            <Link href={RENEWAL_ROUTES.profile}>마이페이지</Link>
+            <Link href={RENEWAL_ROUTES.logout}>로그아웃</Link>
           </div>
         </li>
       </ul>

@@ -12,7 +12,7 @@ import AddPropertyModalRenewal from "./components/AddPropertyModalRenewal";
 
 export default function MonitoringRenewalClient() {
   return (
-    <RenewalAuthGate active="monitoring" featureName="등기감시" description="등기부 변동을 실시간 감시하고 위험을 즉시 알려드립니다">
+    <RenewalAuthGate active="monitoring">
       <MonitoringInner />
     </RenewalAuthGate>
   );
