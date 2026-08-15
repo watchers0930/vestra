@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
 import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
 import { JEONSE_ANALYSIS_PROMPT } from "@/lib/prompts";
-import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
+import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
@@ -11,13 +12,25 @@ export async function POST(req: NextRequest) {
     const csrfError = validateOrigin(req);
     if (csrfError) return csrfError;
 
-    // Rate limiting (보호 API: 30 req/min)
+    // 인증 + 역할 기반 제한 (문서 생성은 무거운 OpenAI 작업)
+    const session = await auth();
     const ip = req.headers.get("x-forwarded-for") || "anonymous";
-    const rl = await rateLimit(`generate-document:${ip}`, 30);
+    const userId = session?.user?.id;
+    const dailyLimit = session?.user?.dailyLimit || ROLE_LIMITS.GUEST;
+
+    const rl = await rateLimit(`generate-document:${userId || ip}`, 30);
     if (!rl.success) {
       return NextResponse.json(
         { error: "요청 한도 초과. 잠시 후 다시 시도해주세요." },
         { status: 429, headers: rateLimitHeaders(rl) }
+      );
+    }
+
+    const daily = await checkDailyUsage(userId || `guest:${ip}`, dailyLimit);
+    if (!daily.success) {
+      return NextResponse.json(
+        { error: "일일 사용 한도를 초과했습니다. 로그인하여 더 많이 이용하세요." },
+        { status: 429, headers: rateLimitHeaders(daily) }
       );
     }
 
@@ -46,7 +59,7 @@ export async function POST(req: NextRequest) {
     const propertyType = sanitizeField(rawPropertyType || "", 50);
 
     // Cost Guard (일일 OpenAI 호출 제한)
-    const costGuard = await checkOpenAICostGuard(ip);
+    const costGuard = await checkOpenAICostGuard(userId || ip);
     if (!costGuard.allowed) {
       return NextResponse.json(
         { error: "일일 사용 한도를 초과했습니다. 내일 다시 시도해주세요." },
