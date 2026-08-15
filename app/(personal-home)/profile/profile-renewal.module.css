@@ -1,0 +1,171 @@
+/* ===== SUB HERO ===== */
+.subHero{position:relative;height:200px;background:linear-gradient(160deg,#060c2a 0%,#141d4a 100%);overflow:hidden}
+.subHeroIn{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:0 20px}
+.heroChip{font-size:11px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:#93a5ff;background:rgba(46,75,216,.18);border:1px solid rgba(46,75,216,.4);padding:4px 14px;border-radius:20px}
+.subHeroTitle{font-size:28px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.subHeroSub{font-size:13.5px;font-weight:300;color:rgba(255,255,255,.72)}
+
+/* ===== PAGE WRAP ===== */
+.pageWrap{max-width:900px;margin:0 auto;padding:36px 32px 80px}
+
+/* ===== TAB BAR ===== */
+.tabBar{display:flex;gap:6px;margin-bottom:28px;flex-wrap:wrap}
+.tabBtn{font-size:13px;font-weight:500;padding:8px 18px;border-radius:20px;border:1px solid #e0e3ef;background:#fff;color:#666;cursor:pointer;font-family:inherit;transition:all .15s}
+.tabBtn:hover{border-color:#c0c7e8;color:#2e4bd8}
+.tabBtn.on{background:#2e4bd8;color:#fff;border-color:#2e4bd8;font-weight:600}
+
+/* ===== SECTION TITLE ===== */
+.secTitle{font-size:20px;font-weight:700;color:#1a1d2e;letter-spacing:-.3px;margin-bottom:20px}
+
+/* ===== CARD ===== */
+.card{background:#fff;border:1px solid #e8eaf2;border-radius:16px;padding:24px;margin-bottom:18px}
+.cardHead{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:18px}
+.cardHeadL{display:flex;align-items:center;gap:9px}
+.cardTitle{font-size:15px;font-weight:700;color:#1a1d2e}
+.cardIco{color:#2e4bd8;flex-shrink:0}
+.cardDesc{font-size:13px;color:#888;line-height:1.6;margin-bottom:16px}
+
+/* ===== KPI ROW ===== */
+.kpiRow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kpiCard{background:#fff;border:1px solid #e8eaf2;border-radius:14px;padding:18px 20px}
+.kpiIco{color:#2e4bd8;margin-bottom:12px}
+.kpiLabel{font-size:11px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.kpiVal{font-size:24px;font-weight:800;letter-spacing:-.8px;line-height:1;color:#1a1d2e}
+
+/* ===== USAGE BAR ===== */
+.usageRow{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin-bottom:9px}
+.usageMuted{color:#888}
+.usageVal{font-weight:600;color:#1a1d2e}
+.usageTrack{height:10px;width:100%;border-radius:20px;background:#eef0f6;overflow:hidden}
+.usageFill{height:100%;border-radius:20px;background:#2e4bd8;transition:width .3s}
+.usageWarn{margin-top:9px;font-size:12px;color:#ef4444}
+
+/* ===== LIST ===== */
+.list{display:flex;flex-direction:column}
+.listRow{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #f2f3f8}
+.listRow:last-child{border-bottom:none}
+.listAddr{font-size:13.5px;color:#1a1d2e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.listMeta{font-size:12px;color:#aaa;margin-left:12px;flex-shrink:0}
+.listVal{font-size:13.5px;font-weight:600;color:#1a1d2e;margin-left:12px;flex-shrink:0}
+.emptyRow{padding:28px 0;text-align:center;font-size:13px;color:#aaa}
+.linkR{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:#2e4bd8;font-weight:500;cursor:pointer}
+.linkR:hover{text-decoration:underline}
+
+/* ===== PROFILE HEAD (info) ===== */
+.profileHead{display:flex;align-items:center;gap:16px}
+.avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.avatarFallback{width:64px;height:64px;border-radius:50%;background:#eef1fd;display:flex;align-items:center;justify-content:center;color:#2e4bd8;flex-shrink:0}
+.profileName{font-size:18px;font-weight:700;color:#1a1d2e}
+.profileEmail{font-size:13px;color:#888;margin-top:2px}
+.badgeRow{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.roleBadge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;color:#fff;padding:3px 10px;border-radius:20px}
+.roleAdmin{background:#ef4444}
+.roleReal{background:#22c55e}
+.roleBiz{background:#3b82f6}
+.rolePersonal{background:#8b8d98}
+.verifyBadge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600}
+.vNone{color:#8b8d98}
+.vPending{color:#f59e0b}
+.vVerified{color:#22c55e}
+.vRejected{color:#ef4444}
+
+/* ===== FEATURE LIST ===== */
+.featureList{display:flex;flex-direction:column;gap:10px}
+.featureItem{display:flex;align-items:center;gap:9px;font-size:13.5px;color:#333}
+.featureIco{color:#2e4bd8;flex-shrink:0}
+
+/* ===== FORM ===== */
+.formInput{width:100%;height:44px;padding:0 14px;border:1.5px solid #d0d4e8;border-radius:10px;font-size:14px;font-family:inherit;color:#1a1d2e;outline:none;transition:border-color .15s;background:#fff}
+.formInput:focus{border-color:#2e4bd8}
+.formInput::placeholder{color:#b0b4c4}
+.formInput:disabled{background:#f6f7fb}
+
+/* ===== BUTTONS ===== */
+.btnPrimary{width:100%;height:46px;background:#2e4bd8;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+.btnPrimary:hover:not(:disabled){background:#2540c0}
+.btnPrimary:disabled{opacity:.5;cursor:not-allowed}
+.btnDark{height:44px;padding:0 18px;background:#1a1d2e;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .15s}
+.btnDark:hover{background:#2e4bd8}
+
+/* ===== ROLE SELECT (upgrade) ===== */
+.roleSelectRow{display:flex;gap:8px;margin-bottom:12px}
+.roleSelectBtn{flex:1;padding:11px 8px;border:1.5px solid #e0e3ef;border-radius:10px;background:#fff;color:#888;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s}
+.roleSelectBtn.onBiz{border-color:#3b82f6;background:#eff6ff;color:#1d4ed8}
+.roleSelectBtn.onReal{border-color:#22c55e;background:#f0fdf4;color:#15803d}
+.upgradeMsg{margin-top:12px;text-align:center;font-size:13px;color:#666}
+
+/* ===== SUBSCRIPTION ===== */
+.subRow{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.subPlanLabel{font-size:12px;color:#888}
+.subPlanVal{font-size:18px;font-weight:800;color:#1a1d2e;margin-top:2px}
+.subStatusWrap{display:flex;align-items:center;gap:8px}
+.statusActive{font-size:11.5px;font-weight:600;background:#dcfce7;color:#15803d;padding:4px 10px;border-radius:20px}
+.statusCancelled{font-size:11.5px;font-weight:600;background:#fee2e2;color:#b91c1c;padding:4px 10px;border-radius:20px}
+.cancelBtn{font-size:12px;padding:6px 12px;border:1px solid #fca5a5;color:#b91c1c;background:#fff;border-radius:8px;cursor:pointer;font-family:inherit;transition:background .15s}
+.cancelBtn:hover:not(:disabled){background:#fff1f2}
+.cancelBtn:disabled{opacity:.5}
+.comingBadge{font-size:11px;font-weight:600;background:#fef3c7;color:#92400e;padding:4px 11px;border-radius:20px}
+.planGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+.planCard{border:1.5px solid #e8eaf2;border-radius:12px;padding:12px 8px;text-align:center}
+.planCard.onPlan{border-color:#2e4bd8;background:#f0f2fd}
+.planName{font-size:13px;font-weight:700;color:#1a1d2e}
+.planCard.onPlan .planName{color:#2e4bd8}
+.planPrice{font-size:11px;color:#aaa;margin-top:3px}
+.notifyBox{background:#f6f7fb;border:1px solid #e8eaf2;border-radius:12px;padding:18px;text-align:center}
+.notifyT{font-size:14px;font-weight:600;color:#1a1d2e;margin-bottom:4px}
+.notifyS{font-size:12.5px;color:#888;margin-bottom:14px}
+.notifyRow{display:flex;gap:8px}
+.notifyRow .formInput{flex:1;height:42px}
+
+/* ===== NOTIFICATIONS ===== */
+.sectionLabel{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#aaa;margin:20px 0 6px}
+.sectionLabel:first-child{margin-top:0}
+.channelRow{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f4f5f9}
+.channelRow:last-child{border-bottom:none}
+.channelInfo{display:flex;align-items:flex-start;gap:11px;min-width:0}
+.channelIco{color:#8b8d98;flex-shrink:0;margin-top:2px}
+.channelLabel{font-size:13.5px;font-weight:600;color:#1a1d2e;display:flex;align-items:center;gap:6px}
+.channelDesc{font-size:12px;color:#888;margin-top:2px;line-height:1.5}
+.miniBadge{font-size:10px;font-weight:600;background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:1px 7px;border-radius:20px}
+.phoneRow{display:flex;align-items:center;gap:8px;padding:0 0 12px 30px}
+.phoneInput{flex:1;height:38px;padding:0 12px;border:1.5px solid #d0d4e8;border-radius:8px;font-size:13px;font-family:inherit;color:#1a1d2e;outline:none;transition:border-color .15s}
+.phoneInput:focus{border-color:#2e4bd8}
+
+/* ===== TOGGLE ===== */
+.toggle{position:relative;width:42px;height:24px;border-radius:20px;border:none;background:#d8dae4;cursor:pointer;flex-shrink:0;transition:background .15s;padding:0}
+.toggle.toggleOn{background:#2e4bd8}
+.toggle:disabled{opacity:.6;cursor:not-allowed}
+.toggleKnob{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .15s}
+.toggle.toggleOn .toggleKnob{transform:translateX(18px)}
+
+/* ===== SKELETON ===== */
+.skel{background:#eef0f6;border-radius:10px;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ===== ACCOUNT ACTIONS ===== */
+.acctWrap{margin-top:40px;padding-top:28px;border-top:1px solid #eceef4;display:flex;flex-direction:column;gap:10px;max-width:360px}
+.logoutBtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:46px;border:1px solid #e0e3ef;background:#fff;color:#666;border-radius:12px;font-size:14px;font-family:inherit;cursor:pointer;transition:all .15s}
+.logoutBtn:hover{background:#f6f7fb;color:#1a1d2e}
+.withdrawLink{width:100%;padding:8px;text-align:center;font-size:12.5px;color:#b0b4c4;background:none;border:none;cursor:pointer;font-family:inherit;transition:color .15s}
+.withdrawLink:hover{color:#ef4444}
+.withdrawBox{border:1px solid #fecaca;background:#fef2f2;border-radius:14px;padding:18px}
+.withdrawTxt{font-size:13px;color:#b91c1c;line-height:1.7;margin-bottom:14px}
+.withdrawTxt strong{font-weight:700}
+.withdrawBtns{display:flex;gap:8px}
+.wCancel{flex:1;height:40px;border:1px solid #e0e3ef;background:#fff;color:#666;border-radius:10px;font-size:13px;font-family:inherit;cursor:pointer}
+.wCancel:hover{background:#fff}
+.wConfirm{flex:1;height:40px;border:none;background:#dc2626;color:#fff;border-radius:10px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer}
+.wConfirm:hover:not(:disabled){background:#b91c1c}
+.wConfirm:disabled{opacity:.5}
+
+/* ===== NOT LOGGED IN ===== */
+.notLogged{padding:80px 20px;text-align:center;font-size:14px;color:#888}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .subHero{height:160px}
+  .subHeroTitle{font-size:22px}
+  .pageWrap{padding:28px 16px 60px}
+  .kpiRow{grid-template-columns:repeat(2,1fr)}
+  .planGrid{grid-template-columns:repeat(3,1fr)}
+}

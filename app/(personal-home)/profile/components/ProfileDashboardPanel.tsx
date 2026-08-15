@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { BarChart3, Wallet, Shield, FileText, ArrowRight } from "lucide-react";
 import { useDashboardData } from "@/app/(app)/dashboard/hooks/useDashboardData";
+import s from "../profile-renewal.module.css";
 
 interface Props {
   usage: { used: number; limit: number } | null;
@@ -27,79 +28,89 @@ export default function ProfileDashboardPanel({ usage }: Props) {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* 오늘 사용량 */}
-      <div className="rounded-2xl border border-border bg-card p-6">
-        <div className="mb-4 flex items-center gap-2">
-          <BarChart3 size={20} className="text-[#1d1d1f]" strokeWidth={1.5} />
-          <h3 className="font-semibold">오늘 사용량</h3>
-        </div>
-        {usage ? (
-          <div>
-            <div className="mb-2 flex justify-between text-sm">
-              <span className="text-muted">분석 횟수</span>
-              <span className="font-medium">{usage.used} / {usage.limit}회</span>
-            </div>
-            <div className="h-2.5 w-full rounded-full bg-[#e5e5e7]">
-              <div className="h-2.5 rounded-full bg-primary transition-all" style={{ width: `${Math.min((usage.used / usage.limit) * 100, 100)}%` }} />
-            </div>
-            {usage.used >= usage.limit && <p className="mt-2 text-xs text-danger">일일 사용 한도에 도달했습니다. 내일 초기화됩니다.</p>}
-          </div>
-        ) : (
-          <div className="h-8 animate-pulse rounded-lg bg-[#e5e5e7]" />
-        )}
-      </div>
-
-      {/* 요약 지표 */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div>
+      {/* KPI */}
+      <div className={s.kpiRow}>
         {metrics.map((m) => {
           const Icon = m.icon;
           return (
-            <div key={m.label} className="rounded-2xl border border-border bg-card p-4">
-              <Icon size={18} className="mb-2 text-[#0071e3]" strokeWidth={1.5} />
-              <p className="text-xs text-muted">{m.label}</p>
-              <p className="mt-0.5 text-lg font-bold text-[#1d1d1f]">{m.value}</p>
+            <div key={m.label} className={s.kpiCard}>
+              <Icon size={20} strokeWidth={1.5} className={s.kpiIco} />
+              <p className={s.kpiLabel}>{m.label}</p>
+              <p className={s.kpiVal}>{m.value}</p>
             </div>
           );
         })}
       </div>
 
+      {/* 오늘 사용량 */}
+      <div className={s.card}>
+        <div className={s.cardHead}>
+          <div className={s.cardHeadL}>
+            <BarChart3 size={18} strokeWidth={1.5} className={s.cardIco} />
+            <h3 className={s.cardTitle}>오늘 사용량</h3>
+          </div>
+        </div>
+        {usage ? (
+          <div>
+            <div className={s.usageRow}>
+              <span className={s.usageMuted}>분석 횟수</span>
+              <span className={s.usageVal}>{usage.used} / {usage.limit}회</span>
+            </div>
+            <div className={s.usageTrack}>
+              <div className={s.usageFill} style={{ width: `${Math.min((usage.used / usage.limit) * 100, 100)}%` }} />
+            </div>
+            {usage.used >= usage.limit && <p className={s.usageWarn}>일일 사용 한도에 도달했습니다. 내일 초기화됩니다.</p>}
+          </div>
+        ) : (
+          <div className={s.skel} style={{ height: 32 }} />
+        )}
+      </div>
+
       {/* 최근 분석 이력 */}
-      <div className="rounded-2xl border border-border bg-card p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-semibold">최근 분석 이력</h3>
-          <Link href="/renewal/rights" className="inline-flex items-center gap-1 text-xs text-[#0071e3] hover:underline">
+      <div className={s.card}>
+        <div className={s.cardHead}>
+          <div className={s.cardHeadL}>
+            <FileText size={18} strokeWidth={1.5} className={s.cardIco} />
+            <h3 className={s.cardTitle}>최근 분석 이력</h3>
+          </div>
+          <Link href="/renewal/rights" className={s.linkR}>
             분석하러 가기 <ArrowRight size={12} />
           </Link>
         </div>
         {!mounted ? (
-          <div className="h-20 animate-pulse rounded-lg bg-[#e5e5e7]" />
+          <div className={s.skel} style={{ height: 80 }} />
         ) : analyses && analyses.length > 0 ? (
-          <ul className="divide-y divide-[#f0f0f2]">
+          <div className={s.list}>
             {analyses.slice(0, 5).map((a: { id?: string; address?: string; createdAt?: string }, i: number) => (
-              <li key={a.id || i} className="flex items-center justify-between py-2.5">
-                <span className="truncate text-sm text-[#1d1d1f]">{a.address || "분석 기록"}</span>
-                <span className="ml-3 flex-shrink-0 text-xs text-[#86868b]">{a.createdAt ? new Date(a.createdAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric" }) : ""}</span>
-              </li>
+              <div key={a.id || i} className={s.listRow}>
+                <span className={s.listAddr}>{a.address || "분석 기록"}</span>
+                <span className={s.listMeta}>{a.createdAt ? new Date(a.createdAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric" }) : ""}</span>
+              </div>
             ))}
-          </ul>
+          </div>
         ) : (
-          <p className="py-6 text-center text-sm text-muted">아직 분석 기록이 없습니다.</p>
+          <p className={s.emptyRow}>아직 분석 기록이 없습니다.</p>
         )}
       </div>
 
-      {/* 등록 자산 요약 */}
+      {/* 내 자산 */}
       {mounted && assets && assets.length > 0 && (
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <h3 className="mb-4 font-semibold">내 자산</h3>
-          <ul className="divide-y divide-[#f0f0f2]">
+        <div className={s.card}>
+          <div className={s.cardHead}>
+            <div className={s.cardHeadL}>
+              <Wallet size={18} strokeWidth={1.5} className={s.cardIco} />
+              <h3 className={s.cardTitle}>내 자산</h3>
+            </div>
+          </div>
+          <div className={s.list}>
             {assets.slice(0, 5).map((a: { id?: string; address?: string; currentValue?: number; value?: number }, i: number) => (
-              <li key={a.id || i} className="flex items-center justify-between py-2.5">
-                <span className="truncate text-sm text-[#1d1d1f]">{a.address || "자산"}</span>
-                <span className="ml-3 flex-shrink-0 text-sm font-medium text-[#1d1d1f]">{formatEok(a.currentValue ?? a.value ?? 0)}</span>
-              </li>
+              <div key={a.id || i} className={s.listRow}>
+                <span className={s.listAddr}>{a.address || "자산"}</span>
+                <span className={s.listVal}>{formatEok(a.currentValue ?? a.value ?? 0)}</span>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
     </div>

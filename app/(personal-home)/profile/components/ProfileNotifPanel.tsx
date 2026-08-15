@@ -1,4 +1,5 @@
 import { Bell, Mail, MessageSquare, TrendingUp, FileText, Megaphone, Gift, Smartphone, BellRing, Phone } from "lucide-react";
+import s from "../profile-renewal.module.css";
 
 interface Props {
   notifications: Record<string, string | boolean | null> | null;
@@ -26,50 +27,46 @@ const TYPES = [
 
 function Toggle({ on, onClick, disabled }: { on: boolean; onClick: () => void; disabled: boolean }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`relative h-5.5 w-10 rounded-full transition-colors ${on ? "bg-primary" : "bg-[#e5e5e7]"}`}
-    >
-      <span className={`absolute left-0.5 top-0.5 h-4.5 w-4.5 rounded-full bg-white shadow transition-transform ${on ? "translate-x-[18px]" : ""}`} />
+    <button onClick={onClick} disabled={disabled} className={`${s.toggle} ${on ? s.toggleOn : ""}`}>
+      <span className={s.toggleKnob} />
     </button>
   );
 }
 
 export default function ProfileNotifPanel({ notifications, notifLoading, phoneSaving, handleToggleNotification, handlePhoneChange, handlePhoneSave }: Props) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-6">
-      <div className="mb-4 flex items-center gap-2">
-        <Bell size={20} className="text-[#1d1d1f]" strokeWidth={1.5} />
-        <h3 className="font-semibold">알림 설정</h3>
+    <div className={s.card}>
+      <div className={s.cardHead}>
+        <div className={s.cardHeadL}>
+          <Bell size={18} strokeWidth={1.5} className={s.cardIco} />
+          <h3 className={s.cardTitle}>알림 설정</h3>
+        </div>
       </div>
       {notifications ? (
-        <div className="space-y-1">
-          <p className="pb-2 pt-1 text-xs font-semibold uppercase tracking-wider text-[#6e6e73]">채널</p>
+        <div>
+          <p className={s.sectionLabel}>채널</p>
           {CHANNELS.map((item) => {
             const Icon = item.icon;
             const on = !!notifications[item.key];
             const phoneKey = "phone" in item ? item.phone : undefined;
             return (
               <div key={item.key}>
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3">
-                    <Icon size={16} className="flex-shrink-0 text-[#6e6e73]" strokeWidth={1.5} />
+                <div className={s.channelRow}>
+                  <div className={s.channelInfo}>
+                    <Icon size={16} strokeWidth={1.5} className={s.channelIco} />
                     <div>
-                      <p className="text-sm font-medium text-[#1d1d1f]">
+                      <p className={s.channelLabel}>
                         {item.label}
-                        {"badge" in item && item.badge && (
-                          <span className="ml-1.5 inline-flex items-center rounded-full border border-amber-100 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">{item.badge}</span>
-                        )}
+                        {"badge" in item && item.badge && <span className={s.miniBadge}>{item.badge}</span>}
                       </p>
-                      <p className="text-xs text-[#6e6e73]">{item.desc}</p>
+                      <p className={s.channelDesc}>{item.desc}</p>
                     </div>
                   </div>
                   <Toggle on={on} onClick={() => handleToggleNotification(item.key)} disabled={notifLoading} />
                 </div>
                 {phoneKey && on && (
-                  <div className="ml-7 mb-2 flex items-center gap-2">
-                    <Phone size={14} className="flex-shrink-0 text-[#6e6e73]" strokeWidth={1.5} />
+                  <div className={s.phoneRow}>
+                    <Phone size={14} strokeWidth={1.5} className={s.channelIco} />
                     <input
                       type="tel"
                       placeholder="010-0000-0000"
@@ -77,7 +74,7 @@ export default function ProfileNotifPanel({ notifications, notifLoading, phoneSa
                       onChange={(e) => handlePhoneChange(phoneKey, e.target.value)}
                       onBlur={() => handlePhoneSave(phoneKey)}
                       disabled={phoneSaving}
-                      className="flex-1 rounded-lg border border-border px-3 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className={s.phoneInput}
                     />
                   </div>
                 )}
@@ -85,17 +82,17 @@ export default function ProfileNotifPanel({ notifications, notifLoading, phoneSa
             );
           })}
 
-          <p className="pb-2 pt-4 text-xs font-semibold uppercase tracking-wider text-[#6e6e73]">알림 유형</p>
+          <p className={s.sectionLabel}>알림 유형</p>
           {TYPES.map((item) => {
             const Icon = item.icon;
             const on = !!notifications[item.key];
             return (
-              <div key={item.key} className="flex items-center justify-between py-2">
-                <div className="flex items-center gap-3">
-                  <Icon size={16} className="flex-shrink-0 text-[#6e6e73]" strokeWidth={1.5} />
+              <div key={item.key} className={s.channelRow}>
+                <div className={s.channelInfo}>
+                  <Icon size={16} strokeWidth={1.5} className={s.channelIco} />
                   <div>
-                    <p className="text-sm font-medium text-[#1d1d1f]">{item.label}</p>
-                    <p className="text-xs text-[#6e6e73]">{item.desc}</p>
+                    <p className={s.channelLabel}>{item.label}</p>
+                    <p className={s.channelDesc}>{item.desc}</p>
                   </div>
                 </div>
                 <Toggle on={on} onClick={() => handleToggleNotification(item.key)} disabled={notifLoading} />
@@ -104,7 +101,7 @@ export default function ProfileNotifPanel({ notifications, notifLoading, phoneSa
           })}
         </div>
       ) : (
-        <div className="h-32 animate-pulse rounded-lg bg-[#e5e5e7]" />
+        <div className={s.skel} style={{ height: 128 }} />
       )}
     </div>
   );
