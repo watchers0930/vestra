@@ -27,7 +27,7 @@ interface GitHubCommit {
 }
 
 const KEYWORDS: Array<[RegExp, string]> = [
-  [/등기|권리|registry|codef|tilko|말소|근저당/i, "등기/권리분석"],
+  [/등기|권리|registry|tilko|말소|근저당/i, "등기/권리분석"],
   [/감시|monitor|알림|notification|toast|증명서/i, "등기감시/알림"],
   [/사업성|feasibility|SCR|MOLIT|실거래/i, "사업성분석"],
   [/회원|가입|auth|login|sidebar|대시보드|UI|UX/i, "서비스 UI/회원"],

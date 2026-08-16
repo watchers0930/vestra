@@ -376,6 +376,35 @@ function diagnoseTrust(
 
 // ─── 메인 진단 함수 ───
 
+/** 등록임대주택(임대사업자) 부기등기 — 안심 신호 (임대료 증액제한·임대의무기간 보호) */
+function diagnoseRentalBusiness(): DiagnosisItem {
+  return {
+    id: "rental_business",
+    label: "등록임대주택 여부",
+    status: "info",
+    severity: "low",
+    description:
+      "등록임대주택(임대사업자) 부기등기가 확인됩니다. 임대료 증액 제한(5%)·임대의무기간 등 임차인 보호 장치가 적용될 수 있습니다.",
+    action:
+      "안심 신호이나 보장은 아닙니다. 임대보증금 보증보험 실제 가입 여부를 임대사업자에게 직접 확인하세요.",
+    evidence: ["등기부 부기등기: 민간임대주택 관련 표시"],
+  };
+}
+
+/** 등기명의인표시변경 부기등기 — 소유자 동일성 재확인 안내 */
+function diagnoseNameChange(): DiagnosisItem {
+  return {
+    id: "name_change",
+    label: "명의인표시변경 이력",
+    status: "warn",
+    severity: "low",
+    description:
+      "등기명의인표시변경(주소·성명) 부기등기가 있습니다. 표시변경이므로 소유권 자체는 유지되나, 현재 소유자 동일성 확인이 필요합니다.",
+    action: "변경된 소유자 주소·성명을 매도인 신분증과 대조하세요.",
+    evidence: ["등기부 부기등기: 등기명의인표시변경"],
+  };
+}
+
 export function runSafetyDiagnosis(
   parsed: ParsedRegistry,
   riskScore: RiskScore,
@@ -393,6 +422,10 @@ export function runSafetyDiagnosis(
     diagnoseTaxDelinquency(),
     diagnoseTrust(parsed),
   ];
+
+  // 부기등기 기반 추가 신호 (해당 시에만 표시)
+  if (parsed.summary.hasRentalBusinessRegistration) items.push(diagnoseRentalBusiness());
+  if (parsed.summary.hasNameChangeRegistration) items.push(diagnoseNameChange());
 
   const passCount = items.filter((i) => i.status === "pass").length;
   const warnCount = items.filter((i) => i.status === "warn").length;

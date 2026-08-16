@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 import { fetchRegistryDocumentByAddress, isTilkoRegistryDocAvailable } from "@/lib/tilko-api";
+import { parseRegistry } from "@/lib/registry-parser";
 import { fetchBuildingInfoByAddress } from "@/lib/building-api";
 import { fetchOfficialPrices } from "@/lib/official-price-api";
 import { checkGuaranteeInsurance } from "@/lib/guarantee-insurance";
@@ -42,6 +43,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     let registryText: string | null = null;
     let buildingDocUrl: string | null = null;
     let seniorLiens = 0;
+    let isRentalBusiness = false;
+    let hasNameChange = false;
     let officialPrice: number | null = null;
     let jeonseRatio: number | null = null;
     let insuranceResult: Record<string, unknown> | null = null;
@@ -55,6 +58,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           checks.registry = true;
           registryText = reg.text;
           seniorLiens = parseSeniorLiens(reg.text);
+          // 부기등기 분석 — 등록임대주택(임대사업자)·명의인표시변경 감지
+          const parsed = parseRegistry(reg.text);
+          isRentalBusiness = parsed.summary.hasRentalBusinessRegistration;
+          hasNameChange = parsed.summary.hasNameChangeRegistration;
         }
       } catch (e) {
         console.error("[certify] 틸코 조회 실패:", e);
@@ -127,6 +134,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         officialPrice: officialPrice ? BigInt(Math.round(officialPrice)) : undefined,
         jeonseRatio: jeonseRatio ?? undefined,
         insuranceResult: insuranceResult ?? undefined,
+        isRentalBusiness,
+        hasNameChange,
       },
     });
 
@@ -136,6 +145,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       jeonseRatio,
       officialPrice,
       insuranceResult,
+      isRentalBusiness,
+      hasNameChange,
       errors: errors.length > 0 ? errors : null,
     });
   } catch (e) {

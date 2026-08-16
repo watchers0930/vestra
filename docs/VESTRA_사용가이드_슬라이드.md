@@ -304,7 +304,7 @@ VESTRA는 **사용자 메뉴**와 **어드민 메뉴** 2개 영역으로 구성�
 | 지도 | Kakao Maps SDK |
 | DB | PostgreSQL (Neon) + Prisma ORM |
 | 인증 | NextAuth v5 |
-| 외부 API | 국토교통부, K-apt, VWorld, CODEF, 대법원, 한국은행, 금감원 |
+| 외부 API | 국토교통부, K-apt, VWorld, Tilko(등기), 대법원, 한국은행, 금감원 |
 | 보안 | AES-256 PII 암호화, CSRF 방어, Rate Limit, Ed25519 서명 |
 | 배포 | Vercel |
 

@@ -176,8 +176,8 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
   const titleInsurance = estimatedPrice > 0 ? evaluateTitleInsurance(estimatedPrice, riskScore) : null;
   const contractClauses = generateContractClauses(riskScore, parsed);
 
-  // 5단계: PropertyInfo
-  const displayAddress = inputSource === "codef" && userAddress
+  // 5단계: PropertyInfo — 주소 기반 조회(틸코/주소검색)면 입력 주소를 우선 표기
+  const displayAddress = (inputSource === "tilko" || inputSource === "address") && userAddress
     ? userAddress
     : parsed.title.address || address;
 

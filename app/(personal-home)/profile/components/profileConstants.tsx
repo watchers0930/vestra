@@ -15,10 +15,12 @@ export const VERIFY_STATUS: Record<string, { label: string; icon: typeof CheckCi
   rejected: { label: "반려", icon: XCircle, color: "text-red-500" },
 };
 
-export type ProfileTab = "dashboard" | "info" | "tier" | "notif";
+export type ProfileTab = "dashboard" | "listings" | "applications" | "info" | "tier" | "notif";
 
 export const PROFILE_TABS: { key: ProfileTab; label: string }[] = [
   { key: "dashboard", label: "대시보드" },
+  { key: "listings", label: "내 매물" },
+  { key: "applications", label: "의향서" },
   { key: "info", label: "내 정보" },
   { key: "tier", label: "등급·구독" },
   { key: "notif", label: "알림 설정" },

@@ -31,7 +31,15 @@ export const GAPGU_RISK_MAP: Record<string, RiskType> = {
   압류말소: "info",
   가처분말소: "info",
   가등기말소: "info",
+  등기명의인표시변경: "info",
+  등기명의인표시경정: "info",
 };
+
+/** 등록임대주택(임대사업자) 부기등기 감지 패턴 — 민간임대주택법 제5조의2 */
+export const RENTAL_BUSINESS_PATTERN = /민간임대주택|임대의무기간|임대사업자|임대료\s*증액|임대주택\s*부기/;
+
+/** 등기명의인표시변경 부기등기 감지 패턴 — 소유자 주소·성명 변경 */
+export const NAME_CHANGE_PATTERN = /등기명의인표시(변경|경정)|명의인표시(변경|경정)/;
 
 /** 을구 권리 유형 → 위험도 매핑 */
 export const EULGU_RISK_MAP: Record<string, RiskType> = {

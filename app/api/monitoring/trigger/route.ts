@@ -3,7 +3,7 @@
  * POST: 주소 + 합성 텍스트로 MonitoredProperty 첫 스냅샷 생성
  *
  * 사용 시점: 등기부 AI 분석 완료 직후 호출
- * - MonitoredProperty.lastHash는 건드리지 않음 (Cron의 실제 CODEF 기반 변동 감지 보존)
+ * - MonitoredProperty.lastHash는 건드리지 않음 (Cron의 Tilko 기반 변동 감지 보존)
  * - RegistrySnapshot 해시체인에만 기록 (감시 개시 시점 감사 기록)
  */
 

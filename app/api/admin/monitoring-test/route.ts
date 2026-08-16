@@ -1,7 +1,7 @@
 /**
  * 등기감시 시뮬레이션 테스트 API
  * ─────────────────────────────
- * CODEF 키 만료 등 실제 변동 감지가 불가한 상황에서
+ * 실데이터 조회가 불가한 상황(예: 외부 API 미설정)에서
  * 관리자가 수동으로 알림을 트리거하여 전체 파이프라인을 검증한다.
  *
  * POST { mode: "trigger_alert", monitoredPropertyId, changeType?, riskLevel?, summary?, detail? }

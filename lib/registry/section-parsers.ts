@@ -14,6 +14,7 @@ import {
   GAPGU_RISK_MAP, EULGU_RISK_MAP,
   extractDate, extractAmount, classifyRightType,
   isCancelled, isRefCancellation, extractArea, extractHolder,
+  RENTAL_BUSINESS_PATTERN, NAME_CHANGE_PATTERN,
 } from "./parsing-utils";
 
 // ─── 표제부 파싱 ───
@@ -171,7 +172,8 @@ export function parseGapgu(raw: string): GapguEntry[] {
   for (let i = startIdx; i < lines.length; i++) {
     const line = lines[i];
 
-    const orderMatch = line.match(/^(\d+)\s/);
+    const orderMatch = line.match(/^(\d+)(?:-(\d+))?\s/);
+    const subOrder = orderMatch && orderMatch[2] ? parseInt(orderMatch[2], 10) : undefined;
     const hasRightKeyword = Object.keys(GAPGU_RISK_MAP).some((k) => line.includes(k));
     const hasDate = extractDate(line) !== "";
 
@@ -188,6 +190,8 @@ export function parseGapgu(raw: string): GapguEntry[] {
 
       currentEntry = {
         order: orderMatch ? parseInt(orderMatch[1], 10) : orderCounter,
+        subOrder,
+        isSupplementary: subOrder !== undefined,
         date,
         purpose: type,
         detail: line,
@@ -260,7 +264,8 @@ export function parseEulgu(raw: string): EulguEntry[] {
   for (let i = startIdx; i < lines.length; i++) {
     const line = lines[i];
 
-    const orderMatch = line.match(/^(\d+)\s/);
+    const orderMatch = line.match(/^(\d+)(?:-(\d+))?\s/);
+    const subOrder = orderMatch && orderMatch[2] ? parseInt(orderMatch[2], 10) : undefined;
     const hasRightKeyword = Object.keys(EULGU_RISK_MAP).some((k) => line.includes(k));
     const hasDate = extractDate(line) !== "";
 
@@ -278,6 +283,8 @@ export function parseEulgu(raw: string): EulguEntry[] {
 
       currentEntry = {
         order: orderMatch ? parseInt(orderMatch[1], 10) : orderCounter,
+        subOrder,
+        isSupplementary: subOrder !== undefined,
         date,
         purpose: type,
         detail: line,
@@ -429,13 +436,21 @@ export function buildSummary(gapgu: GapguEntry[], eulgu: EulguEntry[]): ParseSum
   const activeGapgu = gapgu.filter((e) => !e.isCancelled);
   const activeEulgu = eulgu.filter((e) => !e.isCancelled);
 
+  // 부기등기(이전/변경)는 주등기 채권을 승계할 뿐 신규 채권이 아니므로 합산 제외
   const totalMortgageAmount = activeEulgu
-    .filter((e) => /근저당|저당/.test(e.purpose))
+    .filter((e) => /근저당|저당/.test(e.purpose) && !e.isSupplementary)
     .reduce((sum, e) => sum + e.amount, 0);
 
   const totalJeonseAmount = activeEulgu
-    .filter((e) => /전세권/.test(e.purpose))
+    .filter((e) => /전세권/.test(e.purpose) && !e.isSupplementary)
     .reduce((sum, e) => sum + e.amount, 0);
+
+  // 등록임대주택/명의인표시변경 부기등기 감지 (갑구·을구 전 항목 detail 스캔)
+  const allDetails = [...gapgu, ...eulgu].map((e) => `${e.purpose} ${e.detail}`).join("\n");
+  const hasRentalBusinessRegistration = RENTAL_BUSINESS_PATTERN.test(allDetails);
+  const hasNameChangeRegistration = gapgu.some(
+    (e) => NAME_CHANGE_PATTERN.test(e.purpose) || NAME_CHANGE_PATTERN.test(e.detail)
+  );
 
   return {
     totalGapguEntries: gapgu.length,
@@ -454,6 +469,8 @@ export function buildSummary(gapgu: GapguEntry[], eulgu: EulguEntry[]): ParseSum
     hasLeaseRegistration: activeEulgu.some((e) => /임차권등기|임차권설정/.test(e.purpose)),
     hasWarningRegistration: activeGapgu.some((e) => e.purpose === "예고등기"),
     hasRedemptionRegistration: activeGapgu.some((e) => /환매/.test(e.purpose)),
+    hasRentalBusinessRegistration,
+    hasNameChangeRegistration,
     ownershipTransferCount: gapgu.filter((e) => e.purpose === "소유권이전" && !e.isCancelled).length,
     totalClaimsAmount: totalMortgageAmount + totalJeonseAmount,
   };

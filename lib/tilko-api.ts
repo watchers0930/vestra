@@ -2,7 +2,7 @@
  * Tilko 등기신청사건 처리현황 프리체크 클라이언트
  * ────────────────────────────────────────────
  * 저비용 등기신청사건 조회로 조기 신호를 감지하고, 완료 신호가 있을 때
- * CODEF 등기부등본 상세 조회를 트리거한다.
+ * 등기부등본 상세(확정) 조회를 트리거한다.
  *
  * 실제 Tilko 상품별 URL/인증 헤더는 계약 설정에 맞춰 환경변수로 주입한다.
  */
@@ -141,7 +141,7 @@ function encryptAesKey(publicKeyBase64: string, aesKey: Buffer): string {
   ).toString("base64");
 }
 
-export function shouldConfirmWithCodef(result: TilkoCaseStatusResult): boolean {
+export function shouldConfirmWithFullDoc(result: TilkoCaseStatusResult): boolean {
   return result.hasSignal && result.phase === "completed";
 }
 

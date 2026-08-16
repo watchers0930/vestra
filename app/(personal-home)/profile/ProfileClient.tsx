@@ -8,6 +8,8 @@ import RenewalGnb from "../renewal/_shared/RenewalGnb";
 import { useProfileData } from "./hooks/useProfileData";
 import { PROFILE_TABS, type ProfileTab } from "./components/profileConstants";
 import ProfileDashboardPanel from "./components/ProfileDashboardPanel";
+import ProfileListingsPanel from "./components/ProfileListingsPanel";
+import ProfileApplicationsPanel from "./components/ProfileApplicationsPanel";
 import ProfileInfoPanel from "./components/ProfileInfoPanel";
 import ProfileTierPanel from "./components/ProfileTierPanel";
 import ProfileNotifPanel from "./components/ProfileNotifPanel";
@@ -58,7 +60,11 @@ export default function ProfileClient() {
 
   const user = session.user;
   const role = user.role || "PERSONAL";
-  const tabLabel = PROFILE_TABS.find((t) => t.key === tab)?.label ?? "";
+  // 매물 등록·내 매물 관리 자격: 임대인(LANDLORD) / 부동산 / 기업 / 관리자 (임차인 제외)
+  const canManageListings =
+    user.userType === "LANDLORD" || role === "BUSINESS" || role === "REALESTATE" || role === "ADMIN";
+  const visibleTabs = PROFILE_TABS.filter((t) => t.key !== "listings" || canManageListings);
+  const tabLabel = visibleTabs.find((t) => t.key === tab)?.label ?? "";
 
   const accountActions = (
     <div className={s.acctWrap}>
@@ -102,7 +108,7 @@ export default function ProfileClient() {
       <div className={s.pageWrap}>
         {/* 탭 */}
         <div className={s.tabBar}>
-          {PROFILE_TABS.map((t) => (
+          {visibleTabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
@@ -116,6 +122,8 @@ export default function ProfileClient() {
         <h2 className={s.secTitle}>{tabLabel}</h2>
 
         {tab === "dashboard" && <ProfileDashboardPanel usage={usage} />}
+        {tab === "listings" && canManageListings && <ProfileListingsPanel />}
+        {tab === "applications" && <ProfileApplicationsPanel />}
         {tab === "info" && <ProfileInfoPanel user={user} />}
         {tab === "tier" && (
           <ProfileTierPanel

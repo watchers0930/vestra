@@ -354,7 +354,7 @@ export function evaluateRedemption(parsed: ParsedRegistry): RiskFactor[] {
 export function evaluateMultipleMortgages(parsed: ParsedRegistry): RiskFactor[] {
   const factors: RiskFactor[] = [];
   const activeMortgages = parsed.eulgu.filter(
-    (e) => /근저당|저당/.test(e.purpose) && !e.isCancelled
+    (e) => /근저당|저당/.test(e.purpose) && !e.isCancelled && !e.isSupplementary
   ).length;
 
   if (activeMortgages >= 3) {

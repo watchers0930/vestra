@@ -28,6 +28,10 @@ export interface TitleSection {
 
 export interface GapguEntry {
   order: number;
+  /** 부기등기 하위 순위 (예: 1-1 → 1). 부기가 아니면 undefined */
+  subOrder?: number;
+  /** 부기등기 여부 (주등기의 순위를 승계) */
+  isSupplementary?: boolean;
   date: string;
   purpose: string;
   detail: string;
@@ -38,6 +42,10 @@ export interface GapguEntry {
 
 export interface EulguEntry {
   order: number;
+  /** 부기등기 하위 순위 (예: 1-1 → 1). 부기가 아니면 undefined */
+  subOrder?: number;
+  /** 부기등기 여부 (주등기의 순위를 승계) */
+  isSupplementary?: boolean;
   date: string;
   purpose: string;
   detail: string;
@@ -66,6 +74,10 @@ export interface ParseSummary {
   hasLeaseRegistration: boolean;
   hasWarningRegistration: boolean;
   hasRedemptionRegistration: boolean;
+  /** 등록임대주택(임대사업자) 부기등기 존재 — 임대료 증액제한·임대의무기간 보호 신호 */
+  hasRentalBusinessRegistration: boolean;
+  /** 등기명의인표시변경 부기등기 존재 — 소유자 동일성 재확인 필요 */
+  hasNameChangeRegistration: boolean;
   ownershipTransferCount: number;
   totalClaimsAmount: number;
 }

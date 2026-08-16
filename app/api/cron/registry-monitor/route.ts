@@ -1,5 +1,5 @@
 /**
- * 등기변동 모니터링 Cron Job (v2 — CODEF 실연동)
+ * 등기변동 모니터링 Cron Job (v3 — Tilko 단일 소스)
  * ─────────────────────────────────────────────
  * Vercel Cron: 하루 2회 실행 (vercel.json: 0 3,8 * * *)
  *
@@ -7,8 +7,8 @@
  *  - standard: 일반 감시 (하루 2회)
  *  - contract_gap: 계약~전입 강화 감시 (contract_gap 대상 우선 처리)
  *
- * CODEF API를 통해 실제 등기부를 조회하고 SHA-256 해시 비교로 변동을 감지한다.
- * 데모 환경에서는 시뮬레이션, 유료 전환 시 실제 조회로 자동 전환.
+ * Tilko API로 등기신청사건 처리현황(프리체크) + 등기부등본 발급을 수행하고
+ * SHA-256 해시 비교로 변동을 감지한다. 데모/테스트 시 시뮬레이션 모드 사용.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -17,13 +17,12 @@ import { createHash } from "crypto";
 import { sendNotification } from "@/lib/notification-sender";
 import { getNotificationRecipients } from "@/lib/monitoring-recipients";
 import { verifyCronSecret } from "@/lib/cron-auth";
-import { fetchRegistry, isCodefAvailable } from "@/lib/codef-api";
 import { recordRegistrySnapshot } from "@/lib/registry-snapshot-recorder";
 import { getSectionLabel } from "@/lib/registry-blockchain";
 import {
   fetchRegistryCaseStatus,
   isTilkoAvailable,
-  shouldConfirmWithCodef,
+  shouldConfirmWithFullDoc,
   fetchRegistryDocumentByAddress,
   isTilkoRegistryDocAvailable,
   extractCommUniqueNoFromText,
@@ -153,13 +152,12 @@ function generateSimulatedRegistry(
   ].join("\n");
 }
 
-// ── CODEF로 등기부 조회 (유료 전환 대비) ──
+// ── Tilko 등기부등본 발급 조회 (확정 조회) ──
 async function fetchRegistryContent(
   address: string,
-  commUniqueNo: string | null,
   options?: { simulate?: boolean; changeType?: string; baselineData?: string | null }
 ): Promise<{ text: string; raw?: Record<string, unknown> } | null> {
-  // 시뮬레이션 모드: CODEF 호출 없이 가짜 등기부 반환
+  // 시뮬레이션 모드: 외부 호출 없이 가짜 등기부 반환
   if (options?.simulate) {
     const text = generateSimulatedRegistry(
       options.baselineData ?? null,
@@ -168,20 +166,17 @@ async function fetchRegistryContent(
     return { text };
   }
 
-  // CODEF API 사용 가능하고 고유번호가 있는 경우
-  if (isCodefAvailable() && commUniqueNo) {
+  // Tilko 등기부등본 발급 (주소 기반)
+  if (isTilkoRegistryDocAvailable()) {
     try {
-      const result = await fetchRegistry({
-        reqAddress: address,
-        commUniqueNo,
-      });
+      const result = await fetchRegistryDocumentByAddress({ address });
       return { text: result.text, raw: result.rawData };
     } catch (e) {
-      console.error(`[CRON:MONITOR] CODEF 조회 실패: ${address}`, e instanceof Error ? e.message : e);
+      console.error(`[CRON:MONITOR] Tilko 등기부 발급 실패: ${address}`, e instanceof Error ? e.message : e);
     }
   }
 
-  // 폴백: CODEF 미사용 시 null 반환 → 변동 감지 skip
+  // 폴백: 발급 불가 시 null 반환 → 변동 감지 skip
   return null;
 }
 
@@ -210,7 +205,8 @@ export async function GET(req: NextRequest) {
     const simulate = url.searchParams.get("simulate") === "true";
     const changeType = url.searchParams.get("changeType") || "mortgage_added";
     const propertyIdFilter = url.searchParams.get("propertyId");
-    const forceCodef = url.searchParams.get("forceCodef") === "true";
+    // 프리체크(등기신청사건)를 건너뛰고 등기부등본 발급 확정 조회를 강제
+    const forceFullDoc = url.searchParams.get("forceFullDoc") === "true";
 
     if (simulate) {
       console.log(`[CRON:MONITOR] 시뮬레이션 모드 — changeType=${changeType}, propertyId=${propertyIdFilter || "전체"}`);
@@ -252,7 +248,7 @@ export async function GET(req: NextRequest) {
 
     let alertsCreated = 0;
     let notificationsSent = 0;
-    let codefQueries = 0;
+    let docFetches = 0;
     let tilkoPrechecks = 0;
     let tilkoSignals = 0;
     let skipped = 0;
@@ -375,8 +371,8 @@ export async function GET(req: NextRequest) {
         // 1차 감시: Tilko 등기신청사건 처리현황 조회
         // - 접수/처리 중: 조기 경고만 발송
         // - 처리 완료: 사용자 결제 기반 최신 등기부 발급 CTA까지만 진행
-        // - Tilko 미설정/강제 조회/시뮬레이션: 기존 CODEF 경로 유지
-        if (!simulate && !forceCodef && isTilkoAvailable()) {
+        // - 시뮬레이션/강제 확정조회: 아래 등기부 발급 경로로 진행
+        if (!simulate && !forceFullDoc && isTilkoAvailable()) {
           try {
             const caseStatus = await fetchRegistryCaseStatus({
               reqAddress: prop.address,
@@ -453,20 +449,20 @@ export async function GET(req: NextRequest) {
               }
             }
 
-            if (shouldConfirmWithCodef(caseStatus)) {
+            if (shouldConfirmWithFullDoc(caseStatus)) {
               skipped++;
             }
             continue;
           } catch (tilkoError) {
             console.error(
-              `[CRON:MONITOR] Tilko 프리체크 실패 (CODEF 직접 조회로 폴백): ${prop.address}`,
+              `[CRON:MONITOR] Tilko 프리체크 실패 (등기부 발급 확정조회로 폴백): ${prop.address}`,
               tilkoError instanceof Error ? tilkoError.message : tilkoError
             );
           }
         }
 
-        // CODEF로 등기부 조회 (시뮬레이션 시 가짜 등기부 반환)
-        const registry = await fetchRegistryContent(prop.address, prop.commUniqueNo, simulate
+        // Tilko 등기부등본 발급 확정 조회 (시뮬레이션 시 가짜 등기부 반환)
+        const registry = await fetchRegistryContent(prop.address, simulate
           ? { simulate: true, changeType, baselineData: prop.baselineData }
           : undefined
         );
@@ -481,7 +477,7 @@ export async function GET(req: NextRequest) {
           continue;
         }
 
-        codefQueries++;
+        docFetches++;
         const newHash = generateContentHash(registry.text);
 
         // 해시가 동일하면 변동 없음
@@ -601,7 +597,7 @@ export async function GET(req: NextRequest) {
       processed: allProperties.length,
       gapMode: gapProperties.length,
       standardMode: standardProperties.length,
-      codefQueries,
+      docFetches,
       tilkoPrechecks,
       tilkoSignals,
       skipped,

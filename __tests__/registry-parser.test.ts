@@ -361,6 +361,74 @@ describe("기말소 형식 — 'N번근저당권설정 기말소' 형식 (인터
   });
 });
 
+describe("부기등기 파싱 (A: 순위 승계 / B: 임대사업자 / C: 명의인표시변경)", () => {
+  // 임대사업자(등록임대주택) 부기등기 — 갑구 1-1
+  const rentalText = `
+【 갑 구 】 (소유권에 관한 사항)
+순위번호 등기목적 접수 등기원인 권리자 및 기타사항
+1 소유권보존 2019년3월20일 제12345호 소유자 김영수
+1-1 임대주택등기 2020년5월10일 제20000호 이 주택은 민간임대주택에 관한 특별법 제5조의2에 따라 임대의무기간과 임대료증액기준을 준수하여야 하는 재산임
+
+【 을 구 】 (소유권 이외의 권리에 관한 사항)
+순위번호 등기목적 접수 등기원인 권리자 및 기타사항
+1 근저당권설정 2019년8월12일 제23460호 설정계약 채권최고액 금 300,000,000원 근저당권자 국민은행
+`.trim();
+
+  const rentalParsed = parseRegistry(rentalText);
+
+  it("임대사업자 부기등기를 hasRentalBusinessRegistration으로 감지한다", () => {
+    expect(rentalParsed.summary.hasRentalBusinessRegistration).toBe(true);
+  });
+
+  it("1-1 부기등기는 order=1, isSupplementary=true로 파싱된다", () => {
+    const sup = rentalParsed.gapgu.find((e) => e.isSupplementary);
+    expect(sup).toBeDefined();
+    expect(sup!.order).toBe(1);
+    expect(sup!.subOrder).toBe(1);
+  });
+
+  // 근저당권이전 부기등기 — 을구 1-1 (순위 승계, 신규 채권 아님)
+  const transferText = `
+【 을 구 】 (소유권 이외의 권리에 관한 사항)
+순위번호 등기목적 접수 등기원인 권리자 및 기타사항
+1 근저당권설정 2019년8월12일 제23460호 설정계약 채권최고액 금 300,000,000원 근저당권자 국민은행
+1-1 근저당권이전 2021년6월1일 제30000호 계약양도 근저당권자 신한은행
+`.trim();
+
+  const transferParsed = parseRegistry(transferText);
+
+  it("근저당권이전 부기는 채권 합산에서 제외된다 (설정액만 합산)", () => {
+    expect(transferParsed.summary.totalMortgageAmount).toBe(300000000);
+  });
+
+  it("다수근저당 카운트에서 부기(이전)를 제외한다", () => {
+    const counted = transferParsed.eulgu.filter(
+      (e) => /근저당|저당/.test(e.purpose) && !e.isCancelled && !e.isSupplementary
+    ).length;
+    expect(counted).toBe(1); // 설정 1건만, 이전 부기는 제외
+  });
+
+  // 등기명의인표시변경 부기등기 — 갑구 2-1
+  const nameChangeText = `
+【 갑 구 】 (소유권에 관한 사항)
+순위번호 등기목적 접수 등기원인 권리자 및 기타사항
+2 소유권이전 2020년1월5일 제25000호 매매 소유자 박지민
+2-1 등기명의인표시변경 2022년3월3일 제33000호 전거 박지민의 주소변경
+`.trim();
+
+  const nameChangeParsed = parseRegistry(nameChangeText);
+
+  it("등기명의인표시변경 부기등기를 hasNameChangeRegistration으로 감지한다", () => {
+    expect(nameChangeParsed.summary.hasNameChangeRegistration).toBe(true);
+  });
+
+  it("일반 등기부(부기 없음)는 부기 플래그가 false다", () => {
+    const normal = parseRegistry(SAMPLE_REGISTRY_TEXT);
+    expect(normal.summary.hasRentalBusinessRegistration).toBe(false);
+    expect(normal.summary.hasNameChangeRegistration).toBe(false);
+  });
+});
+
 describe("extractAmount", () => {
   it("금 480,000,000원 → 480000000", () => {
     expect(extractAmount("채권최고액 금 480,000,000원")).toBe(480000000);
