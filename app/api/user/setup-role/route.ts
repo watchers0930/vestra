@@ -15,10 +15,13 @@ export async function POST(req: NextRequest) {
 
   const { role, businessNumber, companyName, representName, userType } = await req.json();
 
-  // 유효한 역할만 허용
-  if (!["PERSONAL", "BUSINESS", "REALESTATE"].includes(role)) {
+  // 유효한 역할만 허용 (RENTAL_BIZ=임대사업자는 BUSINESS/REALESTATE와 동일한 사업자 승인 흐름)
+  if (!["PERSONAL", "RENTAL_BIZ", "BUSINESS", "REALESTATE"].includes(role)) {
     return NextResponse.json({ error: "유효하지 않은 역할입니다" }, { status: 400 });
   }
+
+  // 사업자 역할 라벨
+  const bizLabel = role === "REALESTATE" ? "중개사" : role === "RENTAL_BIZ" ? "임대사업자" : "기업";
 
   // PERSONAL: 즉시 역할 전환, business info 불필요
   if (role === "PERSONAL") {
@@ -60,7 +63,7 @@ export async function POST(req: NextRequest) {
         detail: { newRole: role, status: "applied" },
       });
 
-      return NextResponse.json({ message: `${role === "REALESTATE" ? "중개사" : "기업"} 회원으로 전환되었습니다.` });
+      return NextResponse.json({ message: `${bizLabel} 회원으로 전환되었습니다.` });
     }
 
     // business info가 없으면 폼 입력 필요

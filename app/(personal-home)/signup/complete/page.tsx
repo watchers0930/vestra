@@ -29,10 +29,13 @@ function SignupCompleteContent() {
 
   const isValidRole =
     intendedRole === "PERSONAL" ||
+    intendedRole === "RENTAL_BIZ" ||
     intendedRole === "REALESTATE" ||
     intendedRole === "BUSINESS";
   const requiresBusinessInfo =
-    intendedRole === "REALESTATE" || intendedRole === "BUSINESS";
+    intendedRole === "RENTAL_BIZ" ||
+    intendedRole === "REALESTATE" ||
+    intendedRole === "BUSINESS";
   const [needsBusinessInfo, setNeedsBusinessInfo] = useState(false);
   const [selectedUserType, setSelectedUserType] = useState<"TENANT" | "LANDLORD" | null>(null);
   const isProcessingRef = useRef(false);
@@ -153,7 +156,9 @@ function SignupCompleteContent() {
           <p className="text-muted text-sm mt-1">
             {intendedRole === "REALESTATE"
               ? "부동산 중개사 등록"
-              : "기업 회원 등록"}
+              : intendedRole === "RENTAL_BIZ"
+                ? "임대사업자 등록"
+                : "기업 회원 등록"}
           </p>
         </div>
 

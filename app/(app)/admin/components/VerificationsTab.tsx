@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { CheckCircle, User, Building2, Crown, XCircle } from "lucide-react";
+import { CheckCircle, User, Building2, Crown, XCircle, Home } from "lucide-react";
 import { Card, Button } from "@/components/common";
 import type { UserItem, ConfirmModalState } from "../types";
+import { ROLE_LABELS } from "../constants";
 
 interface Props {
   pending: UserItem[];
@@ -37,6 +38,9 @@ export function VerificationsTab({ pending, setConfirmModal, handleVerify }: Pro
               <div>
                 <p className="font-medium text-gray-900">{user.name || "이름 없음"}</p>
                 <p className="text-xs text-gray-500">{user.email}</p>
+                {user.role && user.role !== "PERSONAL" && (
+                  <p className="text-xs text-teal-600 font-medium mt-1">신청 등급: {ROLE_LABELS[user.role] ?? user.role}</p>
+                )}
                 {user.businessNumber && (
                   <p className="text-xs text-gray-500 mt-1">사업자번호: {user.businessNumber}</p>
                 )}
@@ -52,6 +56,17 @@ export function VerificationsTab({ pending, setConfirmModal, handleVerify }: Pro
               </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setConfirmModal({
+                  message: `${user.name || user.email} 회원을 임대사업자로 승인하시겠습니까?`,
+                  onConfirm: () => { handleVerify(user.id, "approve", "RENTAL_BIZ"); setConfirmModal(null); },
+                })}
+              >
+                <Home size={14} strokeWidth={1.5} className="mr-1" />
+                임대사업자 승인
+              </Button>
               <Button
                 variant="primary"
                 size="sm"

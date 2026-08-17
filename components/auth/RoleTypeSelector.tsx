@@ -1,6 +1,6 @@
 "use client";
 
-import { User, Building2, Briefcase } from "lucide-react";
+import { User, Building2, Briefcase, Home } from "lucide-react";
 import RoleTypeCard from "@/components/auth/RoleTypeCard";
 
 interface RoleTypeSelectorProps {
@@ -15,6 +15,13 @@ const ROLE_OPTIONS = [
     title: "일반 회원",
     description: "부동산 투자/분석 목적",
     features: ["AI 권리분석", "시세전망", "전세보호 분석"],
+  },
+  {
+    role: "RENTAL_BIZ" as const,
+    icon: <Home className="w-5 h-5" />,
+    title: "임대사업자",
+    description: "임대주택 등록 사업자",
+    features: ["매물 등록·관리", "안심인증 등록", "등기감시"],
   },
   {
     role: "REALESTATE" as const,
@@ -41,7 +48,7 @@ export default function RoleTypeSelector({
   onSelect,
 }: RoleTypeSelectorProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
       {ROLE_OPTIONS.map((option) => (
         <RoleTypeCard
           key={option.role}

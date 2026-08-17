@@ -1,6 +1,7 @@
 export const ROLE_LABELS: Record<string, string> = {
   GUEST: "게스트",
   PERSONAL: "개인",
+  RENTAL_BIZ: "임대사업자",
   BUSINESS: "기업",
   REALESTATE: "부동산",
   ADMIN: "관리자",
@@ -9,6 +10,7 @@ export const ROLE_LABELS: Record<string, string> = {
 export const ROLE_COLORS: Record<string, string> = {
   GUEST: "neutral",
   PERSONAL: "info",
+  RENTAL_BIZ: "warning",
   BUSINESS: "primary",
   REALESTATE: "success",
   ADMIN: "danger",

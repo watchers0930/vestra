@@ -60,9 +60,9 @@ export default function ProfileClient() {
 
   const user = session.user;
   const role = user.role || "PERSONAL";
-  // 매물 등록·내 매물 관리 자격: 임대인(LANDLORD) / 부동산 / 기업 / 관리자 (임차인 제외)
+  // 매물 등록·내 매물 관리 자격: 임대인(LANDLORD) / 임대사업자 / 부동산 / 기업 / 관리자 (임차인 제외)
   const canManageListings =
-    user.userType === "LANDLORD" || role === "BUSINESS" || role === "REALESTATE" || role === "ADMIN";
+    user.userType === "LANDLORD" || role === "RENTAL_BIZ" || role === "BUSINESS" || role === "REALESTATE" || role === "ADMIN";
   const visibleTabs = PROFILE_TABS.filter((t) => t.key !== "listings" || canManageListings);
   const tabLabel = visibleTabs.find((t) => t.key === tab)?.label ?? "";
 

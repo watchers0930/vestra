@@ -10,6 +10,7 @@ const ROLE_CONFIG: Record<string, { label: string; color: string; icon: typeof C
   ADMIN: { label: "관리자", color: "bg-red-500/80", icon: Crown },
   REALESTATE: { label: "부동산", color: "bg-emerald-500/80", icon: Home },
   BUSINESS: { label: "기업", color: "bg-blue-500/80", icon: Building2 },
+  RENTAL_BIZ: { label: "임대사업자", color: "bg-teal-500/80", icon: Home },
   PERSONAL: { label: "개인", color: "bg-gray-500/80", icon: User },
   GUEST: { label: "게스트", color: "bg-gray-400/80", icon: User },
 };

@@ -3,7 +3,7 @@
 import { Check } from "lucide-react";
 
 interface RoleTypeCardProps {
-  role: "PERSONAL" | "REALESTATE" | "BUSINESS";
+  role: "PERSONAL" | "RENTAL_BIZ" | "REALESTATE" | "BUSINESS";
   icon: React.ReactNode;
   title: string;
   description: string;

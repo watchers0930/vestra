@@ -14,7 +14,7 @@ interface Props {
 }
 
 const ROLE_CLASS: Record<string, string> = {
-  ADMIN: s.roleAdmin, REALESTATE: s.roleReal, BUSINESS: s.roleBiz, PERSONAL: s.rolePersonal, GUEST: s.rolePersonal,
+  ADMIN: s.roleAdmin, REALESTATE: s.roleReal, BUSINESS: s.roleBiz, RENTAL_BIZ: s.roleBiz, PERSONAL: s.rolePersonal, GUEST: s.rolePersonal,
 };
 const VERIFY_CLASS: Record<string, string> = {
   none: s.vNone, pending: s.vPending, verified: s.vVerified, rejected: s.vRejected,

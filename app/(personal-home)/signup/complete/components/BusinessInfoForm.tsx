@@ -125,7 +125,7 @@ export default function BusinessInfoForm({
           등록이 완료되었습니다
         </h3>
         <p className="text-sm text-muted mb-1">
-          {intendedRole === "REALESTATE" ? "중개사" : "기업"} 회원으로
+          {intendedRole === "REALESTATE" ? "중개사" : intendedRole === "RENTAL_BIZ" ? "임대사업자" : "기업"} 회원으로
           전환되었습니다.
         </p>
         <p className="text-xs text-muted">
@@ -141,7 +141,7 @@ export default function BusinessInfoForm({
       className="bg-card rounded-2xl border border-border p-8 shadow-sm"
     >
       <h2 className="text-lg font-semibold text-center mb-1">
-        {intendedRole === "REALESTATE" ? "중개사 정보 입력" : "기업 정보 입력"}
+        {intendedRole === "REALESTATE" ? "중개사 정보 입력" : intendedRole === "RENTAL_BIZ" ? "임대사업자 정보 입력" : "기업 정보 입력"}
       </h2>
       <p className="text-center text-sm text-muted mb-6">
         등급 승인을 위해 기본 정보를 입력해 주세요
@@ -151,7 +151,7 @@ export default function BusinessInfoForm({
         {/* 회사명 */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-1.5">
-            {intendedRole === "REALESTATE" ? "중개사무소명" : "회사명"}
+            {intendedRole === "REALESTATE" ? "중개사무소명" : intendedRole === "RENTAL_BIZ" ? "상호명" : "회사명"}
           </label>
           <input
             type="text"

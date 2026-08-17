@@ -34,6 +34,7 @@ if (typeof window === "undefined" && !process.env.AUTH_SECRET && !process.env.NE
 export const ROLE_LIMITS: Record<string, number> = {
   GUEST: 2,
   PERSONAL: 5,
+  RENTAL_BIZ: 50,
   BUSINESS: 50,
   REALESTATE: 100,
   ADMIN: 9999,

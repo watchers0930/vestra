@@ -175,6 +175,7 @@ export async function POST(req: NextRequest) {
     const limits: Record<string, number> = {
       GUEST: 1,
       PERSONAL: 3,
+      RENTAL_BIZ: 10,
       BUSINESS: 10,
       REALESTATE: 30,
       ADMIN: 100,
