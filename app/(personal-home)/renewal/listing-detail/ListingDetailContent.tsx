@@ -141,7 +141,7 @@ export default function ListingDetailContent() {
                 <div className={s.certItem}><div className={s.certDot}></div><span className={s.certItemLabel}>재산세납부확인서</span><span className={s.certItemStatus}>납세 이력 확인</span></div>
               </div>
               <button
-                onClick={() => router.push("/rights")}
+                onClick={() => router.push("/renewal/rights")}
                 style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 10, padding: 0, background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#0071e3", lineHeight: 1.5, textAlign: "left" }}
               >
                 등기부 권리관계·부기등기(등록임대주택·명의변경)가 궁금하다면 AI 권리분석 해보기 →
@@ -159,7 +159,7 @@ export default function ListingDetailContent() {
 
             <div className={s.ctaSection}>
               <button className={s.ctaPrimary} onClick={() => setShowIntent(true)}>의향서 보내기</button>
-              <button className={s.ctaSecondary} onClick={() => router.push("/rights")}>AI 권리분석 해보기</button>
+              <button className={s.ctaSecondary} onClick={() => router.push("/renewal/rights")}>AI 권리분석 해보기</button>
             </div>
           </div>
         </div>
