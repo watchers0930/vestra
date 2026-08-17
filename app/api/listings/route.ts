@@ -86,6 +86,8 @@ export async function GET(req: NextRequest) {
           officialPrice: true,
           jeonseRatio: true,
           isCertified: true,
+          isRentalBusiness: true,
+          hasNameChange: true,
           certifiedAt: true,
           taxDocUrl: true,
           taxDocFilename: true,

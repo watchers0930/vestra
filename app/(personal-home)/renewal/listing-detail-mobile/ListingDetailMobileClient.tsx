@@ -175,6 +175,9 @@ export default function ListingDetailMobileClient() {
                 <span className={s.certItemStatus}>납세 이력 확인</span>
               </div>
             </div>
+            <p style={{ fontSize: 11, color: "#94a3b8", margin: "10px 0 0", lineHeight: 1.5 }}>
+              ※ 등기사항전부증명서 확인 시 <strong style={{ color: "#16a34a" }}>등록임대주택(임대사업자)</strong> 및 <strong style={{ color: "#b45309" }}>명의변경</strong> 부기등기까지 자동 분석해 드립니다.
+            </p>
           </div>
 
           <div className={s.descSection}>

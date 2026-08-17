@@ -96,6 +96,17 @@ export function ListingCard({ listing, forceCertified, href }: Props) {
               안심인증
             </span>
           )}
+
+          {/* 등록임대주택 배지 (임대사업자 부기등기) */}
+          {listing.isRentalBusiness && (
+            <span style={{
+              position: "absolute", top: showCertified ? 40 : 10, right: 10,
+              background: "#15803d", color: "#fff",
+              fontSize: 11, fontWeight: 500, padding: "3px 9px", borderRadius: 12,
+            }}>
+              등록임대주택
+            </span>
+          )}
         </div>
 
         {/* Body */}

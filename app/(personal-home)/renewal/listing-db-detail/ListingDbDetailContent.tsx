@@ -155,6 +155,29 @@ export default function ListingDbDetailContent() {
                     </div>
                   ))}
                 </div>
+
+                {/* 등기부 확인 결과 — 부기등기 (등기사항전부증명서 분석) */}
+                {(listing.isRentalBusiness || listing.hasNameChange) && (
+                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #e5efe8", display: "flex", flexDirection: "column", gap: 8 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>등기부 확인 결과</span>
+                    {listing.isRentalBusiness && (
+                      <div style={{ padding: "10px 12px", borderRadius: 10, background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#15803d", marginBottom: 4 }}>등록임대주택 (임대사업자)</div>
+                        <p style={{ fontSize: 12, color: "#166534", lineHeight: 1.5, margin: 0 }}>
+                          등기부상 임대사업자 부기등기가 확인된 매물입니다. 임대료 증액 제한(5%)·임대의무기간 등 임차인 보호가 적용될 수 있습니다. 보증보험 실가입 여부는 별도 확인하세요.
+                        </p>
+                      </div>
+                    )}
+                    {listing.hasNameChange && (
+                      <div style={{ padding: "10px 12px", borderRadius: 10, background: "#fffbeb", border: "1px solid #fde68a" }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#92400e", marginBottom: 4 }}>등기명의인표시변경 이력</div>
+                        <p style={{ fontSize: 12, color: "#92400e", lineHeight: 1.5, margin: 0 }}>
+                          등기명의인표시변경(주소·성명) 이력이 있습니다. 계약 시 현재 소유자 동일성을 신분증과 대조하세요.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <div className={s.certSection}>
@@ -163,23 +186,6 @@ export default function ListingDbDetailContent() {
                 </div>
                 <p style={{ fontSize: 12, color: "#94a3b8", margin: "8px 0 0", lineHeight: 1.5 }}>
                   등기·건축물대장·재산세 서류가 아직 확인되지 않았습니다. 계약 전 권리분석을 권장합니다.
-                </p>
-              </div>
-            )}
-
-            {listing.isRentalBusiness && (
-              <div style={{ marginTop: 12, padding: "12px 14px", borderRadius: 10, background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#15803d", marginBottom: 4 }}>등록임대주택 (임대사업자)</div>
-                <p style={{ fontSize: 12, color: "#166534", lineHeight: 1.5, margin: 0 }}>
-                  등기부상 임대사업자 부기등기가 확인된 매물입니다. 임대료 증액 제한(5%)·임대의무기간 등 임차인 보호가 적용될 수 있습니다. 보증보험 실가입 여부는 별도 확인하세요.
-                </p>
-              </div>
-            )}
-
-            {listing.hasNameChange && (
-              <div style={{ marginTop: 12, padding: "12px 14px", borderRadius: 10, background: "#fffbeb", border: "1px solid #fde68a" }}>
-                <p style={{ fontSize: 12, color: "#92400e", lineHeight: 1.5, margin: 0 }}>
-                  등기명의인표시변경(주소·성명) 이력이 있습니다. 계약 시 현재 소유자 동일성을 신분증과 대조하세요.
                 </p>
               </div>
             )}
