@@ -17,29 +17,50 @@ interface AptItem {
   lng?: number;
 }
 
-// 카카오 키워드 검색으로 아파트 좌표 조회
-async function geocodeApt(query: string, kakaoKey: string): Promise<{ lat: number; lng: number } | null> {
-  const cacheKey = APICache.makeKey("kakao-geo", query);
-  const cached = apiCache.get<{ lat: number; lng: number }>(cacheKey);
-  if (cached) return cached;
+// 카카오 API 단건 좌표 조회 (address.json / keyword.json 공용)
+async function kakaoFetchCoord(url: string, kakaoKey: string): Promise<{ lat: number; lng: number } | null> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch(
-      `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=1`,
-      { headers: { Authorization: `KakaoAK ${kakaoKey}` }, signal: controller.signal },
-    );
+    const res = await fetch(url, { headers: { Authorization: `KakaoAK ${kakaoKey}` }, signal: controller.signal });
     clearTimeout(timeout);
     if (!res.ok) return null;
     const json = await res.json();
     const doc = json.documents?.[0];
     if (!doc?.x || !doc?.y) return null;
-    const coord = { lat: Number(doc.y), lng: Number(doc.x) };
-    apiCache.set(cacheKey, coord, 24 * 60 * 60 * 1000); // 24시간
-    return coord;
+    return { lat: Number(doc.y), lng: Number(doc.x) };
   } catch {
     return null;
   }
+}
+
+// 아파트 좌표 조회 — 지번 주소 우선(정확), 실패 시 아파트명 키워드 폴백
+async function geocodeApt(
+  addressQuery: string | null,
+  keywordQuery: string,
+  kakaoKey: string,
+): Promise<{ lat: number; lng: number } | null> {
+  const cacheKey = APICache.makeKey("kakao-geo", addressQuery || keywordQuery);
+  const cached = apiCache.get<{ lat: number; lng: number }>(cacheKey);
+  if (cached) return cached;
+
+  let coord: { lat: number; lng: number } | null = null;
+  // ① 지번 주소 검색 (지번이 있으면 우선 — 단지 정확 위치)
+  if (addressQuery) {
+    coord = await kakaoFetchCoord(
+      `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(addressQuery)}&size=1`,
+      kakaoKey,
+    );
+  }
+  // ② 아파트명 키워드 폴백 (지번 없거나 주소 검색 실패 시)
+  if (!coord) {
+    coord = await kakaoFetchCoord(
+      `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(keywordQuery)}&size=1`,
+      kakaoKey,
+    );
+  }
+  if (coord) apiCache.set(cacheKey, coord, 24 * 60 * 60 * 1000); // 24시간
+  return coord;
 }
 
 // 동시성 제한 배치 실행
@@ -92,13 +113,20 @@ export async function GET(req: NextRequest) {
     if (doGeocode) {
       const kakaoKey = process.env.KAKAO_REST_KEY;
       if (kakaoKey) {
-        // 건물(동+아파트명) 단위로 중복 제거 후 지오코딩
-        const uniqueKeys = [...new Set(items.map((it) => `${it.dong}|${it.aptName}`))];
+        // 건물(동+아파트명) 단위로 중복 제거 후 지오코딩 (대표 지번 확보)
+        const repJibun = new Map<string, string | null>();
+        items.forEach((it) => {
+          const k = `${it.dong}|${it.aptName}`;
+          if (!repJibun.has(k)) repJibun.set(k, it.jibun ?? null);
+        });
+        const uniqueKeys = [...repJibun.keys()];
         const coordMap = new Map<string, { lat: number; lng: number }>();
         const coords = await batched(
           uniqueKeys.map((key) => async () => {
             const [dong, aptName] = key.split("|");
-            const c = await geocodeApt(`${region} ${dong} ${aptName}`, kakaoKey);
+            const jibun = repJibun.get(key);
+            const addressQuery = jibun ? `${region} ${dong} ${jibun}` : null;
+            const c = await geocodeApt(addressQuery, `${region} ${dong} ${aptName}`, kakaoKey);
             return { key, c };
           }),
         );
