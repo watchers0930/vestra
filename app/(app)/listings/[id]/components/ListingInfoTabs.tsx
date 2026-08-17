@@ -1,11 +1,12 @@
 "use client";
 
 import {
-  useState, useEffect, useId, useRef,
+  useState, useEffect, useRef,
   useCallback, useMemo, useReducer,
 } from "react";
 import { MapPin, GraduationCap } from "lucide-react";
 import { MarketTab } from "./MarketTab";
+import { useKakaoMap } from "./useKakaoMap";
 
 type TabKey = "location" | "infra" | "school" | "market";
 const TABS: { key: TabKey; label: string }[] = [
@@ -23,50 +24,23 @@ export interface ListingInfoTabsProps {
 }
 
 
-// ── Kakao SDK 대기 유틸 ──────────────────────────────────────────────────────
-function waitKakao(cb: () => void): () => void {
-  let dead = false;
-  function go() { if (!dead) cb(); }
-  if (window.kakao?.maps?.Map) { go(); return () => { dead = true; }; }
-  if (window.kakao?.maps?.load) { window.kakao.maps.load(go); return () => { dead = true; }; }
-  const t0 = Date.now();
-  const iv = setInterval(() => {
-    if (dead) { clearInterval(iv); return; }
-    if (window.kakao?.maps?.Map) { clearInterval(iv); go(); }
-    else if (window.kakao?.maps?.load) { clearInterval(iv); window.kakao.maps.load(go); }
-    else if (Date.now() - t0 > 15000) clearInterval(iv);
-  }, 200);
-  return () => { dead = true; clearInterval(iv); };
-}
-
 // ── 위치 지도 ────────────────────────────────────────────────────────────────
 export function LocationMap({ lat, lng, address }: { lat: number; lng: number; address: string }) {
-  const uid = useId();
-  const domId = `kmap-loc-${uid.replace(/:/g, "")}`;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const c = waitKakao(() => {
-      const el = document.getElementById(domId);
-      if (!el || mapRef.current) return;
-      const kakao = window.kakao;
-      const pos = new kakao.maps.LatLng(lat, lng);
-      const map = new kakao.maps.Map(el, { center: pos, level: 3 });
-      mapRef.current = map;
-      setTimeout(() => map.relayout(), 100);
-      new ResizeObserver(() => map.relayout()).observe(el);
-      const pin = document.createElement("div");
-      const shape = document.createElement("div");
-      Object.assign(shape.style, { width: "22px", height: "22px", borderRadius: "50% 50% 50% 0", background: "#0F2547", transform: "rotate(-45deg)", boxShadow: "0 3px 10px rgba(15,37,71,.55)", border: "2.5px solid #fff", position: "relative" });
-      const dot = document.createElement("div");
-      Object.assign(dot.style, { width: "7px", height: "7px", borderRadius: "50%", background: "#fff", position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)" });
-      shape.appendChild(dot);
-      pin.appendChild(shape);
-      new kakao.maps.CustomOverlay({ map, position: pos, content: pin, yAnchor: 1.15, zIndex: 10 });
-    });
-    return () => { c(); mapRef.current = null; };
-  }, [domId, lat, lng]);
+  useKakaoMap(containerRef, (kakao, el) => {
+    const pos = new kakao.maps.LatLng(lat, lng);
+    const map = new kakao.maps.Map(el, { center: pos, level: 3 });
+    const pin = document.createElement("div");
+    const shape = document.createElement("div");
+    Object.assign(shape.style, { width: "22px", height: "22px", borderRadius: "50% 50% 50% 0", background: "#0F2547", transform: "rotate(-45deg)", boxShadow: "0 3px 10px rgba(15,37,71,.55)", border: "2.5px solid #fff", position: "relative" });
+    const dot = document.createElement("div");
+    Object.assign(dot.style, { width: "7px", height: "7px", borderRadius: "50%", background: "#fff", position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)" });
+    shape.appendChild(dot);
+    pin.appendChild(shape);
+    new kakao.maps.CustomOverlay({ map, position: pos, content: pin, yAnchor: 1.15, zIndex: 10 });
+    return { map };
+  }, [lat, lng]);
 
   return (
     <div>
@@ -75,7 +49,7 @@ export function LocationMap({ lat, lng, address }: { lat: number; lng: number; a
         <span style={{ fontSize: 13, fontWeight: 600, color: "#1d1d1f" }}>건물 위치</span>
       </div>
       <p style={{ fontSize: 12, color: "#6e6e73", margin: "0 0 10px" }}>{address}</p>
-      <div id={domId} style={{ width: "100%", height: 437, borderRadius: 14, border: "1px solid #e8edf5", overflow: "hidden" }} />
+      <div ref={containerRef} style={{ width: "100%", height: 437, borderRadius: 14, border: "1px solid #e8edf5", overflow: "hidden" }} />
     </div>
   );
 }
@@ -93,8 +67,7 @@ type InfraCatCode = typeof INFRA_CATS[number]["code"] | "ALL";
 interface PlaceItem { name: string; distance: string; catCode: string; lat: number; lng: number; }
 
 export function InfraMap({ lat, lng }: { lat: number; lng: number }) {
-  const uid   = useId();
-  const domId = `kmap-infra-${uid.replace(/:/g, "")}`;
+  const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef         = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -150,16 +123,11 @@ export function InfraMap({ lat, lng }: { lat: number; lng: number }) {
     }
   }
 
-  useEffect(() => {
-    const dots = dotsByCat.current; const places = placesByCat.current;
-    const c = waitKakao(() => {
-      const el = document.getElementById(domId); if (!el || mapRef.current) return;
-      const kakao = window.kakao;
+  useKakaoMap(containerRef, (kakao, el) => {
+      const dots = dotsByCat.current; const places = placesByCat.current;
       const pos = new kakao.maps.LatLng(lat, lng);
       const map = new kakao.maps.Map(el, { center: pos, level: 4 });
       mapRef.current = map;
-      setTimeout(() => map.relayout(), 100);
-      new ResizeObserver(() => map.relayout()).observe(el);
       // 건물 핀 (prominent pin)
       const buildPin = document.createElement("div");
       const bShape = document.createElement("div");
@@ -195,9 +163,14 @@ export function InfraMap({ lat, lng }: { lat: number; lng: number }) {
           if (done === INFRA_CATS.length) { setLoaded(INFRA_CATS.length); setIsLoading(false); }
         }, { location: pos, radius: cat.code === "SW8" ? 1500 : 500, sort: kakao.maps.services.SortBy.DISTANCE });
       });
-    });
-    return () => { c(); dots.forEach((entries) => entries.forEach(({ ov }) => ov.setMap(null))); dots.clear(); places.clear(); mapRef.current = null; };
-  }, [domId, lat, lng]);
+      return {
+        map,
+        cleanup: () => {
+          dots.forEach((entries) => entries.forEach(({ ov }) => ov.setMap(null)));
+          dots.clear(); places.clear(); mapRef.current = null;
+        },
+      };
+  }, [lat, lng]);
 
   useEffect(() => {
     if (loaded < INFRA_CATS.length) return;
@@ -246,7 +219,7 @@ export function InfraMap({ lat, lng }: { lat: number; lng: number }) {
           </div>
         </div>
         <div style={{ flex: 1, borderRadius: 12, border: "1px solid #e8edf5", overflow: "hidden" }}>
-          <div id={domId} style={{ width: "100%", height: "100%" }} />
+          <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
         </div>
       </div>
     </div>
@@ -269,8 +242,7 @@ function schType(cat: string): typeof SCHOOL_TYPES[number]["key"] | null {
 }
 
 export function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
-  const uid   = useId();
-  const domId = `kmap-school-${uid.replace(/:/g, "")}`;
+  const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef  = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -317,16 +289,11 @@ export function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
 
   function handleSelect(key: SchoolKey) { setSelected(key); applyFilter(key); }
 
-  useEffect(() => {
-    const dots = dotsRef.current;
-    const c = waitKakao(() => {
-      const el = document.getElementById(domId); if (!el || mapRef.current) return;
-      const kakao = window.kakao;
+  useKakaoMap(containerRef, (kakao, el) => {
+      const dots = dotsRef.current;
       const pos = new kakao.maps.LatLng(lat, lng);
       const map = new kakao.maps.Map(el, { center: pos, level: 5 });
       mapRef.current = map;
-      setTimeout(() => map.relayout(), 100);
-      new ResizeObserver(() => map.relayout()).observe(el);
       // 건물 핀
       const sBuildPin = document.createElement("div");
       const sBShape = document.createElement("div");
@@ -362,9 +329,14 @@ export function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
         }
         dispatch({ type: "done", items: Object.values(found).sort((a, b) => SCHOOL_TYPES.findIndex((t) => t.key === a.type) - SCHOOL_TYPES.findIndex((t) => t.key === b.type)) });
       }, { location: pos, radius: 3000, size: 15, sort: kakao.maps.services.SortBy.DISTANCE });
-    });
-    return () => { c(); dots.forEach((entries) => entries.forEach(({ ov }) => ov.setMap(null))); dots.clear(); mapRef.current = null; };
-  }, [domId, lat, lng]);
+      return {
+        map,
+        cleanup: () => {
+          dots.forEach((entries) => entries.forEach(({ ov }) => ov.setMap(null)));
+          dots.clear(); mapRef.current = null;
+        },
+      };
+  }, [lat, lng]);
 
   return (
     <div>
@@ -405,7 +377,7 @@ export function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
           </div>
         </div>
         <div style={{ flex: 1, borderRadius: 12, border: "1px solid #e8edf5", overflow: "hidden" }}>
-          <div id={domId} style={{ width: "100%", height: "100%" }} />
+          <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
         </div>
       </div>
       <p style={{ fontSize: 11, color: "#aeaeb2", marginTop: 8 }}>학군 정보는 참고용이며, 실제 배정과 다를 수 있습니다.</p>
