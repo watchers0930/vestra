@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import s from "./listing-detail-mobile.module.css";
 import DetailTabs from "../listing-detail/DetailTabs";
+import MapThumbnail from "../listing-detail/MapThumbnail";
 import { ApplicationModal } from "@/app/(app)/listings/[id]/components/ApplicationModal";
 
 function formatKoreanWon(won: number): string {
@@ -84,20 +85,29 @@ export default function ListingDetailMobileClient() {
       {/* MAIN CONTENT */}
       <div className={s.mContent}>
 
-        {/* 사진 (국토부 실거래 — 사진 없음) */}
+        {/* 사진 (국토부 실거래 — 좌표 있으면 지도 썸네일, 없으면 안내) */}
         <div className={s.photoGallery}>
-          <div
-            className={s.photoMain}
-            style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 240, background: "#f1f5f9", color: "#94a3b8" }}
-          >
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <polyline points="21 15 16 10 5 21" />
-            </svg>
-            <span style={{ fontSize: 13, fontWeight: 500 }}>등록된 사진이 없습니다</span>
-            <span style={{ fontSize: 11 }}>안심인증 매물 등록 시 사진이 제공됩니다</span>
-          </div>
+          {lat != null && lng != null ? (
+            <div className={s.photoMain} style={{ position: "relative", minHeight: 240, overflow: "hidden" }}>
+              <MapThumbnail lat={lat} lng={lng} minHeight={240} />
+              <span style={{ position: "absolute", top: 10, left: 10, zIndex: 2, background: "rgba(15,37,71,.85)", color: "#fff", fontSize: 11, fontWeight: 500, padding: "3px 9px", borderRadius: 7 }}>
+                실거래 위치 · 사진은 안심인증 등록 시 제공
+              </span>
+            </div>
+          ) : (
+            <div
+              className={s.photoMain}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 240, background: "#f1f5f9", color: "#94a3b8" }}
+            >
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+              <span style={{ fontSize: 13, fontWeight: 500 }}>등록된 사진이 없습니다</span>
+              <span style={{ fontSize: 11 }}>안심인증 매물 등록 시 사진이 제공됩니다</span>
+            </div>
+          )}
           <div className={s.photoBadgeRow}>
             <span className={`${s.photoBadge} ${s.pbSale}`}>매매</span>
             <span className={`${s.photoBadge} ${s.pbStatus}`}>국토부 실거래</span>
