@@ -185,9 +185,12 @@ export default function ListingDetailMobileClient() {
                 <span className={s.certItemStatus}>납세 이력 확인</span>
               </div>
             </div>
-            <p style={{ fontSize: 11, color: "#94a3b8", margin: "10px 0 0", lineHeight: 1.5 }}>
-              ※ 등기사항전부증명서 확인 시 <strong style={{ color: "#16a34a" }}>등록임대주택(임대사업자)</strong> 및 <strong style={{ color: "#b45309" }}>명의변경</strong> 부기등기까지 자동 분석해 드립니다.
-            </p>
+            <button
+              onClick={() => router.push("/rights")}
+              style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 10, padding: 0, background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#0071e3", lineHeight: 1.5, textAlign: "left" }}
+            >
+              등기부 권리관계·부기등기(등록임대주택·명의변경)가 궁금하다면 AI 권리분석 해보기 →
+            </button>
           </div>
 
           <div className={s.descSection}>
