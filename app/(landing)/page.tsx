@@ -6,6 +6,7 @@ import { HowItWorks } from "./components/HowItWorks";
 import { PricingSection } from "./components/PricingSection";
 import { TestimonialsSection } from "./components/TestimonialsSection";
 import { CtaSection } from "./components/CtaSection";
+import { MobileLanding } from "./components/mobile/MobileLanding";
 
 export const metadata = {
   title: "VESTRA - AI 부동산 자산관리 플랫폼",
@@ -26,14 +27,23 @@ export default function LandingPage() {
   return (
     <div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <HeroSection />
-      <TrustBar />
-      <SituationSection />
-      <FeaturesSection />
-      <HowItWorks />
-      <PricingSection />
-      <TestimonialsSection />
-      <CtaSection />
+
+      {/* 데스크탑 (≥768px) */}
+      <div className="lnd-view-desktop">
+        <HeroSection />
+        <TrustBar />
+        <SituationSection />
+        <FeaturesSection />
+        <HowItWorks />
+        <PricingSection />
+        <TestimonialsSection />
+        <CtaSection />
+      </div>
+
+      {/* 모바일 (<768px) */}
+      <div className="lnd-view-mobile">
+        <MobileLanding />
+      </div>
     </div>
   );
 }

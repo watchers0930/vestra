@@ -9,6 +9,13 @@
   --lnd-spy: clamp(64px, 8vw, 120px);
 }
 
+/* 데스크탑/모바일 랜딩 뷰 토글 (768px 기준) */
+.lnd-view-mobile { display: none; }
+@media (max-width: 767px) {
+  .lnd-view-desktop { display: none; }
+  .lnd-view-mobile { display: block; }
+}
+
 /* NAV */
 .lnd-nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 200;
