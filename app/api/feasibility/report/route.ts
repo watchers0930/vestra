@@ -49,6 +49,11 @@ export async function POST(req: NextRequest) {
     if (inlineReport) {
       report = normalizeFeasibilityReport(inlineReport);
     } else {
+      // [보안] DB 저장 보고서는 본인 소유만 조회 가능 (reportId 열거로 타인 사업성보고서 열람 IDOR 차단)
+      if (!userId) {
+        return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+      }
+
       // 3. DB에서 보고서 조회
       const dbReport = await prisma.feasibilityReport.findUnique({
         where: { id: reportId },
@@ -60,6 +65,10 @@ export async function POST(req: NextRequest) {
           { error: "보고서를 찾을 수 없습니다." },
           { status: 404 }
         );
+      }
+
+      if (dbReport.userId !== userId) {
+        return NextResponse.json({ error: "접근 권한이 없습니다." }, { status: 403 });
       }
 
       // 4. HTML 보고서 생성

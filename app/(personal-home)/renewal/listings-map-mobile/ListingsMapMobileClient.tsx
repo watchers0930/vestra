@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import s from "./listings-map-mobile.module.css";
 
 /* ── 국토교통부 실거래 아파트 ── */
@@ -19,7 +20,7 @@ interface AptItem {
   lng?: number;
 }
 
-const REGION_NAME = "강남구";
+const DEFAULT_REGION = "강남구";
 const CHIP_LABELS = ["전체", "매매", "전세", "단기임대", "아파트", "빌라", "안심인증"];
 
 /** 원 단위 → "13억 5,000만원" */
@@ -30,9 +31,9 @@ function fullWon(won: number): string {
   return `${man.toLocaleString()}만원`;
 }
 
-function detailHref(p: AptItem): string {
+function detailHref(p: AptItem, region: string): string {
   const q = new URLSearchParams({
-    region: REGION_NAME,
+    region,
     dong: p.dong,
     apt: p.aptName,
     area: String(p.area),
@@ -59,6 +60,8 @@ const imgPlaceholderStyle: React.CSSProperties = {
 
 /* ── Component ── */
 export default function ListingsMapMobileClient() {
+  const searchParams = useSearchParams();
+  const REGION_NAME = searchParams.get("region") || DEFAULT_REGION;
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeChip, setActiveChip] = useState("전체");
   const [sheetExpanded, setSheetExpanded] = useState(false);
@@ -73,7 +76,7 @@ export default function ListingsMapMobileClient() {
       .then((d) => setItems(d.items ?? []))
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [REGION_NAME]);
 
   function openDetail(p: AptItem) {
     setDetailProp(p);
@@ -253,7 +256,7 @@ export default function ListingsMapMobileClient() {
             </div>
           )}
           <div className={s.dsCta}>
-            <Link href={detailProp ? detailHref(detailProp) : "/renewal/listing-detail"} className={`${s.ctaBtn} ${s.ctaSecondary}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
+            <Link href={detailProp ? detailHref(detailProp, REGION_NAME) : "/renewal/listing-detail"} className={`${s.ctaBtn} ${s.ctaSecondary}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
               상세보기
             </Link>
             <button className={`${s.ctaBtn} ${s.ctaPrimary}`}>계약의향서 받아보기</button>

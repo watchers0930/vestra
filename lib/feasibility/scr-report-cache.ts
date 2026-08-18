@@ -10,6 +10,8 @@ import type { ScrReportData } from "./scr-types";
 interface CachedReport {
   data: ScrReportData;
   createdAt: Date;
+  /** 보고서 생성자 userId. 로그인 사용자 보고서는 본인만 조회 가능. 게스트는 null. */
+  ownerId: string | null;
 }
 
 /** 24시간 TTL (밀리초) */
@@ -38,13 +40,17 @@ function cleanupExpired(): void {
 }
 
 /** 보고서 저장 */
-export function cacheReport(id: string, data: ScrReportData): void {
+export function cacheReport(id: string, data: ScrReportData, ownerId: string | null = null): void {
   cleanupExpired();
-  reportCache.set(id, { data, createdAt: new Date() });
+  reportCache.set(id, { data, createdAt: new Date(), ownerId });
 }
 
-/** 보고서 조회 (TTL 초과 시 null) */
-export function getCachedReport(id: string): ScrReportData | null {
+/**
+ * 보고서 조회 (TTL 초과 시 null)
+ * [보안] 생성자(ownerId)가 있는 보고서는 requesterId가 일치할 때만 반환한다.
+ * 불일치 시 존재 여부를 감추기 위해 null(404)로 처리한다.
+ */
+export function getCachedReport(id: string, requesterId?: string | null): ScrReportData | null {
   cleanupExpired();
   const entry = reportCache.get(id);
   if (!entry) return null;
@@ -52,6 +58,11 @@ export function getCachedReport(id: string): ScrReportData | null {
   // TTL 초과 체크
   if (Date.now() - entry.createdAt.getTime() > CACHE_TTL_MS) {
     reportCache.delete(id);
+    return null;
+  }
+
+  // 소유자 바인딩된 보고서는 본인만 조회
+  if (entry.ownerId && entry.ownerId !== requesterId) {
     return null;
   }
 

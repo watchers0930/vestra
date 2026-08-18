@@ -41,7 +41,7 @@ export default function MapListPanel({ region, loadingItems, items, activeItem, 
             </div>
             <p style={{ fontSize: 15, fontWeight: 700, color: "#1a1d2e", margin: 0 }}>{formatKoreanWon(a.dealAmount).replace(/원$/, "")}</p>
             <p style={{ fontSize: 12, color: "#8a8f9c", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: "3px 0 6px" }}>{region} {a.dong} {a.aptName}</p>
-            <span style={{ display: "inline-block", fontSize: 11, fontWeight: 600, color: "#16a34a", background: "#dcfce7", padding: "2px 9px", borderRadius: 12 }}>안심인증</span>
+            <span style={{ display: "inline-block", fontSize: 11, fontWeight: 600, color: "#2563eb", background: "#e0edff", padding: "2px 9px", borderRadius: 12 }}>국토부 실거래</span>
           </div>
         </button>
       ))}

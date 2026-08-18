@@ -66,6 +66,22 @@ export async function POST(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "서명 이미지가 필요합니다." }, { status: 400 });
     }
 
+    // [보안] 서명 이미지 크기·형식 검증 (대용량 base64로 인한 DB bloat 및 비이미지 저장 방지)
+    const MAX_SIGNATURE_BYTES = 2 * 1024 * 1024; // 2MB
+    if (signatureFile.size > MAX_SIGNATURE_BYTES) {
+      return NextResponse.json({ error: "서명 이미지는 2MB 이하만 가능합니다." }, { status: 400 });
+    }
+    if (signatureFile.type && !signatureFile.type.startsWith("image/")) {
+      return NextResponse.json({ error: "이미지 파일만 업로드할 수 있습니다." }, { status: 400 });
+    }
+    // [보안] 서명자 정보 길이 제한
+    if (signerName && signerName.trim().length > 30) {
+      return NextResponse.json({ error: "서명자 이름이 너무 깁니다." }, { status: 400 });
+    }
+    if (signerPhone && signerPhone.trim().length > 20) {
+      return NextResponse.json({ error: "연락처가 올바르지 않습니다." }, { status: 400 });
+    }
+
     // 서명 이미지를 base64 data URL로 변환하여 DB에 저장
     const arrayBuffer = await signatureFile.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");

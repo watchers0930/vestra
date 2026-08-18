@@ -180,9 +180,12 @@ export const POST = withAgentAuth(async (req, { session }) => {
     });
 
     // 감시 물건 자동 연결 (명시적 ID 지정)
-    if (Array.isArray(monitoredPropertyIds) && monitoredPropertyIds.length > 0) {
+    // [보안] 임의 감시물건 ID를 붙여 타 사용자 물건(주소)을 열람하는 IDOR 차단.
+    // 등록 대상 고객(clientUserId) 소유 물건으로만 제한한다. clientUserId가 없으면
+    // 소유권을 검증할 수 없으므로 명시적 ID 연결을 허용하지 않는다.
+    if (clientUserId && Array.isArray(monitoredPropertyIds) && monitoredPropertyIds.length > 0) {
       const monitoredProps = await prisma.monitoredProperty.findMany({
-        where: { id: { in: monitoredPropertyIds }, status: "active" },
+        where: { id: { in: monitoredPropertyIds }, status: "active", userId: clientUserId },
         select: { id: true, address: true },
       });
 

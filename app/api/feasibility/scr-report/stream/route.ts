@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
 
           // 보고서 캐시 저장
           const reportId = generateReportId();
-          cacheReport(reportId, result);
+          cacheReport(reportId, result, userId ?? null);
 
           // 완료 이벤트 전송
           const doneEvent = JSON.stringify({

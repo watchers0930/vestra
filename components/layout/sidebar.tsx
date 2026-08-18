@@ -38,9 +38,11 @@ export default function Sidebar() {
   const userRole = session?.user?.role;
   const userType = session?.user?.userType;
   const isBusiness = userRole === "BUSINESS";
+  // 임대사업자(RENTAL_BIZ)는 매물 등록·관리가 필요하므로 임대인 메뉴로 매핑
+  // (미매핑 시 임차인 메뉴로 폴백되어 등급 기능에 접근 불가)
   const activeGroups = userRole === "REALESTATE"
     ? userMenuGroups
-    : userType === "LANDLORD"
+    : userRole === "RENTAL_BIZ" || userType === "LANDLORD"
       ? landlordMenuGroups
       : tenantMenuGroups;
   const [collapsed, setCollapsed] = useState(false);

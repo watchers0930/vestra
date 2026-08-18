@@ -39,8 +39,8 @@ export async function GET(
       );
     }
 
-    // 3. 캐시에서 조회
-    const report = getCachedReport(id);
+    // 3. 캐시에서 조회 ([보안] 본인 생성 보고서만 반환)
+    const report = getCachedReport(id, userId ?? null);
     if (!report) {
       return NextResponse.json(
         { error: "보고서를 찾을 수 없습니다. 만료되었거나 존재하지 않는 ID입니다." },

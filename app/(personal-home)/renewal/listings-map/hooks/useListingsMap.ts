@@ -94,7 +94,8 @@ export function useListingsMap() {
       SAMPLE_PHOTOS[(activeItem! + 2) % SAMPLE_PHOTOS.length],
     ],
     description: `${region} ${curApt.dong} ${curApt.aptName} · ${curApt.dealDate} 실거래 ${formatKoreanWon(curApt.dealAmount)} · 국토교통부 공개데이터 기반 (사진은 예시)`,
-    isCertified: true,
+    // 국토부 실거래 공개데이터는 VESTRA 안심인증 대상이 아니므로 false (오인 방지)
+    isCertified: false,
     jeonseRatio: null,
     officialPrice: null,
     latitude: curApt.lat ?? null,

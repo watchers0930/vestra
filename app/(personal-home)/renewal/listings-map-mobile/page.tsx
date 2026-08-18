@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import ListingsMapMobileClient from "./ListingsMapMobileClient";
 
 export const metadata = {
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function ListingsMapMobilePage() {
-  return <ListingsMapMobileClient />;
+  return (
+    <Suspense fallback={null}>
+      <ListingsMapMobileClient />
+    </Suspense>
+  );
 }

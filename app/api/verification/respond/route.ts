@@ -67,6 +67,17 @@ export async function POST(req: NextRequest) {
 
     // 수락 시 분석 결과 공유
     if (action === "accept" && analysisId) {
+      // [보안] 본인 소유 분석만 공유 가능 (타인 분석 리포트 유출 IDOR 차단)
+      const owned = await prisma.analysis.findFirst({
+        where: { id: analysisId, userId: session.user.id },
+        select: { id: true },
+      });
+      if (!owned) {
+        return NextResponse.json(
+          { error: "공유할 수 없는 분석입니다." },
+          { status: 403 }
+        );
+      }
       await prisma.sharedReport.create({
         data: {
           verificationRequestId: requestId,

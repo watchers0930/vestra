@@ -25,15 +25,19 @@ export async function GET(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "계약을 찾을 수 없습니다." }, { status: 404 });
     }
 
-    // 인증된 당사자 또는 서명 완료 계약만 허용
+    // [보안] 로그인한 계약 당사자만 허용. COMPLETED 상태여도 비당사자/비로그인 접근 금지.
+    // (PDF에 실명·서명·보증금·주소 등 개인정보가 포함되므로 ID 열거로 유출되면 안 됨)
     const userId = session?.user?.id;
+    if (!userId) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
     const isParty =
       userId === contract.landlordId ||
       userId === contract.creatorId ||
       session?.user?.email === contract.tenantEmail ||
       session?.user?.email === contract.brokerEmail;
 
-    if (!isParty && contract.status !== "COMPLETED") {
+    if (!isParty) {
       return NextResponse.json({ error: "접근 권한이 없습니다." }, { status: 403 });
     }
 

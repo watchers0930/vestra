@@ -213,7 +213,7 @@ export async function POST(req: NextRequest) {
 
     // 보고서 캐시 저장 (24시간 TTL)
     const reportId = generateReportId();
-    cacheReport(reportId, report);
+    cacheReport(reportId, report, userId ?? null);
 
     return NextResponse.json({ ...report, _reportId: reportId });
   } catch (error: unknown) {

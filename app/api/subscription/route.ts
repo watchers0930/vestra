@@ -46,6 +46,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "유효하지 않은 플랜" }, { status: 400 });
   }
 
+  // [보안] PG 결제 연동 전까지 유료 플랜 자가 활성화 금지.
+  // 이 경로로 role/dailyLimit을 무결제 승격하면 사업자 권한(REALESTATE 등) 탈취가 가능하므로,
+  // 유료 전환은 결제 승인(④단계)에서만 처리한다. 여기서는 FREE 다운그레이드만 허용.
+  if (plan !== "FREE") {
+    return NextResponse.json(
+      { error: "유료 구독은 결제 승인 후 활성화됩니다.", requiresPayment: true },
+      { status: 402 }
+    );
+  }
+
   const config = PLAN_CONFIG[plan as keyof typeof PLAN_CONFIG];
 
   // 구독 upsert

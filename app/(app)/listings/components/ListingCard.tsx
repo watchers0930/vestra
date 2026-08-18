@@ -47,6 +47,13 @@ const META_ICONS = {
 
 type MetaKey = keyof typeof META_ICONS;
 
+// 소유자 등급 → 매물 출처 라벨 (실데이터 owner.role 기반)
+const OWNER_ROLE_LABEL: Record<string, { text: string; color: string; bg: string }> = {
+  REALESTATE: { text: "중개사", color: "#2563eb", bg: "#e0edff" },
+  RENTAL_BIZ: { text: "임대사업자", color: "#15803d", bg: "#dcfce7" },
+  BUSINESS: { text: "기업", color: "#7c3aed", bg: "#ede9fe" },
+};
+
 interface Props { listing: ListingItem; forceCertified?: boolean; href?: string; }
 
 export function ListingCard({ listing, forceCertified, href }: Props) {
@@ -146,7 +153,18 @@ export function ListingCard({ listing, forceCertified, href }: Props) {
               </svg>
               {listing.viewCount}
             </span>
-            <span>{listing.owner.companyName ?? listing.owner.name ?? ""}</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              {OWNER_ROLE_LABEL[listing.owner.role] && (
+                <span style={{
+                  fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4,
+                  color: OWNER_ROLE_LABEL[listing.owner.role].color,
+                  background: OWNER_ROLE_LABEL[listing.owner.role].bg,
+                }}>
+                  {OWNER_ROLE_LABEL[listing.owner.role].text}
+                </span>
+              )}
+              {listing.owner.companyName ?? listing.owner.name ?? ""}
+            </span>
           </div>
         </div>
       </div>

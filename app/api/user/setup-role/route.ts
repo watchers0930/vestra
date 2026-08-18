@@ -51,19 +51,21 @@ export async function POST(req: NextRequest) {
     });
 
     if (user?.companyName) {
-      // 이미 business info가 있으면 역할만 전환
+      // [보안] 이미 business info가 있어도 사업자 역할 전환은 재승인을 거친다.
+      // verifyStatus를 pending으로 재설정해, 재검증 없이 REALESTATE/BUSINESS 권한을
+      // 무단 획득(권한 상승)하는 것을 차단한다. (실기능 게이팅은 verified 필수)
       await prisma.user.update({
         where: { id: session.user.id },
-        data: { role },
+        data: { role, verifyStatus: "pending" },
       });
 
       await logAuditWithRequest({
         userId: session.user.id,
         action: "ROLE_CHANGE",
-        detail: { newRole: role, status: "applied" },
+        detail: { requestedRole: role, status: "pending" },
       });
 
-      return NextResponse.json({ message: `${bizLabel} 회원으로 전환되었습니다.` });
+      return NextResponse.json({ message: `${bizLabel} 회원으로 전환 신청되었습니다. 관리자 승인 후 전체 기능이 활성화됩니다.` });
     }
 
     // business info가 없으면 폼 입력 필요
