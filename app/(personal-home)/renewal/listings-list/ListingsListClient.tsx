@@ -6,6 +6,7 @@ import s from "./listings-list.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import { useListings, type ListingType } from "@/app/(app)/listings/hooks/useListings";
 import { ListingCard } from "@/app/(app)/listings/components/ListingCard";
+import { GANGNAM_TEST_LISTINGS } from "./test-fixtures";
 
 const REGIONS: Record<string, string[]> = {
   '서울특별시': ['강남구','강동구','강북구','강서구','관악구','광진구','구로구','금천구','노원구','도봉구','동대문구','동작구','마포구','서대문구','서초구','성동구','성북구','송파구','양천구','영등포구','용산구','은평구','종로구','중구','중랑구'],
@@ -87,6 +88,15 @@ export default function ListingsListClient() {
   });
   const [sido, setSido] = useState('서울특별시');
   const [sigungu, setSigungu] = useState('강남구');
+
+  // 테스트 전용 샘플 매물: 운영(vestra-plum) 도메인에서는 절대 노출하지 않음.
+  // 실데이터가 비어있을 때만 테스트 화면 확인용으로 강남 샘플 3건(1건 안심)을 보여준다.
+  const [showFixtures, setShowFixtures] = useState(false);
+  useEffect(() => {
+    const host = window.location.hostname;
+    const isProd = host === 'vestra-plum.vercel.app';
+    setShowFixtures(!isProd);
+  }, []);
 
   const sigunguList = sido && REGIONS[sido] ? REGIONS[sido] : [];
 
@@ -292,10 +302,16 @@ export default function ListingsListClient() {
             </div>
           ) : showMolit ? (
             displayMolit.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '80px 0', color: '#aeaeb2' }}>
-                <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{molitRegion} 매물이 없습니다</p>
-                <p style={{ fontSize: 13 }}>시/군/구를 변경해 다시 검색해보세요</p>
-              </div>
+              showFixtures ? (
+                <div className={s.subListingsGrid}>
+                  {GANGNAM_TEST_LISTINGS.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '80px 0', color: '#aeaeb2' }}>
+                  <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{molitRegion} 매물이 없습니다</p>
+                  <p style={{ fontSize: 13 }}>시/군/구를 변경해 다시 검색해보세요</p>
+                </div>
+              )
             ) : (
               <div className={s.subListingsGrid}>
                 {displayMolit.map((m, i) => (
@@ -307,7 +323,7 @@ export default function ListingsListClient() {
                   >
                     <div className={`${s.propImg} ${s[PIMG[i % PIMG.length]]}`}>
                       <span className={`${s.badgeType} ${s.badgeSale}`}>매매</span>
-                      <span className={s.badgeTrust}>안심인증</span>
+                      <span className={s.badgeTrust} style={{ background: '#e0edff', color: '#2563eb' }}>국토부 실거래</span>
                     </div>
                     <div className={s.propBody}>
                       <div className={s.propPrice}>{formatEok(m.dealAmount)}</div>
@@ -328,10 +344,16 @@ export default function ListingsListClient() {
               </div>
             )
           ) : displayListings.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: '#aeaeb2' }}>
-              <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>조건에 맞는 매물이 없습니다</p>
-              <p style={{ fontSize: 13 }}>필터를 변경해 다시 검색해보세요</p>
-            </div>
+            showFixtures ? (
+              <div className={s.subListingsGrid}>
+                {GANGNAM_TEST_LISTINGS.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '80px 0', color: '#aeaeb2' }}>
+                <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>조건에 맞는 매물이 없습니다</p>
+                <p style={{ fontSize: 13 }}>필터를 변경해 다시 검색해보세요</p>
+              </div>
+            )
           ) : (
             <div className={s.subListingsGrid}>
               {displayListings.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
