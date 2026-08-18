@@ -22,7 +22,7 @@ export function MobileHero() {
       <MobileRadar className={s.radar} />
       <span className={s.pill}><span className={s.pillDot} />AI-Powered Real Estate Platform</span>
       <h2 className={s.heroH}>보이지 않는 위험까지<br /><em>AI가 먼저</em> 감지합니다</h2>
-      <p className={s.heroLead}>등기부등본 분석부터 전세 안전진단, 등기변동위험감지, 계약서 검토까지 — 전문가 수준의 통찰을 누구에게나.</p>
+      <p className={s.heroLead}>등기부등본 분석부터 전세 안전진단, 등기변동위험감지,<br />계약서 검토까지 — 전문가 수준의 통찰을 누구에게나</p>
       <form className={s.search} role="search" onSubmit={handleSubmit}>
         <input
           type="text"
