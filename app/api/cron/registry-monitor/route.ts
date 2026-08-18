@@ -556,11 +556,13 @@ export async function GET(req: NextRequest) {
           });
           alertsCreated++;
 
-          // contract_gap 모드에서 high/critical은 즉시 알림
+          // 알림 발송 조건: 긴급(high/critical) / 계약갭 모드 / 전세권·임차권 변동(세입자 핵심 신호)
+          // general_change(medium)는 노이즈라 DB 기록만 남기고 푸시는 생략
           const isGap = prop.monitorMode === "contract_gap";
           const isUrgent = change.riskLevel === "high" || change.riskLevel === "critical";
+          const isLeaseRight = change.changeType === "lease_right_changed";
 
-          if (isUrgent || isGap) {
+          if (isUrgent || isGap || isLeaseRight) {
             const prefix = isGap ? "[긴급:계약감시]" : "[VESTRA]";
             const suffix = isGap && isUrgent
               ? "\n\n⚠️ 계약~전입 기간 중 등기 변동입니다. 즉시 확인하세요.\n💡 dgon에서 긴급 전세권 설정 등기를 진행할 수 있습니다."

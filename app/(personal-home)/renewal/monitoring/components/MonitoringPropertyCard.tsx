@@ -1,6 +1,7 @@
 "use client";
 
 import { Bell } from "lucide-react";
+import { useRouter } from "next/navigation";
 import s from "../monitoring-renewal.module.css";
 import type { MonitoredProperty } from "@/app/(app)/monitoring/hooks/useMonitoringData";
 
@@ -98,6 +99,7 @@ function formatDeposit(man: number | null): string | null {
 }
 
 export default function MonitoringPropertyCard({ property, unreadCount, highestRisk, onSelect }: Props) {
+  const router = useRouter();
   const isActive = property.status === "active";
   const signalStatus = property.registrySignalStatus || "idle";
   const phase = signalPhase(property);
@@ -158,7 +160,17 @@ export default function MonitoringPropertyCard({ property, unreadCount, highestR
           </div>
         </div>
 
-        {showIssueCta && <button className={s.propCtaBtn}>최신 등기부 확인하기</button>}
+        {showIssueCta && (
+          <button
+            className={s.propCtaBtn}
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/renewal/rights?address=${encodeURIComponent(property.address)}`);
+            }}
+          >
+            최신 등기부 확인하기
+          </button>
+        )}
 
         <div className={s.propFooter}>
           <div className={s.palertRow}>
