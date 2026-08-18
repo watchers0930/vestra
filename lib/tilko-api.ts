@@ -12,7 +12,10 @@ import crypto from "crypto";
 
 const DEFAULT_TILKO_BASE = "https://api.tilko.net";
 const DEFAULT_CASE_STATUS_PATH = "/api/v2.0/Iros2IdLogin/RetrieveApplCsprCsList";
-const DEFAULT_REGISTRY_DOC_PATH = "/api/v2.0/Iros2IdLogin/GetRegistryDocument";
+// 등기부등본 조회/발급: 대법원 인터넷등기소 포인트 기반 API (RISU 계열)
+// ① 주소검색(RISUConfirmSimpleC)으로 부동산 고유번호 획득 → ② 등기부등본 조회(RISURetrieve)
+const DEFAULT_ADDRESS_SEARCH_PATH = "/api/v2.0/Iros/RISUConfirmSimpleC";
+const DEFAULT_REGISTRY_DOC_PATH = "/api/v2.0/Iros/RISURetrieve";
 const CASE_STATUS_CACHE_TTL = 20 * 60 * 1000;
 const REGISTRY_DOC_CACHE_TTL = 60 * 60 * 1000;
 
@@ -254,15 +257,14 @@ export function extractCommUniqueNoFromText(text: string): string | null {
 }
 
 function getTilkoRegistryDocConfig() {
-  const apiKey = process.env.TILKO_REGISTRY_DOC_API_KEY || process.env.TILKO_API_KEY;
-  const publicKey = process.env.TILKO_REGISTRY_DOC_PUBLIC_KEY || process.env.TILKO_PUBLIC_KEY;
+  const apiKey = process.env.TILKO_API_KEY;
+  const publicKey = process.env.TILKO_PUBLIC_KEY;
   const irosId = process.env.TILKO_IROS_ID;
   const irosPassword = process.env.TILKO_IROS_PASSWORD;
-  const docPath = process.env.TILKO_REGISTRY_DOC_PATH || DEFAULT_REGISTRY_DOC_PATH;
 
   if (!apiKey || !publicKey || !irosId || !irosPassword) {
     throw new Error(
-      "Tilko 등기부등본 API 설정이 없습니다. (TILKO_REGISTRY_DOC_API_KEY, TILKO_REGISTRY_DOC_PUBLIC_KEY, TILKO_IROS_ID, TILKO_IROS_PASSWORD)"
+      "Tilko 등기부등본 API 설정이 없습니다. (TILKO_API_KEY, TILKO_PUBLIC_KEY, TILKO_IROS_ID, TILKO_IROS_PASSWORD)"
     );
   }
 
@@ -272,78 +274,135 @@ function getTilkoRegistryDocConfig() {
     irosId,
     irosPassword,
     baseUrl: process.env.TILKO_API_BASE || DEFAULT_TILKO_BASE,
-    docPath,
+    addressSearchPath: process.env.TILKO_ADDRESS_SEARCH_PATH || DEFAULT_ADDRESS_SEARCH_PATH,
+    docPath: process.env.TILKO_REGISTRY_DOC_PATH || DEFAULT_REGISTRY_DOC_PATH,
+    // 인터넷등기소 전자지불 선불카드(선택) — 포인트 모드에서는 불필요. 있으면 요청에 포함.
+    emoneyNo1: process.env.TILKO_IROS_EMONEY_NO1 || "",
+    emoneyNo2: process.env.TILKO_IROS_EMONEY_NO2 || "",
+    emoneyPwd: process.env.TILKO_IROS_EMONEY_PWD || "",
   };
 }
 
 export function isTilkoRegistryDocAvailable(): boolean {
   return !!(
-    (process.env.TILKO_REGISTRY_DOC_API_KEY || process.env.TILKO_API_KEY) &&
-    (process.env.TILKO_REGISTRY_DOC_PUBLIC_KEY || process.env.TILKO_PUBLIC_KEY) &&
+    process.env.TILKO_API_KEY &&
+    process.env.TILKO_PUBLIC_KEY &&
     process.env.TILKO_IROS_ID &&
     process.env.TILKO_IROS_PASSWORD
   );
 }
 
-export async function fetchRegistryDocumentByAddress(params: {
-  address: string;
-  realClsCd?: string;
-  registryGubun?: string;
-}): Promise<TilkoRegistryDocResult> {
-  const { address, realClsCd = "3", registryGubun = "1" } = params;
+// Tilko API 레벨 오류코드 검사 (0/0000/00/성공 외에는 throw)
+function assertTilkoOk(raw: Record<string, unknown>, context: string) {
+  const errCode = raw.ErrorCode ?? raw.errCode ?? raw.error_code ?? raw.resultCode ?? raw.code;
+  const ok = errCode === undefined || errCode === 0 || errCode === "0" || errCode === "00" || errCode === "0000";
+  if (!ok) {
+    const errMsg = raw.Message ?? raw.errMessage ?? raw.error_message ?? raw.resultMessage ?? raw.message ?? "요청 실패";
+    throw new Error(`Tilko ${context} 오류 (${errCode}): ${errMsg}`);
+  }
+}
 
-  const cacheKey = APICache.makeKey("tilko-reg-doc", address, realClsCd, registryGubun);
-  const cached = apiCache.get<TilkoRegistryDocResult>(cacheKey);
-  if (cached) return cached;
-
+/**
+ * ① 주소검색(RISUConfirmSimpleC) — 주소로 부동산 고유번호(14자리)를 조회한다.
+ * Address는 평문, 포인트 차감. 다건이면 첫 번째 결과를 사용.
+ */
+export async function searchUniqueNoByAddress(address: string): Promise<string | null> {
   const config = getTilkoRegistryDocConfig();
   const aesKey = crypto.randomBytes(16);
   const encKey = encryptAesKey(config.publicKey, aesKey);
 
+  const res = await fetch(`${config.baseUrl}${config.addressSearchPath}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "API-KEY": config.apiKey, "ENC-KEY": encKey },
+    body: JSON.stringify({ Address: address, Sangtae: "", KindClsFlag: "", Region: "", Page: "" }),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Tilko 주소검색 실패 (${res.status}): ${errText.slice(0, 200)}`);
+  }
+  const raw = (await res.json()) as Record<string, unknown>;
+  assertTilkoOk(raw, "주소검색");
+
+  // 응답 어디에 있든 부동산 고유번호(BudongsanGoyubeonho/UniqueNo)를 찾아 첫 값 반환
+  let found = "";
+  JSON.stringify(raw, (k, v) => {
+    if (!found && /goyubeonho|uniqueno/i.test(k) && typeof v === "string" && v.trim()) found = v.trim();
+    return v;
+  });
+  return found ? found.replace(/-/g, "") : null;
+}
+
+/**
+ * 주소 기반 등기부등본 조회.
+ * ① 주소검색으로 고유번호 확보 → ② RISURetrieve로 등기부 XML 조회(포인트 차감).
+ * 선불카드(EmoneyNo*) 환경변수가 있으면 포함하고, 없으면 포인트 모드로 호출한다.
+ * 시그니처 호환을 위해 realClsCd/registryGubun 파라미터는 받되 무시한다.
+ */
+export async function fetchRegistryDocumentByAddress(params: {
+  address: string;
+  realClsCd?: string;
+  registryGubun?: string;
+  uniqueNo?: string;
+}): Promise<TilkoRegistryDocResult> {
+  const { address } = params;
+
+  const cacheKey = APICache.makeKey("tilko-reg-doc", address, params.uniqueNo ?? "");
+  const cached = apiCache.get<TilkoRegistryDocResult>(cacheKey);
+  if (cached) return cached;
+
+  const config = getTilkoRegistryDocConfig();
+
+  // ① 고유번호 확보 (파라미터로 주어지면 그대로 사용)
+  const uniqueNo = (params.uniqueNo?.replace(/-/g, "")) || (await searchUniqueNoByAddress(address));
+  if (!uniqueNo) {
+    throw new Error(`Tilko 주소검색 결과 없음: 부동산 고유번호를 찾지 못했습니다 (${address})`);
+  }
+
+  // ② 등기부등본 조회 (RISURetrieve)
+  const aesKey = crypto.randomBytes(16);
+  const encKey = encryptAesKey(config.publicKey, aesKey);
+  const body: Record<string, unknown> = {
+    Auth: {
+      UserId: encryptForTilko(aesKey, config.irosId),
+      UserPassword: encryptForTilko(aesKey, config.irosPassword),
+    },
+    UniqueNo: uniqueNo,
+    JoinYn: "",
+    CostsYn: "",
+    DataYn: "",
+    ValidYn: "",
+    IsSummary: "Y",
+  };
+  // 선불카드가 설정된 경우에만 포함 (포인트 모드에서는 생략)
+  if (config.emoneyNo1 && config.emoneyNo2 && config.emoneyPwd) {
+    body.EmoneyNo1 = encryptForTilko(aesKey, config.emoneyNo1);
+    body.EmoneyNo2 = encryptForTilko(aesKey, config.emoneyNo2);
+    body.EmoneyPwd = encryptForTilko(aesKey, config.emoneyPwd);
+  }
+
   const res = await fetch(`${config.baseUrl}${config.docPath}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "API-KEY": config.apiKey,
-      "ENC-KEY": encKey,
-    },
-    body: JSON.stringify({
-      Auth: {
-        UserId: encryptForTilko(aesKey, config.irosId),
-        UserPassword: encryptForTilko(aesKey, config.irosPassword),
-      },
-      Address: encryptForTilko(aesKey, address),
-      RealClsCd: realClsCd,
-      RegistryGubun: registryGubun,
-    }),
+    headers: { "Content-Type": "application/json", "API-KEY": config.apiKey, "ENC-KEY": encKey },
+    body: JSON.stringify(body),
   });
-
   if (!res.ok) {
     const errText = await res.text();
     throw new Error(`Tilko 등기부등본 조회 실패 (${res.status}): ${errText.slice(0, 300)}`);
   }
 
   const rawData = (await res.json()) as Record<string, unknown>;
-
-  // API 레벨 오류 처리
-  const errCode = rawData.errCode ?? rawData.error_code ?? rawData.resultCode ?? rawData.code;
-  if (errCode !== undefined && errCode !== "0000" && errCode !== "00" && errCode !== 0 && errCode !== "0") {
-    const errMsg = rawData.errMessage ?? rawData.error_message ?? rawData.resultMessage ?? rawData.message ?? "등기부 조회 실패";
-    throw new Error(`Tilko API 오류 (${errCode}): ${errMsg}`);
-  }
-
-  console.log("[Tilko 등기부등본] rawData keys:", Object.keys(rawData));
+  assertTilkoOk(rawData, "등기부등본");
 
   const text = extractTilkoRegistryText(rawData, address);
-  const commUniqueNo = extractCommUniqueNoFromText(text) ?? undefined;
+  const commUniqueNo = extractCommUniqueNoFromText(text) ?? uniqueNo;
   const result: TilkoRegistryDocResult = { text, address, rawData, source: "tilko", commUniqueNo };
   apiCache.set(cacheKey, result, REGISTRY_DOC_CACHE_TTL);
   return result;
 }
 
 function extractTilkoRegistryText(raw: Record<string, unknown>, fallbackAddress: string): string {
-  // 1. raw 텍스트/HTML 필드 우선 확인
-  const rawContent = raw.resContent ?? raw.content ?? raw.htmlContent ?? raw.textContent ?? raw.registryContent ?? raw.resRegistryContent;
+  // 1. raw 텍스트/HTML/XML 필드 우선 확인 (RISURetrieve는 XmlData로 등기부 전문 반환)
+  const rawContent = raw.XmlData ?? raw.xmlData ?? raw.resContent ?? raw.content ?? raw.htmlContent ?? raw.textContent ?? raw.registryContent ?? raw.resRegistryContent;
   if (typeof rawContent === "string" && rawContent.length > 50) {
     return rawContent
       .replace(/<br\s*\/?>/gi, "\n")

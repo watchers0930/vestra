@@ -153,6 +153,12 @@ function generateSimulatedRegistry(
 }
 
 // ── Tilko 등기부등본 발급 조회 (확정 조회) ──
+// 틸코/인터넷등기소 상류 장애로 보이는 오류인지 판별 (일시적 장애 vs 코드/권한 오류 구분)
+function isUpstreamError(e: unknown): boolean {
+  const msg = e instanceof Error ? e.message : String(e);
+  return /\((5\d\d)\)|An error has occurred|timeout|ETIMEDOUT|ECONNRESET|fetch failed|network/i.test(msg);
+}
+
 async function fetchRegistryContent(
   address: string,
   options?: { simulate?: boolean; changeType?: string; baselineData?: string | null }
@@ -252,6 +258,9 @@ export async function GET(req: NextRequest) {
     let tilkoPrechecks = 0;
     let tilkoSignals = 0;
     let skipped = 0;
+    // 감시 보완: 등기부 발급(확정조회) 실패를 조용히 넘기지 않고 계측한다.
+    let docFetchFailures = 0; // 확정조회 실패 총건 (그 주기 변동감지 스킵된 물건 수)
+    let upstreamErrors = 0;   // 그중 상류(틸코/인터넷등기소) 장애로 보이는 건
 
     for (const prop of allProperties) {
       try {
@@ -358,7 +367,13 @@ export async function GET(req: NextRequest) {
             });
             tilkoPrechecks++;
           } catch (e) {
-            console.error(`[CRON:MONITOR] Tilko 발급 직접 비교 실패: ${prop.address}`, e instanceof Error ? e.message : e);
+            const upstream = isUpstreamError(e);
+            docFetchFailures++;
+            if (upstream) upstreamErrors++;
+            console.error(
+              `[CRON:MONITOR] 확정조회(등기부 발급) 실패 → 이 주기 변동감지 스킵 [${upstream ? "상류장애" : "코드/권한오류"}]: ${prop.address}`,
+              e instanceof Error ? e.message : e
+            );
             skipped++;
             await prisma.monitoredProperty.update({
               where: { id: prop.id },
@@ -469,6 +484,10 @@ export async function GET(req: NextRequest) {
 
         if (!registry) {
           skipped++;
+          if (!simulate) {
+            docFetchFailures++; // 확정조회 실패로 이 주기 변동감지 스킵됨 (관측용 계측)
+            console.warn(`[CRON:MONITOR] 확정조회 결과 없음 → 이 주기 변동감지 스킵: ${prop.address}`);
+          }
           // 체크 시간은 갱신 (조회 시도 기록)
           await prisma.monitoredProperty.update({
             where: { id: prop.id },
@@ -591,6 +610,15 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // 확정조회 실패가 처리 대상의 상당수면 상류(틸코/인터넷등기소) 장애 가능성 → 경고 로그로 노출
+    if (!simulate && docFetchFailures > 0) {
+      const rate = Math.round((docFetchFailures / allProperties.length) * 100);
+      console.warn(
+        `[CRON:MONITOR] ⚠️ 확정조회 실패 ${docFetchFailures}/${allProperties.length}건 (${rate}%), 상류장애 추정 ${upstreamErrors}건. ` +
+        `해당 물건들은 이번 주기 변동감지가 스킵되어 다음 주기에 재시도됩니다.`
+      );
+    }
+
     return NextResponse.json({
       message: "모니터링 완료",
       ...(simulate ? { simulation: true, changeType } : {}),
@@ -598,6 +626,8 @@ export async function GET(req: NextRequest) {
       gapMode: gapProperties.length,
       standardMode: standardProperties.length,
       docFetches,
+      docFetchFailures,
+      upstreamErrors,
       tilkoPrechecks,
       tilkoSignals,
       skipped,
