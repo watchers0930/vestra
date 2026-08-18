@@ -1,5 +1,6 @@
 import { ScrollReveal } from "./ScrollReveal";
 import { RadarCanvas } from "./RadarCanvas";
+import { HeroAddressSearch } from "./HeroAddressSearch";
 
 export function HeroSection() {
   return (
@@ -18,14 +19,7 @@ export function HeroSection() {
             등기부등본 분석부터 전세 안전진단, 등기변동위험감지, 계약서 검토까지<br />
             전문가 수준의 통찰을 누구에게나 제공합니다
           </p>
-          <div className="lnd-search-wrap" role="search">
-            <input
-              type="text"
-              placeholder="분석할 주소를 입력하세요 (예: 서울시 강남구 역삼동)"
-              aria-label="주소 입력"
-            />
-            <button className="lnd-search-btn" type="button">분석 시작</button>
-          </div>
+          <HeroAddressSearch />
           <p className="lnd-hero-note">로그인 없이 기본 분석 가능 · 상세 리포트는 회원 전용</p>
         </ScrollReveal>
       </div>
