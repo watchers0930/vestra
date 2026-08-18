@@ -88,6 +88,8 @@ export default function ListingsListClient() {
   });
   const [sido, setSido] = useState('서울특별시');
   const [sigungu, setSigungu] = useState('강남구');
+  // 베스트라 안심인증매물만 보기 토글 (isCertified === true 만 노출)
+  const [certifiedOnly, setCertifiedOnly] = useState(false);
 
   // 테스트 전용 샘플 매물: 운영(vestra-plum) 도메인에서는 절대 노출하지 않음.
   // 실데이터가 비어있을 때만 테스트 화면 확인용으로 강남 샘플 3건(1건 안심)을 보여준다.
@@ -128,7 +130,8 @@ export default function ListingsListClient() {
   });
 
   // ── 건물유형=아파트 → 국토교통부 실거래가 아파트 연동 ──
-  const showMolit = dropdownLabels.type === '아파트';
+  // 안심인증만 보기가 켜지면 국토부 실거래(안심인증 대상 아님)는 제외하고 DB 인증매물만 노출
+  const showMolit = dropdownLabels.type === '아파트' && !certifiedOnly;
   const molitRegion = sigungu || '강남구'; // 국토부는 시군구(법정동코드) 단위 조회
   const [molitItems, setMolitItems] = useState<MolitApt[]>([]);
   const [molitLoading, setMolitLoading] = useState(false);
@@ -160,8 +163,17 @@ export default function ListingsListClient() {
     return shuffle(filtered).slice(0, MAX_CARDS);
   }, [molitItems, sizeRange.min, sizeRange.max]);
 
-  // DB 매물도 랜덤 셔플 → 최대 9개
-  const displayListings = useMemo(() => shuffle(listings).slice(0, MAX_CARDS), [listings]);
+  // DB 매물도 랜덤 셔플 → 최대 9개 (안심인증만 켜지면 isCertified 매물만)
+  const displayListings = useMemo(() => {
+    const base = certifiedOnly ? listings.filter((l) => l.isCertified) : listings;
+    return shuffle(base).slice(0, MAX_CARDS);
+  }, [listings, certifiedOnly]);
+
+  // 테스트 샘플도 동일 필터 적용 (실데이터 없을 때 확인용)
+  const displayFixtures = useMemo(
+    () => (certifiedOnly ? GANGNAM_TEST_LISTINGS.filter((l) => l.isCertified) : GANGNAM_TEST_LISTINGS),
+    [certifiedOnly],
+  );
 
   const toggleDropdown = (key: DropdownKey) =>
     setOpenDropdown((prev) => (prev === key ? null : key));
@@ -246,9 +258,22 @@ export default function ListingsListClient() {
           <div className={s.resultsHeader}>
             <p className={s.resultsCount}>
               총 <strong>{showMolit ? displayMolit.length : displayListings.length}개</strong>{' '}
-              {showMolit ? `${molitRegion} 안심 매물` : '안심 매물'}
+              {showMolit ? `${molitRegion} 안심 매물` : certifiedOnly ? '안심인증 매물' : '안심 매물'}
             </p>
             <div className={s.resultsRight}>
+              <button
+                type="button"
+                className={s.filterDdBtn}
+                onClick={() => setCertifiedOnly((v) => !v)}
+                aria-pressed={certifiedOnly}
+                title="베스트라 안심인증매물만 보기"
+                style={certifiedOnly ? { borderColor: '#22c55e', color: '#16a34a', background: '#f0fdf4', fontWeight: 700 } : undefined}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                <span>안심인증만</span>
+              </button>
               {renderDropdown('type', '건물유형', ['아파트', '단독', '다가구', '연립', '빌라'])}
               {renderDropdown('trade', '거래유형', ['매매', '전세', '단기임대', '초단기임대'])}
               {renderDropdown('size', '전체 평형', ['10평형', '20평형', '30평형', '40평형', '50평형', '50평형 이상'])}
@@ -304,7 +329,7 @@ export default function ListingsListClient() {
             displayMolit.length === 0 ? (
               showFixtures ? (
                 <div className={s.subListingsGrid}>
-                  {GANGNAM_TEST_LISTINGS.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
+                  {displayFixtures.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
                 </div>
               ) : (
                 <div style={{ textAlign: 'center', padding: '80px 0', color: '#aeaeb2' }}>
@@ -346,7 +371,7 @@ export default function ListingsListClient() {
           ) : displayListings.length === 0 ? (
             showFixtures ? (
               <div className={s.subListingsGrid}>
-                {GANGNAM_TEST_LISTINGS.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
+                {displayFixtures.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '80px 0', color: '#aeaeb2' }}>
