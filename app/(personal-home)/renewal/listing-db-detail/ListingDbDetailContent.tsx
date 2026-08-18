@@ -138,23 +138,27 @@ export default function ListingDbDetailContent() {
             </div>
 
             {/* 안심인증 서류 */}
-            {listing.isCertified && listing.safetyDocuments && listing.safetyDocuments.length > 0 ? (
+            {listing.isCertified ? (
               <div className={s.certSection}>
                 <div className={s.certHeader}>
                   <div className={s.certCheck}>
                     <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
                   </div>
-                  <span className={s.certTitle}>안심인증 완료 ({listing.safetyDocuments.length}종 서류)</span>
+                  <span className={s.certTitle}>
+                    안심인증 완료{listing.safetyDocuments && listing.safetyDocuments.length > 0 ? ` (${listing.safetyDocuments.length}종 서류)` : ""}
+                  </span>
                 </div>
-                <div className={s.certItems}>
-                  {listing.safetyDocuments.map((doc, i) => (
-                    <div key={i} className={s.certItem}>
-                      <div className={s.certDot}></div>
-                      <span className={s.certItemLabel}>{doc.type || doc.filename}</span>
-                      <span className={s.certItemStatus}>확인 완료</span>
-                    </div>
-                  ))}
-                </div>
+                {listing.safetyDocuments && listing.safetyDocuments.length > 0 && (
+                  <div className={s.certItems}>
+                    {listing.safetyDocuments.map((doc, i) => (
+                      <div key={i} className={s.certItem}>
+                        <div className={s.certDot}></div>
+                        <span className={s.certItemLabel}>{doc.type || doc.filename}</span>
+                        <span className={s.certItemStatus}>확인 완료</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* 등기부 확인 결과 — 부기등기 (등기사항전부증명서 분석) */}
                 {(listing.isRentalBusiness || listing.hasNameChange) && (
