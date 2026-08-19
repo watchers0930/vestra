@@ -1,0 +1,15 @@
+/* 모바일 전용 인프라 탭 — PC 공용 InfraMap과 완전 분리 (PC 무영향) */
+
+/* 좌측 시설 목록 패널 — 반투명 유리 배경 */
+.listPanel {
+  width: 140px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  border: 1px solid #e8edf5;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}

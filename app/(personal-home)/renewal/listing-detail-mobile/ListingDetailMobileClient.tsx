@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import s from "./listing-detail-mobile.module.css";
-import DetailTabs from "../listing-detail/DetailTabs";
+import MobileDetailTabs from "./components/MobileDetailTabs";
 import MapThumbnail from "../listing-detail/MapThumbnail";
 import { ApplicationModal } from "@/app/(app)/listings/[id]/components/ApplicationModal";
 
@@ -202,8 +202,8 @@ export default function ListingDetailMobileClient() {
           </div>
         </div>
 
-        {/* 위치/인프라/학군/시세 — 실데이터 탭 (PC와 공용) */}
-        <DetailTabs region={region} dong={dong} aptName={aptName} lat={lat} lng={lng} />
+        {/* 위치/인프라/학군/시세 — 인프라만 모바일 전용, 나머지는 공용 로직 재사용 */}
+        <MobileDetailTabs region={region} dong={dong} aptName={aptName} lat={lat} lng={lng} />
       </div>
 
       {/* FOOTER */}
