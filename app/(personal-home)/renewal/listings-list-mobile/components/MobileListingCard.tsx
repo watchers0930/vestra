@@ -22,7 +22,7 @@ export default function MobileListingCard({ listing, index }: { listing: Listing
   const photo = listing.photos?.[0];
 
   return (
-    <Link href={`/renewal/listing-db-detail?id=${listing.id}`} className={s.propertyCard}>
+    <Link href={`/renewal/listing-db-detail-mobile?id=${listing.id}`} className={s.propertyCard}>
       <div
         className={`${s.propImg} ${photo ? "" : PIMG[index % PIMG.length]}`}
         style={photo ? { backgroundImage: `url(${photo})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}

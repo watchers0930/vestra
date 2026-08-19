@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import s from "./listings-map.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import { ClusterMarkerMap } from "./ClusterMarkerMap";
@@ -23,6 +24,23 @@ export default function ListingsMapClient() {
   const selectedMarker = activeItem != null && items[activeItem]?.lat != null
     ? { lat: items[activeItem].lat!, lng: items[activeItem].lng!, label: formatEok(items[activeItem].dealAmount) }
     : null;
+
+  // 카카오 SDK 준비 완료 후 지도 마운트 (콜드 로드 시 지도 미생성 방지)
+  const [kakaoReady, setKakaoReady] = useState(false);
+  useEffect(() => {
+    const w = window as unknown as { kakao?: { maps?: { Map?: unknown } }; __kakaoMapsReady?: boolean };
+    if (w.kakao?.maps?.Map || w.__kakaoMapsReady) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setKakaoReady(true);
+      return;
+    }
+    const onReady = () => setKakaoReady(true);
+    window.addEventListener("kakao-maps-ready", onReady);
+    const timer = setInterval(() => {
+      if (w.kakao?.maps?.Map) { setKakaoReady(true); clearInterval(timer); }
+    }, 300);
+    return () => { window.removeEventListener("kakao-maps-ready", onReady); clearInterval(timer); };
+  }, []);
 
   return (
     <>
@@ -76,12 +94,14 @@ export default function ListingsMapClient() {
 
           {/* CENTER: MAP (클러스터 + 선택 시 물방울) */}
           <div className={s.mapCenter}>
-            <ClusterMarkerMap
-              items={markers}
-              selected={selectedMarker}
-              onMarkerClick={(id) => openDetail(Number(id))}
-              panTo={panTo}
-            />
+            {kakaoReady && (
+              <ClusterMarkerMap
+                items={markers}
+                selected={selectedMarker}
+                onMarkerClick={(id) => openDetail(Number(id))}
+                panTo={panTo}
+              />
+            )}
           </div>
 
           {/* RIGHT: DETAIL PANEL + OVERLAY */}

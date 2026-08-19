@@ -1,6 +1,3 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { isMobileUserAgent } from "@/lib/device";
 import ListingsListClient from "./ListingsListClient";
 
 export const metadata = {
@@ -8,9 +5,6 @@ export const metadata = {
   description: "베스트라 인증 안심 매물 검색",
 };
 
-export default async function ListingsListPage() {
-  const ua = (await headers()).get("user-agent");
-  if (isMobileUserAgent(ua)) redirect("/renewal/listings-list-mobile");
-
+export default function ListingsListPage() {
   return <ListingsListClient />;
 }

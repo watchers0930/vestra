@@ -139,7 +139,7 @@ export default function ListingsListMobileClient() {
           </button>
         </div>
         <ul className={`${s.navMobileMenu} ${menuOpen ? s.open : ""}`}>
-          <li><Link href="/renewal/listings-list">매물검색</Link></li>
+          <li><Link href="/renewal/listings-list-mobile">매물검색</Link></li>
           <li><Link href="/renewal/jeonse">전세보호</Link></li>
           <li><a href="/renewal/rights">권리분석</a></li>
           <li><Link href="/renewal/monitoring">등기감시</Link></li>

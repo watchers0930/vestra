@@ -55,7 +55,7 @@ function detailHref(p: AptItem, region: string): string {
     q.set("lat", String(p.lat));
     q.set("lng", String(p.lng));
   }
-  return `/renewal/listing-detail?${q.toString()}`;
+  return `/renewal/listing-detail-mobile?${q.toString()}`;
 }
 
 const imgPlaceholderStyle: React.CSSProperties = {
@@ -188,7 +188,7 @@ export default function ListingsMapMobileClient() {
           <span className={s.navLogoText}>VESTRA</span>
         </Link>
         <div className={s.navRight}>
-          <Link href="/renewal/listings-list" className={s.navListBtn}>
+          <Link href="/renewal/listings-list-mobile" className={s.navListBtn}>
             <svg width="12" height="12" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.6">
               <line x1="1" y1="3" x2="14" y2="3" />
               <line x1="1" y1="7.5" x2="14" y2="7.5" />
@@ -206,7 +206,7 @@ export default function ListingsMapMobileClient() {
           </button>
         </div>
         <ul className={`${s.navMobileMenu} ${menuOpen ? s.open : ""}`}>
-          <li><a href="/renewal/listings-list">매물검색</a></li>
+          <li><a href="/renewal/listings-list-mobile">매물검색</a></li>
           <li><a href="/renewal/jeonse">전세보호</a></li>
           <li><a href="/renewal/rights">권리분석</a></li>
           <li><a href="/renewal/monitoring">등기감시</a></li>
@@ -329,7 +329,7 @@ export default function ListingsMapMobileClient() {
             </div>
           )}
           <div className={s.dsCta}>
-            <Link href={detailProp ? detailHref(detailProp, REGION_NAME) : "/renewal/listing-detail"} className={`${s.ctaBtn} ${s.ctaSecondary}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
+            <Link href={detailProp ? detailHref(detailProp, REGION_NAME) : "/renewal/listing-detail-mobile"} className={`${s.ctaBtn} ${s.ctaSecondary}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
               상세보기
             </Link>
             <button className={`${s.ctaBtn} ${s.ctaPrimary}`}>계약의향서 받아보기</button>
