@@ -8,8 +8,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import s from "../../listing-detail/listing-detail.module.css";
-import { LocationMap, SchoolMap } from "@/app/(app)/listings/[id]/components/ListingInfoTabs";
+import { LocationMap } from "@/app/(app)/listings/[id]/components/ListingInfoTabs";
 import MobileInfraMap from "./MobileInfraMap";
+import MobileSchoolMap from "./MobileSchoolMap";
 
 type TabId = "map" | "infra" | "school" | "price";
 
@@ -122,10 +123,10 @@ export default function MobileDetailTabs({ region, dong, aptName, lat, lng }: Pr
       </div>
 
       <div className={s.listingMapWrap}>
-        {/* 위치·학군 — 공용 컴포넌트 재사용 / 인프라 — 모바일 전용 */}
+        {/* 위치 — 공용 재사용 / 인프라·학군 — 모바일 전용(좌측 슬라이드 반투명 목록) */}
         {tab === "map" && (hasCoord ? <LocationMap lat={lat!} lng={lng!} address={`${region} ${dong} ${aptName}`} /> : noCoord)}
         {tab === "infra" && (hasCoord ? <MobileInfraMap lat={lat!} lng={lng!} /> : noCoord)}
-        {tab === "school" && (hasCoord ? <SchoolMap lat={lat!} lng={lng!} /> : noCoord)}
+        {tab === "school" && (hasCoord ? <MobileSchoolMap lat={lat!} lng={lng!} /> : noCoord)}
 
         {/* 시세 — 지역 실거래 월별 집계 */}
         {tab === "price" && (
