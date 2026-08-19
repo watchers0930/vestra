@@ -1,4 +1,5 @@
 /* ── NAV ── */
+.nav{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #e8eaf0}
 .navInner{padding:0 16px;height:56px;display:flex;align-items:center}
 .navLogo{display:flex;align-items:center;gap:6px;flex:1}
 .logoIcon{width:26px;height:26px;background:#2e4bd8;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px}

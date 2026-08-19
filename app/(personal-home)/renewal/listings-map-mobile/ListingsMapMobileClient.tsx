@@ -1,9 +1,12 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import s from "./listings-map-mobile.module.css";
+import { useKakaoMap } from "@/app/(app)/listings/[id]/components/useKakaoMap";
 
 /* ── 국토교통부 실거래 아파트 ── */
 interface AptItem {
@@ -30,6 +33,17 @@ function fullWon(won: number): string {
   if (eok > 0) return man > 0 ? `${eok}억 ${man.toLocaleString()}만원` : `${eok}억원`;
   return `${man.toLocaleString()}만원`;
 }
+
+/** 마커 라벨용 축약 → "13억5,000만" */
+function markerLabel(won: number): string {
+  const eok = Math.floor(won / 1e8);
+  const man = Math.floor((won % 1e8) / 1e4);
+  if (eok > 0) return man > 0 ? `${eok}억${man.toLocaleString()}만` : `${eok}억`;
+  return `${man.toLocaleString()}만`;
+}
+
+/** 서울시청 근방 기본 중심 (좌표 있는 매물이 있으면 setBounds로 덮어씀) */
+const DEFAULT_CENTER = { lat: 37.5172, lng: 127.0473 };
 
 function detailHref(p: AptItem, region: string): string {
   const q = new URLSearchParams({
@@ -69,6 +83,12 @@ export default function ListingsMapMobileClient() {
   const [detailProp, setDetailProp] = useState<AptItem | null>(null);
   const [items, setItems] = useState<AptItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstRef = useRef<any>(null);
+  const overlaysRef = useRef<any[]>([]);
 
   useEffect(() => {
     fetch(`/api/listings/apartments?region=${encodeURIComponent(REGION_NAME)}&limit=30&geocode=1`)
@@ -78,15 +98,83 @@ export default function ListingsMapMobileClient() {
       .finally(() => setLoading(false));
   }, [REGION_NAME]);
 
+  // 실제 카카오맵 생성 (공용 훅으로 SDK 타이밍/relayout 견고 처리)
+  useKakaoMap(
+    mapRef,
+    (kakao, el) => {
+      const map = new kakao.maps.Map(el, {
+        center: new kakao.maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng),
+        level: 6,
+      });
+      mapInstRef.current = map;
+      setMapReady(true);
+      return { map };
+    },
+    [REGION_NAME],
+  );
+
+  // 가격 라벨 마커 렌더 (items·활성 매물 변경 시)
+  useEffect(() => {
+    const kakao = (window as any).kakao;
+    const map = mapInstRef.current;
+    if (!kakao?.maps || !map) return;
+
+    overlaysRef.current.forEach((ov) => ov.setMap(null));
+    overlaysRef.current = [];
+
+    const geocoded = items.filter((p) => p.lat != null && p.lng != null);
+    if (!geocoded.length) return;
+
+    const bounds = new kakao.maps.LatLngBounds();
+    geocoded.forEach((p) => {
+      const isActive = p.id === activeId;
+      const el = document.createElement("div");
+      el.style.cssText = [
+        "display:inline-flex",
+        "align-items:center",
+        "padding:6px 12px",
+        `background:${isActive ? "#2e4bd8" : "#fff"}`,
+        `color:${isActive ? "#fff" : "#1a1d2e"}`,
+        `border:2px solid ${isActive ? "#2e4bd8" : "#d1d1d6"}`,
+        "border-radius:20px",
+        "font-size:12px",
+        "font-weight:700",
+        "box-shadow:0 2px 10px rgba(0,0,0,.18)",
+        "cursor:pointer",
+        "white-space:nowrap",
+        "user-select:none",
+        "font-family:Paperlogy,Apple SD Gothic Neo,sans-serif",
+        "transform:translateY(-50%)",
+      ].join(";");
+      el.textContent = markerLabel(p.dealAmount);
+      el.addEventListener("click", () => openDetail(p));
+      const overlay = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(p.lat, p.lng),
+        content: el,
+        yAnchor: 1,
+        clickable: true,
+      });
+      overlay.setMap(map);
+      overlaysRef.current.push(overlay);
+      bounds.extend(new kakao.maps.LatLng(p.lat, p.lng));
+    });
+    map.setBounds(bounds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, activeId, mapReady]);
+
+  const geocodedCount = items.filter((p) => p.lat != null && p.lng != null).length;
+
   function openDetail(p: AptItem) {
     setDetailProp(p);
     setDetailOpen(true);
+    setActiveId(p.id);
     if (sheetExpanded) setSheetExpanded(false);
   }
 
   function closeDetail() {
     setDetailOpen(false);
     setDetailProp(null);
+    setActiveId(null);
   }
 
   function toggleSheet() {
@@ -160,15 +248,20 @@ export default function ListingsMapMobileClient() {
       {/* MAP AREA */}
       <div className={s.mapArea}>
 
-        {/* MAP PLACEHOLDER */}
-        <div className={s.mapPlaceholder}>
-          <div className={s.mapPlaceholderInner}>
+        {/* KAKAO MAP */}
+        <div ref={mapRef} className={s.kakaoMap} />
+
+        {/* 로딩 / 좌표 없음 안내 오버레이 */}
+        {(loading || geocodedCount === 0) && (
+          <div className={s.mapOverlayMsg}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#2e4bd8" opacity="0.5" />
             </svg>
-            <span style={{ color: "#888", fontSize: "14px", marginTop: "8px" }}>{REGION_NAME} 실거래 {items.length}건</span>
+            <span style={{ color: "#888", fontSize: "14px", marginTop: "8px" }}>
+              {loading ? `${REGION_NAME} 실거래 불러오는 중…` : `${REGION_NAME} 표시할 좌표가 없습니다`}
+            </span>
           </div>
-        </div>
+        )}
 
         {/* FLOATING FILTER CHIPS */}
         <div className={s.floatFilters}>
