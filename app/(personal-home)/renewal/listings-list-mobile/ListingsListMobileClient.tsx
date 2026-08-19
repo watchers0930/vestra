@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import s from "./listings-list-mobile.module.css";
 import { useListings, type ListingType } from "@/app/(app)/listings/hooks/useListings";
+import { GANGNAM_TEST_LISTINGS } from "../listings-list/test-fixtures";
 import MobileListingCard from "./components/MobileListingCard";
 
 const REGIONS: Record<string, string[]> = {
@@ -65,6 +66,17 @@ export default function ListingsListMobileClient() {
   const [sido, setSido] = useState("서울특별시");
   const [sigungu, setSigungu] = useState("");
 
+  // 테스트 샘플 매물: 운영(vestra-plum) 도메인에서는 노출하지 않음.
+  // 실데이터가 비어있을 때만 테스트 화면 확인용 샘플 카드를 보여준다. (PC 목록과 동일)
+  const [showFixtures, setShowFixtures] = useState(false);
+  useEffect(() => {
+    // 클라이언트 전용 도메인 판별 — SSR(false) 후 클라이언트에서 갱신해 하이드레이션 불일치 방지
+    const host = window.location.hostname;
+    const isProd = host === "vestra-plum.vercel.app";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setShowFixtures(!isProd);
+  }, []);
+
   const sigunguList = REGIONS[sido] || [];
 
   // ── 필터값 → useListings 파라미터 (PC listings-list와 동일 매핑) ──
@@ -82,6 +94,9 @@ export default function ListingsListMobileClient() {
     minSize: sizeRange.min,
     maxSize: sizeRange.max,
   });
+
+  // 실데이터 우선, 비어있고 비운영 도메인이면 샘플 카드로 폴백 (PC 목록과 동일 동작)
+  const cards = listings.length > 0 ? listings : showFixtures ? GANGNAM_TEST_LISTINGS : [];
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -250,7 +265,7 @@ export default function ListingsListMobileClient() {
 
         {/* RESULTS BAR */}
         <div className={s.resultsHeader}>
-          <p className={s.resultsCount}>총 <strong>{listings.length}개</strong> 매물</p>
+          <p className={s.resultsCount}>총 <strong>{cards.length}개</strong> 매물</p>
           <div className={s.resultsRight}>
             <button className={s.sortBtn}>
               최신순
@@ -271,10 +286,10 @@ export default function ListingsListMobileClient() {
         <div className={s.subListingsGrid}>
           {loading ? (
             <p style={emptyMsgStyle}>매물을 불러오는 중…</p>
-          ) : listings.length === 0 ? (
+          ) : cards.length === 0 ? (
             <p style={emptyMsgStyle}>조건에 맞는 매물이 없습니다.</p>
           ) : (
-            listings.map((l, i) => <MobileListingCard key={l.id} listing={l} index={i} />)
+            cards.map((l, i) => <MobileListingCard key={l.id} listing={l} index={i} />)
           )}
         </div>
       </section>
