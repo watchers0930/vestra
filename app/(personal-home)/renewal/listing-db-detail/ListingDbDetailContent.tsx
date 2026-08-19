@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import s from "../listing-detail/listing-detail.module.css";
 import { ApplicationModal } from "@/app/(app)/listings/[id]/components/ApplicationModal";
 import RenewalLoginModal from "../_shared/RenewalLoginModal";
+import { GANGNAM_TEST_LISTINGS } from "../listings-list/test-fixtures";
 import type { ListingItem } from "@/app/(app)/listings/hooks/useListings";
 
 function formatKoreanWon(won: number): string {
@@ -38,6 +39,10 @@ export default function ListingDbDetailContent() {
 
   useEffect(() => {
     if (!id) return;
+    // 테스트 샘플 매물(실데이터 없을 때 노출)은 DB 조회 없이 fixture로 표시
+    const fixture = GANGNAM_TEST_LISTINGS.find((l) => l.id === id);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (fixture) { setListing(fixture); setLoading(false); return; }
     let alive = true;
     fetch(`/api/listings/${id}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
