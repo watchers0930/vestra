@@ -78,6 +78,30 @@ export default function ListingsMapMobileClient() {
   const [detailProp, setDetailProp] = useState<AptItem | null>(null);
   const [items, setItems] = useState<AptItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [kakaoReady, setKakaoReady] = useState(false);
+
+  // 카카오 SDK 준비 완료 후에 ClusterMarkerMap 마운트 (초기 로딩 중 마운트 시 지도 미생성 방지)
+  useEffect(() => {
+    const w = window as unknown as { kakao?: { maps?: { Map?: unknown } }; __kakaoMapsReady?: boolean };
+    if (w.kakao?.maps?.Map || w.__kakaoMapsReady) {
+      // 이미 로드 완료된 경우 즉시 마운트 (SSR 후 클라이언트 1회 판정)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setKakaoReady(true);
+      return;
+    }
+    const onReady = () => setKakaoReady(true);
+    window.addEventListener("kakao-maps-ready", onReady);
+    const timer = setInterval(() => {
+      if (w.kakao?.maps?.Map) {
+        setKakaoReady(true);
+        clearInterval(timer);
+      }
+    }, 300);
+    return () => {
+      window.removeEventListener("kakao-maps-ready", onReady);
+      clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     fetch(`/api/listings/apartments?region=${encodeURIComponent(REGION_NAME)}&limit=30&geocode=1`)
@@ -197,12 +221,14 @@ export default function ListingsMapMobileClient() {
 
         {/* KAKAO MAP — PC와 동일한 ClusterMarkerMap 유형 재사용 */}
         <div className={s.kakaoMap}>
-          <ClusterMarkerMap
-            items={clusterItems}
-            selected={selectedMarker}
-            onMarkerClick={handleMarkerClick}
-            panTo={panTo}
-          />
+          {kakaoReady && (
+            <ClusterMarkerMap
+              items={clusterItems}
+              selected={selectedMarker}
+              onMarkerClick={handleMarkerClick}
+              panTo={panTo}
+            />
+          )}
         </div>
 
         {/* 로딩 / 좌표 없음 안내 오버레이 */}
