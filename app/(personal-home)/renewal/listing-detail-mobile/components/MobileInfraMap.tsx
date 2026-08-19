@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MapPin } from "lucide-react";
+import { MapPin, ChevronLeft, List } from "lucide-react";
 import { useKakaoMap } from "@/app/(app)/listings/[id]/components/useKakaoMap";
 import ms from "./mobile-infra.module.css";
 
@@ -35,6 +35,7 @@ export default function MobileInfraMap({ lat, lng }: { lat: number; lng: number 
   const [items, setItems]       = useState<PlaceItem[]>([]);
   const [loaded, setLoaded]     = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [listOpen, setListOpen] = useState(true);
 
   const clearSelectedShape = useCallback(() => {
     if (selectedShape.current) {
@@ -148,26 +149,33 @@ export default function MobileInfraMap({ lat, lng }: { lat: number; lng: number 
           </button>
         ))}
       </div>
-      <div style={{ display: "flex", gap: 10, height: 414 }}>
-        {/* 좌측 목록 패널 — 반투명 유리 배경(모바일 전용 CSS) */}
-        <div className={ms.listPanel}>
-          <div style={{ padding: "8px 12px", borderBottom: "1px solid #eef1f8", flexShrink: 0 }}>
-            <p style={{ fontSize: 12, fontWeight: 600, color: "#1d1d1f", margin: 0 }}>{selected === "ALL" ? "전체 시설" : `${cat?.name ?? ""} (${items.length})`}</p>
+      {/* 지도 전체 폭 + 좌측 슬라이드 반투명 목록 오버레이 */}
+      <div className={ms.mapArea}>
+        <div className={ms.mapFull}>
+          <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
+        </div>
+
+        {/* 좌측에서 슬라이드되어 나오는 반투명 목록 */}
+        <div className={`${ms.slidePanel} ${listOpen ? "" : ms.closed}`}>
+          <div className={ms.slideHeader}>
+            <p className={ms.slideTitle}>{selected === "ALL" ? "전체 시설" : `${cat?.name ?? ""} (${items.length})`}</p>
+            <button className={ms.slideToggle} onClick={() => setListOpen(false)} aria-label="목록 접기">
+              <ChevronLeft size={16} strokeWidth={2} />
+            </button>
           </div>
-          <div style={{ flex: 1, overflowY: "auto" }}>
+          <div className={ms.slideBody}>
             {items.length === 0
-              ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+              ? <div className={ms.emptyMsg}>
                   <p style={{ fontSize: 11, color: "#aeaeb2" }}>{isLoading ? "로딩 중..." : "주변에 없습니다"}</p>
                 </div>
               : items.map((item, i) => {
                 const ic = INFRA_CATS.find((c) => c.code === item.catCode);
                 return (
-                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 6, padding: "8px 12px", borderBottom: "1px solid #f0f3fa", cursor: "pointer" }}
-                    onClick={() => handleItemClick(item)}>
+                  <div key={i} className={ms.listItem} onClick={() => handleItemClick(item)}>
                     <MapPin size={10} strokeWidth={2} style={{ color: ic?.color, flexShrink: 0, marginTop: 2 }} />
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: 11, fontWeight: 600, color: "#1d1d1f", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</p>
-                      <p style={{ fontSize: 10, color: "#8e8e93", margin: 0, marginTop: 1 }}>{item.distance}</p>
+                      <p className={ms.listName}>{item.name}</p>
+                      <p className={ms.listDist}>{item.distance}</p>
                     </div>
                   </div>
                 );
@@ -175,9 +183,13 @@ export default function MobileInfraMap({ lat, lng }: { lat: number; lng: number 
             }
           </div>
         </div>
-        <div style={{ flex: 1, borderRadius: 12, border: "1px solid #e8edf5", overflow: "hidden" }}>
-          <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
-        </div>
+
+        {/* 목록이 접혔을 때 여는 버튼 */}
+        {!listOpen && (
+          <button className={ms.openBtn} onClick={() => setListOpen(true)}>
+            <List size={14} strokeWidth={2} /> 목록
+          </button>
+        )}
       </div>
     </div>
   );

@@ -1,15 +1,92 @@
 /* 모바일 전용 인프라 탭 — PC 공용 InfraMap과 완전 분리 (PC 무영향) */
 
-/* 좌측 시설 목록 패널 — 반투명 유리 배경 */
-.listPanel {
-  width: 140px;
-  flex-shrink: 0;
+/* 지도 영역 (전체 폭) */
+.mapArea {
+  position: relative;
+  height: 414px;
   border-radius: 12px;
+  overflow: hidden;
   border: 1px solid #e8edf5;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+}
+.mapFull { position: absolute; inset: 0; }
+
+/* 좌측에서 슬라이드되어 나오는 반투명 유리 목록 패널 */
+.slidePanel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 178px;
+  z-index: 5;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 2px 0 14px rgba(15, 37, 71, 0.12);
+  transform: translateX(0);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.slidePanel.closed {
+  transform: translateX(-100%);
+}
+
+.slideHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 8px 9px 12px;
+  border-bottom: 1px solid rgba(15, 37, 71, 0.08);
+  flex-shrink: 0;
+}
+.slideTitle { font-size: 12px; font-weight: 600; color: #1d1d1f; margin: 0; }
+.slideToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: rgba(15, 37, 71, 0.05);
+  border-radius: 7px;
+  color: #6e6e73;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.slideBody { flex: 1; overflow-y: auto; }
+
+.listItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(15, 37, 71, 0.05);
+  cursor: pointer;
+}
+.listItem:active { background: rgba(15, 37, 71, 0.04); }
+.listName { font-size: 11px; font-weight: 600; color: #1d1d1f; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.listDist { font-size: 10px; color: #8e8e93; margin: 1px 0 0; }
+.emptyMsg { display: flex; align-items: center; justify-content: center; height: 100%; }
+
+/* 닫혔을 때 지도 위 '목록 열기' 버튼 */
+.openBtn {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 11px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid #e8edf5;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
 }
