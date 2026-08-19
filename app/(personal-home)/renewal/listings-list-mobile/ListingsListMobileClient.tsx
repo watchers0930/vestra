@@ -139,7 +139,7 @@ export default function ListingsListMobileClient() {
           </button>
         </div>
         <ul className={`${s.navMobileMenu} ${menuOpen ? s.open : ""}`}>
-          <li><Link href="/renewal/listings-list-mobile">매물검색</Link></li>
+          <li><Link href="/renewal/listings-list">매물검색</Link></li>
           <li><Link href="/renewal/jeonse">전세보호</Link></li>
           <li><a href="/renewal/rights">권리분석</a></li>
           <li><Link href="/renewal/monitoring">등기감시</Link></li>
@@ -275,7 +275,7 @@ export default function ListingsListMobileClient() {
               <button className={`${s.viewBtn} ${s.active}`} title="목록보기">
                 <svg width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.1"><line x1="1" y1="3" x2="14" y2="3" /><line x1="1" y1="7.5" x2="14" y2="7.5" /><line x1="1" y1="12" x2="14" y2="12" /></svg>
               </button>
-              <Link href="/renewal/listings-map-mobile" className={s.viewBtn} title="지도보기">
+              <Link href="/renewal/listings-map" className={s.viewBtn} title="지도보기">
                 <svg width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.1"><path d="M7.5 1C5.3 1 3.5 2.8 3.5 5c0 3.2 4 9 4 9s4-5.8 4-9c0-2.2-1.8-4-4-4Z" /><circle cx="7.5" cy="5" r="1.4" /></svg>
               </Link>
             </div>

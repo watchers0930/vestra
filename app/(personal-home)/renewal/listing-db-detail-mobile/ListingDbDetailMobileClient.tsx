@@ -76,7 +76,7 @@ export default function ListingDbDetailMobileClient() {
         <div style={centerBox}>
           매물을 찾을 수 없습니다.
           <div style={{ marginTop: 16 }}>
-            <button className={s.ctaSecondary} style={{ padding: "10px 18px" }} onClick={() => router.push("/renewal/listings-list-mobile")}>매물 목록으로</button>
+            <button className={s.ctaSecondary} style={{ padding: "10px 18px" }} onClick={() => router.push("/renewal/listings-list")}>매물 목록으로</button>
           </div>
         </div>
       </div>
