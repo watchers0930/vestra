@@ -10,7 +10,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { MapPin, ChevronLeft, List } from "lucide-react";
 import { useKakaoMap } from "@/app/(app)/listings/[id]/components/useKakaoMap";
+import { panToVisibleCenter } from "./mapPan";
 import ms from "./mobile-infra.module.css";
+
+/** 목록 패널 폭(178px)의 절반 — 열려 있을 때 가시영역 중앙 보정값 */
+const PANEL_OFFSET = 89;
 
 const INFRA_CATS = [
   { code: "SW8", name: "지하철", color: "#2563EB" },
@@ -67,7 +71,7 @@ export default function MobileInfraMap({ lat, lng }: { lat: number; lng: number 
   }
 
   function handleItemClick(item: PlaceItem) {
-    mapRef.current?.panTo(new window.kakao.maps.LatLng(item.lat, item.lng));
+    panToVisibleCenter(mapRef.current, window.kakao, item.lat, item.lng, listOpen ? PANEL_OFFSET : 0);
     clearSelectedShape();
     const catItems = placesByCat.current.get(item.catCode) ?? [];
     const idx = catItems.findIndex((p) => p.lat === item.lat && p.lng === item.lng);

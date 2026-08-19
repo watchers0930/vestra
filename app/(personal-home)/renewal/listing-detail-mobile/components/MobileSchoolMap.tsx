@@ -9,7 +9,11 @@
 import { useRef, useReducer, useCallback, useMemo, useState } from "react";
 import { GraduationCap, ChevronLeft, List } from "lucide-react";
 import { useKakaoMap } from "@/app/(app)/listings/[id]/components/useKakaoMap";
+import { panToVisibleCenter } from "./mapPan";
 import ms from "./mobile-infra.module.css";
+
+/** 목록 패널 폭(178px)의 절반 — 열려 있을 때 가시영역 중앙 보정값 */
+const PANEL_OFFSET = 89;
 
 const SCHOOL_TYPES = [
   { key: "초등학교", color: "#2563EB" },
@@ -61,7 +65,7 @@ export default function MobileSchoolMap({ lat, lng }: { lat: number; lng: number
   }, [clearSelectedSchoolShape]);
 
   function handleSchoolItemClick(item: SchoolItem) {
-    mapRef.current?.panTo(new window.kakao.maps.LatLng(item.lat, item.lng));
+    panToVisibleCenter(mapRef.current, window.kakao, item.lat, item.lng, listOpen ? PANEL_OFFSET : 0);
     clearSelectedSchoolShape();
     const entries = dotsRef.current.get(item.type) ?? [];
     const conf = SCHOOL_TYPES.find((t) => t.key === item.type);
