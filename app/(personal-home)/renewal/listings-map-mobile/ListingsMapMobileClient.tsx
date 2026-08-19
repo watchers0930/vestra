@@ -1,12 +1,10 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import s from "./listings-map-mobile.module.css";
-import { useKakaoMap } from "@/app/(app)/listings/[id]/components/useKakaoMap";
+import { ClusterMarkerMap } from "../listings-map/ClusterMarkerMap";
 
 /* ── 국토교통부 실거래 아파트 ── */
 interface AptItem {
@@ -41,9 +39,6 @@ function markerLabel(won: number): string {
   if (eok > 0) return man > 0 ? `${eok}억${man.toLocaleString()}만` : `${eok}억`;
   return `${man.toLocaleString()}만`;
 }
-
-/** 서울시청 근방 기본 중심 (좌표 있는 매물이 있으면 setBounds로 덮어씀) */
-const DEFAULT_CENTER = { lat: 37.5172, lng: 127.0473 };
 
 function detailHref(p: AptItem, region: string): string {
   const q = new URLSearchParams({
@@ -83,12 +78,6 @@ export default function ListingsMapMobileClient() {
   const [detailProp, setDetailProp] = useState<AptItem | null>(null);
   const [items, setItems] = useState<AptItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [mapReady, setMapReady] = useState(false);
-
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstRef = useRef<any>(null);
-  const overlaysRef = useRef<any[]>([]);
 
   useEffect(() => {
     fetch(`/api/listings/apartments?region=${encodeURIComponent(REGION_NAME)}&limit=30&geocode=1`)
@@ -98,83 +87,41 @@ export default function ListingsMapMobileClient() {
       .finally(() => setLoading(false));
   }, [REGION_NAME]);
 
-  // 실제 카카오맵 생성 (공용 훅으로 SDK 타이밍/relayout 견고 처리)
-  useKakaoMap(
-    mapRef,
-    (kakao, el) => {
-      const map = new kakao.maps.Map(el, {
-        center: new kakao.maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng),
-        level: 6,
-      });
-      mapInstRef.current = map;
-      setMapReady(true);
-      return { map };
-    },
-    [REGION_NAME],
-  );
+  const geocoded = items.filter((p) => p.lat != null && p.lng != null);
+  const geocodedCount = geocoded.length;
 
-  // 가격 라벨 마커 렌더 (items·활성 매물 변경 시)
-  useEffect(() => {
-    const kakao = (window as any).kakao;
-    const map = mapInstRef.current;
-    if (!kakao?.maps || !map) return;
+  // PC 맵 유형(ClusterMarkerMap) 재사용 — 클러스터 마커 + 선택 시 물방울 마커
+  const clusterItems = geocoded.map((p) => ({
+    id: p.id,
+    lat: p.lat as number,
+    lng: p.lng as number,
+    label: markerLabel(p.dealAmount),
+  }));
 
-    overlaysRef.current.forEach((ov) => ov.setMap(null));
-    overlaysRef.current = [];
+  const selectedMarker =
+    detailProp && detailProp.lat != null && detailProp.lng != null
+      ? { lat: detailProp.lat, lng: detailProp.lng, label: markerLabel(detailProp.dealAmount) }
+      : null;
 
-    const geocoded = items.filter((p) => p.lat != null && p.lng != null);
-    if (!geocoded.length) return;
+  const panTo =
+    detailProp && detailProp.lat != null && detailProp.lng != null
+      ? { lat: detailProp.lat, lng: detailProp.lng }
+      : null;
 
-    const bounds = new kakao.maps.LatLngBounds();
-    geocoded.forEach((p) => {
-      const isActive = p.id === activeId;
-      const el = document.createElement("div");
-      el.style.cssText = [
-        "display:inline-flex",
-        "align-items:center",
-        "padding:6px 12px",
-        `background:${isActive ? "#2e4bd8" : "#fff"}`,
-        `color:${isActive ? "#fff" : "#1a1d2e"}`,
-        `border:2px solid ${isActive ? "#2e4bd8" : "#d1d1d6"}`,
-        "border-radius:20px",
-        "font-size:12px",
-        "font-weight:700",
-        "box-shadow:0 2px 10px rgba(0,0,0,.18)",
-        "cursor:pointer",
-        "white-space:nowrap",
-        "user-select:none",
-        "font-family:Paperlogy,Apple SD Gothic Neo,sans-serif",
-        "transform:translateY(-50%)",
-      ].join(";");
-      el.textContent = markerLabel(p.dealAmount);
-      el.addEventListener("click", () => openDetail(p));
-      const overlay = new kakao.maps.CustomOverlay({
-        position: new kakao.maps.LatLng(p.lat, p.lng),
-        content: el,
-        yAnchor: 1,
-        clickable: true,
-      });
-      overlay.setMap(map);
-      overlaysRef.current.push(overlay);
-      bounds.extend(new kakao.maps.LatLng(p.lat, p.lng));
-    });
-    map.setBounds(bounds);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, activeId, mapReady]);
-
-  const geocodedCount = items.filter((p) => p.lat != null && p.lng != null).length;
+  function handleMarkerClick(id: string) {
+    const p = items.find((x) => x.id === id);
+    if (p) openDetail(p);
+  }
 
   function openDetail(p: AptItem) {
     setDetailProp(p);
     setDetailOpen(true);
-    setActiveId(p.id);
     if (sheetExpanded) setSheetExpanded(false);
   }
 
   function closeDetail() {
     setDetailOpen(false);
     setDetailProp(null);
-    setActiveId(null);
   }
 
   function toggleSheet() {
@@ -248,8 +195,15 @@ export default function ListingsMapMobileClient() {
       {/* MAP AREA */}
       <div className={s.mapArea}>
 
-        {/* KAKAO MAP */}
-        <div ref={mapRef} className={s.kakaoMap} />
+        {/* KAKAO MAP — PC와 동일한 ClusterMarkerMap 유형 재사용 */}
+        <div className={s.kakaoMap}>
+          <ClusterMarkerMap
+            items={clusterItems}
+            selected={selectedMarker}
+            onMarkerClick={handleMarkerClick}
+            panTo={panTo}
+          />
+        </div>
 
         {/* 로딩 / 좌표 없음 안내 오버레이 */}
         {(loading || geocodedCount === 0) && (
