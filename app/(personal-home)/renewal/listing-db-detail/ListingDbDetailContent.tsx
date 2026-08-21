@@ -30,7 +30,7 @@ function parseAddress(address: string): { region: string; dong: string; apt: str
   return { region, dong, apt };
 }
 
-const centerBox: React.CSSProperties = { padding: "80px 20px", textAlign: "center", color: "#94a3b8", fontSize: 14 };
+const centerBox: React.CSSProperties = { padding: "80px 20px", textAlign: "center", color: "#64748b", fontSize: 14 };
 
 // 등록 사진이 없는 매물(테스트 샘플 등)에 노출할 임의 실내 예시 이미지 (안심인증 등록 시 실제 사진으로 대체)
 const SAMPLE_INTERIOR_PHOTOS = [
@@ -116,7 +116,7 @@ export default function ListingDbDetailContent() {
             <div className={s.photoGallery} style={{ position: "relative" }}>
               <PhotoSlider photos={gallery} minHeight={300} />
               {usingSamplePhotos && (
-                <span style={{ position: "absolute", top: 12, right: 12, zIndex: 2, background: "rgba(15,37,71,.85)", color: "#fff", fontSize: 11, fontWeight: 500, padding: "4px 10px", borderRadius: 8 }}>
+                <span style={{ position: "absolute", top: 12, right: 12, zIndex: 2, background: "rgba(15,37,71,.85)", color: "#fff", fontSize: 12, fontWeight: 500, padding: "4px 10px", borderRadius: 8 }}>
                   예시 실내 이미지 · 안심인증 등록 시 실제 사진으로 대체됩니다
                 </span>
               )}
@@ -190,7 +190,7 @@ export default function ListingDbDetailContent() {
                 {/* 등기부 확인 결과 — 부기등기 (등기사항전부증명서 분석) */}
                 {(listing.isRentalBusiness || listing.hasNameChange) && (
                   <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #e5efe8", display: "flex", flexDirection: "column", gap: 8 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>등기부 확인 결과</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#64748b" }}>등기부 확인 결과</span>
                     {listing.isRentalBusiness && (
                       <div style={{ padding: "10px 12px", borderRadius: 10, background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: "#15803d", marginBottom: 4 }}>등록임대주택 (임대사업자)</div>
@@ -215,7 +215,7 @@ export default function ListingDbDetailContent() {
                 <div className={s.certHeader}>
                   <span className={s.certTitle}>안심인증 미완료 매물</span>
                 </div>
-                <p style={{ fontSize: 12, color: "#94a3b8", margin: "8px 0 0", lineHeight: 1.5 }}>
+                <p style={{ fontSize: 12, color: "#64748b", margin: "8px 0 0", lineHeight: 1.5 }}>
                   등기·건축물대장·재산세 서류가 아직 확인되지 않았습니다. 계약 전 권리분석을 권장합니다.
                 </p>
               </div>

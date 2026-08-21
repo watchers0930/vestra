@@ -58,15 +58,15 @@
 .filterDdOpt.selected { color: #2e4bd8; font-weight: 600; background: #f5f7ff; }
 
 .resultsHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.resultsCount { font-size: 13px; color: #888; }
+.resultsCount { font-size: 13px; color: #4b5563; }
 .resultsCount strong { color: #1a1d2e; font-weight: 600; }
 .resultsRight { display: flex; align-items: center; gap: 10px; }
 .locationFilters { display: flex; gap: 8px; }
 .locationSelect { appearance: none; -webkit-appearance: none; padding: 7px 28px 7px 12px; border: 1px solid #dde0ec; border-radius: 6px; font-size: 13px; font-family: inherit; color: #333; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11' fill='none' stroke='%23aaa' stroke-width='1.8'%3E%3Cpolyline points='2,4 5.5,7.5 9,4'/%3E%3C/svg%3E") no-repeat right 10px center; background-size: 11px; cursor: pointer; outline: none; transition: border-color 0.15s; }
 .locationSelect:focus { border-color: #2e4bd8; }
-.locationSelect:disabled { color: #bbb; background-color: #fafbfc; cursor: default; }
+.locationSelect:disabled { color: #64748b; background-color: #fafbfc; cursor: default; }
 .viewToggle { display: flex; border: 1px solid #dde0ec; border-radius: 6px; overflow: hidden; }
-.viewBtn { display: flex; align-items: center; justify-content: center; padding: 7px 10px; font-family: inherit; background: #fff; border: none; color: #bbb; cursor: pointer; transition: background 0.12s, color 0.12s; }
+.viewBtn { display: flex; align-items: center; justify-content: center; padding: 7px 10px; font-family: inherit; background: #fff; border: none; color: #64748b; cursor: pointer; transition: background 0.12s, color 0.12s; }
 .viewBtn + .viewBtn { border-left: 1px solid #dde0ec; }
 .viewBtn.active { background: #f0f3ff; color: #2e4bd8; }
 .viewBtn:hover:not(.active) { background: #f8f9fc; color: #555; }
@@ -93,7 +93,7 @@
 
 .propBody { padding: 14px 16px 16px; }
 .propPrice { font-size: 19px; font-weight: 700; color: #1a1d2e; margin-bottom: 2px; font-variant-numeric: tabular-nums; }
-.propPrice .months { font-size: 12px; font-weight: 400; color: #999; margin-left: 4px; }
+.propPrice .months { font-size: 12px; font-weight: 400; color: #64748b; margin-left: 4px; }
 .propAddr { font-size: 12px; color: #444; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .propMeta { display: flex; flex-wrap: wrap; font-size: 12px; color: #b0b4c0; }
@@ -119,7 +119,7 @@
 .footerLinks { list-style: none; display: flex; flex-direction: column; gap: 10px; }
 .footerLinks a { font-size: 13px; color: rgba(255,255,255,0.80); transition: color 0.15s; }
 .footerLinks a:hover { color: rgba(255,255,255,0.9); }
-.footerBottom { max-width: 1200px; margin: 0 auto; border-top: 1px solid rgba(255,255,255,0.07); padding: 18px 0; display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: rgba(255,255,255,0.55); }
+.footerBottom { max-width: 1200px; margin: 0 auto; border-top: 1px solid rgba(255,255,255,0.07); padding: 18px 0; display: flex; justify-content: space-between; align-items: center; font-size:12px; color: rgba(255,255,255,0.55); }
 
 /* MOBILE */
 @media (max-width: 768px) {

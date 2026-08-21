@@ -358,7 +358,7 @@ export default function ListingsListClient() {
                 </div>
               )}
               {displayMolit.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '80px 0', color: '#aeaeb2' }}>
+                <div style={{ textAlign: 'center', padding: '80px 0', color: '#6b7280' }}>
                   <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{molitRegion} 국토부 실거래가 없습니다</p>
                   <p style={{ fontSize: 13 }}>시/군/구를 변경해 다시 검색해보세요</p>
                 </div>
@@ -405,7 +405,7 @@ export default function ListingsListClient() {
                 {displayFixtures.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
               </div>
             ) : (
-              <div style={{ textAlign: 'center', padding: '80px 0', color: '#aeaeb2' }}>
+              <div style={{ textAlign: 'center', padding: '80px 0', color: '#6b7280' }}>
                 <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>조건에 맞는 매물이 없습니다</p>
                 <p style={{ fontSize: 13 }}>필터를 변경해 다시 검색해보세요</p>
               </div>

@@ -74,7 +74,7 @@ export default function ListingDetailContent() {
               ) : (
                 <div
                   className={s.photoMain}
-                  style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 300, background: "#f1f5f9", color: "#94a3b8" }}
+                  style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 300, background: "#f1f5f9", color: "#64748b" }}
                 >
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
                     <rect x="3" y="3" width="18" height="18" rx="2" />
