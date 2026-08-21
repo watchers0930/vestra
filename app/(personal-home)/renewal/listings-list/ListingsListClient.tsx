@@ -51,8 +51,6 @@ interface MolitApt {
   buildYear: number;
   dealAmount: number;
   dealDate: string;
-  lat?: number;
-  lng?: number;
 }
 
 // Fisher-Yates 셔플 (원본 불변)
@@ -195,23 +193,6 @@ export default function ListingsListClient() {
     const q = new URLSearchParams({ region: molitRegion });
     if (apt) { q.set('apt', apt.aptName); q.set('dong', apt.dong); }
     router.push(`/renewal/listings-map?${q.toString()}`);
-  };
-
-  // 국토부 실거래 카드 → 매물 상세보기(listing-detail)로 이동.
-  // 고유 id가 없으므로 카드가 가진 정보를 쿼리로 전달(안심매물과 동일하게 상세보기로 통일).
-  const goToMolitDetail = (m: MolitApt) => {
-    const q = new URLSearchParams({
-      region: molitRegion,
-      dong: m.dong,
-      apt: m.aptName,
-      area: String(m.area),
-      floor: String(m.floor),
-      amount: String(m.dealAmount),
-      dealDate: m.dealDate,
-      buildYear: String(m.buildYear),
-    });
-    if (m.lat != null && m.lng != null) { q.set('lat', String(m.lat)); q.set('lng', String(m.lng)); }
-    router.push(`/renewal/listing-detail?${q.toString()}`);
   };
 
   const renderDropdown = (
@@ -373,7 +354,7 @@ export default function ListingsListClient() {
                     className={s.propertyCard}
                     key={m.id}
                     style={{ cursor: 'pointer' }}
-                    onClick={() => goToMolitDetail(m)}
+                    onClick={() => goToMap({ aptName: m.aptName, dong: m.dong })}
                   >
                     <div className={`${s.propImg} ${s[PIMG[i % PIMG.length]]}`}>
                       <span className={`${s.badgeType} ${s.badgeSale}`}>매매</span>
