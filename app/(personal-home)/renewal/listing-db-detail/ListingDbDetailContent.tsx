@@ -127,13 +127,6 @@ export default function ListingDbDetailContent() {
               </div>
             </div>
 
-            {listing.description && (
-              <div className={s.descSection}>
-                <div className={s.descLabel}>매물 설명</div>
-                <p className={s.descText}>{listing.description}</p>
-              </div>
-            )}
-
             {/* 위치·인프라·학군·시세 — 국토부 상세보기와 동일 구성(DetailTabs 재사용) */}
             <DetailTabs region={region} dong={dong} aptName={apt} lat={lat} lng={lng} />
           </div>
@@ -171,11 +164,12 @@ export default function ListingDbDetailContent() {
                   <div className={s.certCheck}>
                     <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
                   </div>
-                  <span className={s.certTitle}>
-                    안심인증 완료{listing.safetyDocuments && listing.safetyDocuments.length > 0 ? ` (${listing.safetyDocuments.length}종 서류)` : ""}
-                  </span>
+                  <span className={s.certTitle}>안심인증 3종 서류 기준</span>
                 </div>
-                {listing.safetyDocuments && listing.safetyDocuments.length > 0 && (
+                <p style={{ fontSize: 12, color: "#16a34a", margin: "0 0 12px", lineHeight: 1.5 }}>
+                  안심인증 매물로 등록되면 아래 3종 서류를 확인해 안심 거래를 보증합니다.
+                </p>
+                {listing.safetyDocuments && listing.safetyDocuments.length > 0 ? (
                   <div className={s.certItems}>
                     {listing.safetyDocuments.map((doc, i) => (
                       <div key={i} className={s.certItem}>
@@ -184,6 +178,12 @@ export default function ListingDbDetailContent() {
                         <span className={s.certItemStatus}>확인 완료</span>
                       </div>
                     ))}
+                  </div>
+                ) : (
+                  <div className={s.certItems}>
+                    <div className={s.certItem}><div className={s.certDot}></div><span className={s.certItemLabel}>등기사항전부증명서</span><span className={s.certItemStatus}>권리관계 확인</span></div>
+                    <div className={s.certItem}><div className={s.certDot}></div><span className={s.certItemLabel}>건축물대장</span><span className={s.certItemStatus}>건물 정보 확인</span></div>
+                    <div className={s.certItem}><div className={s.certDot}></div><span className={s.certItemLabel}>재산세납부확인서</span><span className={s.certItemStatus}>납세 이력 확인</span></div>
                   </div>
                 )}
 
@@ -220,6 +220,13 @@ export default function ListingDbDetailContent() {
                 </p>
               </div>
             )}
+
+            <div className={s.descSection}>
+              <div className={s.descLabel}>매물 설명</div>
+              <p className={s.descText}>
+                {listing.description || `${region} ${dong} ${apt} 매물입니다.`} 주변 인프라·학군·시세는 좌측 탭에서 확인하세요.
+              </p>
+            </div>
 
             <div className={s.ctaSection}>
               <button className={s.ctaPrimary} onClick={handleIntent}>의향서 보내기</button>
