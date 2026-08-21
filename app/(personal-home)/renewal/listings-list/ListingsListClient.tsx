@@ -339,10 +339,6 @@ export default function ListingsListClient() {
               )
             ) : (
               <div className={s.subListingsGrid}>
-                {/* 비운영 도메인: 테스트 샘플 3건을 실데이터(국토부) 앞에 항상 노출 */}
-                {showFixtures && displayFixtures.map((l) => (
-                  <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />
-                ))}
                 {displayMolit.map((m, i) => (
                   <div
                     className={s.propertyCard}
@@ -385,8 +381,6 @@ export default function ListingsListClient() {
             )
           ) : (
             <div className={s.subListingsGrid}>
-              {/* 비운영 도메인: 테스트 샘플 3건을 DB 실매물 앞에 항상 노출 */}
-              {showFixtures && displayFixtures.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
               {displayListings.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
             </div>
           )}
