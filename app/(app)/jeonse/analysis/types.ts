@@ -1,5 +1,6 @@
 export interface JeonseFormData {
   propertyAddress: string;
+  dongHo?: string; // 집합건물(아파트·빌라/다세대·오피스텔) 동/호수 상세주소
   deposit: number;
   monthlyRent: number;
   startDate: string;

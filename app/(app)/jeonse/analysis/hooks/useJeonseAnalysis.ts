@@ -12,6 +12,7 @@ import type { JeonseFormData, JeonseAnalysis, GeneratedDocument } from "../types
 
 const DEFAULT_FORM: JeonseFormData = {
   propertyAddress: "",
+  dongHo: "",
   deposit: 300000000,
   monthlyRent: 0,
   startDate: "2025-03-01",
@@ -117,7 +118,7 @@ export function useJeonseAnalysis() {
       addAnalysis({
         type: "jeonse",
         typeLabel: "전세보호",
-        address: formData.propertyAddress || "미입력",
+        address: [formData.propertyAddress, formData.dongHo].filter(Boolean).join(" ") || "미입력",
         summary: `전세권 ${data.needsRegistration === "required" ? "설정 필수" : data.needsRegistration === "recommended" ? "설정 권고" : "선택 사항"}, 위험도 ${data.riskLevel}`,
         data: data as unknown as Record<string, unknown>,
       });

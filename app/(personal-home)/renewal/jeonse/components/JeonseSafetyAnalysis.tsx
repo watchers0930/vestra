@@ -43,6 +43,11 @@ export function JeonseSafetyAnalysis() {
   const fileRef = useRef<HTMLInputElement>(null);
   const update = (patch: Partial<typeof formData>) => setFormData({ ...formData, ...patch });
 
+  // 집합건물(아파트·빌라/다세대·오피스텔)은 동/호수 상세주소 필수
+  const AGGREGATE_TYPES = ["아파트", "빌라/다세대", "오피스텔"];
+  const isAggregate = AGGREGATE_TYPES.includes(formData.propertyType);
+  const dongHoMissing = isAggregate && !formData.dongHo?.trim();
+
   const jeonseRatio = formData.propertyPrice > 0 ? Math.round((formData.deposit / formData.propertyPrice) * 100) : 0;
   const lienRatio = formData.propertyPrice > 0 ? Math.round((formData.seniorLiens / formData.propertyPrice) * 100) : 0;
   const safetyScore = fraudRisk ? Math.max(0, 100 - fraudRisk.fraudScore) : null;
@@ -73,7 +78,7 @@ export function JeonseSafetyAnalysis() {
           {/* 주소 */}
           <div style={{ marginBottom: "14px" }}>
             <label style={labelStyle}>부동산 주소</label>
-            <input style={inputStyle} type="text" value={formData.propertyAddress} onChange={(e) => update({ propertyAddress: e.target.value })} placeholder="서울 강남구 역삼동 123-45 래미안 101동 1502호" />
+            <input style={inputStyle} type="text" value={formData.propertyAddress} onChange={(e) => update({ propertyAddress: e.target.value })} placeholder="서울 강남구 역삼동 123-45 래미안" />
           </div>
 
           {/* 주택 유형 */}
@@ -83,6 +88,28 @@ export function JeonseSafetyAnalysis() {
               {propertyTypes.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
+
+          {/* 동/호수 — 집합건물만 필수 */}
+          {isAggregate && (
+            <div style={{ marginBottom: "14px" }}>
+              <label style={labelStyle}>
+                동 / 호수 <span style={{ color: "#ff3b30" }}>*</span>
+                <span style={{ fontWeight: 400, color: "#8a90a6" }}> (집합건물 필수)</span>
+              </label>
+              <input
+                style={dongHoMissing ? { ...inputStyle, border: "1.5px solid #ff3b30" } : inputStyle}
+                type="text"
+                value={formData.dongHo ?? ""}
+                onChange={(e) => update({ dongHo: e.target.value })}
+                placeholder="예: 101동 1502호"
+              />
+              {dongHoMissing && (
+                <p style={{ fontSize: "11.5px", color: "#b45309", marginTop: "6px", lineHeight: 1.5 }}>
+                  아파트·빌라/다세대·오피스텔은 등기·시세 조회 정확도를 위해 동/호수가 필요합니다.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* 보증금 / 주택시세 / 선순위 */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "14px" }}>
@@ -136,7 +163,7 @@ export function JeonseSafetyAnalysis() {
           <button
             className={s.analyzeBtn}
             onClick={handleAnalyze}
-            disabled={!formData.propertyAddress || loading}
+            disabled={!formData.propertyAddress || dongHoMissing || loading}
             style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
           >
             {loading ? <><Loader2 size={16} className="animate-spin" />분석 중...</> : <><Shield size={16} strokeWidth={2} />전세 안전 분석</>}
