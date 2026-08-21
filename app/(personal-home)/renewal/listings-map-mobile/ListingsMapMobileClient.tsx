@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import s from "./listings-map-mobile.module.css";
 import { ClusterMarkerMap } from "../listings-map/ClusterMarkerMap";
 import { GANGNAM_TEST_LISTINGS } from "../listings-list/test-fixtures";
@@ -84,6 +84,7 @@ const imgPlaceholderStyle: React.CSSProperties = {
 
 /* ── Component ── */
 export default function ListingsMapMobileClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const REGION_NAME = searchParams.get("region") || DEFAULT_REGION;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -169,7 +170,7 @@ export default function ListingsMapMobileClient() {
         key={p.id}
         className={s.peekCard}
         style={expanded ? { width: "100%", flexShrink: 1 } : undefined}
-        onClick={() => openDetail(p)}
+        onClick={() => router.push(detailHref(p))}
       >
         <div
           className={s.peekCardImg}

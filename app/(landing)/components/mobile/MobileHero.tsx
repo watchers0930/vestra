@@ -14,7 +14,7 @@ export function MobileHero() {
     e.preventDefault();
     const addr = address.trim();
     if (addr.length < 4) return;
-    router.push(`/rights?address=${encodeURIComponent(addr)}`);
+    router.push(`/renewal/rights?address=${encodeURIComponent(addr)}`);
   }
 
   return (

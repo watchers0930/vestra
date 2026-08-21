@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import s from "./rights-renewal.module.css";
 import { useRightsAnalysis } from "@/app/(app)/rights/hooks/useRightsAnalysis";
 import RenewalGnb from "../_shared/RenewalGnb";
@@ -19,7 +19,7 @@ const TABS: { id: TabId; label: string; gated?: boolean }[] = [
   { id: "guide", label: "이용 안내", gated: true },
 ];
 
-export default function RightsRenewalClient() {
+export default function RightsRenewalClient({ initialAddress = "" }: { initialAddress?: string }) {
   const [activeTab, setActiveTab] = useState<TabId>("analysis");
   const snavRef = useRef<HTMLDivElement>(null);
 
@@ -32,6 +32,12 @@ export default function RightsRenewalClient() {
     handleFileChange, handleAddressAnalyze, handleAnalyze,
     ownerMatch, registryOwnerMasked,
   } = useRightsAnalysis();
+
+  // 메인 랜딩에서 넘어온 주소(?address=)를 주소 입력창에 프리필
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (initialAddress) setTilkoAddress(initialAddress);
+  }, [initialAddress, setTilkoAddress]);
 
   // 권리관계 분석 결과가 나온 뒤에만 보조 탭(소유자·등기이력·이용안내) 노출
   const hasResult = !!result && step === "done";
