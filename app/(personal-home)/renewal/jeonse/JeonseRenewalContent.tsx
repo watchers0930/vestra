@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import s from "./jeonse-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
@@ -17,6 +17,22 @@ export default function JeonseRenewalContent() {
   const [centerOpen, setCenterOpen] = useState(false);
   const [checklist, setChecklist] = useState<ChecklistState>({});
   const snavRef = useRef<HTMLDivElement>(null);
+  const snavScrollRef = useRef<HTMLDivElement>(null);
+  // 탭 바가 가로로 넘칠 때(스크롤 끝 아님) 오른쪽에 '더 있음' 화살표 노출
+  const [showTabMore, setShowTabMore] = useState(false);
+
+  useEffect(() => {
+    const el = snavScrollRef.current;
+    if (!el) return;
+    const update = () => setShowTabMore(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      el.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
 
   const CK_TOTAL = 15;
   const checkedCount = Object.values(checklist).filter(Boolean).length;
@@ -64,7 +80,7 @@ export default function JeonseRenewalContent() {
       {/* SUB NAV */}
       <div className={s.snavWrap} ref={snavRef}>
         <div className={s.snavIn}>
-          <nav className={s.snav}>
+          <nav className={s.snav} ref={snavScrollRef}>
             {tabs.map((t) => (
               <button
                 key={t.id}
@@ -75,6 +91,18 @@ export default function JeonseRenewalContent() {
               </button>
             ))}
           </nav>
+          {showTabMore && (
+            <button
+              type="button"
+              className={s.snavMore}
+              aria-label="탭 더 보기"
+              onClick={() => snavScrollRef.current?.scrollBy({ left: 160, behavior: "smooth" })}
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 6 15 12 9 18" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 

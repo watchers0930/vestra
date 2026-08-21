@@ -39,12 +39,16 @@
 
 /* SUB NAV */
 .snavWrap{position:sticky;top:80px;z-index:90;background:#fff;border-bottom:1px solid #e8eaf0}
-.snavIn{max-width:1200px;margin:0 auto;padding:0 32px}
+.snavIn{max-width:1200px;margin:0 auto;padding:0 32px;position:relative}
 .snav{display:flex;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .snav::-webkit-scrollbar{display:none}
 .snavBtn{flex-shrink:0;padding:15px 16px;font-size:13.5px;font-family:inherit;color:#666;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s}
 .snavBtn:hover{color:#2e4bd8}
 .snavBtn.on{color:#2e4bd8;font-weight:600;border-bottom-color:#2e4bd8}
+/* 탭이 더 있음을 알리는 우측 페이드+화살표 (스크롤 끝 아닐 때만 노출) */
+.snavMore{position:absolute;top:1px;bottom:1px;right:0;width:52px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;border:none;cursor:pointer;color:#2e4bd8;background:linear-gradient(to right,rgba(255,255,255,0) 0%,#fff 60%)}
+.snavMore svg{animation:snavMorePulse 1.4s ease-in-out infinite}
+@keyframes snavMorePulse{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
 
 /* PANELS */
 .tab{display:none}
