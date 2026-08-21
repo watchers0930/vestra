@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import s from "../listing-detail/listing-detail.module.css";
+import DetailTabs from "../listing-detail/DetailTabs";
 import { ApplicationModal } from "@/app/(app)/listings/[id]/components/ApplicationModal";
 import RenewalLoginModal from "../_shared/RenewalLoginModal";
 import { GANGNAM_TEST_LISTINGS } from "../listings-list/test-fixtures";
@@ -15,6 +16,17 @@ function formatKoreanWon(won: number): string {
   const man = Math.floor((won % 100_000_000) / 10_000);
   if (eok > 0) return man > 0 ? `${eok}억 ${man.toLocaleString()}만원` : `${eok}억원`;
   return `${man.toLocaleString()}만원`;
+}
+
+// 주소 문자열에서 위치·인프라·학군·시세 탭에 넘길 시군구/법정동/단지명 추출
+// 예: "서울시 강남구 대치동 966 대치아이파크" → { region: "강남구", dong: "대치동", apt: "대치아이파크" }
+function parseAddress(address: string): { region: string; dong: string; apt: string } {
+  const parts = (address || "").split(/\s+/).filter(Boolean);
+  const region = parts.find((p) => p.endsWith("구") || (p.endsWith("시") && p !== parts[0])) || "";
+  const dong = parts.find((p) => p.endsWith("동") || p.endsWith("읍") || p.endsWith("면")) || "";
+  const jibunIdx = parts.findIndex((p) => /^\d+(-\d+)?$/.test(p));
+  const apt = (jibunIdx >= 0 ? parts.slice(jibunIdx + 1).join(" ") : parts[parts.length - 1]) || "";
+  return { region, dong, apt };
 }
 
 const centerBox: React.CSSProperties = { padding: "80px 20px", textAlign: "center", color: "#94a3b8", fontSize: 14 };
@@ -71,6 +83,10 @@ export default function ListingDbDetailContent() {
   const priceNum = Number(listing.deposit || 0);
   const photos = listing.photos ?? [];
   const ownerName = listing.owner?.companyName || listing.owner?.name || "등록자";
+  // 국토부 상세보기(listing-detail)와 동일하게 위치·인프라·학군·시세 탭 노출용 파생값
+  const { region, dong, apt } = parseAddress(listing.address);
+  const lat = listing.latitude ?? null;
+  const lng = listing.longitude ?? null;
 
   return (
     <section className={s.listingSection}>
@@ -114,6 +130,9 @@ export default function ListingDbDetailContent() {
                 <p className={s.descText}>{listing.description}</p>
               </div>
             )}
+
+            {/* 위치·인프라·학군·시세 — 국토부 상세보기와 동일 구성(DetailTabs 재사용) */}
+            <DetailTabs region={region} dong={dong} aptName={apt} lat={lat} lng={lng} />
           </div>
 
           {/* RIGHT: 매물 카드 */}
