@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import s from "../listing-detail/listing-detail.module.css";
 import DetailTabs from "../listing-detail/DetailTabs";
+import PhotoSlider from "./PhotoSlider";
 import { ApplicationModal } from "@/app/(app)/listings/[id]/components/ApplicationModal";
 import RenewalLoginModal from "../_shared/RenewalLoginModal";
 import { GANGNAM_TEST_LISTINGS } from "../listings-list/test-fixtures";
@@ -30,6 +31,14 @@ function parseAddress(address: string): { region: string; dong: string; apt: str
 }
 
 const centerBox: React.CSSProperties = { padding: "80px 20px", textAlign: "center", color: "#94a3b8", fontSize: 14 };
+
+// 등록 사진이 없는 매물(테스트 샘플 등)에 노출할 임의 실내 예시 이미지 (안심인증 등록 시 실제 사진으로 대체)
+const SAMPLE_INTERIOR_PHOTOS = [
+  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&q=80",
+  "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=1200&q=80",
+  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&q=80",
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80",
+];
 
 export default function ListingDbDetailContent() {
   const router = useRouter();
@@ -87,6 +96,9 @@ export default function ListingDbDetailContent() {
   const { region, dong, apt } = parseAddress(listing.address);
   const lat = listing.latitude ?? null;
   const lng = listing.longitude ?? null;
+  // 등록 사진이 없으면 임의 실내 예시 이미지로 슬라이더 노출
+  const gallery = photos.length > 0 ? photos : SAMPLE_INTERIOR_PHOTOS;
+  const usingSamplePhotos = photos.length === 0;
 
   return (
     <section className={s.listingSection}>
@@ -101,21 +113,12 @@ export default function ListingDbDetailContent() {
         <div className={s.listingLayout}>
           {/* LEFT */}
           <div className={s.listingLeft}>
-            <div className={s.photoGallery}>
-              {photos.length > 0 ? (
-                <div className={s.photoMain} style={{ backgroundImage: `url(${photos[0]})`, backgroundSize: "cover", backgroundPosition: "center", minHeight: 300 }} />
-              ) : (
-                <div
-                  className={s.photoMain}
-                  style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, minHeight: 300, background: "#f1f5f9", color: "#94a3b8" }}
-                >
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                  <span style={{ fontSize: 14, fontWeight: 500 }}>등록된 사진이 없습니다</span>
-                </div>
+            <div className={s.photoGallery} style={{ position: "relative" }}>
+              <PhotoSlider photos={gallery} minHeight={300} />
+              {usingSamplePhotos && (
+                <span style={{ position: "absolute", top: 12, right: 12, zIndex: 2, background: "rgba(15,37,71,.85)", color: "#fff", fontSize: 11, fontWeight: 500, padding: "4px 10px", borderRadius: 8 }}>
+                  예시 실내 이미지 · 안심인증 등록 시 실제 사진으로 대체됩니다
+                </span>
               )}
               <div className={s.photoBadgeRow}>
                 <span className={`${s.photoBadge} ${isJeonse ? "" : s.pbSale}`}>{isJeonse ? "전세" : "매매"}</span>
