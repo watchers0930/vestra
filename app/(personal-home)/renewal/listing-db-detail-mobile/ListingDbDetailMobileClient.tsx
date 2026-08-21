@@ -28,13 +28,14 @@ function formatKoreanWon(won: number): string {
 /** 주소 문자열에서 시/군/구·동·단지명 추출 (탭 검색·시세 라벨용) */
 function parseAddr(address: string): { region: string; dong: string; aptName: string } {
   const parts = (address || "").trim().split(/\s+/);
-  const region = parts.find((p) => /(구|시|군)$/.test(p)) ?? "";
+  // 시/도(첫 토큰)는 제외하고 시군구(구/군, 또는 성남시 분당구 같은 시) 우선
+  const region = parts.find((p) => p.endsWith("구") || p.endsWith("군") || (p.endsWith("시") && p !== parts[0])) ?? "";
   const dong = parts.find((p) => /(동|가|읍|면)$/.test(p)) ?? "";
   const aptName = parts[parts.length - 1] ?? address;
   return { region, dong, aptName };
 }
 
-const centerBox: React.CSSProperties = { padding: "80px 20px", textAlign: "center", color: "#94a3b8", fontSize: 14 };
+const centerBox: React.CSSProperties = { padding: "80px 20px", textAlign: "center", color: "#64748b", fontSize: 14 };
 
 export default function ListingDbDetailMobileClient() {
   const router = useRouter();
@@ -90,6 +91,20 @@ export default function ListingDbDetailMobileClient() {
   const { region, dong, aptName } = parseAddr(listing.address);
   const lat = listing.latitude;
   const lng = listing.longitude;
+  // 매물 설명 — 실제 등록 설명이 있으면 사용, 없으면(테스트 샘플 포함) 데이터 기반 생성
+  const priceLabel = isJeonse ? `전세 보증금 ${formatKoreanWon(priceNum)}` : `매매가 ${formatKoreanWon(priceNum)}`;
+  const floorText = listing.floor != null ? `${listing.floor}층${listing.totalFloor ? `/${listing.totalFloor}층` : ""}` : null;
+  const certText = listing.isCertified
+    ? "등기사항전부증명서·건축물대장·재산세납부확인서 3종 서류가 확인된 베스트라 안심인증 매물입니다."
+    : "계약 전 AI 권리분석으로 권리관계와 안전성을 확인하시길 권장합니다.";
+  const descText = listing.description && !listing.description.includes("테스트")
+    ? listing.description
+    : [
+        `${region} ${dong}에 위치한 ${aptName} ${listing.roomType ?? "매물"}입니다.`,
+        `전용 ${listing.size ?? "-"}㎡${floorText ? `, ${floorText}` : ""}, ${priceLabel}.`,
+        certText,
+        "주변 교통·학군·생활 인프라와 국토부 실거래 시세는 아래 위치·인프라·학군·시세 탭에서 확인하실 수 있습니다.",
+      ].join(" ");
 
   return (
     <div className={s.pageRoot}>
@@ -126,7 +141,7 @@ export default function ListingDbDetailMobileClient() {
           {photos.length > 0 ? (
             <div className={s.photoMain} style={{ backgroundImage: `url(${photos[photoIdx]})`, backgroundSize: "cover", backgroundPosition: "center" }} />
           ) : (
-            <div className={s.photoMain} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, background: "#f1f5f9", color: "#94a3b8" }}>
+            <div className={s.photoMain} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, background: "#f1f5f9", color: "#64748b" }}>
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
                 <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
               </svg>
@@ -184,11 +199,12 @@ export default function ListingDbDetailMobileClient() {
                 <div className={s.certCheck}>
                   <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
                 </div>
-                <span className={s.certTitle}>
-                  안심인증 완료{listing.safetyDocuments && listing.safetyDocuments.length > 0 ? ` (${listing.safetyDocuments.length}종 서류)` : ""}
-                </span>
+                <span className={s.certTitle}>안심인증 3종 서류 기준</span>
               </div>
-              {listing.safetyDocuments && listing.safetyDocuments.length > 0 && (
+              <p style={{ fontSize: 12, color: "#16a34a", margin: "0 0 12px", lineHeight: 1.5 }}>
+                안심인증 매물로 등록되면 아래 3종 서류를 확인해 안심 거래를 보증합니다.
+              </p>
+              {listing.safetyDocuments && listing.safetyDocuments.length > 0 ? (
                 <div className={s.certItems}>
                   {listing.safetyDocuments.map((doc, i) => (
                     <div key={i} className={s.certItem}>
@@ -198,23 +214,27 @@ export default function ListingDbDetailMobileClient() {
                     </div>
                   ))}
                 </div>
+              ) : (
+                <div className={s.certItems}>
+                  <div className={s.certItem}><div className={s.certDot}></div><span className={s.certItemLabel}>등기사항전부증명서</span><span className={s.certItemStatus}>권리관계 확인</span></div>
+                  <div className={s.certItem}><div className={s.certDot}></div><span className={s.certItemLabel}>건축물대장</span><span className={s.certItemStatus}>건물 정보 확인</span></div>
+                  <div className={s.certItem}><div className={s.certDot}></div><span className={s.certItemLabel}>재산세납부확인서</span><span className={s.certItemStatus}>납세 이력 확인</span></div>
+                </div>
               )}
             </div>
           ) : (
             <div className={s.certSection}>
               <div className={s.certHeader}><span className={s.certTitle}>안심인증 미완료 매물</span></div>
-              <p style={{ fontSize: 12, color: "#94a3b8", margin: "8px 0 0", lineHeight: 1.5 }}>
+              <p style={{ fontSize: 12, color: "#64748b", margin: "8px 0 0", lineHeight: 1.5 }}>
                 등기·건축물대장·재산세 서류가 아직 확인되지 않았습니다. 계약 전 권리분석을 권장합니다.
               </p>
             </div>
           )}
 
-          {listing.description && (
-            <div className={s.descSection}>
-              <div className={s.descLabel}>매물 설명</div>
-              <p className={s.descText}>{listing.description}</p>
-            </div>
-          )}
+          <div className={s.descSection}>
+            <div className={s.descLabel}>매물 설명</div>
+            <p className={s.descText}>{descText}</p>
+          </div>
         </div>
 
         {/* 위치/인프라/학군/시세 — 좌표 있으면 탭 표시 */}

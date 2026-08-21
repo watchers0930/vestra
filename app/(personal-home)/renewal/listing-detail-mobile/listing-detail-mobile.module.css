@@ -87,13 +87,13 @@
   position: absolute; top: 12px; left: 12px;
   display: flex; gap: 6px;
 }
-.photoBadge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; color: #fff; }
+.photoBadge { font-size:12px; font-weight: 700; padding: 3px 8px; border-radius: 4px; color: #fff; }
 .pbSale { background: var(--sale-red); }
 .pbStatus { background: rgba(30,30,50,0.75); }
 .photoCounter {
   position: absolute; bottom: 12px; right: 12px;
   background: rgba(0,0,0,0.48); color: #fff;
-  font-size: 11px; font-weight: 500;
+  font-size:12px; font-weight: 500;
   padding: 3px 9px; border-radius: 10px;
   font-variant-numeric: tabular-nums;
 }
@@ -118,10 +118,10 @@
   border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
 }
 .propCardHeader { padding: 16px 16px 0; }
-.listingNum { font-size: 11px; color: var(--text-light); margin-bottom: 6px; }
+.listingNum { font-size:12px; color: var(--text-light); margin-bottom: 6px; }
 .listingTrustTag {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11px; font-weight: 600;
+  font-size:12px; font-weight: 600;
   color: var(--trust-text); background: var(--trust-bg);
   padding: 3px 9px; border-radius: 10px; margin-bottom: 10px;
 }
@@ -133,7 +133,7 @@
 .listingAddrText { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
 .listingPrice { font-size: 26px; font-weight: 800; color: var(--navy); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
 .listingTypeBadge {
-  display: inline-block; font-size: 11px; font-weight: 700;
+  display: inline-block; font-size:12px; font-weight: 700;
   padding: 3px 8px; border-radius: 4px;
   color: #fff; background: var(--sale-red); margin-bottom: 14px;
 }
@@ -145,16 +145,16 @@
 .metaItem { padding: 11px 16px; }
 .metaItem:nth-child(odd) { border-right: 1px solid var(--border-mid); }
 .metaItem:nth-child(n+3) { border-top: 1px solid var(--border-mid); }
-.metaLabel { font-size: 10px; color: var(--text-light); margin-bottom: 3px; }
+.metaLabel { font-size:12px; color: var(--text-light); margin-bottom: 3px; }
 .metaValue { font-size: 13px; font-weight: 600; color: var(--navy); }
 
 .listingRegistrant {
   padding: 11px 16px; border-bottom: 1px solid var(--border-mid);
   display: flex; justify-content: space-between; align-items: center;
 }
-.registrantInfo { font-size: 11px; color: #666; }
+.registrantInfo { font-size:12px; color: #666; }
 .registrantName { font-size: 13px; font-weight: 600; color: var(--navy); margin-top: 2px; }
-.registrantDate { font-size: 11px; color: var(--text-light); }
+.registrantDate { font-size:12px; color: var(--text-light); }
 
 /* 안심인증 */
 .certSection {
@@ -168,16 +168,16 @@
 }
 .certCheck svg { width: 10px; height: 10px; stroke: #fff; fill: none; stroke-width: 2.5; }
 .certTitle { font-size: 13px; font-weight: 700; color: var(--trust-text); }
-.certDate { font-size: 11px; color: var(--text-light); margin-left: auto; }
+.certDate { font-size:12px; color: var(--text-light); margin-left: auto; }
 .certItems { display: flex; flex-direction: column; gap: 6px; }
 .certItem { display: flex; align-items: center; gap: 8px; }
 .certDot { width: 5px; height: 5px; border-radius: 50%; background: #86efac; flex-shrink: 0; }
 .certItemLabel { font-size: 12px; color: #444; }
-.certItemStatus { font-size: 11px; color: var(--trust-text); margin-left: auto; white-space: nowrap; }
+.certItemStatus { font-size:12px; color: var(--trust-text); margin-left: auto; white-space: nowrap; }
 
 /* 설명 */
 .descSection { padding: 13px 16px; border-bottom: 1px solid var(--border-mid); }
-.descLabel { font-size: 10px; font-weight: 600; color: #999; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 7px; }
+.descLabel { font-size:12px; font-weight: 600; color: #64748b; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 7px; }
 .descText { font-size: 13px; color: #555; line-height: 1.7; }
 
 /* TABS */
@@ -239,7 +239,7 @@
   background: #fff; border-top: 1px solid var(--border-mid);
 }
 .tabListHeader {
-  padding: 8px 14px 6px; font-size: 11px; font-weight: 600; color: #888;
+  padding: 8px 14px 6px; font-size:12px; font-weight: 600; color: #4b5563;
   border-bottom: 1px solid var(--border-mid);
   position: sticky; top: 0; background: #fff; z-index: 2;
 }
@@ -250,7 +250,7 @@
 }
 .tabListItem:active { background: #f8f9fe; }
 .tabListName { font-size: 12px; font-weight: 500; color: var(--navy); line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tabListDist { font-size: 11px; color: var(--text-light); margin-top: 1px; }
+.tabListDist { font-size:12px; color: var(--text-light); margin-top: 1px; }
 
 /* 시세 탭 */
 .tabPrice { background: #fff; }
@@ -273,7 +273,7 @@
 .priceChartCanvas { width: 100% !important; max-width: 100%; display: block; }
 .priceLegend {
   display: flex; align-items: center; justify-content: center; gap: 6px;
-  font-size: 11px; color: #888; margin-bottom: 14px;
+  font-size:12px; color: #4b5563; margin-bottom: 14px;
 }
 .priceLegendDot { width: 8px; height: 8px; border-radius: 50%; background: #93c5fd; display: inline-block; }
 .priceTableWrap { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; overflow-x: auto; }
@@ -282,13 +282,13 @@
   border-collapse: collapse; font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
-.priceTable th { background: var(--bg-soft); color: #888; font-weight: 600; padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+.priceTable th { background: var(--bg-soft); color: #4b5563; font-weight: 600; padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
 .priceTable th:not(:first-child) { text-align: right; }
 .priceTable td { padding: 8px 10px; border-bottom: 1px solid #f4f5f9; color: #444; }
 .priceTable td:not(:first-child) { text-align: right; }
 .priceTable tr:last-child td { border-bottom: none; }
 .priceCol { font-weight: 600; color: var(--navy); }
-.priceDisclaimer { font-size: 10px; color: var(--text-light); margin: 8px 0 0; }
+.priceDisclaimer { font-size:12px; color: var(--text-light); margin: 8px 0 0; }
 
 /* MAP PLACEHOLDER */
 .mapPlaceholder { width: 100%; height: 240px; background: #e8edf5; display: flex; align-items: center; justify-content: center; }
@@ -329,13 +329,13 @@
   color: #fff; font-weight: 800; font-size: 12px;
 }
 .flogoText { font-size: 14px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
-.footerTagline { font-size: 11px; line-height: 1.6; color: rgba(255,255,255,0.6); margin-bottom: 14px; }
-.footerContact { font-size: 11px; line-height: 1.75; color: rgba(255,255,255,0.55); margin-bottom: 24px; }
+.footerTagline { font-size:12px; line-height: 1.6; color: rgba(255,255,255,0.6); margin-bottom: 14px; }
+.footerContact { font-size:12px; line-height: 1.75; color: rgba(255,255,255,0.55); margin-bottom: 24px; }
 .footerLinksRow { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
-.footerColTitle { font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.6); font-weight: 600; margin-bottom: 10px; }
+.footerColTitle { font-size:12px; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.6); font-weight: 600; margin-bottom: 10px; }
 .footerLinks { list-style: none; display: flex; flex-direction: column; gap: 8px; }
 .footerLinks a { font-size: 12px; color: rgba(255,255,255,0.75); }
 .footerBottom {
   border-top: 1px solid rgba(255,255,255,0.07); padding: 16px 0;
-  font-size: 11px; color: rgba(255,255,255,0.45); text-align: center; line-height: 1.6;
+  font-size:12px; color: rgba(255,255,255,0.45); text-align: center; line-height: 1.6;
 }

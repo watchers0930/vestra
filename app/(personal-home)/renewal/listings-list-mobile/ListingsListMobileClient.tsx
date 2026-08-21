@@ -55,7 +55,7 @@ const emptyMsgStyle: React.CSSProperties = {
   gridColumn: "1 / -1",
   textAlign: "center",
   padding: "48px 0",
-  color: "#999",
+  color: "#64748b",
   fontSize: "14px",
 };
 

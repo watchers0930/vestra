@@ -108,7 +108,7 @@ export default function MobileDetailTabs({ region, dong, aptName, lat, lng }: Pr
   const noCoord = (
     <div className={s.mapPlaceholder}>
       <div className={s.mapPlaceholderInner}>
-        <span style={{ color: "#888", fontSize: 14 }}>좌표 정보 없음</span>
+        <span style={{ color: "#4b5563", fontSize: 14 }}>좌표 정보 없음</span>
       </div>
     </div>
   );
@@ -146,7 +146,7 @@ export default function MobileDetailTabs({ region, dong, aptName, lat, lng }: Pr
                   <thead><tr><th>월</th><th>평균거래가</th><th>건수</th></tr></thead>
                   <tbody>
                     {priceRows.length === 0 ? (
-                      <tr><td colSpan={3} style={{ textAlign: "center", color: "#aeaeb2", padding: "20px 0" }}>집계 중…</td></tr>
+                      <tr><td colSpan={3} style={{ textAlign: "center", color: "#6b7280", padding: "20px 0" }}>집계 중…</td></tr>
                     ) : priceRows.map((r) => (
                       <tr key={r.month}><td>{r.month}</td><td className={s.priceCol}>{formatEok(r.avg)}</td><td>{r.count}건</td></tr>
                     ))}

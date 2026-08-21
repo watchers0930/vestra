@@ -134,7 +134,7 @@ export default function MobileSchoolMap({ lat, lng }: { lat: number; lng: number
           const active = selected === key;
           return (
             <button key={key} onClick={() => handleSelect(key)}
-              style={{ borderRadius: 100, border: "1px solid", padding: "4px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all .15s",
+              style={{ borderRadius: 100, border: "1px solid", padding: "4px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all .15s",
                 background: active ? (conf?.color ?? "#0F2547") : "#fff", borderColor: active ? (conf?.color ?? "#0F2547") : "#dde3ef", color: active ? "#fff" : "#6e6e73",
               }}>{key === "ALL" ? "전체" : key}
             </button>
@@ -157,9 +157,9 @@ export default function MobileSchoolMap({ lat, lng }: { lat: number; lng: number
           </div>
           <div className={ms.slideBody}>
             {!loaded
-              ? <div className={ms.emptyMsg}><p style={{ fontSize: 11, color: "#aeaeb2" }}>로딩 중...</p></div>
+              ? <div className={ms.emptyMsg}><p style={{ fontSize: 12, color: "#6b7280" }}>로딩 중...</p></div>
               : listItems.length === 0
-              ? <div className={ms.emptyMsg}><p style={{ fontSize: 11, color: "#aeaeb2", textAlign: "center" }}>반경 3km 내<br/>학교 없음</p></div>
+              ? <div className={ms.emptyMsg}><p style={{ fontSize: 12, color: "#6b7280", textAlign: "center" }}>반경 3km 내<br/>학교 없음</p></div>
               : listItems.map((item, i) => (
                 <div key={i} className={ms.listItem} onClick={() => handleSchoolItemClick(item)}>
                   <GraduationCap size={10} strokeWidth={2} style={{ color: item.color, flexShrink: 0, marginTop: 2 }} />
@@ -180,7 +180,7 @@ export default function MobileSchoolMap({ lat, lng }: { lat: number; lng: number
         )}
       </div>
 
-      <p style={{ fontSize: 11, color: "#aeaeb2", marginTop: 8 }}>학군 정보는 참고용이며, 실제 배정과 다를 수 있습니다.</p>
+      <p style={{ fontSize: 12, color: "#6b7280", marginTop: 8 }}>학군 정보는 참고용이며, 실제 배정과 다를 수 있습니다.</p>
     </div>
   );
 }

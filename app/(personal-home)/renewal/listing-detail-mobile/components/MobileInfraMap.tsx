@@ -147,7 +147,7 @@ export default function MobileInfraMap({ lat, lng }: { lat: number; lng: number 
       <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, marginBottom: 10, scrollbarWidth: "none" as const }}>
         {([{ code: "ALL" as InfraCatCode, name: "전체", color: "#0F2547" }, ...INFRA_CATS]).map((c) => (
           <button key={c.code} onClick={() => handleSelect(c.code as InfraCatCode)}
-            style={{ flexShrink: 0, borderRadius: 100, border: "1px solid", padding: "4px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all .15s",
+            style={{ flexShrink: 0, borderRadius: 100, border: "1px solid", padding: "4px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all .15s",
               background: selected === c.code ? c.color : "#fff", borderColor: selected === c.code ? c.color : "#dde3ef", color: selected === c.code ? "#fff" : "#6e6e73",
             }}>{c.name}
           </button>
@@ -170,7 +170,7 @@ export default function MobileInfraMap({ lat, lng }: { lat: number; lng: number 
           <div className={ms.slideBody}>
             {items.length === 0
               ? <div className={ms.emptyMsg}>
-                  <p style={{ fontSize: 11, color: "#aeaeb2" }}>{isLoading ? "로딩 중..." : "주변에 없습니다"}</p>
+                  <p style={{ fontSize: 12, color: "#6b7280" }}>{isLoading ? "로딩 중..." : "주변에 없습니다"}</p>
                 </div>
               : items.map((item, i) => {
                 const ic = INFRA_CATS.find((c) => c.code === item.catCode);
