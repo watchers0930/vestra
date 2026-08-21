@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { MapMarker } from "@/app/(app)/listings/components/KakaoMarkersMap";
 import type { ListingSlideData } from "@/app/(app)/listings/components/MapSlidePanelInfo";
@@ -12,6 +12,31 @@ import {
   type FilterKey,
 } from "../constants";
 import { formatEok, formatKoreanWon } from "../lib/format";
+import { GANGNAM_TEST_LISTINGS } from "../../listings-list/test-fixtures";
+import type { ListingItem } from "@/app/(app)/listings/hooks/useListings";
+
+// 안심매물(등록매물) fixture → 지도 아이템(Apt) 변환
+function toApt(l: ListingItem): Apt {
+  const parts = (l.address || "").trim().split(/\s+/);
+  const dong = parts.find((p) => /(동|가|읍|면)$/.test(p)) ?? "";
+  const aptName = parts[parts.length - 1] ?? l.address;
+  return {
+    id: l.id,
+    aptName,
+    dong,
+    area: l.size ?? 0,
+    floor: l.floor ?? 0,
+    buildYear: 0,
+    dealAmount: Number(l.deposit || 0),
+    dealDate: "",
+    lat: l.latitude ?? undefined,
+    lng: l.longitude ?? undefined,
+    photos: l.photos ?? undefined,
+    isCertified: !!l.isCertified,
+    isJeonse: l.listingType === "JEONSE",
+    roomType: l.roomType ?? undefined,
+  };
+}
 
 export function useListingsMap() {
   // Dropdown filter
@@ -53,23 +78,19 @@ export function useListingsMap() {
     if (regionInitRef.current) return;
     regionInitRef.current = true;
     const r = searchParams.get("region");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (r && r !== sigungu) setSigungu(r);
   }, [searchParams, sigungu]);
 
-  // 지역 아파트 실거래 (지오코딩 포함)
+  // 안심매물(테스트 샘플)을 지도 목록으로. 운영 도메인에서는 노출하지 않음. (fixtures는 즉시 로드)
   const [items, setItems] = useState<Apt[]>([]);
-  const [loadingItems, setLoadingItems] = useState(true);
+  const loadingItems = false;
 
-  const loadItems = useCallback(async (regionName: string) => {
-    setLoadingItems(true);
-    try {
-      const res = await fetch(`/api/listings/apartments?region=${encodeURIComponent(regionName)}&limit=60&geocode=1`);
-      const data = res.ok ? await res.json() : { items: [] };
-      setItems(data.items ?? []);
-    } catch { setItems([]); }
-    finally { setLoadingItems(false); }
+  useEffect(() => {
+    const isProd = typeof window !== "undefined" && window.location.hostname === "vestra-plum.vercel.app";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setItems(isProd ? [] : GANGNAM_TEST_LISTINGS.map(toApt));
   }, []);
-  useEffect(() => { loadItems(region); }, [region, loadItems]);
 
   // Detail panel
   const [detailOpen, setDetailOpen] = useState(false);
@@ -78,30 +99,25 @@ export function useListingsMap() {
   // 앱 MapSlidePanel 형식용 데이터
   const curApt = activeItem != null ? items[activeItem] : null;
   const slideData: ListingSlideData | null = curApt ? {
-    id: "molit",
-    listingType: "SALE",
+    id: curApt.id ?? "",
+    listingType: curApt.isJeonse ? "JEONSE" : "SALE",
     address: `${region} ${curApt.dong} ${curApt.aptName}`,
-    roomType: "아파트",
+    roomType: curApt.roomType ?? "아파트",
     size: curApt.area,
     floor: curApt.floor,
     totalFloor: null,
     deposit: String(curApt.dealAmount),
     managementFee: null,
     duration: null,
-    photos: [
-      SAMPLE_PHOTOS[activeItem! % SAMPLE_PHOTOS.length],
-      SAMPLE_PHOTOS[(activeItem! + 1) % SAMPLE_PHOTOS.length],
-      SAMPLE_PHOTOS[(activeItem! + 2) % SAMPLE_PHOTOS.length],
-    ],
-    description: `${region} ${curApt.dong} ${curApt.aptName} · ${curApt.dealDate} 실거래 ${formatKoreanWon(curApt.dealAmount)} · 국토교통부 공개데이터 기반 (사진은 예시)`,
-    // 국토부 실거래 공개데이터는 VESTRA 안심인증 대상이 아니므로 false (오인 방지)
-    isCertified: false,
+    photos: curApt.photos && curApt.photos.length > 0 ? curApt.photos : [SAMPLE_PHOTOS[0]],
+    description: `${region} ${curApt.dong} ${curApt.aptName} · ${curApt.isJeonse ? "전세 보증금" : "매매가"} ${formatKoreanWon(curApt.dealAmount)}${curApt.isCertified ? " · 베스트라 안심인증 매물" : ""}`,
+    isCertified: !!curApt.isCertified,
     jeonseRatio: null,
     officialPrice: null,
     latitude: curApt.lat ?? null,
     longitude: curApt.lng ?? null,
     availableFrom: null,
-    owner: { id: "", name: "국토부 실거래", companyName: null },
+    owner: { id: "", name: "베스트라 안심매물", companyName: null },
   } : null;
 
   // 마커
@@ -120,6 +136,7 @@ export function useListingsMap() {
     const idx = items.findIndex((a) => a.aptName === focusApt);
     if (idx >= 0) {
       autoOpenedRef.current = true;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveItem(idx);
       setDetailOpen(true);
       if (items[idx].lat != null) setPanTo({ lat: items[idx].lat!, lng: items[idx].lng! });
@@ -171,10 +188,15 @@ export function useListingsMap() {
     if (a?.lat != null) setPanTo({ lat: a.lat, lng: a.lng! });
   };
 
-  // 상세 페이지로 이동 (계약의향서/상세보기)
+  // 상세 페이지로 이동 (안심매물 상세보기)
   const goToDetail = () => {
     if (activeItem == null || !items[activeItem]) return;
     const a = items[activeItem];
+    if (a.id) {
+      router.push(`/renewal/listing-db-detail?id=${encodeURIComponent(a.id)}`);
+      return;
+    }
+    // (fallback) id 없는 국토부 스타일
     const q = new URLSearchParams({
       region, apt: a.aptName, dong: a.dong,
       area: String(a.area), floor: String(a.floor),

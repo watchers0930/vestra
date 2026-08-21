@@ -20,6 +20,12 @@ export interface Apt {
   dealDate: string;
   lat?: number;
   lng?: number;
+  // 안심매물(등록매물) 연동용
+  id?: string;
+  photos?: string[];
+  isCertified?: boolean;
+  isJeonse?: boolean;
+  roomType?: string;
 }
 
 export type FilterKey = "type" | "trade" | "size";
