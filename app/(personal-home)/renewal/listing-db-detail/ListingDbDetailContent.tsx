@@ -100,6 +100,20 @@ export default function ListingDbDetailContent() {
   const gallery = photos.length > 0 ? photos : SAMPLE_INTERIOR_PHOTOS;
   const usingSamplePhotos = photos.length === 0;
 
+  // 매물 설명 — 실제 등록 설명이 있으면 사용, 없으면(테스트 샘플 포함) 데이터 기반으로 생성
+  const priceLabel = isJeonse ? `전세 보증금 ${formatKoreanWon(priceNum)}` : `매매가 ${formatKoreanWon(priceNum)}`;
+  const floorText = listing.floor != null ? `${listing.floor}층${listing.totalFloor ? `/${listing.totalFloor}층` : ""}` : null;
+  const certText = listing.isCertified
+    ? "등기사항전부증명서·건축물대장·재산세납부확인서 3종 서류가 확인된 베스트라 안심인증 매물입니다."
+    : "계약 전 AI 권리분석으로 권리관계와 안전성을 확인하시길 권장합니다.";
+  const generatedDesc = [
+    `${region} ${dong}에 위치한 ${apt} ${listing.roomType ?? "매물"}입니다.`,
+    `전용 ${listing.size ?? "-"}㎡${floorText ? `, ${floorText}` : ""}, ${priceLabel}.`,
+    certText,
+    "주변 교통·학군·생활 인프라와 국토부 실거래 시세는 아래 위치·인프라·학군·시세 탭에서 확인하실 수 있습니다.",
+  ].join(" ");
+  const descText = listing.description && !listing.description.includes("테스트") ? listing.description : generatedDesc;
+
   return (
     <section className={s.listingSection}>
       <div className={s.listingContainer}>
@@ -223,9 +237,7 @@ export default function ListingDbDetailContent() {
 
             <div className={s.descSection}>
               <div className={s.descLabel}>매물 설명</div>
-              <p className={s.descText}>
-                {listing.description || `${region} ${dong} ${apt} 매물입니다.`} 주변 인프라·학군·시세는 좌측 탭에서 확인하세요.
-              </p>
+              <p className={s.descText}>{descText}</p>
             </div>
 
             <div className={s.ctaSection}>
