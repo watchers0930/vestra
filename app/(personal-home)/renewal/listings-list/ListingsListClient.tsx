@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import s from "./listings-list.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import { useListings, type ListingType } from "@/app/(app)/listings/hooks/useListings";
@@ -40,21 +40,6 @@ const SIZE_RANGES: Record<string, { min?: number; max?: number }> = {
 
 const BUILDING_TYPES = ['아파트', '단독', '다가구', '연립', '빌라'];
 
-const PIMG = ['pimg1', 'pimg2', 'pimg3', 'pimg4', 'pimg5', 'pimg6'] as const;
-
-interface MolitApt {
-  id: string;
-  aptName: string;
-  dong: string;
-  area: number;
-  floor: number;
-  buildYear: number;
-  dealAmount: number;
-  dealDate: string;
-  lat?: number;
-  lng?: number;
-}
-
 // Fisher-Yates 셔플 (원본 불변)
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -66,17 +51,6 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 const MAX_CARDS = 9;
-
-function formatEok(won: number): string {
-  if (!won) return '-';
-  if (won >= 100_000_000) {
-    const eok = won / 100_000_000;
-    const s = eok.toFixed(1); // 천만 단위 반올림
-    return `${s.endsWith('.0') ? s.slice(0, -2) : s}억`;
-  }
-  if (won >= 10_000) return `${Math.floor(won / 10_000)}만`;
-  return `${won.toLocaleString()}원`;
-}
 
 type DropdownKey = 'type' | 'trade' | 'size' | null;
 
@@ -99,6 +73,7 @@ export default function ListingsListClient() {
   useEffect(() => {
     const host = window.location.hostname;
     const isProd = host === 'vestra-plum.vercel.app';
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowFixtures(!isProd);
   }, []);
 
@@ -131,39 +106,9 @@ export default function ListingsListClient() {
     maxSize: sizeRange.max,
   });
 
-  // ── 건물유형=아파트 → 국토교통부 실거래가 아파트 연동 ──
-  // 안심인증만 보기가 켜지면 국토부 실거래(안심인증 대상 아님)는 제외하고 DB 인증매물만 노출
+  // ── 건물유형=아파트 필터(안심인증만 보기가 켜지면 DB 인증매물만) ──
   const showMolit = dropdownLabels.type === '아파트' && !certifiedOnly;
-  const molitRegion = sigungu || '강남구'; // 국토부는 시군구(법정동코드) 단위 조회
-  const [molitItems, setMolitItems] = useState<MolitApt[]>([]);
-  const [molitLoading, setMolitLoading] = useState(false);
-
-  const loadMolit = useCallback(async (regionName: string) => {
-    setMolitLoading(true);
-    try {
-      const res = await fetch(`/api/listings/apartments?region=${encodeURIComponent(regionName)}&limit=30`);
-      const data = res.ok ? await res.json() : { items: [] };
-      setMolitItems(data.items ?? []);
-    } catch {
-      setMolitItems([]);
-    } finally {
-      setMolitLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (showMolit) loadMolit(molitRegion);
-  }, [showMolit, molitRegion, loadMolit]);
-
-  // 평형(면적) 필터 적용 → 랜덤 셔플 → 최대 9개
-  const displayMolit = useMemo(() => {
-    const filtered = molitItems.filter((m) => {
-      if (sizeRange.min != null && m.area < sizeRange.min) return false;
-      if (sizeRange.max != null && m.area > sizeRange.max) return false;
-      return true;
-    });
-    return shuffle(filtered).slice(0, MAX_CARDS);
-  }, [molitItems, sizeRange.min, sizeRange.max]);
+  const molitRegion = sigungu || '강남구'; // 지도보기 이동 시 시군구 전달용
 
   // DB 매물도 랜덤 셔플 → 최대 9개 (안심인증만 켜지면 isCertified 매물만)
   const displayListings = useMemo(() => {
@@ -197,22 +142,6 @@ export default function ListingsListClient() {
     router.push(`/renewal/listings-map?${q.toString()}`);
   };
 
-  // 국토부 실거래 카드 → 매물 상세보기(listing-detail)로 이동.
-  // 고유 id가 없으므로 카드가 가진 정보를 쿼리로 전달(안심매물과 동일하게 상세보기로 통일).
-  const goToMolitDetail = (m: MolitApt) => {
-    const q = new URLSearchParams({
-      region: molitRegion,
-      dong: m.dong,
-      apt: m.aptName,
-      area: String(m.area),
-      floor: String(m.floor),
-      amount: String(m.dealAmount),
-      dealDate: m.dealDate,
-      buildYear: String(m.buildYear),
-    });
-    if (m.lat != null && m.lng != null) { q.set('lat', String(m.lat)); q.set('lng', String(m.lng)); }
-    router.push(`/renewal/listing-detail?${q.toString()}`);
-  };
 
   const renderDropdown = (
     key: 'type' | 'trade' | 'size',
@@ -276,8 +205,8 @@ export default function ListingsListClient() {
           {/* 결과 헤더 */}
           <div className={s.resultsHeader}>
             <p className={s.resultsCount}>
-              총 <strong>{showMolit ? displayMolit.length : displayListings.length}개</strong>{' '}
-              {showMolit ? `${molitRegion} 안심 매물` : certifiedOnly ? '안심인증 매물' : '안심 매물'}
+              총 <strong>{(showFixtures ? displayFixtures.length : 0) + displayListings.length}개</strong>{' '}
+              {certifiedOnly ? '안심인증 매물' : '안심 매물'}
             </p>
             <div className={s.resultsRight}>
               <button
@@ -338,67 +267,17 @@ export default function ListingsListClient() {
           </div>
 
           {/* 카드 그리드 (실데이터) */}
-          {(showMolit ? molitLoading : loading) ? (
+          {loading ? (
             <div className={s.subListingsGrid}>
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} style={{ height: 280, borderRadius: 10, background: '#f5f5f7' }} />
               ))}
             </div>
           ) : showMolit ? (
-            <>
-              {/* 비운영 도메인: 테스트 샘플은 '안심 매물' 형식·상세페이지로 국토부와 분리해 별도 블록 노출 */}
-              {showFixtures && (
-                <div style={{ marginBottom: 28 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#16a34a', margin: '0 0 12px' }}>
-                    베스트라 안심 매물 (테스트 샘플)
-                  </p>
-                  <div className={s.subListingsGrid}>
-                    {displayFixtures.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
-                  </div>
-                </div>
-              )}
-              {displayMolit.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '80px 0', color: '#6b7280' }}>
-                  <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{molitRegion} 국토부 실거래가 없습니다</p>
-                  <p style={{ fontSize: 13 }}>시/군/구를 변경해 다시 검색해보세요</p>
-                </div>
-              ) : (
-              <>
-              {showFixtures && (
-                <p style={{ fontSize: 14, fontWeight: 700, color: '#334155', margin: '0 0 12px' }}>국토부 실거래</p>
-              )}
-              <div className={s.subListingsGrid}>
-                {displayMolit.map((m, i) => (
-                  <div
-                    className={s.propertyCard}
-                    key={m.id}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => goToMolitDetail(m)}
-                  >
-                    <div className={`${s.propImg} ${s[PIMG[i % PIMG.length]]}`}>
-                      <span className={`${s.badgeType} ${s.badgeSale}`}>매매</span>
-                      <span className={s.badgeTrust} style={{ background: '#e0edff', color: '#2563eb' }}>국토부 실거래</span>
-                    </div>
-                    <div className={s.propBody}>
-                      <div className={s.propPrice}>{formatEok(m.dealAmount)}</div>
-                      <div className={s.propAddr}>{molitRegion} {m.dong} {m.aptName}</div>
-                      <div className={s.propMeta}>
-                        <span className={s.mType}>아파트</span>
-                        <span className={s.mArea}>{m.area}㎡</span>
-                        <span className={s.mFloor}>{m.floor}층</span>
-                        <span className={s.mDate}>{m.dealDate} 거래</span>
-                      </div>
-                      <div className={s.propFooter}>
-                        <span>{m.buildYear ? `${m.buildYear}년 준공` : ''}</span>
-                        <span>국토부 실거래</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              </>
-              )}
-            </>
+            <div className={s.subListingsGrid}>
+              {showFixtures && displayFixtures.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
+              {displayListings.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
+            </div>
           ) : displayListings.length === 0 ? (
             showFixtures ? (
               <div className={s.subListingsGrid}>
