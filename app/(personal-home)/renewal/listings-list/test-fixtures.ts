@@ -10,7 +10,7 @@ export const GANGNAM_TEST_LISTINGS: ListingItem[] = [
   {
     id: "test-gangnam-1",
     listingType: "SALE",
-    address: "서울시 강남구 대치동 966 대치아이파크",
+    address: "서울시 강남구 대치동 888 대치아이파크",
     roomType: "아파트",
     size: 84,
     floor: 12,
@@ -47,7 +47,7 @@ export const GANGNAM_TEST_LISTINGS: ListingItem[] = [
   {
     id: "test-gangnam-2",
     listingType: "JEONSE",
-    address: "서울시 강남구 역삼동 736 역삼래미안",
+    address: "서울시 강남구 역삼동 757 역삼래미안",
     roomType: "아파트",
     size: 59,
     floor: 8,
@@ -84,7 +84,7 @@ export const GANGNAM_TEST_LISTINGS: ListingItem[] = [
   {
     id: "test-gangnam-3",
     listingType: "SALE",
-    address: "서울시 강남구 삼성동 159 삼성힐스테이트",
+    address: "서울시 강남구 삼성동 16-2 삼성힐스테이트",
     roomType: "아파트",
     size: 45,
     floor: 15,
@@ -121,7 +121,7 @@ export const GANGNAM_TEST_LISTINGS: ListingItem[] = [
   {
     id: "test-gangnam-4",
     listingType: "SALE",
-    address: "서울시 강남구 도곡동 950 도곡렉슬",
+    address: "서울시 강남구 도곡동 527 도곡렉슬",
     roomType: "아파트",
     size: 114,
     floor: 18,
@@ -158,7 +158,7 @@ export const GANGNAM_TEST_LISTINGS: ListingItem[] = [
   {
     id: "test-gangnam-5",
     listingType: "JEONSE",
-    address: "서울시 강남구 압구정동 456 압구정현대",
+    address: "서울시 강남구 압구정동 426 압구정현대",
     roomType: "아파트",
     size: 84,
     floor: 5,
@@ -195,7 +195,7 @@ export const GANGNAM_TEST_LISTINGS: ListingItem[] = [
   {
     id: "test-gangnam-6",
     listingType: "SALE",
-    address: "서울시 강남구 청담동 78 청담자이",
+    address: "서울시 강남구 청담동 134-38 청담자이",
     roomType: "아파트",
     size: 89,
     floor: 9,
