@@ -326,18 +326,28 @@ export default function ListingsListClient() {
               ))}
             </div>
           ) : showMolit ? (
-            displayMolit.length === 0 ? (
-              showFixtures ? (
-                <div className={s.subListingsGrid}>
-                  {displayFixtures.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
+            <>
+              {/* 비운영 도메인: 테스트 샘플은 '안심 매물' 형식·상세페이지로 국토부와 분리해 별도 블록 노출 */}
+              {showFixtures && (
+                <div style={{ marginBottom: 28 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#16a34a', margin: '0 0 12px' }}>
+                    베스트라 안심 매물 (테스트 샘플)
+                  </p>
+                  <div className={s.subListingsGrid}>
+                    {displayFixtures.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
+                  </div>
                 </div>
-              ) : (
+              )}
+              {displayMolit.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '80px 0', color: '#aeaeb2' }}>
-                  <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{molitRegion} 매물이 없습니다</p>
+                  <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{molitRegion} 국토부 실거래가 없습니다</p>
                   <p style={{ fontSize: 13 }}>시/군/구를 변경해 다시 검색해보세요</p>
                 </div>
-              )
-            ) : (
+              ) : (
+              <>
+              {showFixtures && (
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#334155', margin: '0 0 12px' }}>국토부 실거래</p>
+              )}
               <div className={s.subListingsGrid}>
                 {displayMolit.map((m, i) => (
                   <div
@@ -367,7 +377,9 @@ export default function ListingsListClient() {
                   </div>
                 ))}
               </div>
-            )
+              </>
+              )}
+            </>
           ) : displayListings.length === 0 ? (
             showFixtures ? (
               <div className={s.subListingsGrid}>
@@ -381,6 +393,8 @@ export default function ListingsListClient() {
             )
           ) : (
             <div className={s.subListingsGrid}>
+              {/* 비운영 도메인: 샘플 3건도 동일한 안심매물 형식·상세페이지라 앞에 함께 노출 */}
+              {showFixtures && displayFixtures.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
               {displayListings.map((l) => <ListingCard key={l.id} listing={l} href={`/renewal/listing-db-detail?id=${l.id}`} />)}
             </div>
           )}
