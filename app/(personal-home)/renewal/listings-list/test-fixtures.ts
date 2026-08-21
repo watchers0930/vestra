@@ -85,7 +85,7 @@ export const GANGNAM_TEST_LISTINGS: ListingItem[] = [
     id: "test-gangnam-3",
     listingType: "SALE",
     address: "서울시 강남구 삼성동 159 삼성힐스테이트",
-    roomType: "오피스텔",
+    roomType: "아파트",
     size: 45,
     floor: 15,
     totalFloor: 30,
