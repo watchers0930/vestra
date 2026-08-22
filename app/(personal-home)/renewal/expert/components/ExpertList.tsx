@@ -54,7 +54,7 @@ export default function ExpertList({ onConsult }: ExpertListProps) {
               <Link
                 href={`/renewal/keepzip/lawyers/${expert.id}`}
                 className={s.exBtn}
-                style={{ textAlign: "center", display: "block", textDecoration: "none" }}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", textDecoration: "none" }}
               >
                 내용증명 작성하기
               </Link>
