@@ -35,6 +35,9 @@ const ENV_VARS: EnvVar[] = [
   { key: "TILKO_IROS_ID", required: false, description: "인터넷등기소 로그인 ID" },
   { key: "TILKO_IROS_PASSWORD", required: false, description: "인터넷등기소 로그인 비밀번호" },
   { key: "TILKO_REGISTRY_CASE_STATUS_PATH", required: false, description: "Tilko 등기신청사건 처리현황 API path" },
+  { key: "POSTPLUS_API_KEY", required: false, description: "집키퍼 내용증명 우편발송 API 인증키(포스트플러스, 1577-8114 발급)" },
+  { key: "POSTPLUS_BASE_URL", required: false, description: "포스트플러스 API 서버 URL(미설정 시 테스트 t.postplus.co.kr)" },
+  { key: "POSTPLUS_TEST_MODE", required: false, description: "포스트플러스 테스트 발송 여부(Y/N, 기본 Y)" },
 ];
 
 let validated = false;
