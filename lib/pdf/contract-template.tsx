@@ -102,12 +102,12 @@ const ARTICLES: [string, string][] = [
 
 // ─── 스타일 ───────────────────────────────────────────────────────────────────
 const S = StyleSheet.create({
-  page: { fontFamily: "Paperlogy", fontSize: 8.5, padding: "14mm 16mm", color: "#111" },
+  page: { fontFamily: "Paperlogy", fontSize: 8, padding: "10mm 14mm", color: "#111" },
   title: { fontSize: 16, fontWeight: 700, textAlign: "center", marginBottom: 6 },
   subtitle: { fontSize: 9, textAlign: "center", color: "#555", marginBottom: 14 },
   sectionHeader: {
-    fontSize: 9, fontWeight: 700, backgroundColor: "#1a3a6b", color: "#fff",
-    paddingVertical: 4, paddingHorizontal: 8, marginTop: 10, marginBottom: 0,
+    fontSize: 8.5, fontWeight: 700, backgroundColor: "#1a3a6b", color: "#fff",
+    paddingVertical: 3, paddingHorizontal: 8, marginTop: 6, marginBottom: 0,
   },
   table: { borderWidth: 1, borderColor: "#bbb", borderStyle: "solid" },
   row: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#bbb", borderBottomStyle: "solid" },
@@ -121,20 +121,20 @@ const S = StyleSheet.create({
     width: "15%", backgroundColor: "#f5f7fb", paddingVertical: 5, paddingHorizontal: 6,
     fontWeight: 700, borderRightWidth: 1, borderRightColor: "#bbb", borderRightStyle: "solid", fontSize: 8,
   },
-  articleBox: { marginTop: 12 },
-  articleRow: { flexDirection: "row", marginBottom: 5 },
-  articleTitle: { fontWeight: 700, width: "28%", fontSize: 8 },
-  articleBody: { flex: 1, fontSize: 8, lineHeight: 1.5, color: "#333" },
+  articleBox: { marginTop: 6 },
+  articleRow: { flexDirection: "row", marginBottom: 2 },
+  articleTitle: { fontWeight: 700, width: "26%", fontSize: 7.5 },
+  articleBody: { flex: 1, fontSize: 7.5, lineHeight: 1.3, color: "#333" },
   specialTermsBox: {
-    marginTop: 12, borderWidth: 1, borderColor: "#bbb", borderStyle: "solid",
-    padding: 10, minHeight: 70,
+    marginTop: 7, borderWidth: 1, borderColor: "#bbb", borderStyle: "solid",
+    padding: 8, minHeight: 30,
   },
   specialTermsTitle: { fontWeight: 700, marginBottom: 6, fontSize: 9 },
   specialTermsText: { fontSize: 8, lineHeight: 1.6, color: "#333" },
   signSection: { marginTop: 16, flexDirection: "row", gap: 12 },
   signBox: {
     flex: 1, borderWidth: 1, borderColor: "#bbb", borderStyle: "solid",
-    padding: 10, minHeight: 90,
+    padding: 8, minHeight: 58,
   },
   signRole: { fontWeight: 700, fontSize: 8.5, marginBottom: 8, color: "#1a3a6b" },
   signLine: { flexDirection: "row", marginBottom: 5 },
@@ -144,7 +144,7 @@ const S = StyleSheet.create({
     marginTop: 8, borderTopWidth: 1, borderTopColor: "#eee", borderTopStyle: "solid",
     paddingTop: 6, alignItems: "center",
   },
-  signImg: { width: "100%", height: 54, objectFit: "contain" },
+  signImg: { width: "100%", height: 42, objectFit: "contain" },
   signEmpty: { fontSize: 7.5, color: "#aaa", marginTop: 4, textAlign: "right" },
   footer: { marginTop: 14, fontSize: 7, color: "#999", textAlign: "center" },
   stamp: {
@@ -270,24 +270,9 @@ export function ContractPdf({ data }: { data: EContractPdfData }) {
           </Text>
         </View>
 
-        {/* 확인 사항 */}
-        <View style={S.notice}>
-          <Text>
-            ※ 임차인은 잔금 지급 전 임대인 소유 여부, 선순위 권리관계 등을 확인하시기 바랍니다.{"\n"}
-            ※ 전입신고 및 확정일자를 받으면 주택임대차보호법상 대항력과 우선변제권을 취득합니다.{"\n"}
-            ※ 전세보증보험 가입을 통해 보증금을 보호받으실 수 있습니다 (HUG/SGI/HF).
-          </Text>
-        </View>
-      </Page>
-
-      {/* 서명 페이지 */}
-      <Page size="A4" style={S.page}>
-        <Text style={S.title}>서명 확인</Text>
-        <Text style={S.subtitle}>
-          아래 서명은 당사자가 본 계약 내용에 동의함을 전자적으로 표시한 것입니다.
-        </Text>
-
-        <View style={S.signSection}>
+        {/* 서명 (동일 페이지 하단) */}
+        <Text style={S.sectionHeader}>■ 서명</Text>
+        <View style={[S.signSection, { marginTop: 8 }]}>
           <SignBox
             label="임대인"
             name={data.landlord.name}
@@ -313,8 +298,8 @@ export function ContractPdf({ data }: { data: EContractPdfData }) {
           )}
         </View>
 
-        <Text style={[S.footer, { marginTop: 24 }]}>
-          계약번호: {data.id} | Vestra 전자계약 시스템 | vestra-plum.vercel.app
+        <Text style={[S.footer, { marginTop: 8 }]}>
+          ※ 본 가계약서는 주요 조건 합의 문서이며, 당사자 간 오프라인 본계약으로 확정됩니다. | 계약번호: {data.id} | vestra-plum.vercel.app
         </Text>
       </Page>
     </Document>
