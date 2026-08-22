@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import s from "./monitoring-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import RenewalLoginModal from "../_shared/RenewalLoginModal";
@@ -10,7 +10,7 @@ import MonitoringListView from "./components/MonitoringListView";
 import MonitoringDetailView from "./components/MonitoringDetailView";
 import AddPropertyModalRenewal from "./components/AddPropertyModalRenewal";
 
-export default function MonitoringRenewalClient() {
+export default function MonitoringRenewalClient({ initialAddress = "" }: { initialAddress?: string }) {
   const {
     session,
     properties,
@@ -54,6 +54,15 @@ export default function MonitoringRenewalClient() {
     }
     setShowAddModal(true);
   }, [isLoggedIn]);
+
+  // 매물 상세 등에서 ?address= 로 진입 시 감시 등록 모달 자동 오픈(주소 프리필)
+  useEffect(() => {
+    if (!initialAddress || !mounted) return;
+    if (isLoggedIn) setShowAddModal(true);
+    else setShowLoginModal(true);
+    // 최초 진입 시 1회만 열림 (deps 안정)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialAddress, mounted, isLoggedIn]);
 
   // ── 상세 뷰 ──
   if (selectedId) {
@@ -118,6 +127,7 @@ export default function MonitoringRenewalClient() {
 
       {showAddModal && (
         <AddPropertyModalRenewal
+          initialAddress={initialAddress}
           onClose={() => setShowAddModal(false)}
           onSuccess={() => {
             setShowAddModal(false);

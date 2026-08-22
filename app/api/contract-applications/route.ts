@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
 import { validateOrigin } from "@/lib/csrf";
+import { sendPushToUser } from "@/lib/push-subscriptions";
 
 const createSchema = z.object({
   listingId: z.string().min(1),
@@ -119,6 +120,13 @@ export async function POST(req: NextRequest) {
       },
       select: { id: true, status: true, createdAt: true },
     });
+
+    // 매물 소유자에게 새 의향서 알림
+    sendPushToUser(listing.ownerId, {
+      title: "새 의향서 도착",
+      body: "관심 매물에 새 계약 의향서가 도착했습니다.",
+      url: "/profile",
+    }).catch(() => {});
 
     return NextResponse.json(application, { status: 201 });
   } catch (e) {

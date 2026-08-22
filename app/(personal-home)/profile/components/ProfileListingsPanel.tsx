@@ -30,7 +30,7 @@ export default function ProfileListingsPanel() {
     <div>
       <div className={s.panelHead}>
         <span className={s.panelCount}>총 {listings.length}건</span>
-        <Link href="/listings/new" className={s.emptyBtn} style={{ marginTop: 0 }}>
+        <Link href="/renewal/listing-new" className={s.emptyBtn} style={{ marginTop: 0 }}>
           <Plus size={15} strokeWidth={2} />매물 등록
         </Link>
       </div>
@@ -45,7 +45,7 @@ export default function ProfileListingsPanel() {
         <div className={s.emptyBox}>
           <div className={s.emptyIco}><Building2 size={36} strokeWidth={1.2} /></div>
           <p className={s.emptyTitle}>등록한 매물이 없습니다</p>
-          <Link href="/listings/new" className={s.emptyBtn}>
+          <Link href="/renewal/listing-new" className={s.emptyBtn}>
             <Plus size={14} strokeWidth={2} />첫 매물 등록
           </Link>
         </div>

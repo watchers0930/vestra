@@ -13,6 +13,7 @@ interface SearchResult {
 interface Props {
   onClose: () => void;
   onSuccess: () => void;
+  initialAddress?: string;
 }
 
 /** 순수 토지(토지·임야) 외에는 동·호수 입력 허용 */
@@ -25,15 +26,17 @@ function isCollectiveBuilding(type: string): boolean {
  * 등기감시 물건 추가 모달 (renewal).
  * 시안 디자인 + 실 API 연동: /api/monitoring/parse-pdf, POST /api/monitoring
  */
-export default function AddPropertyModalRenewal({ onClose, onSuccess }: Props) {
+export default function AddPropertyModalRenewal({ onClose, onSuccess, initialAddress = "" }: Props) {
   const [tab, setTab] = useState<"addr" | "pdf">("addr");
 
-  // 주소 검색
-  const [query, setQuery] = useState("");
+  // 주소 검색 (매물 상세 등에서 진입 시 주소 프리필)
+  const [query, setQuery] = useState(initialAddress);
   const [searchError, setSearchError] = useState("");
 
-  // 선택된 물건
-  const [selected, setSelected] = useState<SearchResult | null>(null);
+  // 선택된 물건 (프리필 주소가 있으면 검색 완료 상태로 시작)
+  const [selected, setSelected] = useState<SearchResult | null>(
+    initialAddress ? { uniqueNo: "", address: initialAddress, realEstateType: "부동산" } : null
+  );
 
   // 동/호수
   const [dong, setDong] = useState("");

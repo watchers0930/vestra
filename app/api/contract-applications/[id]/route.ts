@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
 import { validateOrigin } from "@/lib/csrf";
+import { sendPushToUser } from "@/lib/push-subscriptions";
 
 // GET /api/contract-applications/[id] — 채팅방 진입용 단건 조회
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -97,6 +98,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await prisma.listing.update({
         where: { id: application.listingId },
         data: { status: "CONTRACTED" },
+      }).catch(() => {});
+    }
+
+    // 신청자에게 수락/거절 알림 (철회는 본인 행위이므로 제외)
+    if (status === "ACCEPTED" || status === "REJECTED") {
+      sendPushToUser(application.applicantId, {
+        title: status === "ACCEPTED" ? "의향서가 수락되었습니다" : "의향서가 거절되었습니다",
+        body: status === "ACCEPTED"
+          ? "제출하신 계약 의향서가 수락되었습니다. 채팅으로 협의를 시작하세요."
+          : "제출하신 계약 의향서가 거절되었습니다.",
+        url: status === "ACCEPTED" ? `/chat/${application.id}` : "/profile",
       }).catch(() => {});
     }
 

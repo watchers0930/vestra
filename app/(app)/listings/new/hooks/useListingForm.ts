@@ -34,7 +34,7 @@ const INITIAL: ListingFormData = {
   description: "",
 };
 
-export function useListingForm() {
+export function useListingForm(opts?: { successPath?: (id: string) => string }) {
   const router = useRouter();
   const [form, setForm] = useState<ListingFormData>(INITIAL);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -112,7 +112,7 @@ export function useListingForm() {
         throw new Error(j.error ?? "등록에 실패했습니다.");
       }
       const { listing } = await res.json();
-      router.push(`/listings/${listing.id}`);
+      router.push(opts?.successPath?.(listing.id) ?? `/listings/${listing.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "등록 오류");
       setSubmitting(false);
