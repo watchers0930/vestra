@@ -48,7 +48,34 @@ export const GET = withAgentAuth<{ id: string }>(
         );
       }
 
-      return NextResponse.json({ client });
+      // 고객이 VESTRA 가입회원(clientUserId)이면 그 고객의 매물·받은 의향서를 함께 제공
+      let clientListings: unknown[] = [];
+      let clientApplications: unknown[] = [];
+      if (client.clientUserId) {
+        [clientListings, clientApplications] = await Promise.all([
+          prisma.listing.findMany({
+            where: { ownerId: client.clientUserId },
+            select: {
+              id: true, address: true, listingType: true, status: true, isCertified: true, createdAt: true,
+              _count: { select: { applications: true } },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 50,
+          }),
+          prisma.contractApplication.findMany({
+            where: { listing: { ownerId: client.clientUserId } },
+            select: {
+              id: true, status: true, moveInDate: true, createdAt: true,
+              listing: { select: { address: true } },
+              applicant: { select: { name: true, companyName: true } },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 50,
+          }),
+        ]);
+      }
+
+      return NextResponse.json({ client, clientListings, clientApplications });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "알 수 없는 오류";

@@ -163,13 +163,21 @@ export async function POST(req: NextRequest, { params }: Params) {
 // 최종 서명 완료 후 상태 업데이트 (PDF는 온디맨드 생성 — /api/e-contracts/[id]/pdf)
 async function generateFinalPdf(contractId: string) {
   try {
-    await prisma.eContract.update({
+    const updated = await prisma.eContract.update({
       where: { id: contractId },
       data: {
         finalPdfUrl: `/api/e-contracts/${contractId}/pdf`,
         completedAt: new Date(),
       },
+      select: { listingId: true },
     });
+    // 의향서 기반 계약이면 연결 매물을 거래 완료로 동기화 (CONTRACTED → COMPLETED)
+    if (updated.listingId) {
+      await prisma.listing.update({
+        where: { id: updated.listingId },
+        data: { status: "COMPLETED" },
+      }).catch(() => {});
+    }
   } catch (e) {
     console.error("[generateFinalPdf]", e);
   }

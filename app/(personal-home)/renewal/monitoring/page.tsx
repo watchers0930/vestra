@@ -8,8 +8,8 @@ export const metadata = {
 export default async function MonitoringRenewalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ address?: string }>;
+  searchParams: Promise<{ address?: string; listingId?: string }>;
 }) {
-  const { address } = await searchParams;
-  return <MonitoringRenewalClient initialAddress={address ?? ""} />;
+  const { address, listingId } = await searchParams;
+  return <MonitoringRenewalClient initialAddress={address ?? ""} initialListingId={listingId ?? ""} />;
 }

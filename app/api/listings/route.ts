@@ -133,6 +133,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 사업자 회원(임대사업자·부동산·기업)은 관리자 인증 완료(verified) 후에만 등록 가능.
+    // 개인 임대인(PERSONAL/LANDLORD)·관리자는 인증 대상 아님.
+    const BIZ_ROLES = ["RENTAL_BIZ", "BUSINESS", "REALESTATE"];
+    if (BIZ_ROLES.includes(session.user.role ?? "") && session.user.verifyStatus !== "verified") {
+      return NextResponse.json(
+        { error: "사업자 인증 완료 후 매물을 등록할 수 있습니다. 마이페이지에서 인증 상태를 확인해주세요." },
+        { status: 403 },
+      );
+    }
+
     const body = await req.json();
     const parsed = createListingSchema.safeParse(body);
     if (!parsed.success) {

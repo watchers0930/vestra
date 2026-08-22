@@ -14,6 +14,7 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
   initialAddress?: string;
+  initialListingId?: string;
 }
 
 /** 순수 토지(토지·임야) 외에는 동·호수 입력 허용 */
@@ -26,7 +27,7 @@ function isCollectiveBuilding(type: string): boolean {
  * 등기감시 물건 추가 모달 (renewal).
  * 시안 디자인 + 실 API 연동: /api/monitoring/parse-pdf, POST /api/monitoring
  */
-export default function AddPropertyModalRenewal({ onClose, onSuccess, initialAddress = "" }: Props) {
+export default function AddPropertyModalRenewal({ onClose, onSuccess, initialAddress = "", initialListingId = "" }: Props) {
   const [tab, setTab] = useState<"addr" | "pdf">("addr");
 
   // 주소 검색 (매물 상세 등에서 진입 시 주소 프리필)
@@ -119,6 +120,7 @@ export default function AddPropertyModalRenewal({ onClose, onSuccess, initialAdd
       ].filter(Boolean).join(" ");
 
       const body: Record<string, unknown> = { address: fullAddress };
+      if (initialListingId) body.listingId = initialListingId;
       if (selected.uniqueNo) body.commUniqueNo = selected.uniqueNo;
       if (pdfRawText) body.pdfRawText = pdfRawText;
       if (deposit) body.deposit = Number(deposit);

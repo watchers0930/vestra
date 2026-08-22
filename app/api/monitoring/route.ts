@@ -91,12 +91,19 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { address, contractDate, moveInDate, deposit, commUniqueNo, ownerName, pdfRawText } = body;
+    const { address, contractDate, moveInDate, deposit, commUniqueNo, ownerName, pdfRawText, listingId } = body;
     if (!address || typeof address !== "string" || address.trim().length < 5) {
       return NextResponse.json(
         { error: "유효한 주소를 입력해주세요." },
         { status: 400 }
       );
+    }
+
+    // 매물 상세에서 진입한 경우: 실제 존재하는 매물일 때만 연결(FK)
+    let validListingId: string | undefined;
+    if (listingId && typeof listingId === "string") {
+      const listingExists = await prisma.listing.findUnique({ where: { id: listingId }, select: { id: true } });
+      if (listingExists) validListingId = listingId;
     }
 
     // contract_gap 모드: 계약일이 제공되면 강화 감시
@@ -130,6 +137,7 @@ export async function POST(req: NextRequest) {
           ...(deposit ? { deposit: Number(deposit) } : {}),
           ...(commUniqueNo ? { commUniqueNo } : {}),
           ...(ownerName ? { ownerName: String(ownerName).trim() } : {}),
+          ...(validListingId ? { listingId: validListingId } : {}),
         },
       });
       if (pdfRawText && typeof pdfRawText === "string") {
@@ -201,6 +209,7 @@ export async function POST(req: NextRequest) {
         ...(deposit ? { deposit: Number(deposit) } : {}),
         ...(commUniqueNo ? { commUniqueNo } : {}),
         ...(ownerName ? { ownerName: String(ownerName).trim() } : {}),
+        ...(validListingId ? { listingId: validListingId } : {}),
       },
     });
 

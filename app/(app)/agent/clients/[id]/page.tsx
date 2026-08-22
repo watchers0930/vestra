@@ -10,6 +10,7 @@ import {
 import { Card, CardContent } from "@/components/common/Card";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
+import { ClientTransactionsSection, type ClientListing, type ClientApplication } from "./components/ClientTransactionsSection";
 import { Skeleton } from "@/components/common/Skeleton";
 import { FormInput } from "@/components/forms/FormInput";
 import AddressAutocomplete from "@/components/common/AddressAutocomplete";
@@ -61,6 +62,7 @@ export default function ClientDetailPage() {
   const id = params.id as string;
 
   const [client, setClient] = useState<ClientDetail | null>(null);
+  const [txns, setTxns] = useState<{ listings: ClientListing[]; applications: ClientApplication[] }>({ listings: [], applications: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [registryAddress, setRegistryAddress] = useState("");
@@ -81,6 +83,7 @@ export default function ClientDetailPage() {
       }
       const data = await res.json();
       setClient(data.client);
+      setTxns({ listings: data.clientListings ?? [], applications: data.clientApplications ?? [] });
     } catch {
       setError("네트워크 오류가 발생했습니다.");
     } finally {
@@ -373,6 +376,10 @@ export default function ClientDetailPage() {
             )}
           </CardContent>
         </Card>
+
+        {client.clientUserId && (
+          <ClientTransactionsSection listings={txns.listings} applications={txns.applications} />
+        )}
       </div>
     </div>
       <RegistryAnalysisModal

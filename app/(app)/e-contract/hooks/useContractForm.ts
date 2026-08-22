@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export type ContractType = "JEONSE" | "MONTHLY" | "SALE";
 export type Step = "type" | "basic" | "terms" | "confirm" | "done";
@@ -34,9 +34,31 @@ const INITIAL: ContractFormState = {
 export function useContractForm() {
   const [step, setStep] = useState<Step>("type");
   const [form, setForm] = useState<ContractFormState>(INITIAL);
+  const [applicationId, setApplicationId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [signUrl, setSignUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // 받은 의향서(수락됨)에서 진입 시: 매물·의향서 정보를 프리필하고 계약을 의향서와 연결
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const appId = sp.get("applicationId");
+    if (!appId) return;
+    setApplicationId(appId);
+    const address = sp.get("address") ?? "";
+    const deposit = sp.get("deposit") ?? "";
+    const type = sp.get("type") ?? "";
+    const tenantEmail = sp.get("tenantEmail") ?? "";
+    setForm((prev) => ({
+      ...prev,
+      ...(address ? { address } : {}),
+      ...(deposit ? { deposit } : {}),
+      ...(["JEONSE", "MONTHLY", "SALE"].includes(type) ? { contractType: type as ContractType } : {}),
+      ...(tenantEmail ? { tenantEmail } : {}),
+    }));
+    setStep("basic");
+  }, []);
 
   function update(key: keyof ContractFormState, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -80,6 +102,7 @@ export function useContractForm() {
           specialTerms: form.specialTerms || null,
           tenantEmail: form.tenantEmail,
           brokerEmail: form.brokerEmail || null,
+          ...(applicationId ? { applicationId } : {}),
         }),
       });
 

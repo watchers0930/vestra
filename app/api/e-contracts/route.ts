@@ -35,7 +35,28 @@ export async function POST(req: NextRequest) {
       specialTerms,
       tenantEmail,
       brokerEmail,
+      applicationId,
     } = body;
+
+    // 의향서 기반 계약: 매물·의향서·임차인을 FK로 연결(데이터 무결성). 직접 작성 시엔 생략.
+    let linkedListingId: string | undefined;
+    let linkedApplicationId: string | undefined;
+    let linkedTenantId: string | undefined;
+    if (applicationId && typeof applicationId === "string") {
+      const app = await prisma.contractApplication.findUnique({
+        where: { id: applicationId },
+        select: { id: true, applicantId: true, listingId: true, listing: { select: { ownerId: true } } },
+      });
+      if (!app) {
+        return NextResponse.json({ error: "연결할 의향서를 찾을 수 없습니다." }, { status: 404 });
+      }
+      if (app.listing.ownerId !== session.user.id) {
+        return NextResponse.json({ error: "본인 매물의 의향서만 계약으로 연결할 수 있습니다." }, { status: 403 });
+      }
+      linkedListingId = app.listingId;
+      linkedApplicationId = app.id;
+      linkedTenantId = app.applicantId;
+    }
 
     // 필수값 검증
     if (!contractType || !address || !deposit || !tenantEmail) {
@@ -107,6 +128,9 @@ export async function POST(req: NextRequest) {
         tenantEmail: String(tenantEmail).trim().toLowerCase(),
         brokerEmail: brokerEmail ? String(brokerEmail).trim().toLowerCase() : null,
         creatorId: session.user.id,
+        ...(linkedListingId ? { listingId: linkedListingId } : {}),
+        ...(linkedApplicationId ? { applicationId: linkedApplicationId } : {}),
+        ...(linkedTenantId ? { tenantId: linkedTenantId } : {}),
         signatures: {
           create: {
             role: "LANDLORD",

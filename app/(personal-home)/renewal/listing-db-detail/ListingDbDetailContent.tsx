@@ -243,7 +243,7 @@ export default function ListingDbDetailContent() {
             <div className={s.ctaSection}>
               <button className={s.ctaPrimary} onClick={handleIntent}>의향서 보내기</button>
               <button className={s.ctaSecondary} onClick={() => router.push("/renewal/rights")}>AI 권리분석 해보기</button>
-              <button className={s.ctaSecondary} onClick={() => router.push(`/renewal/monitoring?address=${encodeURIComponent(listing.address)}`)}>이 매물 등기감시</button>
+              <button className={s.ctaSecondary} onClick={() => router.push(`/renewal/monitoring?address=${encodeURIComponent(listing.address)}&listingId=${listing.id}`)}>이 매물 등기감시</button>
             </div>
           </div>
         </div>

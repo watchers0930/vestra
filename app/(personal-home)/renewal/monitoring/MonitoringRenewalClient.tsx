@@ -10,7 +10,7 @@ import MonitoringListView from "./components/MonitoringListView";
 import MonitoringDetailView from "./components/MonitoringDetailView";
 import AddPropertyModalRenewal from "./components/AddPropertyModalRenewal";
 
-export default function MonitoringRenewalClient({ initialAddress = "" }: { initialAddress?: string }) {
+export default function MonitoringRenewalClient({ initialAddress = "", initialListingId = "" }: { initialAddress?: string; initialListingId?: string }) {
   const {
     session,
     properties,
@@ -128,6 +128,7 @@ export default function MonitoringRenewalClient({ initialAddress = "" }: { initi
       {showAddModal && (
         <AddPropertyModalRenewal
           initialAddress={initialAddress}
+          initialListingId={initialListingId}
           onClose={() => setShowAddModal(false)}
           onSuccess={() => {
             setShowAddModal(false);

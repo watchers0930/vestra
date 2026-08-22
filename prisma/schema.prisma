@@ -107,6 +107,8 @@ model User {
 
   // 전자계약 (임대인으로 참여한 계약)
   landlordContracts EContract[] @relation("LandlordEContracts")
+  // 전자계약 (임차인으로 참여한 계약 — 가입회원인 경우)
+  tenantContracts   EContract[] @relation("TenantEContracts")
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -315,16 +317,19 @@ model MonitoredProperty {
   commUniqueNo  String?           // CODEF 고유번호 (등기 조회용)
   ownerName     String?           // Tilko 등기신청사건 조회용 소유자명
   baselineData  String?           @db.Text // 계약 시점 등기부 스냅샷 (JSON)
+  listingId     String?           // 감시 대상 매물(Listing) — 있으면 매물과 연결, 없으면 주소 직접 등록
   alerts              MonitoringAlert[]
   snapshots           RegistrySnapshot[]
   agentClientProperties AgentClientProperty[]
   user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing             Listing?          @relation("ListingMonitors", fields: [listingId], references: [id], onDelete: SetNull)
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
   @@unique([userId, address])
   @@index([status])
   @@index([monitorMode])
+  @@index([listingId])
 }
 
 model RegistrySnapshot {
@@ -747,6 +752,8 @@ model Listing {
 
   owner        User                  @relation("OwnedListings", fields: [ownerId], references: [id], onDelete: Cascade)
   applications ContractApplication[]
+  monitors     MonitoredProperty[]   @relation("ListingMonitors")
+  econtracts   EContract[]           @relation("ListingEContracts")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -779,6 +786,7 @@ model ContractApplication {
   listing   Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
   applicant User      @relation("SentApplications", fields: [applicantId], references: [id], onDelete: Cascade)
   messages  Message[]
+  econtracts EContract[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -813,6 +821,11 @@ model EContract {
   brokerEmail  String?   // 공인중개사 이메일 (없으면 직거래 → 2자 서명)
   creatorId    String    // 계약 생성자 User.id (임대인 or 중개사)
 
+  // 거래 연결 (의향서 기반 생성 시 채워짐 — 없으면 직접 작성 계약)
+  listingId     String?  // 계약 대상 매물(Listing)
+  applicationId String?  // 근거 계약의향서(ContractApplication)
+  tenantId      String?  // 임차인이 Vestra 가입회원인 경우 User.id
+
   // 최종 문서
   documentHash String?   // 서명 전 PDF 해시 (무결성 검증용)
   finalPdfUrl  String?   // 최종 서명 완료 PDF (Vercel Blob URL)
@@ -820,6 +833,9 @@ model EContract {
 
   landlord     User      @relation("LandlordEContracts", fields: [landlordId], references: [id], onDelete: Cascade)
   signatures   EContractSignature[]
+  listing      Listing?             @relation("ListingEContracts", fields: [listingId], references: [id], onDelete: SetNull)
+  application  ContractApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  tenant       User?                @relation("TenantEContracts", fields: [tenantId], references: [id], onDelete: SetNull)
 
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -827,6 +843,8 @@ model EContract {
   @@index([landlordId])
   @@index([status])
   @@index([creatorId])
+  @@index([listingId])
+  @@index([applicationId])
 }
 
 model EContractSignature {

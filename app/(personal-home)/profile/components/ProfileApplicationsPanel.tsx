@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Building2, FileText, MessageCircle, Trash2 } from "lucide-react";
+import { Building2, FileText, MessageCircle, Trash2, FileSignature } from "lucide-react";
 import { useSentApplications, useReceivedApplications, type AppItem, type AppStatus, type ReceivedFilter } from "../hooks/useApplications";
 import s from "../profile-renewal.module.css";
 
@@ -191,6 +191,14 @@ function ReceivedList() {
                 <div className={s.footActs}>
                   <span className={s.footDate}>{fmtDate(a.createdAt)}</span>
                   <Link href={`/chat/${a.id}`} className={s.actBtn}><MessageCircle size={13} strokeWidth={2} />채팅</Link>
+                  {a.status === "ACCEPTED" && (
+                    <Link
+                      href={`/e-contract?applicationId=${a.id}&address=${encodeURIComponent(a.listing?.address ?? "")}&deposit=${a.listing?.deposit ?? ""}&type=${a.listing?.listingType ?? "JEONSE"}`}
+                      className={`${s.actBtn} ${s.actAccept}`}
+                    >
+                      <FileSignature size={13} strokeWidth={2} />전자계약 작성
+                    </Link>
+                  )}
                   {a.status === "PENDING" && (
                     <>
                       <button className={`${s.actBtn} ${s.actDanger}`} disabled={busyId === a.id} onClick={() => decide(a.id, "REJECTED")}>거절</button>
