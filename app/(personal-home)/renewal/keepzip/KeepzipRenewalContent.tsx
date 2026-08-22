@@ -25,7 +25,7 @@ export default function KeepzipRenewalContent() {
 
   return (
     <>
-      <RenewalGnb />
+      <RenewalGnb active="keepzip" />
 
       <section className={s.subHero}>
         <div className={s.subHeroBg} />
