@@ -1,9 +1,9 @@
 # VESTRA Wiki INDEX
 
-> **컴파일 날짜**: 2026-07-27
-> **프로젝트 버전**: v5.11.0
+> **컴파일 날짜**: 2026-08-22
+> **프로젝트 버전**: v5.90.2
 > **배포 URL**: https://vestra-plum.vercel.app
-> **총 토픽**: 7개 | **개념 아티클**: 2개 | **소스 문서**: 51개
+> **총 토픽**: 7개 | **개념 아티클**: 3개 | **소스 문서**: 51개+
 
 ---
 
@@ -11,12 +11,12 @@
 
 | 토픽 | 파일 | 설명 | Sources | Coverage |
 |------|------|------|---------|----------|
-| 플랫폼 개요 | [topics/platform-overview.md](topics/platform-overview.md) | 전체 아키텍처, 기술 스택, 코드 규모, 9.2/10 A등급 | 13 | high |
+| 플랫폼 개요 | [topics/platform-overview.md](topics/platform-overview.md) | 전체 아키텍처, 회원 역할 계층, 거래 FK 무결성, v5.90.2 | 13 | high |
 | 핵심 알고리즘 | [topics/algorithm.md](topics/algorithm.md) | 7개 특허 알고리즘, 공공 API 10종, 예측 강화 로드맵 | 11 | high |
-| API 명세 | [topics/api.md](topics/api.md) | 51개 엔드포인트, 접근 매트릭스, 외부 API 7종 | 6 | high |
-| 프론트엔드 | [topics/frontend.md](topics/frontend.md) | 페이지/컴포넌트 구조, Tailwind v4 이슈 | 5 | high |
-| 보안 | [topics/security.md](topics/security.md) | RBAC, PII 암호화, OWASP 8/10, 취약점 감사 | 8 | high |
-| 주요 기능 | [topics/features.md](topics/features.md) | 30+ 기능, 전세·계약·등기감시·대출가심사 | 14 | high |
+| API 명세 | [topics/api.md](topics/api.md) | 거래 API·가계약서·권한 가드·접근 매트릭스 | 8 | high |
+| 프론트엔드 | [topics/frontend.md](topics/frontend.md) | renewal UI, 매물등록·가계약서·서명패드, PDF | 16 | high |
+| 보안 | [topics/security.md](topics/security.md) | RBAC·역할 게이팅·PII 최소화·PDF 접근격리·OWASP | 14 | high |
+| 주요 기능 | [topics/features.md](topics/features.md) | 가계약서·의향서·등기감시·전세·사업성(기업전용) | 20 | high |
 | 배포/인프라 | [topics/deployment.md](topics/deployment.md) | 2단계 배포, Vercel, Neon, 환경변수 15종 | 5 | high |
 
 ---
@@ -27,6 +27,7 @@
 |------|------|-----------|
 | 2단계 검증 원칙 | [concepts/two-stage-principle.md](concepts/two-stage-principle.md) | algorithm, deployment, security |
 | 미검증 파라미터 문제 | [concepts/uncalibrated-parameters.md](concepts/uncalibrated-parameters.md) | algorithm, api, deployment |
+| 역할 기반 기능 게이팅 | [concepts/role-based-feature-gating.md](concepts/role-based-feature-gating.md) | platform-overview, api, security, features |
 
 ---
 
@@ -139,6 +140,12 @@
 
 ## 최근 변경 이력
 
+- **2026-08-22**: 이번 세션(v5.87~5.90.2) 반영 — 5개 토픽 갱신(features·api·frontend·security·platform-overview)
+  - 가계약서 전면 개편(양측 손글씨 서명→PDF A4 1페이지→오프라인 확정, 표준계약 10개 조항 요약, 주민번호 성별1자리)
+  - 거래 데이터 FK 무결성(EContract↔의향서/매물/임차인, MonitoredProperty↔매물)
+  - 회원 역할 계층(개인/부동산/임대사업자/기업=사업성분석/관리자) + 권한 가드(매물등록 verifyStatus, 사업성분석 기업전용)
+  - 매물등록 renewal 이식, 매물→감시 연결, 의향서 Web Push, 중개사 CRM 거래조회
+  - 신규 개념: role-based-feature-gating
 - **2026-07-27**: 3개 토픽 증분 업데이트 (코드 구현 반영)
   - frontend: 500줄 파일 분리 완료 상태 갱신, Tailwind v4 responsive prefix 미작동 이슈 + overflow-x sticky 차단 이슈 추가, 금액 입력 padding 이슈 추가
   - api: generate-document jeonse/lease 타입 법원 공식 양식 적용 Key Decision 추가

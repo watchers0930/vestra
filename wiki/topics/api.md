@@ -1,7 +1,7 @@
 ---
 topic: api
-last_compiled: 2026-07-27
-sources: 6
+last_compiled: 2026-08-22
+sources: 8
 ---
 
 # API
@@ -10,96 +10,11 @@ sources: 6
 
 [coverage: high -- 3 sources]
 
-VESTRA 플랫폼의 모든 서버 엔드포인트 인터페이스 명세. Next.js 16 App Router 기반 Vercel 서버리스 함수로 구현되어 있으며, 총 51개 API 라우트가 존재한다 (분석 12·사업성 7·관리자 16·사용자 5·모니터링 3·상호검증 2·Cron 2·기타 4). 핵심 목적은 등기부등본 분석, 계약서 검토, 시세전망, 권리분석, AI 채팅 등 부동산 AI 서비스를 안전하게 외부에 노출하는 것이다. 모든 OpenAI 호출은 서버사이드에서만 실행된다.
+VESTRA 플랫폼의 모든 서버 엔드포인트 인터페이스 명세. Next.js 16 App Router 기반 Vercel 서버리스 함수로 구현되어 있으며, 등기부등본 분석, 계약서 검토, 시세전망, 권리분석, AI 채팅 등 부동산 AI 서비스 외에 매물 등록·의향서·전자/가계약서·부동산 모니터링·사업성분석(기업 전용)·중개관리 등 거래 워크플로우 API를 포함한다. 핵심 목적은 이 기능들을 안전하게 외부에 노출하는 것이며, 모든 OpenAI 호출은 서버사이드에서만 실행된다. 모든 변이(POST/PUT/PATCH/DELETE) 요청은 `validateOrigin` CSRF 가드와 세션 인증을 우선 통과한다.
 
 - 프로덕션 베이스 URL: `https://vestra-plum.vercel.app`
+- 테스트 베이스 URL: `https://t-vestra.vercel.app`
 - 개발 베이스 URL: `http://localhost:3000`
-
----
-
-## API Surface (전체 엔드포인트 목록)
-
-[coverage: high -- 2 sources]
-
-### 분석 API
-
-| # | Method | URL | 인증 | 역할 제한 | Rate Limit |
-|---|--------|-----|------|----------|-----------|
-| 1 | POST | `/api/analyze-unified` | 선택 | - (미로그인 시 GUEST 한도) | 10/min + 일일 |
-| 2 | POST | `/api/analyze-contract` | 선택 | PERSONAL+ | 30/min + 일일 + Cost Guard |
-| 3 | POST | `/api/analyze-rights` | 선택 | - | 30/min + 일일 + Cost Guard |
-| 4 | POST | `/api/predict-value` | 선택 | - | 30/min + 일일 + Cost Guard |
-
-### 문서 처리 API
-
-| # | Method | URL | 인증 | Rate Limit |
-|---|--------|-----|------|-----------|
-| 5 | POST | `/api/generate-document` | 불필요 | 30/min + Cost Guard |
-| 6 | POST | `/api/extract-pdf` | 불필요 | 10/min |
-| 7 | POST | `/api/parse-registry` | 불필요 | - |
-
-### 사용자 API
-
-| # | Method | URL | 인증 | CSRF |
-|---|--------|-----|------|------|
-| 8 | GET | `/api/user/profile` | 필수 | - |
-| 9 | GET | `/api/user/usage` | 필수 | - |
-| 10 | POST | `/api/user/setup-role` | 필수 | O |
-| 11 | POST | `/api/user/migrate-data` | 필수 | - |
-
-### 관리자 API (ADMIN 역할 전용)
-
-| # | Method | URL | CSRF |
-|---|--------|-----|------|
-| 12 | GET | `/api/admin/users` | - |
-| 13 | GET/PATCH/DELETE | `/api/admin/users/[id]` | - |
-| 14 | GET/PATCH | `/api/admin/settings` | O |
-| 15 | GET | `/api/admin/stats` | - |
-| 16 | GET/POST | `/api/admin/announcements` | - |
-| 17 | PATCH/DELETE | `/api/admin/announcements/[id]` | - |
-| 18 | GET | `/api/admin/audit-logs` | - |
-
-### 인증 API
-
-| # | Method | URL | 설명 |
-|---|--------|-----|------|
-| 19 | GET/POST | `/api/auth/[...nextauth]` | NextAuth v5 핸들러 (자동 처리) |
-
-### 부가 기능 API
-
-| # | Method | URL | 인증 | Rate Limit |
-|---|--------|-----|------|-----------|
-| 20 | POST | `/api/chat` | 선택 (PERSONAL+) | 30/min + 일일 + Cost Guard |
-| 21 | GET/POST | `/api/subscription` | 필수 | - |
-| 22 | POST | `/api/subscription/cancel` | 필수 | - |
-| 23 | POST | `/api/real-price` | 불필요 | - |
-| 24 | GET | `/api/scholar/search` | 불필요 | - |
-
-### 추가 기능 API (완료보고서 기준)
-
-| # | Method | URL | 설명 |
-|---|--------|-----|------|
-| 25 | POST | `/api/fraud-risk` | 15-피처 전세사기 위험도 산출 |
-| 26 | POST | `/api/credit-check` | KCB/NICE 신용정보 (현재 Mock) |
-| 27 | GET/POST | `/api/monitoring` | 부동산 변동 모니터링 등록/조회 |
-| 28 | GET/PATCH | `/api/monitoring/alerts` | 모니터링 알림 조회/일괄 읽음 |
-| 29 | PATCH | `/api/monitoring/alerts/[id]` | 개별 알림 읽음 처리 |
-| 30 | GET/POST | `/api/fraud-cases` | 전세사기 피해사례 조회/등록 |
-| 31 | GET/POST | `/api/verification/request` | 상호검증 요청 생성/목록 |
-| 32 | POST | `/api/verification/respond` | 상호검증 수락/거절 |
-| 33 | GET | `/api/verification/shared/[id]` | 공유 리포트 조회 |
-| 34 | GET | `/api/cron/registry-monitor` | Cron: 등기변동 모니터링 (매일 09:00) |
-| 35 | GET | `/api/cron/fraud-import` | Cron: 전세사기 데이터 수집 (매주 월 03:00) |
-
-### 역할별 일일 분석 한도 (접근 통제 매트릭스 기준)
-
-| 역할 | 일일 한도 | 설명 |
-|------|----------|------|
-| GUEST | 2회 | 비로그인 (IP 기반 식별) |
-| PERSONAL | 5회 | 일반 회원 |
-| BUSINESS | 50회 | 기업 회원 (사업자 인증) |
-| REALESTATE | 100회 | 부동산 전문가 (인증) |
-| ADMIN | 무제한 (9,999회) | 관리자 |
 
 ---
 
@@ -113,80 +28,170 @@ VESTRA 플랫폼의 모든 서버 엔드포인트 인터페이스 명세. Next.j
 Client (Browser / Next.js SSR)
         │ HTTPS
 Vercel Serverless Functions
-  ├── Rate Limit (슬라이딩 윈도우, DB 기반)
-  ├── CSRF Guard (토큰 기반)
+  ├── CSRF Guard (validateOrigin — 변이 요청 전면 적용)
   ├── Auth (JWT, NextAuth v5)
-  └── Core Analysis Engine
-        ├── V-Score / Cross-Analysis / Fraud Risk
+  ├── Rate Limit (슬라이딩 윈도우, DB 기반)
+  ├── Role/VerifyStatus Guard (역할·인증 상태 기반 접근 통제)
+  └── Core Engine
+        ├── V-Score / Cross-Analysis / Fraud Risk / Feasibility
         ├── Cascade / Confidence / Registry Parser
         └── OpenAI gpt-4.1-mini (서버사이드 전용)
         │
-        ├── Neon PostgreSQL (Prisma ORM, 28개 모델)
+        ├── Neon PostgreSQL (Prisma ORM)
         ├── OpenAI API
-        └── 공공 API (MOLIT, 건축물대장, 대법원, ECOS, 학술검색)
+        ├── Web Push (lib/push-subscriptions — sendPushToUser)
+        └── 공공/외부 API (MOLIT, 건축물대장, 대법원, ECOS, Tilko, Kakao geocoding)
 ```
 
 ### 인증 방식
 
-- 프레임워크: NextAuth v5 (beta.30)
-- 세션 전략: JWT (JWE 암호화)
+- 프레임워크: NextAuth v5 (beta), 세션 전략 JWT (JWE 암호화)
 - 소셜 로그인: Google, Naver (카카오는 설정 중)
 - Credentials 로그인: 이메일 + bcrypt 비밀번호
 - 세션 전달: httpOnly 쿠키 (Secure, SameSite=lax)
-- 동적 OAuth: DB 기반 OAuth 키 관리 — 관리자가 설정 변경 가능
+- 동적 OAuth: DB(`SystemSetting`) 기반 OAuth 키를 AES-256-GCM 암호화 저장, 관리자가 변경 가능
+- 세션 사용자에 `role`(GUEST/PERSONAL/RENTAL_BIZ/BUSINESS/REALESTATE/ADMIN 등), `userType`(TENANT 등), `verifyStatus`(사업자 인증 상태) 필드가 포함되며 서버 가드에서 활용
+
+### 접근 통제 계층 (거래 API 공통)
+
+| 가드 유형 | 적용 방식 | 예시 |
+|-----------|-----------|------|
+| CSRF | `validateOrigin(req)` — 모든 변이 요청 진입 시 | listings·monitoring·contract-applications·e-contracts·feasibility POST |
+| 세션 인증 | `auth()` 후 `session.user.id` 확인 | 위 전 라우트 |
+| userType 차단 | `session.user.userType === "TENANT"` → 403 | 매물 등록 |
+| 사업자 인증 상태 | `role ∈ {RENTAL_BIZ,BUSINESS,REALESTATE}` && `verifyStatus !== "verified"` → 403 | 매물 등록 |
+| 기업 전용 가드 | `assertFeasibilityAccess` (`lib/feasibility-guard`) — `role ∈ {BUSINESS,ADMIN}` | 사업성분석 5종 |
+| 중개인 래퍼 | `withAgentAuth` (`lib/with-agent-auth`) + 리소스 소유권(`agentId`) | agent/clients |
+| 리소스 소유권 | `ownerId`/`applicantId`/`landlordId` 대조 | 의향서·가계약 처리 |
 
 ### Rate Limit 정책
 
 | 구분 | 방식 | 저장소 |
 |------|------|--------|
-| 분당 제한 | 슬라이딩 윈도우 | Neon PostgreSQL `RateLimit` 테이블 |
-| 일일 제한 | 역할별 카운터 | `DailyUsage` 테이블 |
-| Cost Guard | OpenAI API 일일 호출 제한 | 별도 카운터 |
+| 분당 제한 | 슬라이딩 윈도우(`rateLimit(key, limit)`) | Neon PostgreSQL `RateLimit` 테이블 |
+| 일일 제한 | 역할별 카운터(`checkDailyUsage`) | `DailyUsage` 테이블 |
+| Cost Guard | OpenAI API 일일 호출 제한(`checkOpenAICostGuard`) | 별도 카운터 |
 
-Rate Limit 응답 헤더: `X-RateLimit-Remaining`, `X-RateLimit-Reset` (Unix timestamp)
+Rate Limit 응답 헤더: `X-RateLimit-Remaining`, `X-RateLimit-Reset`. 식별자: `userId || IP`.
 
-Rate Limit 식별자: IP + userId 조합
+### Web Push 알림 연동
 
-### 미들웨어 보호 경로 (Edge Function)
-
-```
-middleware.ts
-├── /admin/*   → JWT 검증 + ADMIN 역할 확인
-├── /dashboard → JWT 검증
-└── /profile   → JWT 검증
-```
-
-### 입력값 살균 정책 (모든 API 공통)
-
-- HTML 태그 및 `<script>` 블록 제거 (`stripHtml`)
-- 입력 길이 제한: 기본 50,000자 (`truncateInput`)
-- 필드별 최대 길이: 기본 500자 (`sanitizeField`)
-- 채팅: role 허용값 검증, 메시지 수 50개 제한, 개별 10,000자 제한
-
-### 외부 API 연동 모듈
-
-| 외부 API | 내부 모듈 | 환경변수 | 자동 호출 엔드포인트 |
-|---------|----------|---------|------------------|
-| MOLIT 실거래가 (국토교통부) | `lib/molit-api.ts` | `MOLIT_API_KEY` | analyze-unified, analyze-rights, predict-value |
-| 건축물대장·K-apt 단지목록 (국토교통부) | `lib/building-api.ts` | `KAPT_API_KEY` | analyze-unified, analyze-rights |
-| VWorld NED 공시가격 (국토지리정보원) | `lib/vworld-api.ts` | `VWORLD_API_KEY` | analyze-unified, predict-value |
-| 대법원 판례 (법제처) | `lib/court-api.ts` | `LAW_API_KEY` | analyze-contract, chat |
-| ECOS 기준금리 (한국은행) | `lib/bok-api.ts` | `BOK_API_KEY` | predict-value |
-| OpenAI (gpt-4.1-mini) | `lib/openai.ts` | `OPENAI_API_KEY` | 분석 API 전반 |
-| KCB/NICE 신용정보 | `lib/credit-api.ts` | KCB/NICE API키 | credit-check |
-
-- `LAW_API_KEY` 미설정 시 빈 배열 반환
-- KCB/NICE API키 미설정 시 MockCreditProvider 사용 (Strategy 패턴)
-- 알림 발송(`lib/notification-sender.ts`): `KAKAO_ALIMTALK_API_KEY` 없으면 console.log Mock 모드, 있으면 Bizm API 호출
+`lib/push-subscriptions.ts`의 `sendPushToUser(userId, {title, body, url})`로 특정 사용자에게 브라우저 Web Push 발송. fire-and-forget(`.catch(() => {})`)이며 실패해도 원 트랜잭션에 영향 없음. 의향서 제출/수락/거절 이벤트에서 사용.
 
 ### Cron Jobs
 
 | 작업 | 경로 | 스케줄 | 보안 |
 |------|------|--------|------|
-| 등기변동 모니터링 | `/api/cron/registry-monitor` | 매일 09:00 (`0 9 * * *`) | CRON_SECRET 검증, 프로덕션만 강제 |
-| 전세사기 데이터 수집 | `/api/cron/fraud-import` | 매주 월 03:00 (`0 3 * * 1`) | CRON_SECRET 검증 |
+| 등기변동 모니터링 | `/api/cron/registry-monitor` | 매일 09:00 (`0 9 * * *`) | CRON_SECRET, 프로덕션 강제 |
+| 전세사기 데이터 수집 | `/api/cron/fraud-import` | 매주 월 03:00 (`0 3 * * 1`) | CRON_SECRET |
 
-등기변동 모니터링은 배치 크기 50건/회로 처리하며, sha256 해시 비교로 변동을 감지한다.
+---
+
+## API Surface (전체 엔드포인트 목록)
+
+[coverage: high -- 3 sources]
+
+### 분석 API
+
+| Method | URL | 인증 | 역할 제한 | Rate Limit |
+|--------|-----|------|----------|-----------|
+| POST | `/api/analyze-unified` | 선택 | - (미로그인 GUEST 한도) | 10/min + 일일 |
+| POST | `/api/analyze-contract` | 선택 | PERSONAL+ | 30/min + 일일 + Cost Guard |
+| POST | `/api/analyze-rights` | 선택 | - | 30/min + 일일 + Cost Guard |
+| POST | `/api/predict-value` | 선택 | - | 30/min + 일일 + Cost Guard |
+
+### 문서 처리 API
+
+| Method | URL | 인증 | Rate Limit |
+|--------|-----|------|-----------|
+| POST | `/api/generate-document` | 불필요 | 30/min + Cost Guard(analyze 타입) |
+| POST | `/api/extract-pdf` | 불필요 | 10/min |
+| POST | `/api/parse-registry` | 불필요 | - |
+
+### 매물·거래 API (이번 세션 반영)
+
+| Method | URL | 인증 | 접근 제한 | 비고 |
+|--------|-----|------|-----------|------|
+| GET | `/api/listings` | 선택(mine=true 시 필수) | - | 필터: listingType/roomType/region/minSize/maxSize/mine, 페이지네이션 |
+| POST | `/api/listings` | 필수 | TENANT 차단 + 사업자 verified 가드 | 매물 등록, 등록 후 Kakao geocoding(fire-and-forget) |
+| GET | `/api/contract-applications` | 필수 | 임대인(내 매물) | 받은 의향서 목록, status 필터 |
+| POST | `/api/contract-applications` | 필수 | 본인 매물 제외 | 의향서 제출 → 소유자 Web Push |
+| GET | `/api/contract-applications/[id]` | 필수 | 당사자(신청자/소유자) | 채팅방 진입용 단건 |
+| PATCH | `/api/contract-applications/[id]` | 필수 | 소유자=수락/거절, 신청자=철회 | 수락 시 매물 CONTRACTED + 신청자 Web Push |
+| DELETE | `/api/contract-applications/[id]` | 필수 | 신청자(WITHDRAWN)·소유자(REJECTED/WITHDRAWN) | 물리 삭제 |
+| GET | `/api/e-contracts` | 필수 | 임대인/작성자/연결 임차인/중개 | 내 가계약 목록(tenantId 포함), 페이지 20건 |
+| POST | `/api/e-contracts` | 필수 | 의향서 연결 시 본인 매물 소유자 | 가계약서 생성(양측 서명 즉시 COMPLETED) |
+| GET | `/api/e-contracts/[id]/pdf` | (계약 참여자) | - | 온디맨드 PDF 렌더링 |
+| POST | `/api/sign/[token]/complete` | 서명 토큰 | 토큰 검증(만료 72h) | 이메일 서명 링크 서명 저장 + 상태 진행 |
+
+### 모니터링 API
+
+| Method | URL | 인증 | Rate Limit | 비고 |
+|--------|-----|------|-----------|------|
+| GET | `/api/monitoring` | 필수 | 30/min | 내 모니터링 목록(status 필터) |
+| POST | `/api/monitoring` | 필수 | 10/min | 등록/재활성화, listingId FK 연결(유효 시), 역할별 한도 |
+| DELETE | `/api/monitoring` | 필수 | 10/min | 주소 기준 paused 처리(소프트) |
+| GET/PATCH | `/api/monitoring/alerts` | 필수 | - | 알림 조회/일괄 읽음 |
+| PATCH | `/api/monitoring/alerts/[id]` | 필수 | - | 개별 알림 읽음 |
+
+### 사업성분석 API (기업 전용 — assertFeasibilityAccess)
+
+| Method | URL | 가드 | Rate Limit | 비고 |
+|--------|-----|------|-----------|------|
+| POST | `/api/feasibility/parse` | BUSINESS·ADMIN | 30/min + 일일 | 단일 파일 파싱(4MB↑ gzip) |
+| POST | `/api/feasibility/verify` | BUSINESS·ADMIN | 5/min + 일일 + Cost Guard | 주장 검증·점수 산출 |
+| POST | `/api/feasibility/merge` | BUSINESS·ADMIN | 10/min | 파싱 결과 병합·불일치 감지 |
+| POST | `/api/feasibility/scr-report` | BUSINESS·ADMIN | 5/min | SCR 보고서 생성 |
+| POST | `/api/feasibility/scr-report/stream` | BUSINESS·ADMIN | 5/min | SCR 보고서 스트리밍 생성 |
+| GET | `/api/feasibility/scr-report/[id]` | (조회) | 20/min | SCR 보고서 조회 (가드 미적용) |
+| POST | `/api/feasibility/report` | (미적용) | 10/min | 레거시 리포트 (가드 미적용) |
+
+### 중개관리 API (withAgentAuth)
+
+| Method | URL | 인증 | 비고 |
+|--------|-----|------|------|
+| GET | `/api/agent/clients/[id]` | 중개인(소유권) | 고객 상세 + 물건 목록 + (clientUserId 있으면) 고객 매물·받은 의향서 |
+| PUT | `/api/agent/clients/[id]` | 중개인(소유권) | 고객 정보 수정 |
+| DELETE | `/api/agent/clients/[id]` | 중개인(소유권) | 소프트 삭제(inactive + email/userId null 클리어) |
+
+### 사용자·관리자·기타 API
+
+| Method | URL | 설명 |
+|--------|-----|------|
+| GET | `/api/user/profile`, `/api/user/usage` | 프로필/사용량 |
+| POST | `/api/user/setup-role`(CSRF), `/api/user/migrate-data` | 역할 설정/데이터 이관 |
+| GET/PATCH/DELETE | `/api/admin/*` | 관리자(users, settings, stats, announcements, audit-logs 등) |
+| GET/POST | `/api/auth/[...nextauth]` | NextAuth v5 핸들러 |
+| POST | `/api/chat` | AI 채팅 (PERSONAL+, 30/min + Cost Guard) |
+| GET/POST | `/api/subscription`, POST `/api/subscription/cancel` | 구독 |
+| POST | `/api/fraud-risk`, `/api/credit-check`(Mock) | 사기위험도/신용조회 |
+| GET/POST | `/api/fraud-cases`, `/api/verification/*` | 피해사례/상호검증 |
+| GET | `/api/cron/registry-monitor`, `/api/cron/fraud-import` | Cron |
+
+### 역할별 일일 분석 한도
+
+| 역할 | 일일 한도 | 모니터링 등록 한도 |
+|------|----------|------------------|
+| GUEST | 2회 | 1건 |
+| PERSONAL | 5회 | 3건 |
+| RENTAL_BIZ | (사업자) | 10건 |
+| BUSINESS | 50회 | 10건 |
+| REALESTATE | 100회 | 30건 |
+| ADMIN | 무제한 | 100건 |
+
+---
+
+## Data Models (거래 API 연관 모델·상태)
+
+[coverage: high -- 2 sources]
+
+### 상태 머신 및 FK 연결
+
+- **Listing.status**: `ACTIVE` → 의향서 수락 시 `CONTRACTED` → 계약 완료 시 `COMPLETED`. 매물 목록 GET은 기본 `ACTIVE`만(mine=true는 전 상태).
+- **ContractApplication.status**: `PENDING` → `ACCEPTED`/`REJECTED`(임대인) / `WITHDRAWN`(신청자). PENDING 중복 제출 차단.
+- **EContract.status**: 이메일 서명 흐름은 `PENDING_LANDLORD → PENDING_TENANT → (PENDING_BROKER) → COMPLETED`. 가계약(POST /api/e-contracts)은 양측 서명 즉시 `COMPLETED`.
+- **EContract FK**: `listingId`·`applicationId`·`tenantId`를 의향서(`ContractApplication`) 기반 생성 시 자동 연결. `landlordId`/`creatorId`는 세션 사용자.
+- **MonitoredProperty**: `userId_address` 유니크. `listingId`로 매물 연결 가능(유효 매물일 때만). `commUniqueNo`·`baselineData`·`lastHash`(sha256)로 등기 변동 감지.
 
 ---
 
@@ -198,47 +203,41 @@ middleware.ts
 
 | 모듈 | 파일 | 내용 |
 |------|------|------|
-| 암호화 | `lib/crypto.ts` | AES-256-GCM — 학습 데이터, 시스템 설정 (OAuth 키 포함) 암호화 저장 |
-| CSRF 방어 | `lib/csrf.ts` | 토큰 기반 검증 — POST `/api/user/setup-role`, ADMIN 설정 변경 등 변이 요청에 적용 |
+| CSRF 방어 | `lib/csrf.ts` | `validateOrigin` — 모든 변이 라우트 진입 시 Origin 검증 |
+| 기업 전용 가드 | `lib/feasibility-guard.ts` | `assertFeasibilityAccess` — BUSINESS·ADMIN 외 403 |
+| 중개인 인증 래퍼 | `lib/with-agent-auth.ts` | `withAgentAuth` — 중개 역할 + 세션 주입 |
+| 암호화 | `lib/crypto.ts` | AES-256-GCM (OAuth 키·시스템 설정) |
 | XSS 방지 | `lib/sanitize.ts` | DOMPurify 기반 입력 살균 |
 | Rate Limit | `lib/rate-limit.ts` | DB 기반 분당/일일 제한 |
-| 감사 로그 | `lib/audit-log.ts` | 모든 관리자 활동 및 분석 요청 기록 (IP, UserAgent, PII 마스킹) |
+| 감사 로그 | `lib/audit-log.ts` | 관리자 활동·분석·모니터링 기록(IP·UA·PII 마스킹) |
+| Web Push | `lib/push-subscriptions.ts` | `sendPushToUser` 알림 발송 |
 
-### 보안 HTTP 헤더 (`next.config.ts`)
+### 매물·거래 API 입력 검증
 
-- Content-Security-Policy (CSP)
-- X-Frame-Options: DENY
-- Strict-Transport-Security (HSTS)
-- X-Content-Type-Options: nosniff
-- Permissions-Policy (카메라, 마이크, 위치 차단)
+- `listings` POST: `createListingSchema`(zod) — listingType enum, address min 5, deposit 양의 정수, photos/safetyDocuments URL·개수 제한.
+- `contract-applications` POST: `createSchema`(zod) — moveInDate는 오늘 이후, duration 1~36, memo≤500, deposit≥0.
+- `contract-applications` PATCH: `patchSchema` — status enum(ACCEPTED/REJECTED/WITHDRAWN).
+- `e-contracts` POST: 자체 검증 — contractType enum(JEONSE/MONTHLY/SALE), 주민 앞자리 형식(`######-[1-4]`), 서명은 `data:image` 필수, 금액 상한 1조 원.
+- `sign/[token]/complete`: 서명 이미지 2MB·image/* 제한, 서명자 이름 30자·연락처 20자 제한, 토큰 만료 72h.
+- `agent/clients/[id]` PUT: 고객명 2~30자, 이메일 정규식, status 화이트리스트(active/inactive/invited).
 
-### 감사 로그 기록 대상 액션
+### 소유권·권한 검증 (변이 시 리소스 대조)
 
-| 액션 | 설명 |
-|------|------|
-| `LOGIN` / `LOGOUT` | 로그인/로그아웃 |
-| `LOGIN_FAILED` | 로그인 실패 |
-| `SIGNUP` | 회원가입 |
-| `ROLE_CHANGE` | 역할 변경 |
-| `ADMIN_USER_UPDATE` | 관리자의 사용자 정보 수정 |
-| `ADMIN_USER_DELETE` | 관리자의 사용자 삭제 |
-| `ADMIN_SETTINGS_CHANGE` | 시스템 설정 변경 |
-| `ANALYSIS_REQUEST` / `ANALYSIS_COMPLETE` | 분석 요청/완료 |
-| `RATE_LIMIT_EXCEEDED` | Rate Limit 초과 |
-| `SETTINGS_VIEW` | 설정 조회 |
-| `PASSWORD_CHANGE` | 비밀번호 변경 |
-| `MONITORING_REGISTERED` | 모니터링 등록 |
-| `VERIFICATION_REQUESTED` / `ACCEPT` / `REJECT` | 상호검증 요청/수락/거절 |
-| `CREDIT_CHECK` | 신용정보 조회 |
+- 가계약 생성 시 의향서 연결은 해당 의향서 매물의 `ownerId === session.user.id`만 허용(403).
+- 의향서 수락/거절은 매물 소유자만, 철회·해당 삭제는 신청자만.
+- 가계약·중개 고객 조회/수정은 리소스 소유자(landlord/agent)만.
 
 ### 공통 에러 코드
 
 | HTTP | 설명 |
 |------|------|
-| 400 | 필수 파라미터 누락 또는 유효성 검증 실패 |
-| 401 | 인증 필요 (세션 없음) |
-| 403 | 권한 부족 (역할 미충족) |
-| 429 | Rate Limit 또는 일일 한도 초과 |
+| 400 | 유효성 검증 실패 |
+| 401 | 인증 필요 |
+| 403 | 권한 부족(역할·userType·verifyStatus·소유권) |
+| 404 | 리소스 없음 |
+| 409 | 중복/상태 충돌(이미 처리된 의향서, 이미 모니터링 중 등) |
+| 422 | 처리 불가 상태(비활성 매물, 본인 매물 의향서 등) |
+| 429 | Rate Limit/한도 초과 |
 | 500 | 서버 내부 오류 |
 
 공통 에러 응답 형식: `{ "error": "에러 메시지 (한글)" }`
@@ -247,55 +246,64 @@ middleware.ts
 
 ## Key Decisions
 
-[coverage: medium -- 3 sources]
+[coverage: high -- 4 sources]
 
-1. **인증 선택적 적용** — 핵심 분석 API(`analyze-unified`, `analyze-rights`, `predict-value`)는 인증 없이 사용 가능하나 미로그인 시 GUEST 일일 한도(2회)가 적용된다. `/api/analyze-contract`와 `/api/chat`은 PERSONAL 이상만 접근 가능하다 (접근 통제 매트릭스 기준).
+1. **가계약서는 양측 서명 즉시 COMPLETED** — `POST /api/e-contracts`는 이메일 서명 링크 흐름(sign/[token])과 달리, 임대인+임차인 손글씨 서명을 요청 시점에 동시 기록하고 상태를 바로 `COMPLETED`로 만든다. 출력·보관용 즉시 계약서 발급 목적. `tenantEmail`은 빈 문자열(이메일 링크 미사용).
 
-2. **Cost Guard 별도 운영** — OpenAI API 호출 비용 보호를 위해 Rate Limit 외에 별도 Cost Guard 카운터를 운용한다. 분석 API 및 chat API에 적용된다.
+2. **의향서 기반 가계약 FK 자동 연결 + 매물 동기화** — `applicationId`가 오면 의향서에서 `listingId`/`applicationId`/`tenantId`를 계약에 연결하고, 연결 매물을 `COMPLETED`로 동기화한다. 이메일 서명 흐름(`sign/[token]/complete`)도 최종 완료 시 연결 매물을 `COMPLETED`로 동기화한다. 소유권(본인 매물 의향서)만 연결 허용.
 
-3. **동적 OAuth 키 관리** — 소셜 로그인 OAuth 키를 코드에 하드코딩하지 않고 DB(`SystemSetting` 테이블)에 AES-256-GCM 암호화 저장하여 관리자 대시보드에서 변경 가능하다.
+3. **매물 등록 사업자 인증 가드 추가** — 기존 TENANT 차단에 더해, 사업자 회원(`RENTAL_BIZ`/`BUSINESS`/`REALESTATE`)은 `verifyStatus === "verified"`일 때만 매물을 등록할 수 있다. 개인 임대인(PERSONAL/LANDLORD)·관리자는 인증 대상이 아니다. 클라이언트 게이트의 서버측 강제로 우회 방지.
 
-4. **Strategy 패턴으로 외부 API 격리** — KCB/NICE 신용정보 등 실제 계약이 필요한 외부 API는 Provider 인터페이스와 Mock 구현체를 분리하여, API키 없이도 플랫폼이 동작한다.
+4. **모니터링 매물 연결(listingId)** — `POST /api/monitoring`이 `listingId`를 받아 매물 상세에서 진입한 모니터링을 매물에 FK 연결한다. 단, 실제 존재하는 매물일 때만 연결(존재 검증 후 `validListingId`). 재활성화·신규 생성 양쪽에 적용.
 
-5. **등기부 API 시뮬레이션** — 등기변동 모니터링 cron에서 실제 등기부 조회 API는 미연동 상태(TODO 표시)이며, 현재는 시뮬레이션으로 동작한다 (설계 의도).
+5. **거래 이벤트 Web Push 알림** — 의향서 제출 시 매물 소유자에게, 수락/거절 시 신청자에게 `sendPushToUser`로 알림. 철회는 본인 행위이므로 알림 없음. 알림은 fire-and-forget으로 원 트랜잭션 실패에 영향 주지 않는다.
 
-6. **알림 발송 Mock 모드** — `notification-sender.ts`의 이메일 발송은 Mock만 구현되어 있으며, 카카오 알림톡은 API키 존재 여부로 자동 전환된다.
+6. **사업성분석 기업 전용화** — 파싱·검증·병합·SCR생성·SCR스트리밍 5종 생성 API에 `assertFeasibilityAccess`(BUSINESS·ADMIN) 가드를 일괄 적용. 역할 계층상 부동산/임대사업자는 사업자 기본 기능, 기업은 기본+사업성분석, 관리자는 전 기능. 조회(scr-report/[id])와 레거시 report는 가드 미적용.
 
-7. **`analyze-unified` Rate Limit 특별 설정** — 다른 분석 API(30/min)의 1/3인 10/min으로 제한한다. 내부적으로 V-Score, 교차분석, 사기위험도 등 복수의 무거운 엔진을 모두 실행하기 때문이다.
+7. **중개관리 고객 상세에 고객 소유 매물·의향서 포함** — `GET /api/agent/clients/[id]`는 고객이 VESTRA 가입회원(`clientUserId` 존재)일 때 그 고객의 매물 목록과 받은 의향서를 함께 조회해 반환(각 최대 50건). 중개인이 담당 고객의 거래 현황을 한 화면에서 파악하도록 설계.
 
-8. **`generate-document` jeonse/lease 타입 — 법원 공식 양식 적용 (2026-07)** — `/api/generate-document`의 `type=jeonse`(전세권설정등기 신청서)와 `type=lease`(임차권등기명령 신청서)는 OpenAI 호출을 제거하고 법원 서식 기반 정적 템플릿으로 대체됨. 비결정적 AI 생성 대신 부동산등기법/주택임대차보호법 제3조의3 기반의 공식 법원 양식을 반환. 등기부등본에서 파싱된 `landlordName`(임대인 성명)과 `propertyAddress`를 자동 삽입하며, 미입력 필드는 `(기재 필요)` 플레이스홀더로 표시. `type=analyze`는 여전히 OpenAI GPT-4.1-mini를 사용.
+8. **`generate-document` jeonse/lease 법원 공식 양식** — `type=jeonse`/`type=lease`는 OpenAI 미호출, 법원 서식 정적 템플릿 반환(등기부 파싱 값 자동 삽입, 미입력은 `(기재 필요)`). `type=analyze`만 OpenAI GPT-4.1-mini + Cost Guard.
 
 ---
 
 ## Gotchas
 
-[coverage: medium -- 2 sources]
+[coverage: medium -- 3 sources]
 
-- **`/api/analyze-unified` Rate Limit 10/min** — 다른 분석 API(30/min)의 1/3. 가장 무거운 복합 분석 엔드포인트이므로 프론트에서 중복 호출에 주의.
+- **가계약 vs 전자계약 흐름 혼동 주의** — `POST /api/e-contracts`(가계약: 즉시 COMPLETED, 양측 손글씨)와 `POST /api/sign/[token]/complete`(전자계약: 순차 이메일 서명, 상태 단계 진행)는 별개 흐름. 전자는 CSRF+세션, 후자는 서명 토큰(72h 만료)으로 인증.
 
-- **MOLIT API 자동 호출** — `analyze-unified`, `analyze-rights`, `predict-value` 내부에서 국토교통부 실거래가 API를 자동 호출한다. MOLIT API 장애 시 해당 엔드포인트 전체에 영향.
+- **매물 등록 403 두 갈래** — TENANT는 `userType` 기준, 사업자 미인증은 `role + verifyStatus` 기준으로 각각 403. 에러 메시지가 다르므로 프론트에서 구분 처리 필요.
 
-- **`admin/settings` AES-256-GCM 암호화** — OAuth 키, Rate Limit 설정 등 시스템 파라미터는 DB에 암호화 저장되므로 직접 DB 쿼리로 조회해도 평문을 볼 수 없다.
+- **모니터링 listingId는 유효할 때만 연결** — 존재하지 않는 `listingId`를 보내면 조용히 무시(에러 없이 미연결). FK 무결성 위반 방지 목적.
 
-- **`audit-logs` 조회 필터** — `page`, `limit`(최대 200), `action`, `userId`, `from`(ISO8601), `to`(ISO8601) 파라미터 지원.
+- **사업성분석 조회 API 가드 미적용** — 생성 5종은 BUSINESS·ADMIN 가드가 있으나 `scr-report/[id]` GET과 `report` POST에는 `assertFeasibilityAccess`가 없다. 조회는 Rate Limit만 적용.
 
-- **카카오 로그인 비활성화 상태** — 완료보고서(v2.3.2) 기준 카카오 개발자 콘솔 설정 미완료로 비활성화. `auth/[...nextauth]`의 Kakao 콜백 경로는 코드에 있으나 실제 동작하지 않는다.
+- **`e-contracts` GET 조회 범위** — landlordId/tenantId(연결 임차인)/tenantEmail/brokerEmail(소문자) OR 조건으로 조회. 이번 세션에서 tenantId 조건이 포함되어, 의향서 기반 가계약의 임차인도 자기 목록에서 확인 가능.
 
-- **신용정보 API Mock 상태** — `/api/credit-check`의 KCB/NICEProvider는 스켈레톤 구현(throw Error)이며, 실제 연동을 위해서는 API키 계약 및 Provider 구현이 필요하다.
+- **의향서 수락 시 매물 CONTRACTED, 계약 완료 시 COMPLETED** — 수락(PATCH)에서 `CONTRACTED`로, 가계약 생성 또는 최종 서명 완료에서 `COMPLETED`로 두 단계에 걸쳐 매물 상태가 전이된다. 매물 목록(ACTIVE 필터)에서 자동으로 빠진다.
 
-- **CRON_SECRET 검증** — cron 엔드포인트는 프로덕션 환경에서 `Authorization: Bearer ${CRON_SECRET}` 헤더 검증을 강제한다. 개발 환경에서는 무제한.
+- **Web Push 실패는 무시됨** — `sendPushToUser(...).catch(() => {})` 이므로 구독 미등록·발송 실패해도 의향서 제출/처리는 정상 완료. 알림 도달을 거래 성공의 보증으로 간주하면 안 됨.
 
-- **파라미터 실증 미검증** — V-Score 가중치, 감점 수치(30/25/20점), 증폭계수(1.3~1.7), 15-피처 가중치 등은 전문가 휴리스틱 초기값이며 실제 사고 데이터 기반 캘리브레이션이 완료되지 않았다. API 응답의 위험도 수치는 참고용으로 해석해야 한다.
-
-- **`generate-document` analyze vs jeonse/lease 분기** — `type=analyze`는 OpenAI + Cost Guard 적용. `type=jeonse`/`type=lease`는 OpenAI 미호출 — Cost Guard가 트리거되어도 법원 양식 문서는 항상 반환됨. 단, Rate Limit(30/min)은 모든 타입에 동일하게 적용.
+- **파라미터 실증 미검증** — V-Score 가중치, 감점 수치, 증폭계수, 사기 피처 가중치 등은 전문가 휴리스틱 초기값이며 실제 사고 데이터 캘리브레이션 미완료. 위험도 수치는 참고용.
 
 ---
 
 ## Sources
 
-- `/Users/watchers/Desktop/vestra/docs/04-API-Spec.md`
-- `/Users/watchers/Desktop/vestra/docs/security/access-control-matrix.md`
-- `/Users/watchers/Desktop/vestra/docs/TECHNICAL-STATUS-REPORT.md`
-- `/Users/watchers/Desktop/vestra/docs/VESTRA-플랫폼-완료보고서.md`
-- `/Users/watchers/Desktop/vestra/docs/03-analysis/vestra-rfp-enhancement-final.analysis.md`
-- `/Users/watchers/Desktop/vestra/documents/완료보고서-2026-03-23/VESTRA_기술분석서_v4.5.1.md`
+- [[app/api/e-contracts/route.ts]]
+- [[app/api/e-contracts/[id]/pdf/route.ts]]
+- [[app/api/listings/route.ts]]
+- [[app/api/monitoring/route.ts]]
+- [[app/api/contract-applications/route.ts]]
+- [[app/api/contract-applications/[id]/route.ts]]
+- [[app/api/feasibility/parse/route.ts]]
+- [[app/api/feasibility/verify/route.ts]]
+- [[app/api/feasibility/merge/route.ts]]
+- [[app/api/feasibility/scr-report/route.ts]]
+- [[app/api/feasibility/scr-report/stream/route.ts]]
+- [[app/api/agent/clients/[id]/route.ts]]
+- [[app/api/sign/[token]/complete/route.ts]]
+- [[lib/feasibility-guard.ts]]
+- [[lib/push-subscriptions.ts]]
+- [[docs/04-API-Spec.md]]
+- [[docs/security/access-control-matrix.md]]

@@ -131,3 +131,12 @@
 - `docs/01-plan/features/vestra-dgon-integration.plan.md`
 - `CLAUDE.md`
 - `package.json`
+
+## 2026-08-22
+
+**Topics updated:** features, api, frontend, security, platform-overview
+**New topics:** none
+**New concepts:** role-based-feature-gating
+**Sources scanned:** 51+
+**Sources changed:** 이번 세션 코드(app/·lib/·prisma) v5.87~5.90.2
+**Changes:** 가계약서 전면 개편(양측 손글씨 서명→PDF 1페이지→오프라인 확정), 거래 FK 무결성, 회원 역할 계층+권한 가드, 매물등록 renewal 이식·매물→감시 연결·의향서 Web Push, 중개사 CRM 거래조회
