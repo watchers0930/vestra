@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import { LAWYER_TABS, type LawyerTabKey } from "./constants";
 import { NoticesTab } from "./components/NoticesTab";
 import { ConsultsTab } from "./components/ConsultsTab";
@@ -13,9 +12,7 @@ export default function LawyerDashboardPage() {
   const [tab, setTab] = useState<LawyerTabKey>("notices");
 
   return (
-    <div style={{ paddingBottom: "48px", paddingTop: "52px" }}>
-      <DashboardPageTopbar current="변호사 대시보드" primaryHref="/keepzip" primaryLabel="집키퍼" />
-
+    <div className="pb-12 pt-8">
       <div className="max-w-4xl mx-auto px-4">
         <h1 className="text-xl font-bold mb-1">변호사 대시보드</h1>
         <p className="text-sm text-gray-500 mb-5">사건 검수·직인, 상담·방문 관리, 미니홈페이지 프로필을 관리합니다.</p>
