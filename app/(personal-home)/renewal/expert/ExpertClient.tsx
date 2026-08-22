@@ -32,19 +32,35 @@ export default function ExpertClient() {
       </section>
 
       <div className={s.panelWrap}>
-        <ExpertFields />
-        <ExpertList onConsult={handleConsult} />
-        <ConsultForm
-          selectedExpert={selectedExpert}
-          formState={formState}
-          setFormState={setFormState}
-          submitting={submitting}
-          submitted={submitted}
-          error={error}
-          onSubmit={handleSubmit}
-          onReset={resetConsultForm}
-        />
-        <ProcessSection />
+        {selectedExpert ? (
+          /* 2단계: 전문가 선택 후 → 상담 신청 폼만 표시 */
+          <>
+            <button
+              type="button"
+              onClick={resetConsultForm}
+              style={{ background: "none", border: "none", color: "#2e4bd8", fontSize: "13.5px", fontWeight: 600, cursor: "pointer", padding: "0 0 16px", alignSelf: "flex-start" }}
+            >
+              ← 전문가 목록으로
+            </button>
+            <ConsultForm
+              selectedExpert={selectedExpert}
+              formState={formState}
+              setFormState={setFormState}
+              submitting={submitting}
+              submitted={submitted}
+              error={error}
+              onSubmit={handleSubmit}
+              onReset={resetConsultForm}
+            />
+          </>
+        ) : (
+          /* 1단계: 전문가 목록 */
+          <>
+            <ExpertFields />
+            <ExpertList onConsult={handleConsult} />
+            <ProcessSection />
+          </>
+        )}
       </div>
 
       <ExpertFooter />
