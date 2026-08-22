@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { X } from "lucide-react";
 import RoleTypeSelector from "@/components/auth/RoleTypeSelector";
@@ -87,6 +88,13 @@ export default function RenewalSignupModal({ onClose, onSwitchToLogin }: Props) 
           ) : (
             <span onClick={onClose} style={{ fontWeight: 600, color: "#0071e3", cursor: "pointer" }}>로그인</span>
           )}
+        </p>
+
+        <p style={{ textAlign: "center", fontSize: 13, color: "#6e6e73", margin: "10px 0 0", paddingTop: 12, borderTop: "1px solid #f0f0f2" }}>
+          변호사·법무사·세무사·회계사·감정평가사이신가요?{" "}
+          <Link href="/renewal/expert-signup" onClick={onClose} style={{ fontWeight: 600, color: "#2e4bd8" }}>
+            전문가로 가입하기 →
+          </Link>
         </p>
       </div>
     </div>
