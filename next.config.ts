@@ -33,7 +33,7 @@ const baseCSP = [
   `img-src 'self' data: blob: ${kakaoImg} https://lh3.googleusercontent.com https://images.unsplash.com`,
   "font-src 'self' data: https://fastly.jsdelivr.net https://fonts.gstatic.com",
   `connect-src 'self' https://api.openai.com https://*.neon.tech ${kakaoConnect} ${googleAnalyticsConnect} https://api.odcloud.kr https://apis.data.go.kr https://fcm.googleapis.com https://*.push.services.mozilla.com https://*.notify.windows.com ${tossConnect}`,
-  `frame-src https://postcode.map.kakao.com ${googleTagDomains} ${tossFrame}${vercelLive}`,
+  `frame-src https://postcode.map.kakao.com${isDev ? " http://postcode.map.kakao.com" : ""} ${googleTagDomains} ${tossFrame}${vercelLive}`,
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
