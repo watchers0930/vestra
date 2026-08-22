@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import { Card } from "@/components/common/Card";
 import { Button } from "@/components/common/Button";
+import { SignaturePad } from "@/app/(app)/e-contract/components/SignaturePad";
 import type { DraftResult } from "@/lib/keepzip/case-form";
 
 interface Props {
@@ -12,6 +16,7 @@ interface Props {
 
 /** 우측 — AI 내용증명 초안 실시간 생성·편집 (컨셉 문서 canvas 대응) */
 export function DraftPanel({ draft, loading, error, onChangeContent, onProceed }: Props) {
+  const [signature, setSignature] = useState("");
   return (
     <Card className="p-5 lg:sticky lg:top-4">
       <div className="flex items-center justify-between mb-3">
@@ -40,6 +45,9 @@ export function DraftPanel({ draft, loading, error, onChangeContent, onProceed }
             value={draft.content}
             onChange={(e) => onChangeContent(e.target.value)}
           />
+          <div className="mt-4">
+            <SignaturePad value={signature} onChange={setSignature} label="발신인(본인)" />
+          </div>
           <p className="text-xs text-gray-500 mt-2">
             ※ AI 초안입니다. 직접 수정할 수 있으며, <strong>실제 발송 전 담당 변호사의 검토·직인</strong>을 거칩니다.
           </p>

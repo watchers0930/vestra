@@ -4,6 +4,7 @@ import { useState } from "react";
 import s from "../keepzip-renewal.module.css";
 import { useToast } from "@/components/common/toast";
 import { DaumPostcodeModal } from "@/components/keepzip/DaumPostcodeModal";
+import { SignaturePad } from "@/app/(app)/e-contract/components/SignaturePad";
 import { useKeepzipDraft } from "@/lib/keepzip/use-keepzip-draft";
 import {
   SIDE_META, CAUSE_LABELS, CAUSE_DESC, activeFields, amountHint,
@@ -21,6 +22,7 @@ export function KeepzipDraftForm({ lawyerName }: Props) {
   const { showToast } = useToast();
   const { form, draft, loading, error, selectCause, setField, generateDraft, setDraftContent } = useKeepzipDraft();
   const [addrOpen, setAddrOpen] = useState(false);
+  const [signature, setSignature] = useState("");
 
   const fields = activeFields(form);
   const addressReady = form.address.trim() && (form.isBuilding !== "Y" || form.addressDetail.trim());
@@ -138,6 +140,9 @@ export function KeepzipDraftForm({ lawyerName }: Props) {
               <div className={s.docTitle}>{draft.title}</div>
               <textarea className={s.docArea} value={draft.content}
                 onChange={(e) => setDraftContent(e.target.value)} />
+              <div style={{ marginTop: 16 }}>
+                <SignaturePad value={signature} onChange={setSignature} label="발신인(본인)" />
+              </div>
               <p className={s.note}>※ AI 초안입니다. 직접 수정할 수 있으며, 실제 발송 전 담당 변호사의 검토·직인을 거칩니다.</p>
               <button className={s.proceedBtn}
                 onClick={() => showToast("초안이 준비되었습니다. 결제·변호사 검토 단계는 곧 연결됩니다.", "success")}>
