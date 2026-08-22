@@ -38,11 +38,11 @@ export async function POST(req: NextRequest) {
     const title = sanitizeField(String(body.title ?? ""), 200);
     const senderName = sanitizeField(String(body.senderName ?? ""), 100);
     const content = String(body.content ?? "").slice(0, 20000);
-    // 서명은 data:image/ PNG data URL만 허용 (그 외 무시)
-    const signature =
-      typeof body.signature === "string" && body.signature.startsWith("data:image/")
-        ? body.signature
-        : undefined;
+    const lawyerName = sanitizeField(String(body.lawyerName ?? ""), 100) || undefined;
+    // 서명·직인은 data:image/ PNG data URL만 허용 (그 외 무시)
+    const isDataImg = (v: unknown): v is string => typeof v === "string" && v.startsWith("data:image/");
+    const signature = isDataImg(body.signature) ? body.signature : undefined;
+    const stamp = isDataImg(body.stamp) ? body.stamp : undefined;
 
     if (!title || !content.trim()) {
       return NextResponse.json({ error: "문서 제목과 내용이 필요합니다." }, { status: 400 });
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     const pdfBuffer = await renderToBuffer(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      React.createElement(KeepzipCdPdf, { data: { title, content, senderName, signature, date } }) as any
+      React.createElement(KeepzipCdPdf, { data: { title, content, senderName, signature, date, lawyerName, stamp } }) as any
     );
 
     return new NextResponse(new Uint8Array(pdfBuffer), {

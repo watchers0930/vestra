@@ -1,17 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/common/Button";
 import { useToast } from "@/components/common/toast";
 import { PROFILE_LIST } from "../constants";
 
-/** 경력·학교 — 항목 추가/삭제/저장 (리스트형 편집) */
+// 탭 키 → DB 필드
+const FIELD_MAP: Record<"career" | "school", "careers" | "schools"> = { career: "careers", school: "schools" };
+
+/** 경력·학교 — 항목 추가/수정/삭제/저장 (DB 로드·저장) */
 export function ProfileListTab({ tabKey }: { tabKey: "career" | "school" }) {
   const meta = PROFILE_LIST[tabKey];
+  const dbField = FIELD_MAP[tabKey];
   const { showToast } = useToast();
   const [items, setItems] = useState<string[]>([]);
   const [input, setInput] = useState("");
   const [editIdx, setEditIdx] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/keepzip/expert/profile")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (alive && Array.isArray(d?.profile?.[dbField])) setItems(d.profile[dbField]); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [dbField]);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/keepzip/expert/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [dbField]: items }),
+      });
+      const d = await res.json().catch(() => null);
+      showToast(res.ok ? `${meta.title} 저장되었습니다.` : (d?.error ?? "저장 실패"), res.ok ? "success" : "error");
+    } catch {
+      showToast("네트워크 오류가 발생했습니다.", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const add = () => {
     const v = input.trim();
@@ -68,9 +99,7 @@ export function ProfileListTab({ tabKey }: { tabKey: "career" | "school" }) {
       )}
 
       <div className="mt-5">
-        <Button variant="primary" onClick={() => showToast(`${meta.title} 저장되었습니다. (모의)`, "success")} disabled={items.length === 0}>
-          저장
-        </Button>
+        <Button variant="primary" onClick={save} loading={saving}>저장</Button>
       </div>
     </div>
   );

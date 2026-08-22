@@ -924,6 +924,8 @@ model KeepzipCase {
   expiryDate       DateTime?
   // 문서/상태
   draftContent     String?         @db.Text
+  signatureUrl     String?         @db.Text // 발신인 본인 손글씨 서명(PNG data URL)
+  stampUrl         String?         @db.Text // 변호사 전자직인(PNG data URL)
   documentUrl      String? // 직인 합성 완료 PDF (Blob)
   status           String          @default("draft") // draft | paid | lawyer_pending | lawyer_approved | postal_sent | delivered | canceled | refunded
   riskScore        Int?
@@ -951,9 +953,19 @@ model KeepzipCase {
 
 model LawyerPartner {
   id                String    @id @default(cuid())
-  userId            String    @unique // User(role=LAWYER)
-  barNumber         String // 변호사 등록번호
-  firmName          String?
+  userId            String    @unique // User(role=LAWYER/EXPERT)
+  // 전문가 분야 (5종)
+  category          String    @default("lawyer") // lawyer | judicial | tax | accountant | appraiser
+  name              String? // 전문가 성명(가입 입력)
+  phone             String? // 연락처
+  licenseNo         String? // 자격 등록번호(자격증)
+  bizNo             String? // 사업자등록번호
+  barNumber         String? // (구) 변호사 등록번호 — licenseNo로 통합, 하위호환 유지
+  firmName          String? // 소속 법인/사무소
+  // 프로필(미니홈페이지 노출)
+  careers           String[]  @default([]) // 주요 경력
+  schools           String[]  @default([]) // 출신 학교
+  etcInfo           String?   @db.Text // 기타 정보
   // 미니홈페이지(멀티테넌시)
   homepageSlug      String    @unique // /lawyer/[slug]
   homepageActive    Boolean   @default(false)

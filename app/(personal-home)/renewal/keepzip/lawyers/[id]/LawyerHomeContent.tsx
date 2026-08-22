@@ -32,7 +32,7 @@ export default function LawyerHomeContent({ expert }: { expert: Expert }) {
         </div>
       </section>
 
-      <KeepzipDraftForm lawyerName={expert.name} />
+      <KeepzipDraftForm lawyerName={expert.name} lawyerId={expert.id} />
     </>
   );
 }

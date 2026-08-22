@@ -8,18 +8,19 @@ import { MockPaymentModal } from "@/components/keepzip/MockPaymentModal";
 import { SignaturePad } from "@/app/(app)/e-contract/components/SignaturePad";
 import { useKeepzipDraft } from "@/lib/keepzip/use-keepzip-draft";
 import {
-  SIDE_META, CAUSE_LABELS, CAUSE_DESC, activeFields, amountHint,
+  SIDE_META, CAUSE_LABELS, CAUSE_DESC, activeFields, amountHint, fullAddress,
 } from "@/lib/keepzip/case-form";
 
 const SIDE = SIDE_META.tenant;
 
 interface Props {
-  /** 배정된 담당 변호사명(변호사 미니홈페이지에서 진입 시) */
+  /** 배정된 담당 변호사명·ID(변호사 미니홈페이지에서 진입 시) */
   lawyerName?: string;
+  lawyerId?: string;
 }
 
 /** 임차인 내용증명 작성 폼(좌) + AI 초안 패널(우). 리뉴얼 화면·변호사 미니홈페이지 공용. */
-export function KeepzipDraftForm({ lawyerName }: Props) {
+export function KeepzipDraftForm({ lawyerName, lawyerId }: Props) {
   const { showToast } = useToast();
   const { form, draft, loading, error, selectCause, setField, generateDraft, setDraftContent } = useKeepzipDraft();
   const [addrOpen, setAddrOpen] = useState(false);
@@ -197,10 +198,31 @@ export function KeepzipDraftForm({ lawyerName }: Props) {
         <MockPaymentModal
           lawyerName={lawyerName}
           onClose={() => setPayOpen(false)}
-          onPaid={() => {
-            setPayOpen(false);
-            setSent(true);
-            showToast(`결제 완료 — ${lawyerName ?? "담당"} 변호사에게 전송되었습니다.`, "success");
+          onPaid={async () => {
+            try {
+              const res = await fetch("/api/keepzip/cases", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  cause: form.cause,
+                  senderSide: "tenant",
+                  senderName: form.senderName,
+                  recipientName: form.recipientName,
+                  address: fullAddress(form),
+                  lawyerId: lawyerId ?? "",
+                  deposit: form.deposit,
+                  draftContent: draft?.content,
+                  signatureUrl: signature,
+                }),
+              });
+              const d = await res.json().catch(() => null);
+              if (!res.ok) { showToast(d?.error ?? "전송에 실패했습니다.", "error"); return; }
+              setPayOpen(false);
+              setSent(true);
+              showToast(`결제 완료 — ${lawyerName ?? "담당"} 변호사에게 전송되었습니다.`, "success");
+            } catch {
+              showToast("네트워크 오류가 발생했습니다.", "error");
+            }
           }}
         />
       )}

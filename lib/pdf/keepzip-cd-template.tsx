@@ -28,6 +28,10 @@ export interface KeepzipCdPdfData {
   signature?: string;
   /** 작성일자 (예: "2026년 8월 22일") */
   date: string;
+  /** 대리인 변호사명 (직인 표기용) */
+  lawyerName?: string;
+  /** 변호사 전자직인 PNG data URL */
+  stamp?: string;
 }
 
 const styles = StyleSheet.create({
@@ -57,6 +61,12 @@ export function KeepzipCdPdf({ data }: { data: KeepzipCdPdfData }) {
             <Text style={styles.signLabel}>발신인 : {data.senderName} (서명)</Text>
             {data.signature ? <PdfImage src={data.signature} style={styles.signImg} /> : null}
           </View>
+          {data.lawyerName && data.stamp ? (
+            <View style={[styles.signRow, { marginTop: 10 }]}>
+              <Text style={styles.signLabel}>대리인 변호사 : {data.lawyerName} (직인)</Text>
+              <PdfImage src={data.stamp} style={styles.signImg} />
+            </View>
+          ) : null}
         </View>
       </Page>
     </Document>

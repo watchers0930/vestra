@@ -27,6 +27,8 @@ export default function ExpertSignupContent() {
 
   const set = (k: keyof FormState, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
+  const [submitting, setSubmitting] = useState(false);
+
   const canSubmit =
     form.name.trim() && form.email.trim() && form.phone.trim() &&
     form.bizNo.trim() && form.license.trim();
@@ -35,6 +37,32 @@ export default function ExpertSignupContent() {
     setField(EXPERT_FIELDS.find((f) => f.key === key) ?? null);
     setForm({ ...EMPTY });
     setDone(false);
+  };
+
+  const submit = async () => {
+    if (!field || !canSubmit) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/keepzip/expert/onboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: field.key, name: form.name, phone: form.phone,
+          office: form.office, bizNo: form.bizNo, licenseNo: form.license,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        showToast(data?.error ?? "가입 신청에 실패했습니다.", "error");
+        return;
+      }
+      setDone(true);
+      showToast("전문가 가입 신청이 접수되었습니다. 심사 후 승인됩니다.", "success");
+    } catch {
+      showToast("네트워크 오류가 발생했습니다.", "error");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -80,11 +108,11 @@ export default function ExpertSignupContent() {
 
                 <button
                   type="button"
-                  disabled={!canSubmit}
-                  onClick={() => { setDone(true); showToast("전문가 가입 신청이 접수되었습니다. (모의)", "success"); }}
+                  disabled={!canSubmit || submitting}
+                  onClick={submit}
                   className="w-full bg-blue-600 text-white rounded-lg py-3 text-sm font-bold disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
                 >
-                  {field.label} 가입 신청
+                  {submitting ? "신청 중..." : `${field.label} 가입 신청`}
                 </button>
                 <p className="text-xs text-gray-400 text-center">사업자등록번호·자격 등록번호는 필수이며, 심사 후 승인됩니다.</p>
               </div>
