@@ -42,22 +42,31 @@ export function DaumPostcodeModal({ onComplete, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[1000] bg-black/40 flex items-center justify-center p-4"
       onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.4)",
+        display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+      }}
     >
       <div
-        className="bg-white rounded-xl w-full max-w-lg h-[500px] overflow-hidden relative shadow-xl"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#fff", borderRadius: 12, width: "100%", maxWidth: 512, height: 500,
+          overflow: "hidden", position: "relative", boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+        }}
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="닫기"
-          className="absolute top-2 right-3 z-10 text-gray-400 hover:text-gray-700 text-xl leading-none"
+          style={{
+            position: "absolute", top: 8, right: 12, zIndex: 10, background: "none",
+            border: "none", fontSize: 22, lineHeight: 1, color: "#888", cursor: "pointer",
+          }}
         >
           ×
         </button>
-        <div ref={ref} className="w-full h-full" />
+        <div ref={ref} style={{ width: "100%", height: "100%" }} />
       </div>
     </div>
   );
