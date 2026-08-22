@@ -9,15 +9,17 @@ function formatFee(fee: number) {
   return `상담료 ${fee.toLocaleString()}원`;
 }
 
+export type ExpertIntent = "consult" | "keepzip";
+
 interface ExpertListProps {
   /** 선택된 영역의 category 필터 (없으면 전체) */
   categories?: string[];
   fieldLabel?: string;
-  onConsult: (expert: Expert) => void;
+  onSelect: (expert: Expert, intent: ExpertIntent) => void;
 }
 
-/** STEP 2 — 선택한 영역의 전문가 목록. 변호사=내용증명 작성, 그 외=상담 요청. */
-export default function ExpertList({ categories, fieldLabel, onConsult }: ExpertListProps) {
+/** STEP 2 — 선택한 영역의 전문가 목록. 변호사=상담요청+내용증명 2버튼, 그 외=상담 요청. */
+export default function ExpertList({ categories, fieldLabel, onSelect }: ExpertListProps) {
   const list = categories?.length
     ? EXPERTS.filter((e) => categories.includes(e.category))
     : EXPERTS;
@@ -56,17 +58,24 @@ export default function ExpertList({ categories, fieldLabel, onConsult }: Expert
               <span>경력 {expert.experience}년</span>
               <span className={s.exFee}>{formatFee(expert.consultFee)}</span>
             </div>
-            <button
-              className={`${s.exBtn} ${expert.available ? "" : s.off}`}
-              disabled={!expert.available}
-              onClick={() => expert.available && onConsult(expert)}
-            >
-              {!expert.available
-                ? "상담 마감"
-                : expert.category === "변호사"
-                ? "내용증명 작성하기"
-                : "상담 요청"}
-            </button>
+            {!expert.available ? (
+              <button className={`${s.exBtn} ${s.off}`} disabled>상담 마감</button>
+            ) : expert.category === "변호사" ? (
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  className={s.exBtn}
+                  style={{ flex: 1, background: "#eef1fd", color: "#2e4bd8" }}
+                  onClick={() => onSelect(expert, "consult")}
+                >
+                  상담 요청
+                </button>
+                <button className={s.exBtn} style={{ flex: 1 }} onClick={() => onSelect(expert, "keepzip")}>
+                  내용증명 작성
+                </button>
+              </div>
+            ) : (
+              <button className={s.exBtn} onClick={() => onSelect(expert, "consult")}>상담 요청</button>
+            )}
           </div>
         ))}
       </div>

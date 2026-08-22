@@ -10,6 +10,7 @@ import ExpertList from "./components/ExpertList";
 import ConsultForm from "./components/ConsultForm";
 import ProcessSection from "./components/ProcessSection";
 import { KeepzipDraftForm } from "../keepzip/components/KeepzipDraftForm";
+import type { ExpertIntent } from "./components/ExpertList";
 
 const backBtnStyle: React.CSSProperties = {
   background: "none", border: "none", color: "#2e4bd8", fontSize: "13.5px",
@@ -26,6 +27,8 @@ export default function ExpertClient() {
 
   // STEP 1 상태: 선택한 분야(영역)
   const [selectedField, setSelectedField] = useState<{ categories: string[]; label: string } | null>(null);
+  // STEP 3 의도: 상담(consult) vs 내용증명(keepzip). 변호사만 두 갈래.
+  const [intent, setIntent] = useState<ExpertIntent>("consult");
 
   return (
     <div className={s.page}>
@@ -46,7 +49,7 @@ export default function ExpertClient() {
           /* STEP 3 — 상담폼(일반) 또는 내용증명 작성(변호사) */
           <>
             <button type="button" onClick={resetConsultForm} style={backBtnStyle}>← 전문가 목록으로</button>
-            {selectedExpert.category === "변호사" ? (
+            {selectedExpert.category === "변호사" && intent === "keepzip" ? (
               <KeepzipDraftForm lawyerName={selectedExpert.name} />
             ) : (
               <ConsultForm
@@ -68,7 +71,7 @@ export default function ExpertClient() {
             <ExpertList
               categories={selectedField.categories}
               fieldLabel={selectedField.label}
-              onConsult={handleConsult}
+              onSelect={(expert, it) => { setIntent(it); handleConsult(expert); }}
             />
           </>
         ) : (
