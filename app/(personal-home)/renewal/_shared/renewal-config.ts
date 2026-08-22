@@ -63,7 +63,6 @@ export const RENEWAL_MAIN: RenewalFeature[] = [
 /** GNB 고객지원 드롭다운 */
 export const RENEWAL_SUPPORT: RenewalFeature[] = [
   { key: "expert", href: RENEWAL_ROUTES.expert, label: "전문가연결", access: "public", featureName: "전문가 연결", description: "부동산 전문가와 1:1 상담을 연결해 드립니다" },
-  { key: "keepzip", href: RENEWAL_ROUTES.keepzip, label: "내용증명", access: "public", featureName: "내용증명", description: "AI로 내용증명을 작성하고 변호사 검토 후 우체국 등기로 발송합니다" },
   { key: "assistant", href: RENEWAL_ROUTES.assistant, label: "AI 어시스턴트", access: "trial", featureName: "AI 어시스턴트", description: "부동산 궁금증을 AI에게 물어보세요" },
   { key: "official-price", href: RENEWAL_ROUTES.officialPrice, label: "공시가격조회", access: "public", featureName: "공시가격 조회", description: "개별공시지가·공동주택가격을 조회합니다" },
   { key: "tax", href: RENEWAL_ROUTES.tax, label: "세금계산", access: "public", featureName: "세금계산", description: "취득세·보유세·양도세를 계산합니다" },
