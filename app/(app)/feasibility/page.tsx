@@ -1,6 +1,8 @@
 "use client";
 
-import { AlertCircle, X } from "lucide-react";
+import { AlertCircle, X, Building2 } from "lucide-react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { CategoryHero } from "@/components/common/CategoryHero";
 import { StepIndicator } from "@/components/loading/StepIndicator";
@@ -27,8 +29,22 @@ export default function FeasibilityPage() {
     handleOpenReport, handleReset,
   } = useFeasibilityAnalysis();
 
+  const { data: session } = useSession();
+  // 사업성분석은 기업(BUSINESS) 회원 전용 — 서버 가드(lib/feasibility-guard)와 일치
+  const allowed = ["BUSINESS", "ADMIN"].includes(session?.user?.role ?? "");
+
   return (
     <AuthGuard featureName="사업성분석">
+    {!allowed ? (
+      <div style={{ maxWidth: 480, margin: "80px auto", textAlign: "center", padding: "0 20px" }}>
+        <Building2 size={40} strokeWidth={1.4} style={{ color: "#2e4bd8", margin: "0 auto 16px", display: "block" }} />
+        <h2 style={{ fontSize: 19, fontWeight: 700, color: "#1a1d2e", marginBottom: 10 }}>기업 회원 전용 기능입니다</h2>
+        <p style={{ fontSize: 14, color: "#6b7180", lineHeight: 1.6, marginBottom: 22 }}>
+          사업성분석(SCR 보고서)은 기업 회원 전용입니다.<br />마이페이지에서 기업 회원으로 전환하시면 이용하실 수 있습니다.
+        </p>
+        <Link href="/profile" style={{ display: "inline-block", padding: "12px 28px", borderRadius: 12, background: "#2e4bd8", color: "#fff", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>마이페이지로</Link>
+      </div>
+    ) : (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       <CategoryHero
         badge="✨ 수익성 분석"
@@ -95,6 +111,7 @@ export default function FeasibilityPage() {
         />
       )}
     </div>
+    )}
     </AuthGuard>
   );
 }

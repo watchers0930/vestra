@@ -3,6 +3,7 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { gunzipSync } from "zlib";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
+import { assertFeasibilityAccess } from "@/lib/feasibility-guard";
 import { parseDocument } from "@/lib/feasibility/document-parser";
 import { validateOrigin } from "@/lib/csrf";
 
@@ -25,6 +26,8 @@ export async function POST(req: NextRequest) {
 
     // 1. Auth + Rate Limit
     const session = await auth();
+    const gate = assertFeasibilityAccess(session);
+    if (gate) return gate;
     const ip = req.headers.get("x-forwarded-for") || "anonymous";
     const userId = session?.user?.id;
     const dailyLimit = session?.user?.dailyLimit || ROLE_LIMITS.GUEST;

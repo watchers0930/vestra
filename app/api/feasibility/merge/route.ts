@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { auth } from "@/lib/auth";
+import { assertFeasibilityAccess } from "@/lib/feasibility-guard";
 import { mergeContexts } from "@/lib/feasibility/context-merger";
 import type { ParsedDocument } from "@/lib/feasibility/feasibility-types";
 import { validateOrigin } from "@/lib/csrf";
@@ -19,6 +20,8 @@ export async function POST(req: NextRequest) {
     if (csrfError) return csrfError;
 
     const session = await auth();
+    const gate = assertFeasibilityAccess(session);
+    if (gate) return gate;
     const ip = req.headers.get("x-forwarded-for") || "anonymous";
     const userId = session?.user?.id;
 
