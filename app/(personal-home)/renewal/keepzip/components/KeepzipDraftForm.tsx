@@ -4,6 +4,7 @@ import { useState } from "react";
 import s from "../keepzip-renewal.module.css";
 import { useToast } from "@/components/common/toast";
 import { DaumPostcodeModal } from "@/components/keepzip/DaumPostcodeModal";
+import { MockPaymentModal } from "@/components/keepzip/MockPaymentModal";
 import { SignaturePad } from "@/app/(app)/e-contract/components/SignaturePad";
 import { useKeepzipDraft } from "@/lib/keepzip/use-keepzip-draft";
 import {
@@ -23,6 +24,8 @@ export function KeepzipDraftForm({ lawyerName }: Props) {
   const { form, draft, loading, error, selectCause, setField, generateDraft, setDraftContent } = useKeepzipDraft();
   const [addrOpen, setAddrOpen] = useState(false);
   const [signature, setSignature] = useState("");
+  const [payOpen, setPayOpen] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const fields = activeFields(form);
   const addressReady = form.address.trim() && (form.isBuilding !== "Y" || form.addressDetail.trim());
@@ -171,6 +174,17 @@ export function KeepzipDraftForm({ lawyerName }: Props) {
                 <SignaturePad value={signature} onChange={setSignature} label="발신인(본인)" />
               </div>
               <p className={s.note}>※ AI 초안입니다. 직접 수정할 수 있으며, 실제 발송 전 담당 변호사의 검토·직인을 거칩니다.</p>
+              {lawyerName && (
+                sent ? (
+                  <div className={s.assignBadge} style={{ marginTop: 12, marginBottom: 0, textAlign: "center" }}>
+                    ✓ {lawyerName} 변호사에게 전송되었습니다. 검토·직인 후 발송됩니다.
+                  </div>
+                ) : (
+                  <button className={s.submitBtn} style={{ marginTop: 12 }} onClick={() => setPayOpen(true)}>
+                    {lawyerName} 변호사에게 보내기 (결제)
+                  </button>
+                )
+              )}
               <button className={s.proceedBtn} onClick={downloadPdf}>
                 서명 포함 PDF 내려받기
               </button>
@@ -178,6 +192,18 @@ export function KeepzipDraftForm({ lawyerName }: Props) {
           )}
         </div>
       </div>
+
+      {payOpen && (
+        <MockPaymentModal
+          lawyerName={lawyerName}
+          onClose={() => setPayOpen(false)}
+          onPaid={() => {
+            setPayOpen(false);
+            setSent(true);
+            showToast(`결제 완료 — ${lawyerName ?? "담당"} 변호사에게 전송되었습니다.`, "success");
+          }}
+        />
+      )}
 
       {addrOpen && (
         <DaumPostcodeModal
