@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import s from "../expert.module.css";
 import type { Expert } from "@/components/expert/ExpertCard";
 import { EXPERTS } from "@/app/(app)/expert-connect/constants";
@@ -11,20 +10,27 @@ function formatFee(fee: number) {
 }
 
 interface ExpertListProps {
+  /** 선택된 영역의 category 필터 (없으면 전체) */
+  categories?: string[];
+  fieldLabel?: string;
   onConsult: (expert: Expert) => void;
 }
 
-/** 전문가 목록 카드 (실데이터: constants.EXPERTS). 시안 excard 스타일 유지. */
-export default function ExpertList({ onConsult }: ExpertListProps) {
+/** STEP 2 — 선택한 영역의 전문가 목록. 변호사=내용증명 작성, 그 외=상담 요청. */
+export default function ExpertList({ categories, fieldLabel, onConsult }: ExpertListProps) {
+  const list = categories?.length
+    ? EXPERTS.filter((e) => categories.includes(e.category))
+    : EXPERTS;
+
   return (
     <div className={s.block}>
       <p className={s.secEyebrow}>Expert List</p>
-      <h2 className={s.secTitle}>전문가 목록</h2>
+      <h2 className={s.secTitle}>{fieldLabel ? `${fieldLabel} 전문가` : "전문가 목록"}</h2>
       <p className={s.secDesc}>
-        분야별 검증된 전문가를 선택하고 상담을 요청하세요. 상담료와 평점을 비교해 나에게 맞는 전문가를 찾을 수 있습니다.
+        검증된 전문가를 선택하세요. 상담료와 평점을 비교해 나에게 맞는 전문가를 찾을 수 있습니다.
       </p>
       <div className={s.expertGrid}>
-        {EXPERTS.map((expert) => (
+        {list.map((expert) => (
           <div key={expert.id} className={s.excard}>
             <div className={s.exHead}>
               <div className={s.exAvatar}>{expert.name.charAt(0)}</div>
@@ -50,23 +56,17 @@ export default function ExpertList({ onConsult }: ExpertListProps) {
               <span>경력 {expert.experience}년</span>
               <span className={s.exFee}>{formatFee(expert.consultFee)}</span>
             </div>
-            {expert.category === "변호사" ? (
-              <Link
-                href={`/renewal/keepzip/lawyers/${expert.id}`}
-                className={s.exBtn}
-                style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", textDecoration: "none" }}
-              >
-                내용증명 작성하기
-              </Link>
-            ) : (
-              <button
-                className={`${s.exBtn} ${expert.available ? "" : s.off}`}
-                disabled={!expert.available}
-                onClick={() => expert.available && onConsult(expert)}
-              >
-                {expert.available ? "상담 요청" : "상담 마감"}
-              </button>
-            )}
+            <button
+              className={`${s.exBtn} ${expert.available ? "" : s.off}`}
+              disabled={!expert.available}
+              onClick={() => expert.available && onConsult(expert)}
+            >
+              {!expert.available
+                ? "상담 마감"
+                : expert.category === "변호사"
+                ? "내용증명 작성하기"
+                : "상담 요청"}
+            </button>
           </div>
         ))}
       </div>

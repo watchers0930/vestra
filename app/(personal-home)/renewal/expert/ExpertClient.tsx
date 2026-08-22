@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import s from "./expert.module.css";
 import { useExpertConsult } from "@/app/(app)/expert-connect/hooks/useExpertConsult";
 import RenewalGnb from "../_shared/RenewalGnb";
@@ -8,6 +9,12 @@ import ExpertFields from "./components/ExpertFields";
 import ExpertList from "./components/ExpertList";
 import ConsultForm from "./components/ConsultForm";
 import ProcessSection from "./components/ProcessSection";
+import { KeepzipDraftForm } from "../keepzip/components/KeepzipDraftForm";
+
+const backBtnStyle: React.CSSProperties = {
+  background: "none", border: "none", color: "#2e4bd8", fontSize: "13.5px",
+  fontWeight: 600, cursor: "pointer", padding: "0 0 16px", alignSelf: "flex-start",
+};
 
 export default function ExpertClient() {
   const {
@@ -16,6 +23,9 @@ export default function ExpertClient() {
     submitting, submitted, error,
     handleConsult, handleSubmit, resetConsultForm,
   } = useExpertConsult();
+
+  // STEP 1 상태: 선택한 분야(영역)
+  const [selectedField, setSelectedField] = useState<{ categories: string[]; label: string } | null>(null);
 
   return (
     <div className={s.page}>
@@ -33,31 +43,38 @@ export default function ExpertClient() {
 
       <div className={s.panelWrap}>
         {selectedExpert ? (
-          /* 2단계: 전문가 선택 후 → 상담 신청 폼만 표시 */
+          /* STEP 3 — 상담폼(일반) 또는 내용증명 작성(변호사) */
           <>
-            <button
-              type="button"
-              onClick={resetConsultForm}
-              style={{ background: "none", border: "none", color: "#2e4bd8", fontSize: "13.5px", fontWeight: 600, cursor: "pointer", padding: "0 0 16px", alignSelf: "flex-start" }}
-            >
-              ← 전문가 목록으로
-            </button>
-            <ConsultForm
-              selectedExpert={selectedExpert}
-              formState={formState}
-              setFormState={setFormState}
-              submitting={submitting}
-              submitted={submitted}
-              error={error}
-              onSubmit={handleSubmit}
-              onReset={resetConsultForm}
+            <button type="button" onClick={resetConsultForm} style={backBtnStyle}>← 전문가 목록으로</button>
+            {selectedExpert.category === "변호사" ? (
+              <KeepzipDraftForm lawyerName={selectedExpert.name} />
+            ) : (
+              <ConsultForm
+                selectedExpert={selectedExpert}
+                formState={formState}
+                setFormState={setFormState}
+                submitting={submitting}
+                submitted={submitted}
+                error={error}
+                onSubmit={handleSubmit}
+                onReset={resetConsultForm}
+              />
+            )}
+          </>
+        ) : selectedField ? (
+          /* STEP 2 — 선택한 분야의 전문가 목록 */
+          <>
+            <button type="button" onClick={() => setSelectedField(null)} style={backBtnStyle}>← 분야 선택으로</button>
+            <ExpertList
+              categories={selectedField.categories}
+              fieldLabel={selectedField.label}
+              onConsult={handleConsult}
             />
           </>
         ) : (
-          /* 1단계: 전문가 목록 */
+          /* STEP 1 — 분야(영역) 선택 */
           <>
-            <ExpertFields />
-            <ExpertList onConsult={handleConsult} />
+            <ExpertFields onSelect={(categories, label) => setSelectedField({ categories, label })} />
             <ProcessSection />
           </>
         )}
