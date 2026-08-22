@@ -1,0 +1,51 @@
+import { Card } from "@/components/common/Card";
+import { Button } from "@/components/common/Button";
+import type { DraftResult } from "@/lib/keepzip/case-form";
+
+interface Props {
+  draft: DraftResult | null;
+  loading: boolean;
+  error: string | null;
+  onChangeContent: (content: string) => void;
+  onProceed: () => void;
+}
+
+/** 우측 — AI 내용증명 초안 실시간 생성·편집 (컨셉 문서 canvas 대응) */
+export function DraftPanel({ draft, loading, error, onChangeContent, onProceed }: Props) {
+  return (
+    <Card className="p-5 lg:sticky lg:top-4">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-semibold text-gray-700">내 용 증 명</span>
+        {draft && <span className="text-xs rounded px-1.5 py-0.5 bg-gray-100 text-gray-500">AI 초안</span>}
+      </div>
+
+      {loading ? (
+        <div className="flex flex-col items-center justify-center min-h-[420px] text-gray-400 text-sm gap-2">
+          <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+          AI가 내용증명을 작성 중입니다...
+        </div>
+      ) : error ? (
+        <div className="flex items-center justify-center min-h-[420px] text-red-500 text-sm text-center px-4">
+          {error}
+        </div>
+      ) : !draft ? (
+        <div className="flex items-center justify-center min-h-[420px] text-gray-400 text-sm text-center px-4">
+          왼쪽 정보를 입력하고 <br />‘AI 내용증명 초안 생성’을 누르면 <br />여기에 문서가 만들어집니다.
+        </div>
+      ) : (
+        <>
+          <div className="text-base font-bold text-center mb-3">{draft.title}</div>
+          <textarea
+            className="w-full min-h-[420px] text-sm leading-relaxed border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y whitespace-pre-wrap"
+            value={draft.content}
+            onChange={(e) => onChangeContent(e.target.value)}
+          />
+          <p className="text-xs text-gray-500 mt-2">
+            ※ AI 초안입니다. 직접 수정할 수 있으며, <strong>실제 발송 전 담당 변호사의 검토·직인</strong>을 거칩니다.
+          </p>
+          <Button variant="primary" onClick={onProceed} className="w-full mt-3">이 내용으로 진행하기</Button>
+        </>
+      )}
+    </Card>
+  );
+}

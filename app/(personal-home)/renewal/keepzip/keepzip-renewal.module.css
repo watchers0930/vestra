@@ -1,0 +1,68 @@
+/* 집키퍼 임차인 리뉴얼 화면 — 리뉴얼 공통 톤(다크 히어로 #060c2a, 파랑 #2e4bd8) */
+
+/* SUB HERO */
+.subHero{position:relative;height:200px;background:#060c2a;overflow:hidden}
+.subHeroBg{position:absolute;inset:0;background:linear-gradient(160deg,rgba(4,8,34,.92) 0%,rgba(20,30,80,.72) 100%)}
+.subHeroIn{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:0 20px;text-align:center}
+.heroChip{font-size:11px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:rgba(100,130,255,.9);background:rgba(46,75,216,.18);border:1px solid rgba(46,75,216,.32);padding:4px 14px;border-radius:20px}
+.subHero h1{font-size:26px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.subHeroSub{font-size:13.5px;font-weight:300;color:rgba(255,255,255,.7);line-height:1.5}
+
+/* BODY */
+.body{max-width:1080px;margin:0 auto;padding:32px 24px 64px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+
+.panel{background:#fff;border:1px solid #e8eaf0;border-radius:14px;padding:22px}
+.panelSticky{position:sticky;top:20px}
+.panelTitle{font-size:13px;font-weight:700;color:#3a3f55;margin-bottom:14px}
+
+/* 종류 선택 */
+.blockLabel{display:block;font-size:13px;font-weight:700;color:#3a3f55;margin-bottom:10px}
+.causeList{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.causeBtn{text-align:left;border:1px solid #e0e3ee;border-radius:10px;padding:12px 14px;cursor:pointer;background:#fff;transition:border-color .15s,background .15s}
+.causeBtn:hover{border-color:#b8c0e8}
+.causeBtnOn{border-color:#2e4bd8;background:#f0f2fd}
+.causeName{font-size:14px;font-weight:600;color:#1a1d2e}
+.causeDesc{font-size:12px;color:#8b90a5;margin-top:2px}
+
+/* 폼 필드 */
+.field{margin-bottom:14px}
+.fieldLabel{display:block;font-size:12.5px;font-weight:600;color:#4a4f66;margin-bottom:6px}
+.input{width:100%;border:1px solid #dcdfec;border-radius:9px;padding:10px 12px;font-size:14px;transition:border-color .15s}
+.input:focus{outline:none;border-color:#2e4bd8}
+.selGroup{display:flex;flex-wrap:wrap;gap:8px}
+.selBtn{border:1px solid #dcdfec;border-radius:9px;padding:8px 14px;font-size:13px;cursor:pointer;background:#fff;transition:border-color .15s,background .15s}
+.selBtn:hover{border-color:#b8c0e8}
+.selBtnOn{border-color:#2e4bd8;background:#f0f2fd;color:#2e4bd8;font-weight:600}
+.hint{font-size:12px;color:#2e4bd8;margin-top:5px}
+
+/* 주소(다음 우편번호) */
+.searchBtn{width:100%;border:1px dashed #b8c0e8;border-radius:9px;padding:11px;font-size:13.5px;color:#2e4bd8;background:#f7f8fe;cursor:pointer;transition:background .15s}
+.searchBtn:hover{background:#eef1fd}
+.addrPicked{display:flex;align-items:center;gap:8px;border:1px solid #dcdfec;border-radius:9px;padding:9px 12px;font-size:13.5px}
+.addrZip{font-size:11.5px;font-weight:600;color:#2e4bd8;background:#eef1fd;border-radius:5px;padding:2px 7px;flex-shrink:0}
+.addrText{flex:1;color:#1a1d2e}
+.addrChange{font-size:12px;color:#8b90a5;background:none;border:none;cursor:pointer;text-decoration:underline;flex-shrink:0}
+.addrChange:hover{color:#2e4bd8}
+
+.submitBtn{width:100%;margin-top:8px;background:#2e4bd8;color:#fff;font-size:14.5px;font-weight:600;border:none;border-radius:10px;padding:13px;cursor:pointer;transition:background .15s}
+.submitBtn:hover:not(:disabled){background:#2540bd}
+.submitBtn:disabled{background:#c3c8de;cursor:not-allowed}
+
+/* 초안 패널 */
+.docHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.docBadge{font-size:11px;color:#8b90a5;background:#f2f3f8;border-radius:5px;padding:2px 8px}
+.docEmpty{display:flex;align-items:center;justify-content:center;min-height:420px;color:#a4a9bd;font-size:13.5px;text-align:center;line-height:1.7}
+.docTitle{font-size:16px;font-weight:700;text-align:center;color:#1a1d2e;margin-bottom:12px}
+.docArea{width:100%;min-height:420px;border:1px solid #e0e3ee;border-radius:10px;padding:14px;font-size:13.5px;line-height:1.7;white-space:pre-wrap;resize:vertical}
+.docArea:focus{outline:none;border-color:#2e4bd8}
+.note{font-size:12px;color:#8b90a5;margin-top:10px;line-height:1.5}
+.proceedBtn{width:100%;margin-top:12px;background:#0f1633;color:#fff;font-size:14px;font-weight:600;border:none;border-radius:10px;padding:12px;cursor:pointer}
+.proceedBtn:hover{background:#1a2444}
+
+/* 로딩 스피너 */
+.loadWrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px;gap:12px;color:#8b90a5;font-size:13px}
+.spinner{width:26px;height:26px;border:3px solid #e0e3ee;border-top-color:#2e4bd8;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.errBox{display:flex;align-items:center;justify-content:center;min-height:420px;color:#d64545;font-size:13.5px;text-align:center;padding:0 20px}
