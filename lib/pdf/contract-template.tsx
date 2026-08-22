@@ -142,9 +142,9 @@ const S = StyleSheet.create({
   signValue: { fontSize: 7.5, flex: 1 },
   signImgBox: {
     marginTop: 8, borderTopWidth: 1, borderTopColor: "#eee", borderTopStyle: "solid",
-    paddingTop: 6, alignItems: "flex-end",
+    paddingTop: 6, alignItems: "center",
   },
-  signImg: { width: 80, height: 36, objectFit: "contain" },
+  signImg: { width: "100%", height: 54, objectFit: "contain" },
   signEmpty: { fontSize: 7.5, color: "#aaa", marginTop: 4, textAlign: "right" },
   footer: { marginTop: 14, fontSize: 7, color: "#999", textAlign: "center" },
   stamp: {
