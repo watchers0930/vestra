@@ -63,8 +63,16 @@ export async function GET(req: NextRequest) {
     const userId = session?.user?.id;
     if (!userId) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
 
-    const lawyerId = req.nextUrl.searchParams.get("lawyerId");
-    const where = lawyerId ? { lawyerId } : { userId };
+    // as=lawyer → 로그인 변호사(LawyerPartner)에게 배정된 사건, 기본 → 내가 신청한 사건
+    const asLawyer = req.nextUrl.searchParams.get("as") === "lawyer";
+    let where: { lawyerId: string } | { userId: string };
+    if (asLawyer) {
+      const partner = await prisma.lawyerPartner.findUnique({ where: { userId }, select: { id: true } });
+      if (!partner) return NextResponse.json({ cases: [] });
+      where = { lawyerId: partner.id };
+    } else {
+      where = { userId };
+    }
     const cases = await prisma.keepzipCase.findMany({
       where,
       orderBy: { createdAt: "desc" },
