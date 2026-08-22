@@ -1,15 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import s from "./expert.module.css";
 import { useExpertConsult } from "@/app/(app)/expert-connect/hooks/useExpertConsult";
 import RenewalGnb from "../_shared/RenewalGnb";
+import RenewalLoginModal from "../_shared/RenewalLoginModal";
+import RenewalSignupModal from "../_shared/RenewalSignupModal";
 import ExpertFooter from "./components/ExpertFooter";
 import ExpertFields from "./components/ExpertFields";
 import ExpertList from "./components/ExpertList";
 import ConsultForm from "./components/ConsultForm";
 import ProcessSection from "./components/ProcessSection";
 import { KeepzipDraftForm } from "../keepzip/components/KeepzipDraftForm";
+import type { Expert } from "@/components/expert/ExpertCard";
 import type { ExpertIntent } from "./components/ExpertList";
 
 const backBtnStyle: React.CSSProperties = {
@@ -25,10 +29,26 @@ export default function ExpertClient() {
     handleConsult, handleSubmit, resetConsultForm,
   } = useExpertConsult();
 
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
+
   // STEP 1 상태: 선택한 분야(영역)
   const [selectedField, setSelectedField] = useState<{ categories: string[]; label: string } | null>(null);
   // STEP 3 의도: 상담(consult) vs 내용증명(keepzip). 변호사만 두 갈래.
   const [intent, setIntent] = useState<ExpertIntent>("consult");
+  // 로그인 유도 모달 (내용증명은 로그인 필요)
+  const [showLogin, setShowLogin] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
+
+  const handleSelectExpert = (expert: Expert, it: ExpertIntent) => {
+    // 내용증명 작성은 로그인 필요 → 미로그인 시 로그인 유도
+    if (it === "keepzip" && !isLoggedIn) {
+      setShowLogin(true);
+      return;
+    }
+    setIntent(it);
+    handleConsult(expert);
+  };
 
   return (
     <div className={s.page}>
@@ -71,7 +91,7 @@ export default function ExpertClient() {
             <ExpertList
               categories={selectedField.categories}
               fieldLabel={selectedField.label}
-              onSelect={(expert, it) => { setIntent(it); handleConsult(expert); }}
+              onSelect={handleSelectExpert}
             />
           </>
         ) : (
@@ -84,6 +104,19 @@ export default function ExpertClient() {
       </div>
 
       <ExpertFooter />
+
+      {showLogin && (
+        <RenewalLoginModal
+          onClose={() => setShowLogin(false)}
+          onSwitchToSignup={() => { setShowLogin(false); setShowSignup(true); }}
+        />
+      )}
+      {showSignup && (
+        <RenewalSignupModal
+          onClose={() => setShowSignup(false)}
+          onSwitchToLogin={() => { setShowSignup(false); setShowLogin(true); }}
+        />
+      )}
     </div>
   );
 }
