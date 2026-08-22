@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import s from "../expert.module.css";
 import type { Expert } from "@/components/expert/ExpertCard";
 import { EXPERTS } from "@/app/(app)/expert-connect/constants";
@@ -49,13 +50,23 @@ export default function ExpertList({ onConsult }: ExpertListProps) {
               <span>경력 {expert.experience}년</span>
               <span className={s.exFee}>{formatFee(expert.consultFee)}</span>
             </div>
-            <button
-              className={`${s.exBtn} ${expert.available ? "" : s.off}`}
-              disabled={!expert.available}
-              onClick={() => expert.available && onConsult(expert)}
-            >
-              {expert.available ? "상담 요청" : "상담 마감"}
-            </button>
+            {expert.category === "변호사" ? (
+              <Link
+                href={`/renewal/keepzip/lawyers/${expert.id}`}
+                className={s.exBtn}
+                style={{ textAlign: "center", display: "block", textDecoration: "none" }}
+              >
+                내용증명 작성하기
+              </Link>
+            ) : (
+              <button
+                className={`${s.exBtn} ${expert.available ? "" : s.off}`}
+                disabled={!expert.available}
+                onClick={() => expert.available && onConsult(expert)}
+              >
+                {expert.available ? "상담 요청" : "상담 마감"}
+              </button>
+            )}
           </div>
         ))}
       </div>
