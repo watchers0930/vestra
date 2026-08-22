@@ -4,19 +4,49 @@ import { useState } from "react";
 import { Card } from "@/components/common/Card";
 import { Button } from "@/components/common/Button";
 import { SignaturePad } from "@/app/(app)/e-contract/components/SignaturePad";
+import { useToast } from "@/components/common/toast";
 import type { DraftResult } from "@/lib/keepzip/case-form";
 
 interface Props {
   draft: DraftResult | null;
   loading: boolean;
   error: string | null;
+  senderName: string;
   onChangeContent: (content: string) => void;
-  onProceed: () => void;
 }
 
-/** 우측 — AI 내용증명 초안 실시간 생성·편집 (컨셉 문서 canvas 대응) */
-export function DraftPanel({ draft, loading, error, onChangeContent, onProceed }: Props) {
+/** 우측 — AI 내용증명 초안 실시간 생성·편집 + 서명 포함 PDF 내려받기 */
+export function DraftPanel({ draft, loading, error, senderName, onChangeContent }: Props) {
+  const { showToast } = useToast();
   const [signature, setSignature] = useState("");
+
+  const downloadPdf = async () => {
+    if (!draft) return;
+    try {
+      const res = await fetch("/api/keepzip/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: draft.title, content: draft.content, senderName, signature }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => null);
+        showToast(d?.error ?? "PDF 생성에 실패했습니다.", "error");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${draft.title || "내용증명"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      showToast("PDF 다운로드 중 오류가 발생했습니다.", "error");
+    }
+  };
+
   return (
     <Card className="p-5 lg:sticky lg:top-4">
       <div className="flex items-center justify-between mb-3">
@@ -51,7 +81,7 @@ export function DraftPanel({ draft, loading, error, onChangeContent, onProceed }
           <p className="text-xs text-gray-500 mt-2">
             ※ AI 초안입니다. 직접 수정할 수 있으며, <strong>실제 발송 전 담당 변호사의 검토·직인</strong>을 거칩니다.
           </p>
-          <Button variant="primary" onClick={onProceed} className="w-full mt-3">이 내용으로 진행하기</Button>
+          <Button variant="primary" onClick={downloadPdf} className="w-full mt-3">서명 포함 PDF 내려받기</Button>
         </>
       )}
     </Card>

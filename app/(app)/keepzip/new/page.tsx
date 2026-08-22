@@ -2,7 +2,6 @@
 
 import { CategoryHero } from "@/components/common/CategoryHero";
 import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
-import { useToast } from "@/components/common/toast";
 import { useKeepzipDraft } from "@/lib/keepzip/use-keepzip-draft";
 import { CaseForm } from "./components/CaseForm";
 import { DraftPanel } from "./components/DraftPanel";
@@ -12,7 +11,6 @@ import { DraftPanel } from "./components/DraftPanel";
  * 임차인(개인)용은 (personal-home)/renewal/keepzip (리뉴얼 체계).
  */
 export default function KeepzipNewPage() {
-  const { showToast } = useToast();
   const { form, draft, loading, error, selectCause, setField, generateDraft, setDraftContent } = useKeepzipDraft();
 
   return (
@@ -37,8 +35,8 @@ export default function KeepzipNewPage() {
             draft={draft}
             loading={loading}
             error={error}
+            senderName={form.senderName}
             onChangeContent={setDraftContent}
-            onProceed={() => showToast("초안이 준비되었습니다. 결제·변호사 검토 단계는 곧 연결됩니다.", "success")}
           />
         </div>
       </div>

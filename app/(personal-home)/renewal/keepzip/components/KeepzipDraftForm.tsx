@@ -30,6 +30,33 @@ export function KeepzipDraftForm({ lawyerName }: Props) {
   const causeReady = fields.every((f) => String(form[f.key] ?? "").trim().length > 0);
   const canSubmit = !!form.cause && partyReady && causeReady;
 
+  const downloadPdf = async () => {
+    if (!draft) return;
+    try {
+      const res = await fetch("/api/keepzip/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: draft.title, content: draft.content, senderName: form.senderName, signature }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => null);
+        showToast(d?.error ?? "PDF 생성에 실패했습니다.", "error");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${draft.title || "내용증명"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      showToast("PDF 다운로드 중 오류가 발생했습니다.", "error");
+    }
+  };
+
   return (
     <div className={s.body}>
       <div className={s.grid}>
@@ -144,9 +171,8 @@ export function KeepzipDraftForm({ lawyerName }: Props) {
                 <SignaturePad value={signature} onChange={setSignature} label="발신인(본인)" />
               </div>
               <p className={s.note}>※ AI 초안입니다. 직접 수정할 수 있으며, 실제 발송 전 담당 변호사의 검토·직인을 거칩니다.</p>
-              <button className={s.proceedBtn}
-                onClick={() => showToast("초안이 준비되었습니다. 결제·변호사 검토 단계는 곧 연결됩니다.", "success")}>
-                이 내용으로 진행하기
+              <button className={s.proceedBtn} onClick={downloadPdf}>
+                서명 포함 PDF 내려받기
               </button>
             </>
           )}
