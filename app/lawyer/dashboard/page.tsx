@@ -1,47 +1,39 @@
 "use client";
 
 import { useState } from "react";
-import { LAWYER_TABS, type LawyerTabKey } from "./constants";
+import { type LawyerTabKey } from "./constants";
+import { SidebarNav } from "./components/SidebarNav";
 import { NoticesTab } from "./components/NoticesTab";
 import { ConsultsTab } from "./components/ConsultsTab";
 import { ProfileFieldTab } from "./components/ProfileFieldTab";
+import { ProfileListTab } from "./components/ProfileListTab";
 import { VisitsTab } from "./components/VisitsTab";
 
-/** 변호사 전용 대시보드 — 내용증명·상담문의·프로필·방문예약 (설계서 §4) */
+/** 변호사 전용 대시보드 — 2컬럼(사이드바 + 콘텐츠) */
 export default function LawyerDashboardPage() {
   const [tab, setTab] = useState<LawyerTabKey>("notices");
 
   return (
     <div className="pb-12 pt-8">
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="max-w-5xl mx-auto px-4">
         <h1 className="text-xl font-bold mb-1">변호사 대시보드</h1>
-        <p className="text-sm text-gray-500 mb-5">사건 검수·직인, 상담·방문 관리, 미니홈페이지 프로필을 관리합니다.</p>
+        <p className="text-sm text-gray-500 mb-6">사건 검수·직인, 상담·방문 관리, 미니홈페이지 정보를 관리합니다.</p>
 
-        {/* 탭 네비 */}
-        <div className="flex flex-wrap gap-1 border-b mb-6">
-          {LAWYER_TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setTab(t.key)}
-              className={`px-3.5 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                tab === t.key
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-800"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+        <div className="flex gap-6 items-start">
+          {/* 좌: 사이드바 */}
+          <aside className="w-44 shrink-0">
+            <SidebarNav active={tab} onSelect={setTab} />
+          </aside>
+
+          {/* 우: 콘텐츠 */}
+          <div className="flex-1 min-w-0 bg-white border border-gray-200 rounded-xl p-5">
+            {tab === "notices" && <NoticesTab />}
+            {tab === "consults" && <ConsultsTab />}
+            {tab === "visits" && <VisitsTab />}
+            {(tab === "bio" || tab === "etc") && <ProfileFieldTab tabKey={tab} />}
+            {(tab === "career" || tab === "school") && <ProfileListTab tabKey={tab} />}
+          </div>
         </div>
-
-        {/* 활성 탭 */}
-        {tab === "notices" && <NoticesTab />}
-        {tab === "consults" && <ConsultsTab />}
-        {tab === "visits" && <VisitsTab />}
-        {(tab === "bio" || tab === "career" || tab === "school" || tab === "etc") && (
-          <ProfileFieldTab tabKey={tab} />
-        )}
       </div>
     </div>
   );

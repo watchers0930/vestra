@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { Button } from "@/components/common/Button";
 import { useToast } from "@/components/common/toast";
-import { PROFILE_FIELDS } from "../constants";
+import { PROFILE_TEXT } from "../constants";
 
-/** 변호사약력·주요경력·출신학교·기타정보 — 공용 편집 탭 */
-export function ProfileFieldTab({ tabKey }: { tabKey: "bio" | "career" | "school" | "etc" }) {
-  const f = PROFILE_FIELDS[tabKey];
+/** 약력·기타정보 — 텍스트 편집 탭 */
+export function ProfileFieldTab({ tabKey }: { tabKey: "bio" | "etc" }) {
+  const f = PROFILE_TEXT[tabKey];
   const { showToast } = useToast();
   const [value, setValue] = useState("");
 
