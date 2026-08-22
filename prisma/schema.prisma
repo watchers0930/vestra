@@ -55,34 +55,34 @@ model VerificationToken {
 // ---------------------------------------------------------------------------
 
 model User {
-  id             String    @id @default(cuid())
-  name           String?
-  email          String    @unique
-  emailVerified  DateTime?
-  image          String?
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
 
   // 관리자 계정용
-  password       String?
+  password String?
 
   // 회원 등급
-  role           String    @default("PERSONAL") // GUEST | PERSONAL | BUSINESS | REALESTATE | ADMIN
-  userType       String?                         // TENANT(임차/매수인) | LANDLORD(임대/매도인)
-  businessNumber String?                        // 사업자등록번호 (기업/부동산)
-  companyName    String?                        // 회사명
-  representName  String?                        // 대표자명
-  verifyStatus   String    @default("none")     // none | pending | verified | rejected
-  dailyLimit     Int       @default(5)          // 일일 분석 횟수
+  role           String  @default("PERSONAL") // GUEST | PERSONAL | BUSINESS | REALESTATE | ADMIN | LAWYER
+  userType       String? // TENANT(임차/매수인) | LANDLORD(임대/매도인)
+  businessNumber String? // 사업자등록번호 (기업/부동산)
+  companyName    String? // 회사명
+  representName  String? // 대표자명
+  verifyStatus   String  @default("none") // none | pending | verified | rejected
+  dailyLimit     Int     @default(5) // 일일 분석 횟수
 
   // NextAuth 관계
-  accounts       Account[]
-  sessions       Session[]
+  accounts Account[]
+  sessions Session[]
 
   // 앱 데이터 관계
-  analyses       Analysis[]
-  assets         Asset[]
+  analyses Analysis[]
+  assets   Asset[]
 
   // 모니터링 & 검증
-  monitoredProperties MonitoredProperty[]
+  monitoredProperties  MonitoredProperty[]
   verificationRequests VerificationRequest[]
 
   // 구독 & 알림
@@ -97,8 +97,8 @@ model User {
   pushSubscriptions PushSubscription[]
 
   // 중개관리 (부동산 회원)
-  agentClients   AgentClient[] @relation("AgentClients")
-  clientAgent    AgentClient?  @relation("ClientAgent")
+  agentClients AgentClient[] @relation("AgentClients")
+  clientAgent  AgentClient?  @relation("ClientAgent")
 
   // 매물 & 계약의향서 & 채팅
   ownedListings    Listing[]             @relation("OwnedListings")
@@ -110,8 +110,11 @@ model User {
   // 전자계약 (임차인으로 참여한 계약 — 가입회원인 경우)
   tenantContracts   EContract[] @relation("TenantEContracts")
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  // 집키퍼(KeepZip) — 임차인으로 신청한 내용증명 사건
+  keepzipCases KeepzipCase[] @relation("KeepzipTenant")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ---------------------------------------------------------------------------
@@ -126,8 +129,8 @@ model Analysis {
   address   String
   summary   String   @db.Text
   data      String   @db.Text
-  fraudRisk Json?    // 전세사기 위험 평가 결과 (FraudRiskResult)
-  vScore    Json?    // V-Score 통합 위험도 결과 (VScoreResult)
+  fraudRisk Json? // 전세사기 위험 평가 결과 (FraudRiskResult)
+  vScore    Json? // V-Score 통합 위험도 결과 (VScoreResult)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -179,7 +182,7 @@ model Subscription {
   id         String    @id @default(cuid())
   userId     String    @unique
   plan       String    @default("FREE") // FREE | PRO | BUSINESS
-  price      Int       @default(0)      // 월 요금 (원)
+  price      Int       @default(0) // 월 요금 (원)
   status     String    @default("active") // active | canceled | expired
   startDate  DateTime  @default(now())
   endDate    DateTime?
@@ -194,7 +197,7 @@ model Payment {
   id             String       @id @default(cuid())
   subscriptionId String
   amount         Int
-  method         String?      // card | transfer | kakaopay
+  method         String? // card | transfer | kakaopay
   status         String       @default("pending") // pending | completed | failed | refunded
   orderId        String?      @unique
   receiptUrl     String?
@@ -203,26 +206,26 @@ model Payment {
 }
 
 model RegistryIssueOrder {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   userId         String
   address        String
   commUniqueNo   String?
   ownerName      String?
-  amount         Int      @default(1000)
-  status         String   @default("payment_required") // payment_required | paid | issuing | issued | failed | canceled
-  provider       String   @default("codef")
-  purpose        String   @default("analysis") // analysis | monitoring | submission
-  includeHistory Boolean  @default(true)
-  registerType   String   @default("0") // 0: 전체, 1: 갑구, 2: 을구
-  consentVersion String   @default("registry-issue-v1")
-  orderId        String   @unique
-  documentText   String?  @db.Text
+  amount         Int       @default(1000)
+  status         String    @default("payment_required") // payment_required | paid | issuing | issued | failed | canceled
+  provider       String    @default("codef")
+  purpose        String    @default("analysis") // analysis | monitoring | submission
+  includeHistory Boolean   @default(true)
+  registerType   String    @default("0") // 0: 전체, 1: 갑구, 2: 을구
+  consentVersion String    @default("registry-issue-v1")
+  orderId        String    @unique
+  documentText   String?   @db.Text
   rawData        Json?
-  errorMessage   String?  @db.Text
+  errorMessage   String?   @db.Text
   issuedAt       DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
@@ -234,22 +237,22 @@ model RegistryIssueOrder {
 // ---------------------------------------------------------------------------
 
 model NotificationSetting {
-  id                   String   @id @default(cuid())
-  userId               String   @unique
-  emailEnabled         Boolean  @default(true)
-  kakaoEnabled         Boolean  @default(false)
-  kakaoPhoneNumber     String?  // 카카오 알림톡 수신 전화번호
-  smsEnabled           Boolean  @default(false)
-  smsPhoneNumber       String?  // SMS 수신 전화번호
-  webPushEnabled       Boolean  @default(true)
-  registryChangeAlert  Boolean  @default(true)  // 등기 변동 알림 (독립 토글)
-  priceAlert           Boolean  @default(true)
-  analysisReport       Boolean  @default(true)
-  systemNotice         Boolean  @default(true)
-  marketingEmail       Boolean  @default(false)
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  emailEnabled        Boolean  @default(true)
+  kakaoEnabled        Boolean  @default(false)
+  kakaoPhoneNumber    String? // 카카오 알림톡 수신 전화번호
+  smsEnabled          Boolean  @default(false)
+  smsPhoneNumber      String? // SMS 수신 전화번호
+  webPushEnabled      Boolean  @default(true)
+  registryChangeAlert Boolean  @default(true) // 등기 변동 알림 (독립 토글)
+  priceAlert          Boolean  @default(true)
+  analysisReport      Boolean  @default(true)
+  systemNotice        Boolean  @default(true)
+  marketingEmail      Boolean  @default(false)
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 // ---------------------------------------------------------------------------
@@ -271,8 +274,8 @@ model Announcement {
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String?
-  action    String   // LOGIN | LOGOUT | LOGIN_FAILED | ADMIN_USER_UPDATE | ADMIN_USER_DELETE | ADMIN_SETTINGS_CHANGE | ANALYSIS_REQUEST | RATE_LIMIT_EXCEEDED | SIGNUP | ROLE_CHANGE
-  target    String?  // 대상 리소스 ID (userId, settingKey 등)
+  action    String // LOGIN | LOGOUT | LOGIN_FAILED | ADMIN_USER_UPDATE | ADMIN_USER_DELETE | ADMIN_SETTINGS_CHANGE | ANALYSIS_REQUEST | RATE_LIMIT_EXCEEDED | SIGNUP | ROLE_CHANGE
+  target    String? // 대상 리소스 ID (userId, settingKey 등)
   detail    String?  @db.Text // JSON 형태 상세 정보
   ipAddress String?
   userAgent String?
@@ -288,8 +291,8 @@ model AuditLog {
 // ---------------------------------------------------------------------------
 
 model SystemSetting {
-  key       String   @id              // e.g. "AUTH_GOOGLE_ID"
-  value     String   @db.Text         // AES-256-GCM 암호화된 값
+  key       String   @id // e.g. "AUTH_GOOGLE_ID"
+  value     String   @db.Text // AES-256-GCM 암호화된 값
   category  String   @default("oauth")
   updatedAt DateTime @updatedAt
 }
@@ -299,32 +302,32 @@ model SystemSetting {
 // ---------------------------------------------------------------------------
 
 model MonitoredProperty {
-  id            String            @id @default(cuid())
-  userId        String
-  address       String
-  lastCheckedAt DateTime?
-  lastHash      String?           // 등기부 내용 해시 (변동 감지용)
-  status        String            @default("active") // active | paused | expired
-  monitorMode   String            @default("standard") // standard | contract_gap (계약~전입 강화 감시)
-  registrySignalStatus String     @default("idle") // idle | case_detected | pending_confirm | confirmed_changed | confirmed_no_change | dismissed
+  id                       String                @id @default(cuid())
+  userId                   String
+  address                  String
+  lastCheckedAt            DateTime?
+  lastHash                 String? // 등기부 내용 해시 (변동 감지용)
+  status                   String                @default("active") // active | paused | expired
+  monitorMode              String                @default("standard") // standard | contract_gap (계약~전입 강화 감시)
+  registrySignalStatus     String                @default("idle") // idle | case_detected | pending_confirm | confirmed_changed | confirmed_no_change | dismissed
   registrySignalDetectedAt DateTime?
-  registrySignalSummary String?   @db.Text
-  registrySignalRaw Json?
-  tilkoLastCaseCheckedAt DateTime?
-  contractDate  DateTime?         // 계약 체결일
-  moveInDate    DateTime?         // 전입 예정일
-  deposit       Int?              // 보증금 (만원 단위)
-  commUniqueNo  String?           // CODEF 고유번호 (등기 조회용)
-  ownerName     String?           // Tilko 등기신청사건 조회용 소유자명
-  baselineData  String?           @db.Text // 계약 시점 등기부 스냅샷 (JSON)
-  listingId     String?           // 감시 대상 매물(Listing) — 있으면 매물과 연결, 없으면 주소 직접 등록
-  alerts              MonitoringAlert[]
-  snapshots           RegistrySnapshot[]
-  agentClientProperties AgentClientProperty[]
-  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listing             Listing?          @relation("ListingMonitors", fields: [listingId], references: [id], onDelete: SetNull)
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
+  registrySignalSummary    String?               @db.Text
+  registrySignalRaw        Json?
+  tilkoLastCaseCheckedAt   DateTime?
+  contractDate             DateTime? // 계약 체결일
+  moveInDate               DateTime? // 전입 예정일
+  deposit                  Int? // 보증금 (만원 단위)
+  commUniqueNo             String? // CODEF 고유번호 (등기 조회용)
+  ownerName                String? // Tilko 등기신청사건 조회용 소유자명
+  baselineData             String?               @db.Text // 계약 시점 등기부 스냅샷 (JSON)
+  listingId                String? // 감시 대상 매물(Listing) — 있으면 매물과 연결, 없으면 주소 직접 등록
+  alerts                   MonitoringAlert[]
+  snapshots                RegistrySnapshot[]
+  agentClientProperties    AgentClientProperty[]
+  user                     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing                  Listing?              @relation("ListingMonitors", fields: [listingId], references: [id], onDelete: SetNull)
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
 
   @@unique([userId, address])
   @@index([status])
@@ -333,17 +336,17 @@ model MonitoredProperty {
 }
 
 model RegistrySnapshot {
-  id                    String            @id @default(cuid())
-  monitoredPropertyId   String
-  sequenceNo            Int
-  merkleRoot            String
-  snapshotHash          String
-  previousSnapshotHash  String?
-  signature             String
-  encryptedData         String            @db.Text
-  sectionHashes         Json
-  timestamp             DateTime          @default(now())
-  monitoredProperty     MonitoredProperty @relation(fields: [monitoredPropertyId], references: [id], onDelete: Cascade)
+  id                   String            @id @default(cuid())
+  monitoredPropertyId  String
+  sequenceNo           Int
+  merkleRoot           String
+  snapshotHash         String
+  previousSnapshotHash String?
+  signature            String
+  encryptedData        String            @db.Text
+  sectionHashes        Json
+  timestamp            DateTime          @default(now())
+  monitoredProperty    MonitoredProperty @relation(fields: [monitoredPropertyId], references: [id], onDelete: Cascade)
 
   @@unique([monitoredPropertyId, sequenceNo])
   @@index([monitoredPropertyId])
@@ -353,7 +356,7 @@ model RegistrySnapshot {
 model MonitoringAlert {
   id                  String            @id @default(cuid())
   monitoredPropertyId String
-  changeType          String            // mortgage_added | mortgage_removed | seizure_added | ownership_changed | etc.
+  changeType          String // mortgage_added | mortgage_removed | seizure_added | ownership_changed | etc.
   summary             String
   detail              String?           @db.Text
   riskLevel           String            @default("medium") // low | medium | high | critical
@@ -372,11 +375,11 @@ model MonitoringAlert {
 model VerificationRequest {
   id              String         @id @default(cuid())
   requesterId     String
-  targetEmail     String         // 상대방 이메일
-  targetRole      String         // landlord | tenant
+  targetEmail     String // 상대방 이메일
+  targetRole      String // landlord | tenant
   propertyAddress String
   status          String         @default("pending") // pending | accepted | rejected | expired
-  message         String?        // 요청 메시지
+  message         String? // 요청 메시지
   sharedReports   SharedReport[]
   expiresAt       DateTime
   requester       User           @relation(fields: [requesterId], references: [id], onDelete: Cascade)
@@ -392,7 +395,7 @@ model SharedReport {
   id                    String              @id @default(cuid())
   verificationRequestId String
   analysisId            String
-  sharedBy              String              // userId of report owner
+  sharedBy              String // userId of report owner
   consentGiven          Boolean             @default(false)
   consentAt             DateTime?
   verificationRequest   VerificationRequest @relation(fields: [verificationRequestId], references: [id], onDelete: Cascade)
@@ -406,20 +409,20 @@ model SharedReport {
 // ---------------------------------------------------------------------------
 
 model FraudCase {
-  id          String    @id @default(cuid())
-  address     String
-  latitude    Float
-  longitude   Float
-  caseType    String    // jeonse_fraud | deposit_fraud | rental_fraud | other
-  amount      Float?    // 피해금액 (원)
-  victimCount Int?      // 피해 세대수
-  reportDate  DateTime?
-  source      String    // government | news | court | user_report
-  sourceUrl   String?
-  summary     String?   @db.Text
-  verified      Boolean   @default(false)
-  riskFeatures  Json?     // 사기 사례의 피처 벡터 (전세가율, 근저당비율 등)
-  createdAt     DateTime  @default(now())
+  id           String    @id @default(cuid())
+  address      String
+  latitude     Float
+  longitude    Float
+  caseType     String // jeonse_fraud | deposit_fraud | rental_fraud | other
+  amount       Float? // 피해금액 (원)
+  victimCount  Int? // 피해 세대수
+  reportDate   DateTime?
+  source       String // government | news | court | user_report
+  sourceUrl    String?
+  summary      String?   @db.Text
+  verified     Boolean   @default(false)
+  riskFeatures Json? // 사기 사례의 피처 벡터 (전세가율, 근저당비율 등)
+  createdAt    DateTime  @default(now())
 
   @@index([latitude, longitude])
   @@index([caseType])
@@ -433,17 +436,17 @@ model FraudCase {
 
 model TrainingData {
   id               String   @id @default(cuid())
-  rawTextEncrypted String   @db.Text              // AES-256-GCM 암호화된 원문
-  rawTextHash      String                         // 중복 검색용 SHA-256 해시
-  parsedData       Json?                          // ParsedRegistry JSON
-  status           String   @default("pending")   // pending | reviewed | approved | rejected
+  rawTextEncrypted String   @db.Text // AES-256-GCM 암호화된 원문
+  rawTextHash      String // 중복 검색용 SHA-256 해시
+  parsedData       Json? // ParsedRegistry JSON
+  status           String   @default("pending") // pending | reviewed | approved | rejected
   reviewNotes      String?  @db.Text
   sourceFileName   String
-  sourceType       String                         // pdf | text | image
-  confidence       Int      @default(0)           // 등기부등본 감지 신뢰도 0-100
-  charCount        Int      @default(0)           // 원문 글자 수
-  gapguCount       Int      @default(0)           // 갑구 항목 수
-  eulguCount       Int      @default(0)           // 을구 항목 수
+  sourceType       String // pdf | text | image
+  confidence       Int      @default(0) // 등기부등본 감지 신뢰도 0-100
+  charCount        Int      @default(0) // 원문 글자 수
+  gapguCount       Int      @default(0) // 갑구 항목 수
+  eulguCount       Int      @default(0) // 을구 항목 수
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -458,11 +461,11 @@ model TrainingData {
 
 model DomainVocabulary {
   id         String   @id @default(cuid())
-  term       String                          // 용어
-  category   String                          // registry_right | legal_action | structure | finance_tax
-  source     String   @default("manual")     // manual | auto_extracted
-  frequency  Int      @default(1)            // 등장 빈도
-  definition String?  @db.Text               // 용어 설명
+  term       String // 용어
+  category   String // registry_right | legal_action | structure | finance_tax
+  source     String   @default("manual") // manual | auto_extracted
+  frequency  Int      @default(1) // 등장 빈도
+  definition String?  @db.Text // 용어 설명
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -475,25 +478,25 @@ model DomainVocabulary {
 // ---------------------------------------------------------------------------
 
 model FeasibilityReport {
-  id                String   @id @default(cuid())
-  userId            String
-  projectName       String
-  address           String
-  purpose           String                  // "아파트" | "오피스텔" | ...
-  totalFloorArea    Float                   // 연면적 (㎡)
-  totalUnits        Int                     // 세대/호실 수
-  mergedContext     Json                    // MergedProjectContext
-  verificationData  Json                    // VerificationResult[]
-  rationalityData   Json                    // RationalityItem[]
-  chapters          Json                    // ChapterOpinion[]
-  vScore            Int                     // 0-100
-  vScoreGrade       String                  // "A" ~ "F"
-  vScoreDetail      Json                    // FeasibilityScore
-  status            String   @default("draft") // "draft" | "completed"
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id               String   @id @default(cuid())
+  userId           String
+  projectName      String
+  address          String
+  purpose          String // "아파트" | "오피스텔" | ...
+  totalFloorArea   Float // 연면적 (㎡)
+  totalUnits       Int // 세대/호실 수
+  mergedContext    Json // MergedProjectContext
+  verificationData Json // VerificationResult[]
+  rationalityData  Json // RationalityItem[]
+  chapters         Json // ChapterOpinion[]
+  vScore           Int // 0-100
+  vScoreGrade      String // "A" ~ "F"
+  vScoreDetail     Json // FeasibilityScore
+  status           String   @default("draft") // "draft" | "completed"
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  user  User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   files FeasibilityFile[]
 
   @@index([userId])
@@ -504,10 +507,10 @@ model FeasibilityFile {
   id         String   @id @default(cuid())
   reportId   String
   filename   String
-  fileType   String                        // "pdf" | "docx" | "xlsx" | "hwp"
-  fileSize   Int                           // bytes
+  fileType   String // "pdf" | "docx" | "xlsx" | "hwp"
+  fileSize   Int // bytes
   pageCount  Int?
-  confidence Int?                          // 파싱 신뢰도 0-100
+  confidence Int? // 파싱 신뢰도 0-100
   createdAt  DateTime @default(now())
 
   report FeasibilityReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
@@ -520,17 +523,17 @@ model FeasibilityFile {
 // ---------------------------------------------------------------------------
 
 model WeightConfig {
-  id              String   @id @default(cuid())
-  weights         Json     // { "등기부 파싱": 0.25, "위험도 스코어": 0.30, ... }
-  betaParams      Json     // { "등기부 파싱": { alpha: 12, beta: 4 }, ... }
-  brierScore      Float    @default(0)
-  logLoss         Float    @default(0)
-  ece             Float    @default(0)
-  feedbackCount   Int      @default(0)
-  improvement     Float    @default(0)
-  confidence      Float    @default(0)
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
+  id            String   @id @default(cuid())
+  weights       Json // { "등기부 파싱": 0.25, "위험도 스코어": 0.30, ... }
+  betaParams    Json // { "등기부 파싱": { alpha: 12, beta: 4 }, ... }
+  brierScore    Float    @default(0)
+  logLoss       Float    @default(0)
+  ece           Float    @default(0)
+  feedbackCount Int      @default(0)
+  improvement   Float    @default(0)
+  confidence    Float    @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
 
   @@index([isActive])
   @@index([createdAt])
@@ -540,7 +543,7 @@ model WeightFeedback {
   id             String   @id @default(cuid())
   analysisId     String
   predictedRisk  Float
-  actualOutcome  String   // safe | fraud | partial_loss | unknown
+  actualOutcome  String // safe | fraud | partial_loss | unknown
   lossAmount     Float?
   featureValues  Json
   weightSnapshot Json
@@ -555,16 +558,16 @@ model WeightFeedback {
 // ---------------------------------------------------------------------------
 
 model IntegrityRecord {
-  id            String   @id @default(cuid())
-  analysisId    String
-  analysisType  String   // rights | contract | prediction | jeonse | feasibility
-  address       String?
-  steps         Int
-  stepsData     Json     // AnalysisStep[]
-  merkleRoot    String
-  isValid       Boolean  @default(true)
-  verifiedAt    DateTime @default(now())
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  analysisId   String
+  analysisType String // rights | contract | prediction | jeonse | feasibility
+  address      String?
+  steps        Int
+  stepsData    Json // AnalysisStep[]
+  merkleRoot   String
+  isValid      Boolean  @default(true)
+  verifiedAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
 
   @@index([analysisType])
   @@index([isValid])
@@ -572,14 +575,14 @@ model IntegrityRecord {
 }
 
 model BenchmarkCache {
-  id          String   @id @default(cuid())
-  key         String   @unique            // "kict:2026-03", "pf_rate:gradeA" 등
-  category    String                      // "construction_cost" | "pf_rate" | "cap_rate" | "supply"
-  data        Json                        // 벤치마크 수치 데이터
-  source      String                      // 데이터 출처
-  asOfDate    DateTime                    // 데이터 기준일
-  expiresAt   DateTime                    // 캐시 만료일
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  key       String   @unique // "kict:2026-03", "pf_rate:gradeA" 등
+  category  String // "construction_cost" | "pf_rate" | "cap_rate" | "supply"
+  data      Json // 벤치마크 수치 데이터
+  source    String // 데이터 출처
+  asOfDate  DateTime // 데이터 기준일
+  expiresAt DateTime // 캐시 만료일
+  createdAt DateTime @default(now())
 
   @@index([category])
   @@index([expiresAt])
@@ -590,18 +593,18 @@ model BenchmarkCache {
 // ---------------------------------------------------------------------------
 
 model NewsArticle {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   title       String
-  summary     String   @db.Text
-  url         String   @unique
-  source      String                        // google | hankyung | mk | molit | moef | nts
-  category    String                        // news | policy
+  summary     String         @db.Text
+  url         String         @unique
+  source      String // google | hankyung | mk | molit | moef | nts
+  category    String // news | policy
   tags        String[]
-  policyType  String?                       // 세율변경 | 규제지역 | 대출규제 | 공급정책 | 전세대책
+  policyType  String? // 세율변경 | 규제지역 | 대출규제 | 공급정책 | 전세대책
   publishedAt DateTime
-  collectedAt DateTime @default(now())
-  isAlert     Boolean  @default(false)
-  alertAcked  Boolean  @default(false)
+  collectedAt DateTime       @default(now())
+  isAlert     Boolean        @default(false)
+  alertAcked  Boolean        @default(false)
   usageLogs   NewsUsageLog[]
 
   @@index([category, publishedAt(sort: Desc)])
@@ -611,10 +614,10 @@ model NewsArticle {
 model NewsUsageLog {
   id        String   @id @default(cuid())
   articleId String
-  usedIn    String                          // chat | contract | prediction
+  usedIn    String // chat | contract | prediction
   usedAt    DateTime @default(now())
 
-  article   NewsArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  article NewsArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
 
   @@index([articleId])
   @@index([usedIn, usedAt(sort: Desc)])
@@ -643,8 +646,8 @@ model PushSubscription {
 
 model GuaranteeRule {
   id            String   @id @default(cuid())
-  provider      String   // HUG | HF | SGI
-  rules         Json     // 기관별 조건 JSON
+  provider      String // HUG | HF | SGI
+  rules         Json // 기관별 조건 JSON
   version       Int      @default(1)
   isActive      Boolean  @default(true)
   effectiveFrom DateTime @default(now())
@@ -662,23 +665,23 @@ model GuaranteeRule {
 // ---------------------------------------------------------------------------
 
 model AgentClient {
-  id              String    @id @default(cuid())
-  agentId         String                          // 중개사 User.id
-  clientName      String                          // 고객명
-  clientPhone     String?                         // 전화번호 (AES 암호화)
-  clientEmail     String?                         // 이메일
-  clientUserId    String?   @unique               // VESTRA 가입 시 연결
-  status          String    @default("active")    // active | inactive | invited
-  inviteToken     String?   @unique               // 초대 링크 토큰
+  id              String                @id @default(cuid())
+  agentId         String // 중개사 User.id
+  clientName      String // 고객명
+  clientPhone     String? // 전화번호 (AES 암호화)
+  clientEmail     String? // 이메일
+  clientUserId    String?               @unique // VESTRA 가입 시 연결
+  status          String                @default("active") // active | inactive | invited
+  inviteToken     String?               @unique // 초대 링크 토큰
   inviteExpires   DateTime?
-  memo            String?   @db.Text
-  contractDate    DateTime?                       // 거래 계약일
-  propertyAddress String?                         // 거래 물건 주소
-  agent           User      @relation("AgentClients", fields: [agentId], references: [id], onDelete: Cascade)
-  clientUser      User?     @relation("ClientAgent", fields: [clientUserId], references: [id], onDelete: SetNull)
+  memo            String?               @db.Text
+  contractDate    DateTime? // 거래 계약일
+  propertyAddress String? // 거래 물건 주소
+  agent           User                  @relation("AgentClients", fields: [agentId], references: [id], onDelete: Cascade)
+  clientUser      User?                 @relation("ClientAgent", fields: [clientUserId], references: [id], onDelete: SetNull)
   properties      AgentClientProperty[]
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
 
   @@unique([agentId, clientEmail])
   @@index([agentId])
@@ -688,7 +691,7 @@ model AgentClient {
 model AgentClientProperty {
   id                  String             @id @default(cuid())
   agentClientId       String
-  monitoredPropertyId String?                        // 기존 모니터링과 연결
+  monitoredPropertyId String? // 기존 모니터링과 연결
   address             String
   status              String             @default("active") // active | inactive
   startDate           DateTime           @default(now())
@@ -708,47 +711,47 @@ model AgentClientProperty {
 // ---------------------------------------------------------------------------
 
 model Listing {
-  id          String @id @default(cuid())
-  ownerId     String
+  id      String @id @default(cuid())
+  ownerId String
 
   listingType String // JEONSE | SALE
   address     String
   roomType    String? // 아파트 | 빌라 | 오피스텔 | 단독주택 | 원룸/투룸
-  size        Float?  // 전용면적 (㎡)
+  size        Float? // 전용면적 (㎡)
   floor       Int?
   totalFloor  Int?
 
-  deposit       BigInt  // 전세 보증금 or 매매가
+  deposit       BigInt // 전세 보증금 or 매매가
   managementFee BigInt? // 관리비
-  duration      Int?    // 전세 계약 기간 (개월)
+  duration      Int? // 전세 계약 기간 (개월)
 
-  latitude      Float?    // 카카오 geocoding
-  longitude     Float?
+  latitude  Float? // 카카오 geocoding
+  longitude Float?
 
   availableFrom DateTime?
   description   String?   @db.Text
-  photos        Json?     // String[] — Vercel Blob URL 배열
+  photos        Json? // String[] — Vercel Blob URL 배열
 
-  status     String @default("ACTIVE") // ACTIVE | HIDDEN | CONTRACTED | COMPLETED
+  status     String  @default("ACTIVE") // ACTIVE | HIDDEN | CONTRACTED | COMPLETED
   analysisId String? // Analysis.id — 권리분석 첨부
-  viewCount  Int    @default(0)
+  viewCount  Int     @default(0)
 
   // 안전 증명
-  safetyDocuments Json?  // [{type, url, filename}]
+  safetyDocuments Json? // [{type, url, filename}]
   officialPrice   BigInt? // 공시가격 캐시 (VWorld API)
-  jeonseRatio     Float?  // 전세가율 (deposit / officialPrice × 100)
+  jeonseRatio     Float? // 전세가율 (deposit / officialPrice × 100)
 
   // 안전인증
-  isCertified       Boolean  @default(false)
-  certifiedAt       DateTime?
-  registryText      String?  @db.Text  // 틸코 등기부 원문
-  buildingDocUrl    String?            // 건축물대장 확인 URL (KAPT)
-  taxDocUrl         String?            // 재산세납부확인서 Blob URL
-  taxDocFilename    String?
-  seniorLiens       BigInt?            // 선순위 채권 합계 (등기부 파싱)
-  insuranceResult   Json?              // { hugEligible, sgiEligible, hfEligible, recommendation }
-  isRentalBusiness  Boolean  @default(false) // 등록임대주택(임대사업자) 부기등기 — 임대료 증액제한·의무기간 보호
-  hasNameChange     Boolean  @default(false) // 등기명의인표시변경 부기등기 — 소유자 동일성 확인 필요
+  isCertified      Boolean   @default(false)
+  certifiedAt      DateTime?
+  registryText     String?   @db.Text // 틸코 등기부 원문
+  buildingDocUrl   String? // 건축물대장 확인 URL (KAPT)
+  taxDocUrl        String? // 재산세납부확인서 Blob URL
+  taxDocFilename   String?
+  seniorLiens      BigInt? // 선순위 채권 합계 (등기부 파싱)
+  insuranceResult  Json? // { hugEligible, sgiEligible, hfEligible, recommendation }
+  isRentalBusiness Boolean   @default(false) // 등록임대주택(임대사업자) 부기등기 — 임대료 증액제한·의무기간 보호
+  hasNameChange    Boolean   @default(false) // 등기명의인표시변경 부기등기 — 소유자 동일성 확인 필요
 
   owner        User                  @relation("OwnedListings", fields: [ownerId], references: [id], onDelete: Cascade)
   applications ContractApplication[]
@@ -775,17 +778,17 @@ model ContractApplication {
   applicantId String // User.id
 
   moveInDate      DateTime
-  duration        Int?      // 전세만 해당 (개월)
+  duration        Int? // 전세만 해당 (개월)
   memo            String?   @db.Text
-  proposedDeposit BigInt?   // 제안 보증금/매매가 (네고)
+  proposedDeposit BigInt? // 제안 보증금/매매가 (네고)
   visitDateTime   DateTime? // 매물 임장 방문 희망 일시
 
   status          String  @default("PENDING") // PENDING | ACCEPTED | REJECTED | WITHDRAWN
   rejectionReason String? @db.Text
 
-  listing   Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  applicant User      @relation("SentApplications", fields: [applicantId], references: [id], onDelete: Cascade)
-  messages  Message[]
+  listing    Listing     @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  applicant  User        @relation("SentApplications", fields: [applicantId], references: [id], onDelete: Cascade)
+  messages   Message[]
   econtracts EContract[]
 
   createdAt DateTime @default(now())
@@ -801,44 +804,44 @@ model ContractApplication {
 // ---------------------------------------------------------------------------
 
 model EContract {
-  id           String   @id @default(cuid())
-  contractType String   // JEONSE | MONTHLY | SALE
-  status       String   @default("DRAFT")
+  id           String @id @default(cuid())
+  contractType String // JEONSE | MONTHLY | SALE
+  status       String @default("DRAFT")
   // DRAFT | PENDING_LANDLORD | PENDING_TENANT | PENDING_BROKER | COMPLETED | CANCELED
 
   // 계약 기본정보
   address      String
   deposit      BigInt
   monthlyRent  BigInt?
-  duration     Int?      // 임대 기간 (개월)
+  duration     Int? // 임대 기간 (개월)
   startDate    DateTime?
   endDate      DateTime?
   specialTerms String?   @db.Text
 
   // 당사자
-  landlordId   String    // 임대인 User.id
-  tenantEmail  String    // 임차인 이메일 (Vestra 비가입자 가능)
-  brokerEmail  String?   // 공인중개사 이메일 (없으면 직거래 → 2자 서명)
-  creatorId    String    // 계약 생성자 User.id (임대인 or 중개사)
+  landlordId  String // 임대인 User.id
+  tenantEmail String // 임차인 이메일 (Vestra 비가입자 가능)
+  brokerEmail String? // 공인중개사 이메일 (없으면 직거래 → 2자 서명)
+  creatorId   String // 계약 생성자 User.id (임대인 or 중개사)
 
   // 거래 연결 (의향서 기반 생성 시 채워짐 — 없으면 직접 작성 계약)
-  listingId     String?  // 계약 대상 매물(Listing)
-  applicationId String?  // 근거 계약의향서(ContractApplication)
-  tenantId      String?  // 임차인이 Vestra 가입회원인 경우 User.id
+  listingId     String? // 계약 대상 매물(Listing)
+  applicationId String? // 근거 계약의향서(ContractApplication)
+  tenantId      String? // 임차인이 Vestra 가입회원인 경우 User.id
 
   // 최종 문서
-  documentHash String?   // 서명 전 PDF 해시 (무결성 검증용)
-  finalPdfUrl  String?   // 최종 서명 완료 PDF (Vercel Blob URL)
+  documentHash String? // 서명 전 PDF 해시 (무결성 검증용)
+  finalPdfUrl  String? // 최종 서명 완료 PDF (Vercel Blob URL)
   completedAt  DateTime?
 
-  landlord     User      @relation("LandlordEContracts", fields: [landlordId], references: [id], onDelete: Cascade)
-  signatures   EContractSignature[]
-  listing      Listing?             @relation("ListingEContracts", fields: [listingId], references: [id], onDelete: SetNull)
-  application  ContractApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
-  tenant       User?                @relation("TenantEContracts", fields: [tenantId], references: [id], onDelete: SetNull)
+  landlord    User                 @relation("LandlordEContracts", fields: [landlordId], references: [id], onDelete: Cascade)
+  signatures  EContractSignature[]
+  listing     Listing?             @relation("ListingEContracts", fields: [listingId], references: [id], onDelete: SetNull)
+  application ContractApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  tenant      User?                @relation("TenantEContracts", fields: [tenantId], references: [id], onDelete: SetNull)
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([landlordId])
   @@index([status])
@@ -848,26 +851,26 @@ model EContract {
 }
 
 model EContractSignature {
-  id               String    @id @default(cuid())
-  contractId       String
-  role             String    // LANDLORD | TENANT | BROKER
-  signerName       String?
-  signerPhone      String?
-  signerEmail      String?
-  signerRrnPrefix  String?   // 가계약서용: 생년월일+성별 1자리 (예: "890101-1"). 주민 뒷6자리 저장 안 함
+  id              String  @id @default(cuid())
+  contractId      String
+  role            String // LANDLORD | TENANT | BROKER
+  signerName      String?
+  signerPhone     String?
+  signerEmail     String?
+  signerRrnPrefix String? // 가계약서용: 생년월일+성별 1자리 (예: "890101-1"). 주민 뒷6자리 저장 안 함
 
-  method           String?   // HANDWRITING (KCP는 추후)
-  signatureUrl     String?   // 손글씨 서명 이미지 (Vercel Blob URL)
+  method       String? // HANDWRITING (KCP는 추후)
+  signatureUrl String? // 손글씨 서명 이미지 (Vercel Blob URL)
 
-  signToken        String?   @unique   // 공개 서명 링크 토큰
+  signToken        String?   @unique // 공개 서명 링크 토큰
   signTokenExpires DateTime?
 
-  signedAt         DateTime?
-  ipAddress        String?
+  signedAt  DateTime?
+  ipAddress String?
 
-  contract         EContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  contract EContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
 
-  createdAt        DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([contractId, role])
   @@index([contractId])
@@ -879,16 +882,16 @@ model EContractSignature {
 // ---------------------------------------------------------------------------
 
 model Message {
-  id            String              @id @default(cuid())
+  id            String    @id @default(cuid())
   applicationId String
   senderId      String
-  content       String              @db.Text
+  content       String    @db.Text
   readAt        DateTime?
 
-  application   ContractApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  sender        User                @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  application ContractApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  sender      User                @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
 
-  createdAt     DateTime            @default(now())
+  createdAt DateTime @default(now())
 
   @@index([applicationId, createdAt])
   @@index([senderId])
@@ -900,4 +903,142 @@ model WithdrawnEmail {
   withdrawnAt DateTime @default(now())
 
   @@index([email])
+}
+
+// ---------------------------------------------------------------------------
+// 집키퍼(KeepZip) — AI 내용증명 리걸테크 (설계서 docs/05-KEEPZIP-Design.md §5)
+// ---------------------------------------------------------------------------
+
+model KeepzipCase {
+  id               String          @id @default(cuid())
+  userId           String // 임차인/의뢰인
+  lawyerId         String // 배정 변호사(미니홈페이지 소유자)
+  // 내용증명 종류 (§8.0)
+  cause            String          @default("deposit_return") // deposit_return | terminate_by_tenant | terminate_by_landlord | rent_arrears | maintenance_arrears
+  senderSide       String          @default("tenant") // tenant | landlord — cause별 발신 주체
+  // 당사자
+  senderName       String
+  recipientName    String
+  address          String
+  deposit          Int?
+  expiryDate       DateTime?
+  // 문서/상태
+  draftContent     String?         @db.Text
+  documentUrl      String? // 직인 합성 완료 PDF (Blob)
+  status           String          @default("draft") // draft | paid | lawyer_pending | lawyer_approved | postal_sent | delivered | canceled | refunded
+  riskScore        Int?
+  sentAt           DateTime? // 발송 시각 — 환불 기준선
+  // 결제/정산/환불 (가격모델 C — 노쉐어)
+  orderId          String?         @unique
+  serviceFee       Int             @default(9900) // 변호사 서비스료 → 전액 변호사 정산
+  postalFee        Int             @default(0) // 발송 실비 → 포스트플러스 pass-through
+  totalPaid        Int // 소비자 총 결제액 = serviceFee + postalFee
+  settlementStatus String          @default("hold") // hold | released | refunded | partial_refunded
+  payoutId         String? // 지급대행 지급 식별자(서비스료)
+  payoutAmount     Int?
+  refundedAmount   Int?
+  // 관계
+  lawyerReview     LawyerReview?
+  tracking         PostalTracking?
+  user             User            @relation("KeepzipTenant", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([lawyerId])
+  @@index([status])
+}
+
+model LawyerPartner {
+  id                String    @id @default(cuid())
+  userId            String    @unique // User(role=LAWYER)
+  barNumber         String // 변호사 등록번호
+  firmName          String?
+  // 미니홈페이지(멀티테넌시)
+  homepageSlug      String    @unique // /lawyer/[slug]
+  homepageActive    Boolean   @default(false)
+  bio               String?   @db.Text
+  // 지급대행 셀러
+  payoutSellerId    String?   @unique // 토스 지급대행 셀러 ID
+  kycStatus         String    @default("none") // none | pending | verified | rejected
+  // 회비 (플랫폼의 유일한 수익원) — 연회비 50만원 단일, 가입비 없음
+  membershipFee     Int       @default(500000) // 연회비(원)
+  membershipStatus  String    @default("inactive") // inactive | active | expired
+  membershipExpires DateTime?
+  // 랭킹·presence 캐시
+  avgRating         Float     @default(0) // 후기 5항목 평균(정렬용)
+  ratingCount       Int       @default(0)
+  lastSeenAt        DateTime? // presence(온라인) 근사
+  active            Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([membershipStatus])
+}
+
+model LawyerReview {
+  id        String      @id @default(cuid())
+  caseId    String      @unique
+  lawyerId  String
+  tier      String      @default("tier2") // tier1 | tier2 | tier3 (AI 신뢰도별 검토 강도)
+  decision  String      @default("pending") // pending | approved | rejected
+  stampedAt DateTime? // 직인 날인 시각
+  memo      String?     @db.Text
+  case      KeepzipCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([lawyerId])
+}
+
+model PostalTracking {
+  id          String      @id @default(cuid())
+  caseId      String      @unique
+  trackingNo  String? // 등기번호
+  step        Int         @default(1) // 1~5 (검증완료→접수→인쇄→배달→도달)
+  deliveredAt DateTime?
+  provider    String      @default("postplus") // postplus | epost_manual
+  case        KeepzipCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model LawyerRating {
+  id                 String   @id @default(cuid())
+  lawyerId           String
+  userId             String
+  caseId             String   @unique // 완료 사건 연결(1사건 1후기)
+  scoreExpertise     Int // 전문성 1~5
+  scoreResponse      Int // 응답 속도 1~5
+  scoreCommunication Int // 소통·친절 1~5
+  scoreResult        Int // 결과 만족 1~5
+  scoreValue         Int // 비용 대비 만족 1~5
+  avgScore           Float // 5항목 평균(정렬용)
+  comment            String?  @db.Text
+  createdAt          DateTime @default(now())
+
+  @@index([lawyerId])
+}
+
+model ChatThread {
+  id        String    @id @default(cuid())
+  userId    String
+  lawyerId  String
+  caseId    String? // 내용증명 사건 연결(선택)
+  lastMsgAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, lawyerId])
+  @@index([lawyerId])
+}
+
+model ChatMessage {
+  id        String    @id @default(cuid())
+  threadId  String
+  senderId  String // userId 또는 lawyerId
+  body      String    @db.Text
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([threadId])
 }
