@@ -32,9 +32,9 @@ export interface EContractPdfData {
   startDate?: Date | null;
   endDate?: Date | null;
   specialTerms?: string | null;
-  landlord: { name: string | null; email: string; signatureUrl?: string | null };
-  tenant: { name?: string | null; email: string; signatureUrl?: string | null };
-  broker?: { name?: string | null; email: string; signatureUrl?: string | null } | null;
+  landlord: { name: string | null; phone?: string | null; rrn?: string | null; signatureUrl?: string | null };
+  tenant: { name?: string | null; phone?: string | null; rrn?: string | null; signatureUrl?: string | null };
+  broker?: { name?: string | null; phone?: string | null; rrn?: string | null; signatureUrl?: string | null } | null;
   createdAt: Date;
 }
 
@@ -163,12 +163,14 @@ const S = StyleSheet.create({
 function SignBox({
   label,
   name,
-  email,
+  phone,
+  rrn,
   signatureUrl,
 }: {
   label: string;
   name?: string | null;
-  email: string;
+  phone?: string | null;
+  rrn?: string | null;
   signatureUrl?: string | null;
 }) {
   return (
@@ -179,8 +181,12 @@ function SignBox({
         <Text style={S.signValue}>{name ?? "(미기재)"}</Text>
       </View>
       <View style={S.signLine}>
-        <Text style={S.signLabel}>이메일</Text>
-        <Text style={S.signValue}>{email}</Text>
+        <Text style={S.signLabel}>생년월일·성별</Text>
+        <Text style={S.signValue}>{rrn ?? "-"}</Text>
+      </View>
+      <View style={S.signLine}>
+        <Text style={S.signLabel}>연락처</Text>
+        <Text style={S.signValue}>{phone ?? "-"}</Text>
       </View>
       <View style={S.signImgBox}>
         {signatureUrl ? (
@@ -201,9 +207,9 @@ export function ContractPdf({ data }: { data: EContractPdfData }) {
     <Document>
       <Page size="A4" style={S.page}>
         {/* 제목 */}
-        <Text style={S.title}>주택 {typeLabel}계약서</Text>
+        <Text style={S.title}>부동산 {typeLabel} 가계약서</Text>
         <Text style={S.subtitle}>
-          (본 계약서는 전자서명법 및 주택임대차보호법에 따라 법적 효력이 인정됩니다)
+          (본 가계약서는 주요 계약조건을 정한 문서이며, 당사자 간 오프라인 본계약 체결로 확정됩니다)
         </Text>
 
         {/* 부동산 표시 */}
@@ -285,20 +291,23 @@ export function ContractPdf({ data }: { data: EContractPdfData }) {
           <SignBox
             label="임대인"
             name={data.landlord.name}
-            email={data.landlord.email}
+            phone={data.landlord.phone}
+            rrn={data.landlord.rrn}
             signatureUrl={data.landlord.signatureUrl}
           />
           <SignBox
             label="임차인"
             name={data.tenant.name}
-            email={data.tenant.email}
+            phone={data.tenant.phone}
+            rrn={data.tenant.rrn}
             signatureUrl={data.tenant.signatureUrl}
           />
           {data.broker && (
             <SignBox
               label="공인중개사"
               name={data.broker.name}
-              email={data.broker.email}
+              phone={data.broker.phone}
+              rrn={data.broker.rrn}
               signatureUrl={data.broker.signatureUrl}
             />
           )}

@@ -854,6 +854,7 @@ model EContractSignature {
   signerName       String?
   signerPhone      String?
   signerEmail      String?
+  signerRrnPrefix  String?   // 가계약서용: 생년월일+성별 1자리 (예: "890101-1"). 주민 뒷6자리 저장 안 함
 
   method           String?   // HANDWRITING (KCP는 추후)
   signatureUrl     String?   // 손글씨 서명 이미지 (Vercel Blob URL)

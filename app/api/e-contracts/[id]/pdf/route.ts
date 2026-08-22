@@ -34,8 +34,9 @@ export async function GET(req: NextRequest, { params }: Params) {
     const isParty =
       userId === contract.landlordId ||
       userId === contract.creatorId ||
-      session?.user?.email === contract.tenantEmail ||
-      session?.user?.email === contract.brokerEmail;
+      userId === contract.tenantId ||
+      (!!contract.tenantEmail && session?.user?.email === contract.tenantEmail) ||
+      (!!contract.brokerEmail && session?.user?.email === contract.brokerEmail);
 
     if (!isParty) {
       return NextResponse.json({ error: "접근 권한이 없습니다." }, { status: 403 });
@@ -58,19 +59,22 @@ export async function GET(req: NextRequest, { params }: Params) {
       specialTerms: contract.specialTerms,
       createdAt: contract.createdAt,
       landlord: {
-        name: contract.landlord.name,
-        email: contract.landlord.email ?? "",
+        name: landlordSig?.signerName ?? contract.landlord.name,
+        phone: landlordSig?.signerPhone ?? null,
+        rrn: landlordSig?.signerRrnPrefix ?? null,
         signatureUrl: landlordSig?.signatureUrl ?? null,
       },
       tenant: {
         name: tenantSig?.signerName ?? null,
-        email: contract.tenantEmail,
+        phone: tenantSig?.signerPhone ?? null,
+        rrn: tenantSig?.signerRrnPrefix ?? null,
         signatureUrl: tenantSig?.signatureUrl ?? null,
       },
       broker: brokerSig
         ? {
             name: brokerSig.signerName ?? null,
-            email: contract.brokerEmail ?? "",
+            phone: brokerSig.signerPhone ?? null,
+            rrn: brokerSig.signerRrnPrefix ?? null,
             signatureUrl: brokerSig.signatureUrl ?? null,
           }
         : null,

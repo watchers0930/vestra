@@ -2,17 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
-import crypto from "crypto";
 
-function generateSignToken() {
-  return crypto.randomBytes(24).toString("base64url");
+const RRN_PREFIX_RE = /^\d{6}-[1-4]$/;
+const MAX_AMOUNT = BigInt("1000000000000"); // 1조 원 상한
+const ZERO = BigInt(0);
+
+function parseAmount(v: unknown): bigint | null {
+  if (v === null || v === undefined || v === "") return null;
+  if (typeof v !== "number" && typeof v !== "string") return null;
+  if (typeof v === "string" && !/^\d+$/.test(v.trim())) return null;
+  try {
+    const n = BigInt(typeof v === "string" ? v.trim() : Math.trunc(v));
+    return n >= ZERO && n <= MAX_AMOUNT ? n : null;
+  } catch {
+    return null;
+  }
 }
 
-function tokenExpiry(hours = 72) {
-  return new Date(Date.now() + hours * 60 * 60 * 1000);
-}
+interface PartyInput { name?: string; phone?: string; rrn?: string; sign?: string; }
 
-// POST /api/e-contracts — 계약 생성 (임대인 or 공인중개사)
+// POST /api/e-contracts — 가계약서 생성 (임대인+임차인 양측 서명 즉시 완료 → 출력용)
 export async function POST(req: NextRequest) {
   try {
     const csrfError = validateOrigin(req);
@@ -25,20 +34,45 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const {
-      contractType,
-      address,
-      deposit,
-      monthlyRent,
-      duration,
-      startDate,
-      endDate,
-      specialTerms,
-      tenantEmail,
-      brokerEmail,
-      applicationId,
-    } = body;
+      contractType, address, deposit, monthlyRent,
+      startDate, endDate, balance, balanceDate, specialTerms,
+      landlord, tenant, applicationId,
+    } = body as {
+      contractType?: string; address?: string; deposit?: unknown; monthlyRent?: unknown;
+      startDate?: string; endDate?: string; balance?: unknown; balanceDate?: string; specialTerms?: string;
+      landlord?: PartyInput; tenant?: PartyInput; applicationId?: string;
+    };
 
-    // 의향서 기반 계약: 매물·의향서·임차인을 FK로 연결(데이터 무결성). 직접 작성 시엔 생략.
+    // 1. 기본 검증
+    if (!contractType || !["JEONSE", "MONTHLY", "SALE"].includes(contractType)) {
+      return NextResponse.json({ error: "유효하지 않은 계약 유형입니다." }, { status: 400 });
+    }
+    if (!address || String(address).trim().length < 5) {
+      return NextResponse.json({ error: "유효한 주소를 입력해주세요." }, { status: 400 });
+    }
+
+    // 2. 당사자(임대인/임차인) 검증 — 이름·서명 필수, 주민 앞자리는 형식만
+    for (const [label, party] of [["임대인", landlord], ["임차인", tenant]] as const) {
+      if (!party?.name || !String(party.name).trim()) {
+        return NextResponse.json({ error: `${label} 이름을 입력해주세요.` }, { status: 400 });
+      }
+      if (!party?.sign || typeof party.sign !== "string" || !party.sign.startsWith("data:image")) {
+        return NextResponse.json({ error: `${label} 서명을 입력해주세요.` }, { status: 400 });
+      }
+      if (party.rrn && !RRN_PREFIX_RE.test(party.rrn)) {
+        return NextResponse.json({ error: `${label} 생년월일+성별 형식이 올바르지 않습니다. (예: 890101-1)` }, { status: 400 });
+      }
+    }
+
+    // 3. 금액 검증
+    const depositVal = parseAmount(deposit);
+    if (depositVal === null) {
+      return NextResponse.json({ error: "금액(보증금/매매가)이 올바르지 않습니다." }, { status: 400 });
+    }
+    const monthlyRentVal = (monthlyRent !== undefined && monthlyRent !== null && monthlyRent !== "") ? parseAmount(monthlyRent) : null;
+    const balanceVal = (balance !== undefined && balance !== null && balance !== "") ? parseAmount(balance) : null;
+
+    // 4. 의향서 기반이면 매물·의향서·임차인 FK 연결
     let linkedListingId: string | undefined;
     let linkedApplicationId: string | undefined;
     let linkedTenantId: string | undefined;
@@ -47,9 +81,7 @@ export async function POST(req: NextRequest) {
         where: { id: applicationId },
         select: { id: true, applicantId: true, listingId: true, listing: { select: { ownerId: true } } },
       });
-      if (!app) {
-        return NextResponse.json({ error: "연결할 의향서를 찾을 수 없습니다." }, { status: 404 });
-      }
+      if (!app) return NextResponse.json({ error: "연결할 의향서를 찾을 수 없습니다." }, { status: 404 });
       if (app.listing.ownerId !== session.user.id) {
         return NextResponse.json({ error: "본인 매물의 의향서만 계약으로 연결할 수 있습니다." }, { status: 403 });
       }
@@ -58,107 +90,58 @@ export async function POST(req: NextRequest) {
       linkedTenantId = app.applicantId;
     }
 
-    // 필수값 검증
-    if (!contractType || !address || !deposit || !tenantEmail) {
-      return NextResponse.json(
-        { error: "contractType, address, deposit, tenantEmail은 필수입니다." },
-        { status: 400 }
-      );
+    // 5. 표준계약서 요약 특약: 잔금 일정을 특약 상단에 합침
+    const termsParts: string[] = [];
+    if (balanceVal !== null) {
+      termsParts.push(`잔금: ${Number(balanceVal).toLocaleString("ko-KR")}원${balanceDate ? ` (${balanceDate} 지급)` : ""}`);
     }
-    if (!["JEONSE", "MONTHLY", "SALE"].includes(contractType)) {
-      return NextResponse.json({ error: "유효하지 않은 계약 유형입니다." }, { status: 400 });
-    }
+    if (specialTerms && String(specialTerms).trim()) termsParts.push(String(specialTerms).trim());
+    const terms = termsParts.length ? termsParts.join("\n") : null;
 
-    // [보안] 이메일 형식 검증 (잘못된 서명 초대 주소 방지)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (typeof tenantEmail !== "string" || !emailRegex.test(tenantEmail.trim())) {
-      return NextResponse.json({ error: "유효한 임차인 이메일을 입력해주세요." }, { status: 400 });
-    }
-    if (brokerEmail && (typeof brokerEmail !== "string" || !emailRegex.test(brokerEmail.trim()))) {
-      return NextResponse.json({ error: "유효한 중개사 이메일을 입력해주세요." }, { status: 400 });
-    }
+    const ip = req.headers.get("x-forwarded-for") || null;
+    const now = new Date();
 
-    // [보안] 금액·기간 숫자 검증 (비정상 입력으로 인한 BigInt 예외/음수 저장 방지)
-    const MAX_AMOUNT = BigInt("1000000000000"); // 1조 원 상한
-    const ZERO = BigInt(0);
-    const parseAmount = (v: unknown): bigint | null => {
-      if (v === null || v === undefined || v === "") return null;
-      if (typeof v !== "number" && typeof v !== "string") return null;
-      if (typeof v === "string" && !/^\d+$/.test(v.trim())) return null;
-      try {
-        const n = BigInt(typeof v === "string" ? v.trim() : Math.trunc(v));
-        return n >= ZERO && n <= MAX_AMOUNT ? n : null;
-      } catch {
-        return null;
-      }
-    };
-    const depositVal = parseAmount(deposit);
-    if (depositVal === null) {
-      return NextResponse.json({ error: "보증금 금액이 올바르지 않습니다." }, { status: 400 });
-    }
-    let monthlyRentVal: bigint | null = null;
-    if (monthlyRent !== undefined && monthlyRent !== null && monthlyRent !== "") {
-      monthlyRentVal = parseAmount(monthlyRent);
-      if (monthlyRentVal === null) {
-        return NextResponse.json({ error: "월세 금액이 올바르지 않습니다." }, { status: 400 });
-      }
-    }
-    let durationVal: number | null = null;
-    if (duration !== undefined && duration !== null && duration !== "") {
-      const d = Number(duration);
-      if (!Number.isInteger(d) || d < 0 || d > 600) {
-        return NextResponse.json({ error: "계약 기간(개월)이 올바르지 않습니다." }, { status: 400 });
-      }
-      durationVal = d;
-    }
-
-    // 계약 생성 + 임대인 서명 레코드(토큰) 동시 생성
+    // 6. 가계약서 생성 — 양측 서명 즉시 기록, 상태 COMPLETED
     const contract = await prisma.eContract.create({
       data: {
         contractType,
-        status: "PENDING_LANDLORD",
+        status: "COMPLETED",
         address: String(address).trim(),
         deposit: depositVal,
         monthlyRent: monthlyRentVal,
-        duration: durationVal,
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
-        specialTerms: specialTerms ? String(specialTerms).trim() : null,
+        specialTerms: terms,
         landlordId: session.user.id,
-        tenantEmail: String(tenantEmail).trim().toLowerCase(),
-        brokerEmail: brokerEmail ? String(brokerEmail).trim().toLowerCase() : null,
+        tenantEmail: "", // 가계약은 이메일 서명 링크를 쓰지 않음
         creatorId: session.user.id,
+        completedAt: now,
         ...(linkedListingId ? { listingId: linkedListingId } : {}),
         ...(linkedApplicationId ? { applicationId: linkedApplicationId } : {}),
         ...(linkedTenantId ? { tenantId: linkedTenantId } : {}),
         signatures: {
-          create: {
-            role: "LANDLORD",
-            signerEmail: session.user.email ?? undefined,
-            signerName: session.user.name ?? undefined,
-            signToken: generateSignToken(),
-            signTokenExpires: tokenExpiry(72),
-          },
+          create: [
+            { role: "LANDLORD", signerName: String(landlord!.name).trim(), signerPhone: landlord!.phone || null, signerRrnPrefix: landlord!.rrn || null, signatureUrl: landlord!.sign, method: "HANDWRITING", signedAt: now, ipAddress: ip },
+            { role: "TENANT", signerName: String(tenant!.name).trim(), signerPhone: tenant!.phone || null, signerRrnPrefix: tenant!.rrn || null, signatureUrl: tenant!.sign, method: "HANDWRITING", signedAt: now, ipAddress: ip },
+          ],
         },
       },
-      include: { signatures: true },
+      select: { id: true },
     });
 
-    const landlordSig = contract.signatures.find((s) => s.role === "LANDLORD");
+    // 7. 의향서 기반이면 매물을 거래완료로 동기화
+    if (linkedListingId) {
+      await prisma.listing.update({ where: { id: linkedListingId }, data: { status: "COMPLETED" } }).catch(() => {});
+    }
 
-    return NextResponse.json({
-      id: contract.id,
-      status: contract.status,
-      signToken: landlordSig?.signToken,
-      signUrl: `/sign/${landlordSig?.signToken}`,
-    });
+    return NextResponse.json({ id: contract.id, pdfUrl: `/api/e-contracts/${contract.id}/pdf` });
   } catch (e) {
     console.error("[POST /api/e-contracts]", e);
     return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
   }
 }
 
-// GET /api/e-contracts — 내 계약 목록
+// GET /api/e-contracts — 내 가계약 목록 (임대인/작성자 + 연결된 임차인)
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
@@ -170,35 +153,26 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
     const limit = 20;
     const skip = (page - 1) * limit;
-
     const userEmail = session.user.email?.toLowerCase() ?? "";
 
-    // 임대인 or 임차인 or 중개사로 참여한 계약 모두 조회
+    const where = {
+      OR: [
+        { landlordId: session.user.id },
+        { tenantId: session.user.id },
+        { tenantEmail: userEmail },
+        { brokerEmail: userEmail },
+      ],
+    };
+
     const [contracts, total] = await Promise.all([
       prisma.eContract.findMany({
-        where: {
-          OR: [
-            { landlordId: session.user.id },
-            { tenantEmail: userEmail },
-            { brokerEmail: userEmail },
-          ],
-        },
-        include: {
-          signatures: { select: { role: true, signedAt: true, method: true } },
-        },
+        where,
+        include: { signatures: { select: { role: true, signedAt: true, method: true } } },
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
-      prisma.eContract.count({
-        where: {
-          OR: [
-            { landlordId: session.user.id },
-            { tenantEmail: userEmail },
-            { brokerEmail: userEmail },
-          ],
-        },
-      }),
+      prisma.eContract.count({ where }),
     ]);
 
     return NextResponse.json({ contracts, total, page, totalPages: Math.ceil(total / limit) });
