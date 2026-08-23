@@ -1054,3 +1054,33 @@ model ChatMessage {
 
   @@index([threadId])
 }
+
+// 전문가 상담문의 (이용자 → 전문가)
+model ExpertConsult {
+  id        String   @id @default(cuid())
+  lawyerId  String // LawyerPartner.id
+  userId    String? // 신청자(로그인 시)
+  name      String
+  phone     String
+  topic     String // 상담 주제/유형
+  content   String   @db.Text
+  status    String   @default("pending") // pending | answered
+  createdAt DateTime @default(now())
+
+  @@index([lawyerId])
+}
+
+// 전문가 방문 예약 (이용자 → 전문가)
+model ExpertVisit {
+  id          String   @id @default(cuid())
+  lawyerId    String // LawyerPartner.id
+  userId      String? // 신청자(로그인 시)
+  name        String
+  phone       String
+  preferredAt String // 희망 일시(자유 텍스트)
+  purpose     String // 방문 목적
+  status      String   @default("requested") // requested | confirmed
+  createdAt   DateTime @default(now())
+
+  @@index([lawyerId])
+}
