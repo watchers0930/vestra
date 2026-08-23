@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import s from "./expert.module.css";
 import { useExpertConsult } from "@/app/(app)/expert-connect/hooks/useExpertConsult";
@@ -40,6 +40,34 @@ export default function ExpertClient() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
 
+  // 브라우저 뒤로가기(popstate)를 스텝 단위로 연동 — 페이지 이탈 대신 한 스텝 복귀
+  const selectedExpertRef = useRef(selectedExpert);
+  const selectedFieldRef = useRef(selectedField);
+  useEffect(() => { selectedExpertRef.current = selectedExpert; }, [selectedExpert]);
+  useEffect(() => { selectedFieldRef.current = selectedField; }, [selectedField]);
+
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      const currentStep = selectedExpertRef.current ? 3 : selectedFieldRef.current ? 2 : 1;
+      const target = (e.state as { expertStep?: number } | null)?.expertStep ?? 1;
+      // 뒤로가기(target < current)만 스텝 복귀 처리. 앞으로가기는 값 복원 불가라 무시.
+      if (target < currentStep) {
+        if (currentStep === 3) resetConsultForm();
+        else if (currentStep === 2) setSelectedField(null);
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [resetConsultForm]);
+
+  // 스텝 전진 시 히스토리 항목 적재 (뒤로가기가 이 항목을 소비)
+  const pushStep = (step: number) => window.history.pushState({ expertStep: step }, "");
+
+  const handleSelectField = (categories: string[], label: string) => {
+    setSelectedField({ categories, label });
+    pushStep(2);
+  };
+
   const handleSelectExpert = (expert: Expert, it: ExpertIntent) => {
     // 내용증명 작성은 로그인 필요 → 미로그인 시 로그인 유도
     if (it === "keepzip" && !isLoggedIn) {
@@ -48,6 +76,7 @@ export default function ExpertClient() {
     }
     setIntent(it);
     handleConsult(expert);
+    pushStep(3);
   };
 
   return (
@@ -68,7 +97,7 @@ export default function ExpertClient() {
         {selectedExpert ? (
           /* STEP 3 — 상담폼(일반) 또는 내용증명 작성(변호사) */
           <>
-            <button type="button" onClick={resetConsultForm} style={backBtnStyle}>← 전문가 목록으로</button>
+            <button type="button" onClick={() => window.history.back()} style={backBtnStyle}>← 전문가 목록으로</button>
             {selectedExpert.category === "변호사" && intent === "keepzip" ? (
               <KeepzipDraftForm lawyerName={selectedExpert.name} />
             ) : (
@@ -87,7 +116,7 @@ export default function ExpertClient() {
         ) : selectedField ? (
           /* STEP 2 — 선택한 분야의 전문가 목록 */
           <>
-            <button type="button" onClick={() => setSelectedField(null)} style={backBtnStyle}>← 분야 선택으로</button>
+            <button type="button" onClick={() => window.history.back()} style={backBtnStyle}>← 분야 선택으로</button>
             <ExpertList
               categories={selectedField.categories}
               fieldLabel={selectedField.label}
@@ -97,7 +126,7 @@ export default function ExpertClient() {
         ) : (
           /* STEP 1 — 분야(영역) 선택 */
           <>
-            <ExpertFields onSelect={(categories, label) => setSelectedField({ categories, label })} />
+            <ExpertFields onSelect={handleSelectField} />
             <ProcessSection />
           </>
         )}
