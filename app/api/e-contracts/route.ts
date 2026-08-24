@@ -76,10 +76,11 @@ export async function POST(req: NextRequest) {
     let linkedListingId: string | undefined;
     let linkedApplicationId: string | undefined;
     let linkedTenantId: string | undefined;
+    let linkedMoveInDate: Date | null = null;
     if (applicationId && typeof applicationId === "string") {
       const app = await prisma.contractApplication.findUnique({
         where: { id: applicationId },
-        select: { id: true, applicantId: true, listingId: true, listing: { select: { ownerId: true } } },
+        select: { id: true, applicantId: true, listingId: true, moveInDate: true, listing: { select: { ownerId: true } } },
       });
       if (!app) return NextResponse.json({ error: "연결할 의향서를 찾을 수 없습니다." }, { status: 404 });
       if (app.listing.ownerId !== session.user.id) {
@@ -88,6 +89,7 @@ export async function POST(req: NextRequest) {
       linkedListingId = app.listingId;
       linkedApplicationId = app.id;
       linkedTenantId = app.applicantId;
+      linkedMoveInDate = app.moveInDate ?? null;
     }
 
     // 5. 표준계약서 요약 특약: 잔금 일정을 특약 상단에 합침
@@ -132,6 +134,29 @@ export async function POST(req: NextRequest) {
     // 7. 의향서 기반이면 매물을 거래완료로 동기화
     if (linkedListingId) {
       await prisma.listing.update({ where: { id: linkedListingId }, data: { status: "COMPLETED" } }).catch(() => {});
+    }
+
+    // 8. 임차인 가입회원 + 전세/월세면 등기감시 자동 등록(갭2) — 계약~전입 강화감시
+    if (linkedTenantId && (contractType === "JEONSE" || contractType === "MONTHLY")) {
+      const addr = String(address).trim();
+      const depositManwon = depositVal !== null ? Number(depositVal / BigInt(10000)) : null; // 원 → 만원
+      // 전입 예정일: 의향서 입주희망일 우선, 없으면 계약 시작일
+      const moveIn = linkedMoveInDate ?? (startDate ? new Date(startDate) : null);
+      const mode = moveIn && moveIn.getTime() > now.getTime() ? "contract_gap" : "standard";
+      const monData = {
+        listingId: linkedListingId ?? null,
+        monitorMode: mode,
+        contractDate: now,
+        moveInDate: moveIn,
+        deposit: depositManwon,
+        ownerName: String(landlord!.name).trim(),
+        status: "active",
+      };
+      await prisma.monitoredProperty.upsert({
+        where: { userId_address: { userId: linkedTenantId, address: addr } },
+        create: { userId: linkedTenantId, address: addr, ...monData },
+        update: monData,
+      }).catch((e) => console.error("[e-contracts] 등기감시 자동등록 실패", e));
     }
 
     return NextResponse.json({ id: contract.id, pdfUrl: `/api/e-contracts/${contract.id}/pdf` });
