@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import RoleTypeSelector from "@/components/auth/RoleTypeSelector";
+import { markSignupIntent } from "@/lib/signup-intent";
 
 interface Props {
   onClose: () => void;
@@ -20,6 +21,7 @@ export default function RenewalSignupModal({ onClose, onSwitchToLogin }: Props) 
 
   const handleSocial = (provider: "google" | "naver") => {
     if (!selectedRole) return;
+    markSignupIntent(); // 서버 signIn 콜백에 "가입 의도" 전달 (미가입 자동생성 차단 우회)
     signIn(provider, { redirectTo: `/signup/complete?intendedRole=${selectedRole}` });
   };
 

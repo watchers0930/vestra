@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { clearAll } from "@/lib/store";
 import { VestraLogoMark } from "@/components/common/VestraLogo";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+  // 미가입 소셜 계정 로그인 시도 → 서버가 /login?error=not_registered 로 돌려보냄
+  const notRegistered = searchParams.get("error") === "not_registered";
   const [showAdmin, setShowAdmin] = useState(false);
 
   // 이미 로그인된 상태: localStorage 초기화 후 역할별 리다이렉트
@@ -61,6 +64,17 @@ export default function LoginPage() {
           <h1 className="text-[21px] font-bold text-[#1d1d1f] tracking-widest" style={{ fontFamily: 'var(--font-sora)' }}>VESTRA</h1>
           <p className="text-[#6e6e73] text-sm mt-1">AI 자산관리 플랫폼</p>
         </div>
+
+        {/* 미가입 계정 안내 */}
+        {notRegistered && (
+          <div className="mb-4 rounded-xl border border-[#0071e3]/25 bg-[#0071e3]/5 px-4 py-3 text-center">
+            <p className="text-sm font-semibold text-[#1d1d1f]">가입되지 않은 계정입니다</p>
+            <p className="text-xs text-[#6e6e73] mt-1">이 소셜 계정은 아직 회원이 아니에요. 먼저 회원가입을 진행해 주세요.</p>
+            <Link href="/signup" className="inline-block mt-2 text-sm font-semibold text-primary hover:underline">
+              회원가입 하러 가기 →
+            </Link>
+          </div>
+        )}
 
         {/* 로그인 카드 */}
         <div className="bg-white rounded-2xl border border-[#e5e5e7] p-8">
@@ -191,5 +205,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[80vh] bg-[#fbfbfd]" />}>
+      <LoginContent />
+    </Suspense>
   );
 }

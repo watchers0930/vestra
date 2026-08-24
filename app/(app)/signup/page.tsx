@@ -7,6 +7,7 @@ import Link from "next/link";
 import { clearAll } from "@/lib/store";
 import { VestraLogoMark } from "@/components/common/VestraLogo";
 import RoleTypeSelector from "@/components/auth/RoleTypeSelector";
+import { markSignupIntent } from "@/lib/signup-intent";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function SignupPage() {
 
   const handleSocialLogin = (provider: "google" | "naver") => {
     if (!selectedRole) return;
+    markSignupIntent(); // 서버 signIn 콜백에 "가입 의도" 전달 (미가입 자동생성 차단 우회)
     signIn(provider, {
       redirectTo: `/signup/complete?intendedRole=${selectedRole}`,
     });
