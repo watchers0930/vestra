@@ -12,12 +12,15 @@ export async function GET() {
     const userId = session?.user?.id;
     if (!userId) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
     const email = session?.user?.email?.toLowerCase() ?? "";
+    // email 빈 문자열이면 tenantEmail:"" 가계약에 광범위 매치되므로 제외(IDOR 방지)
+    const orConds: Array<{ tenantId: string } | { tenantEmail: string }> = [{ tenantId: userId }];
+    if (email) orConds.push({ tenantEmail: email });
 
     const contracts = await prisma.eContract.findMany({
       where: {
         status: "COMPLETED",
         contractType: { in: ["JEONSE", "MONTHLY"] },
-        OR: [{ tenantId: userId }, { tenantEmail: email }],
+        OR: orConds,
       },
       orderBy: { createdAt: "desc" },
       take: 20,

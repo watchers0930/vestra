@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 import { autoRegisterMonitoring } from "@/lib/e-contract/auto-monitoring";
+import { isValidImageDataUrl } from "@/lib/keepzip/image-validation";
 
 const TENANT_SIGN_TTL_MS = 72 * 60 * 60 * 1000; // 서명 링크 유효 72시간
 
@@ -62,8 +63,8 @@ export async function POST(req: NextRequest) {
       if (!party?.name || !String(party.name).trim()) {
         return NextResponse.json({ error: `${label} 이름을 입력해주세요.` }, { status: 400 });
       }
-      if (needSign && (!party?.sign || typeof party.sign !== "string" || !party.sign.startsWith("data:image"))) {
-        return NextResponse.json({ error: `${label} 서명을 입력해주세요.` }, { status: 400 });
+      if (needSign && !isValidImageDataUrl(party?.sign)) {
+        return NextResponse.json({ error: `${label} 서명 이미지가 올바르지 않습니다. (PNG/JPEG, 2MB 이하)` }, { status: 400 });
       }
       if (party?.rrn && !RRN_PREFIX_RE.test(party.rrn)) {
         return NextResponse.json({ error: `${label} 생년월일+성별 형식이 올바르지 않습니다. (예: 890101-1)` }, { status: 400 });

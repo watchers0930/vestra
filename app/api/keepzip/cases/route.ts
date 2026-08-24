@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
+import { isValidImageDataUrl } from "@/lib/keepzip/image-validation";
 
 const CAUSES = ["deposit_return", "terminate_by_tenant", "terminate_by_landlord", "rent_arrears", "maintenance_arrears"];
 
@@ -31,15 +32,22 @@ export async function POST(req: NextRequest) {
 
     const lawyerId = sanitizeField(String(b.lawyerId ?? ""), 50);
     const senderName = sanitizeField(String(b.senderName ?? ""), 100);
-    const recipientName = sanitizeField(String(b.recipientName ?? ""), 100);
-    const address = sanitizeField(String(b.address ?? ""), 400);
+    let recipientName = sanitizeField(String(b.recipientName ?? ""), 100);
+    let address = sanitizeField(String(b.address ?? ""), 400);
     if (!lawyerId) return NextResponse.json({ error: "담당 변호사가 지정되지 않았습니다." }, { status: 400 });
     if (!senderName || !recipientName || !address) return NextResponse.json({ error: "필수 정보가 누락됐습니다." }, { status: 400 });
 
+    // 배정 변호사 실존·활성 검증(공통B) — orphan 케이스·표적 스팸 방지
+    const lawyerPartner = await prisma.lawyerPartner.findUnique({ where: { id: lawyerId }, select: { id: true, active: true } });
+    if (!lawyerPartner || !lawyerPartner.active) {
+      return NextResponse.json({ error: "유효한 담당 변호사가 아닙니다." }, { status: 400 });
+    }
+
     const senderSide = b.senderSide === "landlord" ? "landlord" : "tenant";
-    const deposit = Number.isFinite(Number(b.deposit)) && Number(b.deposit) >= 0 ? Math.floor(Number(b.deposit)) : null;
+    let deposit = Number.isFinite(Number(b.deposit)) && Number(b.deposit) >= 0 ? Math.floor(Number(b.deposit)) : null;
     const draftContent = typeof b.draftContent === "string" ? b.draftContent.slice(0, 20000) : null;
-    const signatureUrl = typeof b.signatureUrl === "string" && b.signatureUrl.startsWith("data:image/") ? b.signatureUrl : null;
+    // 서명 이미지 검증 강화(공통A) — SVG 차단·크기 상한
+    const signatureUrl = isValidImageDataUrl(b.signatureUrl) ? (b.signatureUrl as string) : null;
 
     // 근거 전자계약 연결(갭1) — 본인이 임차인으로 참여한 계약만 연결 허용
     // + 계약 연결 시 임대인을 수신인 User로 자동 설정(갭6, 플랫폼 수신함용)
@@ -48,13 +56,20 @@ export async function POST(req: NextRequest) {
     const reqEcontractId = sanitizeField(String(b.econtractId ?? ""), 50);
     if (reqEcontractId) {
       const email = session?.user?.email?.toLowerCase() ?? "";
+      // email이 빈 문자열이면 tenantEmail:"" 인 가계약에 광범위 매치되므로 제외(IDOR 방지)
+      const orConds: Array<{ tenantId: string } | { tenantEmail: string }> = [{ tenantId: userId }];
+      if (email) orConds.push({ tenantEmail: email });
       const owned = await prisma.eContract.findFirst({
-        where: { id: reqEcontractId, OR: [{ tenantId: userId }, { tenantEmail: email }] },
-        select: { id: true, landlordId: true },
+        where: { id: reqEcontractId, OR: orConds },
+        select: { id: true, landlordId: true, address: true, deposit: true, signatures: { where: { role: "LANDLORD" }, select: { signerName: true } } },
       });
       if (owned) {
         econtractId = owned.id;
         recipientUserId = owned.landlordId; // 계약 임대인 = 반환청구 수신인
+        // 문서 무결성(M4): 계약 연결 시 수신인·주소·보증금을 계약값으로 확정(클라이언트 조작 방지)
+        recipientName = sanitizeField(owned.signatures[0]?.signerName || recipientName, 100);
+        address = sanitizeField(owned.address || address, 400);
+        if (owned.deposit != null) deposit = Number(owned.deposit);
       }
     }
 

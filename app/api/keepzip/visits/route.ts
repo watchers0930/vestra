@@ -32,6 +32,11 @@ export async function POST(req: NextRequest) {
     if (!lawyerId || !name || !phone || !preferredAt) {
       return NextResponse.json({ error: "전문가·성명·연락처·희망 일시를 입력해주세요." }, { status: 400 });
     }
+    // 전문가 실존·활성 검증(공통B) — 임의 lawyerId 주입·표적 스팸 방지
+    const partner = await prisma.lawyerPartner.findUnique({ where: { id: lawyerId }, select: { id: true, active: true } });
+    if (!partner || !partner.active) {
+      return NextResponse.json({ error: "유효한 전문가가 아닙니다." }, { status: 400 });
+    }
 
     const created = await prisma.expertVisit.create({
       data: { lawyerId, userId, name, phone, preferredAt, purpose: purpose || "방문 상담" },

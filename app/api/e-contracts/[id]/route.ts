@@ -66,14 +66,26 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       if (contract.status === "CANCELED") {
         return NextResponse.json({ error: "이미 취소된 계약입니다." }, { status: 400 });
       }
-      // 계약 취소 + 연결 매물을 다시 거래가능(ACTIVE)으로 복구 → 재계약 가능
+      // 매물에 다른 유효 계약(완료/임차인서명대기)이 남아있으면 ACTIVE 복구 금지(H2: 이중계약 방지)
+      let restoreListing = false;
+      if (contract.listingId) {
+        const otherActive = await prisma.eContract.count({
+          where: { listingId: contract.listingId, id: { not: id }, status: { in: ["COMPLETED", "PENDING_TENANT", "PENDING_LANDLORD"] } },
+        });
+        restoreListing = otherActive === 0;
+      }
       await prisma.$transaction(async (tx) => {
         await tx.eContract.update({ where: { id }, data: { status: "CANCELED" } });
-        if (contract.listingId) {
+        // 임차인 독립서명 대기 토큰 무효화(H1: 취소 후 서명으로 계약 부활 차단)
+        await tx.eContractSignature.updateMany({
+          where: { contractId: id, signToken: { not: null } },
+          data: { signToken: null, signTokenExpires: null },
+        });
+        if (restoreListing && contract.listingId) {
           await tx.listing.update({ where: { id: contract.listingId }, data: { status: "ACTIVE" } });
         }
       });
-      return NextResponse.json({ success: true, listingRestored: !!contract.listingId });
+      return NextResponse.json({ success: true, listingRestored: restoreListing });
     }
 
     return NextResponse.json({ error: "유효하지 않은 action입니다." }, { status: 400 });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { autoRegisterMonitoring } from "@/lib/e-contract/auto-monitoring";
+import { isValidImageDataUrl } from "@/lib/keepzip/image-validation";
 
 const RRN_PREFIX_RE = /^\d{6}-[1-4]$/;
 type Params = { params: Promise<{ token: string }> };
@@ -30,6 +31,9 @@ export async function GET(_req: NextRequest, { params }: Params) {
   if (sig.signTokenExpires && sig.signTokenExpires.getTime() < Date.now()) {
     return NextResponse.json({ error: "서명 링크가 만료되었습니다. 임대인에게 재발급을 요청하세요." }, { status: 410 });
   }
+  if (sig.contract.status !== "PENDING_TENANT") {
+    return NextResponse.json({ error: "서명할 수 없는 계약 상태입니다." }, { status: 409 });
+  }
   const c = sig.contract;
   return NextResponse.json({
     contract: {
@@ -53,9 +57,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const { token } = await params;
   const body = await req.json().catch(() => null);
-  const sign = typeof body?.sign === "string" && body.sign.startsWith("data:image") ? body.sign : null;
+  // 이미지 검증 강화(SVG 차단·크기 상한)
+  const sign = isValidImageDataUrl(body?.sign) ? (body.sign as string) : null;
   const rrn = typeof body?.rrn === "string" ? body.rrn.trim() : "";
-  if (!sign) return NextResponse.json({ error: "서명을 입력해주세요." }, { status: 400 });
+  if (!sign) return NextResponse.json({ error: "서명 이미지가 올바르지 않습니다. (PNG/JPEG, 2MB 이하)" }, { status: 400 });
   if (rrn && !RRN_PREFIX_RE.test(rrn)) {
     return NextResponse.json({ error: "생년월일+성별 형식이 올바르지 않습니다. (예: 890101-1)" }, { status: 400 });
   }
@@ -77,15 +82,21 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (sig.signTokenExpires && sig.signTokenExpires.getTime() < Date.now()) {
     return NextResponse.json({ error: "서명 링크가 만료되었습니다." }, { status: 410 });
   }
+  // 상태 전이 가드(H1): 임차인 서명 대기 상태에서만 서명 가능 — 취소/완료된 계약 부활 차단
+  if (sig.contract.status !== "PENDING_TENANT") {
+    return NextResponse.json({ error: "서명할 수 없는 계약 상태입니다." }, { status: 409 });
+  }
 
   const c = sig.contract;
   const now = new Date();
   const ip = req.headers.get("x-forwarded-for") || null;
 
   // 서명 저장 + 토큰 1회 무효화 + 계약 완료 + 매물 동기화 (원자적)
+  // 경쟁조건 방어(H3): signatureUrl=null·signToken 일치일 때만 갱신되는 조건부 updateMany → 승자 1명만
+  let won = false;
   await prisma.$transaction(async (tx) => {
-    await tx.eContractSignature.update({
-      where: { id: sig.id },
+    const upd = await tx.eContractSignature.updateMany({
+      where: { id: sig.id, signatureUrl: null, signToken: token },
       data: {
         signatureUrl: sign,
         signerRrnPrefix: rrn || sig.signerRrnPrefix,
@@ -95,11 +106,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         ipAddress: ip,
       },
     });
+    if (upd.count === 0) return; // 다른 동시 요청이 이미 처리 → 이 요청은 패자
+    won = true;
     await tx.eContract.update({ where: { id: c.id }, data: { status: "COMPLETED", completedAt: now } });
     if (c.listingId) {
       await tx.listing.update({ where: { id: c.listingId }, data: { status: "COMPLETED" } });
     }
   });
+  if (!won) return NextResponse.json({ error: "이미 서명이 완료된 계약입니다." }, { status: 410 });
 
   // 등기감시 자동 등록(갭2) — 완료 시점. 전입 예정일: 의향서 입주희망일 우선
   if (c.tenantId) {

@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
+import { isValidImageDataUrl } from "@/lib/keepzip/image-validation";
+
+// 검수 가능한 시작 상태 — 검수 전(대기/결제완료)만 승인·반려 허용
+const REVIEWABLE = ["lawyer_pending", "paid"];
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -28,10 +32,17 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!kzCase) return NextResponse.json({ error: "사건을 찾을 수 없습니다." }, { status: 404 });
     // 본인에게 배정된 사건만 검수 가능
     if (kzCase.lawyerId !== partner.id) return NextResponse.json({ error: "배정된 사건만 검수할 수 있습니다." }, { status: 403 });
+    // 상태 전이 가드(M3): 이미 승인·발송·배달·취소된 사건 재처리 차단
+    if (!REVIEWABLE.includes(kzCase.status)) {
+      return NextResponse.json({ error: "이미 처리된 사건입니다." }, { status: 409 });
+    }
 
     const b = await req.json().catch(() => null);
-    const decision = b?.decision === "rejected" ? "rejected" : "approved";
-    const stamp = typeof b?.stamp === "string" && b.stamp.startsWith("data:image/") ? b.stamp : null;
+    if (b?.decision !== "approved" && b?.decision !== "rejected") {
+      return NextResponse.json({ error: "decision은 approved 또는 rejected여야 합니다." }, { status: 400 });
+    }
+    const decision = b.decision;
+    const stamp = isValidImageDataUrl(b?.stamp) ? (b.stamp as string) : null;
 
     if (decision === "approved") {
       await prisma.$transaction([

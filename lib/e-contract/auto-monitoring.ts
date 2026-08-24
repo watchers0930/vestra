@@ -17,22 +17,25 @@ export async function autoRegisterMonitoring(params: {
   if (contractType !== "JEONSE" && contractType !== "MONTHLY") return;
 
   const now = new Date();
-  const depositManwon = depositVal !== null ? Number(depositVal / BigInt(10000)) : null; // 원 → 만원
+  // 1만원 미만 절사로 0이 되는 것 방지(M4-소액): 최소 1만원 보장
+  const depositManwon = depositVal !== null && depositVal > BigInt(0)
+    ? Math.max(1, Number(depositVal / BigInt(10000)))
+    : null;
   const mode = moveIn && moveIn.getTime() > now.getTime() ? "contract_gap" : "standard";
-  const data = {
+  const common = {
     listingId: listingId ?? null,
     monitorMode: mode,
     contractDate: now,
     moveInDate: moveIn,
     deposit: depositManwon,
     ownerName: landlordName,
-    status: "active",
   };
   await prisma.monitoredProperty
     .upsert({
       where: { userId_address: { userId: tenantId, address } },
-      create: { userId: tenantId, address, ...data },
-      update: data,
+      // 신규 생성 시에만 active. 기존 레코드는 status를 건드리지 않아 사용자가 paused한 감시 부활 방지(M6)
+      create: { userId: tenantId, address, ...common, status: "active" },
+      update: common,
     })
     .catch((e) => console.error("[autoRegisterMonitoring]", e));
 }
