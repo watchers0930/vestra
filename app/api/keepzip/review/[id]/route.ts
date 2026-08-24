@@ -24,8 +24,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!partner) return NextResponse.json({ error: "전문가만 검수할 수 있습니다." }, { status: 403 });
 
     const { id } = await params;
-    const kzCase = await prisma.keepzipCase.findUnique({ where: { id }, select: { id: true, status: true } });
+    const kzCase = await prisma.keepzipCase.findUnique({ where: { id }, select: { id: true, status: true, lawyerId: true } });
     if (!kzCase) return NextResponse.json({ error: "사건을 찾을 수 없습니다." }, { status: 404 });
+    // 본인에게 배정된 사건만 검수 가능
+    if (kzCase.lawyerId !== partner.id) return NextResponse.json({ error: "배정된 사건만 검수할 수 있습니다." }, { status: 403 });
 
     const b = await req.json().catch(() => null);
     const decision = b?.decision === "rejected" ? "rejected" : "approved";
