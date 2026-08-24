@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import s from "./listing-detail.module.css";
 import DetailTabs from "./DetailTabs";
 import MapThumbnail from "./MapThumbnail";
-import { ApplicationModal } from "@/app/(app)/listings/[id]/components/ApplicationModal";
 
 function formatKoreanWon(won: number): string {
   if (!won) return "-";
@@ -36,7 +35,6 @@ export default function ListingDetailContent() {
   const lng = sp.get("lng") ? Number(sp.get("lng")) : null;
 
   const [info, setInfo] = useState<AptInfo | null>(null);
-  const [showIntent, setShowIntent] = useState(false);
 
   useEffect(() => {
     const q = new URLSearchParams({ region, dong, apt: aptName });
@@ -158,23 +156,14 @@ export default function ListingDetailContent() {
             </div>
 
             <div className={s.ctaSection}>
-              <button className={s.ctaPrimary} onClick={() => setShowIntent(true)}>의향서 보내기</button>
+              {/* 실거래 정보 매물은 등록 소유자가 없어 의향서 대신 등록매물로 유도(갭8) */}
+              <button className={s.ctaPrimary} onClick={() => router.push(`/renewal/listings-list?region=${encodeURIComponent(region)}`)}>이 지역 등록매물 보기</button>
               <button className={s.ctaSecondary} onClick={() => router.push("/renewal/rights")}>AI 권리분석 해보기</button>
+              <p style={{ fontSize: 12, color: "#8a90a2", marginTop: 8, lineHeight: 1.5 }}>본 화면은 국토교통부 실거래 정보이며, 실제 거래는 안심인증 등록매물에서 진행됩니다.</p>
             </div>
           </div>
         </div>
       </div>
-
-      {showIntent && (
-        <ApplicationModal
-          demoMode
-          listingId=""
-          deposit={String(amount)}
-          listingType="SALE"
-          onClose={() => setShowIntent(false)}
-          onSuccess={() => {}}
-        />
-      )}
     </section>
   );
 }

@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import s from "./listing-detail-mobile.module.css";
 import MobileDetailTabs from "./components/MobileDetailTabs";
 import MapThumbnail from "../listing-detail/MapThumbnail";
-import { ApplicationModal } from "@/app/(app)/listings/[id]/components/ApplicationModal";
 
 function formatKoreanWon(won: number): string {
   if (!won) return "-";
@@ -36,7 +35,6 @@ export default function ListingDetailMobileClient() {
   const lng = sp.get("lng") ? Number(sp.get("lng")) : null;
 
   const [info, setInfo] = useState<AptInfo | null>(null);
-  const [showIntent, setShowIntent] = useState(false);
 
   useEffect(() => {
     const q = new URLSearchParams({ region, dong, apt: aptName });
@@ -256,22 +254,11 @@ export default function ListingDetailMobileClient() {
         </div>
       </footer>
 
-      {/* STICKY CTA */}
+      {/* STICKY CTA — 실거래 정보 매물은 등록매물로 유도(갭8) */}
       <div className={s.stickyCta}>
-        <button className={s.ctaPrimary} onClick={() => setShowIntent(true)}>의향서 보내기</button>
+        <button className={s.ctaPrimary} onClick={() => router.push(`/renewal/listings-list?region=${encodeURIComponent(region)}`)}>이 지역 등록매물</button>
         <button className={s.ctaSecondary} onClick={() => router.push("/renewal/rights")}>AI 권리분석<br />해보기</button>
       </div>
-
-      {showIntent && (
-        <ApplicationModal
-          demoMode
-          listingId=""
-          deposit={String(amount)}
-          listingType="SALE"
-          onClose={() => setShowIntent(false)}
-          onSuccess={() => {}}
-        />
-      )}
     </div>
   );
 }
