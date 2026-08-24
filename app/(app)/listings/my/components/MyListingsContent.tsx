@@ -178,8 +178,8 @@ export function MyListingsContent() {
                   </div>
                 </div>
 
-                {/* 상태 변경 + 액션 */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
+                {/* 상태 변경 + 액션 (한 줄) */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                   <div style={{ position: "relative" }}>
                     <select
                       value={l.status}
@@ -201,30 +201,28 @@ export function MyListingsContent() {
                       style={{ position: "absolute", right: 7, top: "50%", transform: "translateY(-50%)", color: "#6e6e73", pointerEvents: "none" }}
                     />
                   </div>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    <Link href={`/listings/${l.id}`} style={{ textDecoration: "none" }}>
-                      <button
-                        style={{
-                          padding: "5px 10px", borderRadius: 8, border: "1px solid #d2d2d7",
-                          background: "#fff", fontSize: 11, fontWeight: 600, color: "#3d3d3f", cursor: "pointer",
-                        }}
-                      >
-                        보기
-                      </button>
-                    </Link>
+                  <Link href={`/listings/${l.id}`} style={{ textDecoration: "none" }}>
                     <button
-                      onClick={() => handleDelete(l.id)}
-                      disabled={deletingId === l.id}
                       style={{
-                        padding: "5px 10px", borderRadius: 8,
-                        border: "1px solid rgba(255,59,48,0.25)",
-                        background: "rgba(255,59,48,0.05)", fontSize: 11, fontWeight: 600,
-                        color: "#c0392b", cursor: "pointer",
+                        padding: "5px 10px", borderRadius: 8, border: "1px solid #d2d2d7",
+                        background: "#fff", fontSize: 11, fontWeight: 600, color: "#3d3d3f", cursor: "pointer",
                       }}
                     >
-                      {deletingId === l.id ? "..." : "삭제"}
+                      보기
                     </button>
-                  </div>
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(l.id)}
+                    disabled={deletingId === l.id}
+                    style={{
+                      padding: "5px 10px", borderRadius: 8,
+                      border: "1px solid rgba(255,59,48,0.25)",
+                      background: "rgba(255,59,48,0.05)", fontSize: 11, fontWeight: 600,
+                      color: "#c0392b", cursor: "pointer",
+                    }}
+                  >
+                    {deletingId === l.id ? "..." : "삭제"}
+                  </button>
                 </div>
               </div>
             );
