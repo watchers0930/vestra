@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
+import { sanitizeField } from "@/lib/sanitize";
+import { sendNotification } from "@/lib/notification-sender";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -51,7 +53,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     const { id } = await params;
-    const { action } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const action = body?.action;
+    const cancelReason = typeof body?.reason === "string" ? sanitizeField(body.reason, 500) : null;
 
     const contract = await prisma.eContract.findUnique({ where: { id } });
     if (!contract) {
@@ -74,8 +78,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         });
         restoreListing = otherActive === 0;
       }
+      const now = new Date();
       await prisma.$transaction(async (tx) => {
-        await tx.eContract.update({ where: { id }, data: { status: "CANCELED" } });
+        // 취소 + 감사 기록(누가/언제/사유) — 권고3
+        await tx.eContract.update({
+          where: { id },
+          data: { status: "CANCELED", canceledAt: now, canceledBy: session.user!.id, cancelReason },
+        });
         // 임차인 독립서명 대기 토큰 무효화(H1: 취소 후 서명으로 계약 부활 차단)
         await tx.eContractSignature.updateMany({
           where: { contractId: id, signToken: { not: null } },
@@ -85,6 +94,18 @@ export async function PATCH(req: NextRequest, { params }: Params) {
           await tx.listing.update({ where: { id: contract.listingId }, data: { status: "ACTIVE" } });
         }
       });
+
+      // 상대방(임차인 가입회원) 통지 — 권고3. 취소 실행자가 아닌 임차인에게만.
+      if (contract.tenantId && contract.tenantId !== session.user.id) {
+        await sendNotification({
+          userId: contract.tenantId,
+          type: "system",
+          title: "가계약이 취소되었습니다",
+          body: `${contract.address} 가계약이 취소되었습니다.${cancelReason ? ` 사유: ${cancelReason}` : ""}`,
+          data: { econtractId: id, kind: "contract_canceled" },
+        }).catch((e) => console.error("[e-contracts cancel] 통지 실패", e));
+      }
+
       return NextResponse.json({ success: true, listingRestored: restoreListing });
     }
 

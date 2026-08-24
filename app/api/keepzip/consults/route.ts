@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
+import { getClientIp } from "@/lib/client-ip";
 
 /**
  * POST /api/keepzip/consults — 전문가 상담문의 신청 (이용자 → 전문가)
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
 
     const session = await auth();
     const userId = session?.user?.id ?? null;
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anon";
+    const ip = getClientIp(req);
 
     const rl = await rateLimit(`kz-consult:${userId ?? ip}`, 10, 86400000);
     if (!rl.success) return NextResponse.json({ error: "일일 신청 한도를 초과했습니다." }, { status: 429, headers: rateLimitHeaders(rl) });

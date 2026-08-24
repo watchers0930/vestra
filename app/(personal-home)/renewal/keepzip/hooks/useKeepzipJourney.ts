@@ -24,6 +24,8 @@ export function useKeepzipJourney({ lawyerName, lawyerId, onError }: Options = {
   const [signature, setSignature] = useState("");
   const [caseId, setCaseId] = useState<string | null>(null);
   const [caseStatus, setCaseStatus] = useState<string>("draft");
+  const [trackingNo, setTrackingNo] = useState<string | null>(null);
+  const [assignedLawyer, setAssignedLawyer] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // 뷰 전환 시 history에 기록 → 브라우저 뒤로가기로 이전 뷰 복귀
@@ -50,6 +52,19 @@ export function useKeepzipJourney({ lawyerName, lawyerId, onError }: Options = {
     if (!draft.draft) return;
     setSubmitting(true);
     try {
+      // 담당 변호사 결정 — 미니홈 진입 시 지정, 메인 여정은 배정 가능한 변호사 자동 선택(데모)
+      let effLawyerId = lawyerId ?? "";
+      if (!effLawyerId) {
+        const lr = await fetch("/api/keepzip/experts?category=%EB%B3%80%ED%98%B8%EC%82%AC");
+        const ld = await lr.json().catch(() => null);
+        const first = ld?.experts?.[0];
+        if (!first?.id) {
+          onError?.("배정 가능한 변호사가 없습니다.");
+          return;
+        }
+        effLawyerId = first.id;
+        setAssignedLawyer(first.name ?? null);
+      }
       const res = await fetch("/api/keepzip/cases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -59,7 +74,7 @@ export function useKeepzipJourney({ lawyerName, lawyerId, onError }: Options = {
           senderName: draft.form.senderName,
           recipientName: draft.form.recipientName,
           address: fullAddress(draft.form),
-          lawyerId: lawyerId ?? "",
+          lawyerId: effLawyerId,
           deposit: draft.form.deposit,
           econtractId: draft.econtractId ?? undefined,
           draftContent: draft.draft.content,
@@ -81,6 +96,35 @@ export function useKeepzipJourney({ lawyerName, lawyerId, onError }: Options = {
     }
   }, [draft.draft, draft.form, draft.econtractId, signature, lawyerId, goView, onError]);
 
+  /** 데모 상태 전이(승인/결제·발송/배달/반송) — 서버 DB에 반영 */
+  const demoAdvance = useCallback(
+    async (action: "approve" | "pay" | "deliver" | "return") => {
+      if (!caseId) return null;
+      setSubmitting(true);
+      try {
+        const res = await fetch(`/api/keepzip/cases/${caseId}/demo-advance`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action }),
+        });
+        const d = await res.json().catch(() => null);
+        if (!res.ok) {
+          onError?.(d?.error ?? "처리에 실패했습니다.");
+          return null;
+        }
+        setCaseStatus(d.status);
+        if (d.trackingNo) setTrackingNo(d.trackingNo);
+        return d as { status: string; trackingNo?: string };
+      } catch {
+        onError?.("네트워크 오류가 발생했습니다.");
+        return null;
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [caseId, onError],
+  );
+
   return {
     ...draft,
     view,
@@ -90,9 +134,11 @@ export function useKeepzipJourney({ lawyerName, lawyerId, onError }: Options = {
     caseId,
     caseStatus,
     setCaseStatus,
+    trackingNo,
     submitting,
     requestReview,
-    lawyerName,
+    demoAdvance,
+    lawyerName: lawyerName ?? assignedLawyer ?? undefined,
     lawyerId,
   };
 }

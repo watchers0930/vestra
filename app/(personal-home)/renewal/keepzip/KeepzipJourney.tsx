@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import s from "./keepzip-renewal.module.css";
 import { useToast } from "@/components/common/toast";
 import { useKeepzipJourney } from "./hooks/useKeepzipJourney";
@@ -17,13 +16,18 @@ interface Props {
   lawyerId?: string;
 }
 
-const TRACKING_NO = "1234-5678-9012"; // 데모 등기번호 (실서비스: 포스트플러스 발송 응답값)
+/** 서버 사건 상태 → 발송 추적 표시값 */
+function deliveryOf(status: string): Delivery {
+  if (status === "delivered") return "delivered";
+  if (status === "returned") return "returned";
+  return "sending";
+}
 
 /** 집키퍼 임차인 단일 여정 컨테이너 — 작성 → 검토·결제 → 발송·사후관리. */
 export function KeepzipJourney({ lawyerName, lawyerId }: Props) {
   const { showToast } = useToast();
   const j = useKeepzipJourney({ lawyerName, lawyerId, onError: (m) => showToast(m, "error") });
-  const [delivery, setDelivery] = useState<Delivery>("sending");
+  const delivery = deliveryOf(j.caseStatus);
 
   const reset = () => { if (typeof window !== "undefined") window.location.reload(); };
   const selectUpsell = () => showToast("해당 절차 연동은 준비 중입니다.", "info");
@@ -64,16 +68,17 @@ export function KeepzipJourney({ lawyerName, lawyerId }: Props) {
         <>
           <Step3Review
             lawyerName={j.lawyerName}
-            approved={j.caseStatus === "approved"}
-            onApprove={() => j.setCaseStatus("approved")}
+            approved={j.caseStatus === "lawyer_approved"}
+            onApprove={() => j.demoAdvance("approve")}
           />
-          {j.caseStatus === "approved" && (
+          {j.caseStatus === "lawyer_approved" && (
             <Step4Payment
-              onPaid={() => {
-                j.setCaseStatus("paid");
-                setDelivery("sending");
-                j.goView("track");
-                showToast("결제 완료 — 우체국 등기로 발송되었습니다.", "success");
+              onPaid={async () => {
+                const r = await j.demoAdvance("pay");
+                if (r) {
+                  j.goView("track");
+                  showToast("결제 완료 — 우체국 등기로 발송되었습니다.", "success");
+                }
               }}
             />
           )}
@@ -82,7 +87,13 @@ export function KeepzipJourney({ lawyerName, lawyerId }: Props) {
 
       {j.view === "track" && (
         <>
-          <Step5Tracking delivery={delivery} trackingNo={TRACKING_NO} setDelivery={setDelivery} />
+          <Step5Tracking
+            delivery={delivery}
+            trackingNo={j.trackingNo ?? "-"}
+            busy={j.submitting}
+            onDeliver={() => j.demoAdvance("deliver")}
+            onReturn={() => j.demoAdvance("return")}
+          />
           {delivery !== "sending" && (
             <Step6AfterCare delivery={delivery} onSelectUpsell={selectUpsell} onReset={reset} />
           )}

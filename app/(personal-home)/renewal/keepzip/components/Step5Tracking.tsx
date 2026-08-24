@@ -7,12 +7,14 @@ export type Delivery = "sending" | "delivered" | "returned";
 interface Props {
   delivery: Delivery;
   trackingNo: string;
-  /** 데모: 우체국 배달결과 시뮬. 실서비스는 우체국 종적조회 API가 자동 수신. */
-  setDelivery: (d: Delivery) => void;
+  busy?: boolean;
+  /** 데모: 우체국 배달결과 시뮬(서버 DB 반영). 실서비스는 우체국 종적조회 API가 자동 수신. */
+  onDeliver: () => void;
+  onReturn: () => void;
 }
 
 /** Step 5 — 등기 발송 현황 추적. */
-export function Step5Tracking({ delivery, trackingNo, setDelivery }: Props) {
+export function Step5Tracking({ delivery, trackingNo, busy, onDeliver, onReturn }: Props) {
   const nodes = [
     { label: "내용증명 접수완료", state: "done" },
     { label: "우체국 발송처리", state: "done" },
@@ -47,8 +49,8 @@ export function Step5Tracking({ delivery, trackingNo, setDelivery }: Props) {
           <div className={s.demoBox}>
             🎮 데모 컨트롤 — 실서비스에서는 우체국 API가 배달결과를 자동 수신합니다.
             <div className={s.demoRow}>
-              <button className={s.demoBtn} onClick={() => setDelivery("delivered")}>수령완료로 진행 →</button>
-              <button className={s.demoBtnAlt} onClick={() => setDelivery("returned")}>수령거부·폐문부재 →</button>
+              <button className={s.demoBtn} disabled={busy} onClick={onDeliver}>수령완료로 진행 →</button>
+              <button className={s.demoBtnAlt} disabled={busy} onClick={onReturn}>수령거부·폐문부재 →</button>
             </div>
           </div>
         )}

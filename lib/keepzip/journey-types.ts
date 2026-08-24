@@ -38,14 +38,12 @@ export const VIEW_STEPS: Record<JourneyView, JourneyStep[]> = {
  */
 export function stepFromCaseStatus(status?: string | null): JourneyStep {
   switch (status) {
-    case "lawyer_pending": return 3; // 변호사 검토 대기
-    case "approved": return 4;       // 검토 완료 → 결제 대기
-    case "paid": return 5;           // 결제 완료 → 발송/추적
-    case "postal_sent":
+    case "lawyer_pending": return 3;  // 변호사 검토 대기
+    case "lawyer_approved": return 4; // 검토 완료 → 결제 대기
+    case "paid": return 5;            // 결제 완료 → 발송/추적
+    case "postal_sent": return 5;     // 발송 → 추적
     case "delivered":
-    case "returned": return 5;       // 발송 이후 추적
-    case "closed":
-    case "unresponded": return 6;    // 종결/미대응 → 사후관리
+    case "returned": return 6;        // 배달완료/반송 → 사후관리
     default: return 1;
   }
 }

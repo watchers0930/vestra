@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { autoRegisterMonitoring } from "@/lib/e-contract/auto-monitoring";
 import { isValidImageDataUrl } from "@/lib/keepzip/image-validation";
+import { getClientIp } from "@/lib/client-ip";
 
 const RRN_PREFIX_RE = /^\d{6}-[1-4]$/;
 type Params = { params: Promise<{ token: string }> };
@@ -89,7 +90,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const c = sig.contract;
   const now = new Date();
-  const ip = req.headers.get("x-forwarded-for") || null;
+  const ip = getClientIp(req, "") || null;
 
   // 서명 저장 + 토큰 1회 무효화 + 계약 완료 + 매물 동기화 (원자적)
   // 경쟁조건 방어(H3): signatureUrl=null·signToken 일치일 때만 갱신되는 조건부 updateMany → 승자 1명만

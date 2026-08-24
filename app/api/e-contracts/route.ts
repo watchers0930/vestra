@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 import { autoRegisterMonitoring } from "@/lib/e-contract/auto-monitoring";
 import { isValidImageDataUrl } from "@/lib/keepzip/image-validation";
+import { getClientIp } from "@/lib/client-ip";
 
 const TENANT_SIGN_TTL_MS = 72 * 60 * 60 * 1000; // 서명 링크 유효 72시간
 
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest) {
     if (specialTerms && String(specialTerms).trim()) termsParts.push(String(specialTerms).trim());
     const terms = termsParts.length ? termsParts.join("\n") : null;
 
-    const ip = req.headers.get("x-forwarded-for") || null;
+    const ip = getClientIp(req, "") || null;
     const now = new Date();
 
     // 임차인 독립 서명 모드면 임차인 서명란은 토큰만 발급(미서명), 계약은 PENDING_TENANT
