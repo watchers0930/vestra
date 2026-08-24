@@ -51,11 +51,10 @@ export const userMenuItems: MenuItem[] = [
   { href: "/agent",          icon: Handshake,       label: "중개관리",       description: "부동산 중개 고객을 관리하고 물건 모니터링을 설정합니다", tier: "AUTH_REQUIRED" },
   { href: "/e-contract",     icon: FileSignature,   label: "전자계약",       description: "법적 효력이 있는 전자계약서를 작성하고 3자 서명을 받습니다", tier: "AUTH_REQUIRED" },
   {
-    href: "/listings", icon: Building2, label: "매물 거래", description: "매물을 등록하고 계약의향서를 관리합니다", tier: "AUTH_REQUIRED",
+    href: "/listings/my", icon: Building2, label: "매물 거래", description: "매물을 등록하고 계약의향서를 관리합니다", tier: "AUTH_REQUIRED",
     children: [
-      { href: "/listings",          label: "매물 목록" },
+      { href: "/listings/my",       label: "매물 목록" },
       { href: "/listings/new",      label: "매물 등록" },
-      { href: "/listings/my",       label: "내 매물 관리" },
       { href: "/applications",      label: "받은 의향서" },
       { href: "/applications/my",   label: "보낸 의향서" },
       { href: "/chat",              label: "채팅" },
@@ -90,11 +89,10 @@ export const tenantMenuGroups: MenuGroup[] = [
 
 // ── LANDLORD(임대인/매도인) 전용 메뉴 ──
 const landlordListings: MenuItem = {
-  href: "/listings", icon: Building2, label: "매물 관리", description: "매물을 등록하고 계약의향서를 관리합니다", tier: "AUTH_REQUIRED",
+  href: "/listings/my", icon: Building2, label: "매물 관리", description: "매물을 등록하고 계약의향서를 관리합니다", tier: "AUTH_REQUIRED",
   children: [
-    { href: "/listings",      label: "매물 목록" },
+    { href: "/listings/my",   label: "매물 목록" },
     { href: "/listings/new",  label: "매물 등록" },
-    { href: "/listings/my",   label: "내 매물 관리" },
     { href: "/applications",  label: "받은 의향서" },
     { href: "/chat",          label: "채팅" },
   ],
