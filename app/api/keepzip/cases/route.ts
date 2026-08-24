@@ -41,10 +41,22 @@ export async function POST(req: NextRequest) {
     const draftContent = typeof b.draftContent === "string" ? b.draftContent.slice(0, 20000) : null;
     const signatureUrl = typeof b.signatureUrl === "string" && b.signatureUrl.startsWith("data:image/") ? b.signatureUrl : null;
 
+    // 근거 전자계약 연결(갭1) — 본인이 임차인으로 참여한 계약만 연결 허용
+    let econtractId: string | null = null;
+    const reqEcontractId = sanitizeField(String(b.econtractId ?? ""), 50);
+    if (reqEcontractId) {
+      const email = session?.user?.email?.toLowerCase() ?? "";
+      const owned = await prisma.eContract.findFirst({
+        where: { id: reqEcontractId, OR: [{ tenantId: userId }, { tenantEmail: email }] },
+        select: { id: true },
+      });
+      if (owned) econtractId = owned.id;
+    }
+
     const created = await prisma.keepzipCase.create({
       data: {
         userId, lawyerId, cause, senderSide, senderName, recipientName, address,
-        deposit, draftContent, signatureUrl,
+        deposit, draftContent, signatureUrl, econtractId,
         serviceFee: 9900, postalFee: 0, totalPaid: 9900,
         status: "lawyer_pending", settlementStatus: "hold",
       },

@@ -834,11 +834,12 @@ model EContract {
   finalPdfUrl  String? // 최종 서명 완료 PDF (Vercel Blob URL)
   completedAt  DateTime?
 
-  landlord    User                 @relation("LandlordEContracts", fields: [landlordId], references: [id], onDelete: Cascade)
-  signatures  EContractSignature[]
-  listing     Listing?             @relation("ListingEContracts", fields: [listingId], references: [id], onDelete: SetNull)
-  application ContractApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
-  tenant      User?                @relation("TenantEContracts", fields: [tenantId], references: [id], onDelete: SetNull)
+  landlord     User                 @relation("LandlordEContracts", fields: [landlordId], references: [id], onDelete: Cascade)
+  signatures   EContractSignature[]
+  listing      Listing?             @relation("ListingEContracts", fields: [listingId], references: [id], onDelete: SetNull)
+  application  ContractApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  tenant       User?                @relation("TenantEContracts", fields: [tenantId], references: [id], onDelete: SetNull)
+  keepzipCases KeepzipCase[]        @relation("EContractKeepzipCases")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -922,6 +923,7 @@ model KeepzipCase {
   address          String
   deposit          Int?
   expiryDate       DateTime?
+  econtractId      String? // 근거 전자계약(EContract) — 보증금반환청구가 이 계약에서 파생될 때 연결(갭1)
   // 문서/상태
   draftContent     String?         @db.Text
   signatureUrl     String?         @db.Text // 발신인 본인 손글씨 서명(PNG data URL)
@@ -943,12 +945,14 @@ model KeepzipCase {
   lawyerReview     LawyerReview?
   tracking         PostalTracking?
   user             User            @relation("KeepzipTenant", fields: [userId], references: [id], onDelete: Cascade)
+  econtract        EContract?      @relation("EContractKeepzipCases", fields: [econtractId], references: [id], onDelete: SetNull)
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
   @@index([userId])
   @@index([lawyerId])
   @@index([status])
+  @@index([econtractId])
 }
 
 model LawyerPartner {

@@ -5,6 +5,7 @@ import s from "../keepzip-renewal.module.css";
 import { useToast } from "@/components/common/toast";
 import { DaumPostcodeModal } from "@/components/keepzip/DaumPostcodeModal";
 import { MockPaymentModal } from "@/components/keepzip/MockPaymentModal";
+import { MyContractPicker } from "@/components/keepzip/MyContractPicker";
 import { SignaturePad } from "@/app/(app)/e-contract/components/SignaturePad";
 import { useKeepzipDraft } from "@/lib/keepzip/use-keepzip-draft";
 import {
@@ -22,7 +23,7 @@ interface Props {
 /** 임차인 내용증명 작성 폼(좌) + AI 초안 패널(우). 리뉴얼 화면·변호사 미니홈페이지 공용. */
 export function KeepzipDraftForm({ lawyerName, lawyerId }: Props) {
   const { showToast } = useToast();
-  const { form, draft, loading, error, selectCause, setField, generateDraft, setDraftContent } = useKeepzipDraft();
+  const { form, draft, loading, error, econtractId, selectCause, setField, generateDraft, setDraftContent, prefillFromContract, clearContract } = useKeepzipDraft();
   const [addrOpen, setAddrOpen] = useState(false);
   const [signature, setSignature] = useState("");
   const [payOpen, setPayOpen] = useState(false);
@@ -86,6 +87,11 @@ export function KeepzipDraftForm({ lawyerName, lawyerId }: Props) {
 
           {form.cause && (
             <>
+              <MyContractPicker
+                selectedId={econtractId}
+                onSelect={prefillFromContract}
+                onClear={clearContract}
+              />
               <div className={s.field}>
                 <label className={s.fieldLabel}>{SIDE.senderLabel}</label>
                 <input className={s.input} value={form.senderName} placeholder="성명"
@@ -211,6 +217,7 @@ export function KeepzipDraftForm({ lawyerName, lawyerId }: Props) {
                   address: fullAddress(form),
                   lawyerId: lawyerId ?? "",
                   deposit: form.deposit,
+                  econtractId: econtractId ?? undefined,
                   draftContent: draft?.content,
                   signatureUrl: signature,
                 }),
