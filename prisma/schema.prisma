@@ -833,6 +833,7 @@ model EContract {
   documentHash String? // 서명 전 PDF 해시 (무결성 검증용)
   finalPdfUrl  String? // 최종 서명 완료 PDF (Vercel Blob URL)
   completedAt  DateTime?
+  endReminderSentAt DateTime? // 계약 만료 임박 → 임차인 보증금반환 안내 발송 시각(중복방지, 갭3)
 
   landlord     User                 @relation("LandlordEContracts", fields: [landlordId], references: [id], onDelete: Cascade)
   signatures   EContractSignature[]
