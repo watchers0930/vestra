@@ -131,9 +131,13 @@ export async function POST(req: NextRequest) {
       select: { id: true },
     });
 
-    // 7. 의향서 기반이면 매물을 거래완료로 동기화
+    // 7. 의향서 기반이면 매물을 거래완료로 동기화 + 의향서 상태를 ACCEPTED로 정합화(갭4)
     if (linkedListingId) {
       await prisma.listing.update({ where: { id: linkedListingId }, data: { status: "COMPLETED" } }).catch(() => {});
+    }
+    if (linkedApplicationId) {
+      // 계약이 체결됐으므로 근거 의향서는 수락 상태여야 함(수락 단계 건너뛴 경우 정합화)
+      await prisma.contractApplication.update({ where: { id: linkedApplicationId }, data: { status: "ACCEPTED" } }).catch(() => {});
     }
 
     // 8. 임차인 가입회원 + 전세/월세면 등기감시 자동 등록(갭2) — 계약~전입 강화감시
