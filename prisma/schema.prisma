@@ -112,6 +112,7 @@ model User {
 
   // 집키퍼(KeepZip) — 임차인으로 신청한 내용증명 사건
   keepzipCases KeepzipCase[] @relation("KeepzipTenant")
+  keepzipReceived KeepzipCase[] @relation("KeepzipRecipient")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -921,6 +922,7 @@ model KeepzipCase {
   // 당사자
   senderName       String
   recipientName    String
+  recipientUserId  String? // 수신인(임대인) User — 플랫폼 수신함 조회용(갭6). 계약 연결 시 자동 설정
   address          String
   deposit          Int?
   expiryDate       DateTime?
@@ -946,6 +948,7 @@ model KeepzipCase {
   lawyerReview     LawyerReview?
   tracking         PostalTracking?
   user             User            @relation("KeepzipTenant", fields: [userId], references: [id], onDelete: Cascade)
+  recipient        User?           @relation("KeepzipRecipient", fields: [recipientUserId], references: [id], onDelete: SetNull)
   econtract        EContract?      @relation("EContractKeepzipCases", fields: [econtractId], references: [id], onDelete: SetNull)
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
@@ -954,6 +957,7 @@ model KeepzipCase {
   @@index([lawyerId])
   @@index([status])
   @@index([econtractId])
+  @@index([recipientUserId])
 }
 
 model LawyerPartner {
