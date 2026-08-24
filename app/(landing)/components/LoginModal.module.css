@@ -57,35 +57,6 @@
   color: #6e6e73;
 }
 
-/* ── 회원 유형 탭 ── */
-.tabs {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: #f5f5f7;
-  border-radius: 12px;
-  margin-bottom: 22px;
-}
-.tab {
-  flex: 1;
-  padding: 9px 0;
-  border: none;
-  background: transparent;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #6e6e73;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
-}
-.tab:hover { color: #1d1d1f; }
-.tabActive {
-  background: #ffffff;
-  color: #0071e3;
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
 .tabHint {
   text-align: center;
   font-size: 12.5px;

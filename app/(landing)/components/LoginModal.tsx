@@ -1,17 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import s from "./LoginModal.module.css";
-
-type MemberType = "personal" | "realestate" | "business";
-
-const TABS: { key: MemberType; label: string; hint: string }[] = [
-  { key: "personal", label: "개인", hint: "개인 회원으로 간편하게 로그인하세요" },
-  { key: "realestate", label: "부동산", hint: "부동산 중개 회원으로 로그인하세요" },
-  { key: "business", label: "기업", hint: "기업 회원으로 로그인하세요" },
-];
 
 interface LoginModalProps {
   open: boolean;
@@ -19,8 +11,6 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ open, onClose }: LoginModalProps) {
-  const [activeTab, setActiveTab] = useState<MemberType>("personal");
-
   // ESC 닫기 + 배경 스크롤 잠금
   useEffect(() => {
     if (!open) return;
@@ -45,8 +35,6 @@ export function LoginModal({ open, onClose }: LoginModalProps) {
     signIn(provider, { callbackUrl: "/dashboard" });
   };
 
-  const hint = TABS.find((t) => t.key === activeTab)?.hint ?? "";
-
   return (
     <div
       className={s.overlay}
@@ -65,22 +53,7 @@ export function LoginModal({ open, onClose }: LoginModalProps) {
           <p className={s.subtitle}>AI 부동산 자산관리 플랫폼</p>
         </div>
 
-        {/* 회원 유형 탭 */}
-        <div className={s.tabs} role="tablist" aria-label="회원 유형">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              role="tab"
-              aria-selected={activeTab === t.key}
-              className={`${s.tab} ${activeTab === t.key ? s.tabActive : ""}`}
-              onClick={() => setActiveTab(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <p className={s.tabHint}>{hint}</p>
+        <p className={s.tabHint}>간편하게 로그인하세요</p>
 
         {/* 소셜 간편 로그인 */}
         <div className={s.socials}>
