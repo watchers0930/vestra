@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { X } from "lucide-react";
 import RoleTypeSelector from "@/components/auth/RoleTypeSelector";
 
 interface Props {
@@ -26,22 +25,27 @@ export default function RenewalSignupModal({ onClose, onSwitchToLogin }: Props) 
 
   return (
     <div
-      style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", overflowY: "auto" }}
+      style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "rgba(10,15,30,0.55)", backdropFilter: "blur(4px)", overflowY: "auto" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="회원가입"
     >
-      <div style={{ width: "100%", maxWidth: 760, background: "#fff", borderRadius: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.20)", padding: "32px 28px", position: "relative", margin: "auto" }}>
+      <div style={{ width: "100%", maxWidth: 760, background: "#fff", borderRadius: 20, boxShadow: "0 24px 60px rgba(0,0,0,0.28)", padding: "32px 28px 28px", position: "relative", margin: "auto" }}>
         <button
           onClick={onClose}
-          style={{ position: "absolute", top: 16, right: 16, width: 28, height: 28, borderRadius: "50%", background: "#f5f5f7", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+          style={{ position: "absolute", top: 16, right: 16, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", border: "none", background: "transparent", borderRadius: 8, color: "#86868b", fontSize: 20, lineHeight: 1, cursor: "pointer" }}
           aria-label="닫기"
         >
-          <X size={14} strokeWidth={2} style={{ color: "#6e6e73" }} />
+          ✕
         </button>
 
+        <div style={{ textAlign: "center", marginBottom: 22 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: "0.22em", color: "#1d1d1f" }}>VESTRA</div>
+          <p style={{ marginTop: 6, fontSize: 13, color: "#6e6e73" }}>AI 부동산 자산관리 플랫폼</p>
+        </div>
+
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <div style={{ display: "inline-block", fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", color: "#0071e3", background: "rgba(0,113,227,0.08)", borderRadius: 20, padding: "5px 12px", marginBottom: 12 }}>
-            회원가입
-          </div>
           <h3 style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1f", margin: "0 0 6px" }}>이용 목적에 맞는 회원 유형을 선택하세요</h3>
           <p style={{ fontSize: 13, color: "#6e6e73", margin: 0 }}>유형에 따라 맞춤 기능이 제공됩니다</p>
         </div>
