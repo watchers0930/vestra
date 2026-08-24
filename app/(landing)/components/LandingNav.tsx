@@ -2,10 +2,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LoginModal } from "./LoginModal";
+import RenewalSignupModal from "../../(personal-home)/renewal/_shared/RenewalSignupModal";
 
 export function LandingNav() {
   const [scrolled, setScrolled] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [signupOpen, setSignupOpen] = useState(false);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 30);
@@ -32,7 +34,17 @@ export function LandingNav() {
           <Link href="/renewal/listings-list" className="lnd-start">시작하기</Link>
         </div>
       </div>
-      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+      <LoginModal
+        open={loginOpen}
+        onClose={() => setLoginOpen(false)}
+        onSwitchToSignup={() => { setLoginOpen(false); setSignupOpen(true); }}
+      />
+      {signupOpen && (
+        <RenewalSignupModal
+          onClose={() => setSignupOpen(false)}
+          onSwitchToLogin={() => { setSignupOpen(false); setLoginOpen(true); }}
+        />
+      )}
     </nav>
   );
 }

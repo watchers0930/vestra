@@ -8,9 +8,11 @@ import s from "./LoginModal.module.css";
 interface LoginModalProps {
   open: boolean;
   onClose: () => void;
+  /** "간편가입 하러 가기" → 회원가입 모달로 전환 (없으면 /signup 페이지로 이동) */
+  onSwitchToSignup?: () => void;
 }
 
-export function LoginModal({ open, onClose }: LoginModalProps) {
+export function LoginModal({ open, onClose, onSwitchToSignup }: LoginModalProps) {
   // ESC 닫기 + 배경 스크롤 잠금
   useEffect(() => {
     if (!open) return;
@@ -85,9 +87,15 @@ export function LoginModal({ open, onClose }: LoginModalProps) {
         <div className={s.divider}>
           <span className={s.dividerText}>아직 회원이 아니신가요?</span>
         </div>
-        <Link href="/signup" className={s.signup} onClick={onClose}>
-          <strong>간편가입</strong> 하러 가기
-        </Link>
+        {onSwitchToSignup ? (
+          <button type="button" className={s.signup} onClick={onSwitchToSignup}>
+            <strong>간편가입</strong> 하러 가기
+          </button>
+        ) : (
+          <Link href="/signup" className={s.signup} onClick={onClose}>
+            <strong>간편가입</strong> 하러 가기
+          </Link>
+        )}
       </div>
     </div>
   );
