@@ -60,16 +60,20 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (contract.landlordId !== session.user.id && contract.creatorId !== session.user.id) {
       return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
     }
-    if (contract.status === "COMPLETED") {
-      return NextResponse.json({ error: "완료된 계약은 변경할 수 없습니다." }, { status: 400 });
-    }
 
     if (action === "cancel") {
-      await prisma.eContract.update({
-        where: { id },
-        data: { status: "CANCELED" },
+      // 가계약서는 생성 즉시 COMPLETED이므로 완료 계약의 파기(취소)를 허용한다(갭7).
+      if (contract.status === "CANCELED") {
+        return NextResponse.json({ error: "이미 취소된 계약입니다." }, { status: 400 });
+      }
+      // 계약 취소 + 연결 매물을 다시 거래가능(ACTIVE)으로 복구 → 재계약 가능
+      await prisma.$transaction(async (tx) => {
+        await tx.eContract.update({ where: { id }, data: { status: "CANCELED" } });
+        if (contract.listingId) {
+          await tx.listing.update({ where: { id: contract.listingId }, data: { status: "ACTIVE" } });
+        }
       });
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, listingRestored: !!contract.listingId });
     }
 
     return NextResponse.json({ error: "유효하지 않은 action입니다." }, { status: 400 });
