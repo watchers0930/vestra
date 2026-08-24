@@ -3,7 +3,7 @@
 import { signIn } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { X, Map, Landmark, Calculator } from "lucide-react";
+import { Map, Landmark, Calculator } from "lucide-react";
 import { RENEWAL_ROUTES } from "./renewal-config";
 
 interface Props {
@@ -33,23 +33,28 @@ export default function RenewalLoginModal({ featureName, description, onClose, o
 
   return (
     <div
-      style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+      style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "rgba(10,15,30,0.55)", backdropFilter: "blur(4px)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="로그인"
     >
-      <div style={{ width: "100%", maxWidth: 380, background: "#fff", borderRadius: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.20)", padding: "32px 28px", position: "relative" }}>
+      <div style={{ width: "100%", maxWidth: 380, background: "#fff", borderRadius: 20, boxShadow: "0 24px 60px rgba(0,0,0,0.28)", padding: "32px 28px 28px", position: "relative" }}>
         <button
           onClick={onClose}
-          style={{ position: "absolute", top: 16, right: 16, width: 28, height: 28, borderRadius: "50%", background: "#f5f5f7", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+          style={{ position: "absolute", top: 16, right: 16, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", border: "none", background: "transparent", borderRadius: 8, color: "#86868b", fontSize: 20, lineHeight: 1, cursor: "pointer" }}
           aria-label="닫기"
         >
-          <X size={14} strokeWidth={2} style={{ color: "#6e6e73" }} />
+          ✕
         </button>
 
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ display: "inline-block", fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", color: "#0071e3", background: "rgba(0,113,227,0.08)", borderRadius: 20, padding: "5px 12px", marginBottom: 14 }}>
-            로그인이 필요해요
-          </div>
-          <h3 style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1f", margin: "0 0 8px" }}>
+        <div style={{ textAlign: "center", marginBottom: 22 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: "0.22em", color: "#1d1d1f" }}>VESTRA</div>
+          <p style={{ marginTop: 6, fontSize: 13, color: "#6e6e73" }}>AI 부동산 자산관리 플랫폼</p>
+        </div>
+
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <h3 style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1f", margin: "0 0 6px" }}>
             {featureName ? `${featureName} 기능은 로그인 후 이용할 수 있어요` : "로그인하고 시작하세요"}
           </h3>
           <p style={{ fontSize: 13, color: "#6e6e73", lineHeight: 1.6, margin: 0 }}>
