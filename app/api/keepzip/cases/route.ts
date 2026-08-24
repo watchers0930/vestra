@@ -44,7 +44,8 @@ export async function POST(req: NextRequest) {
     }
 
     const senderSide = b.senderSide === "landlord" ? "landlord" : "tenant";
-    let deposit = Number.isFinite(Number(b.deposit)) && Number(b.deposit) >= 0 ? Math.floor(Number(b.deposit)) : null;
+    const depRaw = Number(b.deposit);
+    let deposit: bigint | null = Number.isFinite(depRaw) && depRaw >= 0 ? BigInt(Math.floor(depRaw)) : null;
     const draftContent = typeof b.draftContent === "string" ? b.draftContent.slice(0, 20000) : null;
     // 서명 이미지 검증 강화(공통A) — SVG 차단·크기 상한
     const signatureUrl = isValidImageDataUrl(b.signatureUrl) ? (b.signatureUrl as string) : null;
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
         // 문서 무결성(M4): 계약 연결 시 수신인·주소·보증금을 계약값으로 확정(클라이언트 조작 방지)
         recipientName = sanitizeField(owned.signatures[0]?.signerName || recipientName, 100);
         address = sanitizeField(owned.address || address, 400);
-        if (owned.deposit != null) deposit = Number(owned.deposit);
+        if (owned.deposit != null) deposit = owned.deposit; // EContract.deposit(BigInt) 그대로
       }
     }
 

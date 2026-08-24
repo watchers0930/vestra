@@ -38,7 +38,7 @@ export async function GET() {
     causeLabel: CAUSE_LABEL[r.cause] ?? r.cause,
     senderName: r.senderName,
     address: r.address,
-    deposit: r.deposit,
+    deposit: r.deposit != null ? Number(r.deposit) : null, // BigInt → number 직렬화(보증금은 안전정수 범위)
     status: r.status,
     sentAt: r.sentAt ? r.sentAt.toISOString() : null,
     createdAt: r.createdAt.toISOString(),

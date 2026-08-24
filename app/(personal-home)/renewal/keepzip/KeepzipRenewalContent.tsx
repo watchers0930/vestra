@@ -2,7 +2,7 @@
 
 import s from "./keepzip-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
-import { KeepzipDraftForm } from "./components/KeepzipDraftForm";
+import { KeepzipJourney } from "./KeepzipJourney";
 
 export default function KeepzipRenewalContent() {
   return (
@@ -18,7 +18,7 @@ export default function KeepzipRenewalContent() {
         </div>
       </section>
 
-      <KeepzipDraftForm />
+      <KeepzipJourney />
     </>
   );
 }

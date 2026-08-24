@@ -70,7 +70,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       let restoreListing = false;
       if (contract.listingId) {
         const otherActive = await prisma.eContract.count({
-          where: { listingId: contract.listingId, id: { not: id }, status: { in: ["COMPLETED", "PENDING_TENANT", "PENDING_LANDLORD"] } },
+          where: { listingId: contract.listingId, id: { not: id }, status: { not: "CANCELED" } },
         });
         restoreListing = otherActive === 0;
       }
