@@ -54,6 +54,9 @@ export function useContractForm() {
   const [submitting, setSubmitting] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // 임차인 독립 서명 모드(갭5): 임대인이 임차인 서명 없이 생성, 임차인이 링크로 직접 서명
+  const [tenantSelfSign, setTenantSelfSign] = useState(false);
+  const [tenantSignUrl, setTenantSignUrl] = useState<string | null>(null);
 
   // 받은 의향서(수락)에서 진입 시 매물·금액 프리필 + 의향서 연결
   useEffect(() => {
@@ -88,10 +91,11 @@ export function useContractForm() {
     setForm((prev) => ({ ...prev, specialTerms: prev.specialTerms ? `${prev.specialTerms}\n${term}` : term }));
   }
 
-  /** 당사자 필수값 검증 */
+  /** 당사자 필수값 검증 — 임차인 독립서명 모드면 임차인은 이름만 확인 */
   function validateParties(): string | null {
     for (const [label, party] of [["임대인", form.landlord], ["임차인", form.tenant]] as const) {
       if (!party.name.trim()) return `${label} 이름을 입력해주세요.`;
+      if (label === "임차인" && tenantSelfSign) continue; // 나머지는 임차인이 서명 링크에서 입력
       if (!/^\d{2,3}-?\d{3,4}-?\d{4}$/.test(party.phone.replace(/\s/g, ""))) return `${label} 전화번호를 확인해주세요.`;
       if (!RRN_RE.test(party.rrn)) return `${label} 생년월일+성별을 확인해주세요. (예: 890101-1)`;
       if (!party.sign) return `${label} 서명을 입력해주세요.`;
@@ -124,12 +128,17 @@ export function useContractForm() {
           specialTerms: form.specialTerms || null,
           landlord: form.landlord,
           tenant: form.tenant,
+          ...(tenantSelfSign ? { tenantSelfSign: true } : {}),
           ...(applicationId ? { applicationId } : {}),
         }),
       });
       const json = await res.json();
       if (!res.ok || json.error) { setError(json.error ?? "가계약서 생성에 실패했습니다."); return; }
       setPdfUrl(json.pdfUrl ?? `/api/e-contracts/${json.id}/pdf`);
+      if (json.tenantSignPath) {
+        const origin = typeof window !== "undefined" ? window.location.origin : "";
+        setTenantSignUrl(`${origin}${json.tenantSignPath}`);
+      }
       setStep("done");
     } catch {
       setError("서버 오류가 발생했습니다. 다시 시도해주세요.");
@@ -138,5 +147,5 @@ export function useContractForm() {
     }
   }
 
-  return { step, setStep, form, update, updateParty, appendSpecialTerm, submit, submitting, pdfUrl, error };
+  return { step, setStep, form, update, updateParty, appendSpecialTerm, submit, submitting, pdfUrl, error, tenantSelfSign, setTenantSelfSign, tenantSignUrl };
 }

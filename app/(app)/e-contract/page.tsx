@@ -28,7 +28,7 @@ const labelCls = "block text-xs font-semibold text-[#3a3f55] mb-1.5";
 function comma(v: string) { const d = v.replace(/\D/g, ""); return d ? parseInt(d, 10).toLocaleString() : ""; }
 
 export default function EContractPage() {
-  const { step, setStep, form, update, updateParty, appendSpecialTerm, submit, submitting, pdfUrl, error } = useContractForm();
+  const { step, setStep, form, update, updateParty, appendSpecialTerm, submit, submitting, pdfUrl, error, tenantSelfSign, setTenantSelfSign, tenantSignUrl } = useContractForm();
   const typeMeta = TYPES.find((t) => t.value === form.contractType)!;
   const stepIdx = STEP_ORDER.indexOf(step);
 
@@ -113,7 +113,16 @@ export default function EContractPage() {
         {step === "parties" && (
           <div className="space-y-4">
             <PartyForm title="임대인" accent="#2e4bd8" party={form.landlord} onChange={(k, v) => updateParty("landlord", k, v)} />
+            <label className="flex items-center gap-2 text-sm text-[#3a3f55] bg-[#f5f6fa] rounded-lg px-3 py-2.5 cursor-pointer">
+              <input type="checkbox" checked={tenantSelfSign} onChange={(e) => setTenantSelfSign(e.target.checked)} />
+              임차인이 직접 서명하도록 <b>서명 링크</b>를 발송합니다 (임차인 서명·주민번호는 링크에서 입력)
+            </label>
             <PartyForm title="임차인" accent="#0f6e6e" party={form.tenant} onChange={(k, v) => updateParty("tenant", k, v)} />
+            {tenantSelfSign && (
+              <p className="text-[11px] text-[#2e4bd8] bg-[rgba(46,75,216,0.06)] rounded-lg p-2.5">
+                임차인 이름만 입력하고 서명란은 비워두세요. 생성 후 임차인에게 보낼 <b>서명 링크</b>가 발급됩니다.
+              </p>
+            )}
             <div className="flex justify-between">
               <button onClick={goPrev} className="flex items-center gap-1 text-sm text-[#6b7180]"><ChevronLeft size={16} /> 이전</button>
               <button onClick={goNext} className="flex items-center gap-1 px-5 py-2.5 rounded-xl bg-[#2e4bd8] text-white text-sm font-semibold">확인 <ChevronRight size={16} /></button>
@@ -152,8 +161,21 @@ export default function EContractPage() {
           </div>
         )}
 
-        {/* 완료 */}
-        {step === "done" && pdfUrl && (
+        {/* 완료 — 임차인 직접 서명 모드: 서명 링크 발급 */}
+        {step === "done" && tenantSignUrl && (
+          <div className="bg-white rounded-xl shadow p-8 text-center space-y-5">
+            <CheckCircle className="w-16 h-16 text-[#2e4bd8] mx-auto" />
+            <h2 className="text-xl font-bold text-[#1a1d2e]">임차인 서명 링크가 발급됐습니다</h2>
+            <p className="text-[#6b7180] text-sm">아래 링크를 임차인에게 전달하세요. 임차인이 직접 서명하면 가계약서가 확정됩니다. (링크 유효 72시간)</p>
+            <div className="flex items-center gap-2 max-w-md mx-auto">
+              <input readOnly value={tenantSignUrl} className="flex-1 border border-[#d8dcea] rounded-lg px-3 py-2.5 text-xs text-[#3a3f55]" />
+              <button onClick={() => navigator.clipboard?.writeText(tenantSignUrl)} className="px-4 py-2.5 rounded-lg bg-[#2e4bd8] text-white text-sm font-semibold shrink-0">복사</button>
+            </div>
+          </div>
+        )}
+
+        {/* 완료 — 즉시 서명 모드: PDF */}
+        {step === "done" && !tenantSignUrl && pdfUrl && (
           <div className="bg-white rounded-xl shadow p-8 text-center space-y-5">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
             <h2 className="text-xl font-bold text-[#1a1d2e]">가계약서 생성 완료</h2>
