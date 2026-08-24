@@ -113,6 +113,7 @@ model User {
   // 집키퍼(KeepZip) — 임차인으로 신청한 내용증명 사건
   keepzipCases KeepzipCase[] @relation("KeepzipTenant")
   keepzipReceived KeepzipCase[] @relation("KeepzipRecipient")
+  notifications Notification[] @relation("UserNotifications")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -639,6 +640,21 @@ model PushSubscription {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+}
+
+// in-app 알림 이력 — 채널 발송과 무관하게 항상 기록(권고2). 앱 내 알림함에서 확인.
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String // registry_change | price_alert | analysis_complete | verification_* | chat_message | system
+  title     String
+  body      String    @db.Text
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 // ---------------------------------------------------------------------------

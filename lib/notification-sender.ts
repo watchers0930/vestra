@@ -118,7 +118,23 @@ export async function sendNotification(
       });
     }
 
-    // 알림 타입별 활성 여부 확인
+    // in-app 알림 이력은 채널(push/kakao/sms) 설정·성공과 무관하게 항상 기록(권고2)
+    // → 채널이 비활성이어도 사용자가 앱 내 알림함에서 확인 가능
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: payload.userId,
+          type: payload.type,
+          title: payload.title,
+          body: payload.body,
+          data: payload.data ?? undefined,
+        },
+      });
+    } catch (e) {
+      console.error(`[NOTIFICATION:INAPP:ERROR] userId=${payload.userId}`, e instanceof Error ? e.message : e);
+    }
+
+    // 알림 타입별 활성 여부 확인 (이하 채널 발송)
     const typeEnabled = checkTypeEnabled(setting, payload.type);
     if (!typeEnabled) {
       console.info(

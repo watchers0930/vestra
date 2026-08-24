@@ -15,6 +15,7 @@ interface Notification {
   alertId?: string;
   monitoredPropertyId?: string;
   address?: string;
+  link?: string;
 }
 
 const STORAGE_KEY = "vestra_notifications";
@@ -55,27 +56,30 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
     }
 
     try {
-      const res = await fetch("/api/monitoring/alerts?page=1&limit=20");
+      // in-app 알림(권고2) — 등기변동·계약만료·취소·system 등 모든 알림 통합 소스
+      const res = await fetch("/api/notifications");
       if (!res.ok) throw new Error("fetch failed");
       const data = await res.json();
-      const dbNotifs: Notification[] = (data.alerts ?? []).map(
-        (alert: {
+      const dbNotifs: Notification[] = (data.notifications ?? []).map(
+        (n: {
           id: string;
-          summary: string;
+          title: string;
           createdAt: string;
-          isRead: boolean;
-          monitoredPropertyId?: string;
-          monitoredProperty?: { address?: string };
-        }) => ({
-          id: alert.id,
-          message: alert.summary,
-          date: alert.createdAt,
-          read: alert.isRead,
-          source: "db" as const,
-          alertId: alert.id,
-          monitoredPropertyId: alert.monitoredPropertyId,
-          address: alert.monitoredProperty?.address,
-        })
+          read: boolean;
+          data?: { url?: string; propertyId?: string } | null;
+        }) => {
+          const propertyId = n.data?.propertyId;
+          return {
+            id: n.id,
+            message: n.title,
+            date: n.createdAt,
+            read: n.read,
+            source: "db" as const,
+            alertId: n.id,
+            monitoredPropertyId: propertyId,
+            link: n.data?.url || (propertyId ? `/monitoring/${propertyId}` : undefined),
+          };
+        }
       );
 
       // 새 알림 토스트 팝업
@@ -87,9 +91,7 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
       const toShow = isFirstLoad ? unreadNew.slice(0, 2) : unreadNew;
 
       for (const n of toShow) {
-        const link = n.monitoredPropertyId ? `/monitoring/${n.monitoredPropertyId}` : undefined;
-        const title = n.address || undefined;
-        showToast(n.message, "warning", link, title);
+        showToast(n.message, "warning", n.link);
       }
 
       for (const n of dbNotifs) {
@@ -138,10 +140,10 @@ export default function NotificationBell({ collapsed }: { collapsed?: boolean })
 
     if (session?.user) {
       try {
-        await fetch("/api/monitoring/alerts", {
+        await fetch("/api/notifications", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ markAll: true }),
+          body: JSON.stringify({ all: true }),
         });
       } catch {
         // 실패해도 로컬 상태는 유지
