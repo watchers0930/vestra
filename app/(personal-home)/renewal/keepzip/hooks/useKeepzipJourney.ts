@@ -25,6 +25,7 @@ export function useKeepzipJourney({ lawyerName, lawyerId, onError }: Options = {
   const [caseId, setCaseId] = useState<string | null>(null);
   const [caseStatus, setCaseStatus] = useState<string>("draft");
   const [trackingNo, setTrackingNo] = useState<string | null>(null);
+  const [deliveredAt, setDeliveredAt] = useState<string | null>(null);
   const [assignedLawyer, setAssignedLawyer] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -98,7 +99,11 @@ export function useKeepzipJourney({ lawyerName, lawyerId, onError }: Options = {
 
   /** 데모 상태 전이(승인/결제·발송/배달/반송) — 서버 DB에 반영 */
   const demoAdvance = useCallback(
-    async (action: "approve" | "pay" | "deliver" | "return") => {
+    async (
+      action:
+        | "approve" | "pay" | "deliver" | "return"
+        | "resolve" | "unrespond" | "payment_order" | "litigation" | "public_notice",
+    ) => {
       if (!caseId) return null;
       setSubmitting(true);
       try {
@@ -114,7 +119,8 @@ export function useKeepzipJourney({ lawyerName, lawyerId, onError }: Options = {
         }
         setCaseStatus(d.status);
         if (d.trackingNo) setTrackingNo(d.trackingNo);
-        return d as { status: string; trackingNo?: string };
+        if (d.deliveredAt) setDeliveredAt(d.deliveredAt);
+        return d as { status: string; trackingNo?: string; deliveredAt?: string };
       } catch {
         onError?.("네트워크 오류가 발생했습니다.");
         return null;
@@ -135,6 +141,7 @@ export function useKeepzipJourney({ lawyerName, lawyerId, onError }: Options = {
     caseStatus,
     setCaseStatus,
     trackingNo,
+    deliveredAt,
     submitting,
     requestReview,
     demoAdvance,

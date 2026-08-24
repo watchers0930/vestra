@@ -43,7 +43,12 @@ export function stepFromCaseStatus(status?: string | null): JourneyStep {
     case "paid": return 5;            // 결제 완료 → 발송/추적
     case "postal_sent": return 5;     // 발송 → 추적
     case "delivered":
-    case "returned": return 6;        // 배달완료/반송 → 사후관리
+    case "returned":
+    case "closed":
+    case "unresponded":
+    case "payment_order":
+    case "litigation":
+    case "public_notice": return 6;   // 배달완료/반송 이후 사후관리
     default: return 1;
   }
 }

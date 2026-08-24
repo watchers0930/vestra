@@ -18,8 +18,8 @@ interface Props {
 
 /** 서버 사건 상태 → 발송 추적 표시값 */
 function deliveryOf(status: string): Delivery {
-  if (status === "delivered") return "delivered";
-  if (status === "returned") return "returned";
+  if (status === "returned" || status === "public_notice") return "returned";
+  if (["delivered", "closed", "unresponded", "payment_order", "litigation"].includes(status)) return "delivered";
   return "sending";
 }
 
@@ -30,7 +30,6 @@ export function KeepzipJourney({ lawyerName, lawyerId }: Props) {
   const delivery = deliveryOf(j.caseStatus);
 
   const reset = () => { if (typeof window !== "undefined") window.location.reload(); };
-  const selectUpsell = () => showToast("해당 절차 연동은 준비 중입니다.", "info");
 
   return (
     <div className={s.body}>
@@ -95,7 +94,15 @@ export function KeepzipJourney({ lawyerName, lawyerId }: Props) {
             onReturn={() => j.demoAdvance("return")}
           />
           {delivery !== "sending" && (
-            <Step6AfterCare delivery={delivery} onSelectUpsell={selectUpsell} onReset={reset} />
+            <Step6AfterCare
+              caseStatus={j.caseStatus}
+              deliveredAt={j.deliveredAt}
+              busy={j.submitting}
+              onResolve={() => j.demoAdvance("resolve")}
+              onUnrespond={() => j.demoAdvance("unrespond")}
+              onFollowUp={(v) => j.demoAdvance(v)}
+              onReset={reset}
+            />
           )}
         </>
       )}

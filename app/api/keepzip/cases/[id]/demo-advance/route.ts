@@ -11,7 +11,8 @@ import { validateOrigin } from "@/lib/csrf";
  * 실서비스에서는 승인=변호사 대시보드, 결제=토스 confirm, 발송=포스트플러스,
  * 추적=우체국 종적조회 API가 각각 대체한다. 본 라우트는 실 결제/정산/발송을 하지 않는다.
  *
- * body: { action: "approve" | "pay" | "deliver" | "return" }
+ * body: { action: "approve" | "pay" | "deliver" | "return"
+ *                 | "resolve" | "unrespond" | "payment_order" | "litigation" | "public_notice" }
  */
 type Params = { params: Promise<{ id: string }> };
 
@@ -21,6 +22,21 @@ const FROM: Record<string, string> = {
   pay: "lawyer_approved",
   deliver: "postal_sent",
   return: "postal_sent",
+  // 발송 후 프로세스
+  resolve: "delivered", // 이행기한 내 임대인 대응 → 종결
+  unrespond: "delivered", // 이행기한 경과 미대응
+  payment_order: "unresponded", // 지급명령 신청
+  litigation: "unresponded", // 변호사 선임(소송) 상담
+  public_notice: "returned", // 반송 → 공시송달
+};
+
+// 단순 상태 전이(부가 처리 없음) — action → 다음 status
+const SIMPLE_TO: Record<string, string> = {
+  resolve: "closed",
+  unrespond: "unresponded",
+  payment_order: "payment_order",
+  litigation: "litigation",
+  public_notice: "public_notice",
 };
 
 function genTrackingNo(): string {
@@ -79,19 +95,26 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
 
     if (action === "deliver") {
+      const deliveredAt = new Date();
       await prisma.$transaction([
         prisma.keepzipCase.update({ where: { id }, data: { status: "delivered" } }),
-        prisma.postalTracking.update({ where: { caseId: id }, data: { step: 5, deliveredAt: new Date() } }),
+        prisma.postalTracking.update({ where: { caseId: id }, data: { step: 5, deliveredAt } }),
       ]);
-      return NextResponse.json({ ok: true, status: "delivered" });
+      return NextResponse.json({ ok: true, status: "delivered", deliveredAt: deliveredAt.toISOString() });
     }
 
-    // return — 반송(수령거부·폐문부재)
-    await prisma.$transaction([
-      prisma.keepzipCase.update({ where: { id }, data: { status: "returned" } }),
-      prisma.postalTracking.update({ where: { caseId: id }, data: { step: 4 } }),
-    ]);
-    return NextResponse.json({ ok: true, status: "returned" });
+    if (action === "return") {
+      await prisma.$transaction([
+        prisma.keepzipCase.update({ where: { id }, data: { status: "returned" } }),
+        prisma.postalTracking.update({ where: { caseId: id }, data: { step: 4 } }),
+      ]);
+      return NextResponse.json({ ok: true, status: "returned" });
+    }
+
+    // 발송 후 단순 상태 전이(resolve/unrespond/payment_order/litigation/public_notice)
+    const to = SIMPLE_TO[action];
+    await prisma.keepzipCase.update({ where: { id }, data: { status: to } });
+    return NextResponse.json({ ok: true, status: to });
   } catch (e) {
     console.error("[POST /api/keepzip/cases/[id]/demo-advance]", e);
     return NextResponse.json({ error: "처리 중 오류가 발생했습니다." }, { status: 500 });
