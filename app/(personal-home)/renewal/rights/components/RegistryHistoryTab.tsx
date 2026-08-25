@@ -34,21 +34,45 @@ function formatAmount(won?: number): string {
   return parts.length ? `${parts.join(" ")} 원` : `${won.toLocaleString()}원`;
 }
 
+function fmtWonText(raw: string): string {
+  const n = Number(raw.replace(/[^0-9]/g, ""));
+  return formatAmount(n) || `${raw}원`;
+}
+
+/** holder 값이 실제 권리자명인지(파싱 오류 방어) */
+function validHolder(holder: string): boolean {
+  const h = (holder || "").trim();
+  if (!h || h.length > 30) return false;
+  return !/(요약|이하여백|열람|주의사항|등기사항|출력일시|관할등기소)/.test(h);
+}
+
 /**
- * 등기부 원문 detail을 보기 좋게 정리.
- * ① 열람용 안내문 꼬리말(이하여백·주의사항·열람일시 등) 이후 제거
- * ② 주요 등기 항목 라벨 앞에서 줄바꿈 → white-space:pre-line으로 렌더
+ * 등기 항목의 detail 원문 + 구조화 필드에서 "라벨:값" 핵심 정보만 추출.
+ * 안내문 등 매칭되지 않는 원문은 자동 배제되어 읽기 쉬워진다.
  */
+function extractRegistryFields(r: Row): { label: string; value: string }[] {
+  const d = (r.detail || "").replace(/\s+/g, " ");
+  const out: { label: string; value: string }[] = [];
+  const cause = d.match(/(설정계약|매매|해지|증여|상속|재산분할|신탁재산의 귀속|신탁|임의경매|강제경매|공매|확정채권양도|계약양도|계약인수|변경계약|말소|전세권설정)/)?.[1];
+  if (cause) out.push({ label: "등기원인", value: cause });
+  const receipt = d.match(/제\s?\d{1,7}\s?호/)?.[0]?.replace(/\s/g, "");
+  if (receipt) out.push({ label: "접수번호", value: receipt });
+  if (r.amount && r.amount > 0) out.push({ label: "채권최고액", value: formatAmount(r.amount) });
+  const debtor = d.match(/채무자\s*([가-힣]{2,4})/)?.[1];
+  if (debtor) out.push({ label: "채무자", value: debtor });
+  const deal = d.match(/거래가액\s*금?\s*([\d,]+)\s*원/)?.[1];
+  if (deal) out.push({ label: "거래가액", value: fmtWonText(deal) });
+  return out;
+}
+
+/** 원문 접기용 — 열람 안내 꼬리말 제거 + 공백 정리 */
 function cleanRegistryDetail(raw: string): string {
   if (!raw) return "";
   let t = raw.replace(/\s+/g, " ").trim();
-  // ① 열람용 안내 꼬리말 이후 잘라내기 (요약 항목의 증명서 안내문 제거)
   const cutRe = /(--\s*이\s*하\s*여\s*백\s*--|열\s*람\s*용|열람일시|\*\s*본\s*등기사항|주요\s*등기사항\s*요약|\[\s*주\s*의\s*사\s*항\s*\]|관할등기소|출력일시)/;
   const m = t.match(cutRe);
   if (m && typeof m.index === "number" && m.index > 0) t = t.slice(0, m.index).trim();
-  // ② 주요 등기 라벨 앞 줄바꿈
-  t = t.replace(/\s+(채권최고액|채무자|근저당권자|설정계약|등기원인|소유자|거래가액|존속기간|이자|변제기|전세금|임차보증금|채권액)\b/g, "\n$1");
-  return t.replace(/^\n+/, "").trim();
+  return t;
 }
 
 type Filter = "all" | "갑구" | "을구";
@@ -103,7 +127,10 @@ export default function RegistryHistoryTab({ result }: { result: UnifiedResult }
             <div className={s.tlWrap}>
               {rows.map((r, i) => {
                 const st = statusOf(r.purpose, r.isCancelled);
-                const amt = formatAmount(r.amount);
+                const holderOk = validHolder(r.holder);
+                const roleLabel = /소유/.test(r.purpose) ? "소유자" : /근저당/.test(r.purpose) ? "근저당권자" : /전세권/.test(r.purpose) ? "전세권자" : /임차/.test(r.purpose) ? "임차권자" : "권리자";
+                const fields = extractRegistryFields(r);
+                const rawClean = cleanRegistryDetail(r.detail);
                 return (
                   <div className={s.tlItem} key={`${r.part}-${r.order}-${i}`}>
                     <div className={`${s.tlDot} ${st.key === "D" ? s.tlDotD : st.key === "W" ? s.tlDotW : s.tlDotS}`}></div>
@@ -116,13 +143,31 @@ export default function RegistryHistoryTab({ result }: { result: UnifiedResult }
                         </span>
                       </div>
                       <div className={s.tlEvTitle}>
-                        {r.purpose}{r.holder ? ` — ${r.holder}` : ""}
+                        {r.purpose}{holderOk ? ` — ${r.holder}` : ""}
                       </div>
-                      {(r.detail || amt) && (
-                        <div className={s.tlEvDesc} style={{ whiteSpace: "pre-line" }}>
-                          {amt && <>채권최고액 {amt}{r.detail ? "\n" : ""}</>}
-                          {cleanRegistryDetail(r.detail)}
+                      {/* 핵심 정보 라벨:값 (안내문 등 원문 잡음은 자동 배제) */}
+                      {(fields.length > 0 || holderOk) && (
+                        <div className={s.tlEvDesc} style={{ display: "grid", gap: "3px" }}>
+                          {holderOk && (
+                            <div style={{ display: "flex", gap: "8px" }}>
+                              <span style={{ color: "#9096a8", minWidth: "62px", flexShrink: 0 }}>{roleLabel}</span>
+                              <span style={{ color: "#3a3f52" }}>{r.holder}</span>
+                            </div>
+                          )}
+                          {fields.map((f) => (
+                            <div key={f.label} style={{ display: "flex", gap: "8px" }}>
+                              <span style={{ color: "#9096a8", minWidth: "62px", flexShrink: 0 }}>{f.label}</span>
+                              <span style={{ color: "#3a3f52" }}>{f.value}</span>
+                            </div>
+                          ))}
                         </div>
+                      )}
+                      {/* 등기부 원문 (필요 시 펼쳐 확인) */}
+                      {rawClean && (
+                        <details style={{ marginTop: "8px" }}>
+                          <summary style={{ cursor: "pointer", color: "#9096a8", fontSize: "11.5px" }}>등기부 원문 보기</summary>
+                          <div style={{ marginTop: "5px", fontSize: "11.5px", color: "#aab", lineHeight: 1.6, wordBreak: "break-all" }}>{rawClean}</div>
+                        </details>
                       )}
                     </div>
                   </div>
