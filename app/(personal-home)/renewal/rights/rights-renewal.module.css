@@ -47,7 +47,7 @@
 .secDesc{font-size:13px;color:#888;line-height:1.75;margin-bottom:36px}
 
 /* 2-col 분석 레이아웃 */
-.analysisGrid{display:grid;grid-template-columns:35fr 65fr;gap:24px;align-items:start;margin-bottom:56px}
+.analysisGrid{display:grid;grid-template-columns:minmax(0,35fr) minmax(0,65fr);gap:24px;align-items:start;margin-bottom:56px}
 .analysisSticky{position:sticky;top:160px}
 
 /* INPUT CARD */
