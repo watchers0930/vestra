@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ListingItem } from "../hooks/useListings";
+import { SAMPLE_INTERIOR_PHOTOS } from "@/lib/sample-photos";
 
 function formatWon(val: string | null) {
   if (!val) return "-";
@@ -57,7 +58,8 @@ const OWNER_ROLE_LABEL: Record<string, { text: string; color: string; bg: string
 interface Props { listing: ListingItem; forceCertified?: boolean; href?: string; }
 
 export function ListingCard({ listing, forceCertified, href }: Props) {
-  const thumb = listing.photos?.[0] ?? null;
+  // 등록 사진이 없으면 상세 화면과 동일한 예시 실내 이미지로 대체 (회색 빈 박스 방지)
+  const thumb = listing.photos?.[0] ?? SAMPLE_INTERIOR_PHOTOS[0];
   const showCertified = listing.isCertified || forceCertified;
 
   const metaItems: { key: MetaKey; value: string }[] = [

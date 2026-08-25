@@ -9,6 +9,7 @@ import PhotoSlider from "./PhotoSlider";
 import { ApplicationModal } from "@/app/(app)/listings/[id]/components/ApplicationModal";
 import RenewalLoginModal from "../_shared/RenewalLoginModal";
 import { GANGNAM_TEST_LISTINGS } from "../listings-list/test-fixtures";
+import { SAMPLE_INTERIOR_PHOTOS } from "@/lib/sample-photos";
 import type { ListingItem } from "@/app/(app)/listings/hooks/useListings";
 
 function formatKoreanWon(won: number): string {
@@ -31,14 +32,6 @@ function parseAddress(address: string): { region: string; dong: string; apt: str
 }
 
 const centerBox: React.CSSProperties = { padding: "80px 20px", textAlign: "center", color: "#64748b", fontSize: 14 };
-
-// 등록 사진이 없는 매물(테스트 샘플 등)에 노출할 임의 실내 예시 이미지 (안심인증 등록 시 실제 사진으로 대체)
-const SAMPLE_INTERIOR_PHOTOS = [
-  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&q=80",
-  "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=1200&q=80",
-  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&q=80",
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80",
-];
 
 export default function ListingDbDetailContent() {
   const router = useRouter();
