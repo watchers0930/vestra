@@ -34,6 +34,23 @@ function formatAmount(won?: number): string {
   return parts.length ? `${parts.join(" ")} 원` : `${won.toLocaleString()}원`;
 }
 
+/**
+ * 등기부 원문 detail을 보기 좋게 정리.
+ * ① 열람용 안내문 꼬리말(이하여백·주의사항·열람일시 등) 이후 제거
+ * ② 주요 등기 항목 라벨 앞에서 줄바꿈 → white-space:pre-line으로 렌더
+ */
+function cleanRegistryDetail(raw: string): string {
+  if (!raw) return "";
+  let t = raw.replace(/\s+/g, " ").trim();
+  // ① 열람용 안내 꼬리말 이후 잘라내기 (요약 항목의 증명서 안내문 제거)
+  const cutRe = /(--\s*이\s*하\s*여\s*백\s*--|열\s*람\s*용|열람일시|\*\s*본\s*등기사항|주요\s*등기사항\s*요약|\[\s*주\s*의\s*사\s*항\s*\]|관할등기소|출력일시)/;
+  const m = t.match(cutRe);
+  if (m && typeof m.index === "number" && m.index > 0) t = t.slice(0, m.index).trim();
+  // ② 주요 등기 라벨 앞 줄바꿈
+  t = t.replace(/\s+(채권최고액|채무자|근저당권자|설정계약|등기원인|소유자|거래가액|존속기간|이자|변제기|전세금|임차보증금|채권액)\b/g, "\n$1");
+  return t.replace(/^\n+/, "").trim();
+}
+
 type Filter = "all" | "갑구" | "을구";
 
 export default function RegistryHistoryTab({ result }: { result: UnifiedResult }) {
@@ -102,9 +119,9 @@ export default function RegistryHistoryTab({ result }: { result: UnifiedResult }
                         {r.purpose}{r.holder ? ` — ${r.holder}` : ""}
                       </div>
                       {(r.detail || amt) && (
-                        <div className={s.tlEvDesc}>
-                          {amt && <>채권최고액 {amt}{r.detail ? " · " : ""}</>}
-                          {r.detail}
+                        <div className={s.tlEvDesc} style={{ whiteSpace: "pre-line" }}>
+                          {amt && <>채권최고액 {amt}{r.detail ? "\n" : ""}</>}
+                          {cleanRegistryDetail(r.detail)}
                         </div>
                       )}
                     </div>
