@@ -24,8 +24,21 @@ const RISK_STYLE: Record<string, { color: string; bg: string; text: string }> = 
 const labelStyle: React.CSSProperties = { display: "block", fontSize: "12.5px", fontWeight: 600, color: "#1a1d2e", marginBottom: "8px" };
 const inputStyle: React.CSSProperties = { width: "100%", height: "44px", padding: "0 14px", border: "1.5px solid #d0d4e8", borderRadius: "8px", fontSize: "14px", fontFamily: "inherit", color: "#1a1d2e", background: "#fff", outline: "none" };
 
-const fmtWon = (n: number) => (n ? n.toLocaleString("ko-KR") : "");
-const parseWon = (v: string) => Number(v.replace(/[^0-9]/g, "")) || 0;
+// 만원 단위 표시/파싱 — 화면은 만원 단위로 보여주되 내부 저장값은 원 단위 유지 (API·분석 로직 불변)
+const fmtManwon = (won: number) => (won ? Math.floor(won / 10000).toLocaleString("ko-KR") : "");
+const parseManwon = (v: string) => (Number(v.replace(/[^0-9]/g, "")) || 0) * 10000;
+// 원 단위 → 한글 금액 (예: 50000만원 입력 → "5억원")
+const toKoreanMoney = (won: number): string => {
+  if (!won) return "";
+  const eok = Math.floor(won / 100000000);
+  const man = Math.floor((won % 100000000) / 10000);
+  const parts: string[] = [];
+  if (eok) parts.push(`${eok}억`);
+  if (man) parts.push(`${man.toLocaleString("ko-KR")}만`);
+  return parts.length ? parts.join(" ") + "원" : "";
+};
+const unitStyle: React.CSSProperties = { fontWeight: 400, color: "#8a90a6", fontSize: "11.5px" };
+const wonHintStyle: React.CSSProperties = { fontSize: "11.5px", color: "#0071e3", marginTop: "5px", fontWeight: 600 };
 const scColor = (v: number) => (v >= 80 ? "#1a9e45" : v >= 60 ? "#0071e3" : v >= 40 ? "#b86f00" : "#ff3b30");
 
 export function JeonseSafetyAnalysis() {
@@ -46,7 +59,7 @@ export function JeonseSafetyAnalysis() {
   // 집합건물(아파트·빌라/다세대·오피스텔)은 동/호수 상세주소 필수
   const AGGREGATE_TYPES = ["아파트", "빌라/다세대", "오피스텔"];
   const isAggregate = AGGREGATE_TYPES.includes(formData.propertyType);
-  const dongHoMissing = isAggregate && !formData.dongHo?.trim();
+  const dongHoMissing = isAggregate && (!formData.dong?.trim() || !formData.ho?.trim());
 
   const jeonseRatio = formData.propertyPrice > 0 ? Math.round((formData.deposit / formData.propertyPrice) * 100) : 0;
   const lienRatio = formData.propertyPrice > 0 ? Math.round((formData.seniorLiens / formData.propertyPrice) * 100) : 0;
@@ -96,13 +109,22 @@ export function JeonseSafetyAnalysis() {
                 동 / 호수 <span style={{ color: "#ff3b30" }}>*</span>
                 <span style={{ fontWeight: 400, color: "#8a90a6" }}> (집합건물 필수)</span>
               </label>
-              <input
-                style={dongHoMissing ? { ...inputStyle, border: "1.5px solid #ff3b30" } : inputStyle}
-                type="text"
-                value={formData.dongHo ?? ""}
-                onChange={(e) => update({ dongHo: e.target.value })}
-                placeholder="예: 101동 1502호"
-              />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <input
+                  style={isAggregate && !formData.dong?.trim() ? { ...inputStyle, border: "1.5px solid #ff3b30" } : inputStyle}
+                  type="text"
+                  value={formData.dong ?? ""}
+                  onChange={(e) => update({ dong: e.target.value })}
+                  placeholder="예: 108동"
+                />
+                <input
+                  style={isAggregate && !formData.ho?.trim() ? { ...inputStyle, border: "1.5px solid #ff3b30" } : inputStyle}
+                  type="text"
+                  value={formData.ho ?? ""}
+                  onChange={(e) => update({ ho: e.target.value })}
+                  placeholder="예: 1403호"
+                />
+              </div>
               {dongHoMissing && (
                 <p style={{ fontSize: "11.5px", color: "#b45309", marginTop: "6px", lineHeight: 1.5 }}>
                   아파트·빌라/다세대·오피스텔은 등기·시세 조회 정확도를 위해 동/호수가 필요합니다.
@@ -111,19 +133,22 @@ export function JeonseSafetyAnalysis() {
             </div>
           )}
 
-          {/* 보증금 / 주택시세 / 선순위 */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "14px" }}>
+          {/* 보증금 / 주택시세 / 선순위 (만원 단위 입력, 한글 금액 병기) */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "14px", alignItems: "start" }}>
             <div>
-              <label style={labelStyle}>보증금</label>
-              <input style={inputStyle} type="text" inputMode="numeric" value={fmtWon(formData.deposit)} onChange={(e) => update({ deposit: parseWon(e.target.value) })} placeholder="0" />
+              <label style={labelStyle}>보증금 <span style={unitStyle}>(만원)</span></label>
+              <input style={inputStyle} type="text" inputMode="numeric" value={fmtManwon(formData.deposit)} onChange={(e) => update({ deposit: parseManwon(e.target.value) })} placeholder="0" />
+              {formData.deposit > 0 && <p style={wonHintStyle}>{toKoreanMoney(formData.deposit)}</p>}
             </div>
             <div>
-              <label style={labelStyle}>주택시세</label>
-              <input style={inputStyle} type="text" inputMode="numeric" value={fmtWon(formData.propertyPrice)} onChange={(e) => update({ propertyPrice: parseWon(e.target.value) })} placeholder="0" />
+              <label style={labelStyle}>주택시세 <span style={unitStyle}>(만원)</span></label>
+              <input style={inputStyle} type="text" inputMode="numeric" value={fmtManwon(formData.propertyPrice)} onChange={(e) => update({ propertyPrice: parseManwon(e.target.value) })} placeholder="0" />
+              {formData.propertyPrice > 0 && <p style={wonHintStyle}>{toKoreanMoney(formData.propertyPrice)}</p>}
             </div>
             <div>
-              <label style={labelStyle}>선순위채권</label>
-              <input style={inputStyle} type="text" inputMode="numeric" value={fmtWon(formData.seniorLiens)} onChange={(e) => update({ seniorLiens: parseWon(e.target.value) })} placeholder="0" />
+              <label style={labelStyle}>선순위채권 <span style={unitStyle}>(만원)</span></label>
+              <input style={inputStyle} type="text" inputMode="numeric" value={fmtManwon(formData.seniorLiens)} onChange={(e) => update({ seniorLiens: parseManwon(e.target.value) })} placeholder="0" />
+              {formData.seniorLiens > 0 && <p style={wonHintStyle}>{toKoreanMoney(formData.seniorLiens)}</p>}
             </div>
           </div>
 
@@ -137,8 +162,9 @@ export function JeonseSafetyAnalysis() {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>월세 (없으면 0)</label>
-              <input style={inputStyle} type="text" inputMode="numeric" value={fmtWon(formData.monthlyRent)} onChange={(e) => update({ monthlyRent: parseWon(e.target.value) })} placeholder="0" />
+              <label style={labelStyle}>월세 <span style={unitStyle}>(만원, 없으면 0)</span></label>
+              <input style={inputStyle} type="text" inputMode="numeric" value={fmtManwon(formData.monthlyRent)} onChange={(e) => update({ monthlyRent: parseManwon(e.target.value) })} placeholder="0" />
+              {formData.monthlyRent > 0 && <p style={wonHintStyle}>{toKoreanMoney(formData.monthlyRent)}</p>}
             </div>
           </div>
 
