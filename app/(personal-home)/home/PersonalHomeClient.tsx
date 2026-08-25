@@ -6,6 +6,7 @@ import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import RenewalLoginModal from "../renewal/_shared/RenewalLoginModal";
 import RenewalSignupModal from "../renewal/_shared/RenewalSignupModal";
+import CertifiedListings from "./components/CertifiedListings";
 import s from "./personal-home.module.css";
 
 const REGIONS: Record<string, Record<string, string[]>> = {
@@ -481,83 +482,7 @@ export default function PersonalHomeClient() {
       <section className={s.listings} id="listings">
         <div className={s.listingsInner}>
           <h2 className={s.sectionHeading}>베스트라 인증 안심 매물</h2>
-          <div className={s.listingsGrid}>
-
-            <div className={s.propertyCard}>
-              <div className={`${s.propImg} ${s.pimg3}`}>
-                <span className={`${s.badgeType} ${s.badgeSale}`}>매매</span>
-                <span className={s.badgeTrust}>안심매물</span>
-              </div>
-              <div className={s.propBody}>
-                <div className={s.propPrice}>13.5억</div>
-                <div className={s.propAddr}>서울시 강남구 대치동 966 대치아파트</div>
-                <div className={s.propMeta}><span>아파트단지</span><span>84.9㎡</span><span>9층</span><span>12층</span></div>
-                <div className={s.propFooter}><span>49</span><span>서울부동산중개사</span></div>
-              </div>
-            </div>
-
-            <div className={s.propertyCard}>
-              <div className={`${s.propImg} ${s.pimg1}`}>
-                <span className={`${s.badgeType} ${s.badgeJeonse}`}>전세</span>
-              </div>
-              <div className={s.propBody}>
-                <div className={s.propPrice}>1.9억<span className={s.months}>12개월</span></div>
-                <div className={s.propAddr}>서울시 송파구 잠실동 40 잠실빌딩</div>
-                <div className={s.propMeta}><span>오피스텔</span><span>33.2㎡</span><span>유형</span><span>입주 1달 15일 이내</span></div>
-                <div className={s.propFooter}><span>2</span><span>서울부동산중개사</span></div>
-              </div>
-            </div>
-
-            <div className={s.propertyCard}>
-              <div className={`${s.propImg} ${s.pimg5}`}>
-                <span className={`${s.badgeType} ${s.badgeJeonse}`}>전세</span>
-              </div>
-              <div className={s.propBody}>
-                <div className={s.propPrice}>2.8억<span className={s.months}>24개월</span></div>
-                <div className={s.propAddr}>서울시 마포구 합정동 402-5</div>
-                <div className={s.propMeta}><span>아파트</span><span>59.4㎡</span><span>4층</span><span>입주 1달 1일 일</span></div>
-                <div className={s.propFooter}><span>6</span><span>서울부동산중개사</span></div>
-              </div>
-            </div>
-
-            <div className={s.propertyCard}>
-              <div className={`${s.propImg} ${s.pimg2}`}>
-                <span className={`${s.badgeType} ${s.badgeJeonse}`}>전세</span>
-              </div>
-              <div className={s.propBody}>
-                <div className={s.propPrice}>2.8억<span className={s.months}>24개월</span></div>
-                <div className={s.propAddr}>서울시 마포구 합정동 402-5</div>
-                <div className={s.propMeta}><span>아파트</span><span>59.4㎡</span><span>4층</span><span>입주 1달 1일 일</span></div>
-                <div className={s.propFooter}><span>6</span><span>서울부동산중개사</span></div>
-              </div>
-            </div>
-
-            <div className={s.propertyCard}>
-              <div className={`${s.propImg} ${s.pimg6}`}>
-                <span className={`${s.badgeType} ${s.badgeSale}`}>매매</span>
-                <span className={s.badgeTrust}>안심매물</span>
-              </div>
-              <div className={s.propBody}>
-                <div className={s.propPrice}>13.5억</div>
-                <div className={s.propAddr}>서울시 강남구 대치동 966 대치아파트</div>
-                <div className={s.propMeta}><span>아파트단지</span><span>84.9㎡</span><span>9층</span><span>12층</span></div>
-                <div className={s.propFooter}><span>49</span><span>서울부동산중개사</span></div>
-              </div>
-            </div>
-
-            <div className={s.propertyCard}>
-              <div className={`${s.propImg} ${s.pimg4}`}>
-                <span className={`${s.badgeType} ${s.badgeJeonse}`}>전세</span>
-              </div>
-              <div className={s.propBody}>
-                <div className={s.propPrice}>1.9억<span className={s.months}>12개월</span></div>
-                <div className={s.propAddr}>서울시 송파구 잠실동 40 잠실빌딩</div>
-                <div className={s.propMeta}><span>오피스텔</span><span>33.2㎡</span><span>유형</span><span>입주 1달 15일 이내</span></div>
-                <div className={s.propFooter}><span>2</span><span>서울부동산중개사</span></div>
-              </div>
-            </div>
-
-          </div>
+          <CertifiedListings />
         </div>
       </section>
 
