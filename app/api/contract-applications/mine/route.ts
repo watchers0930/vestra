@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
         proposedDeposit: true,
         status: true,
         rejectionReason: true,
+        contractRequestedAt: true,
         createdAt: true,
         listing: {
           select: {
@@ -47,6 +48,7 @@ export async function GET(req: NextRequest) {
       proposedDeposit: a.proposedDeposit?.toString() ?? null,
       moveInDate: a.moveInDate.toISOString(),
       createdAt: a.createdAt.toISOString(),
+      contractRequestedAt: a.contractRequestedAt?.toISOString() ?? null,
       listing: a.listing
         ? { ...a.listing, deposit: a.listing.deposit?.toString() ?? null }
         : null,

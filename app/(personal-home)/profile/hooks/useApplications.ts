@@ -13,6 +13,7 @@ export interface AppItem {
   proposedDeposit: string | null;
   status: AppStatus;
   rejectionReason?: string | null;
+  contractRequestedAt?: string | null; // 신청자가 가계약서 작성을 요청한 시각 (요청 완료 여부)
   createdAt: string;
   applicant?: { name: string | null; companyName?: string | null } | null;
   listing: {
@@ -89,7 +90,24 @@ export function useSentApplications() {
     } finally { setBusyId(null); }
   }
 
-  return { items, loading, busyId, withdraw, remove };
+  // 신청자(개인) → 소유주(업자)에게 가계약서 작성 요청 (POST)
+  async function requestContract(id: string) {
+    if (!confirm("임대인/중개사에게 가계약서 작성을 요청하시겠습니까?")) return;
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/contract-applications/${id}/request-contract`, { method: "POST" });
+      if (res.ok) {
+        const j = await res.json().catch(() => ({}));
+        const at = j.contractRequestedAt ?? new Date().toISOString();
+        setItems((prev) => prev.map((a) => (a.id === id ? { ...a, contractRequestedAt: at } : a)));
+      } else {
+        const j = await res.json().catch(() => ({}));
+        alert(j.error ?? "요청에 실패했습니다.");
+      }
+    } finally { setBusyId(null); }
+  }
+
+  return { items, loading, busyId, withdraw, remove, requestContract };
 }
 
 /** 받은 의향서 — GET /api/contract-applications(?status=) */

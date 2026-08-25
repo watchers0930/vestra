@@ -803,6 +803,8 @@ model ContractApplication {
   status          String  @default("PENDING") // PENDING | ACCEPTED | REJECTED | WITHDRAWN
   rejectionReason String? @db.Text
 
+  contractRequestedAt DateTime? // 신청자(개인)가 가계약서 작성을 요청한 시각 — 양방향 트리거(개인→업자 요청)
+
   listing    Listing     @relation(fields: [listingId], references: [id], onDelete: Cascade)
   applicant  User        @relation("SentApplications", fields: [applicantId], references: [id], onDelete: Cascade)
   messages   Message[]

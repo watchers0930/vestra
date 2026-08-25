@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
         visitDateTime: true,
         status: true,
         rejectionReason: true,
+        contractRequestedAt: true,
         createdAt: true,
         listing: {
           select: {
@@ -142,6 +143,7 @@ function serialize(a: any) {
     proposedDeposit: a.proposedDeposit?.toString() ?? null,
     moveInDate: a.moveInDate instanceof Date ? a.moveInDate.toISOString() : a.moveInDate,
     createdAt: a.createdAt instanceof Date ? a.createdAt.toISOString() : a.createdAt,
+    contractRequestedAt: a.contractRequestedAt instanceof Date ? a.contractRequestedAt.toISOString() : (a.contractRequestedAt ?? null),
     listing: a.listing
       ? { ...a.listing, deposit: a.listing.deposit?.toString() ?? null }
       : null,

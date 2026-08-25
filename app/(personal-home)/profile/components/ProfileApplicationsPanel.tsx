@@ -101,7 +101,7 @@ function CardSkeleton() {
 
 /* ===== 보낸 의향서 ===== */
 function SentList() {
-  const { items: sent, loading: sentLoading, busyId, withdraw, remove } = useSentApplications();
+  const { items: sent, loading: sentLoading, busyId, withdraw, remove, requestContract } = useSentApplications();
   if (sentLoading) return <CardSkeleton />;
   if (sent.length === 0) {
     return (
@@ -129,7 +129,9 @@ function SentList() {
             )}
             {a.status === "ACCEPTED" && (
               <div className={`${s.noteBox} ${s.noteAccept}`}>
-                임대인이 의향서를 수락했습니다. 계약 진행을 협의해보세요.
+                {a.contractRequestedAt
+                  ? "임대인/중개사에게 가계약서 작성을 요청했습니다. 작성이 완료되면 서명 안내를 받게 됩니다."
+                  : "임대인이 의향서를 수락했습니다. 계약 진행을 협의하거나 가계약서 작성을 요청하세요."}
               </div>
             )}
             <div className={s.appFoot}>
@@ -137,6 +139,17 @@ function SentList() {
               <div className={s.footActs}>
                 <span className={s.footDate}>{fmtDate(a.createdAt)}</span>
                 <Link href={`/chat/${a.id}`} className={s.actBtn}><MessageCircle size={13} strokeWidth={2} />채팅</Link>
+                {a.status === "ACCEPTED" && (
+                  a.contractRequestedAt ? (
+                    <span className={s.actBtn} style={{ opacity: 0.6, cursor: "default" }}>
+                      <FileSignature size={13} strokeWidth={2} />가계약 요청함
+                    </span>
+                  ) : (
+                    <button className={`${s.actBtn} ${s.actAccept}`} disabled={busyId === a.id} onClick={() => requestContract(a.id)}>
+                      <FileSignature size={13} strokeWidth={2} />{busyId === a.id ? "요청 중..." : "가계약 요청"}
+                    </button>
+                  )
+                )}
                 {a.status === "PENDING" && (
                   <button className={s.actBtn} disabled={busyId === a.id} onClick={() => withdraw(a.id)}>
                     {busyId === a.id ? "처리 중..." : "철회"}
@@ -188,6 +201,9 @@ function ReceivedList() {
               <AppDetailGrid a={a} showApplicant />
               <div className={s.appFoot}>
                 <span className={`${s.statusPill} ${st.cls}`}>{st.label}</span>
+                {a.status === "ACCEPTED" && a.contractRequestedAt && (
+                  <span className={s.statusPill} style={{ background: "#fef3c7", color: "#b45309" }}>가계약 요청받음</span>
+                )}
                 <div className={s.footActs}>
                   <span className={s.footDate}>{fmtDate(a.createdAt)}</span>
                   <Link href={`/chat/${a.id}`} className={s.actBtn}><MessageCircle size={13} strokeWidth={2} />채팅</Link>
