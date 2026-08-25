@@ -58,8 +58,8 @@ export default function ListingsListClient() {
   const [openDropdown, setOpenDropdown] = useState<DropdownKey>(null);
   const router = useRouter();
   const [dropdownLabels, setDropdownLabels] = useState({
-    type: '아파트',
-    trade: '매매',
+    type: '건물유형',   // 전체 (진입 시 모든 건물유형 노출)
+    trade: '거래유형',  // 전체 (진입 시 매매·전세 모두 노출)
     size: '전체 평형',
   });
   const [sido, setSido] = useState('서울특별시');
