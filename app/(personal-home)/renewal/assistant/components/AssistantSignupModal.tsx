@@ -8,7 +8,8 @@ interface Props {
   onClose: () => void;
 }
 
-const CALLBACK = "/renewal/assistant";
+// 로그인 후 역할 분배 허브(/dashboard) 경유 — 개인은 어시스턴트로 복귀, 사업자는 대시보드로.
+const CALLBACK = `/dashboard?next=${encodeURIComponent("/renewal/assistant")}`;
 
 /** AI 어시스턴트 게스트 무료 3회 소진 시 회원가입 유도 모달 (기존 assistant 로직 이식) */
 export default function AssistantSignupModal({ onClose }: Props) {

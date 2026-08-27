@@ -29,7 +29,11 @@ const PUBLIC_LINKS = [
  */
 export default function RenewalLoginModal({ featureName, description, onClose, onSwitchToSignup }: Props) {
   const pathname = usePathname();
-  const callbackUrl = pathname || RENEWAL_ROUTES.home;
+  // 로그인 후 역할 분배 허브(/dashboard)를 경유한다.
+  // 사업자 계정은 대시보드로, 개인 계정은 보던 화면(next)으로 복귀한다.
+  const callbackUrl = pathname
+    ? `/dashboard?next=${encodeURIComponent(pathname)}`
+    : "/dashboard";
 
   return (
     <div

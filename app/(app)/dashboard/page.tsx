@@ -17,14 +17,31 @@ import { PortfolioOverview } from "./components/PortfolioOverview";
 import { AssetList } from "./components/AssetList";
 import { AnalysisHistory } from "./components/AnalysisHistory";
 
+// open-redirect 방어: 내부 절대경로(/ 시작, // 아님)만 허용
+function safeInternalPath(raw: string | null): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/") || raw.startsWith("//")) return null;
+  return raw;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { data: sessionData } = useSession();
 
-  // PERSONAL 회원은 개인 홈으로 리다이렉트
+  // 대시보드는 로그인 후 역할 분배 허브 역할을 겸한다.
+  // - ADMIN        → /admin
+  // - PERSONAL     → 로그인 직전 보던 화면(?next=) 있으면 그곳, 없으면 /home
+  // - 사업자 계정   → 대시보드 유지 (REALESTATE / RENTAL_BIZ / BUSINESS)
   useEffect(() => {
-    if (sessionData?.user?.role === "PERSONAL") {
-      router.replace("/home");
+    const role = sessionData?.user?.role;
+    if (!role) return;
+    if (role === "ADMIN") {
+      router.replace("/admin");
+      return;
+    }
+    if (role === "PERSONAL") {
+      const next = safeInternalPath(new URLSearchParams(window.location.search).get("next"));
+      router.replace(next || "/home");
     }
   }, [sessionData, router]);
 
