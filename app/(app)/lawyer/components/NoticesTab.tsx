@@ -23,7 +23,7 @@ const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
   canceled: { text: "반려", cls: "bg-gray-100 text-gray-500 border-gray-200" },
 };
 
-/** 내용증명 — 개인이 보낸 사건 검수·전자직인 (넘버링 에디토리얼 카드) */
+/** 내용증명 — 개인이 보낸 사건 검수·전자직인 (카드 그리드) */
 export function NoticesTab({ cases, busy, onApprove }: Props) {
   if (cases.length === 0) {
     return (
@@ -39,31 +39,27 @@ export function NoticesTab({ cases, busy, onApprove }: Props) {
       <p className="text-sm text-gray-500 mb-5">
         개인이 결제 후 보낸 내용증명입니다. 내용을 검수하고 전자직인을 찍어 발송합니다.
       </p>
-      <ul className="divide-y divide-gray-100">
-        {cases.map((c, i) => {
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {cases.map((c) => {
           const st = STATUS_LABEL[c.status] ?? { text: c.status, cls: "bg-gray-100 text-gray-500 border-gray-200" };
           return (
-            <li key={c.id} className="group flex items-center gap-5 py-5">
-              <span className="text-2xl font-bold tabular-nums text-gray-200 group-hover:text-blue-500 transition-colors w-9 shrink-0">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className={`text-[11px] rounded-full border px-2 py-0.5 font-medium ${st.cls}`}>{st.text}</span>
-                  <span className="text-[11px] tracking-wide text-gray-400 uppercase">내용증명</span>
-                </div>
-                <h3 className="mt-1.5 text-lg font-bold text-gray-900 truncate">
-                  {CAUSE_LABEL[c.cause] ?? c.cause}
-                </h3>
-                <p className="mt-0.5 text-xs text-gray-500">
-                  {c.senderName} <span className="text-gray-300">→</span> {c.recipientName}
-                  <span className="text-gray-300 mx-1.5">·</span>
-                  {c.id.slice(0, 10)}
-                </p>
+            <div
+              key={c.id}
+              className="flex flex-col rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+            >
+              <div className="flex items-center gap-2">
+                <span className={`text-[11px] rounded-full border px-2 py-0.5 font-medium ${st.cls}`}>{st.text}</span>
+                <span className="text-[11px] tracking-wide text-gray-400 uppercase">내용증명</span>
               </div>
-              <div className="shrink-0">
+              <h3 className="mt-2 text-base font-bold text-gray-900">{CAUSE_LABEL[c.cause] ?? c.cause}</h3>
+              <p className="mt-1 text-xs text-gray-500">
+                {c.senderName} <span className="text-gray-300">→</span> {c.recipientName}
+              </p>
+              <p className="mt-0.5 text-[11px] text-gray-400">{c.id.slice(0, 10)}</p>
+              <div className="mt-4 pt-3 border-t border-gray-100">
                 <Button
                   variant="primary"
+                  className="w-full"
                   loading={busy === c.id}
                   disabled={c.status !== "lawyer_pending"}
                   onClick={() => onApprove(c.id)}
@@ -71,10 +67,10 @@ export function NoticesTab({ cases, busy, onApprove }: Props) {
                   {c.status === "lawyer_approved" ? "직인 완료" : "승인·직인"}
                 </Button>
               </div>
-            </li>
+            </div>
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 }
