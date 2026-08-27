@@ -54,6 +54,17 @@ export function ReservationForm({ reservationForm, setReservationForm, onSubmit 
         </div>
 
         <div>
+          <label style={labelStyle}>연락처 <span style={{ color: "#ff3b30" }}>*</span></label>
+          <input
+            type="tel"
+            value={reservationForm.phone}
+            onChange={(e) => setReservationForm((p) => ({ ...p, phone: e.target.value }))}
+            placeholder="010-0000-0000"
+            style={inputStyle}
+          />
+        </div>
+
+        <div>
           <label style={labelStyle}>문의 내용 <span style={{ color: "#ff3b30" }}>*</span></label>
           <textarea
             value={reservationForm.inquiry}

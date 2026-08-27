@@ -11,6 +11,7 @@ import ExpertFooter from "./components/ExpertFooter";
 import ExpertFields from "./components/ExpertFields";
 import ExpertList from "./components/ExpertList";
 import ConsultForm from "./components/ConsultForm";
+import VisitForm from "./components/VisitForm";
 import ProcessSection from "./components/ProcessSection";
 import { KeepzipDraftForm } from "../keepzip/components/KeepzipDraftForm";
 import type { Expert } from "@/components/expert/ExpertCard";
@@ -26,7 +27,9 @@ export default function ExpertClient() {
     selectedExpert,
     formState, setFormState,
     submitting, submitted, error,
-    handleConsult, handleSubmit, resetConsultForm,
+    reservationForm, setReservationForm,
+    visitSubmitting, visitSubmitted, visitError,
+    handleReservationSubmit, handleConsult, handleSubmit, resetConsultForm,
   } = useExpertConsult();
 
   const { data: session } = useSession();
@@ -100,6 +103,17 @@ export default function ExpertClient() {
             <button type="button" onClick={() => window.history.back()} style={backBtnStyle}>← 전문가 목록으로</button>
             {selectedExpert.category === "변호사" && intent === "keepzip" ? (
               <KeepzipDraftForm lawyerName={selectedExpert.name} />
+            ) : intent === "visit" ? (
+              <VisitForm
+                selectedExpert={selectedExpert}
+                reservationForm={reservationForm}
+                setReservationForm={setReservationForm}
+                submitting={visitSubmitting}
+                submitted={visitSubmitted}
+                error={visitError}
+                onSubmit={handleReservationSubmit}
+                onReset={resetConsultForm}
+              />
             ) : (
               <ConsultForm
                 selectedExpert={selectedExpert}

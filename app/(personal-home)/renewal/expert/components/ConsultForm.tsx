@@ -3,7 +3,7 @@
 import s from "../expert.module.css";
 import type { Expert } from "@/components/expert/ExpertCard";
 import type { ConsultFormState } from "@/app/(app)/expert-connect/hooks/useExpertConsult";
-// 서버(/api/expert/request)가 허용하는 상담 유형만 노출 — 실제 백엔드 계약에 맞춤
+// 상담 분야 옵션 — 제출 시 /api/keepzip/consults의 topic으로 전달된다
 import { CONSULT_TYPES } from "@/app/(app)/expert-connect/constants";
 
 function formatFeeShort(fee: number) {

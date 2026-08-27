@@ -9,7 +9,7 @@ function formatFee(fee: number) {
   return `상담료 ${fee.toLocaleString()}원`;
 }
 
-export type ExpertIntent = "consult" | "keepzip";
+export type ExpertIntent = "consult" | "keepzip" | "visit";
 
 interface ExpertListProps {
   /** 선택된 영역의 category 필터 (없으면 전체) */
@@ -75,6 +75,28 @@ export default function ExpertList({ categories, fieldLabel, onSelect }: ExpertL
             {!expert.available ? (
               <button className={`${s.exBtn} ${s.off}`} disabled>상담 마감</button>
             ) : expert.category === "변호사" ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    className={s.exBtn}
+                    style={{ flex: 1, background: "#eef1fd", color: "#2e4bd8" }}
+                    onClick={() => onSelect(expert, "consult")}
+                  >
+                    상담 요청
+                  </button>
+                  <button className={s.exBtn} style={{ flex: 1 }} onClick={() => onSelect(expert, "keepzip")}>
+                    내용증명 작성
+                  </button>
+                </div>
+                <button
+                  className={s.exBtn}
+                  style={{ background: "#f5f5f7", color: "#1d1d1f" }}
+                  onClick={() => onSelect(expert, "visit")}
+                >
+                  방문 예약
+                </button>
+              </div>
+            ) : (
               <div style={{ display: "flex", gap: "8px" }}>
                 <button
                   className={s.exBtn}
@@ -83,12 +105,14 @@ export default function ExpertList({ categories, fieldLabel, onSelect }: ExpertL
                 >
                   상담 요청
                 </button>
-                <button className={s.exBtn} style={{ flex: 1 }} onClick={() => onSelect(expert, "keepzip")}>
-                  내용증명 작성
+                <button
+                  className={s.exBtn}
+                  style={{ flex: 1, background: "#f5f5f7", color: "#1d1d1f" }}
+                  onClick={() => onSelect(expert, "visit")}
+                >
+                  방문 예약
                 </button>
               </div>
-            ) : (
-              <button className={s.exBtn} onClick={() => onSelect(expert, "consult")}>상담 요청</button>
             )}
           </div>
         ))}
