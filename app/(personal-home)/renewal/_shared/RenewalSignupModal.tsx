@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import { Scale } from "lucide-react";
 import RoleTypeSelector from "@/components/auth/RoleTypeSelector";
 import { markSignupIntent } from "@/lib/signup-intent";
 
@@ -117,7 +118,7 @@ export default function RenewalSignupModal({ onClose, onSwitchToLogin }: Props) 
               boxShadow: "0 8px 20px rgba(46,75,216,0.32)",
             }}
           >
-            <span aria-hidden style={{ fontSize: 16 }}>⚖️</span>
+            <Scale size={17} strokeWidth={2.2} aria-hidden />
             전문가로 가입하기 →
           </Link>
         </div>
