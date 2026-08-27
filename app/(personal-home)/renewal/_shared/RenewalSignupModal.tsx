@@ -33,7 +33,7 @@ export default function RenewalSignupModal({ onClose, onSwitchToLogin }: Props) 
       aria-modal="true"
       aria-label="회원가입"
     >
-      <div style={{ width: "100%", maxWidth: 760, background: "#fff", borderRadius: 20, boxShadow: "0 24px 60px rgba(0,0,0,0.28)", padding: "32px 28px 28px", position: "relative", margin: "auto" }}>
+      <div style={{ width: "100%", maxWidth: 960, background: "#fff", borderRadius: 20, boxShadow: "0 24px 60px rgba(0,0,0,0.28)", padding: "32px 28px 28px", position: "relative", margin: "auto" }}>
         <button
           onClick={onClose}
           style={{ position: "absolute", top: 16, right: 16, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", border: "none", background: "transparent", borderRadius: 8, color: "#86868b", fontSize: 20, lineHeight: 1, cursor: "pointer" }}
