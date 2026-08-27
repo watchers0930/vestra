@@ -22,6 +22,8 @@ function LoginContent() {
       clearAll();
       if (session.user.role === "ADMIN") {
         router.push("/admin");
+      } else if (session.user.role === "LAWYER") {
+        router.push("/lawyer/dashboard");
       } else {
         router.push("/dashboard");
       }

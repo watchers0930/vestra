@@ -15,6 +15,7 @@ import { useAdminData } from "./hooks/useAdminData";
 import { OverviewTab } from "./components/OverviewTab";
 import { UsersTab } from "./components/UsersTab";
 import { VerificationsTab } from "./components/VerificationsTab";
+import { ExpertsTab } from "./components/ExpertsTab";
 import { AnalysesTab } from "./components/AnalysesTab";
 import { AnnouncementsTab } from "./components/AnnouncementsTab";
 import { AccountTab } from "./components/AccountTab";
@@ -108,6 +109,14 @@ function AdminContent() {
               pending={data.pending}
               setConfirmModal={data.setConfirmModal}
               handleVerify={data.handleVerify}
+            />
+          )}
+
+          {tab === "experts" && (
+            <ExpertsTab
+              pending={data.pendingExperts}
+              setConfirmModal={data.setConfirmModal}
+              handleExpertReview={data.handleExpertReview}
             />
           )}
 

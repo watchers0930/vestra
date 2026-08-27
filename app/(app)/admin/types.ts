@@ -2,6 +2,7 @@ export type Tab =
   | "overview"
   | "users"
   | "verifications"
+  | "experts"
   | "analyses"
   | "announcements"
   | "ml-training"
@@ -36,6 +37,20 @@ export interface UserItem {
   companyName: string | null;
   representName: string | null;
   createdAt: string;
+}
+
+export interface ExpertItem {
+  id: string;
+  userId: string;
+  category: string;
+  name: string | null;
+  phone: string | null;
+  firmName: string | null;
+  bizNo: string | null;
+  licenseNo: string | null;
+  homepageSlug: string;
+  createdAt: string;
+  user: { email: string | null; name: string | null; image: string | null; role: string } | null;
 }
 
 export interface AnalysisItem {

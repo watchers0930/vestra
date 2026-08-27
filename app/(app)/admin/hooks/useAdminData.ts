@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import {
   Stats,
   UserItem,
+  ExpertItem,
   AnalysisItem,
   AnnouncementItem,
   ConfirmModalState,
@@ -19,6 +20,7 @@ export function useAdminData() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<UserItem[]>([]);
   const [pending, setPending] = useState<UserItem[]>([]);
+  const [pendingExperts, setPendingExperts] = useState<ExpertItem[]>([]);
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [loading, setLoading] = useState(true);
 
@@ -54,9 +56,10 @@ export function useAdminData() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes, analysesRes, announcementsRes, settingsRes] = await Promise.all([
+      const [statsRes, usersRes, expertsRes, analysesRes, announcementsRes, settingsRes] = await Promise.all([
         fetch("/api/admin/stats"),
         fetch("/api/admin/users"),
+        fetch("/api/admin/experts"),
         fetch("/api/admin/analyses"),
         fetch("/api/admin/announcements"),
         fetch("/api/admin/settings"),
@@ -68,6 +71,7 @@ export function useAdminData() {
         setUsers(list);
         setPending(list.filter((u) => u.verifyStatus === "pending"));
       }
+      if (expertsRes.ok) setPendingExperts(await expertsRes.json());
       if (analysesRes.ok) setAnalyses(await analysesRes.json());
       if (announcementsRes.ok) setAnnouncements(await announcementsRes.json());
       if (settingsRes.ok) {
@@ -100,6 +104,15 @@ export function useAdminData() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, action, role }),
+    });
+    if (res.ok) fetchData();
+  };
+
+  const handleExpertReview = async (partnerId: string, action: "approve" | "reject") => {
+    const res = await fetch("/api/admin/experts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ partnerId, action }),
     });
     if (res.ok) fetchData();
   };
@@ -204,7 +217,8 @@ export function useAdminData() {
   const tabs: { key: Tab; label: string; description: string }[] = [
     { key: "overview", label: "개요", description: "서비스 통계, 사용량, 시스템 상태를 한눈에 확인합니다" },
     { key: "users", label: "회원 관리", description: "회원 목록 조회, 역할 변경, 사용 한도를 관리합니다" },
-    { key: "verifications", label: `인증 관리${pending.length > 0 ? ` (${pending.length})` : ""}`, description: "전문가 인증 요청을 검토하고 승인·거부합니다" },
+    { key: "verifications", label: `인증 관리${pending.length > 0 ? ` (${pending.length})` : ""}`, description: "사업자 인증 요청을 검토하고 승인·거부합니다" },
+    { key: "experts", label: `전문가 관리${pendingExperts.length > 0 ? ` (${pendingExperts.length})` : ""}`, description: "변호사·법무사 등 전문가 가입 신청을 검토하고 승인합니다" },
     { key: "analyses", label: "분석 이력", description: "전체 사용자의 분석 요청 기록을 조회합니다" },
     { key: "announcements", label: "공지사항", description: "서비스 공지사항을 작성하고 관리합니다" },
     { key: "ml-training", label: "ML 학습관리", description: "ML 학습 데이터를 관리하고 검수합니다" },
@@ -221,7 +235,7 @@ export function useAdminData() {
   return {
     session, status,
     stats, loading,
-    users, filteredUsers, pending, roleFilter, setRoleFilter,
+    users, filteredUsers, pending, pendingExperts, roleFilter, setRoleFilter,
     analyses, filteredAnalyses, analysisTypeFilter, setAnalysisTypeFilter,
     announcements, announcementForm, setAnnouncementForm,
     editingAnnouncementId, setEditingAnnouncementId, announcementLoading,
@@ -232,7 +246,7 @@ export function useAdminData() {
     currentPw, setCurrentPw, newPw, setNewPw, confirmPw, setConfirmPw,
     pwMsg, pwLoading,
     tabs,
-    handleVerify, startEditing, handleUserEdit, handleDeleteUser,
+    handleVerify, handleExpertReview, startEditing, handleUserEdit, handleDeleteUser,
     handlePasswordChange, handleSaveAnnouncement, handleDeleteAnnouncement, startEditAnnouncement,
   };
 }

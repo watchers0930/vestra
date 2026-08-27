@@ -39,6 +39,7 @@ export const ROLE_LIMITS: Record<string, number> = {
   RENTAL_BIZ: 50,
   BUSINESS: 50,
   REALESTATE: 100,
+  LAWYER: 100,
   ADMIN: 9999,
 };
 

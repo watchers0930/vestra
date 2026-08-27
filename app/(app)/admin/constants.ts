@@ -4,6 +4,7 @@ export const ROLE_LABELS: Record<string, string> = {
   RENTAL_BIZ: "임대사업자",
   BUSINESS: "기업",
   REALESTATE: "부동산",
+  LAWYER: "변호사",
   ADMIN: "관리자",
 };
 
@@ -13,7 +14,17 @@ export const ROLE_COLORS: Record<string, string> = {
   RENTAL_BIZ: "warning",
   BUSINESS: "primary",
   REALESTATE: "success",
+  LAWYER: "primary",
   ADMIN: "danger",
+};
+
+/** 전문가 분야(LawyerPartner.category) 라벨 */
+export const EXPERT_CATEGORY_LABELS: Record<string, string> = {
+  lawyer: "변호사",
+  judicial: "법무사",
+  tax: "세무사",
+  accountant: "회계사",
+  appraiser: "감정평가사",
 };
 
 export const VERIFY_LABELS: Record<string, string> = {
