@@ -96,12 +96,31 @@ export default function RenewalSignupModal({ onClose, onSwitchToLogin }: Props) 
           )}
         </p>
 
-        <p style={{ textAlign: "center", fontSize: 13, color: "#6e6e73", margin: "10px 0 0", paddingTop: 12, borderTop: "1px solid #f0f0f2" }}>
-          변호사·법무사·세무사·회계사·감정평가사이신가요?{" "}
-          <Link href="/renewal/expert-signup" onClick={onClose} style={{ fontWeight: 600, color: "#2e4bd8" }}>
+        <div style={{ textAlign: "center", margin: "16px 0 0", paddingTop: 16, borderTop: "1px solid #f0f0f2" }}>
+          <p style={{ fontSize: 13, color: "#6e6e73", margin: "0 0 12px" }}>
+            변호사·법무사·세무사·회계사·감정평가사이신가요?
+          </p>
+          <Link
+            href="/renewal/expert-signup"
+            onClick={onClose}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "12px 24px",
+              borderRadius: 999,
+              background: "linear-gradient(135deg, #4f46e5 0%, #2e4bd8 100%)",
+              color: "#fff",
+              fontSize: 14,
+              fontWeight: 700,
+              textDecoration: "none",
+              boxShadow: "0 8px 20px rgba(46,75,216,0.32)",
+            }}
+          >
+            <span aria-hidden style={{ fontSize: 16 }}>⚖️</span>
             전문가로 가입하기 →
           </Link>
-        </p>
+        </div>
       </div>
     </div>
   );
