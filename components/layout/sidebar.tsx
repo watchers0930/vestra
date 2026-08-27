@@ -18,7 +18,7 @@ import PushSubscriber from "@/components/pwa/PushSubscriber";
 import PwaInstallButton from "@/components/layout/PwaInstallButton";
 import { useNewMemberBadge } from "@/hooks/useNewMemberBadge";
 import {
-  type MenuItem, userMenuItems, userMenuGroups, tenantMenuGroups, landlordMenuGroups, adminMenuItems,
+  type MenuItem, userMenuItems, userMenuGroups, tenantMenuGroups, landlordMenuGroups, lawyerMenuGroups, adminMenuItems,
   ACTIVE_STYLE, ITEM_BASE,
 } from "./sidebar-menu-data";
 
@@ -40,7 +40,10 @@ export default function Sidebar() {
   const isBusiness = userRole === "BUSINESS";
   // 임대사업자(RENTAL_BIZ)는 매물 등록·관리가 필요하므로 임대인 메뉴로 매핑
   // (미매핑 시 임차인 메뉴로 폴백되어 등급 기능에 접근 불가)
-  const activeGroups = userRole === "REALESTATE"
+  const activeGroups = userRole === "LAWYER"
+    // 변호사(전문가)는 전용 메뉴(대시보드·사건 관리·프로필)만 노출
+    ? lawyerMenuGroups
+    : userRole === "REALESTATE"
     // 부동산 회원은 "메인" 뒤에 "중개 서비스" 그룹(매물 거래)이 동적 삽입되므로
     // 중복되는 별도 "매물 거래" 그룹은 제외한다.
     ? userMenuGroups.filter((g) => g.label !== "매물 거래")
@@ -125,7 +128,8 @@ export default function Sidebar() {
   }, [isAdminPage, currentTab]);
 
   const isUserItemActive = useCallback((item: MenuItem) => {
-    if (item.href === "/dashboard") return pathname === "/dashboard";
+    // 정확 매칭 라우트: 하위 경로가 있는 상위 메뉴가 하위 페이지에서도 활성화되지 않도록
+    if (item.href === "/dashboard" || item.href === "/lawyer") return pathname === item.href;
     return pathname === item.href || pathname.startsWith(item.href + "/");
   }, [pathname]);
 

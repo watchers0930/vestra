@@ -9,7 +9,7 @@ import { withAdminAuth } from "@/lib/with-admin-auth";
  *
  * 전문가 가입은 LawyerPartner(kycStatus="pending")를 생성하지만
  * User.role은 승격되지 않는다. 관리자가 이 API로 승인해야
- * User.role="LAWYER"로 승격되어 /lawyer/dashboard에 진입할 수 있다.
+ * User.role="LAWYER"로 승격되어 /lawyer 대시보드에 진입할 수 있다.
  */
 
 /** 관리자: 심사 대기 중인 전문가 신청 목록 */

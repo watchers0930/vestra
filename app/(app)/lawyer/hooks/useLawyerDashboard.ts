@@ -39,7 +39,11 @@ export interface Visit {
  * 3개 API(내용증명·상담·방문)를 한 번에 병렬 로드해 히어로 KPI와
  * 각 탭이 같은 데이터를 공유한다(탭별 중복 호출 제거).
  */
-export function useLawyerDashboard() {
+export function useLawyerDashboard(
+  wantNotices = true,
+  wantConsults = true,
+  wantVisits = true,
+) {
   const { data: session } = useSession();
   const { showToast } = useToast();
 
@@ -52,16 +56,22 @@ export function useLawyerDashboard() {
   const reload = useCallback(async () => {
     try {
       const [cRes, sRes, vRes] = await Promise.all([
-        fetch("/api/keepzip/cases?as=lawyer"),
-        fetch("/api/keepzip/consults?as=lawyer"),
-        fetch("/api/keepzip/visits?as=lawyer"),
+        wantNotices ? fetch("/api/keepzip/cases?as=lawyer") : Promise.resolve(null),
+        wantConsults ? fetch("/api/keepzip/consults?as=lawyer") : Promise.resolve(null),
+        wantVisits ? fetch("/api/keepzip/visits?as=lawyer") : Promise.resolve(null),
       ]);
-      const cData = cRes.ok ? await cRes.json() : { cases: [] };
-      const sData = sRes.ok ? await sRes.json() : { consults: [] };
-      const vData = vRes.ok ? await vRes.json() : { visits: [] };
-      setCases(Array.isArray(cData.cases) ? cData.cases : []);
-      setConsults(Array.isArray(sData.consults) ? sData.consults : []);
-      setVisits(Array.isArray(vData.visits) ? vData.visits : []);
+      if (cRes) {
+        const cData = cRes.ok ? await cRes.json() : { cases: [] };
+        setCases(Array.isArray(cData.cases) ? cData.cases : []);
+      }
+      if (sRes) {
+        const sData = sRes.ok ? await sRes.json() : { consults: [] };
+        setConsults(Array.isArray(sData.consults) ? sData.consults : []);
+      }
+      if (vRes) {
+        const vData = vRes.ok ? await vRes.json() : { visits: [] };
+        setVisits(Array.isArray(vData.visits) ? vData.visits : []);
+      }
     } catch {
       setCases([]);
       setConsults([]);
@@ -69,7 +79,7 @@ export function useLawyerDashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [wantNotices, wantConsults, wantVisits]);
 
   useEffect(() => {
     reload();

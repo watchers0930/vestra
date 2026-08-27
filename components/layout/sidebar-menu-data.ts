@@ -5,6 +5,7 @@ import {
   KeyRound, ClipboardCheck, Brain, SlidersHorizontal,
   ShieldAlert, Key, Newspaper, MapPin, Landmark, Eye,
   Handshake, BookOpenText, Building2, ClipboardList, FileSignature,
+  Scale, CalendarCheck, UserCog,
   type LucideIcon,
 } from "lucide-react";
 
@@ -103,6 +104,21 @@ export const landlordMenuGroups: MenuGroup[] = [
   { label: "매물 관리",   items: [landlordListings] },
   { label: "분석 서비스", items: [userMenuItems[2], userMenuItems[3], userMenuItems[4], userMenuItems[7], userMenuItems[8]] },
   { label: "도구",       items: [userMenuItems[10], userMenuItems[11], userMenuItems[5], userMenuItems[6]] },
+];
+
+// ── LAWYER(변호사·전문가) 전용 메뉴 ──
+export const lawyerMenuItems: MenuItem[] = [
+  { href: "/lawyer",          icon: Scale,         label: "대시보드",   description: "검수·상담·방문 현황을 한눈에 확인합니다", tier: "AUTH_REQUIRED" },
+  { href: "/lawyer/notices",  icon: FileText,      label: "내용증명",   description: "개인이 보낸 내용증명을 검수하고 전자직인을 찍습니다", tier: "AUTH_REQUIRED" },
+  { href: "/lawyer/consults", icon: MessageSquare, label: "상담문의",   description: "이용자가 신청한 상담문의를 확인합니다", tier: "AUTH_REQUIRED" },
+  { href: "/lawyer/visits",   icon: CalendarCheck, label: "방문예약",   description: "사무실 방문 상담 예약을 확인하고 확정합니다", tier: "AUTH_REQUIRED" },
+  { href: "/lawyer/profile",  icon: UserCog,       label: "내정보",     description: "미니홈페이지 프로필(약력·경력·학교·기타)을 관리합니다", tier: "AUTH_REQUIRED" },
+];
+
+export const lawyerMenuGroups: MenuGroup[] = [
+  { label: "메인",       items: [lawyerMenuItems[0]] },
+  { label: "사건 관리",   items: [lawyerMenuItems[1], lawyerMenuItems[2], lawyerMenuItems[3]] },
+  { label: "프로필",     items: [lawyerMenuItems[4]] },
 ];
 
 export const adminMenuItems: MenuItem[] = [

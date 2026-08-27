@@ -23,7 +23,7 @@ function LoginContent() {
       if (session.user.role === "ADMIN") {
         router.push("/admin");
       } else if (session.user.role === "LAWYER") {
-        router.push("/lawyer/dashboard");
+        router.push("/lawyer");
       } else {
         router.push("/dashboard");
       }
