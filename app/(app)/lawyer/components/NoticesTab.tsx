@@ -39,7 +39,7 @@ export function NoticesTab({ cases, busy, onApprove }: Props) {
       <p className="text-sm text-gray-500 mb-5">
         개인이 결제 후 보낸 내용증명입니다. 내용을 검수하고 전자직인을 찍어 발송합니다.
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {cases.map((c) => {
           const st = STATUS_LABEL[c.status] ?? { text: c.status, cls: "bg-gray-100 text-gray-500 border-gray-200" };
           return (

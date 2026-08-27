@@ -23,7 +23,7 @@ export function VisitsTab({ visits, busy, onConfirm }: Props) {
   return (
     <div>
       <p className="text-sm text-gray-500 mb-5">사무실 방문 상담 예약입니다. 요청을 확인하고 확정합니다.</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {visits.map((v) => {
           const confirmed = v.status === "confirmed";
           return (

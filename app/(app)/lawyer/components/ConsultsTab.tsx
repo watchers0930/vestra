@@ -20,7 +20,7 @@ export function ConsultsTab({ consults }: Props) {
   return (
     <div>
       <p className="text-sm text-gray-500 mb-5">이용자가 신청한 상담문의입니다.</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {consults.map((c) => {
           const answered = c.status === "answered";
           return (
