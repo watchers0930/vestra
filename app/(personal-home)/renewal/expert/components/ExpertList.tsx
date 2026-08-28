@@ -79,49 +79,8 @@ export default function ExpertList({ categories, fieldLabel, onSelect }: ExpertL
               <span>경력 {expert.experience}년</span>
               <span className={s.exFee}>{formatFee(expert.consultFee)}</span>
             </div>
-            <button className={s.exProfile} onClick={() => setProfileOf(expert)}>프로필 · 경력 보기</button>
-            {!expert.available ? (
-              <button className={`${s.exBtn} ${s.off}`} disabled>상담 마감</button>
-            ) : expert.category === "변호사" ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button
-                    className={s.exBtn}
-                    style={{ flex: 1, background: "#eef1fd", color: "#2e4bd8" }}
-                    onClick={() => onSelect(expert, "consult")}
-                  >
-                    상담 요청
-                  </button>
-                  <button className={s.exBtn} style={{ flex: 1 }} onClick={() => onSelect(expert, "keepzip")}>
-                    내용증명 작성
-                  </button>
-                </div>
-                <button
-                  className={s.exBtn}
-                  style={{ background: "#f5f5f7", color: "#1d1d1f" }}
-                  onClick={() => onSelect(expert, "visit")}
-                >
-                  방문 예약
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button
-                  className={s.exBtn}
-                  style={{ flex: 1, background: "#eef1fd", color: "#2e4bd8" }}
-                  onClick={() => onSelect(expert, "consult")}
-                >
-                  상담 요청
-                </button>
-                <button
-                  className={s.exBtn}
-                  style={{ flex: 1, background: "#f5f5f7", color: "#1d1d1f" }}
-                  onClick={() => onSelect(expert, "visit")}
-                >
-                  방문 예약
-                </button>
-              </div>
-            )}
+            <button className={s.exProfileMain} onClick={() => setProfileOf(expert)}>프로필 보기</button>
+            {!expert.available && <p className={s.exClosed}>현재 상담 마감</p>}
           </div>
         ))}
       </div>
