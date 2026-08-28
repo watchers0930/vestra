@@ -48,7 +48,8 @@ export function ConsultCalendar({ consults, selected, onSelect }: {
             <button
               key={i}
               onClick={() => onSelect(k)}
-              className={`aspect-square rounded-lg flex flex-col items-center justify-center text-[13px] transition-colors ${on ? "bg-blue-600 text-white" : today ? "bg-blue-50 text-blue-700" : "hover:bg-gray-100 text-gray-700"}`}
+              style={{ aspectRatio: "1 / 0.8" }}
+              className={`rounded-lg flex flex-col items-center justify-center text-[13px] transition-colors ${on ? "bg-blue-600 text-white" : today ? "bg-blue-50 text-blue-700" : "hover:bg-gray-100 text-gray-700"}`}
             >
               <span>{d.getDate()}</span>
               {cnt > 0 && (
