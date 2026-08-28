@@ -1,6 +1,7 @@
 "use client";
 
-import { Clock, User } from "lucide-react";
+import { useState } from "react";
+import { Clock, User, X } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { isoToKey } from "./ConsultCalendar";
 import type { Visit } from "../hooks/useLawyerDashboard";
@@ -20,6 +21,7 @@ export function VisitDayPanel({ dateKey, visits, busy, onConfirm }: {
   busy: string | null;
   onConfirm: (id: string) => void;
 }) {
+  const [detail, setDetail] = useState<Visit | null>(null);
   const list = visits
     .filter((v) => isoToKey(v.preferredAt) === dateKey)
     .sort((a, b) => String(a.preferredAt).localeCompare(String(b.preferredAt)));
@@ -40,14 +42,14 @@ export function VisitDayPanel({ dateKey, visits, busy, onConfirm }: {
             const st = ST[v.status] ?? ST.pending;
             const confirmed = v.status === "confirmed";
             return (
-              <div key={v.id} className="rounded-lg border border-gray-200 p-4">
+              <div key={v.id} className="rounded-lg border border-gray-200 p-4 cursor-pointer hover:border-emerald-300 transition-colors" onClick={() => setDetail(v)}>
                 <div className="flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1.5 text-sm font-bold text-gray-900"><Clock size={14} className="text-emerald-600" />{fmtTime(v.preferredAt)}</span>
                   <span className={`text-[11px] rounded-full border px-2 py-0.5 font-medium ${st.c}`}>{st.t}</span>
                 </div>
                 <p className="mt-2 text-[13px] text-gray-700"><User size={12} className="inline mr-1 text-gray-400" />{v.name} · {v.phone}</p>
-                <p className="mt-1 text-xs text-gray-500">{v.purpose}</p>
-                <div className="mt-3">
+                <p className="mt-1 text-xs text-gray-500 line-clamp-2">{v.purpose}</p>
+                <div className="mt-3" onClick={(e) => e.stopPropagation()}>
                   <Button variant="primary" className="w-full" loading={busy === v.id} disabled={confirmed} onClick={() => onConfirm(v.id)}>
                     {confirmed ? "확정됨" : "예약 확정"}
                   </Button>
@@ -55,6 +57,27 @@ export function VisitDayPanel({ dateKey, visits, busy, onConfirm }: {
               </div>
             );
           })}
+        </div>
+      )}
+      {detail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setDetail(null)}>
+          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between">
+              <div>
+                <span className={`text-[11px] rounded-full border px-2 py-0.5 font-medium ${(ST[detail.status] ?? ST.pending).c}`}>{(ST[detail.status] ?? ST.pending).t}</span>
+                <h3 className="mt-2 text-lg font-bold text-gray-900">방문 예약</h3>
+              </div>
+              <button onClick={() => setDetail(null)} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
+            </div>
+            <div className="mt-4 space-y-1.5 text-sm text-gray-700">
+              <p><span className="text-gray-400">신청인</span> {detail.name} · {detail.phone}</p>
+              <p><span className="text-gray-400">희망 방문 시간</span> {detail.preferredAt ? new Date(detail.preferredAt).toLocaleString("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "-"}</p>
+            </div>
+            <div className="mt-4">
+              <p className="text-xs font-semibold text-gray-500 mb-1.5">방문 목적 / 메모</p>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-[13px] leading-relaxed text-gray-800 whitespace-pre-wrap">{detail.purpose || "내용 없음"}</div>
+            </div>
+          </div>
         </div>
       )}
     </div>

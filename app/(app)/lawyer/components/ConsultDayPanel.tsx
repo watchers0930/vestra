@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, User, Check } from "lucide-react";
+import { Clock, User, Check, X } from "lucide-react";
 import { isoToKey } from "./ConsultCalendar";
 import type { Consult } from "../hooks/useLawyerDashboard";
 
@@ -32,6 +32,7 @@ export function ConsultDayPanel({ dateKey, consults, busy, onAccept, onPropose }
   onPropose: (id: string, at: string, memo: string) => void;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<Consult | null>(null);
   const [pDate, setPDate] = useState("");
   const [pTime, setPTime] = useState("");
   const [pMemo, setPMemo] = useState("");
@@ -59,7 +60,7 @@ export function ConsultDayPanel({ dateKey, consults, busy, onAccept, onPropose }
             const isBusy = busy === c.id;
             const canRespond = c.status === "pending";
             return (
-              <div key={c.id} className="rounded-lg border border-gray-200 p-4">
+              <div key={c.id} className="rounded-lg border border-gray-200 p-4 cursor-pointer hover:border-blue-300 transition-colors" onClick={() => setDetail(c)}>
                 <div className="flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1.5 text-sm font-bold text-gray-900"><Clock size={14} className="text-blue-600" />{fmtTime(c.preferredAt)}</span>
                   <span className={`text-[11px] rounded-full border px-2 py-0.5 font-medium ${st.c}`}>{st.t}</span>
@@ -76,7 +77,7 @@ export function ConsultDayPanel({ dateKey, consults, busy, onAccept, onPropose }
                 )}
 
                 {canRespond && (
-                  <div className="mt-3">
+                  <div className="mt-3" onClick={(e) => e.stopPropagation()}>
                     {openId === c.id ? (
                       <div className="flex flex-col gap-2">
                         <input type="date" min={today} value={pDate} onChange={(e) => setPDate(e.target.value)} className="rounded-lg border border-gray-200 p-2 text-sm outline-none focus:border-blue-400" />
@@ -105,6 +106,28 @@ export function ConsultDayPanel({ dateKey, consults, busy, onAccept, onPropose }
               </div>
             );
           })}
+        </div>
+      )}
+      {detail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setDetail(null)}>
+          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between">
+              <div>
+                <span className={`text-[11px] rounded-full border px-2 py-0.5 font-medium ${(ST[detail.status] ?? ST.pending).c}`}>{(ST[detail.status] ?? ST.pending).t}</span>
+                <h3 className="mt-2 text-lg font-bold text-gray-900">{detail.topic}</h3>
+              </div>
+              <button onClick={() => setDetail(null)} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
+            </div>
+            <div className="mt-4 space-y-1.5 text-sm text-gray-700">
+              <p><span className="text-gray-400">신청인</span> {detail.name} · {detail.phone}</p>
+              <p><span className="text-gray-400">희망 시간</span> {fmtFull(detail.preferredAt)}</p>
+              {detail.status === "proposed" && detail.proposedAt && <p className="text-blue-700">제안 시간: {fmtFull(detail.proposedAt)}</p>}
+            </div>
+            <div className="mt-4">
+              <p className="text-xs font-semibold text-gray-500 mb-1.5">상담 내용</p>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-[13px] leading-relaxed text-gray-800 whitespace-pre-wrap">{detail.content}</div>
+            </div>
+          </div>
         </div>
       )}
     </div>
