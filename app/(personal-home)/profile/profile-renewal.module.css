@@ -236,6 +236,39 @@
 .emptyBtn{margin-top:14px;display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:12px;background:#2e4bd8;color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;text-decoration:none}
 .emptyBtn:hover{background:#2540c0}
 
+/* ===== KEEPZIP (내용증명) ===== */
+.kzCard{width:100%;text-align:left;cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.kzCard:hover{border-color:#c0c7e8;box-shadow:0 4px 16px rgba(46,75,216,.08)}
+.kzCard:disabled{opacity:.6;cursor:default}
+.kzView{font-size:12px;font-weight:600;color:#2e4bd8}
+.kzIco{color:#2e4bd8}
+/* 모달 */
+.kzOverlay{position:fixed;inset:0;z-index:60;background:rgba(6,12,42,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+.kzModal{background:#fff;border-radius:20px;padding:26px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto}
+.kzModalTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.kzClose{background:none;border:none;color:#aab;cursor:pointer;padding:2px;line-height:0}
+.kzClose:hover{color:#1a1d2e}
+.kzStatusDesc{font-size:13px;color:#666;line-height:1.6;margin-bottom:20px}
+/* 타임라인 */
+.kzTimeline{display:flex;align-items:flex-start;margin-bottom:22px}
+.kzStep{position:relative;flex:1;display:flex;flex-direction:column;align-items:center}
+.kzStepDot{width:30px;height:30px;border-radius:50%;background:#eef0f6;color:#aab;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;position:relative;z-index:1}
+.kzStepDot.kzDone{background:#2e4bd8;color:#fff}
+.kzStepLabel{font-size:10.5px;color:#aab;margin-top:7px;text-align:center;white-space:nowrap}
+.kzStepLabel.kzDone{color:#1a1d2e;font-weight:600}
+.kzLine{position:absolute;top:14px;left:50%;width:100%;height:2px;background:#e8eaf2;z-index:0}
+.kzLine.kzDone{background:#2e4bd8}
+.kzFail{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.6;margin-bottom:20px}
+.kzMemo{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.6;margin-bottom:16px}
+.kzMemo strong{font-weight:700}
+.kzTrack{font-size:12px;color:#888;margin-bottom:16px}
+.kzTrack strong{color:#1a1d2e;font-weight:600;font-variant-numeric:tabular-nums}
+/* 원문 */
+.kzDocLabel{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#aaa;margin-bottom:8px}
+.kzDoc{background:#f6f7fb;border:1px solid #e8eaf2;border-radius:12px;padding:16px;font-size:13px;line-height:1.8;color:#333;white-space:pre-wrap;max-height:300px;overflow-y:auto}
+.kzStamp{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#15803d;font-weight:600;margin-top:10px}
+.kzModalFoot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #eceef4;margin-top:18px;padding-top:14px;font-size:12px;color:#888}
+
 /* ===== RESPONSIVE ===== */
 @media(max-width:768px){
   .subHero{height:160px}
@@ -245,4 +278,6 @@
   .planGrid{grid-template-columns:repeat(3,1fr)}
   .appFoot{align-items:flex-start;flex-direction:column}
   .lstCard{flex-wrap:wrap}
+  .kzStepLabel{font-size:9.5px}
+  .kzModal{padding:20px}
 }
