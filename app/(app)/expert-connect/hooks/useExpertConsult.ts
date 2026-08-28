@@ -151,7 +151,8 @@ export function useExpertConsult() {
           phone: formState.contactPhone,
           topic: formState.type || "상담 문의",
           content,
-          preferredAt: formState.preferredDate,
+          // datetime-local(타임존 없음)을 브라우저 로컬 기준 ISO로 변환 — 캘린더 날짜 밀림 방지
+          preferredAt: formState.preferredDate ? new Date(formState.preferredDate).toISOString() : undefined,
         }),
       });
       const data = await res.json();
