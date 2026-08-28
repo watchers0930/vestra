@@ -1,35 +1,24 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import s from "./keepzip-renewal.module.css";
 import { useToast } from "@/components/common/toast";
 import { useKeepzipJourney } from "./hooks/useKeepzipJourney";
 import { StepIndicator } from "./components/StepIndicator";
 import { Step1Input } from "./components/Step1Input";
 import { Step2Draft } from "./components/Step2Draft";
-import { Step3Review } from "./components/Step3Review";
 import { Step4Payment } from "./components/Step4Payment";
-import { Step5Tracking, type Delivery } from "./components/Step5Tracking";
-import { Step6AfterCare } from "./components/Step6AfterCare";
 
 interface Props {
   lawyerName?: string;
   lawyerId?: string;
 }
 
-/** 서버 사건 상태 → 발송 추적 표시값 */
-function deliveryOf(status: string): Delivery {
-  if (status === "returned" || status === "public_notice") return "returned";
-  if (["delivered", "closed", "unresponded", "payment_order", "litigation"].includes(status)) return "delivered";
-  return "sending";
-}
-
-/** 집키퍼 임차인 단일 여정 컨테이너 — 작성 → 검토·결제 → 발송·사후관리. */
+/** 집키퍼 임차인 여정 — 작성 → 결제·제출. 제출 완료 후 진행상황은 마이페이지에서 확인. */
 export function KeepzipJourney({ lawyerName, lawyerId }: Props) {
+  const router = useRouter();
   const { showToast } = useToast();
   const j = useKeepzipJourney({ lawyerName, lawyerId, onError: (m) => showToast(m, "error") });
-  const delivery = deliveryOf(j.caseStatus);
-
-  const reset = () => { if (typeof window !== "undefined") window.location.reload(); };
 
   return (
     <div className={s.body}>
@@ -64,52 +53,16 @@ export function KeepzipJourney({ lawyerName, lawyerId }: Props) {
       )}
 
       {j.view === "review" && (
-        !j.caseId ? (
-          /* 선결제: 사건 생성 전 결제 → 결제 완료 시 변호사에게 전송(검증 대기) */
-          <Step4Payment
-            onPaid={async () => {
-              const ok = await j.payAndSubmit();
-              if (ok) showToast("결제 완료 — 담당 변호사에게 전송되었습니다.", "success");
-            }}
-          />
-        ) : (
-          <Step3Review
-            lawyerName={j.lawyerName}
-            approved={j.caseStatus === "lawyer_approved"}
-            busy={j.submitting}
-            onApprove={() => j.demoAdvance("approve")}
-            onSend={async () => {
-              const r = await j.demoAdvance("send");
-              if (r) {
-                j.goView("track");
-                showToast("우체국 등기로 발송되었습니다.", "success");
-              }
-            }}
-          />
-        )
-      )}
-
-      {j.view === "track" && (
-        <>
-          <Step5Tracking
-            delivery={delivery}
-            trackingNo={j.trackingNo ?? "-"}
-            busy={j.submitting}
-            onDeliver={() => j.demoAdvance("deliver")}
-            onReturn={() => j.demoAdvance("return")}
-          />
-          {delivery !== "sending" && (
-            <Step6AfterCare
-              caseStatus={j.caseStatus}
-              deliveredAt={j.deliveredAt}
-              busy={j.submitting}
-              onResolve={() => j.demoAdvance("resolve")}
-              onUnrespond={() => j.demoAdvance("unrespond")}
-              onFollowUp={(v) => j.demoAdvance(v)}
-              onReset={reset}
-            />
-          )}
-        </>
+        /* 선결제: 결제 완료 → 담당 변호사에게 전송 → 마이페이지에서 진행 확인 */
+        <Step4Payment
+          onPaid={async () => {
+            const ok = await j.payAndSubmit();
+            if (ok) {
+              showToast("결제 완료 — 담당 변호사에게 전송되었습니다. 진행 상황은 마이페이지에서 확인하세요.", "success");
+              router.push("/profile");
+            }
+          }}
+        />
       )}
     </div>
   );
