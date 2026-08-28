@@ -45,6 +45,19 @@ export function isReviewable(status?: string | null): boolean {
   return status === "lawyer_pending" || status === "paid";
 }
 
+/**
+ * 평점(후기) 등록이 가능한 상태 — 변호사 서비스가 실질 완료(우체국 발송 이후).
+ * 반려(canceled)·환불(refunded)은 서비스 미완료이므로 제외.
+ */
+export const KEEPZIP_RATABLE_STATUS = [
+  "postal_sent", "delivered", "returned", "closed",
+  "unresponded", "payment_order", "litigation", "public_notice",
+] as const;
+
+export function isRatable(status?: string | null): boolean {
+  return (KEEPZIP_RATABLE_STATUS as readonly string[]).includes(status ?? "");
+}
+
 /** 진행 타임라인 4단계 */
 export const KEEPZIP_TIMELINE = ["결제·접수", "변호사 검토·직인", "우체국 발송", "배달 완료"] as const;
 

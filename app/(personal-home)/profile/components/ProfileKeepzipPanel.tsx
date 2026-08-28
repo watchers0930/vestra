@@ -4,8 +4,9 @@ import { useState } from "react";
 import { FileText, X, CheckCircle2 } from "lucide-react";
 import { CAUSE_LABELS } from "@/lib/keepzip/case-form";
 import { annotateAmounts } from "@/lib/keepzip/amount";
-import { statusMeta, KEEPZIP_TIMELINE, timelineStep, type StatusTone } from "@/lib/keepzip/case-status";
+import { statusMeta, KEEPZIP_TIMELINE, timelineStep, isRatable, type StatusTone } from "@/lib/keepzip/case-status";
 import { useKeepzipCases, fetchKeepzipDetail, type KzListItem, type KzDetail } from "../hooks/useKeepzipCases";
+import RatingForm from "./RatingForm";
 import s from "../profile-renewal.module.css";
 
 /** tone → 기존 상태 pill 클래스 매핑(디자인 시스템 재사용) */
@@ -107,9 +108,10 @@ function DetailModal({ detail, onClose }: { detail: KzDetail; onClose: () => voi
 
 /** 마이페이지 — 내 내용증명 사건 목록·진행상황 */
 export default function ProfileKeepzipPanel() {
-  const { items, loading } = useKeepzipCases();
+  const { items, ratedCaseIds, loading, reload } = useKeepzipCases();
   const [detail, setDetail] = useState<KzDetail | null>(null);
   const [opening, setOpening] = useState<string | null>(null);
+  const [rating, setRating] = useState<KzListItem | null>(null);
 
   const openDetail = async (id: string) => {
     setOpening(id);
@@ -148,14 +150,30 @@ export default function ProfileKeepzipPanel() {
             <MiniTimeline status={c.status} />
             <div className={s.appFoot}>
               <span className={s.footDate}>접수 {fmtDate(c.createdAt)}</span>
-              <button className={s.actBtn} onClick={() => openDetail(c.id)} disabled={opening === c.id}>
-                {opening === c.id ? "여는 중…" : "내용 보기"}
-              </button>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                {isRatable(c.status) && (
+                  ratedCaseIds.has(c.id) ? (
+                    <span style={{ fontSize: 13, color: "#059669" }}>✓ 후기 완료</span>
+                  ) : (
+                    <button className={s.actBtn} onClick={() => setRating(c)}>평점 등록</button>
+                  )
+                )}
+                <button className={s.actBtn} onClick={() => openDetail(c.id)} disabled={opening === c.id}>
+                  {opening === c.id ? "여는 중…" : "내용 보기"}
+                </button>
+              </div>
             </div>
           </div>
         );
       })}
       {detail && <DetailModal detail={detail} onClose={() => setDetail(null)} />}
+      {rating && (
+        <RatingForm
+          caseId={rating.id}
+          onClose={() => setRating(null)}
+          onSubmitted={() => { setRating(null); reload(); }}
+        />
+      )}
     </>
   );
 }
