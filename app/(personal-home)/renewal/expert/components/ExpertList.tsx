@@ -79,7 +79,7 @@ export default function ExpertList({ categories, fieldLabel, onSelect }: ExpertL
               <span>경력 {expert.experience}년</span>
               <span className={s.exFee}>{formatFee(expert.consultFee)}</span>
             </div>
-            <button className={s.exProfileMain} onClick={() => setProfileOf(expert)}>프로필 보기</button>
+            <button className={s.exProfileMain} onClick={() => setProfileOf(expert)}>상세 보기</button>
             {!expert.available && <p className={s.exClosed}>현재 상담 마감</p>}
           </div>
         ))}
