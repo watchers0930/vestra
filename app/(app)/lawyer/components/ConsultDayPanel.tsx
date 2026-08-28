@@ -43,7 +43,7 @@ export function ConsultDayPanel({ dateKey, consults, busy, onAccept, onPropose }
       {list.length === 0 ? (
         <div className="py-12 text-center text-sm text-gray-400">이 날짜에 신청된 상담이 없습니다.</div>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {list.map((c) => {
             const st = ST[c.status] ?? ST.pending;
             const isBusy = busy === c.id;

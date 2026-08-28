@@ -22,7 +22,7 @@ export default function LawyerConsultsPage() {
           <div className="py-20 text-center text-sm text-gray-400">불러오는 중…</div>
         ) : (
           <div className="flex flex-col lg:flex-row gap-5 mt-2 items-start">
-            <div className="w-full lg:w-[380px] lg:flex-shrink-0">
+            <div className="w-full lg:w-[300px] lg:flex-shrink-0">
               <ConsultCalendar consults={d.consults} selected={selected} onSelect={setSelected} />
             </div>
             <div className="w-full lg:flex-1 min-w-0">
