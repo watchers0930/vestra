@@ -1002,6 +1002,7 @@ model LawyerPartner {
   bio               String?   @db.Text
   photoUrl          String?   @db.Text // 프로필 사진(dataURL 또는 이미지 URL)
   headline          String?   // 한 줄 소개글(약력과 별개, 카드·모달 상단 노출)
+  hourlyFee         Int?      // 시간당 상담 보수료(원) — 전문가 자율 설정. null=미설정(협의)
   // 지급대행 셀러
   payoutSellerId    String?   @unique // 토스 지급대행 셀러 ID
   kycStatus         String    @default("none") // none | pending | verified | rejected

@@ -35,6 +35,10 @@ interface Props {
 /** 이력 문자열에서 앞의 연도(예: "2018~ ", "2015~2018 ")를 제거 */
 const stripYear = (t: string) => t.replace(/^\d{4}\s*~\s*\d{0,4}\s*/, "").trim();
 
+/** 시간당 보수료 표기 */
+const feeText = (f?: number | null) =>
+  f == null ? "협의" : f === 0 ? "무료" : f >= 10000 ? `${(f / 10000).toLocaleString()}만원` : `${f.toLocaleString()}원`;
+
 const RATING_ITEMS: [string, keyof Omit<RatingBreakdown, "count">][] = [
   ["전문성", "expertise"],
   ["응답 속도", "response"],
@@ -82,6 +86,7 @@ export default function ExpertProfileModal({ expert, onSelect, onClose }: Props)
               <div className={s.pmStatDiv} />
               <div className={s.pmStat}><b>{expert.experience}년</b><span>경력</span></div>
             </div>
+            <div className={s.pmSideFee}><span>시간당 보수료</span><b>{feeText(expert.hourlyFee)}</b></div>
             {expert.specialties.length > 0 && (
               <div className={s.pmSideSpecs}>
                 {expert.specialties.map((sp) => <span key={sp} className={s.pmSpec}>{stripYear(sp)}</span>)}

@@ -237,6 +237,9 @@
 .pmStat b { font-size: 15px; font-weight: 800; color: #1a1d2e; }
 .pmStat span { font-size: 11px; color: #aab; }
 .pmStatDiv { width: 1px; height: 28px; background: #e0e3ef; }
+.pmSideFee { margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.pmSideFee span { font-size: 11px; color: #aab; }
+.pmSideFee b { font-size: 16px; font-weight: 800; color: #2e4bd8; }
 .pmSideSpecs { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 20px; width: 100%; }
 .pmSideSpecs .pmSpec { white-space: nowrap; }
 /* 오른쪽 */

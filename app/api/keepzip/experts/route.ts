@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
       rating: p.avgRating || 0,
       reviewCount: p.ratingCount,
       consultFee: 99000,
+      hourlyFee: p.hourlyFee ?? null,
       available: p.active,
     }));
 

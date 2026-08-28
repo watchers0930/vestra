@@ -66,6 +66,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
         experience: (p.careers ?? []).length,
         rating: p.avgRating || 0,
         reviewCount: p.ratingCount,
+        hourlyFee: p.hourlyFee ?? null,
         ratingBreakdown,
         completedCases,
       },

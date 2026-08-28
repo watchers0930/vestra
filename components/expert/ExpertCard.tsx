@@ -13,6 +13,7 @@ export interface Expert {
   rating: number;
   reviewCount: number;
   consultFee: number;
+  hourlyFee?: number | null;
   available: boolean;
 }
 

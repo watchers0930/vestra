@@ -6,9 +6,11 @@ import type { ConsultFormState } from "@/app/(app)/expert-connect/hooks/useExper
 // 상담 분야 옵션 — 제출 시 /api/keepzip/consults의 topic으로 전달된다
 import { CONSULT_TYPES } from "@/app/(app)/expert-connect/constants";
 
-function formatFeeShort(fee: number) {
-  if (fee >= 10000) return `${(fee / 10000).toLocaleString()}만원`;
-  return `${fee.toLocaleString()}원`;
+function fmtHourly(fee?: number | null) {
+  if (fee == null) return "협의";
+  if (fee === 0) return "무료";
+  if (fee >= 10000) return `시간당 ${(fee / 10000).toLocaleString()}만원`;
+  return `시간당 ${fee.toLocaleString()}원`;
 }
 
 interface ConsultFormProps {
@@ -154,45 +156,16 @@ export default function ConsultForm({
                   {selectedExpert.name} {selectedExpert.category} <span className={s.priceBadge}>선택됨</span>
                 </div>
               </div>
-              <div className={s.selFee}>{formatFeeShort(selectedExpert.consultFee)}</div>
+              <div className={s.selFee}>{fmtHourly(selectedExpert.hourlyFee)}</div>
             </div>
           ) : (
             <div className={s.selEmpty}>선택된 전문가가 없습니다.</div>
           )}
 
           <div className={`${s.sumTitle} ${s.sumTitleSm}`}>상담료 안내</div>
-          <div className={s.priceList}>
-            <div className={s.priceRow}>
-              <span className={s.priceL}>
-                <span className={s.priceIco}><svg viewBox="0 0 24 24"><path d="M12 3v18" /><path d="M5 7h14" /><path d="M5 7l-2.5 6a3 3 0 0 0 5 0z" /><path d="M19 7l-2.5 6a3 3 0 0 0 5 0z" /></svg></span>
-                법무사 상담
-              </span>
-              <span className={s.priceV}>50,000<small>원</small></span>
-            </div>
-            <div className={s.priceRow}>
-              <span className={s.priceL}>
-                <span className={s.priceIco}><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg></span>
-                세무사 상담
-              </span>
-              <span className={s.priceV}>80,000<small>원</small></span>
-            </div>
-            <div className={s.priceRow}>
-              <span className={s.priceL}>
-                <span className={s.priceIco}><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg></span>
-                공인중개사 상담
-              </span>
-              <span className={s.priceV}>30,000<small>원</small></span>
-            </div>
-            <div className={`${s.priceRow} ${s.hl}`}>
-              <span className={s.priceL}>
-                <span className={s.priceIco}><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg></span>
-                종합 컨설팅<span className={s.priceBadge}>추천</span>
-              </span>
-              <span className={s.priceV}>150,000<small>원</small></span>
-            </div>
-          </div>
-          <p className={s.formNote} style={{ textAlign: "left", marginTop: "14px" }}>
-            ※ 상담료는 시안 예시이며 전문가·상담 유형에 따라 달라질 수 있습니다.
+          <p className={s.formNote} style={{ textAlign: "left", marginTop: "8px", lineHeight: 1.7 }}>
+            상담료는 각 전문가가 설정한 <b>시간당 보수료</b> 기준이며, <b>전액 전문가에게 지급</b>됩니다(노쉐어).
+            실제 비용은 상담 시간에 따라 정산되며, 보수료 미설정 전문가는 상담 시 협의합니다.
           </p>
         </div>
       </div>
