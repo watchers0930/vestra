@@ -153,7 +153,6 @@ export default function ConsultForm({
                 <div className={s.selName}>
                   {selectedExpert.name} {selectedExpert.category} <span className={s.priceBadge}>선택됨</span>
                 </div>
-                <div className={s.selCat}>{selectedExpert.specialties.join(" · ")}</div>
               </div>
               <div className={s.selFee}>{formatFeeShort(selectedExpert.consultFee)}</div>
             </div>
