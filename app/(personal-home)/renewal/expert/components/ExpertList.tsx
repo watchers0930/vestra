@@ -5,11 +5,6 @@ import s from "../expert.module.css";
 import ExpertProfileModal from "./ExpertProfileModal";
 import type { Expert } from "@/components/expert/ExpertCard";
 
-function formatFee(fee: number) {
-  if (fee >= 10000) return `상담료 ${(fee / 10000).toLocaleString()}만원`;
-  return `상담료 ${fee.toLocaleString()}원`;
-}
-
 export type ExpertIntent = "consult" | "keepzip" | "visit";
 
 interface ExpertListProps {
@@ -77,7 +72,6 @@ export default function ExpertList({ categories, fieldLabel, onSelect }: ExpertL
             </div>
             <div className={s.exMeta}>
               <span>경력 {expert.experience}년</span>
-              <span className={s.exFee}>{formatFee(expert.consultFee)}</span>
             </div>
             <button className={s.exProfileMain} onClick={() => setProfileOf(expert)}>상세 보기</button>
             {!expert.available && <p className={s.exClosed}>현재 상담 마감</p>}
