@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { LogOut } from "lucide-react";
 import { clearAll } from "@/lib/store";
 import RenewalGnb from "../renewal/_shared/RenewalGnb";
 import { useProfileData } from "./hooks/useProfileData";
@@ -70,12 +69,8 @@ export default function ProfileClient() {
   const tabLabel = current?.label ?? "";
   const tabDesc = current?.desc ?? "";
 
-  const accountActions = (
+  const withdrawSection = (
     <div className={s.acctWrap}>
-      <button onClick={() => { clearAll(); signOut({ redirectTo: "/" }); }} className={s.logoutBtn}>
-        <LogOut size={16} strokeWidth={1.5} />
-        로그아웃
-      </button>
       {!confirmWithdraw ? (
         <button onClick={() => setConfirmWithdraw(true)} className={s.withdrawLink}>
           회원 탈퇴
@@ -144,7 +139,12 @@ export default function ProfileClient() {
               {tab === "listings" && canManageListings && <ProfileListingsPanel />}
               {tab === "applications" && <ProfileApplicationsPanel />}
               {tab === "keepzip" && <ProfileKeepzipPanel />}
-              {tab === "info" && <ProfileInfoPanel user={user} />}
+              {tab === "info" && (
+                <>
+                  <ProfileInfoPanel user={user} />
+                  {withdrawSection}
+                </>
+              )}
               {tab === "tier" && (
                 <ProfileTierPanel
                   role={role}
@@ -173,7 +173,6 @@ export default function ProfileClient() {
                 />
               )}
 
-              {accountActions}
             </main>
           </div>
         </div>

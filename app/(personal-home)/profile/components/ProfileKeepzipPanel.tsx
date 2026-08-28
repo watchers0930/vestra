@@ -133,11 +133,10 @@ export default function ProfileKeepzipPanel() {
 
   return (
     <>
-      <p className={s.cardDesc} style={{ marginBottom: 16 }}>변호사에게 요청한 내용증명의 내용과 진행상황을 확인할 수 있습니다.</p>
       {items.map((c: KzListItem) => {
         const m = statusMeta(c.status);
         return (
-          <button key={c.id} className={`${s.appCard} ${s.kzCard}`} onClick={() => openDetail(c.id)} disabled={opening === c.id}>
+          <div key={c.id} className={s.appCard}>
             <div className={s.appTop}>
               <div className={s.thumb}><FileText size={22} strokeWidth={1.4} className={s.kzIco} /></div>
               <div className={s.appTopInfo}>
@@ -149,9 +148,11 @@ export default function ProfileKeepzipPanel() {
             <MiniTimeline status={c.status} />
             <div className={s.appFoot}>
               <span className={s.footDate}>접수 {fmtDate(c.createdAt)}</span>
-              <span className={s.kzView}>{opening === c.id ? "여는 중…" : "내용·진행상황 보기 →"}</span>
+              <button className={s.actBtn} onClick={() => openDetail(c.id)} disabled={opening === c.id}>
+                {opening === c.id ? "여는 중…" : "내용 보기"}
+              </button>
             </div>
-          </button>
+          </div>
         );
       })}
       {detail && <DetailModal detail={detail} onClose={() => setDetail(null)} />}
