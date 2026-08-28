@@ -16,6 +16,7 @@ export interface KzDetail extends KzListItem {
   address: string;
   deposit: string | null;
   draftContent: string | null;
+  originalDraft: string | null;
   stampUrl: string | null;
   sentAt: string | null;
   serviceFee: number;

@@ -145,6 +145,30 @@ export function useLawyerDashboard(
     }
   };
 
+  /** 내용증명 수정 — 본문을 직접 고쳐 이용자 재확인 대기로 전환(lawyer_revised) */
+  const reviseCase = async (id: string, draftContent: string, reason: string) => {
+    setBusy(id);
+    try {
+      const res = await fetch(`/api/keepzip/review/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision: "revised", draftContent, reason }),
+      });
+      const d = await res.json().catch(() => null);
+      if (!res.ok) {
+        showToast(d?.error ?? "수정 전달에 실패했습니다.", "error");
+        return;
+      }
+      showToast("수정본을 이용자에게 전달했습니다. 동의 후 발송됩니다.", "success");
+      setReviewing(null);
+      reload();
+    } catch {
+      showToast("네트워크 오류가 발생했습니다.", "error");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   /** 내용증명 반려 — 사유 필수 */
   const rejectCase = async (id: string, reason: string) => {
     setBusy(id);
@@ -242,6 +266,7 @@ export function useLawyerDashboard(
     openReview,
     closeReview,
     approveCase,
+    reviseCase,
     rejectCase,
     confirmVisit,
     acceptConsult,

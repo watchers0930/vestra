@@ -12,6 +12,7 @@ interface Props {
   detail: ReviewDetail;
   busy: string | null;
   onApprove: (id: string) => void;
+  onRevise: (id: string, draftContent: string, reason: string) => void;
   onReject: (id: string, reason: string) => void;
   onClose: () => void;
 }
@@ -25,9 +26,12 @@ const CHECKS = [
 const causeLabel = (c: string) => CAUSE_LABELS[c as keyof typeof CAUSE_LABELS] ?? c;
 
 /** 내용증명 검수 모달 — 원문 열람 → 체크리스트 → 승인·직인 / 반려(사유). 열람·확인 없이는 승인 불가. */
-export function NoticeReviewModal({ detail, busy, onApprove, onReject, onClose }: Props) {
+export function NoticeReviewModal({ detail, busy, onApprove, onRevise, onReject, onClose }: Props) {
   const [checks, setChecks] = useState([false, false, false]);
   const [rejectMode, setRejectMode] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editDraft, setEditDraft] = useState(detail.draftContent ?? "");
+  const [editReason, setEditReason] = useState("");
   const [reason, setReason] = useState("");
   const allChecked = checks.every(Boolean);
   const isBusy = busy === detail.id;
@@ -86,6 +90,13 @@ export function NoticeReviewModal({ detail, busy, onApprove, onReject, onClose }
               >
                 반려
               </button>
+              <button
+                onClick={() => setEditMode(true)}
+                disabled={isBusy}
+                className="rounded-lg border border-blue-200 px-4 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-60"
+              >
+                수정
+              </button>
               <Button
                 variant="primary"
                 className="flex-1"
@@ -97,6 +108,42 @@ export function NoticeReviewModal({ detail, busy, onApprove, onReject, onClose }
               </Button>
             </div>
           </>
+        ) : editMode ? (
+          <div className="mt-5 rounded-lg border border-blue-100 bg-blue-50/40 p-4">
+            <p className="text-sm font-semibold text-gray-800">본문 수정</p>
+            <p className="mt-0.5 text-[11px] text-gray-500">수정본은 이용자에게 전달되어 동의(재서명) 후 발송됩니다.</p>
+            <textarea
+              value={editDraft}
+              onChange={(e) => setEditDraft(e.target.value)}
+              rows={10}
+              className="mt-2 w-full rounded-lg border border-gray-200 p-3 text-[13px] leading-relaxed outline-none focus:border-blue-300"
+            />
+            <textarea
+              value={editReason}
+              onChange={(e) => setEditReason(e.target.value)}
+              rows={2}
+              placeholder="수정 사유 (선택) — 이용자에게 함께 전달됩니다."
+              className="mt-2 w-full rounded-lg border border-gray-200 p-3 text-[13px] outline-none focus:border-blue-300"
+            />
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                onClick={() => setEditMode(false)}
+                disabled={isBusy}
+                className="rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-60"
+              >
+                취소
+              </button>
+              <Button
+                variant="primary"
+                className="flex-1"
+                loading={isBusy}
+                disabled={!editDraft.trim()}
+                onClick={() => onRevise(detail.id, editDraft.trim(), editReason.trim())}
+              >
+                수정본 전달
+              </Button>
+            </div>
+          </div>
         ) : (
           <div className="mt-5 rounded-lg border border-red-100 bg-red-50/40 p-4">
             <p className="text-sm font-semibold text-gray-800">반려 사유</p>

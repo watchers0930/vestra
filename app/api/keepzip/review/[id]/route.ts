@@ -38,7 +38,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const { id } = await params;
     const kzCase = await prisma.keepzipCase.findUnique({
       where: { id },
-      select: { id: true, status: true, lawyerId: true, lawyerReview: { select: { viewedAt: true } } },
+      select: { id: true, status: true, lawyerId: true, draftContent: true, originalDraft: true, lawyerReview: { select: { viewedAt: true } } },
     });
     if (!kzCase) return NextResponse.json({ error: "사건을 찾을 수 없습니다." }, { status: 404 });
     // 본인에게 배정된 사건만 검수 가능
@@ -49,8 +49,29 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     const b = await req.json().catch(() => null);
-    if (b?.decision !== "approved" && b?.decision !== "rejected") {
-      return NextResponse.json({ error: "decision은 approved 또는 rejected여야 합니다." }, { status: 400 });
+    if (!["approved", "rejected", "revised"].includes(b?.decision)) {
+      return NextResponse.json({ error: "decision은 approved, rejected, revised 중 하나여야 합니다." }, { status: 400 });
+    }
+
+    // 수정 → 이용자 재확인 대기(lawyer_revised). 본문을 변호사가 직접 편집, 최초 수정 시 원본 백업.
+    if (b.decision === "revised") {
+      const newDraft = String(b?.draftContent ?? "").trim();
+      if (!newDraft) return NextResponse.json({ error: "수정할 본문을 입력해 주세요." }, { status: 400 });
+      if (newDraft.length > 20000) return NextResponse.json({ error: "본문이 너무 깁니다." }, { status: 400 });
+      const reason = sanitizeField(String(b?.reason ?? ""), 500) || null; // 수정 사유(선택)
+      const backup = kzCase.originalDraft == null ? { originalDraft: kzCase.draftContent } : {};
+      await prisma.$transaction([
+        prisma.keepzipCase.update({
+          where: { id },
+          data: { status: "lawyer_revised", draftContent: newDraft, ...backup },
+        }),
+        prisma.lawyerReview.upsert({
+          where: { caseId: id },
+          create: { caseId: id, lawyerId: partner.id, decision: "revised", memo: reason, viewedAt: new Date() },
+          update: { decision: "revised", memo: reason },
+        }),
+      ]);
+      return NextResponse.json({ ok: true, status: "lawyer_revised" });
     }
 
     if (b.decision === "approved") {

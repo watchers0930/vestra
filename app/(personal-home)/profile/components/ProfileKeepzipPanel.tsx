@@ -7,6 +7,7 @@ import { annotateAmounts } from "@/lib/keepzip/amount";
 import { statusMeta, KEEPZIP_TIMELINE, timelineStep, isRatable, type StatusTone } from "@/lib/keepzip/case-status";
 import { useKeepzipCases, fetchKeepzipDetail, type KzListItem, type KzDetail } from "../hooks/useKeepzipCases";
 import RatingForm from "./RatingForm";
+import RevisionReviewModal from "./RevisionReviewModal";
 import s from "../profile-renewal.module.css";
 
 /** tone → 기존 상태 pill 클래스 매핑(디자인 시스템 재사용) */
@@ -112,12 +113,20 @@ export default function ProfileKeepzipPanel() {
   const [detail, setDetail] = useState<KzDetail | null>(null);
   const [opening, setOpening] = useState<string | null>(null);
   const [rating, setRating] = useState<KzListItem | null>(null);
+  const [revising, setRevising] = useState<KzDetail | null>(null);
 
   const openDetail = async (id: string) => {
     setOpening(id);
     const d = await fetchKeepzipDetail(id);
     setOpening(null);
     if (d) setDetail(d);
+  };
+
+  const openRevision = async (id: string) => {
+    setOpening(id);
+    const d = await fetchKeepzipDetail(id);
+    setOpening(null);
+    if (d) setRevising(d);
   };
 
   if (loading) {
@@ -151,6 +160,16 @@ export default function ProfileKeepzipPanel() {
             <div className={s.appFoot}>
               <span className={s.footDate}>접수 {fmtDate(c.createdAt)}</span>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                {c.status === "lawyer_revised" && (
+                  <button
+                    className={s.actBtn}
+                    style={{ background: "#0d9488", color: "#fff", borderColor: "#0d9488" }}
+                    onClick={() => openRevision(c.id)}
+                    disabled={opening === c.id}
+                  >
+                    {opening === c.id ? "여는 중…" : "수정본 확인"}
+                  </button>
+                )}
                 {isRatable(c.status) && (
                   ratedCaseIds.has(c.id) ? (
                     <span style={{ fontSize: 13, color: "#059669" }}>✓ 후기 완료</span>
@@ -172,6 +191,13 @@ export default function ProfileKeepzipPanel() {
           caseId={rating.id}
           onClose={() => setRating(null)}
           onSubmitted={() => { setRating(null); reload(); }}
+        />
+      )}
+      {revising && (
+        <RevisionReviewModal
+          detail={revising}
+          onClose={() => setRevising(null)}
+          onDone={() => { setRevising(null); reload(); }}
         />
       )}
     </>

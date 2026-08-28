@@ -26,6 +26,7 @@ export default function LawyerNoticesPage() {
           detail={d.reviewing}
           busy={d.busy}
           onApprove={d.approveCase}
+          onRevise={d.reviseCase}
           onReject={d.rejectCase}
           onClose={d.closeReview}
         />
