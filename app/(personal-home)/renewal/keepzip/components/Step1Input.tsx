@@ -30,6 +30,18 @@ export function Step1Input({
   selectCause, setField, prefillFromContract, clearContract, onGenerate,
 }: Props) {
   const [addrOpen, setAddrOpen] = useState(false);
+  const [dong, setDong] = useState("");
+  const [ho, setHo] = useState("");
+
+  // 동/호수를 각각 입력받아 "101동 1001호" 형태로 조합해 addressDetail에 저장.
+  // (데이터 구조·서버·PDF는 addressDetail 하나만 사용하므로 UI에서만 분리)
+  const setDetail = (d: string, h: string) => {
+    setDong(d);
+    setHo(h);
+    const combined = [d.trim() && `${d.trim()}동`, h.trim() && `${h.trim()}호`]
+      .filter(Boolean).join(" ");
+    setField("addressDetail", combined);
+  };
 
   const fields = activeFields(form);
   const addressReady = form.address.trim() && (form.isBuilding !== "Y" || form.addressDetail.trim());
@@ -82,8 +94,12 @@ export function Step1Input({
               <button type="button" className={s.searchBtn} onClick={() => setAddrOpen(true)}>주소 검색</button>
             )}
             {form.isBuilding === "Y" && (
-              <input className={s.input} style={{ marginTop: 8 }} placeholder="동/호수 (예: 101동 1001호)"
-                value={form.addressDetail} onChange={(e) => setField("addressDetail", e.target.value)} />
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <input className={s.input} style={{ flex: 1 }} placeholder="동 (예: 101)"
+                  value={dong} onChange={(e) => setDetail(e.target.value, ho)} />
+                <input className={s.input} style={{ flex: 1 }} placeholder="호수 (예: 1001)"
+                  value={ho} onChange={(e) => setDetail(dong, e.target.value)} />
+              </div>
             )}
           </div>
 
@@ -134,6 +150,8 @@ export function Step1Input({
             setField("zipCode", r.zonecode);
             setField("isBuilding", r.isBuilding ? "Y" : "N");
             setField("addressDetail", "");
+            setDong("");
+            setHo("");
           }}
         />
       )}
