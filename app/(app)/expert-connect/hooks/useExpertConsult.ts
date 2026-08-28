@@ -12,6 +12,7 @@ export interface ConsultFormState {
   attachAiResult: boolean;
   contactPhone: string;
   contactEmail: string;
+  preferredDate: string;
 }
 
 export interface ReservationFormState {
@@ -31,6 +32,7 @@ export function useExpertConsult() {
     attachAiResult: false,
     contactPhone: "",
     contactEmail: "",
+    preferredDate: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -126,6 +128,10 @@ export function useExpertConsult() {
       setError("문의 내용을 입력해주세요.");
       return;
     }
+    if (!formState.preferredDate) {
+      setError("희망 상담 시간을 선택해주세요.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -145,6 +151,7 @@ export function useExpertConsult() {
           phone: formState.contactPhone,
           topic: formState.type || "상담 문의",
           content,
+          preferredAt: formState.preferredDate,
         }),
       });
       const data = await res.json();
@@ -163,7 +170,7 @@ export function useExpertConsult() {
   const resetConsultForm = () => {
     setSubmitted(false);
     setSelectedExpert(null);
-    setFormState({ type: "", address: "", content: "", attachAiResult: false, contactPhone: "", contactEmail: "" });
+    setFormState({ type: "", address: "", content: "", attachAiResult: false, contactPhone: "", contactEmail: "", preferredDate: "" });
     setVisitSubmitted(false);
     setVisitError("");
     setReservationForm({ consultType: "", preferredDate: "", phone: "", inquiry: "" });

@@ -1101,10 +1101,14 @@ model ExpertConsult {
   phone     String
   topic     String // 상담 주제/유형
   content   String   @db.Text
-  status    String   @default("pending") // pending | answered
+  status      String    @default("pending") // pending | accepted | proposed | confirmed | rejected | answered
+  preferredAt DateTime? // 이용자 1차 희망 상담 시간
+  proposedAt  DateTime? // 변호사 역제안 시간
+  confirmedAt DateTime? // 최종 확정 시간
   createdAt DateTime @default(now())
 
   @@index([lawyerId])
+  @@index([userId])
 }
 
 // 전문가 방문 예약 (이용자 → 전문가)

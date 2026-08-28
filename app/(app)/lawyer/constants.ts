@@ -19,7 +19,7 @@ export interface MenuItem {
 /** 사이드바 상위 메뉴 */
 export const MAIN_MENU: MenuItem[] = [
   { key: "notices", label: "내용증명" },
-  { key: "consults", label: "상담문의" },
+  { key: "consults", label: "상담신청현황" },
   { key: "visits", label: "방문예약" },
 ];
 

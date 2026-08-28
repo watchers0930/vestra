@@ -65,6 +65,17 @@ export default function ConsultForm({
           </div>
 
           <div className={s.field}>
+            <label className={s.fieldLabel}>희망 상담 시간<span className={s.req}>*</span></label>
+            <input
+              className={s.fInput}
+              type="datetime-local"
+              required
+              value={formState.preferredDate}
+              onChange={(e) => setFormState((p) => ({ ...p, preferredDate: e.target.value }))}
+            />
+          </div>
+
+          <div className={s.field}>
             <label className={s.fieldLabel}>관심 물건 / 주소</label>
             <input
               className={s.fInput}

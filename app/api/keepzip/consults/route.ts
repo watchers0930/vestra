@@ -39,8 +39,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "유효한 전문가가 아닙니다." }, { status: 400 });
     }
 
+    // 희망 상담 시간 (datetime-local 문자열)
+    const pref = b.preferredAt ? new Date(String(b.preferredAt)) : null;
+    const preferredAt = pref && !isNaN(pref.getTime()) ? pref : null;
+
     const created = await prisma.expertConsult.create({
-      data: { lawyerId, userId, name, phone, topic: topic || "상담 문의", content },
+      data: { lawyerId, userId, name, phone, topic: topic || "상담 문의", content, preferredAt },
     });
     return NextResponse.json({ ok: true, id: created.id });
   } catch (e) {

@@ -33,6 +33,9 @@ export interface Consult {
   content: string;
   status: string;
   createdAt: string;
+  preferredAt?: string | null;
+  proposedAt?: string | null;
+  confirmedAt?: string | null;
 }
 
 export interface Visit {
@@ -189,6 +192,36 @@ export function useLawyerDashboard(
     }
   };
 
+  /** 상담 희망시간 수락 */
+  const acceptConsult = async (id: string) => {
+    setBusy(id);
+    try {
+      const res = await fetch(`/api/keepzip/consults/${id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "accept" }),
+      });
+      const d = await res.json().catch(() => null);
+      if (!res.ok) { showToast(d?.error ?? "처리에 실패했습니다.", "error"); return; }
+      showToast("상담 시간을 수락했습니다.", "success");
+      reload();
+    } catch { showToast("네트워크 오류가 발생했습니다.", "error"); } finally { setBusy(null); }
+  };
+
+  /** 상담 다른 시간 역제안 */
+  const proposeConsult = async (id: string, proposedAt: string) => {
+    setBusy(id);
+    try {
+      const res = await fetch(`/api/keepzip/consults/${id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "propose", proposedAt }),
+      });
+      const d = await res.json().catch(() => null);
+      if (!res.ok) { showToast(d?.error ?? "처리에 실패했습니다.", "error"); return; }
+      showToast("다른 시간을 제안했습니다.", "success");
+      reload();
+    } catch { showToast("네트워크 오류가 발생했습니다.", "error"); } finally { setBusy(null); }
+  };
+
   const counts = {
     notices: cases.filter((c) => c.status === "lawyer_pending").length,
     consults: consults.filter((c) => c.status !== "answered").length,
@@ -211,6 +244,8 @@ export function useLawyerDashboard(
     approveCase,
     rejectCase,
     confirmVisit,
+    acceptConsult,
+    proposeConsult,
     reload,
   };
 }
