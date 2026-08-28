@@ -1007,6 +1007,8 @@ model LawyerPartner {
   membershipFee     Int       @default(500000) // 연회비(원)
   membershipStatus  String    @default("inactive") // inactive | active | expired
   membershipExpires DateTime?
+  // 등록 전자직인 — 검수 승인 시 이 이미지로 날인(케이스별 canvas 즉석생성 대체)
+  stampImageUrl     String?   @db.Text
   // 랭킹·presence 캐시
   avgRating         Float     @default(0) // 후기 5항목 평균(정렬용)
   ratingCount       Int       @default(0)
@@ -1025,7 +1027,9 @@ model LawyerReview {
   tier      String      @default("tier2") // tier1 | tier2 | tier3 (AI 신뢰도별 검토 강도)
   decision  String      @default("pending") // pending | approved | rejected
   stampedAt DateTime? // 직인 날인 시각
-  memo      String?     @db.Text
+  viewedAt  DateTime? // 변호사가 문서 원문을 처음 연 시각(검토 증빙)
+  reviewSeconds Int?  // 열람~승인 소요시간(초) — 과도하게 짧으면 형식 검토 플래그
+  memo      String?     @db.Text // 반려 사유 / 검토 메모
   case      KeepzipCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt

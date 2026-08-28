@@ -13,6 +13,18 @@ export interface NoticeCase {
   createdAt: string;
 }
 
+/** 검수 모달용 사건 상세 (문서 원문 포함) */
+export interface ReviewDetail {
+  id: string;
+  cause: string;
+  senderName: string;
+  recipientName: string;
+  address: string;
+  deposit: string | null;
+  draftContent: string | null;
+  status: string;
+}
+
 export interface Consult {
   id: string;
   name: string;
@@ -52,6 +64,7 @@ export function useLawyerDashboard(
   const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [reviewing, setReviewing] = useState<ReviewDetail | null>(null);
 
   const reload = useCallback(async () => {
     try {
@@ -85,28 +98,34 @@ export function useLawyerDashboard(
     reload();
   }, [reload]);
 
-  /** 내용증명 검수·전자직인 */
+  /** 검수 시작 — 사건 원문 열람(서버가 viewedAt 기록, 승인 게이팅 근거) */
+  const openReview = async (id: string) => {
+    setBusy(id);
+    try {
+      const r = await fetch(`/api/keepzip/cases/${id}`);
+      const d = r.ok ? await r.json() : null;
+      if (!d?.case) {
+        showToast("사건 상세를 불러오지 못했습니다.", "error");
+        return;
+      }
+      setReviewing(d.case as ReviewDetail);
+    } catch {
+      showToast("네트워크 오류가 발생했습니다.", "error");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const closeReview = () => setReviewing(null);
+
+  /** 내용증명 승인·전자직인 — 서버가 열람(viewedAt)·등록직인을 강제 검증 */
   const approveCase = async (id: string) => {
     setBusy(id);
     try {
-      // 전자직인 이미지(간단 생성) — 실제로는 등록된 직인 사용
-      const c = document.createElement("canvas");
-      c.width = 100;
-      c.height = 50;
-      const x = c.getContext("2d");
-      if (x) {
-        x.strokeStyle = "#c0392b";
-        x.lineWidth = 2;
-        x.strokeRect(8, 8, 84, 34);
-        x.font = "15px sans-serif";
-        x.fillStyle = "#c0392b";
-        x.fillText("변호사印", 16, 32);
-      }
-      const stamp = c.toDataURL("image/png");
       const res = await fetch(`/api/keepzip/review/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision: "approved", stamp }),
+        body: JSON.stringify({ decision: "approved" }),
       });
       const d = await res.json().catch(() => null);
       if (!res.ok) {
@@ -114,6 +133,31 @@ export function useLawyerDashboard(
         return;
       }
       showToast("전자직인 날인 완료. 발송 대기로 전환됩니다.", "success");
+      setReviewing(null);
+      reload();
+    } catch {
+      showToast("네트워크 오류가 발생했습니다.", "error");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /** 내용증명 반려 — 사유 필수 */
+  const rejectCase = async (id: string, reason: string) => {
+    setBusy(id);
+    try {
+      const res = await fetch(`/api/keepzip/review/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision: "rejected", reason }),
+      });
+      const d = await res.json().catch(() => null);
+      if (!res.ok) {
+        showToast(d?.error ?? "반려 처리에 실패했습니다.", "error");
+        return;
+      }
+      showToast("반려 처리되었습니다.", "success");
+      setReviewing(null);
       reload();
     } catch {
       showToast("네트워크 오류가 발생했습니다.", "error");
@@ -161,7 +205,11 @@ export function useLawyerDashboard(
     visits,
     counts,
     todoTotal,
+    reviewing,
+    openReview,
+    closeReview,
     approveCase,
+    rejectCase,
     confirmVisit,
     reload,
   };

@@ -6,7 +6,7 @@ import type { NoticeCase } from "../hooks/useLawyerDashboard";
 interface Props {
   cases: NoticeCase[];
   busy: string | null;
-  onApprove: (id: string) => void;
+  onOpenReview: (id: string) => void;
 }
 
 const CAUSE_LABEL: Record<string, string> = {
@@ -24,7 +24,7 @@ const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
 };
 
 /** 내용증명 — 개인이 보낸 사건 검수·전자직인 (카드 그리드) */
-export function NoticesTab({ cases, busy, onApprove }: Props) {
+export function NoticesTab({ cases, busy, onOpenReview }: Props) {
   if (cases.length === 0) {
     return (
       <div className="py-20 text-center">
@@ -37,7 +37,7 @@ export function NoticesTab({ cases, busy, onApprove }: Props) {
   return (
     <div>
       <p className="text-sm text-gray-500 mb-5">
-        개인이 결제 후 보낸 내용증명입니다. 내용을 검수하고 전자직인을 찍어 발송합니다.
+        개인이 결제 후 보낸 내용증명입니다. <strong>원문을 열람·검토한 뒤</strong> 전자직인을 찍어 발송합니다.
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {cases.map((c) => {
@@ -58,13 +58,13 @@ export function NoticesTab({ cases, busy, onApprove }: Props) {
               <p className="mt-0.5 text-[11px] text-gray-400">{c.id.slice(0, 10)}</p>
               <div className="mt-4 pt-3 border-t border-gray-100">
                 <Button
-                  variant="primary"
+                  variant={c.status === "lawyer_pending" ? "primary" : "secondary"}
                   className="w-full"
                   loading={busy === c.id}
                   disabled={c.status !== "lawyer_pending"}
-                  onClick={() => onApprove(c.id)}
+                  onClick={() => onOpenReview(c.id)}
                 >
-                  {c.status === "lawyer_approved" ? "직인 완료" : "승인·직인"}
+                  {c.status === "lawyer_approved" ? "직인 완료" : c.status === "canceled" ? "반려됨" : "원문 검토하기"}
                 </Button>
               </div>
             </div>

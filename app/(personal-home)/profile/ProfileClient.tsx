@@ -10,6 +10,7 @@ import { PROFILE_TABS, type ProfileTab } from "./components/profileConstants";
 import ProfileDashboardPanel from "./components/ProfileDashboardPanel";
 import ProfileListingsPanel from "./components/ProfileListingsPanel";
 import ProfileApplicationsPanel from "./components/ProfileApplicationsPanel";
+import ProfileKeepzipPanel from "./components/ProfileKeepzipPanel";
 import ProfileInfoPanel from "./components/ProfileInfoPanel";
 import ProfileTierPanel from "./components/ProfileTierPanel";
 import ProfileNotifPanel from "./components/ProfileNotifPanel";
@@ -124,6 +125,7 @@ export default function ProfileClient() {
         {tab === "dashboard" && <ProfileDashboardPanel usage={usage} />}
         {tab === "listings" && canManageListings && <ProfileListingsPanel />}
         {tab === "applications" && <ProfileApplicationsPanel />}
+        {tab === "keepzip" && <ProfileKeepzipPanel />}
         {tab === "info" && <ProfileInfoPanel user={user} />}
         {tab === "tier" && (
           <ProfileTierPanel
