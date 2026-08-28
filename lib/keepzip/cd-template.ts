@@ -10,6 +10,7 @@
  */
 
 import { sanitizeField } from "@/lib/sanitize";
+import { toKoreanAmount } from "./amount";
 
 export const KEEPZIP_CAUSES = [
   "deposit_return",       // 보증금 반환청구 (세입자→임대인)
@@ -172,29 +173,6 @@ export function validateDraftInput(raw: unknown): ValidationResult {
 }
 
 // ── user 프롬프트 빌더 ───────────────────────────────────────────────────────
-
-/** 금액(원) → 한글 수사(정식 표기, 위변조 방지용 각 자리 명시). 예) 50000000 → "오천만" */
-export function toKoreanAmount(n: number): string {
-  if (n === 0) return "영";
-  const D = ["", "일", "이", "삼", "사", "오", "육", "칠", "팔", "구"];
-  const U4 = ["", "십", "백", "천"]; // 1·10·100·1000의 자리
-  const BIG = ["", "만", "억", "조", "경"];
-  const groups: number[] = [];
-  let x = Math.floor(n);
-  while (x > 0) { groups.push(x % 10000); x = Math.floor(x / 10000); }
-  let out = "";
-  for (let g = groups.length - 1; g >= 0; g--) {
-    const val = groups[g];
-    if (val === 0) continue;
-    let s = "";
-    for (let i = 3; i >= 0; i--) {
-      const d = Math.floor(val / 10 ** i) % 10;
-      if (d !== 0) s += D[d] + U4[i];
-    }
-    out += s + BIG[g];
-  }
-  return out;
-}
 
 /** 금액을 "50,000,000원(일금 오천만원정)" 형태로 표기 */
 function won(n?: number): string {

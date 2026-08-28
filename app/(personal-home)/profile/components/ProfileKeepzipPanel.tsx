@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FileText, X, CheckCircle2 } from "lucide-react";
 import { CAUSE_LABELS } from "@/lib/keepzip/case-form";
+import { annotateAmounts } from "@/lib/keepzip/amount";
 import { statusMeta, KEEPZIP_TIMELINE, timelineStep, type StatusTone } from "@/lib/keepzip/case-status";
 import { useKeepzipCases, fetchKeepzipDetail, type KzListItem, type KzDetail } from "../hooks/useKeepzipCases";
 
@@ -80,7 +81,7 @@ function DetailModal({ detail, onClose }: { detail: KzDetail; onClose: () => voi
         <div className="mt-5">
           <p className="text-xs font-semibold text-gray-500 mb-1.5">내용증명 원문</p>
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-[13px] leading-relaxed text-gray-800 whitespace-pre-wrap max-h-64 overflow-y-auto">
-            {detail.draftContent || "본문이 없습니다."}
+            {detail.draftContent ? annotateAmounts(detail.draftContent) : "본문이 없습니다."}
           </div>
           {detail.stampUrl && (
             <div className="mt-2 flex items-center gap-2 text-xs text-emerald-600">

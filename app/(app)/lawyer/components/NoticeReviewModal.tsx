@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X, CheckCircle2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { CAUSE_LABELS } from "@/lib/keepzip/case-form";
+import { annotateAmounts } from "@/lib/keepzip/amount";
 import { statusMeta, TONE_BADGE, isReviewable } from "@/lib/keepzip/case-status";
 import type { ReviewDetail } from "../hooks/useLawyerDashboard";
 
@@ -51,7 +52,7 @@ export function NoticeReviewModal({ detail, busy, onApprove, onReject, onClose }
         <div className="mt-4">
           <p className="text-xs font-semibold text-gray-500 mb-1.5">내용증명 원문{!readOnly && " — 아래 문서를 검토하세요"}</p>
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-[13px] leading-relaxed text-gray-800 whitespace-pre-wrap max-h-72 overflow-y-auto">
-            {detail.draftContent || "본문이 없습니다."}
+            {detail.draftContent ? annotateAmounts(detail.draftContent) : "본문이 없습니다."}
           </div>
         </div>
 
