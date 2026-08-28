@@ -66,10 +66,10 @@ export function ConsultCalendar({ consults, visits = [], selected, onSelect }: {
               {(cCnt > 0 || vCnt > 0) && (
                 <span className="flex items-center gap-0.5 mt-0.5">
                   {cCnt > 0 && (
-                    <span className={`text-[9.5px] font-bold min-w-[15px] px-1 rounded-full ${on ? "bg-white/25 text-white" : "bg-blue-600 text-white"}`}>{cCnt}</span>
+                    <span className={`text-[9.5px] font-bold min-w-[15px] px-1 rounded-full ${on ? "bg-white text-blue-700" : "bg-blue-600 text-white"}`}>{cCnt}</span>
                   )}
                   {vCnt > 0 && (
-                    <span className={`text-[9.5px] font-bold min-w-[15px] px-1 rounded-full ${on ? "bg-white/25 text-white" : "bg-emerald-600 text-white"}`}>{vCnt}</span>
+                    <span className={`text-[9.5px] font-bold min-w-[15px] px-1 rounded-full ${on ? "bg-white text-emerald-700" : "bg-emerald-600 text-white"}`}>{vCnt}</span>
                   )}
                 </span>
               )}
