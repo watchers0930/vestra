@@ -1,4 +1,4 @@
-import { Crown, Home, Building2, User, CheckCircle2, Clock, XCircle, LayoutDashboard, FileText, ScrollText, Bell, type LucideIcon } from "lucide-react";
+import { Crown, Home, Building2, User, CheckCircle2, Clock, XCircle, LayoutDashboard, FileText, ScrollText, Bell, CalendarClock, type LucideIcon } from "lucide-react";
 
 export const ROLE_INFO: Record<string, { label: string; color: string; limit: number; icon: typeof Crown; features: string[] }> = {
   ADMIN: { label: "관리자", color: "bg-red-500", limit: 9999, icon: Crown, features: ["전체 기능", "관리자 패널"] },
@@ -16,13 +16,14 @@ export const VERIFY_STATUS: Record<string, { label: string; icon: typeof CheckCi
   rejected: { label: "반려", icon: XCircle, color: "text-red-500" },
 };
 
-export type ProfileTab = "dashboard" | "listings" | "applications" | "keepzip" | "info" | "tier" | "notif";
+export type ProfileTab = "dashboard" | "listings" | "applications" | "keepzip" | "consult" | "info" | "tier" | "notif";
 
 export const PROFILE_TABS: { key: ProfileTab; label: string; desc: string; icon: LucideIcon }[] = [
   { key: "dashboard", label: "대시보드", desc: "내 활동과 자산 현황을 한눈에 확인하세요.", icon: LayoutDashboard },
   { key: "listings", label: "내 매물", desc: "등록한 매물을 관리하세요.", icon: Building2 },
   { key: "applications", label: "의향서", desc: "보낸·받은 임대차 의향서를 관리하세요.", icon: FileText },
   { key: "keepzip", label: "내용증명", desc: "변호사에게 요청한 내용증명의 내용과 진행상황을 확인하세요.", icon: ScrollText },
+  { key: "consult", label: "상담예약", desc: "신청한 상담의 확정 시간과 진행상황을 확인하세요.", icon: CalendarClock },
   { key: "info", label: "내 정보", desc: "회원 정보와 이용 가능 기능을 확인하세요.", icon: User },
   { key: "tier", label: "등급·구독", desc: "회원 등급을 올리고 더 많은 기능을 이용하세요.", icon: Crown },
   { key: "notif", label: "알림 설정", desc: "채널별 알림 수신을 관리하세요.", icon: Bell },

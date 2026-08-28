@@ -10,6 +10,7 @@ import ProfileDashboardPanel from "./components/ProfileDashboardPanel";
 import ProfileListingsPanel from "./components/ProfileListingsPanel";
 import ProfileApplicationsPanel from "./components/ProfileApplicationsPanel";
 import ProfileKeepzipPanel from "./components/ProfileKeepzipPanel";
+import ProfileConsultsPanel from "./components/ProfileConsultsPanel";
 import ProfileHeader from "./components/ProfileHeader";
 import ProfileInfoPanel from "./components/ProfileInfoPanel";
 import ProfileTierPanel from "./components/ProfileTierPanel";
@@ -121,7 +122,7 @@ export default function ProfileClient() {
                 const Icon = t.icon;
                 return (
                   <div key={t.key}>
-                    {i === 3 && <div className={s.navSep} />}
+                    {i === 5 && <div className={s.navSep} />}
                     <button onClick={() => setTab(t.key)} className={`${s.navItem} ${tab === t.key ? s.navOn : ""}`}>
                       <Icon size={18} strokeWidth={1.8} />{t.label}
                     </button>
@@ -139,6 +140,7 @@ export default function ProfileClient() {
               {tab === "listings" && canManageListings && <ProfileListingsPanel />}
               {tab === "applications" && <ProfileApplicationsPanel />}
               {tab === "keepzip" && <ProfileKeepzipPanel />}
+              {tab === "consult" && <ProfileConsultsPanel />}
               {tab === "info" && (
                 <>
                   <ProfileInfoPanel user={user} />

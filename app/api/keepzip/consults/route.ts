@@ -58,14 +58,27 @@ export async function GET(req: NextRequest) {
   const userId = session?.user?.id;
   if (!userId) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
 
-  if (req.nextUrl.searchParams.get("as") !== "lawyer") return NextResponse.json({ consults: [] });
-  const partner = await prisma.lawyerPartner.findUnique({ where: { userId }, select: { id: true } });
-  if (!partner) return NextResponse.json({ consults: [] });
+  // 변호사 대시보드: 배정된 상담
+  if (req.nextUrl.searchParams.get("as") === "lawyer") {
+    const partner = await prisma.lawyerPartner.findUnique({ where: { userId }, select: { id: true } });
+    if (!partner) return NextResponse.json({ consults: [] });
+    const consults = await prisma.expertConsult.findMany({
+      where: { lawyerId: partner.id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+    return NextResponse.json({ consults });
+  }
 
+  // 이용자 본인: 내가 신청한 상담 + 담당 전문가명
   const consults = await prisma.expertConsult.findMany({
-    where: { lawyerId: partner.id },
+    where: { userId },
     orderBy: { createdAt: "desc" },
     take: 50,
   });
-  return NextResponse.json({ consults });
+  const ids = [...new Set(consults.map((c) => c.lawyerId))];
+  const partners = await prisma.lawyerPartner.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, category: true } });
+  const nm = Object.fromEntries(partners.map((p) => [p.id, { name: p.name ?? "전문가", category: p.category }]));
+  const withName = consults.map((c) => ({ ...c, lawyerName: nm[c.lawyerId]?.name ?? "전문가" }));
+  return NextResponse.json({ consults: withName });
 }
