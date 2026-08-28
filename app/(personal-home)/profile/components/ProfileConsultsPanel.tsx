@@ -78,6 +78,7 @@ export default function ProfileConsultsPanel() {
   return (
     <>
       <p className={s.cardDesc} style={{ marginBottom: 16 }}>신청한 상담의 확정 시간과 진행상황을 확인하세요.</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {items.map((c) => {
         const st = ST[c.status] ?? ST.pending;
         return (
@@ -113,6 +114,7 @@ export default function ProfileConsultsPanel() {
           </div>
         );
       })}
+      </div>
     </>
   );
 }

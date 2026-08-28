@@ -115,6 +115,7 @@ function SentList() {
   return (
     <>
       <p className={s.panelCount} style={{ marginBottom: 14 }}>총 {sent.length}건</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {sent.map((a) => {
         const st = STATUS_META[a.status];
         return (
@@ -165,6 +166,7 @@ function SentList() {
           </div>
         );
       })}
+      </div>
     </>
   );
 }
@@ -193,7 +195,8 @@ function ReceivedList() {
       ) : received.length === 0 ? (
         <EmptyState icon={<FileText size={36} strokeWidth={1.2} />} title="받은 의향서가 없습니다" />
       ) : (
-        received.map((a) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {received.map((a) => {
           const st = STATUS_META[a.status];
           return (
             <div key={a.id} className={s.appCard}>
@@ -232,7 +235,8 @@ function ReceivedList() {
               </div>
             </div>
           );
-        })
+        })}
+        </div>
       )}
     </>
   );
