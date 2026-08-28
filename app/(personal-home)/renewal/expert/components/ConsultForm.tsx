@@ -40,7 +40,7 @@ export default function ConsultForm({
       <p className={s.secEyebrow}>Consult Request</p>
       <h2 className={s.secTitle}>상담 신청하기</h2>
       <p className={s.secDesc}>
-        아래 폼을 작성하면 담당 전문가가 24시간 이내에 연락드립니다. AI 분석 결과를 첨부하면 더 정확한 상담을 받을 수 있습니다.
+        전화 상담 신청입니다. 담당 전문가가 24시간 이내에 예약을 확정하고 전화로 상담을 진행하며, 통화 시간 기준으로 정산됩니다. AI 분석 결과를 첨부하면 더 정확한 상담을 받을 수 있습니다. (대면 상담은 <b>방문 예약</b>을 이용해 주세요.)
       </p>
 
       <div className={s.consultLayout}>
@@ -165,7 +165,7 @@ export default function ConsultForm({
           <div className={`${s.sumTitle} ${s.sumTitleSm}`}>상담료 안내</div>
           <p className={s.formNote} style={{ textAlign: "left", marginTop: "8px", lineHeight: 1.7 }}>
             상담료는 각 전문가가 설정한 <b>시간당 보수료</b> 기준이며, <b>전액 전문가에게 지급</b>됩니다(노쉐어).
-            실제 비용은 상담 시간에 따라 정산되며, 보수료 미설정 전문가는 상담 시 협의합니다.
+            실제 비용은 <b>통화 시간</b>에 따라 정산되며, 보수료 미설정 전문가는 상담 시 협의합니다.
           </p>
         </div>
       </div>
