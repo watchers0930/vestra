@@ -109,6 +109,12 @@
 .fInput:focus, .fSelect:focus, .fArea:focus { border-color: #2e4bd8; background: #fff; }
 .fInput::placeholder, .fArea::placeholder { color: #b0b4c4; }
 .fieldRow { display: flex; gap: 10px; margin-bottom: 16px; }
+/* 상담 시간 슬롯 버튼 */
+.slotGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.slotBtn { padding: 10px 8px; border: 1px solid #e0e3ef; background: #fff; border-radius: 10px; font-size: 13px; font-weight: 600; color: #555; cursor: pointer; font-family: inherit; transition: all .15s; }
+.slotBtn:hover { border-color: #c0c7e8; color: #2e4bd8; }
+.slotBtnOn { border-color: #2e4bd8; background: #eef1fd; color: #2e4bd8; }
+.slotNote { font-size: 11px; color: #aab; margin-top: 8px; }
 .fieldRow > .field { flex: 1; margin-bottom: 0; }
 .fCheck { display: flex; align-items: center; gap: 9px; padding: 12px 14px; background: #f4f6fb; border-radius: 9px; margin-bottom: 18px; cursor: pointer; }
 .fCheck input { width: 17px; height: 17px; accent-color: #2e4bd8; cursor: pointer; }

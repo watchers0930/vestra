@@ -36,7 +36,7 @@ export function ConsultCalendar({ consults, selected, onSelect }: {
         <div className="text-sm font-bold text-gray-900">{year}년 {month + 1}월</div>
         <button onClick={() => setCursor(new Date(year, month + 1, 1))} className="p-1.5 rounded hover:bg-gray-100" aria-label="다음 달"><ChevronRight size={18} /></button>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center">
+      <div className="text-center" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
         {WD.map((w, i) => <div key={w} className={`text-[11px] py-1 ${i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-gray-400"}`}>{w}</div>)}
         {cells.map((d, i) => {
           if (!d) return <div key={i} />;

@@ -21,9 +21,13 @@ export default function LawyerConsultsPage() {
         {d.loading ? (
           <div className="py-20 text-center text-sm text-gray-400">불러오는 중…</div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-2 items-start">
-            <ConsultCalendar consults={d.consults} selected={selected} onSelect={setSelected} />
-            <ConsultDayPanel dateKey={selected} consults={d.consults} busy={d.busy} onAccept={d.acceptConsult} onPropose={d.proposeConsult} />
+          <div className="flex flex-col lg:flex-row gap-5 mt-2 items-start">
+            <div className="w-full lg:w-[380px] lg:flex-shrink-0">
+              <ConsultCalendar consults={d.consults} selected={selected} onSelect={setSelected} />
+            </div>
+            <div className="w-full lg:flex-1 min-w-0">
+              <ConsultDayPanel dateKey={selected} consults={d.consults} busy={d.busy} onAccept={d.acceptConsult} onPropose={d.proposeConsult} />
+            </div>
           </div>
         )}
       </div>

@@ -1,10 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import s from "../expert.module.css";
 import type { Expert } from "@/components/expert/ExpertCard";
 import type { ConsultFormState } from "@/app/(app)/expert-connect/hooks/useExpertConsult";
 // 상담 분야 옵션 — 제출 시 /api/keepzip/consults의 topic으로 전달된다
 import { CONSULT_TYPES } from "@/app/(app)/expert-connect/constants";
+
+// 상담 가능 시간대 — 오전 9시~오후 5시, 12~2시 휴게 제외 (슬롯 시작 시각)
+const TIME_SLOTS: [string, string][] = [
+  ["09:00", "오전 9시"], ["10:00", "오전 10시"], ["11:00", "오전 11시"],
+  ["14:00", "오후 2시"], ["15:00", "오후 3시"], ["16:00", "오후 4시"],
+];
 
 function fmtHourly(fee?: number | null) {
   if (fee == null) return "협의";
@@ -35,6 +42,12 @@ export default function ConsultForm({
   onSubmit,
   onReset,
 }: ConsultFormProps) {
+  const [date, setDate] = useState(() => formState.preferredDate.split("T")[0] || "");
+  const [time, setTime] = useState(() => formState.preferredDate.split("T")[1] || "");
+  const today = new Date().toISOString().split("T")[0];
+  const pickDate = (nd: string) => { setDate(nd); setFormState((p) => ({ ...p, preferredDate: nd && time ? `${nd}T${time}` : "" })); };
+  const pickTime = (nt: string) => { setTime(nt); setFormState((p) => ({ ...p, preferredDate: date && nt ? `${date}T${nt}` : "" })); };
+
   return (
     <div className={s.block} id="consult-form">
       <p className={s.secEyebrow}>Consult Request</p>
@@ -66,13 +79,13 @@ export default function ConsultForm({
 
           <div className={s.field}>
             <label className={s.fieldLabel}>희망 상담 시간<span className={s.req}>*</span></label>
-            <input
-              className={s.fInput}
-              type="datetime-local"
-              required
-              value={formState.preferredDate}
-              onChange={(e) => setFormState((p) => ({ ...p, preferredDate: e.target.value }))}
-            />
+            <input className={s.fInput} type="date" required min={today} value={date} onChange={(e) => pickDate(e.target.value)} />
+            <div className={s.slotGrid}>
+              {TIME_SLOTS.map(([v, l]) => (
+                <button key={v} type="button" className={`${s.slotBtn} ${time === v ? s.slotBtnOn : ""}`} onClick={() => pickTime(v)}>{l}</button>
+              ))}
+            </div>
+            <p className={s.slotNote}>상담 가능 시간: 평일 오전 9시 ~ 오후 5시 (오후 12~2시 휴게)</p>
           </div>
 
           <div className={s.field}>
