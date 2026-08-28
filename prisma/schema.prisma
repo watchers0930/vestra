@@ -1104,6 +1104,7 @@ model ExpertConsult {
   status      String    @default("pending") // pending | accepted | proposed | confirmed | rejected | answered
   preferredAt DateTime? // 이용자 1차 희망 상담 시간
   proposedAt  DateTime? // 변호사 역제안 시간
+  proposeMemo String?   @db.Text // 변호사 역제안 사유/메모
   confirmedAt DateTime? // 최종 확정 시간
   createdAt DateTime @default(now())
 

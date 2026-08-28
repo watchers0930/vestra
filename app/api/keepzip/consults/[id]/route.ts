@@ -53,7 +53,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (action === "propose") {
       const pt = b?.proposedAt ? new Date(String(b.proposedAt)) : null;
       if (!pt || isNaN(pt.getTime())) return NextResponse.json({ error: "제안할 시간을 선택해 주세요." }, { status: 400 });
-      await prisma.expertConsult.update({ where: { id }, data: { status: "proposed", proposedAt: pt } });
+      const memo = typeof b?.memo === "string" ? b.memo.slice(0, 500).trim() || null : null;
+      await prisma.expertConsult.update({ where: { id }, data: { status: "proposed", proposedAt: pt, proposeMemo: memo } });
       return NextResponse.json({ ok: true, status: "proposed" });
     }
 

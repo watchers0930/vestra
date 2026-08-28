@@ -13,6 +13,7 @@ interface MyConsult {
   status: string;
   preferredAt: string | null;
   proposedAt: string | null;
+  proposeMemo: string | null;
   confirmedAt: string | null;
   createdAt: string;
 }
@@ -97,6 +98,12 @@ export default function ProfileConsultsPanel() {
                 <div className={s.gCol}><p className={s.gLabel}>확정 시간</p><p className={`${s.gVal} ${s.gAccent}`}>{fmt(c.confirmedAt)}</p></div>
               )}
             </div>
+            {c.status === "proposed" && c.proposeMemo && (
+              <div className={s.noteBox} style={{ marginBottom: 12, background: "#f6f7fb", border: "1px solid #e8eaf2", color: "#555" }}>
+                <p className={s.noteLabel}>변호사 메모</p>
+                {c.proposeMemo}
+              </div>
+            )}
             {c.status === "proposed" && (
               <div className={s.appFoot}>
                 <span className={s.footDate}>변호사가 다른 시간을 제안했습니다</span>

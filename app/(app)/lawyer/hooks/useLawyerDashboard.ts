@@ -207,13 +207,13 @@ export function useLawyerDashboard(
     } catch { showToast("네트워크 오류가 발생했습니다.", "error"); } finally { setBusy(null); }
   };
 
-  /** 상담 다른 시간 역제안 */
-  const proposeConsult = async (id: string, proposedAt: string) => {
+  /** 상담 다른 시간 역제안 (사유 메모 포함) */
+  const proposeConsult = async (id: string, proposedAt: string, memo: string) => {
     setBusy(id);
     try {
       const res = await fetch(`/api/keepzip/consults/${id}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "propose", proposedAt }),
+        body: JSON.stringify({ action: "propose", proposedAt, memo }),
       });
       const d = await res.json().catch(() => null);
       if (!res.ok) { showToast(d?.error ?? "처리에 실패했습니다.", "error"); return; }

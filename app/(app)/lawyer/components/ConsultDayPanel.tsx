@@ -8,6 +8,12 @@ import type { Consult } from "../hooks/useLawyerDashboard";
 const fmtTime = (iso?: string | null) => (iso ? new Date(iso).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : "-");
 const fmtFull = (iso?: string | null) => (iso ? new Date(iso).toLocaleString("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "-");
 
+// 상담 가능 시간대 — 이용자 신청과 동일 (오전 9시~오후 5시, 12~2시 휴게 제외)
+const TIME_SLOTS: [string, string][] = [
+  ["09:00", "오전 9시"], ["10:00", "오전 10시"], ["11:00", "오전 11시"],
+  ["14:00", "오후 2시"], ["15:00", "오후 3시"], ["16:00", "오후 4시"],
+];
+
 const ST: Record<string, { t: string; c: string }> = {
   pending: { t: "응답 대기", c: "bg-amber-50 text-amber-700 border-amber-100" },
   accepted: { t: "수락함", c: "bg-emerald-50 text-emerald-700 border-emerald-100" },
@@ -23,10 +29,14 @@ export function ConsultDayPanel({ dateKey, consults, busy, onAccept, onPropose }
   consults: Consult[];
   busy: string | null;
   onAccept: (id: string) => void;
-  onPropose: (id: string, at: string) => void;
+  onPropose: (id: string, at: string, memo: string) => void;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
-  const [at, setAt] = useState("");
+  const [pDate, setPDate] = useState("");
+  const [pTime, setPTime] = useState("");
+  const [pMemo, setPMemo] = useState("");
+  const today = new Date().toISOString().split("T")[0];
+  const reset = () => { setOpenId(null); setPDate(""); setPTime(""); setPMemo(""); };
 
   const list = consults
     .filter((c) => isoToKey(c.preferredAt) === dateKey)
@@ -69,15 +79,24 @@ export function ConsultDayPanel({ dateKey, consults, busy, onAccept, onPropose }
                   <div className="mt-3">
                     {openId === c.id ? (
                       <div className="flex flex-col gap-2">
-                        <input type="datetime-local" value={at} onChange={(e) => setAt(e.target.value)} className="rounded-lg border border-gray-200 p-2 text-sm outline-none focus:border-blue-400" />
+                        <input type="date" min={today} value={pDate} onChange={(e) => setPDate(e.target.value)} className="rounded-lg border border-gray-200 p-2 text-sm outline-none focus:border-blue-400" />
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {TIME_SLOTS.map(([v, l]) => (
+                            <button key={v} type="button" onClick={() => setPTime(v)}
+                              className={`py-2 rounded-lg border text-xs font-semibold transition-colors ${pTime === v ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:border-blue-300"}`}>{l}</button>
+                          ))}
+                        </div>
+                        <textarea value={pMemo} onChange={(e) => setPMemo(e.target.value)} rows={2} maxLength={500}
+                          placeholder="변경 사유 (예: 그 시간은 재판이 있어 어렵습니다. 이 시간 가능하실까요?)"
+                          className="rounded-lg border border-gray-200 p-2 text-[13px] outline-none focus:border-blue-400" />
                         <div className="flex gap-2">
-                          <button onClick={() => setOpenId(null)} className="flex-1 rounded-lg border border-gray-200 py-2 text-sm">취소</button>
-                          <button disabled={isBusy || !at} onClick={() => { onPropose(c.id, at); setOpenId(null); setAt(""); }} className="flex-1 rounded-lg bg-blue-600 text-white py-2 text-sm font-semibold disabled:opacity-50">이 시간 제안</button>
+                          <button onClick={reset} className="flex-1 rounded-lg border border-gray-200 py-2 text-sm">취소</button>
+                          <button disabled={isBusy || !pDate || !pTime} onClick={() => { onPropose(c.id, `${pDate}T${pTime}`, pMemo); reset(); }} className="flex-1 rounded-lg bg-blue-600 text-white py-2 text-sm font-semibold disabled:opacity-50">이 시간 제안</button>
                         </div>
                       </div>
                     ) : (
                       <div className="flex gap-2">
-                        <button disabled={isBusy} onClick={() => { setOpenId(c.id); setAt(""); }} className="flex-1 rounded-lg border border-gray-200 py-2 text-sm font-medium hover:border-blue-300">다른 시간 제안</button>
+                        <button disabled={isBusy} onClick={() => { setOpenId(c.id); setPDate(""); setPTime(""); }} className="flex-1 rounded-lg border border-gray-200 py-2 text-sm font-medium hover:border-blue-300">다른 시간 제안</button>
                         <button disabled={isBusy} onClick={() => onAccept(c.id)} className="flex-1 rounded-lg bg-blue-600 text-white py-2 text-sm font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-1"><Check size={14} />수락</button>
                       </div>
                     )}
