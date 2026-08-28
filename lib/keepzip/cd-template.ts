@@ -35,6 +35,7 @@ const COMMON_SYSTEM = `당신은 대한민국 부동산 임대차 분쟁 내용�
 아래 지침을 반드시 지켜라.
 - 대한민국 내용증명 형식으로 작성한다: 제목, 발신인/수신인, 번호를 매긴 본문 문단, 청구(또는 통지) 취지, 이행 기한, 불이행 시 법적 조치 예고 순서.
 - 입력으로 주어진 사실만 사용하고, 주어지지 않은 금액·날짜·이름은 임의로 지어내지 말고 "(해당 정보 기재)" 형태의 공란으로 남긴다.
+- 금액은 반드시 입력으로 제공된 "숫자원(일금 한글금액원정)" 형식(예: 50,000,000원(일금 오천만원정))을 본문에 그대로 사용한다. 숫자만 쓰거나 한글 병기를 생략하지 않는다.
 - 정중하되 법적 효력과 압박이 분명한 어조를 쓴다. 허위·과장 사실을 넣지 않는다.
 - 관련 법조문을 정확히 인용한다(불확실하면 조문 번호를 지어내지 말 것).
 - 반드시 아래 JSON 형식으로만 응답한다:
@@ -172,8 +173,33 @@ export function validateDraftInput(raw: unknown): ValidationResult {
 
 // ── user 프롬프트 빌더 ───────────────────────────────────────────────────────
 
+/** 금액(원) → 한글 수사(정식 표기, 위변조 방지용 각 자리 명시). 예) 50000000 → "오천만" */
+export function toKoreanAmount(n: number): string {
+  if (n === 0) return "영";
+  const D = ["", "일", "이", "삼", "사", "오", "육", "칠", "팔", "구"];
+  const U4 = ["", "십", "백", "천"]; // 1·10·100·1000의 자리
+  const BIG = ["", "만", "억", "조", "경"];
+  const groups: number[] = [];
+  let x = Math.floor(n);
+  while (x > 0) { groups.push(x % 10000); x = Math.floor(x / 10000); }
+  let out = "";
+  for (let g = groups.length - 1; g >= 0; g--) {
+    const val = groups[g];
+    if (val === 0) continue;
+    let s = "";
+    for (let i = 3; i >= 0; i--) {
+      const d = Math.floor(val / 10 ** i) % 10;
+      if (d !== 0) s += D[d] + U4[i];
+    }
+    out += s + BIG[g];
+  }
+  return out;
+}
+
+/** 금액을 "50,000,000원(일금 오천만원정)" 형태로 표기 */
 function won(n?: number): string {
-  return n === undefined ? "(금액 기재)" : `${n.toLocaleString("ko-KR")}원`;
+  if (n === undefined) return "(금액 기재)";
+  return `${n.toLocaleString("ko-KR")}원(일금 ${toKoreanAmount(n)}원정)`;
 }
 
 export function buildUserPrompt(input: DraftInput): string {
