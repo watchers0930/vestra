@@ -18,7 +18,7 @@
 .secTitle{font-size:20px;font-weight:700;color:#1a1d2e;letter-spacing:-.3px;margin-bottom:20px}
 
 /* ===== CARD ===== */
-.card{background:#fff;border:1px solid #e8eaf2;border-radius:16px;padding:24px;margin-bottom:18px}
+.card{background:#fff;border:1px solid #e8eaf2;border-radius:16px;padding:24px;margin-bottom:18px;box-shadow:0 1px 2px rgba(20,30,90,.03)}
 .cardHead{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:18px}
 .cardHeadL{display:flex;align-items:center;gap:9px}
 .cardTitle{font-size:15px;font-weight:700;color:#1a1d2e}
@@ -27,7 +27,7 @@
 
 /* ===== KPI ROW ===== */
 .kpiRow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
-.kpiCard{background:#fff;border:1px solid #e8eaf2;border-radius:14px;padding:18px 20px}
+.kpiCard{background:#fff;border:1px solid #e8eaf2;border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(20,30,90,.03)}
 .kpiIco{color:#2e4bd8;margin-bottom:12px}
 .kpiLabel{font-size:11px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
 .kpiVal{font-size:24px;font-weight:800;letter-spacing:-.8px;line-height:1;color:#1a1d2e}
@@ -269,6 +269,56 @@
 .kzStamp{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#15803d;font-weight:600;margin-top:10px}
 .kzModalFoot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #eceef4;margin-top:18px;padding-top:14px;font-size:12px;color:#888}
 
+/* ===== MYPAGE LAYOUT (개편) ===== */
+.pageBg{background:#f5f6fc;min-height:calc(100vh - 80px)}
+.mypage{max-width:1200px;margin:0 auto;padding:26px 32px 80px}
+/* 프로필 헤더(서브 히어로) */
+.phead{position:relative;border-radius:20px;overflow:hidden;color:#fff;padding:24px 30px 28px;background:radial-gradient(120% 140% at 85% -10%,#22307a 0%,#1a2456 42%,#070d2e 100%)}
+.phead::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 90% at 12% 120%,rgba(46,75,216,.35),transparent 70%);pointer-events:none}
+.pheadChip{position:relative;z-index:1;display:inline-flex;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#93a5ff;background:rgba(46,75,216,.22);border:1px solid rgba(46,75,216,.42);padding:4px 13px;border-radius:20px;margin-bottom:18px}
+.pheadMain{position:relative;z-index:1;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.pheadAvatar{width:72px;height:72px;border-radius:50%;flex-shrink:0;background:linear-gradient(155deg,#3b57e0,#7d92ff);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;box-shadow:0 6px 20px rgba(20,30,90,.45),inset 0 1px 0 rgba(255,255,255,.25)}
+.pinfo{min-width:0;flex:1}
+.pname{font-size:22px;font-weight:800;letter-spacing:-.4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pnameSuf{font-size:13px;font-weight:600;color:rgba(255,255,255,.55)}
+.pmail{font-size:13px;color:rgba(255,255,255,.62);margin-top:3px}
+.pbadges{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap}
+.hpill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:4px 11px;border-radius:20px;line-height:1;white-space:nowrap}
+.hpillRole{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.2)}
+.hpillOk{background:rgba(52,211,153,.16);color:#6ee7b7;border:1px solid rgba(52,211,153,.3)}
+.hpillWarn{background:rgba(245,158,11,.16);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+.husage{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:16px;padding:15px 18px;min-width:200px}
+.husageTop{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:rgba(255,255,255,.7)}
+.husageTop b{color:#fff;font-size:15px;font-weight:800}
+.husageTrack{height:7px;border-radius:20px;background:rgba(255,255,255,.15);margin-top:9px;overflow:hidden}
+.husageFill{height:100%;border-radius:20px;background:linear-gradient(90deg,#5b78ff,#93a5ff)}
+.husageSub{font-size:11px;color:rgba(255,255,255,.5);margin-top:8px}
+/* 2컬럼 */
+.layoutBody{display:grid;grid-template-columns:212px 1fr;gap:22px;margin-top:22px;align-items:start}
+.sideNav{position:sticky;top:16px;background:#fff;border:1px solid #e8eaf2;border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:2px}
+.navItem{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;font-size:13.5px;font-weight:600;color:#888;cursor:pointer;border:none;background:none;font-family:inherit;text-align:left;width:100%;transition:background .14s,color .14s}
+.navItem svg{width:18px;height:18px;flex-shrink:0}
+.navItem:hover{background:#f0f2f9;color:#1a1d2e}
+.navItem.navOn{background:#eef1fe;color:#2e4bd8}
+.navCnt{margin-left:auto;font-size:11px;font-weight:700;background:#2e4bd8;color:#fff;min-width:18px;height:18px;padding:0 5px;border-radius:20px;display:inline-flex;align-items:center;justify-content:center}
+.navSep{height:1px;background:#f0f2f9;margin:6px 10px}
+.content{min-width:0}
+.contentH{font-size:19px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px;color:#1a1d2e}
+.contentD{font-size:13px;color:#888;margin:0 0 20px}
+/* 모바일 탭 */
+.mobileTabs{display:none}
+.mTab{white-space:nowrap;font-size:13px;font-weight:600;padding:8px 15px;border-radius:20px;border:1px solid #e8eaf2;background:#fff;color:#888;cursor:pointer;flex-shrink:0;font-family:inherit}
+.mTab.navOn{background:#2e4bd8;color:#fff;border-color:#2e4bd8}
+/* 내용증명 목록 카드 미니 타임라인 */
+.kzMini{display:flex;align-items:center;margin-top:13px}
+.kzMiniStep{position:relative;flex:1;display:flex;flex-direction:column;align-items:center}
+.kzMiniDot{width:22px;height:22px;border-radius:50%;background:#e9ebf4;color:#aab;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;z-index:1}
+.kzMiniDot.kzDone{background:#2e4bd8;color:#fff}
+.kzMiniLabel{font-size:9.5px;color:#aab;margin-top:5px;white-space:nowrap}
+.kzMiniLabel.kzDone{color:#1a1d2e;font-weight:700}
+.kzMiniLine{position:absolute;top:10px;left:50%;width:100%;height:2px;background:#e8eaf2;z-index:0}
+.kzMiniLine.kzDone{background:#2e4bd8}
+
 /* ===== RESPONSIVE ===== */
 @media(max-width:768px){
   .subHero{height:160px}
@@ -280,4 +330,11 @@
   .lstCard{flex-wrap:wrap}
   .kzStepLabel{font-size:9.5px}
   .kzModal{padding:20px}
+  .mypage{padding:18px 16px 60px}
+  .phead{padding:22px}
+  .pheadMain{gap:16px}
+  .husage{width:100%;min-width:0}
+  .layoutBody{grid-template-columns:1fr}
+  .sideNav{display:none}
+  .mobileTabs{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;margin-top:18px}
 }

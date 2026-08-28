@@ -44,6 +44,26 @@ function Timeline({ status }: { status: string }) {
   );
 }
 
+/** 목록 카드용 미니 타임라인 */
+function MiniTimeline({ status }: { status: string }) {
+  const cur = timelineStep(status);
+  if (cur < 0) return null;
+  return (
+    <div className={s.kzMini}>
+      {KEEPZIP_TIMELINE.map((label, i) => {
+        const done = i <= cur;
+        return (
+          <div key={label} className={s.kzMiniStep}>
+            {i < KEEPZIP_TIMELINE.length - 1 && <span className={`${s.kzMiniLine} ${i < cur ? s.kzDone : ""}`} />}
+            <span className={`${s.kzMiniDot} ${done ? s.kzDone : ""}`}>{done ? "✓" : i + 1}</span>
+            <span className={`${s.kzMiniLabel} ${done ? s.kzDone : ""}`}>{label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /** 사건 상세 모달 — 원문 + 진행상황 */
 function DetailModal({ detail, onClose }: { detail: KzDetail; onClose: () => void }) {
   const m = statusMeta(detail.status);
@@ -126,6 +146,7 @@ export default function ProfileKeepzipPanel() {
               </div>
               <span className={`${s.statusPill} ${PILL[m.tone]}`}>{m.label}</span>
             </div>
+            <MiniTimeline status={c.status} />
             <div className={s.appFoot}>
               <span className={s.footDate}>접수 {fmtDate(c.createdAt)}</span>
               <span className={s.kzView}>{opening === c.id ? "여는 중…" : "내용·진행상황 보기 →"}</span>
