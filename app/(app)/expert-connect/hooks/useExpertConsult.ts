@@ -77,7 +77,8 @@ export function useExpertConsult() {
           lawyerId: selectedExpert.id,
           name: session?.user?.name?.trim() || "방문 신청자",
           phone: reservationForm.phone,
-          preferredAt: reservationForm.preferredDate,
+          // datetime(타임존 없음)을 로컬 기준 ISO로 변환 — 캘린더 날짜 밀림 방지
+          preferredAt: reservationForm.preferredDate ? new Date(reservationForm.preferredDate).toISOString() : undefined,
           purpose: purpose || "방문 상담",
         }),
       });
