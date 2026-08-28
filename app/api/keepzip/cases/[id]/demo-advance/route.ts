@@ -11,15 +11,18 @@ import { validateOrigin } from "@/lib/csrf";
  * 실서비스에서는 승인=변호사 대시보드, 결제=토스 confirm, 발송=포스트플러스,
  * 추적=우체국 종적조회 API가 각각 대체한다. 본 라우트는 실 결제/정산/발송을 하지 않는다.
  *
- * body: { action: "approve" | "pay" | "deliver" | "return"
+ * body: { action: "approve" | "send" | "deliver" | "return"
  *                 | "resolve" | "unrespond" | "payment_order" | "litigation" | "public_notice" }
+ *
+ * 선결제(설계서 §8.3): 결제는 사건 생성(POST /cases) 시점에 완료되며,
+ * 여기서는 변호사 검증(approve) 후 발송(send)만 처리한다.
  */
 type Params = { params: Promise<{ id: string }> };
 
 // 각 action이 허용되는 시작 상태 (순서 강제 — 서버 검증)
 const FROM: Record<string, string> = {
   approve: "lawyer_pending",
-  pay: "lawyer_approved",
+  send: "lawyer_approved",
   deliver: "postal_sent",
   return: "postal_sent",
   // 발송 후 프로세스
@@ -76,8 +79,8 @@ export async function POST(req: NextRequest, { params }: Params) {
       return NextResponse.json({ ok: true, status: "lawyer_approved" });
     }
 
-    if (action === "pay") {
-      // 결제 + 발송을 하나로(데모). orderId로 결제 증빙, tracking 발급.
+    if (action === "send") {
+      // 검증·직인 완료 → 우체국 등기 발송(데모). orderId로 발송 증빙, tracking 발급.
       const trackingNo = genTrackingNo();
       const orderId = `demo_${id.slice(0, 8)}_${Date.now()}`;
       await prisma.$transaction([

@@ -15,12 +15,15 @@ export interface StepMeta {
   view: JourneyView;
 }
 
-/** 상단 스텝 인디케이터에 노출되는 6단계 */
+/**
+ * 상단 스텝 인디케이터에 노출되는 6단계.
+ * 설계서 §8.3 선결제 흐름: 작성 → 결제 → 변호사 검증·직인 → 발송.
+ */
 export const JOURNEY_STEPS: StepMeta[] = [
   { step: 1, label: "정보입력", view: "compose" },
   { step: 2, label: "AI 초안", view: "compose" },
-  { step: 3, label: "변호사 검토", view: "review" },
-  { step: 4, label: "결제", view: "review" },
+  { step: 3, label: "결제", view: "review" },
+  { step: 4, label: "변호사 검증", view: "review" },
   { step: 5, label: "발송·추적", view: "track" },
   { step: 6, label: "사후관리", view: "track" },
 ];
@@ -38,9 +41,9 @@ export const VIEW_STEPS: Record<JourneyView, JourneyStep[]> = {
  */
 export function stepFromCaseStatus(status?: string | null): JourneyStep {
   switch (status) {
-    case "lawyer_pending": return 3;  // 변호사 검토 대기
-    case "lawyer_approved": return 4; // 검토 완료 → 결제 대기
-    case "paid": return 5;            // 결제 완료 → 발송/추적
+    case "lawyer_pending": return 4;  // 결제 완료 → 변호사 검증·직인 대기
+    case "lawyer_approved": return 4; // 검증·직인 완료 → 발송 대기
+    case "paid": return 4;            // 결제 완료 → 검증 대기
     case "postal_sent": return 5;     // 발송 → 추적
     case "delivered":
     case "returned":

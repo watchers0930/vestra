@@ -57,31 +57,36 @@ export function KeepzipJourney({ lawyerName, lawyerId }: Props) {
             submitting={j.submitting}
             setDraftContent={j.setDraftContent}
             setSignature={j.setSignature}
-            onRequestReview={j.requestReview}
+            onProceed={j.goToPayment}
             onError={(m) => showToast(m, "error")}
           />
         </div>
       )}
 
       {j.view === "review" && (
-        <>
+        !j.caseId ? (
+          /* 선결제: 사건 생성 전 결제 → 결제 완료 시 변호사에게 전송(검증 대기) */
+          <Step4Payment
+            onPaid={async () => {
+              const ok = await j.payAndSubmit();
+              if (ok) showToast("결제 완료 — 담당 변호사에게 전송되었습니다.", "success");
+            }}
+          />
+        ) : (
           <Step3Review
             lawyerName={j.lawyerName}
             approved={j.caseStatus === "lawyer_approved"}
+            busy={j.submitting}
             onApprove={() => j.demoAdvance("approve")}
+            onSend={async () => {
+              const r = await j.demoAdvance("send");
+              if (r) {
+                j.goView("track");
+                showToast("우체국 등기로 발송되었습니다.", "success");
+              }
+            }}
           />
-          {j.caseStatus === "lawyer_approved" && (
-            <Step4Payment
-              onPaid={async () => {
-                const r = await j.demoAdvance("pay");
-                if (r) {
-                  j.goView("track");
-                  showToast("결제 완료 — 우체국 등기로 발송되었습니다.", "success");
-                }
-              }}
-            />
-          )}
-        </>
+        )
       )}
 
       {j.view === "track" && (

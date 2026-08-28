@@ -3,7 +3,7 @@
 import { useState } from "react";
 import s from "../../keepzip-renewal.module.css";
 import RenewalGnb from "../../../_shared/RenewalGnb";
-import { KeepzipDraftForm } from "../../components/KeepzipDraftForm";
+import { KeepzipJourney } from "../../KeepzipJourney";
 import { ExpertInquiryForm } from "@/components/keepzip/ExpertInquiryForm";
 import type { Expert } from "@/components/expert/ExpertCard";
 
@@ -61,7 +61,7 @@ export default function LawyerHomeContent({ expert }: { expert: Expert }) {
         </div>
       </div>
 
-      {tab === "notice" && <KeepzipDraftForm lawyerName={expert.name} lawyerId={expert.id} />}
+      {tab === "notice" && <KeepzipJourney lawyerName={expert.name} lawyerId={expert.id} />}
       {tab === "consult" && (
         <div className="max-w-5xl mx-auto px-4 py-8">
           <ExpertInquiryForm lawyerId={expert.id} lawyerName={expert.name} mode="consult" />

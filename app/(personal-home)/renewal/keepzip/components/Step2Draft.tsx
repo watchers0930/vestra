@@ -13,14 +13,14 @@ interface Props {
   submitting: boolean;
   setDraftContent: (content: string) => void;
   setSignature: (v: string) => void;
-  onRequestReview: () => void;
+  onProceed: () => void;
   onError: (msg: string) => void;
 }
 
-/** Step 2 — AI 초안 패널(우). 수정·서명 후 변호사 검토 요청 / PDF 내려받기. */
+/** Step 2 — AI 초안 패널(우). 수정·서명 후 결제 단계로 진행 / PDF 내려받기. */
 export function Step2Draft({
   draft, loading, error, senderName, signature, submitting,
-  setDraftContent, setSignature, onRequestReview, onError,
+  setDraftContent, setSignature, onProceed, onError,
 }: Props) {
   const downloadPdf = async () => {
     if (!draft) return;
@@ -70,11 +70,11 @@ export function Step2Draft({
           <div style={{ marginTop: 16 }}>
             <SignaturePad value={signature} onChange={setSignature} label="발신인(본인)" />
           </div>
-          <p className={s.note}>※ AI 초안입니다. 직접 수정할 수 있으며, 실제 발송 전 담당 변호사의 검토·직인을 거칩니다.</p>
+          <p className={s.note}>※ AI 초안입니다. 직접 수정할 수 있으며, 결제 후 담당 변호사의 검토·직인을 거쳐 발송됩니다.</p>
           <button className={s.submitBtn} style={{ marginTop: 12 }}
             disabled={submitting || !signature}
-            onClick={onRequestReview}>
-            {submitting ? "요청 중..." : !signature ? "서명 후 검토 요청" : "변호사 검토 요청하기"}
+            onClick={onProceed}>
+            {!signature ? "서명 후 결제 단계로" : "결제하고 진행하기"}
           </button>
           <button className={s.proceedBtn} onClick={downloadPdf}>서명 포함 PDF 내려받기</button>
         </>

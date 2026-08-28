@@ -5,14 +5,17 @@ import s from "../keepzip-renewal.module.css";
 interface Props {
   lawyerName?: string;
   approved: boolean;
+  busy?: boolean;
   /** 데모: 변호사 승인 시뮬레이션 (실서비스는 변호사가 대시보드에서 승인·직인) */
   onApprove: () => void;
+  /** 검증·직인 완료 후 우체국 등기 발송 */
+  onSend: () => void;
 }
 
 const CHECKS = ["AI 초안 수령 확인", "법률 조항 및 사실관계 검토", "전자 날인 및 승인"];
 
-/** Step 3 — 변호사 검토·직인 대기/완료. */
-export function Step3Review({ lawyerName, approved, onApprove }: Props) {
+/** Step 4 — 변호사 검증·직인 대기/완료(결제 후). 승인 시 발송. */
+export function Step3Review({ lawyerName, approved, busy, onApprove, onSend }: Props) {
   const name = lawyerName ?? "제휴 변호사";
   return (
     <div className={s.centerCol}>
@@ -34,9 +37,14 @@ export function Step3Review({ lawyerName, approved, onApprove }: Props) {
         </ul>
 
         {approved ? (
-          <div className={s.assignBadge} style={{ marginTop: 16, marginBottom: 0, textAlign: "center" }}>
-            ✓ 변호사 검토가 완료되었습니다. 결제 후 우체국 등기로 발송됩니다.
-          </div>
+          <>
+            <div className={s.assignBadge} style={{ marginTop: 16, marginBottom: 0, textAlign: "center" }}>
+              ✓ 변호사 검토·직인이 완료되었습니다. 우체국 등기로 발송할 수 있습니다.
+            </div>
+            <button className={s.submitBtn} style={{ marginTop: 12 }} disabled={busy} onClick={onSend}>
+              {busy ? "처리 중..." : "우체국 등기로 발송하기"}
+            </button>
+          </>
         ) : (
           <>
             <div className={s.loadWrap} style={{ minHeight: 100 }}>

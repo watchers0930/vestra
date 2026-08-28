@@ -13,7 +13,7 @@ import ExpertList from "./components/ExpertList";
 import ConsultForm from "./components/ConsultForm";
 import VisitForm from "./components/VisitForm";
 import ProcessSection from "./components/ProcessSection";
-import { KeepzipDraftForm } from "../keepzip/components/KeepzipDraftForm";
+import { KeepzipJourney } from "../keepzip/KeepzipJourney";
 import type { Expert } from "@/components/expert/ExpertCard";
 import type { ExpertIntent } from "./components/ExpertList";
 
@@ -102,7 +102,7 @@ export default function ExpertClient() {
           <>
             <button type="button" onClick={() => window.history.back()} style={backBtnStyle}>← 전문가 목록으로</button>
             {selectedExpert.category === "변호사" && intent === "keepzip" ? (
-              <KeepzipDraftForm lawyerName={selectedExpert.name} />
+              <KeepzipJourney lawyerName={selectedExpert.name} lawyerId={selectedExpert.id} />
             ) : intent === "visit" ? (
               <VisitForm
                 selectedExpert={selectedExpert}

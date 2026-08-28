@@ -48,9 +48,15 @@ export function useKeepzipJourney({ lawyerName, lawyerId, onError }: Options = {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  /** 작성 완료 → 사건 생성(검토 대기) → 검토 뷰로 이동 */
-  const requestReview = useCallback(async () => {
-    if (!draft.draft) return;
+  /** 작성 완료(초안+서명) → 결제 뷰로 이동. 사건 생성은 결제 후. */
+  const goToPayment = useCallback(() => {
+    if (!draft.draft || !signature) return;
+    goView("review");
+  }, [draft.draft, signature, goView]);
+
+  /** 결제 완료 → 사건 생성(변호사 전송, 검증 대기). 설계서 §8.3 선결제. */
+  const payAndSubmit = useCallback(async () => {
+    if (!draft.draft) return false;
     setSubmitting(true);
     try {
       // 담당 변호사 결정 — 미니홈 진입 시 지정, 메인 여정은 배정 가능한 변호사 자동 선택(데모)
@@ -61,7 +67,7 @@ export function useKeepzipJourney({ lawyerName, lawyerId, onError }: Options = {
         const first = ld?.experts?.[0];
         if (!first?.id) {
           onError?.("배정 가능한 변호사가 없습니다.");
-          return;
+          return false;
         }
         effLawyerId = first.id;
         setAssignedLawyer(first.name ?? null);
@@ -84,24 +90,25 @@ export function useKeepzipJourney({ lawyerName, lawyerId, onError }: Options = {
       });
       const d = await res.json().catch(() => null);
       if (!res.ok) {
-        onError?.(d?.error ?? "검토 요청에 실패했습니다.");
-        return;
+        onError?.(d?.error ?? "사건 생성에 실패했습니다.");
+        return false;
       }
       setCaseId(d?.id ?? null);
-      setCaseStatus("lawyer_pending");
-      goView("review");
+      setCaseStatus("lawyer_pending"); // 결제 완료 → 변호사 검증·직인 대기
+      return true;
     } catch {
       onError?.("네트워크 오류가 발생했습니다.");
+      return false;
     } finally {
       setSubmitting(false);
     }
-  }, [draft.draft, draft.form, draft.econtractId, signature, lawyerId, goView, onError]);
+  }, [draft.draft, draft.form, draft.econtractId, signature, lawyerId, onError]);
 
   /** 데모 상태 전이(승인/결제·발송/배달/반송) — 서버 DB에 반영 */
   const demoAdvance = useCallback(
     async (
       action:
-        | "approve" | "pay" | "deliver" | "return"
+        | "approve" | "send" | "deliver" | "return"
         | "resolve" | "unrespond" | "payment_order" | "litigation" | "public_notice",
     ) => {
       if (!caseId) return null;
@@ -143,7 +150,8 @@ export function useKeepzipJourney({ lawyerName, lawyerId, onError }: Options = {
     trackingNo,
     deliveredAt,
     submitting,
-    requestReview,
+    goToPayment,
+    payAndSubmit,
     demoAdvance,
     lawyerName: lawyerName ?? assignedLawyer ?? undefined,
     lawyerId,
