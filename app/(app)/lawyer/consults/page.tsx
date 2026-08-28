@@ -10,7 +10,7 @@ import { ConsultDayPanel } from "../components/ConsultDayPanel";
 
 /** 상담신청현황 — 캘린더(날짜별 건수) + 날짜별 시간 일정 조율 */
 export default function LawyerConsultsPage() {
-  const d = useLawyerDashboard(false, true, false);
+  const d = useLawyerDashboard(false, true, true);
   const [selected, setSelected] = useState(() => dayKey(new Date()));
 
   return (
@@ -23,7 +23,7 @@ export default function LawyerConsultsPage() {
         ) : (
           <div className="flex flex-col lg:flex-row gap-5 mt-2 items-start">
             <div className="w-full lg:w-[300px] lg:flex-shrink-0">
-              <ConsultCalendar consults={d.consults} selected={selected} onSelect={setSelected} />
+              <ConsultCalendar consults={d.consults} visits={d.visits} selected={selected} onSelect={setSelected} />
             </div>
             <div className="w-full lg:flex-1 min-w-0">
               <ConsultDayPanel dateKey={selected} consults={d.consults} busy={d.busy} onAccept={d.acceptConsult} onPropose={d.proposeConsult} />

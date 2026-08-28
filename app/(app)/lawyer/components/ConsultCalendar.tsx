@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { Consult } from "../hooks/useLawyerDashboard";
+import type { Consult, Visit } from "../hooks/useLawyerDashboard";
 
 export const dayKey = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -10,16 +10,19 @@ export const isoToKey = (iso?: string | null) => (iso ? dayKey(new Date(iso)) : 
 
 const WD = ["일", "월", "화", "수", "목", "금", "토"];
 
-/** 월 캘린더 — 날짜별 상담 건수 배지, 날짜 선택 */
-export function ConsultCalendar({ consults, selected, onSelect }: {
+/** 월 캘린더 — 상담(파랑)·방문(초록) 건수를 날짜별 색 구분 배지로 표시(공동 달력). */
+export function ConsultCalendar({ consults, visits = [], selected, onSelect }: {
   consults: Consult[];
+  visits?: Visit[];
   selected: string;
   onSelect: (key: string) => void;
 }) {
   const [cursor, setCursor] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
 
-  const counts: Record<string, number> = {};
-  consults.forEach((c) => { const k = isoToKey(c.preferredAt); if (k) counts[k] = (counts[k] || 0) + 1; });
+  const cCounts: Record<string, number> = {};
+  const vCounts: Record<string, number> = {};
+  consults.forEach((c) => { const k = isoToKey(c.preferredAt); if (k) cCounts[k] = (cCounts[k] || 0) + 1; });
+  visits.forEach((v) => { const k = isoToKey(v.preferredAt); if (k) vCounts[k] = (vCounts[k] || 0) + 1; });
 
   const year = cursor.getFullYear(), month = cursor.getMonth();
   const startDow = new Date(year, month, 1).getDay();
@@ -36,12 +39,20 @@ export function ConsultCalendar({ consults, selected, onSelect }: {
         <div className="text-sm font-bold text-gray-900">{year}년 {month + 1}월</div>
         <button onClick={() => setCursor(new Date(year, month + 1, 1))} className="p-1.5 rounded hover:bg-gray-100" aria-label="다음 달"><ChevronRight size={18} /></button>
       </div>
+
+      {/* 범례 — 상담·방문 색 구분 */}
+      <div className="flex items-center justify-center gap-4 mb-3 text-[11px] text-gray-500">
+        <span className="inline-flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-blue-600" /> 상담</span>
+        <span className="inline-flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-emerald-600" /> 방문</span>
+      </div>
+
       <div className="text-center" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
         {WD.map((w, i) => <div key={w} className={`text-[11px] py-1 ${i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-gray-400"}`}>{w}</div>)}
         {cells.map((d, i) => {
           if (!d) return <div key={i} />;
           const k = dayKey(d);
-          const cnt = counts[k] || 0;
+          const cCnt = cCounts[k] || 0;
+          const vCnt = vCounts[k] || 0;
           const on = k === selected;
           const today = k === todayKey;
           return (
@@ -52,8 +63,15 @@ export function ConsultCalendar({ consults, selected, onSelect }: {
               className={`rounded-lg flex flex-col items-center justify-center text-[13px] transition-colors ${on ? "bg-blue-600 text-white" : today ? "bg-blue-50 text-blue-700" : "hover:bg-gray-100 text-gray-700"}`}
             >
               <span>{d.getDate()}</span>
-              {cnt > 0 && (
-                <span className={`text-[9.5px] font-bold mt-0.5 min-w-[16px] px-1 rounded-full ${on ? "bg-white/25 text-white" : "bg-blue-600 text-white"}`}>{cnt}</span>
+              {(cCnt > 0 || vCnt > 0) && (
+                <span className="flex items-center gap-0.5 mt-0.5">
+                  {cCnt > 0 && (
+                    <span className={`text-[9.5px] font-bold min-w-[15px] px-1 rounded-full ${on ? "bg-white/25 text-white" : "bg-blue-600 text-white"}`}>{cCnt}</span>
+                  )}
+                  {vCnt > 0 && (
+                    <span className={`text-[9.5px] font-bold min-w-[15px] px-1 rounded-full ${on ? "bg-white/25 text-white" : "bg-emerald-600 text-white"}`}>{vCnt}</span>
+                  )}
+                </span>
               )}
             </button>
           );
