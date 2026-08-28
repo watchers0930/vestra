@@ -247,7 +247,7 @@ export function useLawyerDashboard(
   };
 
   const counts = {
-    notices: cases.filter((c) => c.status === "lawyer_pending").length,
+    notices: cases.filter((c) => c.status === "lawyer_pending" || c.status === "user_confirmed").length,
     consults: consults.filter((c) => c.status !== "answered").length,
     visits: visits.filter((v) => v.status !== "confirmed").length,
   };

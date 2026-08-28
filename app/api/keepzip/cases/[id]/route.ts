@@ -101,30 +101,16 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const b = await req.json().catch(() => null);
     const action = b?.action;
 
-    // 동의 → 재서명(본문 변경분 반영) 후 변호사 직인·발송 준비
+    // 동의 → 재서명 반영 후 '변호사 최종 승인 대기'로 전환. 직인·발송은 변호사 검수 승인 단계에서.
     if (action === "accept") {
       if (!isValidImageDataUrl(b?.signature)) {
         return NextResponse.json({ error: "동의 서명을 다시 입력해 주세요." }, { status: 400 });
       }
-      const partner = await prisma.lawyerPartner.findUnique({
-        where: { id: kz.lawyerId },
-        select: { stampImageUrl: true },
+      await prisma.keepzipCase.update({
+        where: { id },
+        data: { status: "user_confirmed", signatureUrl: b.signature },
       });
-      if (!partner?.stampImageUrl) {
-        return NextResponse.json({ error: "변호사 전자직인이 없어 발송할 수 없습니다." }, { status: 428 });
-      }
-      await prisma.$transaction([
-        prisma.keepzipCase.update({
-          where: { id },
-          data: { status: "lawyer_approved", signatureUrl: b.signature, stampUrl: partner.stampImageUrl },
-        }),
-        prisma.lawyerReview.upsert({
-          where: { caseId: id },
-          create: { caseId: id, lawyerId: kz.lawyerId, decision: "approved", stampedAt: new Date() },
-          update: { decision: "approved", stampedAt: new Date() },
-        }),
-      ]);
-      return NextResponse.json({ ok: true, status: "lawyer_approved" });
+      return NextResponse.json({ ok: true, status: "user_confirmed" });
     }
 
     // 재수정 요청 → 변호사에게 되돌림

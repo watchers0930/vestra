@@ -4,8 +4,8 @@ import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 import { sanitizeField } from "@/lib/sanitize";
 
-// 검수 가능한 시작 상태 — 검수 전(대기/결제완료)만 승인·반려 허용
-const REVIEWABLE = ["lawyer_pending", "paid"];
+// 검수 가능한 시작 상태 — 최초 검토 대기 + 수정본에 이용자가 동의한 사건(최종 승인 대기)
+const REVIEWABLE = ["lawyer_pending", "paid", "user_confirmed"];
 
 type Params = { params: Promise<{ id: string }> };
 
