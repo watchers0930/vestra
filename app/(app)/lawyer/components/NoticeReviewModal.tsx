@@ -64,7 +64,7 @@ export function NoticeReviewModal({ detail, busy, onApprove, onRevise, onReject,
           <div className="mt-5 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
             {m.desc || `현재 상태: ${m.label}`} — 이미 처리된 사건으로 열람만 가능합니다.
           </div>
-        ) : !rejectMode ? (
+        ) : !rejectMode && !editMode ? (
           <>
             {/* 검토 확인 체크리스트 */}
             <div className="mt-5 rounded-lg border border-gray-200 p-4">
