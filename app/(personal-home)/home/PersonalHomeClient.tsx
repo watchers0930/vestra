@@ -2,10 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
-import RenewalLoginModal from "../renewal/_shared/RenewalLoginModal";
-import RenewalSignupModal from "../renewal/_shared/RenewalSignupModal";
+import RenewalGnb from "../renewal/_shared/RenewalGnb";
 import CertifiedListings from "./components/CertifiedListings";
 import { REGIONS } from "./regions";
 import s from "./personal-home.module.css";
@@ -13,15 +11,9 @@ import s from "./personal-home.module.css";
 
 export default function PersonalHomeClient() {
   const router = useRouter();
-  const { data: session } = useSession();
-  const isLoggedIn = !!session?.user;
-  const userName = session?.user?.name || "회원";
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showSignupModal, setShowSignupModal] = useState(false);
   const [sido, setSido] = useState("");
   const [sigungu, setSigungu] = useState("");
   const [dong, setDong] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
   const [activeDot, setActiveDot] = useState(0);
   const featRef = useRef<HTMLDivElement>(null);
 
@@ -53,73 +45,8 @@ export default function PersonalHomeClient() {
   return (
     <div className={s.wrap}>
 
-      {/* ─── NAV ─── */}
-      <nav className={s.nav}>
-        <div className={s.navInner}>
-          <Link href="/" className={s.navLogo}>
-            <div className={s.logoIcon}>V</div>
-            <span className={s.logoText}>VESTRA</span>
-          </Link>
-          <ul className={s.navMenu}>
-            <li><Link href="/listings">매물검색</Link></li>
-            <li><Link href="/renewal/jeonse">전세보호</Link></li>
-            <li><Link href="/renewal/rights">권리분석</Link></li>
-            <li><Link href="/renewal/monitoring">등기감시</Link></li>
-            <li><Link href="/renewal/contract">계약검토</Link></li>
-            <li><Link href="/renewal/price-map">시세전망</Link></li>
-            <li><Link href="/renewal/expert">전문가상담</Link></li>
-          </ul>
-          <div className={s.navAuth}>
-            {isLoggedIn ? (
-              <>
-                <span>{userName}님</span>
-                <span className={s.navAuthDivider}>|</span>
-                <Link href="/profile">마이페이지</Link>
-                <span className={s.navAuthDivider}>|</span>
-                <a onClick={() => signOut({ redirectTo: "/" })} style={{ cursor: "pointer" }}>로그아웃</a>
-              </>
-            ) : (
-              <>
-                <a onClick={() => setShowLoginModal(true)} style={{ cursor: "pointer" }}>로그인</a>
-                <span className={s.navAuthDivider}>|</span>
-                <a onClick={() => setShowSignupModal(true)} style={{ cursor: "pointer" }}>회원가입</a>
-              </>
-            )}
-          </div>
-          <button
-            className={`${s.navHamburger} ${menuOpen ? s.open : ""}`}
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="메뉴"
-          >
-            <span /><span /><span />
-          </button>
-        </div>
-        <ul className={`${s.navMobileMenu} ${menuOpen ? s.open : ""}`}>
-          <li><Link href="/listings">매물검색</Link></li>
-          <li><Link href="/renewal/jeonse">전세보호</Link></li>
-          <li><Link href="/renewal/rights">권리분석</Link></li>
-          <li><Link href="/renewal/monitoring">등기감시</Link></li>
-          <li><Link href="/renewal/contract">계약검토</Link></li>
-          <li><Link href="/renewal/price-map">시세전망</Link></li>
-          <li><Link href="/renewal/expert">전문가상담</Link></li>
-          <li>
-            <div className={s.navMobileAuth}>
-              {isLoggedIn ? (
-                <>
-                  <span>{userName}님</span>
-                  <Link href="/profile">마이페이지</Link>
-                  <a onClick={() => signOut({ redirectTo: "/" })} style={{ cursor: "pointer" }}>로그아웃</a>
-                </>
-              ) : (
-                <>
-                  <a onClick={() => setShowLoginModal(true)} style={{ cursor: "pointer" }}>로그인</a>
-                  <a onClick={() => setShowSignupModal(true)} style={{ cursor: "pointer" }}>회원가입</a>
-                </>
-              )}
-            </div>
-          </li>
-        </ul>
-      </nav>
+      {/* ─── NAV (공통 헤더) ─── */}
+      <RenewalGnb />
 
       {/* ─── HERO ─── */}
       <section className={s.hero}>
@@ -296,18 +223,6 @@ export default function PersonalHomeClient() {
         </div>
       </footer>
 
-      {showLoginModal && (
-        <RenewalLoginModal
-          onClose={() => setShowLoginModal(false)}
-          onSwitchToSignup={() => { setShowLoginModal(false); setShowSignupModal(true); }}
-        />
-      )}
-      {showSignupModal && (
-        <RenewalSignupModal
-          onClose={() => setShowSignupModal(false)}
-          onSwitchToLogin={() => { setShowSignupModal(false); setShowLoginModal(true); }}
-        />
-      )}
     </div>
   );
 }
