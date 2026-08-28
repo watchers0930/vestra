@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X, CheckCircle2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { CAUSE_LABELS } from "@/lib/keepzip/case-form";
+import { statusMeta, TONE_BADGE, isReviewable } from "@/lib/keepzip/case-status";
 import type { ReviewDetail } from "../hooks/useLawyerDashboard";
 
 interface Props {
@@ -29,6 +30,8 @@ export function NoticeReviewModal({ detail, busy, onApprove, onReject, onClose }
   const [reason, setReason] = useState("");
   const allChecked = checks.every(Boolean);
   const isBusy = busy === detail.id;
+  const readOnly = !isReviewable(detail.status); // 이미 처리된 사건 → 열람 전용
+  const m = statusMeta(detail.status);
   const toggle = (i: number) => setChecks((p) => p.map((v, idx) => (idx === i ? !v : v)));
 
   return (
@@ -36,7 +39,7 @@ export function NoticeReviewModal({ detail, busy, onApprove, onReject, onClose }
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between">
           <div>
-            <span className="inline-flex items-center gap-1 text-[11px] rounded-full border border-amber-100 bg-amber-50 px-2 py-0.5 font-medium text-amber-700">검수 대기</span>
+            <span className={`inline-flex items-center gap-1 text-[11px] rounded-full border px-2 py-0.5 font-medium ${TONE_BADGE[m.tone]}`}>{m.label}</span>
             <h3 className="mt-2 text-lg font-bold text-gray-900">{causeLabel(detail.cause)}</h3>
             <p className="mt-0.5 text-xs text-gray-500">{detail.senderName} <span className="text-gray-300">→</span> {detail.recipientName}</p>
             <p className="mt-0.5 text-xs text-gray-400">{detail.address}</p>
@@ -46,13 +49,17 @@ export function NoticeReviewModal({ detail, busy, onApprove, onReject, onClose }
 
         {/* 원문 */}
         <div className="mt-4">
-          <p className="text-xs font-semibold text-gray-500 mb-1.5">내용증명 원문 — 아래 문서를 검토하세요</p>
+          <p className="text-xs font-semibold text-gray-500 mb-1.5">내용증명 원문{!readOnly && " — 아래 문서를 검토하세요"}</p>
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-[13px] leading-relaxed text-gray-800 whitespace-pre-wrap max-h-72 overflow-y-auto">
             {detail.draftContent || "본문이 없습니다."}
           </div>
         </div>
 
-        {!rejectMode ? (
+        {readOnly ? (
+          <div className="mt-5 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+            {m.desc || `현재 상태: ${m.label}`} — 이미 처리된 사건으로 열람만 가능합니다.
+          </div>
+        ) : !rejectMode ? (
           <>
             {/* 검토 확인 체크리스트 */}
             <div className="mt-5 rounded-lg border border-gray-200 p-4">

@@ -32,6 +32,19 @@ export function statusMeta(status?: string | null): StatusMeta {
   return KEEPZIP_STATUS_META[status ?? ""] ?? { label: status ?? "-", tone: "pending", desc: "" };
 }
 
+/** tone → 배지 Tailwind 클래스 (사용자·변호사 공용) */
+export const TONE_BADGE: Record<StatusTone, string> = {
+  pending: "bg-gray-100 text-gray-600 border-gray-200",
+  progress: "bg-amber-50 text-amber-700 border-amber-100",
+  done: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  fail: "bg-red-50 text-red-600 border-red-100",
+};
+
+/** 검수 액션(승인/반려)이 가능한 상태 — 그 외는 열람 전용 */
+export function isReviewable(status?: string | null): boolean {
+  return status === "lawyer_pending" || status === "paid";
+}
+
 /** 진행 타임라인 4단계 */
 export const KEEPZIP_TIMELINE = ["결제·접수", "변호사 검토·직인", "우체국 발송", "배달 완료"] as const;
 

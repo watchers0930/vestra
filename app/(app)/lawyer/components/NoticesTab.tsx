@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/common/Button";
+import { statusMeta, TONE_BADGE, isReviewable } from "@/lib/keepzip/case-status";
 import type { NoticeCase } from "../hooks/useLawyerDashboard";
 
 interface Props {
@@ -15,12 +16,6 @@ const CAUSE_LABEL: Record<string, string> = {
   terminate_by_landlord: "부동산 계약해지(임대인용)",
   rent_arrears: "월세 청구",
   maintenance_arrears: "체납 관리비 납부 요청",
-};
-
-const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
-  lawyer_pending: { text: "검수 대기", cls: "bg-amber-50 text-amber-700 border-amber-100" },
-  lawyer_approved: { text: "직인 완료", cls: "bg-emerald-50 text-emerald-700 border-emerald-100" },
-  canceled: { text: "반려", cls: "bg-gray-100 text-gray-500 border-gray-200" },
 };
 
 /** 내용증명 — 개인이 보낸 사건 검수·전자직인 (카드 그리드) */
@@ -41,14 +36,15 @@ export function NoticesTab({ cases, busy, onOpenReview }: Props) {
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {cases.map((c) => {
-          const st = STATUS_LABEL[c.status] ?? { text: c.status, cls: "bg-gray-100 text-gray-500 border-gray-200" };
+          const m = statusMeta(c.status);
+          const pending = isReviewable(c.status);
           return (
             <div
               key={c.id}
               className="flex flex-col rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
             >
               <div className="flex items-center gap-2">
-                <span className={`text-[11px] rounded-full border px-2 py-0.5 font-medium ${st.cls}`}>{st.text}</span>
+                <span className={`text-[11px] rounded-full border px-2 py-0.5 font-medium ${TONE_BADGE[m.tone]}`}>{m.label}</span>
                 <span className="text-[11px] tracking-wide text-gray-400 uppercase">내용증명</span>
               </div>
               <h3 className="mt-2 text-base font-bold text-gray-900">{CAUSE_LABEL[c.cause] ?? c.cause}</h3>
@@ -58,13 +54,13 @@ export function NoticesTab({ cases, busy, onOpenReview }: Props) {
               <p className="mt-0.5 text-[11px] text-gray-400">{c.id.slice(0, 10)}</p>
               <div className="mt-4 pt-3 border-t border-gray-100">
                 <Button
-                  variant={c.status === "lawyer_pending" ? "primary" : "secondary"}
+                  variant={pending ? "primary" : "secondary"}
                   className="w-full"
                   loading={busy === c.id}
-                  disabled={c.status !== "lawyer_pending"}
+                  disabled={busy === c.id}
                   onClick={() => onOpenReview(c.id)}
                 >
-                  {c.status === "lawyer_approved" ? "직인 완료" : c.status === "canceled" ? "반려됨" : "원문 검토하기"}
+                  {pending ? "원문 검토하기" : "원문 보기"}
                 </Button>
               </div>
             </div>
