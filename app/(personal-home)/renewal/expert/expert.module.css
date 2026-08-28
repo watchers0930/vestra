@@ -108,7 +108,7 @@
 .fArea { height: auto; min-height: 120px; padding: 12px 14px; line-height: 1.6; resize: vertical; }
 .fInput:focus, .fSelect:focus, .fArea:focus { border-color: #2e4bd8; background: #fff; }
 .fInput::placeholder, .fArea::placeholder { color: #b0b4c4; }
-.fieldRow { display: flex; gap: 10px; }
+.fieldRow { display: flex; gap: 10px; margin-bottom: 16px; }
 .fieldRow > .field { flex: 1; margin-bottom: 0; }
 .fCheck { display: flex; align-items: center; gap: 9px; padding: 12px 14px; background: #f4f6fb; border-radius: 9px; margin-bottom: 18px; cursor: pointer; }
 .fCheck input { width: 17px; height: 17px; accent-color: #2e4bd8; cursor: pointer; }
@@ -130,8 +130,8 @@
 .selExpert { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fff; border: 1px solid #e0e3ef; border-radius: 12px; margin-bottom: 20px; }
 .selAvatar { width: 40px; height: 40px; border-radius: 11px; background: linear-gradient(148deg, #0c1527, #141820); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #7d94ff; flex-shrink: 0; }
 .selInfo { flex: 1; }
-.selName { font-size: 13.5px; font-weight: 700; color: #1a1d2e; }
-.selCat { font-size: 11.5px; color: #888; margin-top: 2px; }
+.selName { font-size: 13.5px; font-weight: 700; color: #1a1d2e; line-height: 1.6; }
+.selCat { font-size: 11.5px; color: #888; margin-top: 4px; line-height: 1.6; }
 .selFee { font-size: 13px; font-weight: 700; color: #2e4bd8; }
 .selEmpty { font-size: 12.5px; color: #99a; padding: 14px 16px; background: #fff; border: 1px dashed #d4d8e6; border-radius: 12px; margin-bottom: 20px; text-align: center; }
 .priceList { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
@@ -220,10 +220,10 @@
 
 /* ── 프로필 상세 모달 (2컬럼) ── */
 .pmOverlay { position: fixed; inset: 0; z-index: 60; background: rgba(6,12,42,.5); display: flex; align-items: center; justify-content: center; padding: 16px; }
-.pmModal { position: relative; background: #fff; border-radius: 20px; max-width: 760px; width: 100%; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
+.pmModal { position: relative; background: #fff; border-radius: 20px; max-width: 880px; width: 100%; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
 .pmClose { position: absolute; top: 14px; right: 16px; z-index: 3; background: rgba(255,255,255,.85); border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 15px; color: #888; cursor: pointer; line-height: 1; }
 .pmClose:hover { color: #1a1d2e; background: #fff; }
-.pmGrid { display: grid; grid-template-columns: 244px 1fr; overflow-y: auto; flex: 1; min-height: 0; }
+.pmGrid { display: grid; grid-template-columns: 300px 1fr; overflow-y: auto; flex: 1; min-height: 0; }
 /* 왼쪽 */
 .pmSide { background: #f7f8fd; padding: 34px 22px 28px; display: flex; flex-direction: column; align-items: center; text-align: center; border-right: 1px solid #eceef4; }
 .pmPhoto { width: 116px; height: 116px; border-radius: 50%; overflow: hidden; background: linear-gradient(155deg,#3b57e0,#7d92ff); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -237,7 +237,8 @@
 .pmStat b { font-size: 15px; font-weight: 800; color: #1a1d2e; }
 .pmStat span { font-size: 11px; color: #aab; }
 .pmStatDiv { width: 1px; height: 28px; background: #e0e3ef; }
-.pmSideSpecs { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 20px; width: 100%; }
+.pmSideSpecs { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 20px; width: 100%; }
+.pmSideSpecs .pmSpec { white-space: nowrap; }
 /* 오른쪽 */
 .pmMain { padding: 30px 28px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .pmHeadline { font-size: 14.5px; color: #3a3f55; line-height: 1.6; margin: 0; padding: 14px 16px; background: #f7f8fd; border-radius: 12px; font-weight: 500; }

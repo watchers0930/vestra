@@ -75,8 +75,14 @@ export const EXPERTS: Expert[] = [
 export const CONSULT_TYPES = [
   "전세 안전 검증",
   "등기부 해석",
-  "세금 상담",
   "계약서 검토",
+  "매매·전세 계약",
+  "임대차 분쟁",
+  "전세사기·보증금 반환",
+  "재개발·재건축",
+  "부동산 세금",
+  "부동산 등기·상속",
+  "기타 부동산 상담",
 ];
 
 export const PRICING: PricingItem[] = [

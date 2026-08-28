@@ -32,6 +32,9 @@ interface Props {
   onClose: () => void;
 }
 
+/** 이력 문자열에서 앞의 연도(예: "2018~ ", "2015~2018 ")를 제거 */
+const stripYear = (t: string) => t.replace(/^\d{4}\s*~\s*\d{0,4}\s*/, "").trim();
+
 const RATING_ITEMS: [string, keyof Omit<RatingBreakdown, "count">][] = [
   ["전문성", "expertise"],
   ["응답 속도", "response"],
@@ -81,7 +84,7 @@ export default function ExpertProfileModal({ expert, onSelect, onClose }: Props)
             </div>
             {expert.specialties.length > 0 && (
               <div className={s.pmSideSpecs}>
-                {expert.specialties.map((sp) => <span key={sp} className={s.pmSpec}>{sp}</span>)}
+                {expert.specialties.map((sp) => <span key={sp} className={s.pmSpec}>{stripYear(sp)}</span>)}
               </div>
             )}
           </aside>
@@ -142,8 +145,8 @@ export default function ExpertProfileModal({ expert, onSelect, onClose }: Props)
         <div className={s.pmActions}>
           {expert.available ? (
             <>
-              <button className={s.pmBtn} onClick={() => onSelect(expert, "consult")}>상담 요청</button>
               {isLawyer && <button className={`${s.pmBtn} ${s.pmBtnPri}`} onClick={() => onSelect(expert, "keepzip")}>내용증명 작성</button>}
+              <button className={s.pmBtn} onClick={() => onSelect(expert, "consult")}>상담 요청</button>
               <button className={s.pmBtn} onClick={() => onSelect(expert, "visit")}>방문 예약</button>
             </>
           ) : (
