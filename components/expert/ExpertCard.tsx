@@ -6,6 +6,8 @@ export interface Expert {
   id: string;
   name: string;
   category: string;
+  photoUrl?: string | null;
+  headline?: string | null;
   specialties: string[];
   experience: number;
   rating: number;

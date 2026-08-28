@@ -1000,6 +1000,8 @@ model LawyerPartner {
   homepageSlug      String    @unique // /lawyer/[slug]
   homepageActive    Boolean   @default(false)
   bio               String?   @db.Text
+  photoUrl          String?   @db.Text // 프로필 사진(dataURL 또는 이미지 URL)
+  headline          String?   // 한 줄 소개글(약력과 별개, 카드·모달 상단 노출)
   // 지급대행 셀러
   payoutSellerId    String?   @unique // 토스 지급대행 셀러 ID
   kycStatus         String    @default("none") // none | pending | verified | rejected

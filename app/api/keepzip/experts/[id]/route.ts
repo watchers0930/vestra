@@ -14,11 +14,28 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const p = await prisma.lawyerPartner.findFirst({ where: { id, active: true } });
     if (!p) return NextResponse.json({ error: "전문가를 찾을 수 없습니다." }, { status: 404 });
 
+    // 항목별 후기 평점 집계(전문성·응답·소통·결과·비용). 후기 없으면 null.
+    const agg = await prisma.lawyerRating.aggregate({
+      where: { lawyerId: id },
+      _avg: { scoreExpertise: true, scoreResponse: true, scoreCommunication: true, scoreResult: true, scoreValue: true },
+      _count: { _all: true },
+    });
+    const ratingBreakdown = agg._count._all > 0 ? {
+      count: agg._count._all,
+      expertise: agg._avg.scoreExpertise ?? 0,
+      response: agg._avg.scoreResponse ?? 0,
+      communication: agg._avg.scoreCommunication ?? 0,
+      result: agg._avg.scoreResult ?? 0,
+      value: agg._avg.scoreValue ?? 0,
+    } : null;
+
     return NextResponse.json({
       expert: {
         id: p.id,
         name: p.name ?? "전문가",
         category: CAT_LABEL[p.category] ?? p.category,
+        photoUrl: p.photoUrl ?? null,
+        headline: p.headline ?? "",
         firmName: p.firmName ?? "",
         bio: p.bio ?? "",
         careers: p.careers ?? [],
@@ -28,6 +45,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
         experience: (p.careers ?? []).length,
         rating: p.avgRating || 0,
         reviewCount: p.ratingCount,
+        ratingBreakdown,
       },
     });
   } catch (e) {

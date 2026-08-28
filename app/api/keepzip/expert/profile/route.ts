@@ -16,7 +16,7 @@ export async function GET() {
 
   const p = await prisma.lawyerPartner.findUnique({
     where: { userId },
-    select: { bio: true, careers: true, schools: true, etcInfo: true, category: true, name: true, stampImageUrl: true },
+    select: { bio: true, careers: true, schools: true, etcInfo: true, category: true, name: true, stampImageUrl: true, photoUrl: true, headline: true },
   });
   return NextResponse.json({ profile: p });
 }
@@ -36,13 +36,16 @@ export async function PATCH(req: NextRequest) {
     const b = await req.json().catch(() => null);
     if (!b || typeof b !== "object") return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
 
-    const data: { bio?: string; etcInfo?: string; careers?: string[]; schools?: string[]; stampImageUrl?: string } = {};
+    const data: { bio?: string; etcInfo?: string; careers?: string[]; schools?: string[]; stampImageUrl?: string; photoUrl?: string; headline?: string } = {};
     if (typeof b.bio === "string") data.bio = b.bio.slice(0, 2000);
     if (typeof b.etcInfo === "string") data.etcInfo = b.etcInfo.slice(0, 2000);
     if (Array.isArray(b.careers)) data.careers = b.careers.slice(0, 30).map((x: unknown) => sanitizeField(String(x), 200)).filter(Boolean);
     if (Array.isArray(b.schools)) data.schools = b.schools.slice(0, 30).map((x: unknown) => sanitizeField(String(x), 200)).filter(Boolean);
     // 전자직인 — 이미지 data URL 검증(SVG 차단·크기 상한) 후 저장
     if (typeof b.stampImageUrl === "string" && isValidImageDataUrl(b.stampImageUrl)) data.stampImageUrl = b.stampImageUrl;
+    // 프로필 사진 — 이미지 data URL 검증(3MB 상한)
+    if (typeof b.photoUrl === "string" && isValidImageDataUrl(b.photoUrl, 3_000_000)) data.photoUrl = b.photoUrl;
+    if (typeof b.headline === "string") data.headline = sanitizeField(b.headline, 120);
 
     await prisma.lawyerPartner.update({ where: { userId }, data });
     return NextResponse.json({ ok: true });

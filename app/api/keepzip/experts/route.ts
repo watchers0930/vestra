@@ -25,6 +25,8 @@ export async function GET(req: NextRequest) {
       id: p.id,
       name: p.name ?? "전문가",
       category: CAT_LABEL[p.category] ?? p.category,
+      photoUrl: p.photoUrl ?? null,
+      headline: p.headline ?? null,
       specialties: (p.careers ?? []).slice(0, 3),
       experience: (p.careers ?? []).length,
       rating: p.avgRating || 0,

@@ -8,6 +8,7 @@ export type LawyerTabKey =
   | "career"    // 내정보수정 > 경력
   | "school"    // 내정보수정 > 학교
   | "etc"       // 내정보수정 > 기타정보
+  | "profile"   // 내정보수정 > 프로필 사진·소개
   | "stamp";    // 내정보수정 > 전자직인
 
 export interface MenuItem {
@@ -24,6 +25,7 @@ export const MAIN_MENU: MenuItem[] = [
 
 /** "내정보수정" 하위 메뉴 */
 export const PROFILE_SUBMENU: MenuItem[] = [
+  { key: "profile", label: "프로필·소개" },
   { key: "bio", label: "약력" },
   { key: "career", label: "경력" },
   { key: "school", label: "학교" },
@@ -31,7 +33,7 @@ export const PROFILE_SUBMENU: MenuItem[] = [
   { key: "stamp", label: "전자직인" },
 ];
 
-export const PROFILE_KEYS: LawyerTabKey[] = ["bio", "career", "school", "etc", "stamp"];
+export const PROFILE_KEYS: LawyerTabKey[] = ["profile", "bio", "career", "school", "etc", "stamp"];
 
 /** 텍스트형 편집(약력·기타정보) */
 export const PROFILE_TEXT: Record<"bio" | "etc", { title: string; placeholder: string; desc: string }> = {

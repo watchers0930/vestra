@@ -211,3 +211,45 @@
   .fieldRow { flex-direction: column; gap: 16px; }
   .fieldRow > .field { margin-bottom: 0; }
 }
+
+/* ── 전문가 프로필 보기 버튼 + 상세 모달 ── */
+.exProfile { width: 100%; padding: 9px; border: 1px solid #e0e3ef; background: #fff; color: #555; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; margin-bottom: 8px; transition: all .15s; }
+.exProfile:hover { border-color: #c0c7e8; color: #2e4bd8; background: #f7f8fd; }
+
+.pmOverlay { position: fixed; inset: 0; z-index: 60; background: rgba(6,12,42,.5); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.pmModal { position: relative; background: #fff; border-radius: 20px; max-width: 520px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 28px; }
+.pmClose { position: absolute; top: 18px; right: 20px; background: none; border: none; font-size: 17px; color: #aab; cursor: pointer; line-height: 1; }
+.pmClose:hover { color: #1a1d2e; }
+.pmHead { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.pmAvatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(155deg,#3b57e0,#7d92ff); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; flex-shrink: 0; }
+.pmId { min-width: 0; }
+.pmNameRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pmName { font-size: 19px; font-weight: 800; color: #1a1d2e; }
+.pmCat { font-size: 12px; font-weight: 600; color: #2e4bd8; background: #eef1fd; padding: 2px 9px; border-radius: 20px; }
+.pmFirm { font-size: 13px; color: #888; margin-top: 3px; }
+.pmMetaRow { font-size: 12.5px; color: #f59e0b; font-weight: 600; margin-top: 5px; }
+.pmMetaRow span { color: #aab; font-weight: 500; }
+.pmLoad, .pmEmpty { text-align: center; color: #aab; font-size: 13px; padding: 24px 0; }
+.pmBody { display: flex; flex-direction: column; gap: 18px; border-top: 1px solid #eceef4; padding-top: 20px; }
+.pmSecT { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #aaa; margin: 0 0 8px; }
+.pmText { font-size: 13.5px; line-height: 1.7; color: #3a3f55; margin: 0; white-space: pre-wrap; }
+.pmList { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.pmList li { font-size: 13.5px; color: #3a3f55; padding-left: 14px; position: relative; line-height: 1.5; }
+.pmList li::before { content: ''; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 50%; background: #2e4bd8; }
+.pmSpecs { display: flex; flex-wrap: wrap; gap: 6px; }
+.pmSpec { font-size: 12px; font-weight: 600; color: #2e4bd8; background: #eef1fd; padding: 4px 11px; border-radius: 20px; }
+.pmActions { display: flex; gap: 8px; margin-top: 22px; padding-top: 18px; border-top: 1px solid #eceef4; }
+.pmBtn { flex: 1; padding: 11px; border: 1px solid #e0e3ef; background: #fff; color: #1d1d1f; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .15s; }
+.pmBtn:hover { border-color: #c0c7e8; color: #2e4bd8; }
+.pmBtnPri { background: #2e4bd8; color: #fff; border-color: #2e4bd8; }
+.pmBtnPri:hover { background: #2540c0; color: #fff; }
+/* 목록 카드 한 줄 소개 */
+.exHeadline { font-size: 13px; color: #555; line-height: 1.5; margin: 10px 0 0; }
+/* 모달 소개글 + 항목별 별점 */
+.pmHeadline { font-size: 14px; color: #3a3f55; line-height: 1.6; margin: 0 0 18px; padding: 12px 14px; background: #f7f8fd; border-radius: 12px; }
+.pmRatings { display: flex; flex-direction: column; gap: 9px; }
+.pmRateRow { display: flex; align-items: center; gap: 10px; }
+.pmRateLabel { font-size: 12.5px; color: #555; width: 62px; flex-shrink: 0; }
+.pmRateBar { flex: 1; height: 7px; background: #eef0f6; border-radius: 20px; overflow: hidden; }
+.pmRateFill { height: 100%; border-radius: 20px; background: linear-gradient(90deg,#f59e0b,#fbbf24); }
+.pmRateScore { font-size: 12.5px; font-weight: 700; color: #1a1d2e; width: 26px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }

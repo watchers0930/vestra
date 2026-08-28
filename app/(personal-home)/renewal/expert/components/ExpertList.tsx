@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import s from "../expert.module.css";
+import ExpertProfileModal from "./ExpertProfileModal";
 import type { Expert } from "@/components/expert/ExpertCard";
 
 function formatFee(fee: number) {
@@ -22,6 +23,7 @@ interface ExpertListProps {
 export default function ExpertList({ categories, fieldLabel, onSelect }: ExpertListProps) {
   const [all, setAll] = useState<Expert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profileOf, setProfileOf] = useState<Expert | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -49,7 +51,11 @@ export default function ExpertList({ categories, fieldLabel, onSelect }: ExpertL
         {list.map((expert) => (
           <div key={expert.id} className={s.excard}>
             <div className={s.exHead}>
-              <div className={s.exAvatar}>{expert.name.charAt(0)}</div>
+              <div className={s.exAvatar} style={{ overflow: "hidden" }}>
+                {expert.photoUrl
+                  ? <img src={expert.photoUrl} alt={expert.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : expert.name.charAt(0)}
+              </div>
               <div className={s.exId}>
                 <div className={s.exNameRow}>
                   <span className={s.exName}>{expert.name}</span>
@@ -63,6 +69,7 @@ export default function ExpertList({ categories, fieldLabel, onSelect }: ExpertL
                 <span className={s.exRateC}>({expert.reviewCount})</span>
               </div>
             </div>
+            {expert.headline && <p className={s.exHeadline}>{expert.headline}</p>}
             <div className={s.exSpecs}>
               {expert.specialties.map((sp) => (
                 <span key={sp} className={s.exSpec}>{sp}</span>
@@ -72,6 +79,7 @@ export default function ExpertList({ categories, fieldLabel, onSelect }: ExpertL
               <span>경력 {expert.experience}년</span>
               <span className={s.exFee}>{formatFee(expert.consultFee)}</span>
             </div>
+            <button className={s.exProfile} onClick={() => setProfileOf(expert)}>프로필 · 경력 보기</button>
             {!expert.available ? (
               <button className={`${s.exBtn} ${s.off}`} disabled>상담 마감</button>
             ) : expert.category === "변호사" ? (
@@ -117,6 +125,14 @@ export default function ExpertList({ categories, fieldLabel, onSelect }: ExpertL
           </div>
         ))}
       </div>
+
+      {profileOf && (
+        <ExpertProfileModal
+          expert={profileOf}
+          onSelect={(e, intent) => { setProfileOf(null); onSelect(e, intent); }}
+          onClose={() => setProfileOf(null)}
+        />
+      )}
     </div>
   );
 }

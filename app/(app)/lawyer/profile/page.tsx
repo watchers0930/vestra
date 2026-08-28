@@ -8,10 +8,11 @@ import { PROFILE_SUBMENU, type LawyerTabKey } from "../constants";
 import { ProfileFieldTab } from "../components/ProfileFieldTab";
 import { ProfileListTab } from "../components/ProfileListTab";
 import { ProfileStampTab } from "../components/ProfileStampTab";
+import { ProfilePhotoTab } from "../components/ProfilePhotoTab";
 
 /** 내정보 — 미니홈페이지 프로필(약력·경력·학교·기타·직인) 관리 */
 export default function LawyerProfilePage() {
-  const [tab, setTab] = useState<LawyerTabKey>("bio");
+  const [tab, setTab] = useState<LawyerTabKey>("profile");
 
   return (
     <div>
@@ -35,6 +36,7 @@ export default function LawyerProfilePage() {
           ))}
         </div>
 
+        {tab === "profile" && <ProfilePhotoTab />}
         {(tab === "bio" || tab === "etc") && <ProfileFieldTab tabKey={tab} />}
         {(tab === "career" || tab === "school") && <ProfileListTab tabKey={tab} />}
         {tab === "stamp" && <ProfileStampTab />}
