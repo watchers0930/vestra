@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,6 +40,7 @@ export interface LoanForm {
 // Hook
 // ---------------------------------------------------------------------------
 export function useLoanCheckData() {
+  const searchParams = useSearchParams();
   const [form, setForm] = useState<LoanForm>({
     deposit: 300_000_000,
     propertyPrice: 500_000_000,
@@ -49,6 +51,23 @@ export function useLoanCheckData() {
     existingLoans: 0,
     isFirstHome: false,
   });
+
+  // 매물 상세에서 넘어온 경우 보증금·건물유형·주소 프리필 (최초 1회)
+  // 매매시세(propertyPrice)는 추정값 주입을 피해 사용자 입력에 맡긴다.
+  useEffect(() => {
+    const deposit = Number(searchParams.get("deposit"));
+    const propertyType = searchParams.get("propertyType");
+    const propertyAddress = searchParams.get("propertyAddress");
+    if (!deposit && !propertyType && !propertyAddress) return;
+    setForm((prev) => ({
+      ...prev,
+      ...(deposit > 0 ? { deposit } : {}),
+      ...(propertyType ? { propertyType } : {}),
+      ...(propertyAddress ? { propertyAddress } : {}),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [result, setResult] = useState<SimResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
+import { LoanUnderwritingSection } from "./LoanUnderwritingSection";
 
 interface FSSProduct {
   bankName: string;
@@ -139,12 +140,14 @@ export function LoanRatesTab() {
         </div>
       )}
 
-      {/* 안내 */}
-      <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-        <p className="text-sm text-yellow-800">
-          <span className="font-semibold">참고:</span> 금리는 FSS API로 자동 갱신됩니다. LTV, DTI, 소득 상한 등 심사 조건은 공개 API가 없어 분기 1회 수동 확인이 필요합니다.
-          <code className="ml-1 text-xs bg-yellow-100 px-1 py-0.5 rounded">lib/loan-simulator.ts</code>의 <code className="text-xs bg-yellow-100 px-1 py-0.5 rounded">LOAN_PRODUCTS</code>에서 수정하세요.
-        </p>
+      {/* 심사 조건 관리 */}
+      <div className="border-t border-gray-200 pt-6">
+        <div className="mb-4 rounded-lg bg-blue-50 border border-blue-200 p-3">
+          <p className="text-sm text-blue-800">
+            <span className="font-semibold">안내:</span> 금리는 FSS API로 자동 갱신됩니다. LTV·DTI·소득 상한 등 심사 조건은 공개 API가 없어 아래에서 직접 관리합니다. 저장 시 전세대출 가심사 시뮬레이터에 즉시 반영됩니다.
+          </p>
+        </div>
+        <LoanUnderwritingSection />
       </div>
     </div>
   );

@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { Banknote, CheckCircle, XCircle, Star, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { formatKRW, formatNumber, parseNumber } from "@/lib/format";
 import { useLoanCheckData } from "./hooks/useLoanCheckData";
 
-export default function LoanCheckPage() {
+function LoanCheckInner() {
   const {
     form,
     update,
@@ -239,5 +240,13 @@ export default function LoanCheckPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function LoanCheckPage() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-5xl p-6 text-sm text-gray-500">불러오는 중…</div>}>
+      <LoanCheckInner />
+    </Suspense>
   );
 }

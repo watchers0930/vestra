@@ -6,6 +6,7 @@
  */
 
 import { getCachedRates, getBankRateRange } from "./fss-loan-api";
+import { applyUnderwritingOverrides } from "./loan-underwriting";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -49,7 +50,7 @@ export interface LoanSimulateResponse {
 // 7대 은행 전세대출 조건 DB (2026-03 기준)
 // ---------------------------------------------------------------------------
 
-interface BankLoanProduct {
+export interface BankLoanProduct {
   bankName: string;
   productName: string;
   maxLTV: number;
@@ -273,7 +274,7 @@ function simulateProduct(input: LoanSimulateInput, product: BankLoanProduct): Lo
 export async function simulateLoan(input: LoanSimulateInput): Promise<LoanSimulateResponse> {
   // FSS 실시간 금리로 상품별 금리 덮어쓰기
   const fssRates = await getCachedRates();
-  const products = LOAN_PRODUCTS.map((product) => {
+  const baseProducts = LOAN_PRODUCTS.map((product) => {
     if (fssRates && fssRates.dataSource === "fss") {
       const fssRate = getBankRateRange(fssRates, product.bankName);
       if (fssRate) {
@@ -282,6 +283,9 @@ export async function simulateLoan(input: LoanSimulateInput): Promise<LoanSimula
     }
     return product;
   });
+
+  // 관리자 심사조건 오버라이드 적용 (미설정 시 기본값 그대로)
+  const products = await applyUnderwritingOverrides(baseProducts);
 
   const results = products.map((product) => simulateProduct(input, product));
 

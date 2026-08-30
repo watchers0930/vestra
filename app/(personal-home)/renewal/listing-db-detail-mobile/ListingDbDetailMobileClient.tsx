@@ -270,6 +270,9 @@ export default function ListingDbDetailMobileClient() {
       <div className={s.stickyCta}>
         <button className={s.ctaPrimary} onClick={handleIntent}>의향서 보내기</button>
         <button className={s.ctaSecondary} onClick={() => router.push("/renewal/rights")}>AI 권리분석<br />해보기</button>
+        {isJeonse && (
+          <button className={s.ctaSecondary} onClick={() => router.push(`/loan-check?deposit=${priceNum}&propertyType=${encodeURIComponent(listing.roomType || "아파트")}&propertyAddress=${encodeURIComponent(listing.address)}`)}>전세대출<br />가심사</button>
+        )}
       </div>
 
       {showIntent && (

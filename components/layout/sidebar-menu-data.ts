@@ -5,7 +5,7 @@ import {
   KeyRound, ClipboardCheck, Brain, SlidersHorizontal,
   ShieldAlert, Key, Newspaper, MapPin, Landmark, Eye,
   Handshake, BookOpenText, Building2, ClipboardList, FileSignature,
-  Scale, CalendarCheck, UserCog,
+  Scale, CalendarCheck, UserCog, Banknote,
   type LucideIcon,
 } from "lucide-react";
 
@@ -51,6 +51,7 @@ export const userMenuItems: MenuItem[] = [
   { href: "/api-hub",        icon: Database,        label: "API 데이터 허브", description: "국토교통부·법원 등 공공 API 연동 현황과 데이터를 조회합니다", tier: "AUTH_REQUIRED" },
   { href: "/agent",          icon: Handshake,       label: "중개관리",       description: "부동산 중개 고객을 관리하고 물건 모니터링을 설정합니다", tier: "AUTH_REQUIRED" },
   { href: "/e-contract",     icon: FileSignature,   label: "전자계약",       description: "법적 효력이 있는 전자계약서를 작성하고 3자 서명을 받습니다", tier: "AUTH_REQUIRED" },
+  { href: "/loan-check",     icon: Banknote,        label: "전세대출 가심사", description: "7대 은행 전세대출 조건을 한 번에 비교하고 가심사 결과를 확인합니다", tier: "AUTH_REQUIRED" },
   {
     href: "/listings/my", icon: Building2, label: "매물 거래", description: "매물을 등록하고 계약의향서를 관리합니다", tier: "AUTH_REQUIRED",
     children: [
@@ -65,8 +66,8 @@ export const userMenuItems: MenuItem[] = [
 
 export const userMenuGroups: MenuGroup[] = [
   { label: "메인",       items: [userMenuItems[0]] },
-  { label: "매물 거래",   items: [userMenuItems[15]] },
-  { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[2], userMenuItems[3], userMenuItems[4], userMenuItems[7], userMenuItems[8], userMenuItems[9]] },
+  { label: "매물 거래",   items: [userMenuItems[16]] },
+  { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[15], userMenuItems[2], userMenuItems[3], userMenuItems[4], userMenuItems[7], userMenuItems[8], userMenuItems[9]] },
   { label: "도구",       items: [userMenuItems[10], userMenuItems[11], userMenuItems[5], userMenuItems[6], userMenuItems[12]] },
   { label: "중개사 도구", items: [userMenuItems[13], userMenuItems[14]] },
 ];
@@ -84,7 +85,7 @@ const tenantListings: MenuItem = {
 export const tenantMenuGroups: MenuGroup[] = [
   { label: "메인",       items: [userMenuItems[0]] },
   { label: "매물 거래",   items: [tenantListings] },
-  { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[2], userMenuItems[3], userMenuItems[4], userMenuItems[7], userMenuItems[8]] },
+  { label: "분석 서비스", items: [userMenuItems[1], userMenuItems[15], userMenuItems[2], userMenuItems[3], userMenuItems[4], userMenuItems[7], userMenuItems[8]] },
   { label: "도구",       items: [userMenuItems[10], userMenuItems[11], userMenuItems[5], userMenuItems[6]] },
 ];
 
@@ -102,7 +103,7 @@ const landlordListings: MenuItem = {
 export const landlordMenuGroups: MenuGroup[] = [
   { label: "메인",       items: [userMenuItems[0]] },
   { label: "매물 관리",   items: [landlordListings] },
-  { label: "분석 서비스", items: [userMenuItems[2], userMenuItems[3], userMenuItems[4], userMenuItems[7], userMenuItems[8]] },
+  { label: "분석 서비스", items: [userMenuItems[15], userMenuItems[2], userMenuItems[3], userMenuItems[4], userMenuItems[7], userMenuItems[8]] },
   { label: "도구",       items: [userMenuItems[10], userMenuItems[11], userMenuItems[5], userMenuItems[6]] },
 ];
 
