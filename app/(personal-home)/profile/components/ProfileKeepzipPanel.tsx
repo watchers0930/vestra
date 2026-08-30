@@ -96,7 +96,23 @@ function DetailModal({ detail, onClose }: { detail: KzDetail; onClose: () => voi
 
         <p className={s.kzDocLabel}>내용증명 원문</p>
         <div className={s.kzDoc}>{detail.draftContent ? annotateAmounts(detail.draftContent) : "본문이 없습니다."}</div>
-        {detail.stampUrl && <div className={s.kzStamp}><CheckCircle2 size={14} /> 변호사 전자직인 날인 완료</div>}
+        {detail.stampUrl && (
+          <>
+            <div className={s.kzStamp}><CheckCircle2 size={14} /> 변호사 전자직인 날인 완료</div>
+            <button
+              type="button"
+              onClick={() => window.open(`/api/keepzip/cases/${detail.id}/preview-pdf`, "_blank", "noopener,noreferrer")}
+              style={{
+                marginTop: 10, width: "100%", padding: "11px 0", borderRadius: 12, border: "none",
+                background: "linear-gradient(135deg,#0f2547,#2563eb)", color: "#fff",
+                fontSize: 13.5, fontWeight: 700, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+              }}
+            >
+              <FileText size={15} /> 직인 완료본 미리보기 (PDF)
+            </button>
+          </>
+        )}
 
         <div className={s.kzModalFoot}>
           <span>접수 {fmtDate(detail.createdAt)}</span>
