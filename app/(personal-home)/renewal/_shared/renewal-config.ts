@@ -6,7 +6,7 @@
 
 export type RenewalKey =
   | "listings" | "jeonse" | "rights" | "monitoring" | "contract" | "price-map"
-  | "expert" | "assistant" | "official-price" | "tax" | "keepzip";
+  | "expert" | "assistant" | "official-price" | "tax" | "keepzip" | "loan-check";
 
 /** renewal 및 공통 경로 단일 소스 */
 export const RENEWAL_ROUTES = {
@@ -24,6 +24,7 @@ export const RENEWAL_ROUTES = {
   officialPrice: "/renewal/official-price",
   tax: "/renewal/tax",
   keepzip: "/renewal/keepzip",
+  loanCheck: "/renewal/loan-check",
   // 비-renewal 공통
   login: "/login",
   signup: "/signup",
@@ -66,6 +67,7 @@ export const RENEWAL_SUPPORT: RenewalFeature[] = [
   { key: "assistant", href: RENEWAL_ROUTES.assistant, label: "AI 어시스턴트", access: "trial", featureName: "AI 어시스턴트", description: "부동산 궁금증을 AI에게 물어보세요" },
   { key: "official-price", href: RENEWAL_ROUTES.officialPrice, label: "공시가격조회", access: "public", featureName: "공시가격 조회", description: "개별공시지가·공동주택가격을 조회합니다" },
   { key: "tax", href: RENEWAL_ROUTES.tax, label: "세금계산", access: "public", featureName: "세금계산", description: "취득세·보유세·양도세를 계산합니다" },
+  { key: "loan-check", href: RENEWAL_ROUTES.loanCheck, label: "전세대출 가심사", access: "trial", featureName: "전세대출 가심사", description: "7대 은행 전세대출 조건을 한 번에 비교합니다" },
 ];
 
 /** 화면별 접근 정책 조회 (key → 기능 정의) */

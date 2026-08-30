@@ -238,7 +238,7 @@ export default function ListingDbDetailContent() {
               <button className={s.ctaSecondary} onClick={() => router.push("/renewal/rights")}>AI 권리분석 해보기</button>
               <button className={s.ctaSecondary} onClick={() => router.push(`/renewal/monitoring?address=${encodeURIComponent(listing.address)}&listingId=${listing.id}`)}>이 매물 등기감시</button>
               {isJeonse && (
-                <button className={s.ctaSecondary} onClick={() => router.push(`/loan-check?deposit=${priceNum}&propertyType=${encodeURIComponent(listing.roomType || "아파트")}&propertyAddress=${encodeURIComponent(listing.address)}`)}>이 매물 전세대출 가심사</button>
+                <button className={s.ctaSecondary} onClick={() => router.push(`/renewal/loan-check?deposit=${priceNum}&propertyType=${encodeURIComponent(listing.roomType || "아파트")}&propertyAddress=${encodeURIComponent(listing.address)}`)}>이 매물 전세대출 가심사</button>
               )}
             </div>
           </div>

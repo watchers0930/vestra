@@ -1,0 +1,237 @@
+/* 전세대출 가심사 — renewal 톤 (밝은 배경 · 파란 accent · 카드형) */
+
+.pageShell {
+  min-height: 100vh;
+  background: #f6f7f9;
+  color: #16181d;
+}
+.pageShell a { text-decoration: none; color: inherit; }
+
+.pageWrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 44px 32px 80px;
+}
+
+/* ── 히어로 ── */
+.hero { margin-bottom: 26px; }
+.heroChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.heroTitle {
+  margin: 14px 0 6px;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.heroSub { font-size: 14px; color: #6b7280; }
+
+/* ── 카드 ── */
+.card {
+  background: #fff;
+  border: 1px solid #eceef1;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+  margin-bottom: 18px;
+}
+.cardTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #16181d;
+  margin-bottom: 18px;
+}
+
+/* ── 입력 폼 ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+@media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+
+.field { display: flex; flex-direction: column; }
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 7px;
+}
+.fieldInput,
+.fieldSelect {
+  width: 100%;
+  border: 1px solid #d7dbe0;
+  border-radius: 10px;
+  padding: 11px 13px;
+  font-size: 14px;
+  color: #16181d;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.fieldInput:focus,
+.fieldSelect:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+.fieldHint { margin-top: 6px; font-size: 11.5px; color: #9aa1ab; }
+
+.checkRow { display: flex; align-items: center; }
+.checkLabel {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+}
+.checkbox { width: 17px; height: 17px; accent-color: #2563eb; cursor: pointer; }
+
+.submitBtn {
+  margin-top: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 11px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 13px 34px;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.submitBtn:hover { background: #1d4ed8; }
+.submitBtn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── 에러 ── */
+.errorBox {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 13.5px;
+  color: #dc2626;
+  margin-bottom: 18px;
+}
+
+/* ── 결과 요약 ── */
+.resultHero {
+  border: 1px solid #c7d7fe;
+  background: linear-gradient(135deg, #eff4ff 0%, #f2f7ff 100%);
+  border-radius: 16px;
+  padding: 22px 24px;
+  margin-bottom: 18px;
+}
+.resultTop {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+@media (min-width: 640px) {
+  .resultTop { flex-direction: row; align-items: center; justify-content: space-between; }
+}
+.resultLabel { font-size: 13px; font-weight: 600; color: #2563eb; }
+.resultHeadline { font-size: 19px; font-weight: 800; color: #16181d; margin-top: 2px; }
+.statRow { display: flex; gap: 26px; }
+.stat { text-align: center; }
+.statLabel { font-size: 11.5px; color: #6b7280; }
+.statValue { font-size: 18px; font-weight: 800; margin-top: 2px; }
+.statValueBlue { color: #2563eb; }
+.statValueGreen { color: #16a34a; }
+
+.bestBox {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 11px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+}
+.bestName { font-weight: 700; }
+
+/* ── 은행별 카드 ── */
+.bankGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+@media (max-width: 900px) { .bankGrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .bankGrid { grid-template-columns: 1fr; } }
+
+.bankCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px;
+  text-align: left;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+.bankCardOk:hover { border-color: #86efac; }
+.bankCardNo { background: #fafafa; }
+.bankCardSel { box-shadow: 0 0 0 2px #2563eb; border-color: #2563eb; }
+
+.bankHead { display: flex; align-items: center; justify-content: space-between; }
+.bankName { font-size: 14px; font-weight: 700; color: #16181d; }
+.bankProduct { font-size: 11.5px; color: #6b7280; margin-top: 1px; }
+
+.bankBody { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+.bankRow { display: flex; justify-content: space-between; font-size: 12px; }
+.bankRowLabel { color: #6b7280; }
+.bankRowValue { font-weight: 700; }
+.bankRowRate { font-weight: 700; color: #16a34a; }
+
+.reasonList { margin-top: 14px; display: flex; flex-direction: column; gap: 3px; }
+.reason { font-size: 11.5px; color: #dc2626; }
+
+.reqBox { margin-top: 14px; border-top: 1px solid #f0f1f3; padding-top: 12px; }
+.reqTitle { font-size: 11.5px; font-weight: 700; color: #4b5563; margin-bottom: 5px; }
+.reqItem { font-size: 11.5px; color: #6b7280; }
+
+/* ── 의사결정 리포트 CTA ── */
+.ctaCard {
+  border: 1px solid #c7d7fe;
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+@media (min-width: 640px) {
+  .ctaCard { flex-direction: row; align-items: center; justify-content: space-between; }
+}
+.ctaTitle { font-size: 14px; font-weight: 700; color: #16181d; }
+.ctaSub { font-size: 12px; color: #6b7280; margin-top: 3px; }
+.ctaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 11px;
+  padding: 12px 22px;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ctaBtn:hover { background: #1d4ed8; }
+
+.disclaimer { font-size: 11.5px; color: #9aa1ab; text-align: center; }
