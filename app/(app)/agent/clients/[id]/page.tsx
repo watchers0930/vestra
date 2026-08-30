@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/common/Card";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { ClientTransactionsSection, type ClientListing, type ClientApplication } from "./components/ClientTransactionsSection";
+import { InviteSection } from "./components/InviteSection";
 import { Skeleton } from "@/components/common/Skeleton";
 import { FormInput } from "@/components/forms/FormInput";
 import AddressAutocomplete from "@/components/common/AddressAutocomplete";
@@ -254,6 +255,9 @@ export default function ClientDetailPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* VESTRA 초대 — 미가입 고객만 */}
+        {!isTypeA && <InviteSection clientId={id} status={client.status} />}
 
         {/* 물건 목록 */}
         <Card>

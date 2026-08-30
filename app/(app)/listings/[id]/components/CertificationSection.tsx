@@ -1,13 +1,27 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { ShieldCheck, Shield, CheckCircle2, Circle, Loader2, Upload, ExternalLink, UploadCloud, MousePointerClick, ScanSearch, BadgeCheck } from "lucide-react";
+import { ShieldCheck, Shield, CheckCircle2, Circle, Loader2, Upload, ExternalLink, UploadCloud, MousePointerClick, ScanSearch, BadgeCheck, Activity } from "lucide-react";
 import type { ListingItem } from "../../hooks/useListings";
 
 interface CertifyResult {
   isCertified: boolean;
   checks: { registry: boolean; building: boolean; taxDoc: boolean };
   error: string | null;
+}
+
+interface SafetyResult {
+  officialPrice: number | null;
+  jeonseRatio: number | null;
+  insurance: { hugEligible: boolean; sgiEligible: boolean; hfEligible: boolean } | null;
+  listingType: string;
+}
+
+function formatEok(won: number): string {
+  const eok = Math.floor(won / 100_000_000);
+  const man = Math.floor((won % 100_000_000) / 10_000);
+  if (eok > 0) return man > 0 ? `${eok}억 ${man.toLocaleString()}만원` : `${eok}억원`;
+  return `${man.toLocaleString()}만원`;
 }
 
 interface Props {
@@ -21,7 +35,11 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
   const [certResult, setCertResult] = useState<CertifyResult | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadDone, setUploadDone] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [safety, setSafety] = useState<SafetyResult | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const isJeonse = listing.listingType === "JEONSE";
 
   const hasTaxDoc = uploadDone || !!listing.taxDocUrl;
   const checks = certResult?.checks ?? {
@@ -61,6 +79,23 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
       onReload?.();
     } finally {
       setCertifying(false);
+    }
+  }
+
+  async function handleSafetyCheck() {
+    setAnalyzing(true);
+    try {
+      const res = await fetch(`/api/listings/${listing.id}/safety-check`, { method: "POST" });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        alert(j.error ?? "안전지표 분석에 실패했습니다.");
+        return;
+      }
+      const data: SafetyResult = await res.json();
+      setSafety(data);
+      onReload?.(); // 저장된 전세가율이 임차인 열람 화면에도 반영되도록 갱신
+    } finally {
+      setAnalyzing(false);
     }
   }
 
@@ -222,6 +257,75 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
           {!certResult.checks.registry && "등기부 조회에 실패했습니다. 주소를 확인하거나 잠시 후 다시 시도해주세요. "}
           {!certResult.checks.building && "건축물대장 조회에 실패했습니다. "}
           {certResult.error && certResult.error}
+        </div>
+      )}
+
+      {/* 전세가율·보증보험 안전지표 분석 — 오너 + 전세 매물만 */}
+      {isOwner && isJeonse && (
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid #f2f2f7" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <Activity size={15} strokeWidth={2} color="#0071e3" />
+            <p style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f", margin: 0 }}>전세 안전지표</p>
+          </div>
+          <p style={{ fontSize: 11, color: "#6e6e73", lineHeight: 1.5, margin: "0 0 12px" }}>
+            공시가격 기준 전세가율과 전세보증보험 가입 가능 여부를 자동 계산합니다. 결과는 저장되어 임차인 열람 화면에도 표시됩니다.
+          </p>
+
+          {safety && (
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+              {safety.jeonseRatio != null && (() => {
+                const r = safety.jeonseRatio!;
+                const safe = r <= 80; const warn = r > 80 && r <= 100;
+                return (
+                  <div style={{ flex: 1, minWidth: 110, borderRadius: 12, padding: "12px 14px", background: safe ? "rgba(52,199,89,0.08)" : warn ? "rgba(255,149,0,0.08)" : "rgba(255,59,48,0.08)" }}>
+                    <p style={{ fontSize: 10, color: "#aeaeb2", margin: "0 0 4px" }}>전세가율</p>
+                    <p style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-0.02em", margin: 0, color: safe ? "#1a9e45" : warn ? "#b45309" : "#c0392b" }}>{r.toFixed(1)}%</p>
+                    <p style={{ fontSize: 11, color: "#6e6e73", margin: "4px 0 0" }}>{safe ? "✓ 안전" : warn ? "⚠ 주의 — 80% 초과" : "✕ 위험"}</p>
+                  </div>
+                );
+              })()}
+              {safety.insurance && (() => {
+                const ins = safety.insurance!;
+                const eligible = ins.hugEligible || ins.sgiEligible || ins.hfEligible;
+                return (
+                  <div style={{ flex: 1, minWidth: 110, borderRadius: 12, padding: "12px 14px", background: eligible ? "rgba(52,199,89,0.08)" : "rgba(255,59,48,0.06)" }}>
+                    <p style={{ fontSize: 10, color: "#aeaeb2", margin: "0 0 4px" }}>전세보증보험</p>
+                    <p style={{ fontSize: 13, fontWeight: 800, margin: 0, color: eligible ? "#1a9e45" : "#c0392b" }}>
+                      {ins.hugEligible ? "HUG 가입 가능" : ins.sgiEligible ? "SGI 가입 가능" : ins.hfEligible ? "HF 가입 가능" : "가입 어려움"}
+                    </p>
+                  </div>
+                );
+              })()}
+              {safety.officialPrice != null && (
+                <div style={{ flex: 1, minWidth: 110, borderRadius: 12, padding: "12px 14px", background: "#f9f9fb" }}>
+                  <p style={{ fontSize: 10, color: "#aeaeb2", margin: "0 0 4px" }}>공시가격</p>
+                  <p style={{ fontSize: 15, fontWeight: 800, margin: 0, color: "#1d1d1f" }}>{formatEok(safety.officialPrice)}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {safety && safety.officialPrice == null && (
+            <p style={{ fontSize: 11, color: "#c0392b", margin: "0 0 12px" }}>
+              공시가격을 조회하지 못했습니다. 주소를 확인하거나 잠시 후 다시 시도해주세요.
+            </p>
+          )}
+
+          <button
+            type="button"
+            onClick={handleSafetyCheck}
+            disabled={analyzing}
+            style={{
+              width: "100%", padding: "11px 0", borderRadius: 12,
+              background: analyzing ? "#d2d2d7" : "#0071e3",
+              color: "#fff", fontSize: 13, fontWeight: 700, border: "none",
+              cursor: analyzing ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+            }}
+          >
+            {analyzing && <Loader2 size={14} strokeWidth={2} style={{ animation: "spin 1s linear infinite" }} />}
+            {analyzing ? "분석 중..." : safety ? "안전지표 다시 분석" : "전세가율·보증보험 분석"}
+          </button>
         </div>
       )}
 

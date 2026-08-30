@@ -13,6 +13,14 @@ interface CompareResult {
   confidence: number;
 }
 
+interface CompareApiItem {
+  address: string;
+  currentPrice: number;
+  predictions: { base?: Record<string, number> } | null;
+  confidence: number;
+  error?: string;
+}
+
 interface RegionCompareProps {
   primaryResult?: CompareResult;
 }
@@ -33,30 +41,25 @@ export function RegionCompare({ primaryResult }: RegionCompareProps) {
 
     setLoading(true);
     try {
-      const promises = addresses.map(async (addr) => {
-        // 주소에서 아파트/단지명 추출 시도 (예: "서울 강남구 대치동 까치마을" → buildingName: "까치마을")
-        const parts = addr.trim().split(/\s+/);
-        const lastPart = parts[parts.length - 1];
-        const hasBuilding = parts.length >= 3 && !/[시구군동읍면리로길]$/.test(lastPart);
-        const res = await fetch("/api/predict-value", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            address: addr,
-            buildingName: hasBuilding ? lastPart : undefined,
-          }),
-        });
-        if (!res.ok) return null;
-        const data = await res.json();
-        return {
-          address: addr,
-          currentPrice: data.currentPrice,
-          prediction1y: data.predictions?.base?.["1y"] ?? 0,
-          confidence: data.confidence,
-        } as CompareResult;
+      // 배치 비교 API 1회 호출 (기존: 주소 수만큼 개별 predict 반복 호출)
+      const res = await fetch("/api/predict-value/compare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ addresses }),
       });
-
-      const compareResults = (await Promise.all(promises)).filter(Boolean) as CompareResult[];
+      if (!res.ok) {
+        setResults([]);
+        return;
+      }
+      const data = await res.json();
+      const compareResults: CompareResult[] = (data.comparisons ?? [])
+        .filter((c: CompareApiItem) => c && !c.error && c.predictions)
+        .map((c: CompareApiItem) => ({
+          address: c.address,
+          currentPrice: c.currentPrice,
+          prediction1y: c.predictions?.base?.["1y"] ?? 0,
+          confidence: c.confidence,
+        }));
       setResults(compareResults);
     } finally {
       setLoading(false);

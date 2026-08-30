@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react";
 import type { ListingItem } from "../../hooks/useListings";
 import { ApplicationModal } from "./ApplicationModal";
 import { CertificationSection } from "./CertificationSection";
+import { PhotoManager } from "./PhotoManager";
 import { ChatModal } from "./ChatModal";
 import { ListingInfoTabs } from "./ListingInfoTabs";
 import styles from "./ListingDetail.module.css";
@@ -135,6 +136,9 @@ export function ListingDetail({ listing, onReload }: Props) {
               ))}
             </div>
           )}
+
+          {/* 사진 관리 — 소유자 전용 */}
+          {isOwner && <PhotoManager listingId={listing.id} photos={photos} onReload={onReload} />}
 
           {/* 위치/인프라/학군/시세 탭 */}
           <ListingInfoTabs

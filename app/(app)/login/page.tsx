@@ -36,7 +36,10 @@ function LoginContent() {
 
   const handleSocialLogin = (provider: "google" | "naver") => {
     try { sessionStorage.setItem("vestra_alive", "1"); } catch {}
-    signIn(provider, { callbackUrl: "/dashboard" });
+    // 로그인 후 복귀할 화면(callbackUrl)이 있으면 대시보드 허브의 next로 넘겨 역할별 복귀 처리
+    const cb = searchParams.get("callbackUrl");
+    const dest = cb ? `/dashboard?next=${encodeURIComponent(cb)}` : "/dashboard";
+    signIn(provider, { callbackUrl: dest });
   };
 
   const handleAdminLogin = async (e: React.FormEvent) => {
