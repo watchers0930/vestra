@@ -219,7 +219,27 @@ function buildProviders(settings: Record<string, string>) {
   const naverId = normalizeOAuthValue(settings.NAVER_CLIENT_ID || process.env.NAVER_CLIENT_ID);
   const naverSecret = normalizeOAuthValue(settings.NAVER_CLIENT_SECRET || process.env.NAVER_CLIENT_SECRET);
   if (naverId && naverSecret) {
-    providers.push(Naver({ clientId: naverId, clientSecret: naverSecret }));
+    // 기본 Naver provider는 name을 nickname만 매핑 → 별명 미동의 시 User.name이 null.
+    // 실제 이름(response.name) 우선, 없으면 별명, 그것도 없으면 이메일 로컬파트로 폴백.
+    providers.push(
+      Naver({
+        clientId: naverId,
+        clientSecret: naverSecret,
+        profile(profile) {
+          const r = profile.response;
+          const name =
+            r.name?.trim() ||
+            r.nickname?.trim() ||
+            (r.email ? r.email.split("@")[0] : null);
+          return {
+            id: r.id,
+            name,
+            email: r.email,
+            image: r.profile_image,
+          };
+        },
+      })
+    );
   }
 
   providers.push(credentialsProvider);
