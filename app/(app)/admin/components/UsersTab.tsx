@@ -77,7 +77,7 @@ export function UsersTab({
                         </div>
                       )}
                       <div>
-                        <p className="font-medium text-gray-900">{user.name || "이름 없음"}</p>
+                        <p className="font-medium text-gray-900">{user.name || user.companyName || "이름 없음"}</p>
                         <p className="text-xs text-gray-500">{user.email}</p>
                       </div>
                     </div>

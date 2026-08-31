@@ -13,6 +13,7 @@ import {
 } from "../constants";
 import { formatEok, formatKoreanWon } from "../lib/format";
 import { GANGNAM_TEST_LISTINGS } from "../../listings-list/test-fixtures";
+import { isProdHost } from "@/lib/site";
 import type { ListingItem } from "@/app/(app)/listings/hooks/useListings";
 
 // 안심매물(등록매물) fixture → 지도 아이템(Apt) 변환
@@ -87,7 +88,7 @@ export function useListingsMap() {
   const loadingItems = false;
 
   useEffect(() => {
-    const isProd = typeof window !== "undefined" && window.location.hostname === "vestra-plum.vercel.app";
+    const isProd = typeof window !== "undefined" && isProdHost(window.location.hostname);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setItems(isProd ? [] : GANGNAM_TEST_LISTINGS.map(toApt));
   }, []);

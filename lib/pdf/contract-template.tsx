@@ -299,7 +299,7 @@ export function ContractPdf({ data }: { data: EContractPdfData }) {
         </View>
 
         <Text style={[S.footer, { marginTop: 8 }]}>
-          ※ 본 가계약서는 주요 조건 합의 문서이며, 당사자 간 오프라인 본계약으로 확정됩니다. | 계약번호: {data.id} | vestra-plum.vercel.app
+          ※ 본 가계약서는 주요 조건 합의 문서이며, 당사자 간 오프라인 본계약으로 확정됩니다. | 계약번호: {data.id} | vestra.ai.kr
         </Text>
       </Page>
     </Document>

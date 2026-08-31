@@ -1,10 +1,12 @@
+import { SITE_URL } from "@/lib/site";
+
 export default function JsonLd() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     name: "VESTRA",
     alternateName: "베스트라",
-    url: "https://vestra-plum.vercel.app",
+    url: SITE_URL,
     description:
       "AI가 분석하는 부동산 자산관리. 등기부등본 분석, 계약서 검토, 세무 시뮬레이션, 시세 전망, 전세 안전성 진단까지 한 곳에서.",
     applicationCategory: "FinanceApplication",

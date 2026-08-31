@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import Script from "next/script";
+import { SITE_URL } from "@/lib/site";
 
 declare global {
   interface Window {
@@ -71,7 +72,7 @@ export const metadata: Metadata = {
   authors: [{ name: "BMI C&S" }],
   creator: "BMI C&S",
   publisher: "BMI C&S",
-  metadataBase: new URL("https://vestra-plum.vercel.app"),
+  metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: "/",
   },
@@ -89,7 +90,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://vestra-plum.vercel.app",
+    url: SITE_URL,
     siteName: "VESTRA",
     title: "VESTRA - AI 자산관리 플랫폼",
     description:

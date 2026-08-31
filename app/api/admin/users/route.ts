@@ -19,6 +19,8 @@ export const GET = withAdminAuth(async (request) => {
         verifyStatus: true,
         dailyLimit: true,
         businessNumber: true,
+        companyName: true,
+        representName: true,
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },

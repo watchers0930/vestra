@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
+import { SITE_URL } from "@/lib/site";
 import { withAgentAuth } from "@/lib/with-agent-auth";
 import crypto from "crypto";
 
@@ -45,8 +46,7 @@ export const POST = withAgentAuth<{ id: string }>(
         },
       });
 
-      const baseUrl =
-        process.env.NEXTAUTH_URL || "https://vestra-plum.vercel.app";
+      const baseUrl = process.env.NEXTAUTH_URL || SITE_URL;
       const inviteUrl = `${baseUrl}/invite/${inviteToken}`;
 
       return NextResponse.json({

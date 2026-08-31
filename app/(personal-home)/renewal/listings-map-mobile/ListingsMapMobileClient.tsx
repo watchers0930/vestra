@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import s from "./listings-map-mobile.module.css";
 import { ClusterMarkerMap } from "../listings-map/ClusterMarkerMap";
 import { GANGNAM_TEST_LISTINGS } from "../listings-list/test-fixtures";
+import { isProdHost } from "@/lib/site";
 import type { ListingItem } from "@/app/(app)/listings/hooks/useListings";
 
 /* ── 지도용 매물 아이템(안심매물 fixture 기반) ── */
@@ -119,7 +120,7 @@ export default function ListingsMapMobileClient() {
 
   // 안심매물(테스트 샘플)을 지도 목록으로. 운영 도메인에서는 노출하지 않음.
   useEffect(() => {
-    const isProd = window.location.hostname === "vestra-plum.vercel.app";
+    const isProd = isProdHost(window.location.hostname);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setItems(isProd ? [] : GANGNAM_TEST_LISTINGS.map(toMapItem));
   }, []);

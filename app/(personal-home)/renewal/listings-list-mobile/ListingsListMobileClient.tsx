@@ -5,6 +5,7 @@ import Link from "next/link";
 import s from "./listings-list-mobile.module.css";
 import { useListings, type ListingType } from "@/app/(app)/listings/hooks/useListings";
 import { GANGNAM_TEST_LISTINGS } from "../listings-list/test-fixtures";
+import { isProdHost } from "@/lib/site";
 import MobileListingCard from "./components/MobileListingCard";
 
 const REGIONS: Record<string, string[]> = {
@@ -66,15 +67,13 @@ export default function ListingsListMobileClient() {
   const [sido, setSido] = useState("서울특별시");
   const [sigungu, setSigungu] = useState("");
 
-  // 테스트 샘플 매물: 운영(vestra-plum) 도메인에서는 노출하지 않음.
+  // 테스트 샘플 매물: 운영 도메인에서는 노출하지 않음.
   // 실데이터가 비어있을 때만 테스트 화면 확인용 샘플 카드를 보여준다. (PC 목록과 동일)
   const [showFixtures, setShowFixtures] = useState(false);
   useEffect(() => {
     // 클라이언트 전용 도메인 판별 — SSR(false) 후 클라이언트에서 갱신해 하이드레이션 불일치 방지
-    const host = window.location.hostname;
-    const isProd = host === "vestra-plum.vercel.app";
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setShowFixtures(!isProd);
+    setShowFixtures(!isProdHost(window.location.hostname));
   }, []);
 
   const sigunguList = REGIONS[sido] || [];

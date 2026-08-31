@@ -7,6 +7,7 @@ import RenewalGnb from "../_shared/RenewalGnb";
 import { useListings, type ListingType } from "@/app/(app)/listings/hooks/useListings";
 import { ListingCard } from "@/app/(app)/listings/components/ListingCard";
 import { GANGNAM_TEST_LISTINGS } from "./test-fixtures";
+import { isProdHost } from "@/lib/site";
 
 const REGIONS: Record<string, string[]> = {
   '서울특별시': ['강남구','강동구','강북구','강서구','관악구','광진구','구로구','금천구','노원구','도봉구','동대문구','동작구','마포구','서대문구','서초구','성동구','성북구','송파구','양천구','영등포구','용산구','은평구','종로구','중구','중랑구'],
@@ -67,14 +68,12 @@ export default function ListingsListClient() {
   // 베스트라 안심인증매물만 보기 토글 (isCertified === true 만 노출)
   const [certifiedOnly, setCertifiedOnly] = useState(false);
 
-  // 테스트 전용 샘플 매물: 운영(vestra-plum) 도메인에서는 절대 노출하지 않음.
+  // 테스트 전용 샘플 매물: 운영 도메인에서는 절대 노출하지 않음.
   // 실데이터가 비어있을 때만 테스트 화면 확인용으로 강남 샘플 3건(1건 안심)을 보여준다.
   const [showFixtures, setShowFixtures] = useState(false);
   useEffect(() => {
-    const host = window.location.hostname;
-    const isProd = host === 'vestra-plum.vercel.app';
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setShowFixtures(!isProd);
+    setShowFixtures(!isProdHost(window.location.hostname));
   }, []);
 
   const sigunguList = sido && REGIONS[sido] ? REGIONS[sido] : [];

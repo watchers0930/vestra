@@ -11,6 +11,8 @@ const ALLOWED_ORIGINS = new Set([
   ...(process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(",").map((s) => s.trim())
     : []),
+  "https://vestra.ai.kr",
+  "https://www.vestra.ai.kr",
   "https://vestra-plum.vercel.app",
   "https://t-vestra.vercel.app",
   "http://localhost:3000",

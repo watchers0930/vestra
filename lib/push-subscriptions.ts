@@ -15,7 +15,7 @@ function ensureVapidConfigured() {
   const pub = process.env.NEXT_PUBLIC_VAPID_KEY;
   const priv = process.env.VAPID_PRIVATE_KEY;
   if (pub && priv) {
-    webpush.setVapidDetails("mailto:support@vestra-plum.vercel.app", pub, priv);
+    webpush.setVapidDetails("mailto:support@vestra.ai.kr", pub, priv);
     vapidConfigured = true;
     return true;
   }

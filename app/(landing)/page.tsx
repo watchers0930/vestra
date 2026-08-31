@@ -7,6 +7,7 @@ import { PricingSection } from "./components/PricingSection";
 import { TestimonialsSection } from "./components/TestimonialsSection";
 import { CtaSection } from "./components/CtaSection";
 import { MobileLanding } from "./components/mobile/MobileLanding";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata = {
   title: "VESTRA - AI 부동산 자산관리 플랫폼",
@@ -17,7 +18,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "VESTRA",
-  url: "https://vestra-plum.vercel.app",
+  url: SITE_URL,
   description: "AI 기반 부동산 자산관리 플랫폼. 전세사기 예방, 권리분석, 계약서 검토, 세금 시뮬레이션.",
   sameAs: [],
   contactPoint: { "@type": "ContactPoint", contactType: "customer service", availableLanguage: "Korean" },
