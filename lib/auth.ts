@@ -72,9 +72,17 @@ const authEvents: NextAuthConfig["events"] = {
 
 // ─── 공통 콜백 + 페이지 설정 ───
 
+/** 네이버 프로필에서 표시 이름 결정: 실명 > 별명 > 이메일 로컬파트 */
+function resolveNaverName(
+  r: { name?: string; nickname?: string },
+  email?: string | null
+): string | null {
+  return r.name?.trim() || r.nickname?.trim() || (email ? email.split("@")[0] : null);
+}
+
 const authCallbacks: NextAuthConfig["callbacks"] = {
   // 재가입 차단: 탈퇴 후 30일 이내면 로그인/가입 거부
-  async signIn({ user, account }) {
+  async signIn({ user, account, profile }) {
     if (user.email) {
       const withdrawn = await prisma.withdrawnEmail.findUnique({ where: { email: user.email } });
       if (withdrawn) {
@@ -96,7 +104,7 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
             providerAccountId: account.providerAccountId,
           },
         },
-        select: { id: true },
+        select: { id: true, userId: true },
       });
       if (!linked) {
         let hasSignupIntent = false;
@@ -108,6 +116,19 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
         }
         if (!hasSignupIntent) {
           return "/login?error=not_registered";
+        }
+      } else if (account.provider === "naver" && (!user.name || !user.name.trim())) {
+        // 기존 네이버 유저인데 name이 비어있으면 프로필에서 소급 복원
+        // (초기 기본 매핑 버그로 null 저장된 유저 대상 — 재로그인 시 자동 채움)
+        const r = (profile as { response?: { name?: string; nickname?: string } } | null)?.response;
+        const recovered = r ? resolveNaverName(r, user.email) : null;
+        if (recovered) {
+          await prisma.user
+            .updateMany({
+              where: { id: linked.userId, OR: [{ name: null }, { name: "" }] },
+              data: { name: recovered },
+            })
+            .catch(() => {});
         }
       }
     }
@@ -227,13 +248,9 @@ function buildProviders(settings: Record<string, string>) {
         clientSecret: naverSecret,
         profile(profile) {
           const r = profile.response;
-          const name =
-            r.name?.trim() ||
-            r.nickname?.trim() ||
-            (r.email ? r.email.split("@")[0] : null);
           return {
             id: r.id,
-            name,
+            name: resolveNaverName(r, r.email),
             email: r.email,
             image: r.profile_image,
           };
