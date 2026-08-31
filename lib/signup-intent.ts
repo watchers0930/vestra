@@ -12,9 +12,29 @@
  */
 export const SIGNUP_INTENT_COOKIE = "signup_intent";
 
-/** 회원가입 버튼 클릭 시점에 호출 (소셜 signIn 직전) */
-export function markSignupIntent() {
+/**
+ * 선택한 회원유형(intendedRole) 보관 키.
+ * `/signup/complete`가 OAuth 리다이렉트 후 URL 쿼리에서 intendedRole을 못 읽으면
+ * 이 sessionStorage 값을 폴백으로 사용한다.
+ */
+export const INTENDED_ROLE_KEY = "intendedRole";
+
+/**
+ * 회원가입 버튼 클릭 시점에 호출 (소셜 signIn 직전).
+ *
+ * @param intendedRole 선택한 회원유형(PERSONAL/RENTAL_BIZ/REALESTATE/BUSINESS).
+ *   OAuth 왕복 중 redirectTo URL 쿼리가 유실돼도 역할을 복구할 수 있도록 sessionStorage에 저장한다.
+ *   (같은 탭에서 동일 origin으로 복귀하므로 sessionStorage가 유지된다.)
+ */
+export function markSignupIntent(intendedRole?: string) {
   if (typeof document === "undefined") return;
   const secure = location.protocol === "https:" ? "; secure" : "";
   document.cookie = `${SIGNUP_INTENT_COOKIE}=1; path=/; max-age=600; samesite=lax${secure}`;
+  if (intendedRole && typeof sessionStorage !== "undefined") {
+    try {
+      sessionStorage.setItem(INTENDED_ROLE_KEY, intendedRole);
+    } catch {
+      // 프라이빗 모드 등 sessionStorage 불가 시 URL 쿼리 경로로 폴백
+    }
+  }
 }

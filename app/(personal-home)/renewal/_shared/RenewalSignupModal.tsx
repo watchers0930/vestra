@@ -22,7 +22,8 @@ export default function RenewalSignupModal({ onClose, onSwitchToLogin }: Props) 
 
   const handleSocial = (provider: "google" | "naver") => {
     if (!selectedRole) return;
-    markSignupIntent(); // 서버 signIn 콜백에 "가입 의도" 전달 (미가입 자동생성 차단 우회)
+    // 가입 의도 쿠키 + 선택 역할 sessionStorage 저장 (OAuth 왕복 중 URL 쿼리 유실 대비)
+    markSignupIntent(selectedRole);
     signIn(provider, { redirectTo: `/signup/complete?intendedRole=${selectedRole}` });
   };
 
