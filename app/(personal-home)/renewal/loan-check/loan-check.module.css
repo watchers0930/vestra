@@ -2,70 +2,89 @@
 
 .pageShell {
   min-height: 100vh;
-  background: #f6f7f9;
+  background: #f5f6f8;
   color: #16181d;
 }
 .pageShell a { text-decoration: none; color: inherit; }
 
-.pageWrap {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 44px 32px 80px;
+/* ── 히어로 (풀폭 그라데이션) ── */
+.heroWrap {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+  color: #fff;
+  padding: 52px 32px 120px;
 }
-
-/* ── 히어로 ── */
-.hero { margin-bottom: 26px; }
+.heroInner { max-width: 1120px; margin: 0 auto; }
 .heroChip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
+  padding: 6px 13px;
   border-radius: 999px;
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.02em;
+  backdrop-filter: blur(4px);
 }
 .heroTitle {
-  margin: 14px 0 6px;
-  font-size: 28px;
+  margin: 16px 0 8px;
+  font-size: 34px;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
 }
-.heroSub { font-size: 14px; color: #6b7280; }
+.heroSub { font-size: 15px; color: rgba(255, 255, 255, 0.85); max-width: 560px; line-height: 1.6; }
+
+.heroStats {
+  display: flex;
+  gap: 34px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+.heroStat { display: flex; flex-direction: column; }
+.heroStatNum { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+.heroStatLabel { font-size: 12.5px; color: rgba(255, 255, 255, 0.78); margin-top: 2px; }
+.heroStatDiv { width: 1px; background: rgba(255, 255, 255, 0.22); }
+
+/* ── 메인 2컬럼 (히어로 위로 겹침) ── */
+.mainWrap {
+  max-width: 1120px;
+  margin: -72px auto 0;
+  padding: 0 32px 80px;
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 22px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .mainWrap { grid-template-columns: 1fr; margin-top: -80px; }
+}
+
+.colForm { position: sticky; top: 20px; }
+@media (max-width: 900px) { .colForm { position: static; } }
 
 /* ── 카드 ── */
 .card {
   background: #fff;
   border: 1px solid #eceef1;
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
-  margin-bottom: 18px;
+  box-shadow: 0 8px 28px rgba(16, 24, 40, 0.08);
 }
-.cardTitle {
-  font-size: 14px;
-  font-weight: 700;
-  color: #16181d;
-  margin-bottom: 18px;
+.cardHead { display: flex; align-items: center; gap: 9px; margin-bottom: 18px; }
+.cardIcon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: rgba(37, 99, 235, 0.1); color: #2563eb;
+  display: flex; align-items: center; justify-content: center;
 }
+.cardTitle { font-size: 15px; font-weight: 700; color: #16181d; }
+.cardDesc { font-size: 12px; color: #8b919b; margin-top: 1px; }
 
 /* ── 입력 폼 ── */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
-}
-@media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
-
+.formGrid { display: flex; flex-direction: column; gap: 16px; }
 .field { display: flex; flex-direction: column; }
-.fieldLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: #4b5563;
-  margin-bottom: 7px;
-}
+.fieldLabel { font-size: 12px; font-weight: 600; color: #4b5563; margin-bottom: 7px; }
 .fieldInput,
 .fieldSelect {
   width: 100%;
@@ -85,65 +104,92 @@
 }
 .fieldHint { margin-top: 6px; font-size: 11.5px; color: #9aa1ab; }
 
-.checkRow { display: flex; align-items: center; }
+.fieldRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
 .checkLabel {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #374151;
+  display: flex; align-items: center; gap: 9px; cursor: pointer;
+  font-size: 13.5px; color: #374151;
+  padding: 4px 0;
 }
 .checkbox { width: 17px; height: 17px; accent-color: #2563eb; cursor: pointer; }
 
 .submitBtn {
-  margin-top: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: none;
-  border-radius: 11px;
-  background: #2563eb;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 13px 34px;
+  margin-top: 4px;
+  width: 100%;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: none; border-radius: 12px;
+  background: #2563eb; color: #fff;
+  font-size: 14.5px; font-weight: 700;
+  padding: 14px;
   cursor: pointer;
   transition: background 0.15s, opacity 0.15s;
 }
 .submitBtn:hover { background: #1d4ed8; }
 .submitBtn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-/* ── 에러 ── */
+/* ── 우측 컬럼 공통 ── */
+.rightCol { display: flex; flex-direction: column; gap: 18px; }
+
 .errorBox {
-  border: 1px solid #fecaca;
-  background: #fef2f2;
-  border-radius: 12px;
-  padding: 14px 16px;
-  font-size: 13.5px;
-  color: #dc2626;
-  margin-bottom: 18px;
+  border: 1px solid #fecaca; background: #fef2f2;
+  border-radius: 12px; padding: 14px 16px;
+  font-size: 13.5px; color: #dc2626;
 }
+
+/* ── 빈 상태 안내 ── */
+.guideCard {
+  background: #fff; border: 1px solid #eceef1; border-radius: 18px;
+  padding: 26px 24px; box-shadow: 0 4px 18px rgba(16, 24, 40, 0.05);
+}
+.guideTitle { font-size: 16px; font-weight: 800; color: #16181d; margin-bottom: 4px; }
+.guideSub { font-size: 13px; color: #6b7280; margin-bottom: 22px; }
+
+.stepList { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 560px) { .stepList { grid-template-columns: 1fr; } }
+.step {
+  border: 1px solid #eef0f3; border-radius: 14px; padding: 16px;
+  background: #fafbfc;
+}
+.stepNum {
+  width: 26px; height: 26px; border-radius: 8px;
+  background: #2563eb; color: #fff;
+  font-size: 13px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 10px;
+}
+.stepHead { font-size: 13.5px; font-weight: 700; color: #16181d; margin-bottom: 3px; }
+.stepText { font-size: 12px; color: #6b7280; line-height: 1.5; }
+
+.guideDivider { height: 1px; background: #f0f1f3; margin: 22px 0; }
+
+.bankLabel { font-size: 12.5px; font-weight: 700; color: #4b5563; margin-bottom: 12px; }
+.bankChips { display: flex; flex-wrap: wrap; gap: 8px; }
+.bankChip {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid #e5e7eb; border-radius: 999px;
+  padding: 7px 13px; font-size: 12.5px; font-weight: 600; color: #374151;
+  background: #fff;
+}
+.bankDot { width: 7px; height: 7px; border-radius: 50%; background: #2563eb; }
+
+.termGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .termGrid { grid-template-columns: 1fr; } }
+.termCard { border: 1px solid #eef0f3; border-radius: 12px; padding: 13px 15px; background: #fafbfc; }
+.termLabel { font-size: 12.5px; font-weight: 700; color: #2563eb; margin-bottom: 4px; }
+.termDesc { font-size: 11.5px; color: #6b7280; line-height: 1.55; }
 
 /* ── 결과 요약 ── */
 .resultHero {
   border: 1px solid #c7d7fe;
   background: linear-gradient(135deg, #eff4ff 0%, #f2f7ff 100%);
-  border-radius: 16px;
-  padding: 22px 24px;
-  margin-bottom: 18px;
+  border-radius: 18px; padding: 22px 24px;
 }
-.resultTop {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-@media (min-width: 640px) {
+.resultTop { display: flex; flex-direction: column; gap: 16px; }
+@media (min-width: 560px) {
   .resultTop { flex-direction: row; align-items: center; justify-content: space-between; }
 }
 .resultLabel { font-size: 13px; font-weight: 600; color: #2563eb; }
-.resultHeadline { font-size: 19px; font-weight: 800; color: #16181d; margin-top: 2px; }
+.resultHeadline { font-size: 20px; font-weight: 800; color: #16181d; margin-top: 2px; }
 .statRow { display: flex; gap: 26px; }
 .stat { text-align: center; }
 .statLabel { font-size: 11.5px; color: #6b7280; }
@@ -152,38 +198,22 @@
 .statValueGreen { color: #16a34a; }
 
 .bestBox {
-  margin-top: 16px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  background: rgba(255, 255, 255, 0.75);
-  border-radius: 11px;
-  padding: 12px 14px;
-  font-size: 13.5px;
+  margin-top: 16px; display: flex; align-items: center; gap: 9px;
+  background: rgba(255, 255, 255, 0.8); border-radius: 12px;
+  padding: 12px 14px; font-size: 13.5px;
 }
 .bestName { font-weight: 700; }
 
 /* ── 은행별 카드 ── */
-.bankGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin-bottom: 18px;
-}
-@media (max-width: 900px) { .bankGrid { grid-template-columns: repeat(2, 1fr); } }
+.bankGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 @media (max-width: 560px) { .bankGrid { grid-template-columns: 1fr; } }
 
 .bankCard {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 16px;
-  text-align: left;
-  background: #fff;
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  width: 100%;
+  border: 1px solid #e5e7eb; border-radius: 15px; padding: 17px;
+  text-align: left; background: #fff; cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s; width: 100%;
 }
-.bankCardOk:hover { border-color: #86efac; }
+.bankCardOk:hover { border-color: #86efac; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.08); }
 .bankCardNo { background: #fafafa; }
 .bankCardSel { box-shadow: 0 0 0 2px #2563eb; border-color: #2563eb; }
 
@@ -191,11 +221,13 @@
 .bankName { font-size: 14px; font-weight: 700; color: #16181d; }
 .bankProduct { font-size: 11.5px; color: #6b7280; margin-top: 1px; }
 
-.bankBody { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+.bankBody { margin-top: 14px; display: flex; flex-direction: column; gap: 7px; }
 .bankRow { display: flex; justify-content: space-between; font-size: 12px; }
 .bankRowLabel { color: #6b7280; }
 .bankRowValue { font-weight: 700; }
 .bankRowRate { font-weight: 700; color: #16a34a; }
+.bankBar { height: 5px; border-radius: 3px; background: #eef2f7; overflow: hidden; margin-top: 3px; }
+.bankBarFill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #2563eb, #3b82f6); }
 
 .reasonList { margin-top: 14px; display: flex; flex-direction: column; gap: 3px; }
 .reason { font-size: 11.5px; color: #dc2626; }
@@ -206,32 +238,38 @@
 
 /* ── 의사결정 리포트 CTA ── */
 .ctaCard {
-  border: 1px solid #c7d7fe;
-  background: #fff;
-  border-radius: 16px;
-  padding: 22px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 16px;
+  border: 1px solid #c7d7fe; background: #fff; border-radius: 18px;
+  padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;
 }
-@media (min-width: 640px) {
+@media (min-width: 560px) {
   .ctaCard { flex-direction: row; align-items: center; justify-content: space-between; }
 }
 .ctaTitle { font-size: 14px; font-weight: 700; color: #16181d; }
 .ctaSub { font-size: 12px; color: #6b7280; margin-top: 3px; }
 .ctaBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #2563eb;
-  color: #fff;
-  border-radius: 11px;
-  padding: 12px 22px;
-  font-size: 13.5px;
-  font-weight: 700;
-  white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #2563eb; color: #fff; border-radius: 12px;
+  padding: 12px 22px; font-size: 13.5px; font-weight: 700; white-space: nowrap;
 }
 .ctaBtn:hover { background: #1d4ed8; }
 
-.disclaimer { font-size: 11.5px; color: #9aa1ab; text-align: center; }
+.disclaimer { font-size: 11.5px; color: #9aa1ab; line-height: 1.6; }
+
+/* ── 하단 안내 밴드 ── */
+.noticeBand {
+  max-width: 1120px; margin: 0 auto; padding: 0 32px 70px;
+}
+.noticeInner {
+  background: #fff; border: 1px solid #eceef1; border-radius: 18px;
+  padding: 24px 26px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px;
+}
+@media (max-width: 760px) { .noticeInner { grid-template-columns: 1fr; gap: 16px; } }
+.notice { display: flex; flex-direction: column; gap: 6px; }
+.noticeIcon {
+  width: 32px; height: 32px; border-radius: 9px;
+  background: rgba(37, 99, 235, 0.09); color: #2563eb;
+  display: flex; align-items: center; justify-content: center;
+}
+.noticeHead { font-size: 13.5px; font-weight: 700; color: #16181d; margin-top: 4px; }
+.noticeText { font-size: 12px; color: #6b7280; line-height: 1.55; }
