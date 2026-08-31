@@ -1,0 +1,106 @@
+/* 의사결정 통합 리포트 — renewal 톤 */
+
+.pageShell { min-height: 100vh; background: #f5f6f8; color: #16181d; }
+.pageShell a { text-decoration: none; color: inherit; }
+
+/* ── 히어로 ── */
+.heroWrap { background: #060c2a; color: #fff; padding: 52px 32px 120px; }
+.heroInner { max-width: 900px; margin: 0 auto; }
+.heroChip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 13px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16); color: #fff;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+}
+.heroTitle { margin: 16px 0 8px; font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2; }
+.heroSub { font-size: 15px; color: rgba(255, 255, 255, 0.85); max-width: 560px; line-height: 1.6; }
+
+/* ── 메인 ── */
+.mainWrap { max-width: 900px; margin: -72px auto 0; padding: 0 32px 80px; display: flex; flex-direction: column; gap: 18px; }
+
+.card { background: #fff; border: 1px solid #eceef1; border-radius: 18px; padding: 24px; box-shadow: 0 8px 28px rgba(16, 24, 40, 0.08); }
+
+/* ── 종합 등급 ── */
+.gradeCard {
+  border: 1px solid #c7d7fe;
+  background: linear-gradient(135deg, #eff4ff 0%, #f2f7ff 100%);
+  border-radius: 18px; padding: 24px;
+}
+.gradeTop { display: flex; align-items: center; gap: 16px; }
+.gradeBadge {
+  width: 66px; height: 66px; border-radius: 18px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; font-weight: 900;
+}
+.gradeLabel { font-size: 13px; font-weight: 700; }
+.gradeRec { font-size: 19px; font-weight: 800; color: #16181d; margin-top: 2px; }
+.keyPoints { margin-top: 18px; display: flex; flex-direction: column; gap: 9px; }
+.keyPoint { display: flex; align-items: flex-start; gap: 9px; }
+.keyNum {
+  margin-top: 1px; width: 20px; height: 20px; flex-shrink: 0;
+  border-radius: 50%; background: #2563eb; color: #fff;
+  font-size: 11px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.keyText { font-size: 13.5px; color: #374151; line-height: 1.5; }
+
+/* ── 통계 3칸 ── */
+.statGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 560px) { .statGrid { grid-template-columns: 1fr; } }
+.statCard { border: 1px solid #eef0f3; border-radius: 15px; padding: 18px; text-align: center; background: #fff; }
+.statValue { font-size: 24px; font-weight: 800; color: #16181d; margin-top: 8px; }
+.statLabel { font-size: 12px; color: #6b7280; margin-top: 2px; }
+
+/* ── 은행 목록 ── */
+.bankListTitle { font-size: 14px; font-weight: 700; color: #16181d; margin-bottom: 14px; }
+.bankRows { display: flex; flex-direction: column; gap: 9px; }
+.bankRow {
+  display: flex; align-items: center; justify-content: space-between;
+  border-radius: 12px; background: #f7f8fa; padding: 13px 15px;
+}
+.bankRowName { font-size: 13.5px; font-weight: 700; color: #16181d; }
+.bankRowRate { font-size: 11.5px; color: #6b7280; margin-top: 2px; }
+.bankRowAmount { font-size: 14px; font-weight: 800; color: #2563eb; }
+
+/* ── 프리미엄 CTA ── */
+.premiumCard {
+  border: 2px dashed #bcccf7; background: #f4f7ff;
+  border-radius: 18px; padding: 26px; text-align: center;
+}
+.premiumIcon {
+  width: 44px; height: 44px; border-radius: 12px; margin: 0 auto 12px;
+  background: rgba(37, 99, 235, 0.1); color: #2563eb;
+  display: flex; align-items: center; justify-content: center;
+}
+.premiumTitle { font-size: 15px; font-weight: 800; color: #16181d; }
+.premiumDesc { font-size: 12.5px; color: #6b7280; margin-top: 5px; line-height: 1.5; }
+.premiumBtn {
+  margin-top: 16px; border: none; border-radius: 12px;
+  background: #2563eb; color: #fff; font-size: 14px; font-weight: 700;
+  padding: 12px 26px; cursor: pointer; transition: background 0.15s;
+}
+.premiumBtn:hover { background: #1d4ed8; }
+.premiumNote { font-size: 11.5px; color: #9aa1ab; margin-top: 10px; }
+
+.footNote { font-size: 11.5px; color: #9aa1ab; text-align: center; line-height: 1.6; }
+
+/* ── 빈 상태 / 로딩 ── */
+.centerBox {
+  min-height: 300px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; gap: 12px;
+}
+.emptyIcon { color: #c3c8d0; }
+.emptyTitle { font-size: 17px; font-weight: 800; color: #16181d; }
+.emptyText { font-size: 13.5px; color: #6b7280; max-width: 380px; line-height: 1.6; }
+.emptyBtn {
+  margin-top: 6px; display: inline-flex; align-items: center; gap: 6px;
+  background: #2563eb; border-radius: 12px; padding: 12px 24px;
+  font-size: 13.5px; font-weight: 700;
+}
+.pageShell a.emptyBtn { color: #fff; }
+.spinner {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid rgba(37, 99, 235, 0.2); border-top-color: #2563eb;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

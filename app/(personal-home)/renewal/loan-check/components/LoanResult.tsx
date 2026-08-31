@@ -110,7 +110,7 @@ export default function LoanResult({ result, form, selectedBank, toggleBank }: P
           <p className={s.ctaSub}>대출 + 시세예측 + 세금 + 보증보험 + 임대인 프로파일 통합 리포트</p>
         </div>
         <Link className={s.ctaBtn}
-          href={`/decision-report?deposit=${form.deposit}&propertyPrice=${form.propertyPrice}&annualIncome=${form.annualIncome}&propertyType=${form.propertyType}&isFirstHome=${form.isFirstHome}`}>
+          href={`/renewal/decision-report?deposit=${form.deposit}&propertyPrice=${form.propertyPrice}&annualIncome=${form.annualIncome}&propertyType=${form.propertyType}&isFirstHome=${form.isFirstHome}`}>
           의사결정 리포트 보기 <ChevronRight size={16} />
         </Link>
       </div>

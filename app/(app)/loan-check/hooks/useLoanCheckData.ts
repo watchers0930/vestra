@@ -42,11 +42,11 @@ export interface LoanForm {
 export function useLoanCheckData() {
   const searchParams = useSearchParams();
   const [form, setForm] = useState<LoanForm>({
-    deposit: 300_000_000,
-    propertyPrice: 500_000_000,
+    deposit: 0,
+    propertyPrice: 0,
     propertyType: "아파트",
     propertyAddress: "",
-    annualIncome: 50_000_000,
+    annualIncome: 0,
     creditScore: 700,
     existingLoans: 0,
     isFirstHome: false,
