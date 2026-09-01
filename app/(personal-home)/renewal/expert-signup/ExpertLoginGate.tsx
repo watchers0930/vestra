@@ -48,9 +48,9 @@ export default function ExpertLoginGate() {
         className="pointer-events-none absolute inset-0 opacity-40"
         style={{ background: "radial-gradient(circle at 85% 15%, rgba(90,130,255,0.30), transparent 45%)" }}
       />
-      <div className="relative grid items-start gap-10 p-8 sm:p-12 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="relative grid items-start gap-10 p-8 sm:p-12 lg:grid-cols-5">
         {/* 좌: 설명 */}
-        <div>
+        <div className="lg:col-span-3">
           <span className="inline-block rounded-full bg-white/12 px-3.5 py-1.5 text-xs font-semibold tracking-wide text-white backdrop-blur">
             VESTRA 전문가 파트너
           </span>
@@ -87,7 +87,7 @@ export default function ExpertLoginGate() {
         </div>
 
         {/* 우: 소셜 로그인 + 절차 (흰 카드) */}
-        <div className="rounded-2xl bg-white p-7 shadow-[0_10px_40px_rgba(0,0,0,0.25)] lg:sticky lg:top-6">
+        <div className="rounded-2xl bg-white p-7 shadow-[0_10px_40px_rgba(0,0,0,0.25)] lg:col-span-2 lg:sticky lg:top-6">
           <h2 className="text-lg font-extrabold text-gray-900">소셜 계정으로 시작하기</h2>
           <p className="mt-1.5 text-[13px] leading-relaxed text-gray-500">
             로그인 후 자격 정보를 등록하면 심사를 거쳐 전문가 계정이 승인됩니다.
