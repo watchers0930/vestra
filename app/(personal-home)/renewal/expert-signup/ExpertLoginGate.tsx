@@ -38,14 +38,14 @@ export default function ExpertLoginGate() {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: "2.5rem", alignItems: "flex-start" }}>
       {/* 좌: 설명 + 혜택 */}
-      <div style={{ flex: "1 1 440px", minWidth: 0 }}>
+      <div style={{ flex: "1 1 560px", minWidth: 0 }}>
         <span
           className="inline-block rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide"
           style={{ background: "rgba(46,75,216,0.08)", color: ACCENT }}
         >
           VESTRA 전문가 파트너
         </span>
-        <h1 className="mt-6 font-extrabold leading-tight text-gray-900" style={{ fontSize: "clamp(2.6rem, 5.5vw, 5.3rem)" }}>
+        <h1 className="mt-6 font-extrabold leading-tight text-gray-900" style={{ fontSize: "clamp(2.2rem, 4.5vw, 4rem)" }}>
           부동산 전문가로,<br />더 많은 고객과 만나세요
         </h1>
         <p className="mt-6 max-w-lg text-[15px] leading-relaxed text-gray-500">
@@ -80,7 +80,7 @@ export default function ExpertLoginGate() {
       {/* 우: 소셜 로그인 + 절차 (카드) */}
       <div
         className="rounded-2xl border border-gray-200 bg-white p-7"
-        style={{ flex: "0 0 380px", maxWidth: "100%", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}
+        style={{ flex: "0 0 340px", maxWidth: "100%", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}
       >
         <h2 className="text-lg font-extrabold text-gray-900">소셜 계정으로 시작하기</h2>
         <p className="mt-1.5 text-[13px] leading-relaxed text-gray-500">

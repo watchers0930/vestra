@@ -85,7 +85,7 @@ export default function ExpertSignupContent() {
     <>
       <RenewalGnb />
 
-      <div className={`mx-auto px-4 py-10 ${authed ? "max-w-2xl" : "max-w-6xl"}`}>
+      <div className={`mx-auto px-4 py-10 ${authed ? "max-w-2xl" : "max-w-7xl"}`}>
         {/* 비로그인: 랜딩형 게이트 (자체 히어로 포함) */}
         {status === "loading" ? (
           <p className="py-20 text-center text-sm text-gray-400">불러오는 중…</p>
