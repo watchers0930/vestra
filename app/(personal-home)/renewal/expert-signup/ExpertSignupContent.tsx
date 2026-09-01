@@ -6,6 +6,7 @@ import { Scale, Stamp, Calculator, Landmark, Home, Check, ShieldCheck } from "lu
 import type { LucideIcon } from "lucide-react";
 import RenewalGnb from "../_shared/RenewalGnb";
 import ExpertLoginGate from "./ExpertLoginGate";
+import ExpertFooter from "../expert/components/ExpertFooter";
 import { useToast } from "@/components/common/toast";
 import { EXPERT_FIELDS, type ExpertFieldKey, type ExpertFieldDef } from "./constants";
 
@@ -85,7 +86,7 @@ export default function ExpertSignupContent() {
     <>
       <RenewalGnb />
 
-      <div className={`mx-auto px-4 py-10 ${authed ? "max-w-2xl" : "max-w-7xl"}`}>
+      <div className="mx-auto px-8 py-10" style={{ maxWidth: authed ? 672 : 1200 }}>
         {/* 비로그인: 랜딩형 게이트 (자체 히어로 포함) */}
         {status === "loading" ? (
           <p className="py-20 text-center text-sm text-gray-400">불러오는 중…</p>
@@ -194,6 +195,8 @@ export default function ExpertSignupContent() {
           </>
         )}
       </div>
+
+      <ExpertFooter />
     </>
   );
 }
