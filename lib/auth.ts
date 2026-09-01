@@ -148,8 +148,14 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
           where: { id: token.id as string },
           select: { role: true, dailyLimit: true, verifyStatus: true, userType: true },
         });
-        token.role = dbUser?.role || "PERSONAL";
-        token.dailyLimit = dbUser?.dailyLimit || ROLE_LIMITS.PERSONAL;
+        const resolvedRole = dbUser?.role || "PERSONAL";
+        token.role = resolvedRole;
+        // 저장된 dailyLimit이 역할 기본 한도보다 낮으면 역할 한도를 보장한다.
+        // (인증 승인 경로를 거치지 않아 dailyLimit이 상향되지 않은 유저 방어)
+        token.dailyLimit = Math.max(
+          dbUser?.dailyLimit ?? 0,
+          ROLE_LIMITS[resolvedRole] ?? ROLE_LIMITS.PERSONAL
+        );
         token.verifyStatus = dbUser?.verifyStatus || "none";
         token.userType = dbUser?.userType ?? null;
       } catch {
