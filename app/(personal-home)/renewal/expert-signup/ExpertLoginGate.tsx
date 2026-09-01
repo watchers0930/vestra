@@ -36,7 +36,7 @@ export default function ExpertLoginGate() {
   };
 
   return (
-    <div className="w-[377px] text-[13.7px] zqtest-marker" style={{ display: "flex", flexWrap: "wrap", gap: "2.5rem", alignItems: "flex-start" }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "2.5rem", alignItems: "flex-start" }}>
       {/* 좌: 설명 + 혜택 */}
       <div style={{ flex: "1 1 560px", minWidth: 0 }}>
         <span
@@ -46,7 +46,7 @@ export default function ExpertLoginGate() {
           VESTRA 전문가 파트너
         </span>
         <h1 className="mt-6 font-extrabold leading-tight text-gray-900" style={{ fontSize: "clamp(2.2rem, 4.5vw, 4rem)" }}>
-          부동산 전문가로,<br />더 많은 고객과 만나세요
+          부동산 전문가로,<br /><span style={{ fontWeight: 300 }}>더 많은 고객과 만나세요</span>
         </h1>
         <p className="mt-6 max-w-lg text-[15px] leading-relaxed text-gray-500">
           VESTRA에 전문가로 등록하면 나만의 홈페이지부터 고객 연결,<br />내용증명 수임까지
