@@ -45,15 +45,15 @@ export default function ExpertLoginGate() {
         >
           VESTRA 전문가 파트너
         </span>
-        <h1 className="mt-4 text-[28px] font-extrabold leading-tight text-gray-900 sm:text-[34px]">
+        <h1 className="mt-6 text-[28px] font-extrabold leading-tight text-gray-900 sm:text-[34px]">
           부동산 전문가로,<br />더 많은 고객과 만나세요
         </h1>
-        <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-gray-500">
+        <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-gray-500">
           VESTRA에 전문가로 등록하면 나만의 홈페이지부터 고객 연결, 내용증명 수임까지
           한 곳에서 시작할 수 있습니다.
         </p>
 
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-7 flex flex-wrap gap-2">
           {FIELDS.map((f) => (
             <span key={f} className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600">
               {f}
@@ -62,7 +62,7 @@ export default function ExpertLoginGate() {
         </div>
 
         {/* 혜택 리스트 */}
-        <div className="mt-8 flex flex-col gap-4 border-t border-gray-100 pt-7">
+        <div className="mt-10 flex flex-col gap-6 border-t border-gray-100 pt-9">
           {BENEFITS.map(({ icon: Icon, title, desc }) => (
             <div key={title} className="flex gap-3.5">
               <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl" style={{ background: "rgba(46,75,216,0.08)" }}>
