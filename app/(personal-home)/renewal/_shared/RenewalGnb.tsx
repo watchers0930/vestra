@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import s from "./RenewalGnb.module.css";
@@ -23,6 +23,21 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
   const userName = session?.user?.name || "회원";
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
+  const [signupNotice, setSignupNotice] = useState<"not_registered" | "withdrawn" | undefined>();
+
+  // 소셜 로그인 미가입/탈퇴 → 서버가 /home?auth=... 로 돌려보냄. 회원가입 모달을 안내와 함께 연다.
+  // (useSearchParams 대신 마운트 후 window에서 읽어 프리렌더 Suspense 요구를 피한다)
+  useEffect(() => {
+    const auth = new URLSearchParams(window.location.search).get("auth");
+    if (auth === "not_registered" || auth === "withdrawn") {
+      setSignupNotice(auth);
+      setShowSignup(true);
+      // 쿼리 제거 (새로고침 시 모달 재오픈 방지)
+      const url = new URL(window.location.href);
+      url.searchParams.delete("auth");
+      window.history.replaceState({}, "", url.pathname + url.search);
+    }
+  }, []);
 
   return (
     <>
@@ -113,8 +128,9 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
     )}
     {showSignup && (
       <RenewalSignupModal
-        onClose={() => setShowSignup(false)}
-        onSwitchToLogin={() => { setShowSignup(false); setShowLogin(true); }}
+        notice={signupNotice}
+        onClose={() => { setShowSignup(false); setSignupNotice(undefined); }}
+        onSwitchToLogin={() => { setShowSignup(false); setSignupNotice(undefined); setShowLogin(true); }}
       />
     )}
     </>

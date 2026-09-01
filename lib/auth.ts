@@ -87,7 +87,7 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
       const withdrawn = await prisma.withdrawnEmail.findUnique({ where: { email: user.email } });
       if (withdrawn) {
         const days = (Date.now() - withdrawn.withdrawnAt.getTime()) / 86_400_000;
-        if (days < 30) return "/login?error=withdrawn";
+        if (days < 30) return "/home?auth=withdrawn";
         // 30일 경과 → 이력 제거 후 재가입 허용
         await prisma.withdrawnEmail.delete({ where: { email: user.email } }).catch(() => {});
       }
@@ -115,7 +115,7 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
           // 쿠키 접근 불가 시 안전하게 차단(가입은 명시적 경로로만)
         }
         if (!hasSignupIntent) {
-          return "/login?error=not_registered";
+          return "/home?auth=not_registered";
         }
       } else if (account.provider === "naver" && (!user.name || !user.name.trim())) {
         // 기존 네이버 유저인데 name이 비어있으면 프로필에서 소급 복원

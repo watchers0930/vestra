@@ -11,13 +11,32 @@ interface Props {
   onClose: () => void;
   /** "이미 계정이 있으신가요? 로그인" → 로그인 모달로 전환 */
   onSwitchToLogin?: () => void;
+  /** 소셜 로그인 시도 결과 안내 배너 (미가입/탈퇴) */
+  notice?: "not_registered" | "withdrawn";
 }
+
+/** 안내 배너 문구/스타일 (미가입: 파랑 / 탈퇴: 주황) */
+const NOTICE_CONFIG = {
+  not_registered: {
+    title: "가입되지 않은 계정입니다",
+    desc: "이 소셜 계정은 아직 회원이 아니에요. 아래에서 회원 유형을 선택해 가입을 진행해 주세요.",
+    color: "#0071e3",
+    bg: "rgba(0,113,227,0.06)",
+  },
+  withdrawn: {
+    title: "탈퇴 후 30일 이내에는 재가입이 제한됩니다",
+    desc: "탈퇴한 계정은 30일이 지난 뒤에 다시 가입할 수 있어요. 문의가 필요하면 고객센터로 연락해 주세요.",
+    color: "#d97706",
+    bg: "rgba(217,119,6,0.07)",
+  },
+} as const;
 
 /**
  * 회원가입 전용 모달 — 역할(일반/부동산/기업) 선택 후 소셜 가입.
  * 기존 /signup 페이지 로직(RoleTypeSelector + signIn redirectTo /signup/complete)을 모달로 이식.
  */
-export default function RenewalSignupModal({ onClose, onSwitchToLogin }: Props) {
+export default function RenewalSignupModal({ onClose, onSwitchToLogin, notice }: Props) {
+  const noticeInfo = notice ? NOTICE_CONFIG[notice] : null;
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   const handleSocial = (provider: "google" | "naver") => {
@@ -48,6 +67,16 @@ export default function RenewalSignupModal({ onClose, onSwitchToLogin }: Props) 
           <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: "0.22em", color: "#1d1d1f" }}>VESTRA</div>
           <p style={{ marginTop: 6, fontSize: 13, color: "#6e6e73" }}>AI 부동산 자산관리 플랫폼</p>
         </div>
+
+        {noticeInfo && (
+          <div
+            role="alert"
+            style={{ marginBottom: 18, borderRadius: 14, border: `1px solid ${noticeInfo.color}40`, background: noticeInfo.bg, padding: "14px 16px", textAlign: "center" }}
+          >
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#1d1d1f" }}>{noticeInfo.title}</p>
+            <p style={{ margin: "6px 0 0", fontSize: 12.5, lineHeight: 1.6, color: "#6e6e73" }}>{noticeInfo.desc}</p>
+          </div>
+        )}
 
         <div style={{ textAlign: "center", marginBottom: 20 }}>
           <h3 style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1f", margin: "0 0 6px" }}>이용 목적에 맞는 회원 유형을 선택하세요</h3>
