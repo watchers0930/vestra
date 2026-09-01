@@ -150,7 +150,7 @@ gtag('config', '${GA_MEASUREMENT_ID}', {
           </>
         ) : null}
         <meta name="theme-color" content="#4F46E5" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
         {/* Paperlogy 주요 weight preload — 자가 호스팅 */}
         <link rel="preload" href="/fonts/Paperlogy-4Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/Paperlogy-5Medium.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
