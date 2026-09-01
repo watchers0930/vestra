@@ -7,6 +7,9 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DEPLOY_ENV_FILE="${DEPLOY_ENV_FILE:-$HOME/.deploy-env.sh}"
 PREVIEW_ALIAS="t-vestra.vercel.app"
 PRODUCTION_ALIAS="vestra-plum.vercel.app"
+# 승격(promote) 시 새 빌드로 함께 이동할 운영 도메인 전체.
+# 실사용 도메인(vestra.ai.kr/www)이 빠지면 승격해도 사용자는 구빌드를 봄.
+PRODUCTION_DOMAINS="vestra-plum.vercel.app vestra.ai.kr www.vestra.ai.kr"
 DEFAULT_BRANCH="main"
 
 if [ -f "$DEPLOY_ENV_FILE" ]; then
@@ -100,13 +103,16 @@ promote_preview() {
     exit 1
   fi
 
-  echo "🚀 운영 승격: $deploy_url -> $PRODUCTION_ALIAS"
-  npx vercel alias set "$deploy_url" "$PRODUCTION_ALIAS" --token="$TOKEN" 2>&1 | tail -1
+  for domain in $PRODUCTION_DOMAINS; do
+    echo "🚀 운영 승격: $deploy_url -> $domain"
+    npx vercel alias set "$deploy_url" "$domain" --token="$TOKEN" 2>&1 | tail -1
+  done
 
   echo "🩺 production smoke test 실행"
   "$ROOT_DIR/scripts/smoke-deployment.sh" "https://$PRODUCTION_ALIAS"
+  "$ROOT_DIR/scripts/smoke-deployment.sh" "https://vestra.ai.kr"
 
-  echo "✅ 운영 승격 완료: https://$PRODUCTION_ALIAS"
+  echo "✅ 운영 승격 완료: $PRODUCTION_DOMAINS"
 }
 
 ensure_token
