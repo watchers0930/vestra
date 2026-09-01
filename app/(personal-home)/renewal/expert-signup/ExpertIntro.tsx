@@ -18,7 +18,7 @@ const ACCENT = "#2e4bd8";
  */
 export default function ExpertIntro() {
   return (
-    <div style={{ flex: "1 1 560px", minWidth: 0 }}>
+    <div style={{ flex: "1 1 560px", minWidth: 0, position: "sticky", top: 100, alignSelf: "flex-start" }}>
       <span
         className="inline-block rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide"
         style={{ background: "rgba(46,75,216,0.08)", color: ACCENT }}
