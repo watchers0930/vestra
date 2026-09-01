@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import s from "./listings-list-mobile.module.css";
@@ -125,7 +126,7 @@ export default function ListingsListMobileClient() {
       <nav className={s.nav}>
         <div className={s.navInner}>
           <Link href="/" className={s.navLogo}>
-            <div className={s.logoIcon}>V</div>
+            <Image src="/vestra-symbol.png" alt="VESTRA" width={26} height={26} className={s.logoIcon} priority />
             <span className={s.logoText}>VESTRA</span>
           </Link>
           <button
@@ -296,7 +297,7 @@ export default function ListingsListMobileClient() {
       {/* FOOTER */}
       <footer className={s.footer}>
         <div className={s.footerLogoRow}>
-          <div className={s.flogoIcon}>V</div>
+          <Image src="/vestra-symbol.png" alt="VESTRA" width={24} height={24} className={s.flogoIcon} />
           <span className={s.flogoText}>VESTRA</span>
         </div>
         <p className={s.footerTagline}>The Digital Curator of Real Estate<br />AI 기반 부동산 자산관리 플랫폼</p>

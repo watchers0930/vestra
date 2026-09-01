@@ -1,7 +1,7 @@
 /* ── NAV ── */
 .nav{flex-shrink:0;position:relative;z-index:300;background:#fff;border-bottom:1px solid #e8eaf0;height:52px;display:flex;align-items:center;padding:0 14px}
 .navLogo{display:flex;align-items:center;gap:6px;flex:1}
-.navLogoIcon{width:22px;height:22px;background:#2e4bd8;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;flex-shrink:0}
+.navLogoIcon { width: 22px; height: 22px; border-radius: 4px; object-fit: contain; display: block; }
 .navLogoText{font-weight:700;font-size:14px;color:#1a1d2e;letter-spacing:.5px}
 .navRight{display:flex;align-items:center;gap:6px}
 .navListBtn{display:flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid #dde0ec;border-radius:20px;font-size:12px;font-weight:600;color:#555;background:#fff;cursor:pointer;font-family:inherit;line-height:1;flex-shrink:0;text-decoration:none}

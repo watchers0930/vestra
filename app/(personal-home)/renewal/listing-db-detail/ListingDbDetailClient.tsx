@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import s from "../listing-detail/listing-detail.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import ListingDbDetailContent from "./ListingDbDetailContent";
@@ -27,7 +28,7 @@ export default function ListingDbDetailClient() {
         <div className={s.footerInner}>
           <div>
             <div className={s.footerLogo}>
-              <div className={s.flogoIcon}>V</div>
+              <Image src="/vestra-symbol.png" alt="VESTRA" width={26} height={26} className={s.flogoIcon} />
               <span className={s.flogoText}>VESTRA</span>
             </div>
             <p className={s.footerTagline}>

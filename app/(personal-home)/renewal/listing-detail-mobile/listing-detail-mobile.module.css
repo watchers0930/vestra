@@ -323,11 +323,7 @@
 /* FOOTER */
 .footer { background: #080c28; color: rgba(255,255,255,0.88); padding: 36px 20px 0; }
 .footerLogo { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
-.flogoIcon {
-  width: 24px; height: 24px; background: var(--blue); border-radius: 5px;
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-weight: 800; font-size: 12px;
-}
+.flogoIcon { width: 24px; height: 24px; border-radius: 5px; object-fit: contain; display: block; }
 .flogoText { font-size: 14px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
 .footerTagline { font-size:12px; line-height: 1.6; color: rgba(255,255,255,0.6); margin-bottom: 14px; }
 .footerContact { font-size:12px; line-height: 1.75; color: rgba(255,255,255,0.55); margin-bottom: 24px; }

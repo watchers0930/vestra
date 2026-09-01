@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import s from "./listings-list.module.css";
@@ -303,7 +304,7 @@ export default function ListingsListClient() {
         <div className={s.footerInner}>
           <div>
             <div className={s.footerLogo}>
-              <div className={s.flogoIcon}>V</div>
+              <Image src="/vestra-symbol.png" alt="VESTRA" width={26} height={26} className={s.flogoIcon} />
               <span className={s.flogoText}>VESTRA</span>
             </div>
             <p className={s.footerTagline}>The Digital Curator of Real Estate<br />AI 기반 부동산 자산관리 플랫폼</p>

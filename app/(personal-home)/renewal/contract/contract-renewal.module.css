@@ -309,7 +309,7 @@
 .footer{background:#0a0d1a;padding:48px 0 0}
 .footerIn{max-width:1200px;margin:0 auto;padding:0 32px 40px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px}
 .flogo{display:flex;align-items:center;gap:8px;margin-bottom:14px}
-.flogoI{width:24px;height:24px;background:#2e4bd8;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px}
+.flogoI { width: 24px; height: 24px; border-radius: 5px; object-fit: contain; display: block; }
 .flogoT{font-weight:700;font-size:15px;color:#fff;letter-spacing:.6px}
 .ftag{font-size:12.5px;color:rgba(255,255,255,.4);line-height:1.75;margin-bottom:14px}
 .fcontact{font-size:11.5px;color:rgba(255,255,255,.3);line-height:1.9}

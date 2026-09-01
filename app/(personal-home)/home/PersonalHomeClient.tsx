@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -174,7 +175,7 @@ export default function PersonalHomeClient() {
         <div className={s.footerInner}>
           <div>
             <div className={s.footerLogo}>
-              <div className={s.flogoIcon}>V</div>
+              <Image src="/vestra-symbol.png" alt="VESTRA" width={26} height={26} className={s.flogoIcon} />
               <span className={s.flogoText}>VESTRA</span>
             </div>
             <p className={s.footerTagline}>

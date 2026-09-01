@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -202,7 +203,7 @@ export default function ListingsMapMobileClient() {
       {/* NAV */}
       <nav className={s.nav}>
         <Link href="/" className={s.navLogo}>
-          <div className={s.navLogoIcon}>V</div>
+          <Image src="/vestra-symbol.png" alt="VESTRA" width={22} height={22} className={s.navLogoIcon} priority />
           <span className={s.navLogoText}>VESTRA</span>
         </Link>
         <div className={s.navRight}>

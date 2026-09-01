@@ -1,3 +1,4 @@
+import Image from "next/image";
 import s from "../listings-map.module.css";
 
 export default function ListingsMapFooter() {
@@ -6,7 +7,7 @@ export default function ListingsMapFooter() {
       <div className={s.footerInner}>
         <div>
           <div className={s.footerLogo}>
-            <div className={s.flogoIcon}>V</div>
+            <Image src="/vestra-symbol.png" alt="VESTRA" width={26} height={26} className={s.flogoIcon} />
             <span className={s.flogoText}>VESTRA</span>
           </div>
           <p className={s.footerTagline}>

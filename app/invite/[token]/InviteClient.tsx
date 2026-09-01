@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import { ShieldCheck, Loader2, CheckCircle2, XCircle, LogIn } from "lucide-react";
 
 interface InviteInfo {
@@ -61,7 +62,7 @@ export default function InviteClient({ token }: { token: string }) {
 
   const logo = (
     <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
-      <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg,#0f2547,#2563eb)", color: "#fff", fontWeight: 900, fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>V</div>
+      <Image src="/vestra-symbol.png" alt="VESTRA" width={36} height={36} style={{ borderRadius: 10, objectFit: "contain" }} />
       <span style={{ fontWeight: 800, fontSize: 20, color: "#0f2547", letterSpacing: "0.02em" }}>VESTRA</span>
     </div>
   );

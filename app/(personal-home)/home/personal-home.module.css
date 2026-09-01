@@ -600,18 +600,7 @@
   margin-bottom: 8px;
 }
 
-.flogoIcon {
-  width: 26px;
-  height: 26px;
-  background: #2e4bd8;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: 800;
-  font-size: 13px;
-}
+.flogoIcon { width: 26px; height: 26px; border-radius: 5px; object-fit: contain; display: block; }
 
 .flogoText { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
 

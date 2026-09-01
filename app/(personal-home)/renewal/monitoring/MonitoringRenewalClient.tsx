@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useCallback, useEffect } from "react";
 import s from "./monitoring-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
@@ -155,7 +156,7 @@ function RenewalFooter() {
     <footer className={s.footer}>
       <div className={s.footerIn}>
         <div>
-          <div className={s.flogo}><div className={s.flogoI}>V</div><span className={s.flogoT}>VESTRA</span></div>
+          <div className={s.flogo}><Image src="/vestra-symbol.png" alt="VESTRA" width={26} height={26} className={s.flogoI} /><span className={s.flogoT}>VESTRA</span></div>
           <p className={s.ftag}>The Digital Curator of Real Estate<br />AI 기반 부동산 자산관리 플랫폼</p>
           <div className={s.fcontact}>BMI C&S | 대표이사 김동의<br />사업자등록번호 263-87-03481 | 통신판매신고번호 2025-경기광명-0189<br />서울시 강남구 강남대로 354(역삼동, 혜천빌딩) 1126-5호<br />고객센터 010-8490-9271</div>
         </div>

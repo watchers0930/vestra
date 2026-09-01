@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { signOut, useSession } from "next-auth/react";
 import s from "./RenewalGnb.module.css";
 import { RENEWAL_MAIN as MAIN, RENEWAL_SUPPORT as SUPPORT, RENEWAL_ROUTES, type RenewalKey } from "./renewal-config";
@@ -52,7 +53,7 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
     <nav className={s.navBar}>
       <div className={s.navInner}>
         <Link href={RENEWAL_ROUTES.landing} className={s.navLogo}>
-          <div className={s.logoIcon}>V</div>
+          <Image src="/vestra-symbol.png" alt="VESTRA" width={28} height={28} className={s.logoIcon} priority />
           <span className={s.logoText}>VESTRA</span>
         </Link>
         <ul className={s.navMenu}>

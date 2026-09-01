@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import s from "./listing-detail-mobile.module.css";
@@ -207,7 +208,7 @@ export default function ListingDetailMobileClient() {
       {/* FOOTER */}
       <footer className={s.footer}>
         <div className={s.footerLogo}>
-          <div className={s.flogoIcon}>V</div>
+          <Image src="/vestra-symbol.png" alt="VESTRA" width={24} height={24} className={s.flogoIcon} />
           <span className={s.flogoText}>VESTRA</span>
         </div>
         <p className={s.footerTagline}>The Digital Curator of Real Estate<br />AI 기반 부동산 자산관리 플랫폼</p>

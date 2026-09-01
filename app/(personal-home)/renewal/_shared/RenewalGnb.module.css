@@ -2,7 +2,7 @@
 .navBar { position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid #e8eaf0; }
 .navInner { max-width: 1200px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; }
 .navLogo { display: flex; align-items: center; gap: 7px; margin-right: 48px; flex-shrink: 0; }
-.logoIcon { width: 28px; height: 28px; background: #2e4bd8; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 14px; }
+.logoIcon { width: 28px; height: 28px; border-radius: 6px; object-fit: contain; display: block; }
 .logoText { font-weight: 700; font-size: 15.5px; letter-spacing: .6px; }
 .navMenu { display: flex; align-items: center; list-style: none; gap: 2px; flex: 1; }
 .navMenu > li { position: relative; display: flex; align-items: center; }

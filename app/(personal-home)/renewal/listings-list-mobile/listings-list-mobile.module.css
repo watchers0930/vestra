@@ -2,7 +2,7 @@
 .nav{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #e8eaf0}
 .navInner{padding:0 16px;height:56px;display:flex;align-items:center}
 .navLogo{display:flex;align-items:center;gap:6px;flex:1}
-.logoIcon{width:26px;height:26px;background:#2e4bd8;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px}
+.logoIcon { width: 26px; height: 26px; border-radius: 5px; object-fit: contain; display: block; }
 .logoText{font-weight:700;font-size:15px;color:#1a1d2e;letter-spacing:.5px}
 .navHamburger{display:flex;flex-direction:column;gap:5px;cursor:pointer;padding:7px;margin-right:-7px;background:none;border:none}
 .navHamburger span{display:block;width:20px;height:2px;background:#1a1d2e;border-radius:2px;transition:transform .2s,opacity .2s}
@@ -90,7 +90,7 @@
 /* ── FOOTER ── */
 .footer{background:#080c28;color:rgba(255,255,255,.9);padding:40px 20px 0}
 .footerLogoRow{display:flex;align-items:center;gap:7px;margin-bottom:6px}
-.flogoIcon{width:24px;height:24px;background:#2e4bd8;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px}
+.flogoIcon { width: 24px; height: 24px; border-radius: 5px; object-fit: contain; display: block; }
 .flogoText{font-size:15px;font-weight:700;color:#fff;letter-spacing:.5px}
 .footerTagline{font-size:12px;line-height:1.5;color:rgba(255,255,255,.7);margin-bottom:14px}
 .footerContact{font-size:12px;line-height:1.75;color:rgba(255,255,255,.55);margin-bottom:24px}

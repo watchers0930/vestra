@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { AlertTriangle, FileText } from "lucide-react";
 import s from "./contract-renewal.module.css";
@@ -304,7 +305,7 @@ export default function ContractRenewalClient() {
         <div className={s.footerIn}>
           <div>
             <div className={s.flogo}>
-              <div className={s.flogoI}>V</div>
+              <Image src="/vestra-symbol.png" alt="VESTRA" width={24} height={24} className={s.flogoI} />
               <span className={s.flogoT}>VESTRA</span>
             </div>
             <p className={s.ftag}>The Digital Curator of Real Estate<br />AI 기반 부동산 자산관리 플랫폼</p>

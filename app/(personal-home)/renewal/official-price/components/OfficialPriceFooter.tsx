@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import s from "../official-price.module.css";
 
@@ -8,7 +9,7 @@ export default function OfficialPriceFooter() {
       <div className={s.footerIn}>
         <div>
           <div className={s.flogo}>
-            <div className={s.flogoI}>V</div>
+            <Image src="/vestra-symbol.png" alt="VESTRA" width={26} height={26} className={s.flogoI} />
             <span className={s.flogoT}>VESTRA</span>
           </div>
           <p className={s.ftag}>The Digital Curator of Real Estate<br />AI 기반 부동산 자산관리 플랫폼</p>
