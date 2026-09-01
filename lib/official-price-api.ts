@@ -254,7 +254,7 @@ function vworldParams(pnu: string, year: number): URLSearchParams {
     format: "json",
     numOfRows: "10",
     pageNo: "1",
-    domain: "vestra-plum.vercel.app",
+    domain: "vestra.ai.kr",
   });
 }
 
