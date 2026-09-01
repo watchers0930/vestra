@@ -4,6 +4,8 @@ import { useState, useCallback } from "react";
 import Link from "next/link";
 import { formatKRW } from "@/lib/utils";
 import type { OfficialPriceResult } from "@/lib/official-price-api";
+import { DaumPostcodeModal } from "@/components/keepzip/DaumPostcodeModal";
+import type { PostcodeResult } from "@/lib/keepzip/daum-postcode";
 import s from "./official-price.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import OfficialPriceFooter from "./components/OfficialPriceFooter";
@@ -17,57 +19,28 @@ function getBestPrice(result: OfficialPriceResult): number {
 }
 
 export default function OfficialPriceClient() {
-  const [address, setAddress] = useState("");
-  const [selectedAddress, setSelectedAddress] = useState("");
+  const [selectedAddress, setSelectedAddress] = useState(""); // 지번 주소
+  const [roadAddress, setRoadAddress] = useState("");         // 도로명 주소(표시용)
+  const [isBuilding, setIsBuilding] = useState(false);        // 집합건물(공동주택) 여부
+  const [dong, setDong] = useState("");                       // 동 (집합건물)
+  const [ho, setHo] = useState("");                           // 호 (집합건물)
+  const [showPostcode, setShowPostcode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<OfficialPriceResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // 공동주택 세대 지정(동/호 2칸)
-  const [dong, setDong] = useState("");
-  const [ho, setHo] = useState("");
-  const [unitLoading, setUnitLoading] = useState(false);
 
-  // 기존 (app)/official-price/page.tsx 의 조회 로직과 동일한 방식 (GET /api/official-price)
+  // 다음주소 선택 + (집합건물이면) 동/호 포함하여 조회
   const handleSearch = useCallback(async () => {
-    const query = address.trim();
-    if (query.length < 3) return;
+    if (selectedAddress.length < 3) return;
 
     setLoading(true);
     setError(null);
     setResult(null);
-    setDong("");
-    setHo("");
 
     try {
-      const res = await fetch(`/api/official-price?address=${encodeURIComponent(query)}`);
-      const json = await res.json();
-
-      if (!res.ok) {
-        setError(json.error || "조회에 실패했습니다");
-        return;
-      }
-
-      setSelectedAddress(json.address || query);
-      setResult(json);
-    } catch {
-      setError("네트워크 오류가 발생했습니다");
-    } finally {
-      setLoading(false);
-    }
-  }, [address]);
-
-  // 동/호로 특정 세대 공시가 재조회 (지번 주소는 유지)
-  const handleUnitSearch = useCallback(async () => {
-    const query = address.trim();
-    if (query.length < 3 || (!dong && !ho)) return;
-
-    setUnitLoading(true);
-    setError(null);
-
-    try {
-      const params = new URLSearchParams({ address: query });
-      if (dong) params.set("dong", dong);
-      if (ho) params.set("ho", ho);
+      const params = new URLSearchParams({ address: selectedAddress });
+      if (isBuilding && /^\d+$/.test(dong.trim())) params.set("dong", dong.trim());
+      if (isBuilding && /^\d+$/.test(ho.trim())) params.set("ho", ho.trim());
       const res = await fetch(`/api/official-price?${params.toString()}`);
       const json = await res.json();
 
@@ -79,13 +52,20 @@ export default function OfficialPriceClient() {
     } catch {
       setError("네트워크 오류가 발생했습니다");
     } finally {
-      setUnitLoading(false);
+      setLoading(false);
     }
-  }, [address, dong, ho]);
+  }, [selectedAddress, isBuilding, dong, ho]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handleSearch();
-  };
+  // 다음주소 팝업에서 주소 선택 → 지번 주소 + 집합건물 여부 반영
+  const handlePostcode = useCallback((r: PostcodeResult) => {
+    setSelectedAddress(r.jibunAddress);
+    setRoadAddress(r.roadAddress);
+    setIsBuilding(r.isBuilding);
+    setDong("");
+    setHo("");
+    setResult(null);
+    setError(null);
+  }, []);
 
   const onlyDigits = (v: string) => v.replace(/[^\d]/g, "");
 
@@ -114,43 +94,84 @@ export default function OfficialPriceClient() {
 
         {/* SEARCH */}
         <div className={s.searchCard}>
-          <div className={s.searchRow}>
-            <input
-              className={s.searchInput}
-              type="text"
-              placeholder="지번 주소 입력 (예: 서울 강남구 역삼동 123-4)"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-            <button
-              className={s.searchBtn}
-              onClick={handleSearch}
-              disabled={loading || address.trim().length < 3}
-            >
-              {loading ? (
-                <svg className={s.searchSpin} viewBox="0 0 24 24">
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24">
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-              )}
-              조회
-            </button>
-          </div>
+          {/* 다음주소 검색 버튼 */}
+          <button
+            className={s.searchInput}
+            style={{ textAlign: "left", cursor: "pointer", color: selectedAddress ? "#1a1d2e" : "#9aa0b4", width: "100%" }}
+            onClick={() => setShowPostcode(true)}
+          >
+            {selectedAddress || "주소 검색 (다음 우편번호)"}
+          </button>
+
           {selectedAddress && (
             <div className={s.searchSelected}>
               <svg viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <b>{selectedAddress}</b> · 선택된 주소
+              지번 <b>{selectedAddress}</b>{roadAddress ? ` · 도로명 ${roadAddress}` : ""}
             </div>
           )}
+
+          {/* 집합건물(공동주택) → 동/호 입력 */}
+          {selectedAddress && isBuilding && (
+            <div className={s.unitCard} style={{ marginTop: 12 }}>
+              <div className={s.unitHead}>
+                <svg viewBox="0 0 24 24" className={s.unitHeadIco}>
+                  <rect x="4" y="2" width="16" height="20" rx="2" />
+                  <path d="M9 22v-4h6v4" />
+                </svg>
+                <div>
+                  <b>집합건물(아파트·공동주택)</b> · 세대 지정
+                  <span>동·호를 입력하면 해당 세대의 정확한 공시가격을 조회합니다</span>
+                </div>
+              </div>
+              <div className={s.unitRow}>
+                <input
+                  className={s.unitInput}
+                  inputMode="numeric"
+                  placeholder="동"
+                  value={dong}
+                  onChange={(e) => setDong(onlyDigits(e.target.value))}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+                <span className={s.unitDash}>-</span>
+                <input
+                  className={s.unitInput}
+                  inputMode="numeric"
+                  placeholder="호"
+                  value={ho}
+                  onChange={(e) => setHo(onlyDigits(e.target.value))}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* 조회 버튼 */}
+          <button
+            className={s.searchBtn}
+            style={{ width: "100%", marginTop: 12, justifyContent: "center" }}
+            onClick={handleSearch}
+            disabled={loading || selectedAddress.length < 3}
+          >
+            {loading ? (
+              <svg className={s.searchSpin} viewBox="0 0 24 24">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            )}
+            공시가격 조회
+          </button>
         </div>
+
+        {showPostcode && (
+          <DaumPostcodeModal onComplete={handlePostcode} onClose={() => setShowPostcode(false)} />
+        )}
 
         {/* ERROR */}
         {error && <div className={s.errorBox}>{error}</div>}
@@ -166,55 +187,6 @@ export default function OfficialPriceClient() {
               </div>
               {result.pnu && <div className={s.rmPnu}>PNU {result.pnu}</div>}
             </div>
-
-            {/* UNIT SELECTOR — 공동주택 감지 시 동/호 입력 노출 */}
-            {result.aptPrice && (
-              <div className={s.unitCard}>
-                <div className={s.unitHead}>
-                  <svg viewBox="0 0 24 24" className={s.unitHeadIco}>
-                    <rect x="4" y="2" width="16" height="20" rx="2" />
-                    <path d="M9 22v-4h6v4" />
-                    <line x1="9" y1="6" x2="9" y2="6" /><line x1="15" y1="6" x2="15" y2="6" />
-                    <line x1="9" y1="10" x2="9" y2="10" /><line x1="15" y1="10" x2="15" y2="10" />
-                  </svg>
-                  <div>
-                    <b>{result.aptPrice.complexName || "공동주택"}</b> · 세대 지정
-                    <span>동·호를 입력하면 해당 세대의 정확한 공시가격을 조회합니다</span>
-                  </div>
-                </div>
-                <div className={s.unitRow}>
-                  <input
-                    className={s.unitInput}
-                    inputMode="numeric"
-                    placeholder="동"
-                    value={dong}
-                    onChange={(e) => setDong(onlyDigits(e.target.value))}
-                    onKeyDown={(e) => e.key === "Enter" && handleUnitSearch()}
-                  />
-                  <span className={s.unitDash}>-</span>
-                  <input
-                    className={s.unitInput}
-                    inputMode="numeric"
-                    placeholder="호"
-                    value={ho}
-                    onChange={(e) => setHo(onlyDigits(e.target.value))}
-                    onKeyDown={(e) => e.key === "Enter" && handleUnitSearch()}
-                  />
-                  <button
-                    className={s.unitBtn}
-                    onClick={handleUnitSearch}
-                    disabled={unitLoading || (!dong && !ho)}
-                  >
-                    {unitLoading ? "조회 중…" : "세대 조회"}
-                  </button>
-                </div>
-                {result.aptPrice.matched === true && (
-                  <div className={s.unitOk}>
-                    ✓ {[result.aptPrice.dong, result.aptPrice.ho].filter(Boolean).join("-")} 세대 공시가격을 표시하고 있습니다
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* PRICE CARDS */}
             <div className={s.priceGrid}>
