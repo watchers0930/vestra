@@ -60,7 +60,7 @@
 .filterDdOpt.selected { color: #2e4bd8; font-weight: 600; background: #f5f7ff; }
 
 .resultsHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.resultsCount { font-size: 13px; color: #4b5563; }
+.resultsCount { font-size: 13px; color: #4b5563; white-space: nowrap; flex-shrink: 0; }
 .resultsCount strong { color: #1a1d2e; font-weight: 600; }
 .resultsRight { display: flex; align-items: center; gap: 10px; }
 .locationFilters { display: flex; gap: 8px; }

@@ -6,6 +6,7 @@ import { Scale, Stamp, Calculator, Landmark, Home, Check, ShieldCheck } from "lu
 import type { LucideIcon } from "lucide-react";
 import RenewalGnb from "../_shared/RenewalGnb";
 import ExpertLoginGate from "./ExpertLoginGate";
+import ExpertIntro from "./ExpertIntro";
 import ExpertFooter from "../expert/components/ExpertFooter";
 import { useToast } from "@/components/common/toast";
 import { EXPERT_FIELDS, type ExpertFieldKey, type ExpertFieldDef } from "./constants";
@@ -86,21 +87,25 @@ export default function ExpertSignupContent() {
     <>
       <RenewalGnb />
 
-      <div className="mx-auto px-8 py-10" style={{ maxWidth: authed ? 672 : 1200 }}>
+      <div className="mx-auto px-8 py-10" style={{ maxWidth: 1200 }}>
         {/* 비로그인: 랜딩형 게이트 (자체 히어로 포함) */}
         {status === "loading" ? (
           <p className="py-20 text-center text-sm text-gray-400">불러오는 중…</p>
         ) : !authed ? (
           <ExpertLoginGate />
         ) : (
-          <>
-            {/* 헤더 */}
-            <div className="mb-7 text-center">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#2e4bd8]/8 px-3.5 py-1.5 text-xs font-semibold text-[#2e4bd8]">
-                <ShieldCheck size={13} /> 전문가 파트너 가입
-              </span>
-              <h1 className="mt-3 text-[26px] font-extrabold text-gray-900">전문가 자격 등록</h1>
-              <p className="mt-2 text-sm text-gray-500">
+          /* 로그인 후: 로그인 전과 동일한 2칼럼 (좌 공유 인트로 / 우 자격등록 카드) */
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "2.5rem", alignItems: "flex-start" }}>
+            {/* 좌: 공유 인트로 */}
+            <ExpertIntro />
+
+            {/* 우: 자격 등록 카드 */}
+            <div
+              className="rounded-2xl border border-gray-200 bg-white p-7"
+              style={{ flex: "0 0 420px", maxWidth: "100%", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}
+            >
+              <h2 className="text-lg font-extrabold text-gray-900">전문가 자격 등록</h2>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-gray-500">
                 분야를 선택하고 자격 정보를 입력하면, 심사 후 전문가 계정이 승인됩니다.
               </p>
               {session?.user?.email && (
@@ -108,91 +113,91 @@ export default function ExpertSignupContent() {
                   가입 계정 <span className="font-semibold text-gray-600">{session.user.email}</span>
                 </p>
               )}
-            </div>
 
-            {/* 스텝 인디케이터 */}
-            <StepBar step={step} />
+              {/* 스텝 인디케이터 */}
+              <div className="mt-6">
+                <StepBar step={step} />
+              </div>
 
-            {done ? (
-              /* 완료 화면 */
-              <div className="mt-8 overflow-hidden rounded-3xl border border-gray-100 bg-white text-center shadow-[0_4px_24px_rgba(0,0,0,0.05)]">
-                <div className="px-8 pt-10">
+              {done ? (
+                /* 완료 화면 */
+                <div className="mt-7 text-center">
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "linear-gradient(135deg,#22c55e,#16a34a)" }}>
                     <Check size={30} strokeWidth={3} color="#fff" />
                   </div>
-                  <h2 className="mt-5 text-xl font-extrabold text-gray-900">가입 신청이 접수되었습니다</h2>
+                  <h3 className="mt-5 text-lg font-extrabold text-gray-900">가입 신청이 접수되었습니다</h3>
                   <p className="mx-auto mt-2.5 max-w-sm text-sm leading-relaxed text-gray-500">
                     제출하신 사업자·자격 정보를 확인한 뒤 전문가 계정이 승인됩니다.
                     승인 완료 시 등록하신 연락처로 안내드립니다.
                   </p>
-                </div>
-                <div className="mt-8 flex items-center justify-center gap-2 border-t border-gray-100 bg-[#fafbff] px-8 py-4 text-xs text-gray-500">
-                  <ShieldCheck size={14} className="text-[#2e4bd8]" />
-                  평균 심사 소요 1~2 영업일 · 승인 즉시 전문가 홈페이지가 활성화됩니다
-                </div>
-              </div>
-            ) : (
-              <>
-                {/* 분야 선택 (카드형) */}
-                <div className="mt-8">
-                  <p className="mb-3 text-sm font-bold text-gray-900">전문 분야를 선택하세요</p>
-                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                    {EXPERT_FIELDS.map((f) => {
-                      const Icon = FIELD_ICON[f.key];
-                      const active = field?.key === f.key;
-                      return (
-                        <button
-                          key={f.key}
-                          type="button"
-                          onClick={() => selectField(f.key)}
-                          className={`flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all ${
-                            active
-                              ? "border-[#2e4bd8] bg-[#2e4bd8]/[0.06] shadow-[0_2px_12px_rgba(46,75,216,0.12)]"
-                              : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-                          }`}
-                        >
-                          <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${active ? "bg-[#2e4bd8]" : "bg-gray-100"}`}>
-                            <Icon size={19} strokeWidth={2} color={active ? "#fff" : "#8a90a2"} />
-                          </div>
-                          <span className={`text-sm font-semibold ${active ? "text-[#2e4bd8]" : "text-gray-700"}`}>{f.label}</span>
-                        </button>
-                      );
-                    })}
+                  <div className="mt-6 flex items-center justify-center gap-2 rounded-xl border border-gray-100 bg-[#fafbff] px-4 py-3 text-xs text-gray-500">
+                    <ShieldCheck size={14} className="text-[#2e4bd8]" />
+                    평균 심사 1~2 영업일 · 승인 즉시 전문가 홈페이지 활성화
                   </div>
                 </div>
-
-                {/* 자격 정보 폼 */}
-                {field && (
-                  <div className="mt-6 rounded-3xl border border-gray-100 bg-white p-6 shadow-[0_2px_14px_rgba(0,0,0,0.05)]">
-                    <p className="mb-5 flex items-center gap-2 text-sm font-bold text-gray-900">
-                      {(() => { const Icon = FIELD_ICON[field.key]; return <Icon size={16} className="text-[#2e4bd8]" />; })()}
-                      {field.label} 자격 정보
-                    </p>
-                    <div className="space-y-4">
-                      <Field label="성명"><input className={inputCls} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="예) 홍길동" /></Field>
-                      <Field label="연락처"><input className={inputCls} value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="010-0000-0000" /></Field>
-                      <Field label={field.officeLabel}><input className={inputCls} value={form.office} onChange={(e) => set("office", e.target.value)} placeholder="예) 법무법인 율지" /></Field>
-                      <Field label="사업자등록번호" required><input className={inputCls} value={form.bizNo} onChange={(e) => set("bizNo", e.target.value)} placeholder="000-00-00000" /></Field>
-                      <Field label={`${field.licenseLabel} (자격증)`} required><input className={inputCls} value={form.license} onChange={(e) => set("license", e.target.value)} placeholder={field.licensePlaceholder} /></Field>
-
-                      <button
-                        type="button"
-                        disabled={!canSubmit || submitting}
-                        onClick={submit}
-                        className="w-full rounded-xl py-3.5 text-sm font-bold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40"
-                        style={{ background: canSubmit && !submitting ? "linear-gradient(135deg,#2e4bd8,#4f46e5)" : "#c7ccdb" }}
-                      >
-                        {submitting ? "신청 중..." : `${field.label} 가입 신청`}
-                      </button>
-                      <p className="text-center text-xs text-gray-400">
-                        사업자등록번호·자격 등록번호는 필수이며, 제출 후 심사를 거쳐 승인됩니다.
-                      </p>
+              ) : (
+                <>
+                  {/* 분야 선택 (카드형) */}
+                  <div className="mt-7">
+                    <p className="mb-3 text-sm font-bold text-gray-900">전문 분야를 선택하세요</p>
+                    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                      {EXPERT_FIELDS.map((f) => {
+                        const Icon = FIELD_ICON[f.key];
+                        const active = field?.key === f.key;
+                        return (
+                          <button
+                            key={f.key}
+                            type="button"
+                            onClick={() => selectField(f.key)}
+                            className={`flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all ${
+                              active
+                                ? "border-[#2e4bd8] bg-[#2e4bd8]/[0.06] shadow-[0_2px_12px_rgba(46,75,216,0.12)]"
+                                : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${active ? "bg-[#2e4bd8]" : "bg-gray-100"}`}>
+                              <Icon size={19} strokeWidth={2} color={active ? "#fff" : "#8a90a2"} />
+                            </div>
+                            <span className={`text-sm font-semibold ${active ? "text-[#2e4bd8]" : "text-gray-700"}`}>{f.label}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
-                )}
-              </>
-            )}
-          </>
+
+                  {/* 자격 정보 폼 */}
+                  {field && (
+                    <div className="mt-6 border-t border-gray-100 pt-6">
+                      <p className="mb-5 flex items-center gap-2 text-sm font-bold text-gray-900">
+                        {(() => { const Icon = FIELD_ICON[field.key]; return <Icon size={16} className="text-[#2e4bd8]" />; })()}
+                        {field.label} 자격 정보
+                      </p>
+                      <div className="space-y-4">
+                        <Field label="성명"><input className={inputCls} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="예) 홍길동" /></Field>
+                        <Field label="연락처"><input className={inputCls} value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="010-0000-0000" /></Field>
+                        <Field label={field.officeLabel}><input className={inputCls} value={form.office} onChange={(e) => set("office", e.target.value)} placeholder="예) 법무법인 율지" /></Field>
+                        <Field label="사업자등록번호" required><input className={inputCls} value={form.bizNo} onChange={(e) => set("bizNo", e.target.value)} placeholder="000-00-00000" /></Field>
+                        <Field label={`${field.licenseLabel} (자격증)`} required><input className={inputCls} value={form.license} onChange={(e) => set("license", e.target.value)} placeholder={field.licensePlaceholder} /></Field>
+
+                        <button
+                          type="button"
+                          disabled={!canSubmit || submitting}
+                          onClick={submit}
+                          className="w-full rounded-xl py-3.5 text-sm font-bold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                          style={{ background: canSubmit && !submitting ? "linear-gradient(135deg,#2e4bd8,#4f46e5)" : "#c7ccdb" }}
+                        >
+                          {submitting ? "신청 중..." : `${field.label} 가입 신청`}
+                        </button>
+                        <p className="text-center text-xs text-gray-400">
+                          사업자등록번호·자격 등록번호는 필수이며, 제출 후 심사를 거쳐 승인됩니다.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         )}
       </div>
 
