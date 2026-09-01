@@ -6,10 +6,10 @@
 .logoText { font-weight: 700; font-size: 18.6px; letter-spacing: .6px; }
 .navMenu { display: flex; align-items: center; list-style: none; gap: 2px; flex: 1; }
 .navMenu > li { position: relative; display: flex; align-items: center; }
-.navMenu > li > a { display: flex; align-items: center; font-size: 17px; line-height: 1; padding: 10px 20px; border-radius: 4px; transition: color .15s, background .15s; }
+.navMenu > li > a { display: flex; align-items: center; white-space: nowrap; font-size: 17px; line-height: 1; padding: 10px 16px; border-radius: 4px; transition: color .15s, background .15s; }
 .navMenu > li > a:hover { color: #2e4bd8; background: #f0f2fd; }
 .navMenu > li > a.active { color: #2e4bd8; }
-.navDropToggle { display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 17px; line-height: 1; padding: 10px 20px; border-radius: 4px; transition: color .15s, background .15s; }
+.navDropToggle { display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; font-size: 17px; line-height: 1; padding: 10px 16px; border-radius: 4px; transition: color .15s, background .15s; }
 .navDropToggle:hover { color: #2e4bd8; background: #f0f2fd; }
 .navDropToggle.active { color: #2e4bd8; }
 .caret { width: 9px; height: 9px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s; }
