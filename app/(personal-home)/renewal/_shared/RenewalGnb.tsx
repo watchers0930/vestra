@@ -53,7 +53,7 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
     <nav className={s.navBar}>
       <div className={s.navInner}>
         <Link href={RENEWAL_ROUTES.landing} className={s.navLogo}>
-          <Image src="/vestra-symbol.png" alt="VESTRA" width={28} height={28} className={s.logoIcon} priority />
+          <Image src="/vestra-symbol.png" alt="VESTRA" width={34} height={34} className={s.logoIcon} priority />
           <span className={s.logoText}>VESTRA</span>
         </Link>
         <ul className={s.navMenu}>

@@ -2,8 +2,8 @@
 .navBar { position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid #e8eaf0; }
 .navInner { max-width: 1200px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; }
 .navLogo { display: flex; align-items: center; gap: 7px; margin-right: 48px; flex-shrink: 0; }
-.logoIcon { width: 28px; height: 28px; border-radius: 6px; object-fit: contain; display: block; }
-.logoText { font-weight: 700; font-size: 15.5px; letter-spacing: .6px; }
+.logoIcon { width: 34px; height: 34px; border-radius: 7px; object-fit: contain; display: block; }
+.logoText { font-weight: 700; font-size: 18.6px; letter-spacing: .6px; }
 .navMenu { display: flex; align-items: center; list-style: none; gap: 2px; flex: 1; }
 .navMenu > li { position: relative; display: flex; align-items: center; }
 .navMenu > li > a { display: flex; align-items: center; font-size: 17px; line-height: 1; padding: 10px 20px; border-radius: 4px; transition: color .15s, background .15s; }
