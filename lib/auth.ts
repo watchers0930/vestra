@@ -160,8 +160,13 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
         token.userType = dbUser?.userType ?? null;
       } catch {
         // DB 일시 장애 시 기존 토큰 값 유지 (OAuth 콜백 Configuration 에러 방지)
-        token.role = token.role ?? "PERSONAL";
-        token.dailyLimit = token.dailyLimit ?? ROLE_LIMITS.PERSONAL;
+        const fallbackRole = (token.role as string) ?? "PERSONAL";
+        token.role = fallbackRole;
+        // try 경로와 동일하게 역할 기본 한도를 보장 (폴백 로직 일관성)
+        token.dailyLimit = Math.max(
+          (token.dailyLimit as number) ?? 0,
+          ROLE_LIMITS[fallbackRole] ?? ROLE_LIMITS.PERSONAL
+        );
         token.verifyStatus = token.verifyStatus ?? "none";
         token.userType = token.userType ?? null;
       }
