@@ -87,7 +87,7 @@ export default function ExpertLoginGate() {
         </div>
 
         {/* 우: 소셜 로그인 + 절차 (흰 카드) */}
-        <div className="w-full flex-shrink-0 rounded-2xl bg-white p-7 shadow-[0_10px_40px_rgba(0,0,0,0.25)] lg:w-[380px]">
+        <div className="w-full flex-shrink-0 rounded-2xl bg-white p-7 shadow-xl lg:w-96">
           <h2 className="text-lg font-extrabold text-gray-900">소셜 계정으로 시작하기</h2>
           <p className="mt-1.5 text-[13px] leading-relaxed text-gray-500">
             로그인 후 자격 정보를 등록하면 심사를 거쳐 전문가 계정이 승인됩니다.
