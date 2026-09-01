@@ -7,26 +7,33 @@ import { formatKRW } from "@/lib/utils";
 import { CategoryHero } from "@/components/common/CategoryHero";
 import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import { InfoRow } from "@/components/results";
-import AddressAutocomplete, { type AddressResult } from "@/components/common/AddressAutocomplete";
+import { DaumPostcodeModal } from "@/components/keepzip/DaumPostcodeModal";
+import type { PostcodeResult } from "@/lib/keepzip/daum-postcode";
 import type { OfficialPriceResult } from "@/lib/official-price-api";
 
 export default function OfficialPricePage() {
-  const [address, setAddress] = useState("");
-  const [selectedAddress, setSelectedAddress] = useState("");
+  const [selectedAddress, setSelectedAddress] = useState(""); // 지번 주소
+  const [roadAddress, setRoadAddress] = useState("");         // 도로명 주소(표시용)
+  const [isBuilding, setIsBuilding] = useState(false);        // 집합건물(공동주택) 여부
+  const [dong, setDong] = useState("");                       // 동 (집합건물)
+  const [ho, setHo] = useState("");                           // 호 (집합건물)
+  const [showPostcode, setShowPostcode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<OfficialPriceResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = useCallback(async (addr?: string) => {
-    const query = addr || selectedAddress || address;
-    if (query.length < 3) return;
+  const handleSearch = useCallback(async () => {
+    if (selectedAddress.length < 3) return;
 
     setLoading(true);
     setError(null);
     setResult(null);
 
     try {
-      const res = await fetch(`/api/official-price?address=${encodeURIComponent(query)}`);
+      const params = new URLSearchParams({ address: selectedAddress });
+      if (isBuilding && /^\d+$/.test(dong.trim())) params.set("dong", dong.trim());
+      if (isBuilding && /^\d+$/.test(ho.trim())) params.set("ho", ho.trim());
+      const res = await fetch(`/api/official-price?${params.toString()}`);
       const json = await res.json();
 
       if (!res.ok) {
@@ -40,16 +47,18 @@ export default function OfficialPricePage() {
     } finally {
       setLoading(false);
     }
-  }, [address, selectedAddress]);
+  }, [selectedAddress, isBuilding, dong, ho]);
 
-  const handleSelect = useCallback((item: AddressResult) => {
-    const addr = item.address || item.roadAddress;
-    setSelectedAddress(addr);
+  // 다음주소 팝업에서 주소 선택 → 지번 주소 + 집합건물 여부 반영
+  const handlePostcode = useCallback((r: PostcodeResult) => {
+    setSelectedAddress(r.jibunAddress);
+    setRoadAddress(r.roadAddress);
+    setIsBuilding(r.isBuilding);
+    setDong("");
+    setHo("");
     setResult(null);
     setError(null);
-    // 선택 후 자동 조회
-    setTimeout(() => handleSearch(addr), 100);
-  }, [handleSearch]);
+  }, []);
 
   const cardStyle = {
     background: "#fff",
@@ -71,36 +80,77 @@ export default function OfficialPricePage() {
 
       {/* 검색 영역 */}
       <div style={cardStyle}>
-        <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
-          <AddressAutocomplete
-            value={address}
-            onChange={setAddress}
-            onSelect={handleSelect}
-            onSubmit={() => handleSearch()}
-            placeholder="지번 주소 입력 (예: 서울 강남구 역삼동 123-4)"
-          />
-          <button
-            onClick={() => handleSearch()}
-            disabled={loading || address.length < 3}
-            style={{
-              display: "flex", alignItems: "center", gap: "6px",
-              padding: "9px 18px", borderRadius: "10px", fontSize: "13px", fontWeight: 600,
-              background: loading ? "#ccc" : "#0071e3", color: "#fff", border: "none",
-              cursor: loading ? "not-allowed" : "pointer", transition: "all 0.15s",
-              whiteSpace: "nowrap", flexShrink: 0,
-            }}
-          >
-            {loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
-            조회
-          </button>
-        </div>
+        {/* 다음주소 검색 버튼 */}
+        <button
+          onClick={() => setShowPostcode(true)}
+          style={{
+            display: "flex", alignItems: "center", gap: "8px", width: "100%",
+            padding: "12px 16px", borderRadius: "10px", fontSize: "14px", fontWeight: 500,
+            background: "#fff", color: selectedAddress ? "#1d1d1f" : "#8e8e93",
+            border: "1px solid rgba(0,0,0,0.12)", cursor: "pointer", textAlign: "left",
+          }}
+        >
+          <Search size={16} style={{ color: "#0071e3", flexShrink: 0 }} />
+          {selectedAddress || "주소 검색 (다음 우편번호)"}
+        </button>
+
+        {/* 선택된 주소 표시 */}
         {selectedAddress && (
-          <p style={{ fontSize: "12px", color: "#6e6e73", marginTop: "8px", marginBottom: 0 }}>
-            <MapPin size={11} style={{ display: "inline", verticalAlign: "-1px", marginRight: "4px" }} />
-            {selectedAddress}
-          </p>
+          <div style={{ marginTop: "10px" }}>
+            <p style={{ fontSize: "12px", color: "#6e6e73", margin: "0 0 2px" }}>
+              <MapPin size={11} style={{ display: "inline", verticalAlign: "-1px", marginRight: "4px" }} />
+              지번 {selectedAddress}
+            </p>
+            {roadAddress && (
+              <p style={{ fontSize: "12px", color: "#8e8e93", margin: 0, paddingLeft: "17px" }}>
+                도로명 {roadAddress}
+              </p>
+            )}
+          </div>
         )}
+
+        {/* 집합건물(공동주택) → 동/호수 입력 */}
+        {selectedAddress && isBuilding && (
+          <div style={{ marginTop: "12px" }}>
+            <p style={{ fontSize: "12px", fontWeight: 600, color: "#0071e3", margin: "0 0 6px" }}>
+              집합건물(아파트·공동주택) — 동·호수를 입력하면 해당 세대 공시가격을 조회합니다
+            </p>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <input
+                type="text" inputMode="numeric" value={dong}
+                onChange={(e) => setDong(e.target.value.replace(/[^\d]/g, ""))}
+                placeholder="동 (예: 101)"
+                style={{ flex: 1, padding: "10px 12px", borderRadius: "8px", fontSize: "13px", border: "1px solid rgba(0,0,0,0.12)" }}
+              />
+              <input
+                type="text" inputMode="numeric" value={ho}
+                onChange={(e) => setHo(e.target.value.replace(/[^\d]/g, ""))}
+                placeholder="호 (예: 1502)"
+                style={{ flex: 1, padding: "10px 12px", borderRadius: "8px", fontSize: "13px", border: "1px solid rgba(0,0,0,0.12)" }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 조회 버튼 */}
+        <button
+          onClick={() => handleSearch()}
+          disabled={loading || selectedAddress.length < 3}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", width: "100%",
+            marginTop: "12px", padding: "11px 18px", borderRadius: "10px", fontSize: "14px", fontWeight: 600,
+            background: loading || selectedAddress.length < 3 ? "#ccc" : "#0071e3", color: "#fff", border: "none",
+            cursor: loading || selectedAddress.length < 3 ? "not-allowed" : "pointer", transition: "all 0.15s",
+          }}
+        >
+          {loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+          공시가격 조회
+        </button>
       </div>
+
+      {showPostcode && (
+        <DaumPostcodeModal onComplete={handlePostcode} onClose={() => setShowPostcode(false)} />
+      )}
 
       {/* 에러 */}
       {error && (
