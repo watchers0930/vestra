@@ -46,7 +46,7 @@ export default function ExpertLoginGate() {
           VESTRA 전문가 파트너
         </span>
         <h1 className="mt-6 font-extrabold leading-tight text-gray-900" style={{ fontSize: "clamp(2.2rem, 4.5vw, 4rem)" }}>
-          부동산 전문가로,<br /><span style={{ fontWeight: 300 }}>더 많은 고객과 만나세요</span>
+          부동산 전문가로,<br /><span style={{ fontWeight: 100 }}>더 많은 고객과 만나세요</span>
         </h1>
         <p className="mt-6 max-w-lg text-[15px] leading-relaxed text-gray-500">
           VESTRA에 전문가로 등록하면 나만의 홈페이지부터 고객 연결,<br />내용증명 수임까지
