@@ -36,7 +36,7 @@ export default function ExpertLoginGate() {
   };
 
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: "2.5rem", alignItems: "flex-start" }}>
+    <div className="w-[377px] text-[13.7px] zqtest-marker" style={{ display: "flex", flexWrap: "wrap", gap: "2.5rem", alignItems: "flex-start" }}>
       {/* 좌: 설명 + 혜택 */}
       <div style={{ flex: "1 1 560px", minWidth: 0 }}>
         <span
