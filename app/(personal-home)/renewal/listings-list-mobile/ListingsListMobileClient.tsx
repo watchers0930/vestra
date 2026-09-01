@@ -147,9 +147,9 @@ export default function ListingsListMobileClient() {
           <li><Link href="/renewal/expert">전문가상담</Link></li>
           <li>
             <div className={s.navMobileAuth}>
-              <Link href="/login">로그인</Link>
+              <Link href="/home?auth=login">로그인</Link>
               <Link href="/profile">마이페이지</Link>
-              <Link href="/signup">회원가입</Link>
+              <Link href="/home?auth=signup">회원가입</Link>
             </div>
           </li>
         </ul>

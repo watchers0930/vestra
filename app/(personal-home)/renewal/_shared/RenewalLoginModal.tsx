@@ -111,7 +111,7 @@ export default function RenewalLoginModal({ featureName, description, onClose, o
           {onSwitchToSignup ? (
             <span onClick={onSwitchToSignup} style={{ fontWeight: 600, color: "#0071e3", cursor: "pointer" }}>회원가입</span>
           ) : (
-            <Link href={RENEWAL_ROUTES.signup} style={{ fontWeight: 600, color: "#0071e3" }}>회원가입</Link>
+            <Link href="/home?auth=signup" style={{ fontWeight: 600, color: "#0071e3" }}>회원가입</Link>
           )}
         </p>
       </div>

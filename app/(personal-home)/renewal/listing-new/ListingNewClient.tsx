@@ -37,7 +37,7 @@ export default function ListingNewClient() {
         <div className={s.gate}>
           <p className={s.gateTitle}>로그인이 필요합니다</p>
           <p className={s.gateSub}>매물 등록은 로그인 후 이용하실 수 있습니다.</p>
-          <Link href="/login" className={s.gateBtn}>로그인하기</Link>
+          <Link href="/home?auth=login" className={s.gateBtn}>로그인하기</Link>
         </div>
       ) : bizNeedsVerify ? (
         <div className={s.gate}>

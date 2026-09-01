@@ -40,10 +40,10 @@ function SignupCompleteContent() {
   const [selectedUserType, setSelectedUserType] = useState<"TENANT" | "LANDLORD" | null>(null);
   const isProcessingRef = useRef(false);
 
-  // 미로그인 상태면 login으로 리다이렉트
+  // 미로그인 상태면 renewal 홈으로 이동 후 로그인 모달 오픈
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/login");
+      router.push("/home?auth=login");
     }
   }, [status, router]);
 
@@ -114,7 +114,7 @@ function SignupCompleteContent() {
         <div className="text-center">
           <p className="text-sm text-muted mb-4">잘못된 접근입니다.</p>
           <button
-            onClick={() => router.push("/login")}
+            onClick={() => router.push("/home?auth=login")}
             className="text-sm text-primary hover:underline cursor-pointer"
           >
             로그인으로 돌아가기

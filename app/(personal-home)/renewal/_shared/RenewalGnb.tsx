@@ -29,11 +29,17 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
   // (useSearchParams 대신 마운트 후 window에서 읽어 프리렌더 Suspense 요구를 피한다)
   useEffect(() => {
     const auth = new URLSearchParams(window.location.search).get("auth");
-    if (auth !== "not_registered" && auth !== "withdrawn") return;
+    // 로그인(login) / 회원가입(signup, not_registered, withdrawn) 진입을 renewal 모달로 처리
+    const valid = auth === "login" || auth === "signup" || auth === "not_registered" || auth === "withdrawn";
+    if (!valid) return;
     // 마운트 시 URL 기반 1회 모달 오픈 (의도된 setState)
     /* eslint-disable react-hooks/set-state-in-effect */
-    setSignupNotice(auth);
-    setShowSignup(true);
+    if (auth === "login") {
+      setShowLogin(true);
+    } else {
+      if (auth === "not_registered" || auth === "withdrawn") setSignupNotice(auth);
+      setShowSignup(true);
+    }
     /* eslint-enable react-hooks/set-state-in-effect */
     // 쿼리 제거 (새로고침 시 모달 재오픈 방지)
     const url = new URL(window.location.href);

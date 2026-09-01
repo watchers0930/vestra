@@ -61,10 +61,10 @@ export default function AssistantSignupModal({ onClose }: Props) {
             네이버로 무료 가입
           </button>
           <Link
-            href="/signup"
+            href="/home?auth=signup"
             style={{ display: "block", textAlign: "center", padding: "12px", borderRadius: "14px", background: "#f5f5f7", fontSize: "13px", fontWeight: 500, color: "#3d3d3f", textDecoration: "none" }}
           >
-            이메일로 회원가입
+            다른 방법으로 회원가입
           </Link>
         </div>
 
