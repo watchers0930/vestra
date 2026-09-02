@@ -46,11 +46,16 @@ export default function ExpertSignupContent() {
   const [field, setField] = useState<ExpertFieldDef | null>(null);
   const [form, setForm] = useState<FormState>({ ...EMPTY });
   const [done, setDone] = useState(false);
+  const [personalDone, setPersonalDone] = useState(false); // ② 개인정보 완료 → ③ 전문가 정보
   const [submitting, setSubmitting] = useState(false);
   const [focusedPhone, setFocusedPhone] = useState<null | "mobile" | "officePhone">(null);
-  const step2Ref = useRef<HTMLDivElement>(null);
+  const personalRef = useRef<HTMLDivElement>(null);
+  const expertRef = useRef<HTMLDivElement>(null);
 
   const set = (k: keyof FormState, v: string) => setForm((p) => ({ ...p, [k]: v }));
+
+  const scrollTo = (ref: React.RefObject<HTMLDivElement | null>) =>
+    setTimeout(() => ref.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
 
   const onLicenseFile = (file: File | undefined) => {
     if (!file) return;
@@ -67,17 +72,24 @@ export default function ExpertSignupContent() {
     reader.readAsDataURL(file);
   };
 
+  // ② 개인정보 진행 조건 (성명·휴대전화 필수)
+  const canProceedPersonal = !!form.name.trim() && !!form.mobile.trim();
+  // ③ 전문가 정보 제출 조건
   const canSubmit =
-    !!form.name.trim() && !!form.mobile.trim() &&
+    canProceedPersonal &&
     !!form.bizNo.trim() && !!form.license.trim() && !!form.licenseFile;
 
   const selectField = (key: ExpertFieldKey) => {
     setField(EXPERT_FIELDS.find((f) => f.key === key) ?? null);
     setForm({ ...EMPTY });
+    setPersonalDone(false);
     setDone(false);
-    // STEP1 접힘 → STEP2 폼으로 자동 스크롤
-    setTimeout(() => step2Ref.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+    scrollTo(personalRef); // ① 분야 접힘 → ② 개인정보로 자동 스크롤
   };
+
+  const changeField = () => { setField(null); setPersonalDone(false); };
+  const goToExpert = () => { setPersonalDone(true); scrollTo(expertRef); }; // ② → ③
+  const editPersonal = () => setPersonalDone(false); // ③ → ② 수정
 
   const submit = async () => {
     if (!field || !canSubmit) return;
@@ -106,8 +118,8 @@ export default function ExpertSignupContent() {
   };
 
   const authed = status === "authenticated";
-  // 진행 단계: 1 분야선택 · 2 정보입력 · 3 심사
-  const step = done ? 3 : field ? 2 : 1;
+  // 진행 단계: 1 분야 · 2 개인정보 · 3 전문가 정보 · 4 심사
+  const step = done ? 4 : !field ? 1 : !personalDone ? 2 : 3;
 
   return (
     <>
@@ -189,7 +201,7 @@ export default function ExpertSignupContent() {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => setField(null)}
+                      onClick={changeField}
                       className="flex w-full items-center justify-between rounded-2xl border border-[#2e4bd8]/30 bg-[#2e4bd8]/[0.05] px-4 py-3.5 text-left transition-colors hover:bg-[#2e4bd8]/[0.09]"
                     >
                       <span className="flex items-center gap-2 text-sm font-bold text-gray-900">
@@ -205,20 +217,33 @@ export default function ExpertSignupContent() {
                     </button>
                   )}
 
-                  {/* STEP 2 — 자격 정보 (분야 선택 전 잠김 / 선택 후 펼침 + 자동 스크롤) */}
-                  <div ref={step2Ref} style={{ scrollMarginTop: 100 }}>
+                  {/* STEP 2 — 개인정보 (잠김 / 펼침 / 완료 요약) */}
+                  <div ref={personalRef} style={{ scrollMarginTop: 100 }}>
                     {!field ? (
                       <div className="rounded-2xl border border-dashed border-gray-200 px-4 py-3.5 text-sm font-semibold text-gray-300">
-                        ② 자격 정보 · 분야 선택 후 입력합니다
+                        ② 개인정보 · 분야 선택 후 입력합니다
                       </div>
+                    ) : personalDone ? (
+                      <button
+                        type="button"
+                        onClick={editPersonal}
+                        className="flex w-full items-center justify-between rounded-2xl border border-[#2e4bd8]/30 bg-[#2e4bd8]/[0.05] px-4 py-3.5 text-left transition-colors hover:bg-[#2e4bd8]/[0.09]"
+                      >
+                        <span className="flex items-center gap-2 text-sm font-bold text-gray-900">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2e4bd8]">
+                            <Check size={13} strokeWidth={3} color="#fff" />
+                          </span>
+                          {form.name} · {maskPhone(form.mobile)}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#2e4bd8]">
+                          <ChevronLeft size={13} /> 수정
+                        </span>
+                      </button>
                     ) : (
                       <div className="rounded-2xl border border-gray-100 bg-[#fafbff] p-5">
-                        <p className="mb-5 flex items-center gap-2 text-sm font-bold text-gray-900">
-                          {(() => { const Icon = FIELD_ICON[field.key]; return <Icon size={16} className="text-[#2e4bd8]" />; })()}
-                          {field.label} 자격 정보
-                        </p>
+                        <p className="mb-5 text-sm font-bold text-gray-900">② 개인정보</p>
                         <div className="space-y-4">
-                          <Field label="성명"><input className={inputCls} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="예) 홍길동" /></Field>
+                          <Field label="성명" required><input className={inputCls} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="예) 홍길동" /></Field>
                           <Field label="휴대전화번호" required>
                             <input
                               className={inputCls}
@@ -241,6 +266,33 @@ export default function ExpertSignupContent() {
                               placeholder="02-000-0000"
                             />
                           </Field>
+                          <button
+                            type="button"
+                            disabled={!canProceedPersonal}
+                            onClick={goToExpert}
+                            className="w-full rounded-xl py-3.5 text-sm font-bold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                            style={{ background: canProceedPersonal ? "linear-gradient(135deg,#2e4bd8,#4f46e5)" : "#c7ccdb" }}
+                          >
+                            다음 · 전문가 정보 입력
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* STEP 3 — 전문가 정보 (개인정보 완료 후 펼침) */}
+                  <div ref={expertRef} style={{ scrollMarginTop: 100 }}>
+                    {!personalDone || !field ? (
+                      <div className="rounded-2xl border border-dashed border-gray-200 px-4 py-3.5 text-sm font-semibold text-gray-300">
+                        ③ 전문가 정보 · 개인정보 입력 후 진행합니다
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-gray-100 bg-[#fafbff] p-5">
+                        <p className="mb-5 flex items-center gap-2 text-sm font-bold text-gray-900">
+                          {(() => { const Icon = FIELD_ICON[field.key]; return <Icon size={16} className="text-[#2e4bd8]" />; })()}
+                          ③ {field.label} 자격 정보
+                        </p>
+                        <div className="space-y-4">
                           <Field label={field.officeLabel}><input className={inputCls} value={form.office} onChange={(e) => set("office", e.target.value)} placeholder="예) 법무법인 율지" /></Field>
                           <Field label="사업자등록번호" required><input className={inputCls} inputMode="numeric" value={form.bizNo} onChange={(e) => set("bizNo", formatBizNo(e.target.value))} placeholder="000-00-00000" /></Field>
                           <Field label={`${field.licenseLabel} (자격증)`} required><input className={inputCls} value={form.license} onChange={(e) => set("license", e.target.value)} placeholder={field.licensePlaceholder} /></Field>
@@ -310,7 +362,7 @@ export default function ExpertSignupContent() {
 
 /** 스텝 인디케이터 */
 function StepBar({ step }: { step: number }) {
-  const steps = ["분야 선택", "자격 정보", "심사 대기"];
+  const steps = ["분야 선택", "개인정보", "전문가 정보", "심사 대기"];
   return (
     <div className="flex items-center justify-center">
       {steps.map((label, i) => {
