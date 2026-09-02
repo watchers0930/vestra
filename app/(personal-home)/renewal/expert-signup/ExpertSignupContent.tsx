@@ -10,7 +10,7 @@ import ExpertIntro from "./ExpertIntro";
 import ExpertFooter from "../expert/components/ExpertFooter";
 import { useToast } from "@/components/common/toast";
 import { EXPERT_FIELDS, type ExpertFieldKey, type ExpertFieldDef } from "./constants";
-import { formatMobile, formatOfficePhone, maskPhone, maskEmail } from "@/lib/phone-format";
+import { formatMobile, formatOfficePhone, formatBizNo, maskPhone, maskEmail } from "@/lib/phone-format";
 
 interface FormState {
   name: string;
@@ -222,7 +222,7 @@ export default function ExpertSignupContent() {
                             />
                           </Field>
                           <Field label={field.officeLabel}><input className={inputCls} value={form.office} onChange={(e) => set("office", e.target.value)} placeholder="예) 법무법인 율지" /></Field>
-                          <Field label="사업자등록번호" required><input className={inputCls} value={form.bizNo} onChange={(e) => set("bizNo", e.target.value)} placeholder="000-00-00000" /></Field>
+                          <Field label="사업자등록번호" required><input className={inputCls} inputMode="numeric" value={form.bizNo} onChange={(e) => set("bizNo", formatBizNo(e.target.value))} placeholder="000-00-00000" /></Field>
                           <Field label={`${field.licenseLabel} (자격증)`} required><input className={inputCls} value={form.license} onChange={(e) => set("license", e.target.value)} placeholder={field.licensePlaceholder} /></Field>
 
                           <button

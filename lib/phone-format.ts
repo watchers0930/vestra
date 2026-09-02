@@ -38,6 +38,14 @@ export function formatOfficePhone(input: string): string {
   return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
 }
 
+/** 사업자등록번호 하이픈 자동 (3-2-5) */
+export function formatBizNo(input: string): string {
+  const d = input.replace(/\D/g, "").slice(0, 10);
+  if (d.length < 4) return d;
+  if (d.length < 6) return `${d.slice(0, 3)}-${d.slice(3)}`;
+  return `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}`;
+}
+
 /** 전화번호 가운데 블록 마스킹 (010-****-5678) — 표시 전용 */
 export function maskPhone(formatted: string): string {
   if (!formatted) return "";
