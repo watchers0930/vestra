@@ -988,7 +988,8 @@ model LawyerPartner {
   // 전문가 분야 (5종)
   category          String    @default("lawyer") // lawyer | judicial | tax | accountant | appraiser
   name              String? // 전문가 성명(가입 입력)
-  phone             String? // 연락처
+  phone             String? // 휴대전화번호
+  officePhone       String? // 사무실 전화번호
   licenseNo         String? // 자격 등록번호(자격증)
   bizNo             String? // 사업자등록번호
   barNumber         String? // (구) 변호사 등록번호 — licenseNo로 통합, 하위호환 유지

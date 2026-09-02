@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
 
     const name = sanitizeField(String(b.name ?? ""), 100);
     const phone = sanitizeField(String(b.phone ?? ""), 30);
+    const officePhone = sanitizeField(String(b.officePhone ?? ""), 30);
     const office = sanitizeField(String(b.office ?? ""), 200);
     const bizNo = sanitizeField(String(b.bizNo ?? ""), 30);
     const licenseNo = sanitizeField(String(b.licenseNo ?? ""), 50);
@@ -48,10 +49,10 @@ export async function POST(req: NextRequest) {
     const partner = await prisma.lawyerPartner.upsert({
       where: { userId },
       create: {
-        userId, category, name, phone, firmName: office, bizNo, licenseNo,
+        userId, category, name, phone, officePhone, firmName: office, bizNo, licenseNo,
         homepageSlug: slug, kycStatus: "pending", membershipStatus: "inactive",
       },
-      update: { category, name, phone, firmName: office, bizNo, licenseNo },
+      update: { category, name, phone, officePhone, firmName: office, bizNo, licenseNo },
     });
 
     return NextResponse.json({ ok: true, id: partner.id, status: partner.kycStatus });

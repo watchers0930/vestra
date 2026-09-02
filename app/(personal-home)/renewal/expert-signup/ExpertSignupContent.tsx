@@ -10,16 +10,18 @@ import ExpertIntro from "./ExpertIntro";
 import ExpertFooter from "../expert/components/ExpertFooter";
 import { useToast } from "@/components/common/toast";
 import { EXPERT_FIELDS, type ExpertFieldKey, type ExpertFieldDef } from "./constants";
+import { formatMobile, formatOfficePhone, maskPhone, maskEmail } from "@/lib/phone-format";
 
 interface FormState {
   name: string;
-  phone: string;
-  office: string;
+  mobile: string;     // 휴대전화번호 (필수)
+  officePhone: string; // 사무실 전화번호
+  office: string;     // 소속 법인/사무소명
   bizNo: string;      // 사업자등록번호 (필수)
   license: string;    // 자격 등록번호/자격증 (필수)
 }
 
-const EMPTY: FormState = { name: "", phone: "", office: "", bizNo: "", license: "" };
+const EMPTY: FormState = { name: "", mobile: "", officePhone: "", office: "", bizNo: "", license: "" };
 
 /** 분야별 아이콘 */
 const FIELD_ICON: Record<ExpertFieldKey, LucideIcon> = {
@@ -40,12 +42,13 @@ export default function ExpertSignupContent() {
   const [form, setForm] = useState<FormState>({ ...EMPTY });
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [focusedPhone, setFocusedPhone] = useState<null | "mobile" | "officePhone">(null);
   const step2Ref = useRef<HTMLDivElement>(null);
 
   const set = (k: keyof FormState, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   const canSubmit =
-    !!form.name.trim() && !!form.phone.trim() &&
+    !!form.name.trim() && !!form.mobile.trim() &&
     !!form.bizNo.trim() && !!form.license.trim();
 
   const selectField = (key: ExpertFieldKey) => {
@@ -64,7 +67,7 @@ export default function ExpertSignupContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          category: field.key, name: form.name, phone: form.phone,
+          category: field.key, name: form.name, phone: form.mobile, officePhone: form.officePhone,
           office: form.office, bizNo: form.bizNo, licenseNo: form.license,
         }),
       });
@@ -113,7 +116,7 @@ export default function ExpertSignupContent() {
               </p>
               {session?.user?.email && (
                 <p className="mt-2 text-xs text-gray-400">
-                  가입 계정 <span className="font-semibold text-gray-600">{session.user.email}</span>
+                  가입 계정 <span className="font-semibold text-gray-600">{maskEmail(session.user.email)}</span>
                 </p>
               )}
 
@@ -196,7 +199,28 @@ export default function ExpertSignupContent() {
                         </p>
                         <div className="space-y-4">
                           <Field label="성명"><input className={inputCls} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="예) 홍길동" /></Field>
-                          <Field label="연락처"><input className={inputCls} value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="010-0000-0000" /></Field>
+                          <Field label="휴대전화번호" required>
+                            <input
+                              className={inputCls}
+                              inputMode="numeric"
+                              value={focusedPhone === "mobile" ? form.mobile : maskPhone(form.mobile)}
+                              onFocus={() => setFocusedPhone("mobile")}
+                              onBlur={() => setFocusedPhone(null)}
+                              onChange={(e) => set("mobile", formatMobile(e.target.value))}
+                              placeholder="010-0000-0000"
+                            />
+                          </Field>
+                          <Field label="사무실번호">
+                            <input
+                              className={inputCls}
+                              inputMode="numeric"
+                              value={focusedPhone === "officePhone" ? form.officePhone : maskPhone(form.officePhone)}
+                              onFocus={() => setFocusedPhone("officePhone")}
+                              onBlur={() => setFocusedPhone(null)}
+                              onChange={(e) => set("officePhone", formatOfficePhone(e.target.value))}
+                              placeholder="02-000-0000"
+                            />
+                          </Field>
                           <Field label={field.officeLabel}><input className={inputCls} value={form.office} onChange={(e) => set("office", e.target.value)} placeholder="예) 법무법인 율지" /></Field>
                           <Field label="사업자등록번호" required><input className={inputCls} value={form.bizNo} onChange={(e) => set("bizNo", e.target.value)} placeholder="000-00-00000" /></Field>
                           <Field label={`${field.licenseLabel} (자격증)`} required><input className={inputCls} value={form.license} onChange={(e) => set("license", e.target.value)} placeholder={field.licensePlaceholder} /></Field>
