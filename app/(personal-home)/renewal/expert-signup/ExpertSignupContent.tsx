@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { Scale, Stamp, Calculator, Landmark, Home, Check, ShieldCheck, ChevronLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -40,6 +40,7 @@ export default function ExpertSignupContent() {
   const [form, setForm] = useState<FormState>({ ...EMPTY });
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const step2Ref = useRef<HTMLDivElement>(null);
 
   const set = (k: keyof FormState, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -51,6 +52,8 @@ export default function ExpertSignupContent() {
     setField(EXPERT_FIELDS.find((f) => f.key === key) ?? null);
     setForm({ ...EMPTY });
     setDone(false);
+    // STEP1 접힘 → STEP2 폼으로 자동 스크롤
+    setTimeout(() => step2Ref.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
   };
 
   const submit = async () => {
@@ -135,62 +138,84 @@ export default function ExpertSignupContent() {
                     평균 심사 1~2 영업일 · 승인 즉시 전문가 홈페이지 활성화
                   </div>
                 </div>
-              ) : !field ? (
-                /* Step 1: 분야 선택 (카드형) */
-                <div className="mt-7">
-                  <p className="mb-3 text-sm font-bold text-gray-900">전문 분야를 선택하세요</p>
-                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                    {EXPERT_FIELDS.map((f) => {
-                      const Icon = FIELD_ICON[f.key];
-                      return (
-                        <button
-                          key={f.key}
-                          type="button"
-                          onClick={() => selectField(f.key)}
-                          className="flex flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white p-4 transition-all hover:border-[#2e4bd8] hover:bg-[#2e4bd8]/[0.04] hover:shadow-[0_2px_12px_rgba(46,75,216,0.12)]"
-                        >
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
-                            <Icon size={19} strokeWidth={2} color="#8a90a2" />
-                          </div>
-                          <span className="text-sm font-semibold text-gray-700">{f.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
               ) : (
-                /* Step 2: 자격 정보 폼 */
-                <div className="mt-7">
-                  <button
-                    type="button"
-                    onClick={() => setField(null)}
-                    className="mb-4 inline-flex items-center gap-1 text-xs font-semibold text-gray-500 transition-colors hover:text-[#2e4bd8]"
-                  >
-                    <ChevronLeft size={14} /> 분야 다시 선택
-                  </button>
-                  <p className="mb-5 flex items-center gap-2 text-sm font-bold text-gray-900">
-                    {(() => { const Icon = FIELD_ICON[field.key]; return <Icon size={16} className="text-[#2e4bd8]" />; })()}
-                    {field.label} 자격 정보
-                  </p>
-                  <div className="space-y-4">
-                    <Field label="성명"><input className={inputCls} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="예) 홍길동" /></Field>
-                    <Field label="연락처"><input className={inputCls} value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="010-0000-0000" /></Field>
-                    <Field label={field.officeLabel}><input className={inputCls} value={form.office} onChange={(e) => set("office", e.target.value)} placeholder="예) 법무법인 율지" /></Field>
-                    <Field label="사업자등록번호" required><input className={inputCls} value={form.bizNo} onChange={(e) => set("bizNo", e.target.value)} placeholder="000-00-00000" /></Field>
-                    <Field label={`${field.licenseLabel} (자격증)`} required><input className={inputCls} value={form.license} onChange={(e) => set("license", e.target.value)} placeholder={field.licensePlaceholder} /></Field>
-
+                <div className="mt-6 space-y-3">
+                  {/* STEP 1 — 분야 선택 (펼침) / 선택 요약 (접힘) */}
+                  {!field ? (
+                    <div>
+                      <p className="mb-3 text-sm font-bold text-gray-900">① 전문 분야를 선택하세요</p>
+                      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                        {EXPERT_FIELDS.map((f) => {
+                          const Icon = FIELD_ICON[f.key];
+                          return (
+                            <button
+                              key={f.key}
+                              type="button"
+                              onClick={() => selectField(f.key)}
+                              className="flex flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white p-4 transition-all hover:border-[#2e4bd8] hover:bg-[#2e4bd8]/[0.04] hover:shadow-[0_2px_12px_rgba(46,75,216,0.12)]"
+                            >
+                              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
+                                <Icon size={19} strokeWidth={2} color="#8a90a2" />
+                              </div>
+                              <span className="text-sm font-semibold text-gray-700">{f.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
                     <button
                       type="button"
-                      disabled={!canSubmit || submitting}
-                      onClick={submit}
-                      className="w-full rounded-xl py-3.5 text-sm font-bold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40"
-                      style={{ background: canSubmit && !submitting ? "linear-gradient(135deg,#2e4bd8,#4f46e5)" : "#c7ccdb" }}
+                      onClick={() => setField(null)}
+                      className="flex w-full items-center justify-between rounded-2xl border border-[#2e4bd8]/30 bg-[#2e4bd8]/[0.05] px-4 py-3.5 text-left transition-colors hover:bg-[#2e4bd8]/[0.09]"
                     >
-                      {submitting ? "신청 중..." : `${field.label} 가입 신청`}
+                      <span className="flex items-center gap-2 text-sm font-bold text-gray-900">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2e4bd8]">
+                          <Check size={13} strokeWidth={3} color="#fff" />
+                        </span>
+                        {(() => { const Icon = FIELD_ICON[field.key]; return <Icon size={16} className="text-[#2e4bd8]" />; })()}
+                        {field.label}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#2e4bd8]">
+                        <ChevronLeft size={13} /> 분야 변경
+                      </span>
                     </button>
-                    <p className="text-center text-xs text-gray-400">
-                      사업자등록번호·자격 등록번호는 필수이며, 제출 후 심사를 거쳐 승인됩니다.
-                    </p>
+                  )}
+
+                  {/* STEP 2 — 자격 정보 (분야 선택 전 잠김 / 선택 후 펼침 + 자동 스크롤) */}
+                  <div ref={step2Ref} style={{ scrollMarginTop: 100 }}>
+                    {!field ? (
+                      <div className="rounded-2xl border border-dashed border-gray-200 px-4 py-3.5 text-sm font-semibold text-gray-300">
+                        ② 자격 정보 · 분야 선택 후 입력합니다
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-gray-100 bg-[#fafbff] p-5">
+                        <p className="mb-5 flex items-center gap-2 text-sm font-bold text-gray-900">
+                          {(() => { const Icon = FIELD_ICON[field.key]; return <Icon size={16} className="text-[#2e4bd8]" />; })()}
+                          {field.label} 자격 정보
+                        </p>
+                        <div className="space-y-4">
+                          <Field label="성명"><input className={inputCls} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="예) 홍길동" /></Field>
+                          <Field label="연락처"><input className={inputCls} value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="010-0000-0000" /></Field>
+                          <Field label={field.officeLabel}><input className={inputCls} value={form.office} onChange={(e) => set("office", e.target.value)} placeholder="예) 법무법인 율지" /></Field>
+                          <Field label="사업자등록번호" required><input className={inputCls} value={form.bizNo} onChange={(e) => set("bizNo", e.target.value)} placeholder="000-00-00000" /></Field>
+                          <Field label={`${field.licenseLabel} (자격증)`} required><input className={inputCls} value={form.license} onChange={(e) => set("license", e.target.value)} placeholder={field.licensePlaceholder} /></Field>
+
+                          <button
+                            type="button"
+                            disabled={!canSubmit || submitting}
+                            onClick={submit}
+                            className="w-full rounded-xl py-3.5 text-sm font-bold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                            style={{ background: canSubmit && !submitting ? "linear-gradient(135deg,#2e4bd8,#4f46e5)" : "#c7ccdb" }}
+                          >
+                            {submitting ? "신청 중..." : `${field.label} 가입 신청`}
+                          </button>
+                          <p className="text-center text-xs text-gray-400">
+                            사업자등록번호·자격 등록번호는 필수이며, 제출 후 심사를 거쳐 승인됩니다.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
