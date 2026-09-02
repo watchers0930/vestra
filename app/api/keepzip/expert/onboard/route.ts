@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
+import { isValidLicenseFileDataUrl } from "@/lib/keepzip/image-validation";
 
 const CATEGORIES = ["lawyer", "judicial", "tax", "accountant", "appraiser"];
 
@@ -39,20 +40,24 @@ export async function POST(req: NextRequest) {
     const office = sanitizeField(String(b.office ?? ""), 200);
     const bizNo = sanitizeField(String(b.bizNo ?? ""), 30);
     const licenseNo = sanitizeField(String(b.licenseNo ?? ""), 50);
+    const licenseFileUrl = typeof b.licenseFileUrl === "string" ? b.licenseFileUrl : "";
 
     if (!name) return NextResponse.json({ error: "성명을 입력해주세요." }, { status: 400 });
     if (!bizNo) return NextResponse.json({ error: "사업자등록번호는 필수입니다." }, { status: 400 });
     if (!licenseNo) return NextResponse.json({ error: "자격 등록번호는 필수입니다." }, { status: 400 });
+    if (!isValidLicenseFileDataUrl(licenseFileUrl)) {
+      return NextResponse.json({ error: "자격증 파일을 첨부해주세요. (JPG·PNG·PDF, 3MB 이하)" }, { status: 400 });
+    }
 
     const slug = `${category}-${userId.slice(-6)}`;
 
     const partner = await prisma.lawyerPartner.upsert({
       where: { userId },
       create: {
-        userId, category, name, phone, officePhone, firmName: office, bizNo, licenseNo,
+        userId, category, name, phone, officePhone, firmName: office, bizNo, licenseNo, licenseFileUrl,
         homepageSlug: slug, kycStatus: "pending", membershipStatus: "inactive",
       },
-      update: { category, name, phone, officePhone, firmName: office, bizNo, licenseNo },
+      update: { category, name, phone, officePhone, firmName: office, bizNo, licenseNo, licenseFileUrl },
     });
 
     return NextResponse.json({ ok: true, id: partner.id, status: partner.kycStatus });

@@ -991,6 +991,7 @@ model LawyerPartner {
   phone             String? // 휴대전화번호
   officePhone       String? // 사무실 전화번호
   licenseNo         String? // 자격 등록번호(자격증)
+  licenseFileUrl    String?   @db.Text // 자격증 첨부 파일(dataURL: 이미지/PDF)
   bizNo             String? // 사업자등록번호
   barNumber         String? // (구) 변호사 등록번호 — licenseNo로 통합, 하위호환 유지
   firmName          String? // 소속 법인/사무소

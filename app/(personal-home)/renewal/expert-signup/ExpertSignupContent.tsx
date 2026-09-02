@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { Scale, Stamp, Calculator, Landmark, Home, Check, ShieldCheck, ChevronLeft } from "lucide-react";
+import { Scale, Stamp, Calculator, Landmark, Home, Check, ShieldCheck, ChevronLeft, Upload, FileText, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import RenewalGnb from "../_shared/RenewalGnb";
 import ExpertLoginGate from "./ExpertLoginGate";
@@ -19,9 +19,14 @@ interface FormState {
   office: string;     // 소속 법인/사무소명
   bizNo: string;      // 사업자등록번호 (필수)
   license: string;    // 자격 등록번호/자격증 (필수)
+  licenseFile: string;     // 자격증 첨부 파일 dataURL (필수)
+  licenseFileName: string; // 첨부 파일명 (표시용)
 }
 
-const EMPTY: FormState = { name: "", mobile: "", officePhone: "", office: "", bizNo: "", license: "" };
+const EMPTY: FormState = { name: "", mobile: "", officePhone: "", office: "", bizNo: "", license: "", licenseFile: "", licenseFileName: "" };
+
+const LICENSE_MAX = 3_000_000;
+const LICENSE_TYPES = ["image/png", "image/jpeg", "image/jpg", "application/pdf"];
 
 /** 분야별 아이콘 */
 const FIELD_ICON: Record<ExpertFieldKey, LucideIcon> = {
@@ -47,9 +52,24 @@ export default function ExpertSignupContent() {
 
   const set = (k: keyof FormState, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
+  const onLicenseFile = (file: File | undefined) => {
+    if (!file) return;
+    if (!LICENSE_TYPES.includes(file.type)) {
+      showToast("JPG·PNG·PDF 파일만 첨부할 수 있습니다.", "error");
+      return;
+    }
+    if (file.size > LICENSE_MAX) {
+      showToast("파일 크기는 3MB 이하여야 합니다.", "error");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setForm((p) => ({ ...p, licenseFile: String(reader.result || ""), licenseFileName: file.name }));
+    reader.readAsDataURL(file);
+  };
+
   const canSubmit =
     !!form.name.trim() && !!form.mobile.trim() &&
-    !!form.bizNo.trim() && !!form.license.trim();
+    !!form.bizNo.trim() && !!form.license.trim() && !!form.licenseFile;
 
   const selectField = (key: ExpertFieldKey) => {
     setField(EXPERT_FIELDS.find((f) => f.key === key) ?? null);
@@ -68,7 +88,7 @@ export default function ExpertSignupContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           category: field.key, name: form.name, phone: form.mobile, officePhone: form.officePhone,
-          office: form.office, bizNo: form.bizNo, licenseNo: form.license,
+          office: form.office, bizNo: form.bizNo, licenseNo: form.license, licenseFileUrl: form.licenseFile,
         }),
       });
       const data = await res.json().catch(() => null);
@@ -224,6 +244,41 @@ export default function ExpertSignupContent() {
                           <Field label={field.officeLabel}><input className={inputCls} value={form.office} onChange={(e) => set("office", e.target.value)} placeholder="예) 법무법인 율지" /></Field>
                           <Field label="사업자등록번호" required><input className={inputCls} inputMode="numeric" value={form.bizNo} onChange={(e) => set("bizNo", formatBizNo(e.target.value))} placeholder="000-00-00000" /></Field>
                           <Field label={`${field.licenseLabel} (자격증)`} required><input className={inputCls} value={form.license} onChange={(e) => set("license", e.target.value)} placeholder={field.licensePlaceholder} /></Field>
+
+                          {/* 자격증 파일 첨부 (필수) */}
+                          <div>
+                            <label className="mb-1.5 block text-[13px] font-semibold text-gray-700">
+                              자격증 파일 첨부<span className="ml-0.5 text-red-500">*</span>
+                            </label>
+                            {!form.licenseFile ? (
+                              <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-gray-300 bg-white px-4 py-6 text-center transition-colors hover:border-[#2e4bd8] hover:bg-[#2e4bd8]/[0.03]">
+                                <Upload size={20} className="text-gray-400" />
+                                <span className="text-xs font-medium text-gray-600">클릭하여 자격증 파일 첨부</span>
+                                <span className="text-[11px] text-gray-400">JPG · PNG · PDF · 최대 3MB</span>
+                                <input type="file" accept="image/png,image/jpeg,application/pdf" className="hidden" onChange={(e) => onLicenseFile(e.target.files?.[0])} />
+                              </label>
+                            ) : (
+                              <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3">
+                                {form.licenseFile.startsWith("data:image") ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={form.licenseFile} alt="자격증 미리보기" className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
+                                ) : (
+                                  <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                                    <FileText size={20} className="text-gray-500" />
+                                  </span>
+                                )}
+                                <span className="flex-1 truncate text-xs font-medium text-gray-700">{form.licenseFileName}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setForm((p) => ({ ...p, licenseFile: "", licenseFileName: "" }))}
+                                  className="flex-shrink-0 text-gray-400 transition-colors hover:text-red-500"
+                                  aria-label="첨부 파일 삭제"
+                                >
+                                  <X size={16} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
 
                           <button
                             type="button"
