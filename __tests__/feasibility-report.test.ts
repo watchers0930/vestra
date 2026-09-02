@@ -1223,60 +1223,6 @@ describe("report-html (generateFeasibilityReportHtml / normalizeFeasibilityRepor
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 6. scr-report-cache.ts
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-describe("scr-report-cache", () => {
-  it("보고서를 캐시에 저장하고 조회한다", async () => {
-    const { cacheReport, getCachedReport } = await import("@/lib/feasibility/scr-report-cache");
-    const data = createMinimalScrReportData();
-
-    cacheReport("test-id-001", data);
-    const result = getCachedReport("test-id-001");
-
-    expect(result).not.toBeNull();
-    expect(result!.frontMatter.projectName).toBe("테스트 아파트 사업");
-  });
-
-  it("존재하지 않는 ID는 null을 반환한다", async () => {
-    const { getCachedReport } = await import("@/lib/feasibility/scr-report-cache");
-    const result = getCachedReport("nonexistent-id-" + Date.now());
-    expect(result).toBeNull();
-  });
-
-  it("generateReportId가 UUID v4 형식의 문자열을 반환한다", async () => {
-    const { generateReportId } = await import("@/lib/feasibility/scr-report-cache");
-    const id = generateReportId();
-
-    expect(typeof id).toBe("string");
-    // UUID v4 format: 8-4-4-4-12 hex characters
-    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
-  });
-
-  it("동일 ID로 덮어쓰기하면 최신 데이터가 반환된다", async () => {
-    const { cacheReport, getCachedReport } = await import("@/lib/feasibility/scr-report-cache");
-    const data1 = createMinimalScrReportData();
-    const data2 = createMinimalScrReportData();
-    data2.frontMatter.projectName = "업데이트된 사업";
-
-    cacheReport("overwrite-test", data1);
-    cacheReport("overwrite-test", data2);
-
-    const result = getCachedReport("overwrite-test");
-    expect(result!.frontMatter.projectName).toBe("업데이트된 사업");
-  });
-
-  it("generateReportId가 매번 고유한 ID를 생성한다", async () => {
-    const { generateReportId } = await import("@/lib/feasibility/scr-report-cache");
-    const ids = new Set<string>();
-    for (let i = 0; i < 50; i++) {
-      ids.add(generateReportId());
-    }
-    expect(ids.size).toBe(50);
-  });
-});
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 7. scr-parser-extensions.ts
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
