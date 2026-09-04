@@ -61,7 +61,7 @@
 .kv { font-size: 27px; font-weight: 700; color: #1a1d2e; letter-spacing: -.5px; font-variant-numeric: tabular-nums; }
 .kv small { font-size: 14px; font-weight: 500; color: #999; margin-left: 3px; }
 .kt { font-size: 12px; margin-top: 6px; color: #999; }
-.kt.up { color: #1a9d4b; font-weight: 600; }
+.kt.up { color: #2e4bd8; font-weight: 600; }
 .kt.warn { color: #e04444; font-weight: 600; }
 
 /* ── 2컬럼 위젯 ── */
@@ -79,8 +79,8 @@
 .titem:first-child { border-top: 0; }
 .chip { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 5px; flex-shrink: 0; width: 60px; text-align: center; }
 .chip.sign { background: #eef1fd; color: #2e4bd8; }
-.chip.new { background: #e8f7ee; color: #1a9d4b; }
-.chip.talk { background: #fff3e0; color: #b26a00; }
+.chip.new { background: #eef1fd; color: #2e4bd8; }
+.chip.talk { background: #eef0f3; color: #6e6e73; }
 .chip.due { background: #fdeaea; color: #e04444; }
 .tbody { flex: 1; min-width: 0; }
 .ttitle { font-size: 14px; font-weight: 600; color: #1a1d2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -94,7 +94,7 @@
 .nic { width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0; display: grid; place-items: center; }
 .nic.alert { background: #fdeaea; color: #e04444; }
 .nic.msg { background: #eef1fd; color: #2e4bd8; }
-.nic.doc { background: #e8f7ee; color: #1a9d4b; }
+.nic.doc { background: #eef1fd; color: #2e4bd8; }
 .ntitle { font-size: 13.5px; font-weight: 600; color: #1a1d2e; }
 .ntitle .hl { color: #e04444; }
 .nsub { font-size: 12px; color: #777; margin-top: 3px; }

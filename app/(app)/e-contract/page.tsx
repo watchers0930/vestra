@@ -67,7 +67,7 @@ export default function EContractPage() {
   return (
     <AuthGuard featureName="가계약서">
       <div className="max-w-5xl px-4 py-6">
-        <div className="econtract-2col">
+        <div className="econtract-2col" style={{ display: "grid", gridTemplateColumns: "minmax(0, 6fr) minmax(0, 4fr)", gap: 32, alignItems: "start", marginTop: 24 }}>
           {/* 좌측: 설명 */}
           <ContractGuidePanel step={step} />
 
