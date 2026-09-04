@@ -336,3 +336,45 @@ body {
     align-self: flex-start;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+ * 부동산 중개사(REALESTATE) 전용 renewal 인디고 톤
+ * .realtor-theme 스코프 안에서만 primary 색을 override한다.
+ * 이 클래스는 (app)/layout.tsx의 REALESTATE 분기 wrapper에만 붙으므로
+ * 개인회원 등 다른 계정 UI에는 절대 영향이 없다.
+ * primary #0071e3 → #2e4bd8 / dark #0058b0·#005bb5 → #2641c0
+ * ───────────────────────────────────────────────────────────── */
+.realtor-theme .text-primary,
+.realtor-theme .text-\[\#0071e3\] { color: #2e4bd8 !important; }
+.realtor-theme .bg-primary,
+.realtor-theme .bg-\[\#0071e3\] { background-color: #2e4bd8 !important; }
+.realtor-theme .border-primary,
+.realtor-theme .border-\[\#0071e3\] { border-color: #2e4bd8 !important; }
+.realtor-theme .ring-primary,
+.realtor-theme .ring-\[\#0071e3\] { --tw-ring-color: #2e4bd8 !important; }
+.realtor-theme .fill-primary,
+.realtor-theme .fill-\[\#0071e3\] { fill: #2e4bd8 !important; }
+.realtor-theme .stroke-primary,
+.realtor-theme .stroke-\[\#0071e3\] { stroke: #2e4bd8 !important; }
+.realtor-theme .decoration-\[\#0071e3\] { text-decoration-color: #2e4bd8 !important; }
+.realtor-theme .from-\[\#0071e3\] { --tw-gradient-from: #2e4bd8 var(--tw-gradient-from-position) !important; }
+.realtor-theme .to-\[\#0071e3\] { --tw-gradient-to: #2e4bd8 var(--tw-gradient-to-position) !important; }
+.realtor-theme .via-\[\#0071e3\] { --tw-gradient-via: #2e4bd8 var(--tw-gradient-via-position) !important; }
+/* hover / focus / group-hover variants */
+.realtor-theme .hover\:bg-primary:hover,
+.realtor-theme .hover\:bg-\[\#0071e3\]:hover { background-color: #2e4bd8 !important; }
+.realtor-theme .hover\:text-primary:hover,
+.realtor-theme .hover\:text-\[\#0071e3\]:hover { color: #2e4bd8 !important; }
+.realtor-theme .hover\:border-primary:hover,
+.realtor-theme .hover\:border-\[\#0071e3\]:hover { border-color: #2e4bd8 !important; }
+.realtor-theme .focus\:ring-primary:focus,
+.realtor-theme .focus\:ring-\[\#0071e3\]:focus { --tw-ring-color: #2e4bd8 !important; }
+/* dark variants (#0058b0 · #005bb5) → #2641c0 */
+.realtor-theme .text-\[\#0058b0\],
+.realtor-theme .text-\[\#005bb5\] { color: #2641c0 !important; }
+.realtor-theme .bg-\[\#0058b0\],
+.realtor-theme .bg-\[\#005bb5\] { background-color: #2641c0 !important; }
+.realtor-theme .hover\:bg-\[\#0058b0\]:hover,
+.realtor-theme .hover\:bg-\[\#005bb5\]:hover { background-color: #2641c0 !important; }
+.realtor-theme .hover\:text-\[\#005bb5\]:hover,
+.realtor-theme .hover\:text-\[\#0058b0\]:hover { color: #2641c0 !important; }

@@ -21,18 +21,22 @@ export default async function AppLayout({
   const isRealtor = session?.user?.role === "REALESTATE";
 
   if (isRealtor) {
+    // realtor-theme: 이 wrapper 하위에서만 primary 색을 renewal 인디고로 override
+    // (globals.css의 .realtor-theme 스코프 규칙 — 다른 계정 UI에는 영향 없음)
     return (
       <SessionGuard>
-        <a href="#main-content" className={SKIP_LINK}>본문으로 건너뛰기</a>
-        <RealtorGnb />
-        <main
-          id="main-content"
-          className="mx-auto min-h-[calc(100vh-80px)] max-w-[1200px] px-4 lg:px-8"
-          style={{ paddingTop: 24, paddingBottom: 48 }}
-        >
-          <ErrorBoundary>{children}</ErrorBoundary>
-        </main>
-        <RealtorFooter />
+        <div className="realtor-theme">
+          <a href="#main-content" className={SKIP_LINK}>본문으로 건너뛰기</a>
+          <RealtorGnb />
+          <main
+            id="main-content"
+            className="mx-auto min-h-[calc(100vh-80px)] max-w-[1200px] px-4 lg:px-8"
+            style={{ paddingTop: 24, paddingBottom: 48 }}
+          >
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </main>
+          <RealtorFooter />
+        </div>
       </SessionGuard>
     );
   }
