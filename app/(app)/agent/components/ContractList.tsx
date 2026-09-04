@@ -92,7 +92,7 @@ export function ContractList() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {contracts.map((c) => {
         const status = STATUS_LABEL[c.status] ?? { label: c.status, color: "bg-gray-100 text-gray-600" };
         const depositAmt = Number(c.deposit).toLocaleString("ko-KR");
