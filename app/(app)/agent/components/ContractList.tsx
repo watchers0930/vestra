@@ -21,11 +21,11 @@ type Contract = {
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   DRAFT: { label: "초안", color: "bg-gray-100 text-gray-600" },
-  PENDING_LANDLORD: { label: "임대인 서명 대기", color: "bg-yellow-100 text-yellow-700" },
-  PENDING_TENANT: { label: "임차인 서명 대기", color: "bg-blue-100 text-blue-700" },
-  PENDING_BROKER: { label: "중개사 서명 대기", color: "bg-purple-100 text-purple-700" },
-  COMPLETED: { label: "서명 완료", color: "bg-green-100 text-green-700" },
-  CANCELED: { label: "취소됨", color: "bg-red-100 text-red-700" },
+  PENDING_LANDLORD: { label: "임대인 서명 대기", color: "bg-indigo-50 text-indigo-700" },
+  PENDING_TENANT: { label: "임차인 서명 대기", color: "bg-indigo-50 text-indigo-700" },
+  PENDING_BROKER: { label: "중개사 서명 대기", color: "bg-indigo-50 text-indigo-700" },
+  COMPLETED: { label: "서명 완료", color: "bg-gray-100 text-gray-600" },
+  CANCELED: { label: "취소됨", color: "bg-red-50 text-red-600" },
 };
 
 const ROLE_LABEL: Record<string, string> = {
