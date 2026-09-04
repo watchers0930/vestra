@@ -17,6 +17,12 @@ export const REALTOR_ROUTES = {
   prediction: "/prediction",
   priceMap: "/price-map",
   expert: "/expert-connect",
+  // 고객지원(더보기) 드롭다운
+  jeonse: "/jeonse",
+  assistant: "/assistant",
+  tax: "/tax",
+  officialPrice: "/official-price",
+  apiHub: "/api-hub",
   profile: "/profile",
   landing: "/",
 } as const;
@@ -45,6 +51,15 @@ export const REALTOR_ANALYSIS: RealtorMenuItem[] = [
 /** GNB 우측 단독 메뉴 */
 export const REALTOR_TRAILING: RealtorMenuItem[] = [
   { href: REALTOR_ROUTES.expert, label: "전문가 연결" },
+];
+
+/** GNB "고객지원" 드롭다운 (그 외 도구 메뉴 수용) */
+export const REALTOR_SUPPORT: RealtorMenuItem[] = [
+  { href: REALTOR_ROUTES.jeonse, label: "전세보호" },
+  { href: REALTOR_ROUTES.assistant, label: "AI 어시스턴트" },
+  { href: REALTOR_ROUTES.tax, label: "세금계산" },
+  { href: REALTOR_ROUTES.officialPrice, label: "공시가격 조회" },
+  { href: REALTOR_ROUTES.apiHub, label: "API 데이터 허브" },
 ];
 
 /** 자주 쓰는 기능 카드의 아이콘 키 (lucide 매핑용) */

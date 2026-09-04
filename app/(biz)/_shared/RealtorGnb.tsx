@@ -11,6 +11,7 @@ import {
   REALTOR_MAIN,
   REALTOR_ANALYSIS,
   REALTOR_TRAILING,
+  REALTOR_SUPPORT,
 } from "./realtor-config";
 
 /**
@@ -26,6 +27,7 @@ export default function RealtorGnb() {
   const isActive = (href: string) =>
     href === REALTOR_ROUTES.home ? pathname === href : pathname.startsWith(href);
   const analysisActive = REALTOR_ANALYSIS.some((m) => pathname.startsWith(m.href));
+  const supportActive = REALTOR_SUPPORT.some((m) => pathname.startsWith(m.href));
 
   return (
     <nav className={s.navBar}>
@@ -62,6 +64,21 @@ export default function RealtorGnb() {
               <Link href={m.href} className={isActive(m.href) ? "active" : undefined}>{m.label}</Link>
             </li>
           ))}
+          <li className={s.hasDrop}>
+            <span className={`${s.navDropToggle}${supportActive ? " active" : ""}`}>
+              고객지원
+              <svg className={s.caret} viewBox="0 0 24 24">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </span>
+            <ul className={s.navDrop}>
+              {REALTOR_SUPPORT.map((m) => (
+                <li key={m.href}>
+                  <Link href={m.href} className={isActive(m.href) ? "active" : undefined}>{m.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </li>
         </ul>
 
         <div className={s.navAuth}>
@@ -92,6 +109,12 @@ export default function RealtorGnb() {
         {REALTOR_TRAILING.map((m) => (
           <li key={m.href}>
             <Link href={m.href} className={isActive(m.href) ? "active" : undefined} onClick={() => setMenuOpen(false)}>{m.label}</Link>
+          </li>
+        ))}
+        <li><span className={s.grp}>고객지원</span></li>
+        {REALTOR_SUPPORT.map((m) => (
+          <li key={m.href} className={s.sub}>
+            <Link href={m.href} className={isActive(m.href) ? "active" : undefined} onClick={() => setMenuOpen(false)}>· {m.label}</Link>
           </li>
         ))}
         <li>
