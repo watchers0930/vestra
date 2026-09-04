@@ -97,7 +97,7 @@ export default function AssistantPage() {
                     onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#ebebed"; (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(0,113,227,0.20)"; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#f5f5f7"; (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(0,0,0,0.07)"; }}
                   >
-                    <Icon size={13} strokeWidth={1.5} style={{ color: "#0071e3", flexShrink: 0 }} />
+                    <Icon size={13} strokeWidth={1.5} style={{ color: "var(--brand-primary)", flexShrink: 0 }} />
                     {text}
                   </button>
                 ))}
@@ -121,7 +121,7 @@ export default function AssistantPage() {
                     padding: "12px 16px",
                     borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "4px 18px 18px 18px",
                     background: msg.role === "user"
-                      ? "linear-gradient(148deg, #0071e3, #0058b0)"
+                      ? "linear-gradient(148deg, var(--brand-primary), var(--brand-primary-dark))"
                       : "#f5f5f7",
                     border: msg.role === "user" ? "none" : "1px solid rgba(0,0,0,0.07)",
                     boxShadow: msg.role === "user"
@@ -146,7 +146,7 @@ export default function AssistantPage() {
                             display: "inline-flex", alignItems: "center", gap: "5px",
                             padding: "6px 12px", borderRadius: "10px",
                             background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.15)",
-                            fontSize: "11.5px", fontWeight: 600, color: "#0071e3",
+                            fontSize: "11.5px", fontWeight: 600, color: "var(--brand-primary)",
                             textDecoration: "none", transition: "all 0.15s",
                           }}
                           onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,113,227,0.12)"; }}
@@ -204,7 +204,7 @@ export default function AssistantPage() {
                   whiteSpace: "pre-wrap",
                 }}>
                   {streamingContent}
-                  <span style={{ display: "inline-block", width: "6px", height: "16px", background: "#0071e3", marginLeft: "2px", animation: "blink 0.8s step-end infinite", verticalAlign: "text-bottom" }} />
+                  <span style={{ display: "inline-block", width: "6px", height: "16px", background: "var(--brand-primary)", marginLeft: "2px", animation: "blink 0.8s step-end infinite", verticalAlign: "text-bottom" }} />
                 </div>
               </div>
             </div>
@@ -219,7 +219,7 @@ export default function AssistantPage() {
               <div style={{ padding: "14px 18px", borderRadius: "4px 18px 18px 18px", background: "#f5f5f7", border: "1px solid rgba(0,0,0,0.07)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                   {[0, 1, 2].map((i) => (
-                    <span key={i} style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#0071e3", opacity: 0.5, animation: "bounce 1.2s ease-in-out infinite", animationDelay: `${i * 180}ms`, display: "inline-block" }} />
+                    <span key={i} style={{ width: "7px", height: "7px", borderRadius: "50%", background: "var(--brand-primary)", opacity: 0.5, animation: "bounce 1.2s ease-in-out infinite", animationDelay: `${i * 180}ms`, display: "inline-block" }} />
                   ))}
                 </div>
               </div>
@@ -248,7 +248,7 @@ export default function AssistantPage() {
               onClick={() => sendMessage()}
               disabled={loading || !input.trim()}
               aria-label="메시지 전송"
-              style={{ width: "44px", height: "44px", borderRadius: "14px", background: loading || !input.trim() ? "#e5e5e7" : "linear-gradient(148deg, #0071e3, #0058b0)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: loading || !input.trim() ? "not-allowed" : "pointer", flexShrink: 0, boxShadow: loading || !input.trim() ? "none" : "0 4px 12px rgba(0,113,227,0.30)", transition: "all 0.15s" }}
+              style={{ width: "44px", height: "44px", borderRadius: "14px", background: loading || !input.trim() ? "#e5e5e7" : "linear-gradient(148deg, var(--brand-primary), var(--brand-primary-dark))", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: loading || !input.trim() ? "not-allowed" : "pointer", flexShrink: 0, boxShadow: loading || !input.trim() ? "none" : "0 4px 12px rgba(0,113,227,0.30)", transition: "all 0.15s" }}
             >
               <Send size={17} strokeWidth={2} style={{ color: loading || !input.trim() ? "#aeaeb2" : "#fff" }} />
             </button>
@@ -262,7 +262,7 @@ export default function AssistantPage() {
                 onClick={() => setShowSignupModal(true)}
                 style={{
                   fontSize: "10.5px", fontWeight: 600, cursor: "pointer",
-                  color: guestRemaining <= 1 ? "#ff3b30" : "#0071e3",
+                  color: guestRemaining <= 1 ? "#ff3b30" : "var(--brand-primary)",
                   background: guestRemaining <= 1 ? "rgba(255,59,48,0.08)" : "rgba(0,113,227,0.08)",
                   padding: "2px 8px", borderRadius: "6px",
                   whiteSpace: "nowrap", flexShrink: 0,
@@ -346,7 +346,7 @@ export default function AssistantPage() {
 
           <p style={{ fontSize: "11px", color: "#aeaeb2", textAlign: "center", marginTop: "16px" }}>
             이미 계정이 있으신가요?{" "}
-            <span onClick={() => signIn(undefined, { callbackUrl: "/assistant" })} style={{ color: "#0071e3", cursor: "pointer", fontWeight: 500 }}>로그인</span>
+            <span onClick={() => signIn(undefined, { callbackUrl: "/assistant" })} style={{ color: "var(--brand-primary)", cursor: "pointer", fontWeight: 500 }}>로그인</span>
           </p>
         </div>
       </div>

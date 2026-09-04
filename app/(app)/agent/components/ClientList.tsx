@@ -178,7 +178,7 @@ export function ClientList({ clients, onDelete, onToggleMonitoring, loading }: C
                         display: "inline-flex", alignItems: "center", gap: 4,
                         padding: "2px 8px", borderRadius: 999,
                         fontSize: 10.5, fontWeight: 700,
-                        background: "rgba(0,113,227,0.07)", color: "#0071e3",
+                        background: "rgba(0,113,227,0.07)", color: "var(--brand-primary)",
                         border: "1px solid rgba(0,113,227,0.18)",
                       }}
                     >

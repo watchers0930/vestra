@@ -62,7 +62,7 @@ export default function ChatListPage() {
             href="/listings"
             style={{
               display: "inline-block", marginTop: 20, padding: "10px 24px",
-              borderRadius: 100, background: "#0071e3", color: "#fff",
+              borderRadius: 100, background: "var(--brand-primary)", color: "#fff",
               fontSize: 14, fontWeight: 600, textDecoration: "none",
             }}
           >
@@ -83,7 +83,7 @@ export default function ChatListPage() {
             >
               {/* 아바타 */}
               <div style={{
-                width: 44, height: 44, borderRadius: "50%", background: "#0071e3",
+                width: 44, height: 44, borderRadius: "50%", background: "var(--brand-primary)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 color: "#fff", fontSize: 16, fontWeight: 700, flexShrink: 0,
                 position: "relative",

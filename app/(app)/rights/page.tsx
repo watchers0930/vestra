@@ -66,15 +66,15 @@ export default function RightsAnalysisPage() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <FileText size={15} style={{ color: "#0071e3", flexShrink: 0 }} />
-            <span style={{ fontSize: "13px", color: "#0071e3" }}>이전 분석 기록이 있습니다: {previousAnalysis.date}</span>
+            <FileText size={15} style={{ color: "var(--brand-primary)", flexShrink: 0 }} />
+            <span style={{ fontSize: "13px", color: "var(--brand-primary)" }}>이전 분석 기록이 있습니다: {previousAnalysis.date}</span>
           </div>
           <button
             onClick={() => {
               const el = document.getElementById("rights-result");
               if (el) el.scrollIntoView({ behavior: "smooth" });
             }}
-            style={{ fontSize: "13px", fontWeight: 600, color: "#0071e3", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+            style={{ fontSize: "13px", fontWeight: 600, color: "var(--brand-primary)", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
           >
             결과 보기 →
           </button>

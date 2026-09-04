@@ -74,7 +74,7 @@ export function MarketTab({ listingId }: { listingId: string }) {
     <div>
       {/* 헤더 */}
       <h3 style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14, fontWeight: 700, color: "#1d1d1f", margin: "0 0 14px" }}>
-        <TrendingUp size={16} strokeWidth={1.5} style={{ color: "#0071e3" }} />
+        <TrendingUp size={16} strokeWidth={1.5} style={{ color: "var(--brand-primary)" }} />
         인근 시세 추이 ({data.period})
       </h3>
 

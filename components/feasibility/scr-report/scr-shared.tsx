@@ -11,7 +11,7 @@ export const tdNumCls =
 
 /* ─── 공용 차트 색상 ─── */
 export const CHART_COLORS = {
-  primary: "#0071e3",
+  primary: "var(--brand-primary)",
   secondary: "#34c759",
   tertiary: "#ff9500",
   danger: "#ff3b30",

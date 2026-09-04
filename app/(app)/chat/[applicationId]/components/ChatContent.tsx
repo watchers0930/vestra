@@ -54,7 +54,7 @@ export function ChatContent({ applicationId, partnerName, address }: Props) {
   }
 
   // 이니셜 색상 — 이름 첫 글자 기반으로 고정 색상
-  const AVATAR_COLORS = ["#0071e3", "#34c759", "#ff9500", "#af52de", "#ff3b30", "#5856d6"];
+  const AVATAR_COLORS = ["var(--brand-primary)", "#34c759", "#ff9500", "#af52de", "#ff3b30", "#5856d6"];
   const avatarColor = AVATAR_COLORS[(partnerName.charCodeAt(0) || 0) % AVATAR_COLORS.length];
 
   let lastDate = "";
@@ -141,7 +141,7 @@ export function ChatContent({ applicationId, partnerName, address }: Props) {
               alignItems: "center", justifyContent: "center",
               marginBottom: 14,
             }}>
-              <Send size={24} strokeWidth={1.5} style={{ color: "#0071e3" }} />
+              <Send size={24} strokeWidth={1.5} style={{ color: "var(--brand-primary)" }} />
             </div>
             <p style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f", marginBottom: 6 }}>
               첫 메시지를 보내보세요
@@ -217,7 +217,7 @@ export function ChatContent({ applicationId, partnerName, address }: Props) {
                         borderRadius: isMine
                           ? "18px 4px 18px 18px"
                           : "4px 18px 18px 18px",
-                        background: isMine ? "#0071e3" : "#f2f2f7",
+                        background: isMine ? "var(--brand-primary)" : "#f2f2f7",
                         color: isMine ? "#fff" : "#1d1d1f",
                         fontSize: 14, lineHeight: 1.55,
                         wordBreak: "break-word", whiteSpace: "pre-wrap",
@@ -287,7 +287,7 @@ export function ChatContent({ applicationId, partnerName, address }: Props) {
             transition: "border-color 0.15s, background 0.15s",
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = "#0071e3";
+            e.currentTarget.style.borderColor = "var(--brand-primary)";
             e.currentTarget.style.background = "#fff";
           }}
           onBlur={(e) => {
@@ -306,7 +306,7 @@ export function ChatContent({ applicationId, partnerName, address }: Props) {
           style={{
             width: 42, height: 42,
             borderRadius: 13,
-            background: sending || !input.trim() ? "#e5e5ea" : "#0071e3",
+            background: sending || !input.trim() ? "#e5e5ea" : "var(--brand-primary)",
             border: "none",
             cursor: sending || !input.trim() ? "not-allowed" : "pointer",
             display: "flex", alignItems: "center", justifyContent: "center",

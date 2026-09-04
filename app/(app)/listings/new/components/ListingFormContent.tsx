@@ -36,7 +36,7 @@ const labelStyle: React.CSSProperties = {
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label style={labelStyle}>{label}{required && <span style={{ color: "#0071e3", marginLeft: 2 }}>*</span>}</label>
+      <label style={labelStyle}>{label}{required && <span style={{ color: "var(--brand-primary)", marginLeft: 2 }}>*</span>}</label>
       {children}
     </div>
   );
@@ -113,7 +113,7 @@ export function ListingFormContent() {
                   flex: 1, padding: "10px 0", borderRadius: 10, cursor: "pointer",
                   border: form.listingType === value ? "2px solid #0071e3" : "1px solid #d2d2d7",
                   background: form.listingType === value ? "rgba(0,113,227,0.06)" : "#fff",
-                  color: form.listingType === value ? "#0071e3" : "#3d3d3f",
+                  color: form.listingType === value ? "var(--brand-primary)" : "#3d3d3f",
                   fontSize: 14, fontWeight: 600, transition: "all 0.15s",
                 }}
               >
@@ -136,7 +136,7 @@ export function ListingFormContent() {
               type="button"
               onClick={openPostcode}
               style={{
-                flex: 1, padding: "10px 0", borderRadius: 10, background: "#0071e3",
+                flex: 1, padding: "10px 0", borderRadius: 10, background: "var(--brand-primary)",
                 color: "#fff", fontSize: 13, fontWeight: 600, border: "none",
                 cursor: "pointer", whiteSpace: "nowrap",
               }}
@@ -216,7 +216,7 @@ export function ListingFormContent() {
             onChange={(e) => set("deposit", formatCommas(e.target.value))}
           />
           {form.deposit && (
-            <p style={{ fontSize: 11, color: "#0071e3", marginTop: 4 }}>{toKorean(form.deposit)}</p>
+            <p style={{ fontSize: 11, color: "var(--brand-primary)", marginTop: 4 }}>{toKorean(form.deposit)}</p>
           )}
         </Field>
 
@@ -347,7 +347,7 @@ export function ListingFormContent() {
           disabled={submitting || uploading}
           style={{
             width: "100%", padding: "14px 0", borderRadius: 14,
-            background: submitting ? "#aeaeb2" : "#0071e3",
+            background: submitting ? "#aeaeb2" : "var(--brand-primary)",
             color: "#fff", fontSize: 15, fontWeight: 700, border: "none",
             cursor: submitting ? "not-allowed" : "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,

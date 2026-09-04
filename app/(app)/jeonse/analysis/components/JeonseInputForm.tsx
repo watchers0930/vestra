@@ -110,7 +110,7 @@ export function JeonseInputForm({ formData, setFormData, loading, registryLoadin
           }}
         >
           {registryLoading ? (
-            <Loader2 size={20} className="animate-spin" style={{ color: "#0071e3", flexShrink: 0 }} />
+            <Loader2 size={20} className="animate-spin" style={{ color: "var(--brand-primary)", flexShrink: 0 }} />
           ) : hasRegistry ? (
             <CheckCircle2 size={20} style={{ color: "#30d158", flexShrink: 0 }} />
           ) : (
@@ -118,7 +118,7 @@ export function JeonseInputForm({ formData, setFormData, loading, registryLoadin
           )}
           <div style={{ minWidth: 0 }}>
             {registryLoading ? (
-              <p style={{ fontSize: "13px", color: "#0071e3", margin: 0 }}>등기부등본 분석 중...</p>
+              <p style={{ fontSize: "13px", color: "var(--brand-primary)", margin: 0 }}>등기부등본 분석 중...</p>
             ) : hasRegistry ? (
               <>
                 <p style={{ fontSize: "13px", fontWeight: 600, color: "#30d158", margin: 0 }}>등기부등본 파싱 완료</p>
@@ -240,7 +240,7 @@ export function JeonseInputForm({ formData, setFormData, loading, registryLoadin
           type="checkbox"
           checked={formData.hasJeonseLoan}
           onChange={(e) => update({ hasJeonseLoan: e.target.checked })}
-          style={{ width: "15px", height: "15px", accentColor: "#0071e3" }}
+          style={{ width: "15px", height: "15px", accentColor: "var(--brand-primary)" }}
         />
         <span style={{ fontSize: "12.5px", color: "#3c3c43" }}>전세자금대출 연계 (HF 보증 판단용)</span>
       </label>
@@ -276,7 +276,7 @@ export function JeonseInputForm({ formData, setFormData, loading, registryLoadin
           padding: "14px",
           borderRadius: "14px",
           border: "none",
-          background: !formData.propertyAddress || loading ? "rgba(0,0,0,0.07)" : "#0071e3",
+          background: !formData.propertyAddress || loading ? "rgba(0,0,0,0.07)" : "var(--brand-primary)",
           color: !formData.propertyAddress || loading ? "#aeaeb2" : "#fff",
           fontSize: "14px",
           fontWeight: 700,

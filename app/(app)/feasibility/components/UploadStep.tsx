@@ -35,7 +35,7 @@ export function UploadStep({
       <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 16px rgba(0,0,0,0.05)", overflow: "hidden" }}>
         {/* 카드 헤더 */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "20px 24px", borderBottom: "1px solid rgba(0,0,0,0.06)", background: "linear-gradient(135deg, #fafbff 0%, #ffffff 100%)" }}>
-          <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "linear-gradient(148deg, #0071e3, #0058b0)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "linear-gradient(148deg, var(--brand-primary), var(--brand-primary-dark))", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <ClipboardList size={20} color="#fff" strokeWidth={1.8} />
           </div>
           <div>
@@ -92,7 +92,7 @@ export function UploadStep({
           disabled={loading || !isRequiredComplete}
           style={{
             width: "100%", padding: "16px", borderRadius: "16px", border: "none", cursor: loading || !isRequiredComplete ? "not-allowed" : "pointer",
-            background: loading || !isRequiredComplete ? "#e5e5e7" : "linear-gradient(148deg, #0071e3, #0058b0)",
+            background: loading || !isRequiredComplete ? "#e5e5e7" : "linear-gradient(148deg, var(--brand-primary), var(--brand-primary-dark))",
             color: loading || !isRequiredComplete ? "#aeaeb2" : "#fff",
             fontSize: "15px", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
             boxShadow: loading || !isRequiredComplete ? "none" : "0 4px 20px rgba(0,113,227,0.30)",

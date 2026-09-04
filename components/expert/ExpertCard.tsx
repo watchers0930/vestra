@@ -42,7 +42,7 @@ export function ExpertCard({ expert, onConsult }: ExpertCardProps) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
             <span style={{ fontSize: "13px", fontWeight: 700, color: "#1d1d1f" }}>{expert.name}</span>
-            <BadgeCheck size={14} style={{ color: "#0071e3", flexShrink: 0 }} />
+            <BadgeCheck size={14} style={{ color: "var(--brand-primary)", flexShrink: 0 }} />
           </div>
           <p style={{ fontSize: "11px", color: "#6e6e73", margin: "2px 0 0" }}>{expert.category}</p>
         </div>
@@ -74,7 +74,7 @@ export function ExpertCard({ expert, onConsult }: ExpertCardProps) {
         disabled={!expert.available}
         style={{
           marginTop: "auto", width: "100%", padding: "10px", borderRadius: "12px", border: "none",
-          background: expert.available ? "linear-gradient(148deg, #0071e3, #0058b0)" : "#f5f5f7",
+          background: expert.available ? "linear-gradient(148deg, var(--brand-primary), var(--brand-primary-dark))" : "#f5f5f7",
           color: expert.available ? "#fff" : "#aeaeb2",
           fontSize: "13px", fontWeight: 600, cursor: expert.available ? "pointer" : "not-allowed",
           boxShadow: expert.available ? "0 4px 12px rgba(0,113,227,0.25)" : "none",

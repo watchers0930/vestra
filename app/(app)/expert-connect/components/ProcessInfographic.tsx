@@ -6,7 +6,7 @@ const STEPS = [
   {
     icon: Brain, label: "1단계: AI 즉시 분석",
     desc: "문서 업로드 즉시 AI가\n권리관계·위험요소를 분석",
-    badge: "평균 3.2초 소요", badgeColor: "#0071e3", badgeBg: "rgba(0,113,227,0.10)",
+    badge: "평균 3.2초 소요", badgeColor: "var(--brand-primary)", badgeBg: "rgba(0,113,227,0.10)",
     iconColor: "#2997ff", iconBg: "rgba(0,113,227,0.15)",
   },
   {

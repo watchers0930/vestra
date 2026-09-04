@@ -40,8 +40,8 @@ export function VerifyStep() {
       {/* 상단 헤더 */}
       <div style={{ textAlign: "center", marginBottom: "28px" }}>
         <div style={{ position: "relative", width: "48px", height: "48px", margin: "0 auto 16px" }}>
-          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "linear-gradient(148deg, #0071e3, #0058b0)", opacity: 0.12 }} />
-          <div style={{ position: "absolute", inset: "4px", borderRadius: "50%", border: "2.5px solid transparent", borderTopColor: "#0071e3", animation: "verify-spin 0.9s linear infinite" }} />
+          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "linear-gradient(148deg, var(--brand-primary), var(--brand-primary-dark))", opacity: 0.12 }} />
+          <div style={{ position: "absolute", inset: "4px", borderRadius: "50%", border: "2.5px solid transparent", borderTopColor: "var(--brand-primary)", animation: "verify-spin 0.9s linear infinite" }} />
         </div>
         <p style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", margin: "0 0 4px" }}>사업성 검증 분석 중</p>
         <p style={{ fontSize: "12px", color: "#86868b", margin: 0 }}>경과 시간: {elapsed}초</p>
@@ -68,7 +68,7 @@ export function VerifyStep() {
                 style={{
                   width: "36px", height: "36px", borderRadius: "12px",
                   display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  background: isCompleted ? "#30d158" : isActive ? "#0071e3" : "#f5f5f7",
+                  background: isCompleted ? "#30d158" : isActive ? "var(--brand-primary)" : "#f5f5f7",
                   transition: "all 0.3s ease",
                 }}
               >
@@ -92,7 +92,7 @@ export function VerifyStep() {
               {isActive && (
                 <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
                   {[0, 1, 2].map((d) => (
-                    <span key={d} style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#0071e3", animation: `verify-bounce 1.2s ease-in-out infinite ${d * 180}ms` }} />
+                    <span key={d} style={{ width: "5px", height: "5px", borderRadius: "50%", background: "var(--brand-primary)", animation: `verify-bounce 1.2s ease-in-out infinite ${d * 180}ms` }} />
                   ))}
                 </div>
               )}

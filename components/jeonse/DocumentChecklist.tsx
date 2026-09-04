@@ -74,7 +74,7 @@ export default function DocumentChecklist({
           type="checkbox"
           checked={isChecked}
           onChange={(e) => setChecked({ ...checked, [doc.name]: e.target.checked })}
-          style={{ width: "15px", height: "15px", accentColor: "#0071e3", marginTop: "2px", flexShrink: 0 }}
+          style={{ width: "15px", height: "15px", accentColor: "var(--brand-primary)", marginTop: "2px", flexShrink: 0 }}
         />
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
@@ -114,7 +114,7 @@ export default function DocumentChecklist({
                 rel="noopener noreferrer"
                 style={{
                   display: "inline-flex", alignItems: "center", gap: "4px",
-                  fontSize: "12px", color: "#0071e3", textDecoration: "none",
+                  fontSize: "12px", color: "var(--brand-primary)", textDecoration: "none",
                   fontWeight: 500,
                 }}
                 onClick={(e) => e.stopPropagation()}
@@ -166,7 +166,7 @@ export default function DocumentChecklist({
           <div
             style={{
               height: "100%", borderRadius: "4px",
-              background: "linear-gradient(90deg, #0071e3, #30d158)",
+              background: "linear-gradient(90deg, var(--brand-primary), #30d158)",
               width: `${(checkedCount / totalCount) * 100}%`,
               transition: "width 0.3s ease",
             }}

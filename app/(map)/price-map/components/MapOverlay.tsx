@@ -21,7 +21,7 @@ export function MapOverlay({ loading, total, propertyType }: Props) {
       {loading && (
         <div style={{ position: "absolute", top: "12px", left: "50%", transform: "translateX(-50%)", zIndex: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "#fff", padding: "12px 20px", borderRadius: "14px", boxShadow: "0 4px 20px rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.08)" }}>
-            <div style={{ width: "16px", height: "16px", borderRadius: "50%", border: "2px solid rgba(0,113,227,0.20)", borderTopColor: "#0071e3", animation: "spin 0.8s linear infinite" }} />
+            <div style={{ width: "16px", height: "16px", borderRadius: "50%", border: "2px solid rgba(0,113,227,0.20)", borderTopColor: "var(--brand-primary)", animation: "spin 0.8s linear infinite" }} />
             <span style={{ fontSize: "13px", color: "#3d3d3f", fontWeight: 500 }}>시세 데이터 로딩 중...</span>
           </div>
         </div>
@@ -43,7 +43,7 @@ export function MapOverlay({ loading, total, propertyType }: Props) {
       {/* 총 건수 배지 */}
       <div style={{ position: "absolute", left: "12px", top: "12px", zIndex: 10, background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: "10px", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 2px 10px rgba(0,0,0,0.08)", padding: "6px 12px" }}>
         <span style={{ fontSize: "12px", color: "#6e6e73" }}>
-          <span style={{ fontWeight: 700, color: "#0071e3" }}>{total}</span>개 {propertyType}
+          <span style={{ fontWeight: 700, color: "var(--brand-primary)" }}>{total}</span>개 {propertyType}
         </span>
       </div>
 

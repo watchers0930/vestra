@@ -45,7 +45,7 @@ export function LocationMap({ lat, lng, address }: { lat: number; lng: number; a
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-        <MapPin size={14} strokeWidth={1.5} color="#0071e3" />
+        <MapPin size={14} strokeWidth={1.5} color="var(--brand-primary)" />
         <span style={{ fontSize: 13, fontWeight: 600, color: "#1d1d1f" }}>건물 위치</span>
       </div>
       <p style={{ fontSize: 12, color: "#6e6e73", margin: "0 0 10px" }}>{address}</p>
@@ -397,7 +397,7 @@ export function ListingInfoTabs({ listingId, address, latitude, longitude }: Lis
       <div style={{ display: "flex", borderBottom: "1.5px solid #e5e5ea", marginBottom: 20 }}>
         {TABS.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            style={{ flex: 1, paddingBottom: 12, fontSize: 14, fontWeight: tab === t.key ? 600 : 400, color: tab === t.key ? "#0071e3" : "#8e8e93", background: "none", border: "none", borderBottom: tab === t.key ? "2px solid #0071e3" : "2px solid transparent", cursor: "pointer", transition: "all .15s", marginBottom: -1.5 }}>
+            style={{ flex: 1, paddingBottom: 12, fontSize: 14, fontWeight: tab === t.key ? 600 : 400, color: tab === t.key ? "var(--brand-primary)" : "#8e8e93", background: "none", border: "none", borderBottom: tab === t.key ? "2px solid #0071e3" : "2px solid transparent", cursor: "pointer", transition: "all .15s", marginBottom: -1.5 }}>
             {t.label}
           </button>
         ))}

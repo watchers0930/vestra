@@ -25,7 +25,7 @@ export function ReservationForm({ reservationForm, setReservationForm, onSubmit 
   return (
     <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px", marginBottom: "24px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-        <CalendarClock size={18} strokeWidth={1.5} style={{ color: "#0071e3" }} />
+        <CalendarClock size={18} strokeWidth={1.5} style={{ color: "var(--brand-primary)" }} />
         <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", margin: 0 }}>상담 예약</h2>
       </div>
       <p style={{ fontSize: "12px", color: "#6e6e73", margin: "0 0 20px" }}>원하시는 상담 유형과 일시를 선택하고 예약하세요</p>
@@ -79,7 +79,7 @@ export function ReservationForm({ reservationForm, setReservationForm, onSubmit 
           type="submit"
           style={{
             width: "100%", padding: "13px", borderRadius: "13px", border: "none",
-            background: "linear-gradient(148deg, #0071e3, #0058b0)", color: "#fff",
+            background: "linear-gradient(148deg, var(--brand-primary), var(--brand-primary-dark))", color: "#fff",
             fontSize: "14px", fontWeight: 700, cursor: "pointer", display: "flex",
             alignItems: "center", justifyContent: "center", gap: "8px",
             boxShadow: "0 4px 16px rgba(0,113,227,0.30)",

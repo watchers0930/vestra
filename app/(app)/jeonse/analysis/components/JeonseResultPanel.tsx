@@ -217,7 +217,7 @@ export function JeonseResultPanel({
                     type="checkbox"
                     checked={checklist[doc.name] || false}
                     onChange={(e) => setChecklist({ ...checklist, [doc.name]: e.target.checked })}
-                    style={{ width: "15px", height: "15px", accentColor: "#0071e3", marginTop: "2px", flexShrink: 0 }}
+                    style={{ width: "15px", height: "15px", accentColor: "var(--brand-primary)", marginTop: "2px", flexShrink: 0 }}
                   />
                   <div>
                     <div style={{ fontSize: "13px", fontWeight: 600, color: "#1d1d1f" }}>{doc.name}</div>
@@ -283,7 +283,7 @@ export function JeonseResultPanel({
                   padding: "10px 16px",
                   borderRadius: "12px",
                   border: "none",
-                  background: "#0071e3",
+                  background: "var(--brand-primary)",
                   color: "#fff",
                   fontSize: "13px",
                   fontWeight: 600,
@@ -349,7 +349,7 @@ export function JeonseResultPanel({
                         fontSize: "11.5px", color: "#6e6e73", cursor: "pointer",
                         transition: "color 0.12s",
                       }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#0071e3"; }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--brand-primary)"; }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6e6e73"; }}
                     >
                       <Copy size={12} strokeWidth={1.5} />복사
@@ -371,7 +371,7 @@ export function JeonseResultPanel({
                         fontSize: "11.5px", color: "#6e6e73", cursor: "pointer",
                         transition: "color 0.12s",
                       }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#0071e3"; }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--brand-primary)"; }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6e6e73"; }}
                     >
                       <Download size={12} strokeWidth={1.5} />다운로드

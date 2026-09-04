@@ -66,7 +66,7 @@ export function AddressInfoCard({ address, addressInfo, addressTab, setAddressTa
                     fontSize: "10px",
                     borderRadius: "6px",
                     border: addressTab === tab.key ? "none" : "1px solid rgba(0,0,0,0.10)",
-                    background: addressTab === tab.key ? "#0071e3" : "#fff",
+                    background: addressTab === tab.key ? "var(--brand-primary)" : "#fff",
                     color: addressTab === tab.key ? "#fff" : "#6e6e73",
                     cursor: "pointer",
                     fontWeight: addressTab === tab.key ? 600 : 400,

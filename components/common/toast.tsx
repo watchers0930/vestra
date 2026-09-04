@@ -117,7 +117,7 @@ const dotColor: Record<ToastType, string> = {
   error: "#ff3b30",
   success: "#30d158",
   warning: "#ff9f0a",
-  info: "#0071e3",
+  info: "var(--brand-primary)",
 };
 
 function NotificationRow({ toast, onRemove }: { toast: Toast; onRemove: (id: number) => void }) {

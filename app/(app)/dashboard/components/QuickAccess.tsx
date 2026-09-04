@@ -3,7 +3,7 @@ import { Scale, FileText, TrendingUp, Home, Bot, Calculator } from "lucide-react
 import type { LucideIcon } from "lucide-react";
 
 const ITEMS: { href: string; Icon: LucideIcon; label: string; bg: string; color: string }[] = [
-  { href: "/rights",     Icon: Scale,       label: "권리분석",     bg: "rgba(0,113,227,0.09)",   color: "#0071e3" },
+  { href: "/rights",     Icon: Scale,       label: "권리분석",     bg: "rgba(0,113,227,0.09)",   color: "var(--brand-primary)" },
   { href: "/contract",   Icon: FileText,    label: "계약검토",     bg: "rgba(48,209,88,0.09)",   color: "#30d158" },
   { href: "/prediction", Icon: TrendingUp,  label: "시세전망",     bg: "rgba(255,159,10,0.09)",  color: "#ff9f0a" },
   { href: "/jeonse",     Icon: Home,        label: "전세보호",     bg: "rgba(255,59,48,0.07)",   color: "#ff3b30" },

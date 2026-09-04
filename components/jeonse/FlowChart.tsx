@@ -14,8 +14,8 @@ export interface FlowStepData {
 }
 
 const CIRCLE_COLOR: Record<string, { bg: string; shadow: string }> = {
-  blue:    { bg: "#0071e3", shadow: "rgba(0,113,227,0.30)" },
-  emerald: { bg: "#0071e3", shadow: "rgba(0,113,227,0.30)" },
+  blue:    { bg: "var(--brand-primary)", shadow: "rgba(0,113,227,0.30)" },
+  emerald: { bg: "var(--brand-primary)", shadow: "rgba(0,113,227,0.30)" },
   amber:   { bg: "#ff9f0a", shadow: "rgba(255,159,10,0.30)" },
   red:     { bg: "#ff3b30", shadow: "rgba(255,59,48,0.30)" },
   purple:  { bg: "#30d158", shadow: "rgba(48,209,88,0.30)" },

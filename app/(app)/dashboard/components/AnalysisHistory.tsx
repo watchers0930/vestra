@@ -29,7 +29,7 @@ const TYPE_BG: Record<string, string> = {
 };
 
 const TYPE_COLOR: Record<string, string> = {
-  rights:      "#0071e3",
+  rights:      "var(--brand-primary)",
   contract:    "#1a9e45",
   prediction:  "#b86f00",
   jeonse:      "#ff3b30",

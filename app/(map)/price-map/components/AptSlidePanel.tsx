@@ -39,7 +39,7 @@ export function AptSlidePanel({ apt, tradeType, officialPriceLabel, onClose, onR
               className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold"
               style={{
                 background: isUp ? "rgba(255,59,48,0.08)" : "rgba(0,113,227,0.08)",
-                color: isUp ? "#ff3b30" : "#0071e3",
+                color: isUp ? "#ff3b30" : "var(--brand-primary)",
               }}
             >
               {isUp ? <TrendingUp size={11} strokeWidth={2} /> : <TrendingDown size={11} strokeWidth={2} />}
@@ -84,7 +84,7 @@ export function AptSlidePanel({ apt, tradeType, officialPriceLabel, onClose, onR
           onClick={() => onRiskPopup({ apt, risk: analyzeRisk(apt) })}
           style={{
             display: "block", width: "100%", borderRadius: "10px",
-            background: "#0071e3", padding: "10px",
+            background: "var(--brand-primary)", padding: "10px",
             textAlign: "center", fontSize: "12px", fontWeight: 600,
             color: "#fff", border: "none", cursor: "pointer",
             boxShadow: "0 2px 10px rgba(0,113,227,0.30)",

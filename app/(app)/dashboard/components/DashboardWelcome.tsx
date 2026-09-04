@@ -59,7 +59,7 @@ export function DashboardWelcome({ userName }: Props) {
           <Link
             href="/rights"
             className="inline-flex items-center gap-2 rounded-2xl px-7 py-3.5 text-[14px] font-bold text-white transition-all hover:opacity-90 active:scale-95"
-            style={{ background: "linear-gradient(135deg, #0071e3, #2997ff)", boxShadow: "0 4px 24px rgba(0,113,227,0.42)" }}
+            style={{ background: "linear-gradient(135deg, var(--brand-primary), #2997ff)", boxShadow: "0 4px 24px rgba(0,113,227,0.42)" }}
           >
             <Shield size={15} strokeWidth={2.2} />
             권리분석 시작하기

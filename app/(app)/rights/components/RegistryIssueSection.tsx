@@ -283,7 +283,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "14px", marginBottom: "12px" }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "4px" }}>
-              <ReceiptText size={16} style={{ color: "#0071e3" }} />
+              <ReceiptText size={16} style={{ color: "var(--brand-primary)" }} />
               <p style={{ fontSize: "13.5px", fontWeight: 800, color: "#1d1d1f" }}>등기부 조회 및 AI 권리분석 신청</p>
             </div>
             <p style={{ fontSize: "13px", color: "#6e6e73", lineHeight: 1.55 }}>
@@ -292,15 +292,15 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
           </div>
           <div style={{ textAlign: "right", flexShrink: 0 }}>
             <p style={{ fontSize: "13px", color: "#86868b" }}>조회+AI 분석 기준가</p>
-            <p style={{ fontSize: "18px", fontWeight: 900, color: "#0071e3" }}>{REGISTRY_ISSUE_PRICE.toLocaleString()}원</p>
+            <p style={{ fontSize: "18px", fontWeight: 900, color: "var(--brand-primary)" }}>{REGISTRY_ISSUE_PRICE.toLocaleString()}원</p>
           </div>
         </div>
 
         {/* 결제 처리 중 오버레이 */}
         {(paymentPhase === "confirming" || paymentPhase === "executing") && (
           <div style={{ textAlign: "center", padding: "20px 0", marginBottom: "12px" }}>
-            <Loader2 size={28} className="animate-spin" style={{ color: "#0071e3", margin: "0 auto 10px" }} />
-            <p style={{ fontSize: "13px", fontWeight: 600, color: "#0071e3" }}>
+            <Loader2 size={28} className="animate-spin" style={{ color: "var(--brand-primary)", margin: "0 auto 10px" }} />
+            <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--brand-primary)" }}>
               {paymentPhase === "confirming" ? "결제 확인 중..." : "등기부 조회 및 AI 권리분석 중..."}
             </p>
             <p style={{ fontSize: "13px", color: "#6e6e73", marginTop: "4px" }}>잠시만 기다려주세요.</p>
@@ -337,7 +337,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
                   borderRadius: "10px",
                   border: "1px solid rgba(0,113,227,0.25)",
                   background: "rgba(0,113,227,0.07)",
-                  color: "#0071e3",
+                  color: "var(--brand-primary)",
                   fontSize: "13px",
                   fontWeight: 700,
                   cursor: isProcessing ? "not-allowed" : "pointer",
@@ -362,7 +362,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
                 집합건물 (아파트·오피스텔·빌라 등)
               </span>
               {isApartment && detectApartment(issueAddress) && (
-                <span style={{ fontSize: "13px", color: "#0071e3", background: "rgba(0,113,227,0.08)", borderRadius: "6px", padding: "1px 7px" }}>
+                <span style={{ fontSize: "13px", color: "var(--brand-primary)", background: "rgba(0,113,227,0.08)", borderRadius: "6px", padding: "1px 7px" }}>
                   자동 감지
                 </span>
               )}

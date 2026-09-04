@@ -23,13 +23,13 @@ const TaxScenarioCompare = dynamic(
 type TaxTab = "acquisition" | "holding" | "transfer" | "scenario";
 
 const TAB_COLORS: Record<TaxTab, string> = {
-  acquisition: "#0071e3",
+  acquisition: "var(--brand-primary)",
   holding: "#10b981",
   transfer: "#f59e0b",
   scenario: "#7c3aed",
 };
 
-function HouseCountButtons({ count, setCount, max = 4, color = "#0071e3" }: {
+function HouseCountButtons({ count, setCount, max = 4, color = "var(--brand-primary)" }: {
   count: number; setCount: (n: number) => void; max?: number; color?: string;
 }) {
   return (
@@ -61,7 +61,7 @@ function CheckOption({ checked, onChange, label }: { checked: boolean; onChange:
         onClick={() => onChange(!checked)}
         style={{
           width: "18px", height: "18px", borderRadius: "5px", flexShrink: 0,
-          background: checked ? "#0071e3" : "#f5f5f7",
+          background: checked ? "var(--brand-primary)" : "#f5f5f7",
           border: checked ? "none" : "1px solid rgba(0,0,0,0.20)",
           display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
         }}
@@ -154,7 +154,7 @@ export default function TaxPage() {
   ];
 
   const comparisonData = [
-    { name: "취득세", value: acqResult.totalTax || acqResult.tax, fill: "#0071e3" },
+    { name: "취득세", value: acqResult.totalTax || acqResult.tax, fill: "var(--brand-primary)" },
     { name: "보유세(연)", value: holdResult.totalTax, fill: "#10b981" },
     { name: "양도세", value: transResult.totalTax || transResult.tax || 0, fill: "#f59e0b" },
   ];
@@ -279,7 +279,7 @@ export default function TaxPage() {
               <InfoRow label="실효세율" value={`${((acqResult.totalTax || acqResult.tax) / acqPrice * 100).toFixed(2)}%`} />
             </div>
             <div style={{ marginTop: "12px", padding: "10px 14px", borderRadius: "10px", background: "rgba(0,113,227,0.06)", border: "1px solid rgba(0,113,227,0.12)" }}>
-              <p style={{ fontSize: "11.5px", color: "#0058b0", margin: 0, lineHeight: 1.6 }}>{acqResult.details}</p>
+              <p style={{ fontSize: "11.5px", color: "var(--brand-primary-dark)", margin: 0, lineHeight: 1.6 }}>{acqResult.details}</p>
             </div>
           </div>
         </div>

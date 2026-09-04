@@ -26,7 +26,7 @@ interface Props {
   officialPriceLabel?: string;
 }
 
-const RANK_COLORS = ["#0071e3", "#1a9e45", "#b86f00"];
+const RANK_COLORS = ["var(--brand-primary)", "#1a9e45", "#b86f00"];
 const PEEK_HEIGHT = 64;
 const PEEK_HEIGHT_WITH_APT = 88;
 const EXPANDED_HEIGHT_VH = 55;
@@ -75,7 +75,7 @@ export function MobileMapSheet({
         </div>
         <div className="flex items-center justify-between px-4 pb-2.5">
           <div className="flex items-center gap-2">
-            <MapPin size={14} strokeWidth={1.5} style={{ color: "#0071e3" }} />
+            <MapPin size={14} strokeWidth={1.5} style={{ color: "var(--brand-primary)" }} />
             <span className="text-[13px] font-bold text-[#1d1d1f]">{selectedGu}</span>
             <span className="text-[11px] font-medium text-[#6e6e73]">· {propertyType} · {tradeType}</span>
           </div>
@@ -94,7 +94,7 @@ export function MobileMapSheet({
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <span className="text-[12px] font-bold text-[#1d1d1f]">{formatMapPrice(selectedApt, tradeType)}</span>
               {selectedApt.change !== null && (
-                <span className="text-[10px] font-bold" style={{ color: (selectedApt.change ?? 0) >= 0 ? "#ff3b30" : "#0071e3" }}>
+                <span className="text-[10px] font-bold" style={{ color: (selectedApt.change ?? 0) >= 0 ? "#ff3b30" : "var(--brand-primary)" }}>
                   {(selectedApt.change ?? 0) >= 0 ? "+" : ""}{selectedApt.change}%
                 </span>
               )}
@@ -117,7 +117,7 @@ export function MobileMapSheet({
                     <p className="text-[11px] text-[#6e6e73] m-0 mt-0.5">{selectedApt.dong}</p>
                   </div>
                   {selectedApt.change !== null ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold flex-shrink-0" style={{ background: isUp ? "rgba(255,59,48,0.08)" : "rgba(0,113,227,0.08)", color: isUp ? "#ff3b30" : "#0071e3" }}>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold flex-shrink-0" style={{ background: isUp ? "rgba(255,59,48,0.08)" : "rgba(0,113,227,0.08)", color: isUp ? "#ff3b30" : "var(--brand-primary)" }}>
                       {isUp ? <TrendingUp size={11} strokeWidth={2} /> : <TrendingDown size={11} strokeWidth={2} />}
                       {isUp ? "+" : ""}{selectedApt.change}%
                     </span>
@@ -155,7 +155,7 @@ export function MobileMapSheet({
                   key={t}
                   onClick={() => setPropertyType(t)}
                   className="min-h-[34px] rounded-[9px] px-1.5 py-1.5 text-[10px] font-bold leading-tight"
-                  style={{ border: propertyType === t ? "1px solid rgba(0,113,227,0.28)" : "1px solid rgba(0,0,0,0.08)", background: propertyType === t ? "rgba(0,113,227,0.08)" : "#f5f5f7", color: propertyType === t ? "#0071e3" : "#3d3d3f" }}
+                  style={{ border: propertyType === t ? "1px solid rgba(0,113,227,0.28)" : "1px solid rgba(0,0,0,0.08)", background: propertyType === t ? "rgba(0,113,227,0.08)" : "#f5f5f7", color: propertyType === t ? "var(--brand-primary)" : "#3d3d3f" }}
                 >
                   {t}
                 </button>
@@ -168,7 +168,7 @@ export function MobileMapSheet({
                 className="flex w-full items-center justify-between rounded-[10px] border border-black/[0.12] bg-[#f5f5f7] px-3 py-2 text-[12.5px] font-semibold text-[#1d1d1f]"
               >
                 <span className="flex items-center gap-1.5">
-                  <MapPin size={13} strokeWidth={1.5} style={{ color: "#0071e3" }} />
+                  <MapPin size={13} strokeWidth={1.5} style={{ color: "var(--brand-primary)" }} />
                   {selectedGu}
                 </span>
                 <ChevronDown size={13} className="text-[#aeaeb2]" />
@@ -182,7 +182,7 @@ export function MobileMapSheet({
                         key={sido}
                         onClick={() => setSelectedSido(sido)}
                         className="block w-full px-2.5 py-1.5 text-left text-[12px] border-none"
-                        style={{ fontWeight: sido === selectedSido ? 700 : 400, color: sido === selectedSido ? "#0071e3" : "#3d3d3f", background: sido === selectedSido ? "rgba(0,113,227,0.08)" : "transparent" }}
+                        style={{ fontWeight: sido === selectedSido ? 700 : 400, color: sido === selectedSido ? "var(--brand-primary)" : "#3d3d3f", background: sido === selectedSido ? "rgba(0,113,227,0.08)" : "transparent" }}
                       >
                         {sido}
                       </button>
@@ -195,7 +195,7 @@ export function MobileMapSheet({
                         key={gu}
                         onClick={() => { setSelectedGu(gu); setShowGuDropdown(false); }}
                         className="block w-full px-2.5 py-1.5 text-left text-[12px] border-none"
-                        style={{ fontWeight: gu === selectedGu ? 600 : 400, color: gu === selectedGu ? "#0071e3" : "#3d3d3f", background: gu === selectedGu ? "rgba(0,113,227,0.07)" : "transparent" }}
+                        style={{ fontWeight: gu === selectedGu ? 600 : 400, color: gu === selectedGu ? "var(--brand-primary)" : "#3d3d3f", background: gu === selectedGu ? "rgba(0,113,227,0.07)" : "transparent" }}
                       >
                         {gu}
                       </button>
@@ -210,7 +210,7 @@ export function MobileMapSheet({
                   key={t}
                   onClick={() => setTradeType(t)}
                   className="border-none text-[12px] font-semibold px-3.5 py-2"
-                  style={{ background: tradeType === t ? "#0071e3" : "#fff", color: tradeType === t ? "#fff" : "#6e6e73" }}
+                  style={{ background: tradeType === t ? "var(--brand-primary)" : "#fff", color: tradeType === t ? "#fff" : "#6e6e73" }}
                 >
                   {t}
                 </button>
@@ -250,7 +250,7 @@ export function MobileMapSheet({
                       </div>
                       <div className="text-right flex-shrink-0">
                         <p className="text-[12px] font-bold text-[#1d1d1f] m-0">{formatMapPrice(apt, tradeType)}</p>
-                        <p className="text-[10px] font-bold m-0" style={{ color: isUp ? "#ff3b30" : "#0071e3" }}>
+                        <p className="text-[10px] font-bold m-0" style={{ color: isUp ? "#ff3b30" : "var(--brand-primary)" }}>
                           {apt.change !== null ? `${isUp ? "+" : ""}${apt.change}%` : "-"}
                         </p>
                       </div>

@@ -124,7 +124,7 @@ export function ReceivedApplicationsContent() {
             style={{
               padding: "7px 16px", borderRadius: 100, fontSize: 13, fontWeight: 600,
               cursor: "pointer", border: "none",
-              background: filter === value ? "#0071e3" : "#f5f5f7",
+              background: filter === value ? "var(--brand-primary)" : "#f5f5f7",
               color: filter === value ? "#fff" : "#3d3d3f",
               transition: "all 0.15s",
             }}
@@ -217,7 +217,7 @@ export function ReceivedApplicationsContent() {
                   {a.proposedDeposit && (
                     <div>
                       <p style={{ fontSize: 10, color: "#aeaeb2", marginBottom: 2 }}>제안 금액</p>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: "#0071e3" }}>{formatWon(a.proposedDeposit)}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "var(--brand-primary)" }}>{formatWon(a.proposedDeposit)}</p>
                     </div>
                   )}
                   {a.memo && (
@@ -277,7 +277,7 @@ export function ReceivedApplicationsContent() {
                           disabled={processingId === a.id}
                           style={{
                             padding: "7px 14px", borderRadius: 10, border: "none",
-                            background: "#0071e3", fontSize: 12, fontWeight: 600,
+                            background: "var(--brand-primary)", fontSize: 12, fontWeight: 600,
                             color: "#fff", cursor: "pointer",
                           }}
                         >

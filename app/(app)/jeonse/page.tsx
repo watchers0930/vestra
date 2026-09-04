@@ -97,7 +97,7 @@ export default function JeonseHubPage() {
                 display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
               }}
             >
-              <Shield size={22} style={{ color: "#0071e3" }} strokeWidth={1.5} />
+              <Shield size={22} style={{ color: "var(--brand-primary)" }} strokeWidth={1.5} />
             </div>
             <div>
               <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", marginBottom: "3px" }}>
@@ -108,7 +108,7 @@ export default function JeonseHubPage() {
               </p>
             </div>
           </div>
-          <ChevronRight size={20} style={{ color: "#0071e3", flexShrink: 0 }} strokeWidth={2} />
+          <ChevronRight size={20} style={{ color: "var(--brand-primary)", flexShrink: 0 }} strokeWidth={2} />
         </div>
       </Link>
 

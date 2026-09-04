@@ -145,7 +145,7 @@ const CHECKLIST_DATA: Record<DealType, Partial<Record<Stage, CheckItem[]>>> = {
 /* ── 단계별 색상 ── */
 
 const STAGE_META: Record<Stage, { color: string; bg: string; label: string }> = {
-  "계약 전":  { color: "#0071e3", bg: "rgba(0,113,227,0.10)",  label: "계약 전" },
+  "계약 전":  { color: "var(--brand-primary)", bg: "rgba(0,113,227,0.10)",  label: "계약 전" },
   "계약 중":  { color: "#b86f00", bg: "rgba(255,159,10,0.10)", label: "계약 중" },
   "계약 후":  { color: "#1a9e45", bg: "rgba(48,209,88,0.10)",  label: "계약 후" },
   "입주 전":  { color: "#6e3de8", bg: "rgba(110,61,232,0.10)", label: "입주 전" },
@@ -153,7 +153,7 @@ const STAGE_META: Record<Stage, { color: string; bg: string; label: string }> = 
 };
 
 const DEAL_META: Record<DealType, { color: string; bg: string; icon: LucideIcon }> = {
-  전세: { color: "#0071e3", bg: "rgba(0,113,227,0.10)", icon: Home },
+  전세: { color: "var(--brand-primary)", bg: "rgba(0,113,227,0.10)", icon: Home },
   매매: { color: "#1a9e45", bg: "rgba(48,209,88,0.10)", icon: Key },
   월세: { color: "#b86f00", bg: "rgba(255,159,10,0.10)", icon: FileText },
 };
@@ -283,11 +283,11 @@ export default function ChecklistPage() {
           style={{
             display: "inline-flex", alignItems: "center", gap: "8px",
             padding: "11px 28px", borderRadius: "12px", border: "none", cursor: "pointer",
-            background: "#0071e3", color: "#fff", fontSize: "13.5px", fontWeight: 600,
+            background: "var(--brand-primary)", color: "#fff", fontSize: "13.5px", fontWeight: 600,
             boxShadow: "0 2px 12px rgba(0,113,227,0.30)", transition: "all 0.15s",
           }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#0077ed"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 20px rgba(0,113,227,0.40)"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#0071e3"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 2px 12px rgba(0,113,227,0.30)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "var(--brand-primary)"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 2px 12px rgba(0,113,227,0.30)"; }}
         >
           <ClipboardCheck size={15} strokeWidth={2} />
           체크리스트 생성
@@ -345,11 +345,11 @@ export default function ChecklistPage() {
                         width: `${progress}%`,
                         background: progress === 100
                           ? "linear-gradient(90deg, #1a9e45, #30d158)"
-                          : "linear-gradient(90deg, #0071e3, #2997ff)",
+                          : "linear-gradient(90deg, var(--brand-primary), #2997ff)",
                       }}
                     />
                   </div>
-                  <span style={{ fontSize: "20px", fontWeight: 700, color: progress === 100 ? "#1a9e45" : "#0071e3", minWidth: "48px", textAlign: "right" as const }}>
+                  <span style={{ fontSize: "20px", fontWeight: 700, color: progress === 100 ? "#1a9e45" : "var(--brand-primary)", minWidth: "48px", textAlign: "right" as const }}>
                     {progress}%
                   </span>
                 </div>

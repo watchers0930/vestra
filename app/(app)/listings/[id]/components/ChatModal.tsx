@@ -63,7 +63,7 @@ export function ChatModal({ listingId, partnerName, address, onClose }: ChatModa
       >
         {/* 헤더 */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", borderBottom: "1px solid #f2f2f7", flexShrink: 0, background: "#fff" }}>
-          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#0071e3", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--brand-primary)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <MessageCircle size={16} strokeWidth={2} color="#fff" />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -151,12 +151,12 @@ function ChatBody({ applicationId, myId }: { applicationId: string; myId: string
                 )}
                 <div style={{ display: "flex", flexDirection: isMine ? "row-reverse" : "row", alignItems: "flex-end", gap: 5, marginBottom: 6 }}>
                   {!isMine && (
-                    <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#0071e3", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--brand-primary)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
                       {(msg.sender.name ?? "?")[0]}
                     </div>
                   )}
                   <div style={{ maxWidth: "75%", display: "flex", flexDirection: "column", alignItems: isMine ? "flex-end" : "flex-start", gap: 2 }}>
-                    <div style={{ padding: "8px 12px", borderRadius: isMine ? "16px 16px 4px 16px" : "16px 16px 16px 4px", background: isMine ? "#0071e3" : "#f2f2f7", color: isMine ? "#fff" : "#1d1d1f", fontSize: 13, lineHeight: 1.5, wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
+                    <div style={{ padding: "8px 12px", borderRadius: isMine ? "16px 16px 4px 16px" : "16px 16px 16px 4px", background: isMine ? "var(--brand-primary)" : "#f2f2f7", color: isMine ? "#fff" : "#1d1d1f", fontSize: 13, lineHeight: 1.5, wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
                       {msg.content}
                     </div>
                     <span style={{ fontSize: 10, color: "#c7c7cc" }}>{formatTime(msg.createdAt)}</span>
@@ -191,7 +191,7 @@ function ChatBody({ applicationId, myId }: { applicationId: string; myId: string
         <button
           onClick={handleSend}
           disabled={sending || !input.trim()}
-          style={{ width: 36, height: 36, borderRadius: "50%", background: sending || !input.trim() ? "#e5e5ea" : "#0071e3", border: "none", cursor: sending || !input.trim() ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0, transition: "background 0.15s" }}
+          style={{ width: 36, height: 36, borderRadius: "50%", background: sending || !input.trim() ? "#e5e5ea" : "var(--brand-primary)", border: "none", cursor: sending || !input.trim() ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0, transition: "background 0.15s" }}
         >
           {sending
             ? <Loader2 size={14} strokeWidth={2} style={{ animation: "spin 1s linear infinite" }} />

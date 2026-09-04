@@ -91,14 +91,14 @@ export default function JeonseRightPage() {
               display: "inline-flex", alignItems: "center", gap: "7px",
               padding: "11px 18px",
               borderRadius: "12px",
-              background: "#0071e3",
+              background: "var(--brand-primary)",
               color: "#fff",
               fontSize: "14px", fontWeight: 600,
               textDecoration: "none",
               transition: "background 0.15s",
             }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#0077ed"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#0071e3"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "var(--brand-primary)"; }}
           >
             <ExternalLink size={14} strokeWidth={2} />
             등기온 전자등기 신청

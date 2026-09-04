@@ -97,7 +97,7 @@ export function RiskPopup({ popup, selectedGu, onClose }: Props) {
           </p>
           <a
             href={`/rights?address=${encodeURIComponent(`서울특별시 ${selectedGu} ${popup.apt.dong} ${popup.apt.name}`)}`}
-            style={{ display: "block", width: "100%", borderRadius: "12px", border: "1px solid rgba(0,113,227,0.20)", background: "rgba(0,113,227,0.05)", padding: "10px", textAlign: "center" as const, fontSize: "12.5px", fontWeight: 600, color: "#0071e3", textDecoration: "none", transition: "all 0.15s", boxSizing: "border-box" as const }}
+            style={{ display: "block", width: "100%", borderRadius: "12px", border: "1px solid rgba(0,113,227,0.20)", background: "rgba(0,113,227,0.05)", padding: "10px", textAlign: "center" as const, fontSize: "12.5px", fontWeight: 600, color: "var(--brand-primary)", textDecoration: "none", transition: "all 0.15s", boxSizing: "border-box" as const }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(0,113,227,0.10)"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(0,113,227,0.05)"; }}
           >

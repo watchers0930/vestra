@@ -31,7 +31,7 @@ const ITEMS = [
   },
   {
     icon: ShieldCheck,
-    color: "#0071e3",
+    color: "var(--brand-primary)",
     bg: "rgba(0,113,227,0.05)",
     border: "rgba(0,113,227,0.16)",
     title: "전세보증보험 가입",

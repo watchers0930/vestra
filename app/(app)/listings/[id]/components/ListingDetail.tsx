@@ -288,12 +288,12 @@ export function ListingDetail({ listing, onReload }: Props) {
                   </div>
                 ) : (
                   <button onClick={() => setShowModal(true)}
-                    style={{ width: "100%", padding: "15px 0", borderRadius: 14, background: "#0071e3", color: "#fff", fontSize: 15, fontWeight: 700, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 4px 18px rgba(0,113,227,0.28)", transition: "all 0.15s" }}>
+                    style={{ width: "100%", padding: "15px 0", borderRadius: 14, background: "var(--brand-primary)", color: "#fff", fontSize: 15, fontWeight: 700, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 4px 18px rgba(0,113,227,0.28)", transition: "all 0.15s" }}>
                     <FileText size={16} strokeWidth={2} />계약 의향서 보내기
                   </button>
                 )}
                 <button onClick={() => setShowChatModal(true)}
-                  style={{ width: "100%", padding: "14px 0", borderRadius: 14, background: "#fff", color: "#0071e3", fontSize: 14, fontWeight: 600, border: "1.5px solid #0071e3", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, transition: "all 0.15s" }}>
+                  style={{ width: "100%", padding: "14px 0", borderRadius: 14, background: "#fff", color: "var(--brand-primary)", fontSize: 14, fontWeight: 600, border: "1.5px solid #0071e3", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, transition: "all 0.15s" }}>
                   <MessageCircle size={15} strokeWidth={2} />메신저 보내기
                 </button>
               </div>

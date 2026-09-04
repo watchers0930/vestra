@@ -9,7 +9,7 @@ import type { AnalysisResult, FacilityGroup, FacilityItem } from "../hooks/useNe
 import AddressAutocomplete, { type AddressResult } from "@/components/common/AddressAutocomplete";
 
 const CATEGORY_META = [
-  { key: "transport"   as const, label: "교통", icon: Train,         color: "#0071e3", weight: "25%" },
+  { key: "transport"   as const, label: "교통", icon: Train,         color: "var(--brand-primary)", weight: "25%" },
   { key: "education"   as const, label: "교육", icon: GraduationCap, color: "#6e3de8", weight: "20%" },
   { key: "medical"     as const, label: "의료", icon: Heart,         color: "#ff3b30", weight: "20%" },
   { key: "convenience" as const, label: "편의", icon: ShoppingCart,  color: "#1a9e45", weight: "15%" },
@@ -18,7 +18,7 @@ const CATEGORY_META = [
 
 function getScoreColor(score: number) {
   if (score >= 80) return "#1a9e45";
-  if (score >= 60) return "#0071e3";
+  if (score >= 60) return "var(--brand-primary)";
   if (score >= 40) return "#b86f00";
   return "#ff3b30";
 }
@@ -98,7 +98,7 @@ export function NeighborhoodPanel({
             disabled={loading || !address.trim()}
             className="flex-shrink-0 flex items-center rounded-[10px] border-none px-4 py-[9px] text-[12.5px] font-semibold text-white transition-all duration-150"
             style={{
-              background: loading || !address.trim() ? "rgba(0,113,227,0.35)" : "#0071e3",
+              background: loading || !address.trim() ? "rgba(0,113,227,0.35)" : "var(--brand-primary)",
               cursor: loading || !address.trim() ? "not-allowed" : "pointer",
             }}
           >

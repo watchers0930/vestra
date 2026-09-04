@@ -59,8 +59,8 @@ export function TransactionTrendChart({ trendData, totalTransactions, selectedAp
           <AreaChart data={trendData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
             <defs>
               <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#0071e3" stopOpacity={0.12} />
-                <stop offset="95%" stopColor="#0071e3" stopOpacity={0.01} />
+                <stop offset="5%" stopColor="var(--brand-primary)" stopOpacity={0.12} />
+                <stop offset="95%" stopColor="var(--brand-primary)" stopOpacity={0.01} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -83,14 +83,14 @@ export function TransactionTrendChart({ trendData, totalTransactions, selectedAp
             />
             <Area type="monotone" dataKey="maxPrice" stroke="none" fill="#e5e5e7" fillOpacity={0.3} name="최고가" />
             <Area type="monotone" dataKey="minPrice" stroke="none" fill="#ffffff" fillOpacity={1} name="최저가" />
-            <Line type="monotone" dataKey="avgPrice" stroke="#0071e3" strokeWidth={2.5} dot={{ r: 3, fill: "#0071e3", strokeWidth: 0 }} activeDot={{ r: 5, fill: "#0071e3" }} name="평균가" />
+            <Line type="monotone" dataKey="avgPrice" stroke="var(--brand-primary)" strokeWidth={2.5} dot={{ r: 3, fill: "var(--brand-primary)", strokeWidth: 0 }} activeDot={{ r: 5, fill: "var(--brand-primary)" }} name="평균가" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
       <div style={{ marginTop: "14px", display: "flex", flexWrap: "wrap", gap: "16px", fontSize: "11px", color: "#6e6e73" }}>
         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ display: "inline-block", width: "14px", height: "2px", background: "#0071e3", borderRadius: "2px" }} />
+          <span style={{ display: "inline-block", width: "14px", height: "2px", background: "var(--brand-primary)", borderRadius: "2px" }} />
           평균 거래가
         </span>
         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>

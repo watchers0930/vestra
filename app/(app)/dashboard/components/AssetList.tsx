@@ -49,7 +49,7 @@ function getRiskColor(risk: number): string {
 }
 
 const BADGE_STYLE: Record<string, { color: string; bg: string }> = {
-  apt:   { color: "#0071e3", bg: "rgba(0,113,227,0.09)" },
+  apt:   { color: "var(--brand-primary)", bg: "rgba(0,113,227,0.09)" },
   villa: { color: "#1a9e45", bg: "rgba(48,209,88,0.09)" },
   ofc:   { color: "#b86f00", bg: "rgba(255,159,10,0.09)" },
   other: { color: "#6e6e73", bg: "rgba(0,0,0,0.06)" },
@@ -175,7 +175,7 @@ export function AssetList({
                     width: 32,
                     height: 18,
                     borderRadius: 9,
-                    background: isMonitored ? "#0071e3" : "rgba(0,0,0,0.12)",
+                    background: isMonitored ? "var(--brand-primary)" : "rgba(0,0,0,0.12)",
                     border: "none",
                     cursor: isLoading ? "not-allowed" : "pointer",
                     transition: "background 0.2s",

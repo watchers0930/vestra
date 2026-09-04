@@ -21,7 +21,7 @@ interface Props {
   selectAndMoveToApt: (apt: AptData) => void;
 }
 
-const RANK_COLORS = ["#0071e3", "#1a9e45", "#b86f00"];
+const RANK_COLORS = ["var(--brand-primary)", "#1a9e45", "#b86f00"];
 const PROPERTY_TYPES: PropertyType[] = ["아파트", "연립/빌라/다세대"];
 const TRADE_TYPES: PriceMapTradeType[] = ["매매", "전세"];
 
@@ -69,7 +69,7 @@ export function LeftPanel({
             <button
               key={t}
               onClick={() => setPropertyType(t)}
-              style={{ minHeight: "34px", borderRadius: "9px", border: propertyType === t ? "1px solid rgba(0,113,227,0.28)" : "1px solid rgba(0,0,0,0.08)", background: propertyType === t ? "rgba(0,113,227,0.08)" : "#f5f5f7", color: propertyType === t ? "#0071e3" : "#3d3d3f", fontSize: "10.5px", fontWeight: 700, lineHeight: 1.2, cursor: "pointer", padding: "6px 4px" }}
+              style={{ minHeight: "34px", borderRadius: "9px", border: propertyType === t ? "1px solid rgba(0,113,227,0.28)" : "1px solid rgba(0,0,0,0.08)", background: propertyType === t ? "rgba(0,113,227,0.08)" : "#f5f5f7", color: propertyType === t ? "var(--brand-primary)" : "#3d3d3f", fontSize: "10.5px", fontWeight: 700, lineHeight: 1.2, cursor: "pointer", padding: "6px 4px" }}
             >
               {t}
             </button>
@@ -83,7 +83,7 @@ export function LeftPanel({
               style={{ display: "flex", width: "100%", alignItems: "center", justifyContent: "space-between", borderRadius: "10px", border: "1px solid rgba(0,0,0,0.12)", background: "#f5f5f7", padding: "8px 12px", fontSize: "12.5px", fontWeight: 600, color: "#1d1d1f", cursor: "pointer" }}
             >
               <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <MapPin size={13} strokeWidth={1.5} style={{ color: "#0071e3" }} />
+                <MapPin size={13} strokeWidth={1.5} style={{ color: "var(--brand-primary)" }} />
                 {selectedGu}
               </span>
               <ChevronDown size={13} strokeWidth={1.5} style={{ color: "#aeaeb2" }} />
@@ -96,7 +96,7 @@ export function LeftPanel({
                     <button
                       key={sido}
                       onClick={() => setSelectedSido(sido)}
-                      style={{ display: "block", width: "100%", padding: "7px 10px", textAlign: "left" as const, fontSize: "12px", fontWeight: sido === selectedSido ? 700 : 400, color: sido === selectedSido ? "#0071e3" : "#3d3d3f", background: sido === selectedSido ? "rgba(0,113,227,0.08)" : "transparent", border: "none", cursor: "pointer" }}
+                      style={{ display: "block", width: "100%", padding: "7px 10px", textAlign: "left" as const, fontSize: "12px", fontWeight: sido === selectedSido ? 700 : 400, color: sido === selectedSido ? "var(--brand-primary)" : "#3d3d3f", background: sido === selectedSido ? "rgba(0,113,227,0.08)" : "transparent", border: "none", cursor: "pointer" }}
                     >
                       {sido}
                     </button>
@@ -108,7 +108,7 @@ export function LeftPanel({
                     <button
                       key={gu}
                       onClick={() => { setSelectedGu(gu); setShowGuDropdown(false); }}
-                      style={{ display: "block", width: "100%", padding: "7px 10px", textAlign: "left" as const, fontSize: "12px", fontWeight: gu === selectedGu ? 600 : 400, color: gu === selectedGu ? "#0071e3" : "#3d3d3f", background: gu === selectedGu ? "rgba(0,113,227,0.07)" : "transparent", border: "none", cursor: "pointer" }}
+                      style={{ display: "block", width: "100%", padding: "7px 10px", textAlign: "left" as const, fontSize: "12px", fontWeight: gu === selectedGu ? 600 : 400, color: gu === selectedGu ? "var(--brand-primary)" : "#3d3d3f", background: gu === selectedGu ? "rgba(0,113,227,0.07)" : "transparent", border: "none", cursor: "pointer" }}
                     >
                       {gu}
                     </button>
@@ -124,7 +124,7 @@ export function LeftPanel({
               <button
                 key={t}
                 onClick={() => setTradeType(t)}
-                style={{ padding: "8px 14px", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", transition: "all 0.15s", background: tradeType === t ? "#0071e3" : "#fff", color: tradeType === t ? "#fff" : "#6e6e73" }}
+                style={{ padding: "8px 14px", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", transition: "all 0.15s", background: tradeType === t ? "var(--brand-primary)" : "#fff", color: tradeType === t ? "#fff" : "#6e6e73" }}
               >
                 {t}
               </button>
@@ -171,7 +171,7 @@ export function LeftPanel({
                     </div>
                     <div style={{ textAlign: "right" as const, flexShrink: 0 }}>
                       <p style={{ fontSize: "12px", fontWeight: 700, color: "#1d1d1f", margin: 0 }}>{formatMapPrice(apt, tradeType)}</p>
-                      <p style={{ fontSize: "10.5px", fontWeight: 700, color: isUp ? "#ff3b30" : "#0071e3", margin: 0 }}>
+                      <p style={{ fontSize: "10.5px", fontWeight: 700, color: isUp ? "#ff3b30" : "var(--brand-primary)", margin: 0 }}>
                         {apt.change !== null ? `${isUp ? "+" : ""}${apt.change}%` : "-"}
                       </p>
                     </div>

@@ -41,7 +41,7 @@ export default function GovernmentLink({
           display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
         }}
       >
-        <ExternalLink size={15} strokeWidth={1.5} style={{ color: "#0071e3" }} />
+        <ExternalLink size={15} strokeWidth={1.5} style={{ color: "var(--brand-primary)" }} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: "14px", fontWeight: 600, color: "#1d1d1f" }}>{name}</div>

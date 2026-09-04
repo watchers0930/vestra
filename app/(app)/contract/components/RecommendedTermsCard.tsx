@@ -9,13 +9,13 @@ import type { RecommendedTermsResult } from "../types";
 const PRIORITY_CONFIG = {
   critical: { label: "필수", color: "#ff3b30", bg: "rgba(255,59,48,0.08)", border: "rgba(255,59,48,0.18)", icon: AlertTriangle },
   high:     { label: "권장", color: "#ff9500", bg: "rgba(255,149,0,0.08)", border: "rgba(255,149,0,0.18)", icon: AlertCircle },
-  medium:   { label: "선택", color: "#0071e3", bg: "rgba(0,113,227,0.08)", border: "rgba(0,113,227,0.18)", icon: Info },
+  medium:   { label: "선택", color: "var(--brand-primary)", bg: "rgba(0,113,227,0.08)", border: "rgba(0,113,227,0.18)", icon: Info },
 } as const;
 
 const CATEGORY_COLORS: Record<string, string> = {
   "보증금": "#ff3b30",
   "등기": "#af52de",
-  "임차인": "#0071e3",
+  "임차인": "var(--brand-primary)",
   "임대인": "#ff9500",
   "기타": "#6e6e73",
 };

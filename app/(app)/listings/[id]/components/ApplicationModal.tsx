@@ -129,7 +129,7 @@ export function ApplicationModal({ listingId, deposit, listingType, onClose, onS
             <button
               onClick={onClose}
               style={{
-                padding: "10px 24px", borderRadius: 12, background: "#0071e3",
+                padding: "10px 24px", borderRadius: 12, background: "var(--brand-primary)",
                 color: "#fff", fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer",
               }}
             >
@@ -164,7 +164,7 @@ export function ApplicationModal({ listingId, deposit, listingType, onClose, onS
               {/* 입주 희망일 */}
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#3d3d3f", marginBottom: 6 }}>
-                  입주 희망일 <span style={{ color: "#0071e3" }}>*</span>
+                  입주 희망일 <span style={{ color: "var(--brand-primary)" }}>*</span>
                 </label>
                 <input
                   type="date"
@@ -204,7 +204,7 @@ export function ApplicationModal({ listingId, deposit, listingType, onClose, onS
                   onChange={(e) => setProposedDeposit(formatCommas(e.target.value))}
                 />
                 {proposedDeposit && (
-                  <p style={{ fontSize: 11, color: "#0071e3", marginTop: 4 }}>{toKorean(proposedDeposit)}</p>
+                  <p style={{ fontSize: 11, color: "var(--brand-primary)", marginTop: 4 }}>{toKorean(proposedDeposit)}</p>
                 )}
               </div>
 
@@ -230,7 +230,7 @@ export function ApplicationModal({ listingId, deposit, listingType, onClose, onS
                         style={{
                           padding: "6px 10px", borderRadius: 8, fontSize: 12, fontWeight: 600,
                           border: visitHour === h ? "none" : "1px solid #d2d2d7",
-                          background: visitHour === h ? "#0071e3" : "#fff",
+                          background: visitHour === h ? "var(--brand-primary)" : "#fff",
                           color: visitHour === h ? "#fff" : "#3d3d3f",
                           cursor: "pointer", transition: "all 0.12s",
                         }}
@@ -278,7 +278,7 @@ export function ApplicationModal({ listingId, deposit, listingType, onClose, onS
                   disabled={submitting || !moveInDate}
                   style={{
                     flex: 2, padding: "12px 0", borderRadius: 12, border: "none",
-                    background: submitting || !moveInDate ? "#aeaeb2" : "#0071e3",
+                    background: submitting || !moveInDate ? "#aeaeb2" : "var(--brand-primary)",
                     fontSize: 14, fontWeight: 600, color: "#fff", cursor: submitting ? "not-allowed" : "pointer",
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                     transition: "background 0.15s",

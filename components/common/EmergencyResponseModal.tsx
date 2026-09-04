@@ -252,7 +252,7 @@ export function EmergencyResponseModal({
               style={{
                 height: "100%",
                 borderRadius: "2px",
-                background: checkedCount === totalCount ? "#30d158" : "#0071e3",
+                background: checkedCount === totalCount ? "#30d158" : "var(--brand-primary)",
                 width: `${totalCount > 0 ? (checkedCount / totalCount) * 100 : 0}%`,
                 transition: "width 0.3s",
               }}
@@ -343,7 +343,7 @@ export function EmergencyResponseModal({
               background: "rgba(0,113,227,0.05)",
               fontSize: "12.5px",
               fontWeight: 600,
-              color: "#0071e3",
+              color: "var(--brand-primary)",
               textDecoration: "none",
               cursor: "pointer",
               transition: "background 0.15s",

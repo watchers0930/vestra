@@ -282,7 +282,7 @@ export function ListingsMapView({ onClose, canRegister, appSidebar = true, initi
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {canRegister && (
             <Link href="/listings/new" style={{ textDecoration: "none" }}>
-              <button style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 13px", borderRadius: 10, background: "#0071e3", color: "#fff", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer" }}>
+              <button style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 13px", borderRadius: 10, background: "var(--brand-primary)", color: "#fff", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer" }}>
                 <Plus size={13} strokeWidth={2} />매물 등록
               </button>
             </Link>

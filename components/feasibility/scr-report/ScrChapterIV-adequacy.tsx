@@ -134,13 +134,13 @@ export function AdequacyOpinionSection({ data }: { data: ScrAdequacyOpinion }) {
                 />
                 <ReferenceLine
                   x={data.plannedPrice[0].pricePerPyeong}
-                  stroke="#0071e3"
+                  stroke="var(--brand-primary)"
                   strokeDasharray="4 4"
                   strokeWidth={1.5}
                 />
                 <Bar dataKey="price" radius={[0, 4, 4, 0]}>
                   {[data.plannedPrice[0], ...data.comparison].map((_, i) => (
-                    <Cell key={i} fill={i === 0 ? "#0071e3" : "#6e6e73"} />
+                    <Cell key={i} fill={i === 0 ? "var(--brand-primary)" : "#6e6e73"} />
                   ))}
                 </Bar>
               </BarChart>

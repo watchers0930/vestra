@@ -74,7 +74,7 @@ export function MonitoringRegisterButton({ address }: Props) {
           background: "rgba(0,113,227,0.04)",
           fontSize: "13px",
           fontWeight: 500,
-          color: "#0071e3",
+          color: "var(--brand-primary)",
         }}
       >
         <Eye size={15} strokeWidth={1.5} />

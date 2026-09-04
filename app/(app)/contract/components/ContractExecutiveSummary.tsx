@@ -11,7 +11,7 @@ interface Props {
 const SEVERITY_STYLE: Record<ContractReviewIssue["severity"], { label: string; color: string; bg: string; border: string }> = {
   critical: { label: "긴급", color: "#ff3b30", bg: "rgba(255,59,48,0.07)", border: "rgba(255,59,48,0.22)" },
   high: { label: "중요", color: "#ff9500", bg: "rgba(255,149,0,0.07)", border: "rgba(255,149,0,0.22)" },
-  warning: { label: "확인", color: "#0071e3", bg: "rgba(0,113,227,0.06)", border: "rgba(0,113,227,0.18)" },
+  warning: { label: "확인", color: "var(--brand-primary)", bg: "rgba(0,113,227,0.06)", border: "rgba(0,113,227,0.18)" },
   info: { label: "참고", color: "#6e6e73", bg: "rgba(0,0,0,0.04)", border: "rgba(0,0,0,0.10)" },
 };
 
@@ -58,7 +58,7 @@ export function ContractExecutiveSummary({ extractedInfo, reviewIssues = [] }: P
         }}
       >
         <h2 style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "16px", fontWeight: 800, color: "#1d1d1f", marginBottom: "16px" }}>
-          <FileCheck2 size={18} strokeWidth={1.7} style={{ color: "#0071e3" }} />
+          <FileCheck2 size={18} strokeWidth={1.7} style={{ color: "var(--brand-primary)" }} />
           계약 핵심정보
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "10px" }}>

@@ -337,6 +337,17 @@ body {
   }
 }
 
+/* 브랜드 색 변수 — 인라인 style에서 var(--brand-primary)로 참조한다.
+ * 기본값은 애플블루(개인회원 등 전역 불변), .realtor-theme 안에서만 인디고로 override. */
+:root {
+  --brand-primary: #0071e3;
+  --brand-primary-dark: #0058b0;
+}
+.realtor-theme {
+  --brand-primary: #2e4bd8;
+  --brand-primary-dark: #2641c0;
+}
+
 /* 부동산 콘텐츠 컨테이너를 헤더 GNB 폭(max-w-1200 · 좌우 32px)에 정렬한다.
  * 각 페이지가 자체 max-width/여백(max-w-7xl·좁은 폼·풀폭)을 가져 nav와 어긋나므로,
  * main 직속 자식의 자체 컨테이너 스타일을 무력화해 main 폭을 그대로 따르게 한다. */

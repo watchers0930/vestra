@@ -112,7 +112,7 @@ export function SnapshotChainView({ snapshots }: Props) {
                         className="text-[12px] font-bold px-2 py-0.5 rounded"
                         style={{
                           background: isFirst ? "rgba(0,113,227,0.1)" : "rgba(0,0,0,0.05)",
-                          color: isFirst ? "#0071e3" : "#6e6e73",
+                          color: isFirst ? "var(--brand-primary)" : "#6e6e73",
                         }}
                       >
                         #{snap.sequenceNo}

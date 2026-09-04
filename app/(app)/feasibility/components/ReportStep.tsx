@@ -63,7 +63,7 @@ export function ReportStep({ vScore, chapters, verifications, rationalityItems, 
           disabled={loading}
           style={{
             flex: 1, padding: "14px", borderRadius: "14px", border: "none",
-            background: loading ? "#e5e5e7" : "linear-gradient(148deg, #0071e3, #0058b0)",
+            background: loading ? "#e5e5e7" : "linear-gradient(148deg, var(--brand-primary), var(--brand-primary-dark))",
             color: loading ? "#aeaeb2" : "#fff",
             fontSize: "14px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",

@@ -119,7 +119,7 @@ export function MyApplicationsContent() {
             <button
               style={{
                 marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6,
-                padding: "9px 18px", borderRadius: 12, background: "#0071e3",
+                padding: "9px 18px", borderRadius: 12, background: "var(--brand-primary)",
                 color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer",
               }}
             >
@@ -199,7 +199,7 @@ export function MyApplicationsContent() {
                   {a.proposedDeposit && (
                     <div>
                       <p style={{ fontSize: 10, color: "#aeaeb2", marginBottom: 2 }}>제안 금액</p>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: "#0071e3" }}>{formatWon(a.proposedDeposit)}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "var(--brand-primary)" }}>{formatWon(a.proposedDeposit)}</p>
                     </div>
                   )}
                   {a.memo && (

@@ -48,7 +48,7 @@ export function MonitoringPropertyList({
             className="rounded-full px-3 py-1.5 text-[12px] font-medium transition-all duration-150"
             style={{
               background: statusFilter === f.value ? "rgba(0,113,227,0.1)" : "transparent",
-              color: statusFilter === f.value ? "#0071e3" : "#6e6e73",
+              color: statusFilter === f.value ? "var(--brand-primary)" : "#6e6e73",
               border: statusFilter === f.value ? "1px solid rgba(0,113,227,0.2)" : "1px solid transparent",
             }}
           >

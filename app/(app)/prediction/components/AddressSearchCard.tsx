@@ -59,7 +59,7 @@ export function AddressSearchCard({ roadResult, loading, canSearch, openDaumPost
             padding: "12px 22px",
             borderRadius: "12px",
             border: "none",
-            background: (roadResult && (!canSearch || loading)) ? "rgba(0,0,0,0.07)" : "#0071e3",
+            background: (roadResult && (!canSearch || loading)) ? "rgba(0,0,0,0.07)" : "var(--brand-primary)",
             color: (roadResult && (!canSearch || loading)) ? "#aeaeb2" : "#fff",
             fontSize: "14px",
             fontWeight: 700,

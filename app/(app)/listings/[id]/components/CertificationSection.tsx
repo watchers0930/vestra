@@ -183,7 +183,7 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
               </div>
               {doc.url && (
                 <a href={doc.url} target="_blank" rel="noopener noreferrer"
-                  style={{ color: "#0071e3", display: "flex" }}
+                  style={{ color: "var(--brand-primary)", display: "flex" }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <ExternalLink size={13} strokeWidth={2} />
@@ -198,7 +198,7 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
                     disabled={uploading}
                     style={{
                       padding: "4px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600,
-                      background: "#0071e3", color: "#fff", border: "none",
+                      background: "var(--brand-primary)", color: "#fff", border: "none",
                       cursor: uploading ? "not-allowed" : "pointer",
                       display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
                     }}
@@ -264,7 +264,7 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
       {isOwner && isJeonse && (
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid #f2f2f7" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <Activity size={15} strokeWidth={2} color="#0071e3" />
+            <Activity size={15} strokeWidth={2} color="var(--brand-primary)" />
             <p style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f", margin: 0 }}>전세 안전지표</p>
           </div>
           <p style={{ fontSize: 11, color: "#6e6e73", lineHeight: 1.5, margin: "0 0 12px" }}>
@@ -317,7 +317,7 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
             disabled={analyzing}
             style={{
               width: "100%", padding: "11px 0", borderRadius: 12,
-              background: analyzing ? "#d2d2d7" : "#0071e3",
+              background: analyzing ? "#d2d2d7" : "var(--brand-primary)",
               color: "#fff", fontSize: 13, fontWeight: 700, border: "none",
               cursor: analyzing ? "not-allowed" : "pointer",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 7,

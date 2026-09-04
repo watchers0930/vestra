@@ -50,7 +50,7 @@ export function InviteSection({ clientId, status }: { clientId: string; status: 
           <h2 className="text-sm font-semibold text-[#1d1d1f]">VESTRA 초대</h2>
           {status === "invited" && (
             <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-700"
-              style={{ background: "rgba(0,113,227,0.07)", color: "#0071e3", border: "1px solid rgba(0,113,227,0.18)" }}>
+              style={{ background: "rgba(0,113,227,0.07)", color: "var(--brand-primary)", border: "1px solid rgba(0,113,227,0.18)" }}>
               초대중
             </span>
           )}
@@ -68,7 +68,7 @@ export function InviteSection({ clientId, status }: { clientId: string; status: 
               <button
                 onClick={handleCopy}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold shrink-0 transition-colors"
-                style={{ background: copied ? "rgba(52,199,89,0.12)" : "#0071e3", color: copied ? "#1a7f37" : "#fff" }}
+                style={{ background: copied ? "rgba(52,199,89,0.12)" : "var(--brand-primary)", color: copied ? "#1a7f37" : "#fff" }}
               >
                 {copied ? <Check size={12} /> : <Copy size={12} />}
                 {copied ? "복사됨" : "복사"}
@@ -81,7 +81,7 @@ export function InviteSection({ clientId, status }: { clientId: string; status: 
             onClick={handleInvite}
             disabled={inviting}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold text-white transition-opacity"
-            style={{ background: "#0071e3", opacity: inviting ? 0.6 : 1, cursor: inviting ? "not-allowed" : "pointer" }}
+            style={{ background: "var(--brand-primary)", opacity: inviting ? 0.6 : 1, cursor: inviting ? "not-allowed" : "pointer" }}
           >
             {inviting ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
             {inviting ? "생성 중..." : status === "invited" ? "초대 링크 다시 생성" : "초대 링크 생성"}

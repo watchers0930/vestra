@@ -44,7 +44,7 @@ export function ConsultForm({ selectedExpert, formState, setFormState, submittin
           <p style={{ fontSize: "12px", color: "#6e6e73", lineHeight: 1.7, margin: "0 0 20px", maxWidth: "320px", marginLeft: "auto", marginRight: "auto" }}>
             전문가 배정 후 24시간 내 연락드립니다. 빠른 답변을 위해 연락처를 확인해주세요.
           </p>
-          <button onClick={onReset} style={{ fontSize: "13px", color: "#0071e3", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: "3px" }}>새 상담 요청</button>
+          <button onClick={onReset} style={{ fontSize: "13px", color: "var(--brand-primary)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: "3px" }}>새 상담 요청</button>
         </div>
       ) : (
         <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
@@ -60,7 +60,7 @@ export function ConsultForm({ selectedExpert, formState, setFormState, submittin
                   style={{
                     padding: "9px 8px", borderRadius: "10px", fontSize: "12px", fontWeight: 600,
                     border: "none", cursor: "pointer", transition: "all 0.15s",
-                    background: formState.type === type ? "linear-gradient(148deg, #0071e3, #0058b0)" : "#f5f5f7",
+                    background: formState.type === type ? "linear-gradient(148deg, var(--brand-primary), var(--brand-primary-dark))" : "#f5f5f7",
                     color: formState.type === type ? "#fff" : "#3d3d3f",
                     boxShadow: formState.type === type ? "0 4px 12px rgba(0,113,227,0.25)" : "none",
                   }}
@@ -86,7 +86,7 @@ export function ConsultForm({ selectedExpert, formState, setFormState, submittin
           {/* AI 결과 첨부 */}
           <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
             <div onClick={() => setFormState((p) => ({ ...p, attachAiResult: !p.attachAiResult }))}
-              style={{ width: "18px", height: "18px", borderRadius: "5px", flexShrink: 0, background: formState.attachAiResult ? "#0071e3" : "#f5f5f7", border: formState.attachAiResult ? "none" : "1px solid rgba(0,0,0,0.20)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              style={{ width: "18px", height: "18px", borderRadius: "5px", flexShrink: 0, background: formState.attachAiResult ? "var(--brand-primary)" : "#f5f5f7", border: formState.attachAiResult ? "none" : "1px solid rgba(0,0,0,0.20)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               {formState.attachAiResult && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
             </div>
             <span style={{ fontSize: "13px", color: "#3d3d3f" }}>AI 분석 결과를 전문가에게 함께 전달</span>
@@ -115,7 +115,7 @@ export function ConsultForm({ selectedExpert, formState, setFormState, submittin
             disabled={submitting}
             style={{
               width: "100%", padding: "13px", borderRadius: "13px", border: "none",
-              background: submitting ? "#e5e5e7" : "linear-gradient(148deg, #0071e3, #0058b0)",
+              background: submitting ? "#e5e5e7" : "linear-gradient(148deg, var(--brand-primary), var(--brand-primary-dark))",
               color: submitting ? "#aeaeb2" : "#fff", fontSize: "14px", fontWeight: 700,
               cursor: submitting ? "not-allowed" : "pointer",
               display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",

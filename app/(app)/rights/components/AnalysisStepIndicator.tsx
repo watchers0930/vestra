@@ -49,7 +49,7 @@ export function AnalysisStepIndicator({ step, showExtract, showTilko, fileType }
                   justifyContent: "center",
                   transition: "all 0.2s",
                   background: isDone
-                    ? "#0071e3"
+                    ? "var(--brand-primary)"
                     : isActive
                     ? "rgba(0,113,227,0.12)"
                     : "rgba(0,0,0,0.05)",
@@ -59,7 +59,7 @@ export function AnalysisStepIndicator({ step, showExtract, showTilko, fileType }
                 {isDone ? (
                   <CheckCircle size={16} style={{ color: "#fff" }} />
                 ) : isActive ? (
-                  <Loader2 size={16} className="animate-spin" style={{ color: "#0071e3" }} />
+                  <Loader2 size={16} className="animate-spin" style={{ color: "var(--brand-primary)" }} />
                 ) : (
                   <s.icon size={16} style={{ color: "#aeaeb2" }} />
                 )}
@@ -68,7 +68,7 @@ export function AnalysisStepIndicator({ step, showExtract, showTilko, fileType }
                 style={{
                   fontSize: "13px",
                   fontWeight: isActive || isDone ? 600 : 400,
-                  color: isActive || isDone ? "#0071e3" : "#aeaeb2",
+                  color: isActive || isDone ? "var(--brand-primary)" : "#aeaeb2",
                   whiteSpace: "nowrap",
                 }}
               >
@@ -82,7 +82,7 @@ export function AnalysisStepIndicator({ step, showExtract, showTilko, fileType }
                   height: "2px",
                   borderRadius: "1px",
                   marginBottom: "18px",
-                  background: isDone ? "#0071e3" : "rgba(0,0,0,0.08)",
+                  background: isDone ? "var(--brand-primary)" : "rgba(0,0,0,0.08)",
                   transition: "background 0.3s",
                 }}
               />

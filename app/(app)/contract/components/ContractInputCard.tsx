@@ -85,7 +85,7 @@ export function ContractInputCard({
                     cursor: "pointer",
                     transition: "all 0.15s",
                     border: active ? "none" : "1px solid rgba(0,0,0,0.10)",
-                    background: active ? "#0071e3" : "#fff",
+                    background: active ? "var(--brand-primary)" : "#fff",
                     color: active ? "#fff" : "#6e6e73",
                     boxShadow: active ? "0 2px 8px rgba(0,113,227,0.25)" : "none",
                   }}
@@ -104,7 +104,7 @@ export function ContractInputCard({
               style={{
                 fontSize: "11.5px",
                 fontWeight: 500,
-                color: "#0071e3",
+                color: "var(--brand-primary)",
                 background: "rgba(0,113,227,0.06)",
                 border: "1px solid rgba(0,113,227,0.15)",
                 borderRadius: "20px",
@@ -182,7 +182,7 @@ export function ContractInputCard({
                   fontFamily: "inherit",
                   transition: "border-color 0.15s",
                 }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = "#0071e3"; e.currentTarget.style.background = "#fff"; }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--brand-primary)"; e.currentTarget.style.background = "#fff"; }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.10)"; e.currentTarget.style.background = "#fafafa"; }}
               />
               {contractText && (
@@ -204,7 +204,7 @@ export function ContractInputCard({
                 role="button"
                 aria-label={fileName ? `업로드된 파일: ${fileName}. 클릭하여 변경` : "계약서 파일 업로드"}
                 style={{
-                  border: `2px dashed ${isDragging ? "#0071e3" : fileName ? "#30d158" : "rgba(0,0,0,0.12)"}`,
+                  border: `2px dashed ${isDragging ? "var(--brand-primary)" : fileName ? "#30d158" : "rgba(0,0,0,0.12)"}`,
                   borderRadius: "14px",
                   minHeight: "280px",
                   display: "flex",
@@ -267,7 +267,7 @@ export function ContractInputCard({
               padding: "14px",
               borderRadius: "14px",
               border: "none",
-              background: !contractText.trim() || isLoading ? "rgba(0,0,0,0.07)" : "#0071e3",
+              background: !contractText.trim() || isLoading ? "rgba(0,0,0,0.07)" : "var(--brand-primary)",
               color: !contractText.trim() || isLoading ? "#aeaeb2" : "#fff",
               fontSize: "14px",
               fontWeight: 700,

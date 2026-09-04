@@ -183,7 +183,7 @@ function RevenueExpenseStackedChart({ data }: { data: ScrBusinessIncome }) {
   const revenueKeys = ["아파트", "오피스텔", "발코니", "상가", "중도금이자", "부가세"];
   const expenseKeys = ["토지비", "직접공사비", "간접공사비", "분양경비", "일반관리비", "PF이자", "기타"];
   const allKeys = [...revenueKeys, ...expenseKeys];
-  const colors = ["#0071e3", "#5856d6", "#30b0c7", "#34c759", "#ff9500", "#8e8e93",
+  const colors = ["var(--brand-primary)", "#5856d6", "#30b0c7", "#34c759", "#ff9500", "#8e8e93",
     "#ff3b30", "#ef4444", "#f97316", "#f59e0b", "#8b5cf6", "#6366f1", "#a3a3a3"];
 
   if (data.revenue.total === 0 && data.cost.total === 0) return null;
@@ -229,7 +229,7 @@ function RevenueExpenseStackedChart({ data }: { data: ScrBusinessIncome }) {
 }
 
 /* ─── 그림18: 사업비 구성 파이차트 ─── */
-const PIE_COLORS = ["#0071e3", "#34c759", "#ff9500", "#ff3b30", "#8e8e93", "#5856d6", "#af52de", "#007aff", "#30b0c7"];
+const PIE_COLORS = ["var(--brand-primary)", "#34c759", "#ff9500", "#ff3b30", "#8e8e93", "#5856d6", "#af52de", "#007aff", "#30b0c7"];
 
 function BusinessCostPieChart({ data }: { data: ScrBusinessIncome }) {
   const costItems = [

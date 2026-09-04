@@ -11,7 +11,7 @@ interface Props {
 }
 
 const ACCENT: Record<string, string> = {
-  blue:   "linear-gradient(90deg, #0071e3, #2997ff)",
+  blue:   "linear-gradient(90deg, var(--brand-primary), #2997ff)",
   green:  "linear-gradient(90deg, #30d158, #70e896)",
   orange: "linear-gradient(90deg, #ff9f0a, #ffd60a)",
   red:    "linear-gradient(90deg, #ff3b30, #ff7b73)",
@@ -31,7 +31,7 @@ const TREND_STYLE: Record<string, { color: string; bg: string }> = {
 };
 
 const ICON_COLOR: Record<string, string> = {
-  blue:   "#0071e3",
+  blue:   "var(--brand-primary)",
   green:  "#30d158",
   orange: "#ff9f0a",
   red:    "#ff3b30",

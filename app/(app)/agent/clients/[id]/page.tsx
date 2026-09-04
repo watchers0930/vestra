@@ -202,7 +202,7 @@ export default function ClientDetailPage() {
                 {isTypeA ? (
                   <span
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-700"
-                    style={{ background: "rgba(0,113,227,0.07)", color: "#0071e3", border: "1px solid rgba(0,113,227,0.18)" }}
+                    style={{ background: "rgba(0,113,227,0.07)", color: "var(--brand-primary)", border: "1px solid rgba(0,113,227,0.18)" }}
                   >
                     <ShieldCheck size={11} />
                     VESTRA 가입

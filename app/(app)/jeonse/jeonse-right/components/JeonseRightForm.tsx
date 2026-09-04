@@ -165,7 +165,7 @@ export function JeonseRightForm() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "24px" }}>
       <div style={{ ...card, background: "#f5f5f7", display: "flex", alignItems: "flex-start", gap: "10px" }}>
-        <Info size={15} style={{ color: "#0071e3", marginTop: "1px", flexShrink: 0 }} />
+        <Info size={15} style={{ color: "var(--brand-primary)", marginTop: "1px", flexShrink: 0 }} />
         <p style={{ fontSize: "13px", color: "#444", lineHeight: 1.6 }}>
           {fromAnalysis
             ? "전세 분석 데이터를 불러왔습니다. 나머지 항목(주민등록번호, 주소 등)을 입력 후 출력하세요."
@@ -220,7 +220,7 @@ export function JeonseRightForm() {
           <div style={{ display: "flex", gap: "8px", marginBottom: "6px" }}>
             <input style={{ ...inp, width: "100px", flexShrink: 0, background: "#f5f5f7", color: "#6e6e73" }} value={form.landlordZip} placeholder="우편번호" readOnly />
             <button type="button" onClick={() => openPostcode((zip, addr) => { set("landlordZip", zip); set("landlordAddr", addr); set("landlordAddrDetail", ""); })}
-              style={{ padding: "8px 14px", borderRadius: "8px", background: "#0071e3", color: "#fff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
+              style={{ padding: "8px 14px", borderRadius: "8px", background: "var(--brand-primary)", color: "#fff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
               주소 검색
             </button>
           </div>
@@ -251,7 +251,7 @@ export function JeonseRightForm() {
           <div style={{ display: "flex", gap: "8px", marginBottom: "6px" }}>
             <input style={{ ...inp, width: "100px", flexShrink: 0, background: "#f5f5f7", color: "#6e6e73" }} value={form.tenantZip} placeholder="우편번호" readOnly />
             <button type="button" onClick={() => openPostcode((zip, addr) => { set("tenantZip", zip); set("tenantAddr", addr); set("tenantAddrDetail", ""); })}
-              style={{ padding: "8px 14px", borderRadius: "8px", background: "#0071e3", color: "#fff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
+              style={{ padding: "8px 14px", borderRadius: "8px", background: "var(--brand-primary)", color: "#fff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
               주소 검색
             </button>
           </div>
@@ -329,7 +329,7 @@ export function JeonseRightForm() {
         onClick={handlePrint}
         style={{
           width: "100%", padding: "14px", borderRadius: "14px",
-          border: "none", background: "#0071e3", color: "#fff",
+          border: "none", background: "var(--brand-primary)", color: "#fff",
           fontSize: "15px", fontWeight: 700, cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
           boxShadow: "0 2px 14px rgba(0,113,227,0.3)",

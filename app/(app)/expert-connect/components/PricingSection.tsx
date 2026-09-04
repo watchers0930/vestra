@@ -7,7 +7,7 @@ export function PricingSection() {
   return (
     <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px", marginBottom: "24px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-        <CreditCard size={18} strokeWidth={1.5} style={{ color: "#0071e3" }} />
+        <CreditCard size={18} strokeWidth={1.5} style={{ color: "var(--brand-primary)" }} />
         <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", margin: 0 }}>상담 요금 안내</h2>
       </div>
       <p style={{ fontSize: "12px", color: "#6e6e73", margin: "0 0 20px" }}>분야별 전문가 상담 요금을 확인하세요 (VAT 포함)</p>
@@ -24,10 +24,10 @@ export function PricingSection() {
             }}
           >
             {item.highlight && (
-              <span style={{ position: "absolute", top: "-10px", left: "50%", transform: "translateX(-50%)", padding: "2px 10px", borderRadius: "20px", fontSize: "9px", fontWeight: 700, background: "#0071e3", color: "#fff", letterSpacing: "0.08em" }}>BEST</span>
+              <span style={{ position: "absolute", top: "-10px", left: "50%", transform: "translateX(-50%)", padding: "2px 10px", borderRadius: "20px", fontSize: "9px", fontWeight: 700, background: "var(--brand-primary)", color: "#fff", letterSpacing: "0.08em" }}>BEST</span>
             )}
             <div style={{ display: "flex", justifyContent: "center", marginBottom: "10px" }}>
-                <item.icon size={24} strokeWidth={1.5} style={{ color: item.highlight ? "#2997ff" : "#0071e3" }} />
+                <item.icon size={24} strokeWidth={1.5} style={{ color: item.highlight ? "#2997ff" : "var(--brand-primary)" }} />
               </div>
             <h3 style={{ fontSize: "12px", fontWeight: 600, color: item.highlight ? "rgba(255,255,255,0.70)" : "#3d3d3f", margin: "0 0 6px" }}>{item.label}</h3>
             <p style={{ fontSize: "18px", fontWeight: 700, color: item.highlight ? "#fff" : "#1d1d1f", margin: 0 }}>

@@ -20,7 +20,7 @@ const STATUS_LABEL: Record<string, string> = {
 const STATUS_CHIP_STYLE: Record<string, React.CSSProperties> = {
   ACTIVE:     { background: "rgba(52,199,89,0.12)",  color: "#1a9e45" },
   HIDDEN:     { background: "#f5f5f7",               color: "#6e6e73" },
-  CONTRACTED: { background: "rgba(0,113,227,0.1)",   color: "#0071e3" },
+  CONTRACTED: { background: "rgba(0,113,227,0.1)",   color: "var(--brand-primary)" },
   COMPLETED:  { background: "rgba(0,0,0,0.06)",      color: "#3d3d3f" },
 };
 
@@ -88,7 +88,7 @@ export function MyListingsContent() {
           <button
             style={{
               display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "9px 16px", borderRadius: 12, background: "#0071e3",
+              padding: "9px 16px", borderRadius: 12, background: "var(--brand-primary)",
               color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer",
             }}
           >
@@ -111,7 +111,7 @@ export function MyListingsContent() {
             <button
               style={{
                 marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6,
-                padding: "9px 18px", borderRadius: 12, background: "#0071e3",
+                padding: "9px 18px", borderRadius: 12, background: "var(--brand-primary)",
                 color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer",
               }}
             >
@@ -150,7 +150,7 @@ export function MyListingsContent() {
                 {/* 정보 */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "#0071e3" }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--brand-primary)" }}>
                       {TYPE_LABEL[l.listingType]}
                     </span>
                     <span

@@ -105,7 +105,7 @@ export function RightsInputCard({
                   cursor: "pointer",
                   transition: "all 0.15s",
                   border: active ? "none" : "1px solid rgba(0,0,0,0.10)",
-                  background: active ? "#0071e3" : "#fff",
+                  background: active ? "var(--brand-primary)" : "#fff",
                   color: active ? "#fff" : "#6e6e73",
                   boxShadow: active ? "0 2px 8px rgba(0,113,227,0.25)" : "none",
                 }}
@@ -121,7 +121,7 @@ export function RightsInputCard({
           style={{
             fontSize: "13px",
             fontWeight: 500,
-            color: "#0071e3",
+            color: "var(--brand-primary)",
             background: "rgba(0,113,227,0.06)",
             border: "1px solid rgba(0,113,227,0.15)",
             borderRadius: "20px",
@@ -160,7 +160,7 @@ export function RightsInputCard({
                   color: "#1d1d1f",
                   transition: "border-color 0.15s",
                 }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = "#0071e3"; }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--brand-primary)"; }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.10)"; }}
               />
               <button
@@ -172,7 +172,7 @@ export function RightsInputCard({
                   gap: "6px",
                   padding: "11px 20px",
                   borderRadius: "12px",
-                  background: tilkoFetching || tilkoAddress.trim().length < 4 ? "rgba(0,0,0,0.08)" : "#0071e3",
+                  background: tilkoFetching || tilkoAddress.trim().length < 4 ? "rgba(0,0,0,0.08)" : "var(--brand-primary)",
                   color: tilkoFetching || tilkoAddress.trim().length < 4 ? "#aaa" : "#fff",
                   fontSize: "13.5px",
                   fontWeight: 600,
@@ -202,7 +202,7 @@ export function RightsInputCard({
             role="button"
             aria-label={fileName ? `업로드된 파일: ${fileName}. 클릭하여 변경` : "등기부등본 파일 업로드. 클릭 또는 드래그"}
             style={{
-              border: `2px dashed ${isDragging ? "#0071e3" : fileName ? "#30d158" : "rgba(0,0,0,0.12)"}`,
+              border: `2px dashed ${isDragging ? "var(--brand-primary)" : fileName ? "#30d158" : "rgba(0,0,0,0.12)"}`,
               borderRadius: "14px",
               padding: "36px 24px",
               textAlign: "center",
@@ -222,8 +222,8 @@ export function RightsInputCard({
             />
             {isExtracting ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
-                <Loader2 size={30} className="animate-spin" style={{ color: "#0071e3" }} />
-                <p style={{ fontSize: "13.5px", fontWeight: 600, color: "#0071e3" }}>텍스트 추출 중...</p>
+                <Loader2 size={30} className="animate-spin" style={{ color: "var(--brand-primary)" }} />
+                <p style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--brand-primary)" }}>텍스트 추출 중...</p>
               </div>
             ) : fileName ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
@@ -301,7 +301,7 @@ export function RightsInputCard({
             padding: "14px",
             borderRadius: "14px",
             border: "none",
-            background: !rawText.trim() || isAnalyzing ? "rgba(0,0,0,0.07)" : "#0071e3",
+            background: !rawText.trim() || isAnalyzing ? "rgba(0,0,0,0.07)" : "var(--brand-primary)",
             color: !rawText.trim() || isAnalyzing ? "#aeaeb2" : "#fff",
             fontSize: "14px",
             fontWeight: 700,

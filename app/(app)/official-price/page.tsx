@@ -90,7 +90,7 @@ export default function OfficialPricePage() {
             border: "1px solid rgba(0,0,0,0.12)", cursor: "pointer", textAlign: "left",
           }}
         >
-          <Search size={16} style={{ color: "#0071e3", flexShrink: 0 }} />
+          <Search size={16} style={{ color: "var(--brand-primary)", flexShrink: 0 }} />
           {selectedAddress || "주소 검색 (다음 우편번호)"}
         </button>
 
@@ -112,7 +112,7 @@ export default function OfficialPricePage() {
         {/* 집합건물(공동주택) → 동/호수 입력 */}
         {selectedAddress && isBuilding && (
           <div style={{ marginTop: "12px" }}>
-            <p style={{ fontSize: "12px", fontWeight: 600, color: "#0071e3", margin: "0 0 6px" }}>
+            <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--brand-primary)", margin: "0 0 6px" }}>
               집합건물(아파트·공동주택) — 동·호수를 입력하면 해당 세대 공시가격을 조회합니다
             </p>
             <div style={{ display: "flex", gap: "8px" }}>
@@ -139,7 +139,7 @@ export default function OfficialPricePage() {
           style={{
             display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", width: "100%",
             marginTop: "12px", padding: "11px 18px", borderRadius: "10px", fontSize: "14px", fontWeight: 600,
-            background: loading || selectedAddress.length < 3 ? "#ccc" : "#0071e3", color: "#fff", border: "none",
+            background: loading || selectedAddress.length < 3 ? "#ccc" : "var(--brand-primary)", color: "#fff", border: "none",
             cursor: loading || selectedAddress.length < 3 ? "not-allowed" : "pointer", transition: "all 0.15s",
           }}
         >
@@ -180,7 +180,7 @@ export default function OfficialPricePage() {
               icon={Building2}
               title="공동주택 공시가격"
               subtitle="아파트 · 연립주택"
-              color="#0071e3"
+              color="var(--brand-primary)"
               price={result.aptPrice?.price ?? null}
               rows={result.aptPrice ? [
                 { label: "단지명", value: result.aptPrice.complexName || "-" },
@@ -228,7 +228,7 @@ export default function OfficialPricePage() {
               style={{
                 display: "flex", alignItems: "center", gap: "5px",
                 padding: "8px 14px", borderRadius: "10px", fontSize: "12px", fontWeight: 600,
-                background: "#0071e3", color: "#fff", textDecoration: "none", whiteSpace: "nowrap",
+                background: "var(--brand-primary)", color: "#fff", textDecoration: "none", whiteSpace: "nowrap",
               }}
             >
               세금계산 <ExternalLink size={12} />
