@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import s from "../realtor-home.module.css";
 import { REALTOR_ROUTES } from "../../_shared/realtor-config";
 
@@ -45,7 +46,7 @@ export default function RealtorHero({
           <div className={s.heroQuickLabel}>빠른 작업</div>
           <div className={s.heroCard}>
             <Link href={REALTOR_ROUTES.listingNew} className={s.heroCta}>
-              <span className={s.plus}>＋</span> 신규 매물 등록
+              <Plus size={18} strokeWidth={2.4} /> 신규 매물 등록
             </Link>
             <div className={s.heroSubLinks}>
               <Link href={REALTOR_ROUTES.listings}>매물 목록</Link>

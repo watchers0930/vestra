@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { AlertTriangle, MessageSquare, FileText, type LucideIcon } from "lucide-react";
 import s from "../realtor-home.module.css";
 import { REALTOR_ROUTES } from "../../_shared/realtor-config";
 import type { NotiItem } from "../hooks/useRealtorHomeData";
 
-const ICON: Record<NotiItem["kind"], { cls: string; emoji: string }> = {
-  alert: { cls: s.alert, emoji: "⚠️" },
-  msg: { cls: s.msg, emoji: "💬" },
-  doc: { cls: s.doc, emoji: "📄" },
+const ICON: Record<NotiItem["kind"], { cls: string; Icon: LucideIcon }> = {
+  alert: { cls: s.alert, Icon: AlertTriangle },
+  msg: { cls: s.msg, Icon: MessageSquare },
+  doc: { cls: s.doc, Icon: FileText },
 };
 
 export default function RealtorNotiPanel({ notis, loading }: { notis: NotiItem[]; loading: boolean }) {
@@ -33,7 +34,7 @@ export default function RealtorNotiPanel({ notis, loading }: { notis: NotiItem[]
             const ic = ICON[n.kind];
             return (
               <div key={i} className={s.nitem}>
-                <span className={`${s.nic} ${ic.cls}`}>{ic.emoji}</span>
+                <span className={`${s.nic} ${ic.cls}`}><ic.Icon size={16} strokeWidth={2} /></span>
                 <div>
                   <div className={s.ntitle}>
                     {n.highlight ? <span className={s.hl}>{n.highlight}</span> : n.title}
