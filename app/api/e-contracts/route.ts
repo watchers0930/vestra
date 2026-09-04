@@ -215,7 +215,14 @@ export async function GET(req: NextRequest) {
       prisma.eContract.count({ where }),
     ]);
 
-    return NextResponse.json({ contracts, total, page, totalPages: Math.ceil(total / limit) });
+    // BigInt(deposit·monthlyRent)는 JSON 직렬화 불가 → 문자열로 변환
+    const serialized = contracts.map((c) => ({
+      ...c,
+      deposit: c.deposit.toString(),
+      monthlyRent: c.monthlyRent?.toString() ?? null,
+    }));
+
+    return NextResponse.json({ contracts: serialized, total, page, totalPages: Math.ceil(total / limit) });
   } catch (e) {
     console.error("[GET /api/e-contracts]", e);
     return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
