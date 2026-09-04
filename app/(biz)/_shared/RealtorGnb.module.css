@@ -1,16 +1,16 @@
 /* 사업자(중개사) 공통 헤더 GNB — renewal GNB 스타일을 그대로 계승 */
 .navBar { position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid #e8eaf0; }
 .navInner { max-width: 1200px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; }
-.navLogo { display: flex; align-items: center; gap: 7px; margin-right: 40px; flex-shrink: 0; }
-.logoIcon { width: 34px; height: 34px; border-radius: 7px; object-fit: contain; display: block; }
-.logoText { font-weight: 700; font-size: 18.6px; letter-spacing: .6px; }
-.bizBadge { margin-left: 9px; font-size: 11px; font-weight: 700; color: #2e4bd8; background: #eef1fd; padding: 3px 9px; border-radius: 6px; letter-spacing: .2px; }
-.navMenu { display: flex; align-items: center; list-style: none; gap: 2px; flex: 1; margin: 0; padding: 0; }
+.navLogo { display: flex; align-items: center; gap: 7px; margin-right: 22px; flex-shrink: 0; }
+.logoIcon { width: 32px; height: 32px; border-radius: 7px; object-fit: contain; display: block; }
+.logoText { font-weight: 700; font-size: 18px; letter-spacing: .4px; }
+.bizBadge { margin-left: 7px; font-size: 10.5px; font-weight: 700; color: #2e4bd8; background: #eef1fd; padding: 2px 7px; border-radius: 6px; letter-spacing: .2px; }
+.navMenu { display: flex; align-items: center; list-style: none; gap: 0; flex: 1; flex-wrap: nowrap; margin: 0; padding: 0; }
 .navMenu > li { position: relative; display: flex; align-items: center; }
-.navMenu > li > a { display: flex; align-items: center; white-space: nowrap; font-size: 17px; line-height: 1; padding: 10px 16px; border-radius: 4px; transition: color .15s, background .15s; }
+.navMenu > li > a { display: flex; align-items: center; white-space: nowrap; font-size: 15.5px; line-height: 1; padding: 10px 11px; border-radius: 4px; transition: color .15s, background .15s; }
 .navMenu > li > a:hover { color: #2e4bd8; background: #f0f2fd; }
 .navMenu > li > a.active { color: #2e4bd8; font-weight: 600; }
-.navDropToggle { display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; font-size: 17px; line-height: 1; padding: 10px 16px; border-radius: 4px; transition: color .15s, background .15s; }
+.navDropToggle { display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; font-size: 15.5px; line-height: 1; padding: 10px 11px; border-radius: 4px; transition: color .15s, background .15s; }
 .navDropToggle:hover { color: #2e4bd8; background: #f0f2fd; }
 .navDropToggle.active { color: #2e4bd8; }
 .caret { width: 9px; height: 9px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s; }
