@@ -120,7 +120,7 @@ export function MyListingsContent() {
           </Link>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(420px, 1fr))", gap: 12 }}>
           {listings.map((l) => {
             const thumb = l.photos?.[0] ?? null;
             const statusStyle = STATUS_CHIP_STYLE[l.status] ?? {};
