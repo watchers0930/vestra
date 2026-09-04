@@ -64,7 +64,7 @@ export default function AgentPage() {
       <div className="mt-6 flex border-b border-gray-200 gap-1">
         {([
           { key: "clients", label: "고객 관리" },
-          { key: "contracts", label: "전자계약" },
+          { key: "contracts", label: "계약 관리" },
         ] as const).map(({ key, label }) => (
           <button
             key={key}
