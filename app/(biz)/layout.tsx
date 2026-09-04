@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import SessionGuard from "@/components/auth/session-guard";
 import { auth } from "@/lib/auth";
 import RealtorGnb from "./_shared/RealtorGnb";
+import RealtorFooter from "./_shared/RealtorFooter";
 
 /**
  * 사업자(중개사) 전용 레이아웃.
@@ -23,6 +24,7 @@ export default async function BizLayout({
       <main id="main-content" style={{ minHeight: "calc(100vh - 80px)", background: "#fff" }}>
         {children}
       </main>
+      <RealtorFooter />
     </SessionGuard>
   );
 }
