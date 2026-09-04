@@ -337,6 +337,17 @@ body {
   }
 }
 
+/* 부동산 콘텐츠 컨테이너를 헤더 GNB 폭(max-w-1200 · 좌우 32px)에 정렬한다.
+ * 각 페이지가 자체 max-width/여백(max-w-7xl·좁은 폼·풀폭)을 가져 nav와 어긋나므로,
+ * main 직속 자식의 자체 컨테이너 스타일을 무력화해 main 폭을 그대로 따르게 한다. */
+.realtor-theme main > * {
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
 /* ─────────────────────────────────────────────────────────────
  * 부동산 중개사(REALESTATE) 전용 renewal 인디고 톤
  * .realtor-theme 스코프 안에서만 primary 색을 override한다.
