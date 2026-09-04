@@ -18,10 +18,10 @@ const STATUS_LABEL: Record<string, string> = {
   ACTIVE: "거래중", HIDDEN: "숨김", CONTRACTED: "계약완료", COMPLETED: "거래완료",
 };
 const STATUS_CHIP_STYLE: Record<string, React.CSSProperties> = {
-  ACTIVE:     { background: "rgba(52,199,89,0.12)",  color: "#1a9e45" },
-  HIDDEN:     { background: "#f5f5f7",               color: "#6e6e73" },
-  CONTRACTED: { background: "rgba(0,113,227,0.1)",   color: "var(--brand-primary)" },
-  COMPLETED:  { background: "rgba(0,0,0,0.06)",      color: "#3d3d3f" },
+  ACTIVE:     { background: "rgba(46,75,216,0.10)",  color: "var(--brand-primary)" },
+  HIDDEN:     { background: "#f0f1f4",               color: "#6e6e73" },
+  CONTRACTED: { background: "#eef0f3",               color: "#3a3f55" },
+  COMPLETED:  { background: "rgba(0,0,0,0.06)",      color: "#6e6e73" },
 };
 
 const STATUS_OPTIONS = ["ACTIVE", "HIDDEN", "CONTRACTED", "COMPLETED"] as const;
