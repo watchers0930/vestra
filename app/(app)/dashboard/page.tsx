@@ -31,8 +31,9 @@ export default function DashboardPage() {
   // 대시보드는 로그인 후 역할 분배 허브 역할을 겸한다.
   // - ADMIN        → /admin
   // - LAWYER       → /lawyer (변호사 전용 대시보드)
+  // - REALESTATE   → /realtor (중개사 전용 리뉴얼 홈)
   // - PERSONAL     → 로그인 직전 보던 화면(?next=) 있으면 그곳, 없으면 /home
-  // - 사업자 계정   → 대시보드 유지 (REALESTATE / RENTAL_BIZ / BUSINESS)
+  // - 그 외 사업자  → 대시보드 유지 (RENTAL_BIZ / BUSINESS)
   useEffect(() => {
     const role = sessionData?.user?.role;
     if (!role) return;
@@ -42,6 +43,10 @@ export default function DashboardPage() {
     }
     if (role === "LAWYER") {
       router.replace("/lawyer");
+      return;
+    }
+    if (role === "REALESTATE") {
+      router.replace("/realtor");
       return;
     }
     if (role === "PERSONAL") {

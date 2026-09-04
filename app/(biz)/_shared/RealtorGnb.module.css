@@ -1,0 +1,43 @@
+/* 사업자(중개사) 공통 헤더 GNB — renewal GNB 스타일을 그대로 계승 */
+.navBar { position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid #e8eaf0; }
+.navInner { max-width: 1200px; margin: 0 auto; padding: 0 32px; height: 80px; display: flex; align-items: center; }
+.navLogo { display: flex; align-items: center; gap: 7px; margin-right: 40px; flex-shrink: 0; }
+.logoIcon { width: 34px; height: 34px; border-radius: 7px; object-fit: contain; display: block; }
+.logoText { font-weight: 700; font-size: 18.6px; letter-spacing: .6px; }
+.bizBadge { margin-left: 9px; font-size: 11px; font-weight: 700; color: #2e4bd8; background: #eef1fd; padding: 3px 9px; border-radius: 6px; letter-spacing: .2px; }
+.navMenu { display: flex; align-items: center; list-style: none; gap: 2px; flex: 1; margin: 0; padding: 0; }
+.navMenu > li { position: relative; display: flex; align-items: center; }
+.navMenu > li > a { display: flex; align-items: center; white-space: nowrap; font-size: 17px; line-height: 1; padding: 10px 16px; border-radius: 4px; transition: color .15s, background .15s; }
+.navMenu > li > a:hover { color: #2e4bd8; background: #f0f2fd; }
+.navMenu > li > a.active { color: #2e4bd8; font-weight: 600; }
+.navDropToggle { display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; font-size: 17px; line-height: 1; padding: 10px 16px; border-radius: 4px; transition: color .15s, background .15s; }
+.navDropToggle:hover { color: #2e4bd8; background: #f0f2fd; }
+.navDropToggle.active { color: #2e4bd8; }
+.caret { width: 9px; height: 9px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s; }
+.navMenu > li.hasDrop:hover .navDropToggle .caret { transform: rotate(180deg); }
+.navDrop { position: absolute; top: calc(100% + 8px); left: 0; min-width: 200px; background: #fff; border: 1px solid #e8eaf0; border-radius: 12px; box-shadow: 0 14px 38px rgba(20, 28, 70, .14); padding: 8px; list-style: none; opacity: 0; visibility: hidden; transform: translateY(6px); transition: opacity .16s, transform .16s, visibility .16s; z-index: 120; margin: 0; }
+.navDrop::before { content: ''; position: absolute; top: -10px; left: 0; right: 0; height: 10px; }
+.navMenu > li.hasDrop:hover .navDrop { opacity: 1; visibility: visible; transform: translateY(0); }
+.navDrop li a { display: flex; align-items: center; gap: 9px; padding: 10px 12px; font-size: 14px; border-radius: 8px; color: #3a3f55; transition: color .15s, background .15s; }
+.navDrop li a:hover { color: #2e4bd8; background: #f0f2fd; }
+.navDrop li a.active { color: #2e4bd8; background: #eef1fd; font-weight: 600; }
+.navAuth { display: flex; align-items: center; gap: 2px; font-size: 12.5px; }
+.navAuth .greet { font-size: 12.5px; color: #1a1d2e; font-weight: 600; padding: 4px 8px; }
+.navAuth a { padding: 4px 8px; color: #555; transition: color .15s; cursor: pointer; }
+.navAuth a:hover { color: #2e4bd8; }
+.navAuth .div { color: #d4d6de; font-size: 12px; }
+.navBurger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; margin-left: auto; background: none; border: none; }
+.navBurger span { display: block; width: 22px; height: 2px; background: #1a1d2e; border-radius: 2px; }
+.navMob { display: none; position: absolute; top: 80px; left: 0; right: 0; background: #fff; border-top: 1px solid #e8eaf0; padding: 8px 24px 20px; z-index: 99; box-shadow: 0 8px 20px rgba(0, 0, 0, .08); list-style: none; margin: 0; }
+.navMob li { list-style: none; border-bottom: 1px solid #f4f5f9; }
+.navMob li:last-child { border-bottom: none; }
+.navMob a { display: block; padding: 13px 0; font-size: 15px; font-weight: 500; }
+.navMob .grp { display: block; padding: 13px 0; font-size: 15px; font-weight: 500; }
+.navMob .sub a { padding-left: 14px; font-size: 14px; color: #666; font-weight: 400; }
+.navMob .sub a.active { color: #2e4bd8; font-weight: 600; }
+.navMobAuth { display: flex; gap: 12px; padding: 16px 0 4px; font-size: 13px; color: #555; }
+@media (max-width: 860px) {
+  .navMenu, .navAuth { display: none; }
+  .navBurger { display: flex; }
+  .navMob.open { display: block; }
+}
