@@ -26,26 +26,24 @@ export interface RealtorMenuItem {
   label: string;
 }
 
-/** GNB 메인 메뉴 (홈 제외 · 홈은 로고/별도 처리) */
+/** GNB 메인 메뉴 (홈은 로고로 이동하므로 제외) */
 export const REALTOR_MAIN: RealtorMenuItem[] = [
-  { href: REALTOR_ROUTES.home, label: "홈" },
   { href: REALTOR_ROUTES.listings, label: "매물 관리" },
   { href: REALTOR_ROUTES.agent, label: "중개관리" },
   { href: REALTOR_ROUTES.eContract, label: "전자계약" },
+  { href: REALTOR_ROUTES.monitoring, label: "등기감시" },
 ];
 
-/** GNB "분석 서비스" 드롭다운 */
+/** GNB "분석 서비스" 드롭다운 (시세전망은 시세지도에 통합되어 제외) */
 export const REALTOR_ANALYSIS: RealtorMenuItem[] = [
   { href: REALTOR_ROUTES.rights, label: "권리분석" },
-  { href: REALTOR_ROUTES.monitoring, label: "등기감시" },
   { href: REALTOR_ROUTES.contract, label: "계약검토" },
   { href: REALTOR_ROUTES.feasibility, label: "사업성분석" },
-  { href: REALTOR_ROUTES.prediction, label: "시세전망" },
-  { href: REALTOR_ROUTES.expert, label: "전문가 연결" },
 ];
 
 /** GNB 우측 단독 메뉴 */
 export const REALTOR_TRAILING: RealtorMenuItem[] = [
+  { href: REALTOR_ROUTES.expert, label: "전문가 연결" },
   { href: REALTOR_ROUTES.priceMap, label: "시세지도" },
 ];
 
