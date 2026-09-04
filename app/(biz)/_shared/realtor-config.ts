@@ -28,6 +28,7 @@ export interface RealtorMenuItem {
 
 /** GNB 메인 메뉴 (홈은 로고로 이동하므로 제외) */
 export const REALTOR_MAIN: RealtorMenuItem[] = [
+  { href: REALTOR_ROUTES.priceMap, label: "시세지도" },
   { href: REALTOR_ROUTES.listings, label: "매물 관리" },
   { href: REALTOR_ROUTES.agent, label: "중개관리" },
   { href: REALTOR_ROUTES.eContract, label: "전자계약" },
@@ -44,7 +45,6 @@ export const REALTOR_ANALYSIS: RealtorMenuItem[] = [
 /** GNB 우측 단독 메뉴 */
 export const REALTOR_TRAILING: RealtorMenuItem[] = [
   { href: REALTOR_ROUTES.expert, label: "전문가 연결" },
-  { href: REALTOR_ROUTES.priceMap, label: "시세지도" },
 ];
 
 /** 자주 쓰는 기능 카드의 아이콘 키 (lucide 매핑용) */
