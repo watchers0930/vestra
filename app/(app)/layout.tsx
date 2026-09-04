@@ -30,8 +30,8 @@ export default async function AppLayout({
           <RealtorGnb />
           <main
             id="main-content"
-            className="mx-auto min-h-[calc(100vh-80px)] max-w-[1200px] px-4 lg:px-8"
-            style={{ paddingTop: 24, paddingBottom: 48 }}
+            className="mx-auto px-4 lg:px-8"
+            style={{ maxWidth: 1200, minHeight: "calc(100vh - 80px)", paddingTop: 24, paddingBottom: 48 }}
           >
             <ErrorBoundary>{children}</ErrorBoundary>
           </main>
