@@ -363,17 +363,18 @@ body {
   --accent-positive-rgb: 46, 75, 216;
   --accent-warning: #6e6e73;
   --accent-warning-rgb: 110, 110, 115;
-  --cat-hero-mt: 20px;
+  --cat-hero-mt: 0px;
 }
-/* 부동산: 서브히어로 아래 페이지 상단 여백 절반 (pt-[52px] → 26px) */
-.realtor-theme .pt-\[52px\] { padding-top: 26px !important; }
+/* 부동산: 페이지 자체 상단 여백 제거 → 서브히어로~콘텐츠 여백을 main 50px로 통일 */
+.realtor-theme .pt-\[52px\] { padding-top: 0 !important; }
 
 /* 부동산 콘텐츠 컨테이너를 헤더 GNB 폭(max-w-1200 · 좌우 32px)에 정렬한다.
  * 각 페이지가 자체 max-width/여백(max-w-7xl·좁은 폼·풀폭)을 가져 nav와 어긋나므로,
  * main 직속 자식의 자체 컨테이너 스타일을 무력화해 main 폭을 그대로 따르게 한다. */
 .realtor-theme main > * {
-  /* 이중 좌우 여백만 제거(main이 여백 담당). max-width·정렬(mx-auto)은 각 페이지
-   * 자체 값 존중 → 리스트=풀폭, 폼=중앙, 넓은 페이지=1200 꽉참(nav 정렬). */
+  /* 좌우 이중여백 + 상단 여백 제거 → 서브히어로~콘텐츠 여백은 main의 50px로 통일.
+   * max-width·정렬(mx-auto)은 각 페이지 자체 값 존중(리스트=풀폭·폼=중앙). */
+  padding-top: 0 !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
