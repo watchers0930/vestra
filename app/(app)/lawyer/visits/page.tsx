@@ -16,7 +16,7 @@ export default function LawyerVisitsPage() {
   return (
     <div>
       <DashboardPageTopbar current="방문예약" primaryHref="/lawyer" primaryLabel="대시보드" />
-      <div className="pt-[52px] mt-4">
+      <div className="mt-4">
         <PageHeader icon={CalendarCheck} title="방문예약" description="사무실 방문 예약을 날짜별로 확인하고 확정합니다." />
         {d.loading ? (
           <div className="py-20 text-center text-sm text-gray-400">불러오는 중…</div>

@@ -87,7 +87,7 @@ export default function RentalYieldPage() {
     "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 pb-6 pt-[52px] sm:px-6">
+    <div className="mx-auto max-w-5xl space-y-6 px-4 pb-6 sm:px-6">
       <DashboardPageTopbar current="임대 수익률" primaryHref="/jeonse" primaryLabel="전세보호" />
       <CategoryHero
         badge={<><TrendingUp size={11} strokeWidth={2} />임대 수익률</>}

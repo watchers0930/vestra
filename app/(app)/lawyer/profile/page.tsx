@@ -17,7 +17,7 @@ export default function LawyerProfilePage() {
   return (
     <div>
       <DashboardPageTopbar current="내정보" primaryHref="/lawyer" primaryLabel="대시보드" />
-      <div className="pt-[52px] mt-4">
+      <div className="mt-4">
         <PageHeader icon={UserCog} title="내정보" description="미니홈페이지에 노출되는 프로필 정보를 관리합니다." />
 
         {/* 서브탭 pill */}

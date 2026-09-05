@@ -49,7 +49,8 @@ export default async function AppLayout({
       <Suspense><Sidebar /></Suspense>
       <OnboardingModal />
       <div className="min-h-screen lg:ml-[272px] transition-all duration-300">
-        <main id="main-content" className="mobile-safe-top px-4 pb-4 lg:px-6 lg:pb-6" style={{ paddingTop: 20 }}>
+        {/* 고정 상단바(DashboardPageTopbar h-52) 보상 + 여백 20 = 72 (기존 페이지 pt-[52px] 대체) */}
+        <main id="main-content" className="mobile-safe-top px-4 pb-4 lg:px-6 lg:pb-6" style={{ paddingTop: 72 }}>
           <ErrorBoundary>
             {children}
           </ErrorBoundary>

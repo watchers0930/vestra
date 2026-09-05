@@ -108,7 +108,7 @@ export default function DashboardPage() {
     <AuthGuard featureName="대시보드">
       <div>
         <DashboardPageTopbar current="대시보드" primaryHref="/rights" primaryLabel="새 분석" />
-        <div className="pb-20 pt-[52px]">
+        <div className="pb-20">
 
           {/* 컴팩트 헤더 */}
           <div className="mt-7 mb-6">

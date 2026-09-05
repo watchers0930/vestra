@@ -44,7 +44,7 @@ export default function RightsAnalysisPage() {
   return (
     <div>
       <DashboardPageTopbar current="권리분석" primaryHref="/contract" primaryLabel="계약검토" />
-      <div className="pt-[52px]">
+      <div className="">
         <CategoryHero
           badge="⚖️ 권리분석"
           title="등기부등본 AI 종합 분석"

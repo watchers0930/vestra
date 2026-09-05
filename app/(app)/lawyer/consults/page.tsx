@@ -16,7 +16,7 @@ export default function LawyerConsultsPage() {
   return (
     <div>
       <DashboardPageTopbar current="상담신청현황" primaryHref="/lawyer" primaryLabel="대시보드" />
-      <div className="pt-[52px] mt-4">
+      <div className="mt-4">
         <PageHeader icon={CalendarDays} title="상담신청현황" description="이용자가 신청한 상담을 날짜별로 확인하고 시간을 조율합니다." />
         {d.loading ? (
           <div className="py-20 text-center text-sm text-gray-400">불러오는 중…</div>

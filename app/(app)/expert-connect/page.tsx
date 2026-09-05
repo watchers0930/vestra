@@ -24,7 +24,7 @@ export default function ExpertConnectPage() {
     <AuthGuard featureName="전문가 연결">
     <div>
       <DashboardPageTopbar current="전문가 연결" primaryHref="/assistant" primaryLabel="AI 상담" />
-      <div className="pb-20 pt-[52px]">
+      <div className="pb-20">
         <CategoryHero
           badge="👥 전문가 연결"
           title="AI 분석 결과를 전문가가 검증합니다"

@@ -131,7 +131,7 @@ export default function MovingCostPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 pb-6 pt-[52px] sm:px-6">
+    <div className="mx-auto max-w-5xl space-y-6 px-4 pb-6 sm:px-6">
       <DashboardPageTopbar current="이사 비용" primaryHref="/jeonse" primaryLabel="전세보호" />
       <CategoryHero
         badge={<><Truck size={11} strokeWidth={2} />이사 비용</>}

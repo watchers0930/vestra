@@ -46,7 +46,7 @@ export default function AssistantPage() {
     <>
     <div>
       <DashboardPageTopbar current="AI 어시스턴트" primaryHref="/contract" primaryLabel="계약검토" />
-      <div className="flex min-h-[calc(100vh-72px)] flex-col pb-20 pt-[52px]">
+      <div className="flex min-h-[calc(100vh-72px)] flex-col pb-20">
         <CategoryHero
           badge="✨ AI 어시스턴트"
           title="부동산 전문 AI 상담"

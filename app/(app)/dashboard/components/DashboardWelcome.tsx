@@ -22,7 +22,7 @@ interface Props {
 
 export function DashboardWelcome({ userName }: Props) {
   return (
-    <div className="pt-[52px] pb-20">
+    <div className="pb-20">
       {/* 메인 CTA 카드 */}
       <div
         className="mt-10 mb-6 rounded-[28px] px-8 py-12 sm:px-14 sm:py-14 text-center"

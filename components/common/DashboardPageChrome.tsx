@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Bell, Plus } from "lucide-react";
+import { useSession } from "next-auth/react";
 import SessionTimer from "@/components/auth/session-timer";
 
 interface DashboardPageTopbarProps {
@@ -33,6 +34,10 @@ export function DashboardPageTopbar({
   primaryHref = "/rights",
   primaryLabel = "새 분석",
 }: DashboardPageTopbarProps) {
+  const { data } = useSession();
+  // 부동산 중개사: 상단 nav + 서브히어로가 있어 이 고정 상단바(사이드바 기준 left-272)는 중복 → 숨김
+  if (data?.user?.role === "REALESTATE") return null;
+
   return (
     <div
       className="fixed top-0 z-40 flex h-[52px] items-center justify-between border-b border-black/[0.06] px-4 sm:px-6 lg:px-9 left-0 lg:left-[272px] right-0"

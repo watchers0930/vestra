@@ -98,7 +98,7 @@ export default function JeonseComparisonPage() {
     : [];
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 pb-6 pt-[52px] sm:px-6">
+    <div className="mx-auto max-w-5xl space-y-6 px-4 pb-6 sm:px-6">
       <DashboardPageTopbar current="전세·월세 비교" primaryHref="/jeonse" primaryLabel="전세보호" />
       <CategoryHero
         badge={<><Home size={11} strokeWidth={2} />전세·월세 비교</>}

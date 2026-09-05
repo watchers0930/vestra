@@ -38,7 +38,7 @@ export default function ContractReviewPage() {
     <AuthGuard featureName="계약검토">
     <div>
       <DashboardPageTopbar current="계약검토" primaryHref="/rights" primaryLabel="권리분석" />
-      <div className="pb-20 pt-[52px]">
+      <div className="pb-20">
         <CategoryHero
           badge="📝 계약검토"
           title="부동산 계약서 AI 자동 분석"

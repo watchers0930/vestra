@@ -12,7 +12,7 @@ export default function LawyerDashboardPage() {
   return (
     <div>
       <DashboardPageTopbar current="변호사 대시보드" primaryHref="/lawyer/notices" primaryLabel="내용증명 검수" />
-      <div className="pt-[52px]">
+      <div className="">
         <div className="mb-6 mt-4">
           <h1 className="text-[22px] font-bold tracking-[-0.02em] text-[#1d1d1f]">
             {d.name}님, 안녕하세요

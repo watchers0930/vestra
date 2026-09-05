@@ -34,7 +34,7 @@ export default function MonitoringPage() {
     return (
       <div>
         <DashboardPageTopbar current="등기감시" primaryHref="/monitoring" primaryLabel="물건 추가" />
-        <div className="pb-20 pt-[52px]">
+        <div className="pb-20">
           <CategoryHero
             badge="🔎 등기감시"
             title="등기부 변동 실시간 감시"
@@ -50,7 +50,7 @@ export default function MonitoringPage() {
     <AuthGuard featureName="등기감시">
     <div>
       <DashboardPageTopbar current="등기감시" primaryHref="/monitoring" primaryLabel="물건 추가" />
-      <div className="pb-20 pt-[52px]">
+      <div className="pb-20">
         <CategoryHero
           badge="🔎 등기감시"
           title="등기부 변동 실시간 감시"
