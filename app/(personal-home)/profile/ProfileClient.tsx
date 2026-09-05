@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { clearAll } from "@/lib/store";
 import RenewalGnb from "../renewal/_shared/RenewalGnb";
+import RealtorGnb from "@/app/(biz)/_shared/RealtorGnb";
 import { useProfileData } from "./hooks/useProfileData";
 import { PROFILE_TABS, type ProfileTab } from "./components/profileConstants";
 import ProfileDashboardPanel from "./components/ProfileDashboardPanel";
@@ -92,9 +93,12 @@ export default function ProfileClient() {
     </div>
   );
 
+  // 부동산 중개사는 마이페이지에서도 부동산 nav 유지(개인 renewal nav로 이탈 방지)
+  const isRealtor = session?.user?.role === "REALESTATE";
+
   return (
     <>
-      <RenewalGnb />
+      {isRealtor ? <RealtorGnb /> : <RenewalGnb />}
 
       <div className={s.pageBg}>
         <div className={s.mypage}>
