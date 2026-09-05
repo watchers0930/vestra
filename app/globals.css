@@ -404,3 +404,25 @@ body {
 .realtor-theme .hover\:bg-\[\#005bb5\]:hover { background-color: #2641c0 !important; }
 .realtor-theme .hover\:text-\[\#005bb5\]:hover,
 .realtor-theme .hover\:text-\[\#0058b0\]:hover { color: #2641c0 !important; }
+
+/* ── 부동산 4색 정리: 장식색 계열을 통일 (attribute selector로 모든 shade 커버)
+ * 초록·청록·보라 → 인디고 / 주황·노랑 → 그레이 / 경고 red는 유지.
+ * .realtor-theme 스코프라 개인회원 등 다른 계정에는 영향 없음. ── */
+.realtor-theme [class*="text-emerald-"], .realtor-theme [class*="text-green-"],
+.realtor-theme [class*="text-teal-"],    .realtor-theme [class*="text-cyan-"],
+.realtor-theme [class*="text-purple-"],  .realtor-theme [class*="text-violet-"],
+.realtor-theme [class*="text-indigo-"] { color: #2e4bd8 !important; }
+.realtor-theme [class*="bg-emerald-"], .realtor-theme [class*="bg-green-"],
+.realtor-theme [class*="bg-teal-"],    .realtor-theme [class*="bg-cyan-"],
+.realtor-theme [class*="bg-purple-"],  .realtor-theme [class*="bg-violet-"],
+.realtor-theme [class*="bg-indigo-"] { background-color: #eef1fd !important; }
+.realtor-theme [class*="border-emerald-"], .realtor-theme [class*="border-green-"],
+.realtor-theme [class*="border-teal-"],    .realtor-theme [class*="border-purple-"],
+.realtor-theme [class*="border-violet-"],  .realtor-theme [class*="border-indigo-"] { border-color: #c7d0f5 !important; }
+
+.realtor-theme [class*="text-amber-"], .realtor-theme [class*="text-yellow-"],
+.realtor-theme [class*="text-orange-"] { color: #6e6e73 !important; }
+.realtor-theme [class*="bg-amber-"], .realtor-theme [class*="bg-yellow-"],
+.realtor-theme [class*="bg-orange-"] { background-color: #f0f1f4 !important; }
+.realtor-theme [class*="border-amber-"], .realtor-theme [class*="border-yellow-"],
+.realtor-theme [class*="border-orange-"] { border-color: #e2e4ea !important; }
