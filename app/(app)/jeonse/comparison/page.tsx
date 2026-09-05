@@ -93,7 +93,7 @@ export default function JeonseComparisonPage() {
   const chartData = result
     ? [
         { name: "전세 총 비용", value: result.jeonseTotalCost, fill: "#4f46e5" },
-        { name: "월세 총 비용", value: result.wolseTotalCost, fill: "#f59e0b" },
+        { name: "월세 총 비용", value: result.wolseTotalCost, fill: "var(--accent-warning)" },
       ]
     : [];
 

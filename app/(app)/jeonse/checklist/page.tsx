@@ -146,7 +146,7 @@ const CHECKLIST_DATA: Record<DealType, Partial<Record<Stage, CheckItem[]>>> = {
 
 const STAGE_META: Record<Stage, { color: string; bg: string; label: string }> = {
   "계약 전":  { color: "var(--brand-primary)", bg: "rgba(0,113,227,0.10)",  label: "계약 전" },
-  "계약 중":  { color: "#b86f00", bg: "rgba(255,159,10,0.10)", label: "계약 중" },
+  "계약 중":  { color: "#b86f00", bg: "rgba(var(--accent-warning-rgb), 0.10)", label: "계약 중" },
   "계약 후":  { color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.10)",  label: "계약 후" },
   "입주 전":  { color: "#6e3de8", bg: "rgba(110,61,232,0.10)", label: "입주 전" },
   "입주 후":  { color: "#636366", bg: "rgba(99,99,102,0.10)",  label: "입주 후" },
@@ -155,7 +155,7 @@ const STAGE_META: Record<Stage, { color: string; bg: string; label: string }> = 
 const DEAL_META: Record<DealType, { color: string; bg: string; icon: LucideIcon }> = {
   전세: { color: "var(--brand-primary)", bg: "rgba(0,113,227,0.10)", icon: Home },
   매매: { color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.10)", icon: Key },
-  월세: { color: "#b86f00", bg: "rgba(255,159,10,0.10)", icon: FileText },
+  월세: { color: "#b86f00", bg: "rgba(var(--accent-warning-rgb), 0.10)", icon: FileText },
 };
 
 /* ── 스토리지 헬퍼 ── */

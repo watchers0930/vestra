@@ -350,12 +350,17 @@ body {
   /* 성공·활성 색: 개인은 초록 유지, 부동산은 인디고로 통일(4색) */
   --accent-positive: #30d158;
   --accent-positive-rgb: 52, 199, 89;
+  /* 주의 색: 개인은 주황 유지, 부동산은 그레이로 통일(4색) */
+  --accent-warning: #ff9f0a;
+  --accent-warning-rgb: 255, 159, 10;
 }
 .realtor-theme {
   --brand-primary: #2e4bd8;
   --brand-primary-dark: #2641c0;
   --accent-positive: #2e4bd8;
   --accent-positive-rgb: 46, 75, 216;
+  --accent-warning: #6e6e73;
+  --accent-warning-rgb: 110, 110, 115;
 }
 
 /* 부동산 콘텐츠 컨테이너를 헤더 GNB 폭(max-w-1200 · 좌우 32px)에 정렬한다.

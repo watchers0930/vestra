@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react";
 
 const FEATURES: { href: string; icon: LucideIcon; label: string; desc: string; color: string; bg: string }[] = [
   { href: "/contract",   icon: FileText,   label: "계약검토",      desc: "위험 조항 자동 분석",   color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.09)" },
-  { href: "/prediction", icon: TrendingUp, label: "시세전망",       desc: "AI 시세 예측",          color: "#ff9f0a", bg: "rgba(255,159,10,0.09)" },
+  { href: "/prediction", icon: TrendingUp, label: "시세전망",       desc: "AI 시세 예측",          color: "var(--accent-warning)", bg: "rgba(var(--accent-warning-rgb), 0.09)" },
   { href: "/jeonse",     icon: Home,       label: "전세보호",       desc: "전세금 위험도 진단",     color: "#ff3b30", bg: "rgba(255,59,48,0.07)" },
   { href: "/assistant",  icon: Bot,        label: "AI 어시스턴트",  desc: "부동산 궁금증 해결",     color: "#0a84ff", bg: "rgba(10,132,255,0.09)" },
   { href: "/tax",        icon: Calculator, label: "세금계산",       desc: "취득세·양도세 계산",     color: "#8250ff", bg: "rgba(130,80,255,0.07)" },

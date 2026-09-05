@@ -48,7 +48,7 @@ export function PropertyInfoHeader({ property, monitorDays }: Props) {
               {!property.commUniqueNo && (
                 <span
                   className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
-                  style={{ background: "rgba(255,159,10,0.12)", color: "#b86f00" }}
+                  style={{ background: "rgba(var(--accent-warning-rgb), 0.12)", color: "#b86f00" }}
                   title="공식 등기 연계 없이 PDF로 직접 등록된 물건입니다. 원본 진위가 검증되지 않았습니다."
                 >
                   <AlertTriangle size={10} />

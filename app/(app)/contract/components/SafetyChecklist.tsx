@@ -18,9 +18,9 @@ const ITEMS = [
   },
   {
     icon: AlertTriangle,
-    color: "#ff9f0a",
-    bg: "rgba(255,159,10,0.06)",
-    border: "rgba(255,159,10,0.18)",
+    color: "var(--accent-warning)",
+    bg: "rgba(var(--accent-warning-rgb), 0.06)",
+    border: "rgba(var(--accent-warning-rgb), 0.18)",
     title: "등기부 말소 이력 확인",
     titleColor: "#b86f00",
     body: (
@@ -79,7 +79,7 @@ export function SafetyChecklist() {
           letterSpacing: "-0.02em",
         }}
       >
-        <ShieldAlert size={17} style={{ color: "#ff9f0a" }} />
+        <ShieldAlert size={17} style={{ color: "var(--accent-warning)" }} />
         계약 전 안전 체크리스트
       </h2>
 

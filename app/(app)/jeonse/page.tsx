@@ -38,7 +38,7 @@ const PROCEDURES = [
     icon: Gavel,
     title: "임차권등기명령",
     description: "보증금 미반환 시 법원 명령으로 이사 후에도 권리를 유지합니다",
-    badge: { text: "보증금 미반환 시", color: "#b86f00", bg: "rgba(255,159,10,0.10)" },
+    badge: { text: "보증금 미반환 시", color: "#b86f00", bg: "rgba(var(--accent-warning-rgb), 0.10)" },
     steps: 6, difficulty: "보통", diffColor: "#b86f00",
     requiresLandlord: false,
   },

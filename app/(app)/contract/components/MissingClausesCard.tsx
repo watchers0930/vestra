@@ -30,7 +30,7 @@ export function MissingClausesCard({ missingClauses }: Props) {
           letterSpacing: "-0.02em",
         }}
       >
-        <AlertTriangle size={17} style={{ color: "#ff9f0a" }} />
+        <AlertTriangle size={17} style={{ color: "var(--accent-warning)" }} />
         누락된 중요 조항
       </h2>
       <div
@@ -47,8 +47,8 @@ export function MissingClausesCard({ missingClauses }: Props) {
               key={idx}
               style={{
                 borderRadius: "14px",
-                border: `1px solid ${isHigh ? "rgba(255,59,48,0.22)" : "rgba(255,159,10,0.22)"}`,
-                background: isHigh ? "rgba(255,59,48,0.04)" : "rgba(255,159,10,0.04)",
+                border: `1px solid ${isHigh ? "rgba(255,59,48,0.22)" : "rgba(var(--accent-warning-rgb), 0.22)"}`,
+                background: isHigh ? "rgba(255,59,48,0.04)" : "rgba(var(--accent-warning-rgb), 0.04)",
                 padding: "14px 16px",
               }}
             >
@@ -61,7 +61,7 @@ export function MissingClausesCard({ missingClauses }: Props) {
                     padding: "2px 8px",
                     borderRadius: "20px",
                     color: isHigh ? "#ff3b30" : "#b86f00",
-                    background: isHigh ? "rgba(255,59,48,0.10)" : "rgba(255,159,10,0.10)",
+                    background: isHigh ? "rgba(255,59,48,0.10)" : "rgba(var(--accent-warning-rgb), 0.10)",
                     flexShrink: 0,
                   }}
                 >

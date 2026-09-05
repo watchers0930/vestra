@@ -19,7 +19,7 @@ const CIRCUMFERENCE = 2 * Math.PI * 46; // ≈ 289.03
 
 function getBarBg(risk: number): string {
   if (risk <= 30) return "linear-gradient(90deg, var(--brand-primary), #2997ff)";
-  if (risk <= 60) return "linear-gradient(90deg, #ff9f0a, #ffd60a)";
+  if (risk <= 60) return "linear-gradient(90deg, var(--accent-warning), #ffd60a)";
   return "linear-gradient(90deg, #ff3b30, #ff7b73)";
 }
 

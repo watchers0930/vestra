@@ -195,7 +195,7 @@ export function AddClientModal({ open, onClose, onSubmit }: AddClientModalProps)
             onClick={() => { setMode("direct"); setSelected(null); setError(""); }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
               mode === "direct"
-                ? "bg-[#ff9500]/10 text-[#b86f00]"
+                ? "bg-[var(--accent-warning)]/10 text-[#b86f00]"
                 : "text-[#86868b] hover:bg-[#f5f5f7]"
             }`}
           >

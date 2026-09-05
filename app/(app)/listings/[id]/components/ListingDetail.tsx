@@ -162,7 +162,7 @@ export function ListingDetail({ listing, onReload }: Props) {
                   const r = listing.jeonseRatio!;
                   const safe = r <= 80; const warn = r > 80 && r <= 100;
                   return (
-                    <div style={{ flex: 1, minWidth: 120, borderRadius: 14, padding: "14px 16px", background: safe ? "rgba(var(--accent-positive-rgb), 0.08)" : warn ? "rgba(255,149,0,0.08)" : "rgba(255,59,48,0.08)" }}>
+                    <div style={{ flex: 1, minWidth: 120, borderRadius: 14, padding: "14px 16px", background: safe ? "rgba(var(--accent-positive-rgb), 0.08)" : warn ? "rgba(var(--accent-warning-rgb), 0.08)" : "rgba(255,59,48,0.08)" }}>
                       <p style={{ fontSize: 10, color: "#aeaeb2", margin: "0 0 4px" }}>전세가율</p>
                       <p style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: 0, color: safe ? "var(--accent-positive)" : warn ? "#b45309" : "#c0392b" }}>{r.toFixed(1)}%</p>
                       <p style={{ fontSize: 11, color: "#6e6e73", margin: "4px 0 0" }}>{safe ? "✓ 안전" : warn ? "⚠ 주의 — 80% 초과" : "✕ 위험"}</p>

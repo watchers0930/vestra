@@ -54,7 +54,7 @@ export function ChatContent({ applicationId, partnerName, address }: Props) {
   }
 
   // 이니셜 색상 — 이름 첫 글자 기반으로 고정 색상
-  const AVATAR_COLORS = ["var(--brand-primary)", "#34c759", "#ff9500", "#af52de", "#ff3b30", "#5856d6"];
+  const AVATAR_COLORS = ["var(--brand-primary)", "#34c759", "var(--accent-warning)", "#af52de", "#ff3b30", "#5856d6"];
   const avatarColor = AVATAR_COLORS[(partnerName.charCodeAt(0) || 0) % AVATAR_COLORS.length];
 
   let lastDate = "";

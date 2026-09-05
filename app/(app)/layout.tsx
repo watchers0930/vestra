@@ -6,6 +6,7 @@ import ErrorBoundary from "@/components/common/ErrorBoundary";
 import SessionGuard from "@/components/auth/session-guard";
 import { auth } from "@/lib/auth";
 import RealtorGnb from "@/app/(biz)/_shared/RealtorGnb";
+import RealtorSubHero from "@/app/(biz)/_shared/RealtorSubHero";
 import RealtorFooter from "@/app/(biz)/_shared/RealtorFooter";
 
 const SKIP_LINK =
@@ -28,10 +29,11 @@ export default async function AppLayout({
         <div className="realtor-theme">
           <a href="#main-content" className={SKIP_LINK}>본문으로 건너뛰기</a>
           <RealtorGnb />
+          <RealtorSubHero />
           <main
             id="main-content"
             className="mx-auto px-4 lg:px-8"
-            style={{ maxWidth: 1200, minHeight: "calc(100vh - 80px)", paddingTop: 24, paddingBottom: 48 }}
+            style={{ maxWidth: 1200, minHeight: "calc(100vh - 280px)", paddingTop: 24, paddingBottom: 48 }}
           >
             <ErrorBoundary>{children}</ErrorBoundary>
           </main>

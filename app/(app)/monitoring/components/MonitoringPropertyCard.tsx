@@ -250,8 +250,8 @@ export function MonitoringPropertyCard({ property, unreadCount, highestRisk }: P
             <div className="flex items-center gap-3">
               {unreadCount > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <AlertCircle size={13} className="text-[#ff9f0a]" />
-                  <span className="text-[12px] font-semibold text-[#ff9f0a]">
+                  <AlertCircle size={13} className="text-[var(--accent-warning)]" />
+                  <span className="text-[12px] font-semibold text-[var(--accent-warning)]">
                     {unreadCount}건
                   </span>
                   {highestRisk && (

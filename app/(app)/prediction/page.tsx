@@ -383,7 +383,7 @@ export default function PredictionPage() {
           <div
             style={{
               padding: "16px 20px", borderRadius: "14px",
-              background: "rgba(255,159,10,0.05)", border: "1px solid rgba(255,159,10,0.18)",
+              background: "rgba(var(--accent-warning-rgb), 0.05)", border: "1px solid rgba(var(--accent-warning-rgb), 0.18)",
               fontSize: "12.5px", lineHeight: 1.65, color: "#6e6e73",
             }}
           >

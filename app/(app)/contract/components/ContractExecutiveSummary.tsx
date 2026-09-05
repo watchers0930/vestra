@@ -10,7 +10,7 @@ interface Props {
 
 const SEVERITY_STYLE: Record<ContractReviewIssue["severity"], { label: string; color: string; bg: string; border: string }> = {
   critical: { label: "긴급", color: "#ff3b30", bg: "rgba(255,59,48,0.07)", border: "rgba(255,59,48,0.22)" },
-  high: { label: "중요", color: "#ff9500", bg: "rgba(255,149,0,0.07)", border: "rgba(255,149,0,0.22)" },
+  high: { label: "중요", color: "var(--accent-warning)", bg: "rgba(var(--accent-warning-rgb), 0.07)", border: "rgba(var(--accent-warning-rgb), 0.22)" },
   warning: { label: "확인", color: "var(--brand-primary)", bg: "rgba(0,113,227,0.06)", border: "rgba(0,113,227,0.18)" },
   info: { label: "참고", color: "#6e6e73", bg: "rgba(0,0,0,0.04)", border: "rgba(0,0,0,0.10)" },
 };
@@ -103,14 +103,14 @@ export function ContractExecutiveSummary({ extractedInfo, reviewIssues = [] }: P
         <div
           style={{
             background: "#fff",
-            border: "1px solid rgba(255,149,0,0.20)",
+            border: "1px solid rgba(var(--accent-warning-rgb), 0.20)",
             borderRadius: "20px",
             boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
             padding: "24px",
           }}
         >
           <h2 style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "16px", fontWeight: 800, color: "#1d1d1f", marginBottom: "14px" }}>
-            <AlertTriangle size={18} strokeWidth={1.7} style={{ color: "#ff9500" }} />
+            <AlertTriangle size={18} strokeWidth={1.7} style={{ color: "var(--accent-warning)" }} />
             우선 검토 이슈
           </h2>
           <div style={{ display: "grid", gap: "10px" }}>

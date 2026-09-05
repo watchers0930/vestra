@@ -81,3 +81,26 @@ export const REALTOR_QUICK: QuickMenuItem[] = [
   { href: REALTOR_ROUTES.rights, label: "권리분석", sub: "등기부 진단", icon: "rights" },
   { href: REALTOR_ROUTES.priceMap, label: "시세지도", sub: "실거래 조회", icon: "priceMap" },
 ];
+
+/** 서브 페이지 히어로 카테고리 (경로 prefix → 라벨·설명) */
+export const REALTOR_PAGE_META: { prefix: string; label: string; desc: string }[] = [
+  { prefix: "/listings", label: "매물 관리", desc: "등록한 매물을 관리하고 거래 상태를 업데이트합니다" },
+  { prefix: "/agent", label: "중개관리", desc: "고객과 계약 현황을 한 곳에서 관리합니다" },
+  { prefix: "/e-contract", label: "전자계약", desc: "가계약서를 작성하고 서명을 진행합니다" },
+  { prefix: "/monitoring", label: "등기감시", desc: "등기부 변동을 실시간으로 감시합니다" },
+  { prefix: "/rights", label: "권리분석", desc: "등기부 권리관계를 AI가 분석합니다" },
+  { prefix: "/contract", label: "계약검토", desc: "계약서의 위험 조항을 AI가 검토합니다" },
+  { prefix: "/feasibility", label: "사업성분석", desc: "부동산 개발·투자 사업성을 분석합니다" },
+  { prefix: "/prediction", label: "시세전망", desc: "지역별 시세 흐름과 전망을 확인합니다" },
+  { prefix: "/price-map", label: "시세지도", desc: "지도에서 실거래가를 한눈에 확인합니다" },
+  { prefix: "/expert-connect", label: "전문가 연결", desc: "분야별 전문가와 상담을 연결합니다" },
+  { prefix: "/jeonse", label: "전세보호", desc: "전세 안전성을 분석하고 보호 절차를 안내합니다" },
+  { prefix: "/assistant", label: "AI 어시스턴트", desc: "부동산 궁금증을 AI에게 물어보세요" },
+  { prefix: "/tax", label: "세금계산", desc: "취득세·보유세·양도세를 계산합니다" },
+  { prefix: "/official-price", label: "공시가격 조회", desc: "개별공시지가·공동주택가격을 조회합니다" },
+  { prefix: "/api-hub", label: "API 데이터 허브", desc: "부동산 공공데이터를 활용합니다" },
+];
+
+export function getRealtorPageMeta(pathname: string) {
+  return REALTOR_PAGE_META.find((m) => pathname.startsWith(m.prefix)) ?? null;
+}

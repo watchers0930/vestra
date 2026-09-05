@@ -22,7 +22,7 @@ const TYPE_ICON: Record<string, LucideIcon> = {
 const TYPE_BG: Record<string, string> = {
   rights:      "rgba(0,113,227,0.09)",
   contract:    "rgba(var(--accent-positive-rgb), 0.09)",
-  prediction:  "rgba(255,159,10,0.09)",
+  prediction:  "rgba(var(--accent-warning-rgb), 0.09)",
   jeonse:      "rgba(255,59,48,0.07)",
   registry:    "rgba(130,80,255,0.07)",
   feasibility: "rgba(100,200,255,0.09)",
@@ -44,7 +44,7 @@ function getChip(summary: string): { label: string; color: string; bg: string } 
   if (s.includes("위험") || s.includes("고위험") || s.includes("불법") || s.includes("하락"))
     return { label: `↓ ${summary.slice(0, 18)}`, color: "#ff3b30", bg: "rgba(255,59,48,0.07)" };
   if (s.includes("주의") || s.includes("확인") || s.includes("권고") || s.includes("보증"))
-    return { label: `! ${summary.slice(0, 18)}`, color: "#b86f00", bg: "rgba(255,159,10,0.09)" };
+    return { label: `! ${summary.slice(0, 18)}`, color: "#b86f00", bg: "rgba(var(--accent-warning-rgb), 0.09)" };
   return { label: summary.slice(0, 20) || "분석 완료", color: "#6e6e73", bg: "rgba(0,0,0,0.05)" };
 }
 

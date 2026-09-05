@@ -394,7 +394,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
                   <span style={{ fontSize: "13px", color: "#3c3c43", flexShrink: 0 }}>호</span>
                 </div>
                 {(!dong.trim() || !ho.trim()) && (
-                  <p style={{ fontSize: "13px", color: "#ff9500", marginBottom: "8px", marginTop: "-4px" }}>
+                  <p style={{ fontSize: "13px", color: "var(--accent-warning)", marginBottom: "8px", marginTop: "-4px" }}>
                     ⚠ 동호수 미입력 시 소유자명 기준으로 조회되어 정확도가 낮아질 수 있습니다.
                   </p>
                 )}
@@ -408,7 +408,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
               placeholder={isApartment && (!dong.trim() || !ho.trim()) ? "등기부상 소유자명 (필수)" : "등기부상 소유자명"}
               style={{
                 ...inputStyle,
-                borderColor: isApartment && (!dong.trim() || !ho.trim()) && !issueOwnerName.trim() ? "rgba(255,149,0,0.4)" : "rgba(0,0,0,0.10)",
+                borderColor: isApartment && (!dong.trim() || !ho.trim()) && !issueOwnerName.trim() ? "rgba(var(--accent-warning-rgb), 0.4)" : "rgba(0,0,0,0.10)",
               }}
               disabled={isProcessing}
             />

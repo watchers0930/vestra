@@ -296,7 +296,7 @@ export function JeonseRightForm() {
       {/* 등기의무자 등기필정보 */}
       <div style={card}>
         <div style={title}>등기의무자 등기필정보</div>
-        <div style={{ marginBottom: "12px", padding: "10px 12px", background: "rgba(255,159,10,0.08)", border: "1px solid rgba(255,159,10,0.22)", borderRadius: "10px", fontSize: "12.5px", color: "#7a4f00", lineHeight: 1.6 }}>
+        <div style={{ marginBottom: "12px", padding: "10px 12px", background: "rgba(var(--accent-warning-rgb), 0.08)", border: "1px solid rgba(var(--accent-warning-rgb), 0.22)", borderRadius: "10px", fontSize: "12.5px", color: "#7a4f00", lineHeight: 1.6 }}>
           아래 일련번호·비밀번호는 <strong>임대인이 소유권 등기 시 발급받은 등기필증</strong>에 기재된 정보입니다. 임대인에게 직접 확인 후 입력하세요.
         </div>
         <div style={{ marginBottom: "12px" }}>

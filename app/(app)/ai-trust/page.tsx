@@ -61,7 +61,7 @@ function AccuracyBar({ value, label }: { value: number; label: string }) {
 const CHART_COLORS = {
   jeonse: "var(--accent-positive)",
   rights: "#3b82f6",
-  prediction: "#f59e0b",
+  prediction: "var(--accent-warning)",
   contract: "#8b5cf6",
 };
 

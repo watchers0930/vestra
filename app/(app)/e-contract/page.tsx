@@ -66,8 +66,8 @@ export default function EContractPage() {
   // ── 작성 단계: 2칼럼 (좌 설명 6 : 우 선택·입력 4)
   return (
     <AuthGuard featureName="가계약서">
-      <div className="mx-auto py-6" style={{ maxWidth: 900 }}>
-        <div className="econtract-2col" style={{ display: "grid", gridTemplateColumns: "minmax(0, 6fr) minmax(0, 4fr)", gap: 32, alignItems: "start", marginTop: 24 }}>
+      <div className="py-6">
+        <div className="econtract-2col" style={{ display: "grid", gridTemplateColumns: "minmax(0, 6fr) minmax(0, 4fr)", gap: 32, alignItems: "start" }}>
           {/* 좌측: 설명 */}
           <ContractGuidePanel step={step} />
 
@@ -182,7 +182,7 @@ export default function EContractPage() {
                 {form.specialTerms && (
                   <div><p className={labelCls}>특약사항</p><p className="text-xs text-[#3a3f55] whitespace-pre-wrap bg-[#f5f6fa] rounded-lg p-3">{form.specialTerms}</p></div>
                 )}
-                <p className="text-[11px] text-[#b86f00] bg-[rgba(255,149,0,0.08)] rounded-lg p-2.5">본 가계약서는 당사자 간 <b>오프라인 본계약 체결로 확정</b>됩니다.</p>
+                <p className="text-[11px] text-[#b86f00] bg-[rgba(var(--accent-warning-rgb), 0.08)] rounded-lg p-2.5">본 가계약서는 당사자 간 <b>오프라인 본계약 체결로 확정</b>됩니다.</p>
                 <div className="flex justify-between pt-1">
                   <button onClick={goPrev} className="flex items-center gap-1 text-sm text-[#6b7180]"><ChevronLeft size={16} /> 이전</button>
                   <button onClick={submit} disabled={submitting} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2e4bd8] text-white text-sm font-semibold disabled:bg-[#aeb2bf]">

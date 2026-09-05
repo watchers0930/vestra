@@ -22,7 +22,7 @@ interface Props {
 
 const RISK_COLOR: Record<string, string> = {
   critical: "#ff3b30",
-  high: "#ff9500",
+  high: "var(--accent-warning)",
   medium: "#ffcc00",
   low: "var(--accent-positive)",
 };
@@ -269,9 +269,9 @@ export function AlertTimeline({ alerts, deposit, property, onMarkRead }: Props) 
                             }
                             className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-colors"
                             style={{
-                              background: alert.riskLevel === "critical" ? "rgba(255,59,48,0.10)" : "rgba(255,149,0,0.10)",
-                              color: alert.riskLevel === "critical" ? "#ff3b30" : "#ff9500",
-                              border: `1px solid ${alert.riskLevel === "critical" ? "rgba(255,59,48,0.25)" : "rgba(255,149,0,0.25)"}`,
+                              background: alert.riskLevel === "critical" ? "rgba(255,59,48,0.10)" : "rgba(var(--accent-warning-rgb), 0.10)",
+                              color: alert.riskLevel === "critical" ? "#ff3b30" : "var(--accent-warning)",
+                              border: `1px solid ${alert.riskLevel === "critical" ? "rgba(255,59,48,0.25)" : "rgba(var(--accent-warning-rgb), 0.25)"}`,
                             }}
                           >
                             <ShieldAlert size={12} />

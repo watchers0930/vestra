@@ -25,7 +25,7 @@ type TaxTab = "acquisition" | "holding" | "transfer" | "scenario";
 const TAB_COLORS: Record<TaxTab, string> = {
   acquisition: "var(--brand-primary)",
   holding: "var(--accent-positive)",
-  transfer: "#f59e0b",
+  transfer: "var(--accent-warning)",
   scenario: "#7c3aed",
 };
 
@@ -156,7 +156,7 @@ export default function TaxPage() {
   const comparisonData = [
     { name: "취득세", value: acqResult.totalTax || acqResult.tax, fill: "var(--brand-primary)" },
     { name: "보유세(연)", value: holdResult.totalTax, fill: "var(--accent-positive)" },
-    { name: "양도세", value: transResult.totalTax || transResult.tax || 0, fill: "#f59e0b" },
+    { name: "양도세", value: transResult.totalTax || transResult.tax || 0, fill: "var(--accent-warning)" },
   ];
 
   const cardStyle = { background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", padding: "24px" };

@@ -41,13 +41,13 @@ interface Props {
 
 const NEEDS_STYLE: Record<string, { color: string; bg: string; border: string }> = {
   required:    { color: "#ff3b30", bg: "rgba(255,59,48,0.10)",   border: "rgba(255,59,48,0.22)"  },
-  recommended: { color: "#b86f00", bg: "rgba(255,159,10,0.10)",  border: "rgba(255,159,10,0.22)" },
+  recommended: { color: "#b86f00", bg: "rgba(var(--accent-warning-rgb), 0.10)",  border: "rgba(var(--accent-warning-rgb), 0.22)" },
   optional:    { color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.10)",   border: "rgba(var(--accent-positive-rgb), 0.22)"  },
 };
 
 const RISK_STYLE: Record<string, { color: string; bg: string }> = {
   high:   { color: "#ff3b30", bg: "rgba(255,59,48,0.10)"  },
-  medium: { color: "#b86f00", bg: "rgba(255,159,10,0.10)" },
+  medium: { color: "#b86f00", bg: "rgba(var(--accent-warning-rgb), 0.10)" },
   low:    { color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.10)"  },
 };
 
@@ -168,7 +168,7 @@ export function JeonseResultPanel({
                 marginBottom: "14px",
               }}
             >
-              <AlertTriangle size={16} strokeWidth={1.5} style={{ color: "#ff9f0a" }} />
+              <AlertTriangle size={16} strokeWidth={1.5} style={{ color: "var(--accent-warning)" }} />
               권고사항
             </h4>
             <ul style={{ display: "flex", flexDirection: "column", gap: "8px", listStyle: "none", padding: 0, margin: 0 }}>
@@ -308,12 +308,12 @@ export function JeonseResultPanel({
                   padding: "10px 16px",
                   borderRadius: "12px",
                   border: "none",
-                  background: docLoading && activeDocType === "lease" ? "rgba(0,0,0,0.07)" : "rgba(255,159,10,0.90)",
+                  background: docLoading && activeDocType === "lease" ? "rgba(0,0,0,0.07)" : "rgba(var(--accent-warning-rgb), 0.90)",
                   color: docLoading && activeDocType === "lease" ? "#aeaeb2" : "#fff",
                   fontSize: "13px",
                   fontWeight: 600,
                   cursor: docLoading ? "not-allowed" : "pointer",
-                  boxShadow: docLoading ? "none" : "0 2px 10px rgba(255,159,10,0.30)",
+                  boxShadow: docLoading ? "none" : "0 2px 10px rgba(var(--accent-warning-rgb), 0.30)",
                   transition: "all 0.15s",
                 }}
               >
@@ -394,7 +394,7 @@ export function JeonseResultPanel({
       <div
         style={{
           padding: "16px 20px", borderRadius: "14px",
-          background: "rgba(255,159,10,0.05)", border: "1px solid rgba(255,159,10,0.18)",
+          background: "rgba(var(--accent-warning-rgb), 0.05)", border: "1px solid rgba(var(--accent-warning-rgb), 0.18)",
           fontSize: "12.5px", lineHeight: 1.65, color: "#6e6e73",
         }}
       >

@@ -69,7 +69,7 @@ export default function RentalYieldPage() {
     ].filter((d) => d.value > 0);
   }, [result, form]);
 
-  const PIE_COLORS = ["#4f46e5", "#f59e0b", "#ef4444", "#9ca3af"];
+  const PIE_COLORS = ["#4f46e5", "var(--accent-warning)", "#ef4444", "#9ca3af"];
 
   const yieldColor = (rate: number) => {
     if (rate >= 5) return "text-green-600";

@@ -207,7 +207,7 @@ export default function OfficialPricePage() {
               icon={Landmark}
               title="개별공시지가"
               subtitle="토지"
-              color="#f59e0b"
+              color="var(--accent-warning)"
               price={result.landPrice?.totalPrice ?? null}
               rows={result.landPrice ? [
                 { label: "㎡당 공시지가", value: formatKRW(result.landPrice.price) },

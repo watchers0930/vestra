@@ -295,7 +295,7 @@ export default function ClientDetailPage() {
                         ) : (
                           <span
                             className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
-                            style={{ background: "rgba(255,149,0,0.1)", color: "#b86f00", border: "1px solid rgba(255,149,0,0.3)" }}
+                            style={{ background: "rgba(var(--accent-warning-rgb), 0.1)", color: "#b86f00", border: "1px solid rgba(var(--accent-warning-rgb), 0.3)" }}
                           >
                             🕐 대기 중
                           </span>
@@ -306,7 +306,7 @@ export default function ClientDetailPage() {
                         onClick={() => setRegistryAddress(prop.address)}
                         title="등기부 분석"
                         className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold transition-colors"
-                        style={{ background: "rgba(255,149,0,0.08)", color: "#b86f00", border: "1px solid rgba(255,149,0,0.25)" }}
+                        style={{ background: "rgba(var(--accent-warning-rgb), 0.08)", color: "#b86f00", border: "1px solid rgba(var(--accent-warning-rgb), 0.25)" }}
                       >
                         <FileText size={11} />
                         AI 분석
@@ -327,7 +327,7 @@ export default function ClientDetailPage() {
               !isTypeA ? (
                 <div
                   className="mb-5 p-4 rounded-xl"
-                  style={{ background: "rgba(255,149,0,0.06)", border: "1px solid rgba(255,149,0,0.20)" }}
+                  style={{ background: "rgba(var(--accent-warning-rgb), 0.06)", border: "1px solid rgba(var(--accent-warning-rgb), 0.20)" }}
                 >
                   <p className="text-[12.5px] font-semibold text-[#b86f00] mb-1">등기감시 물건이 없습니다</p>
                   <p className="text-[12px] text-[#6e6e73] leading-relaxed">

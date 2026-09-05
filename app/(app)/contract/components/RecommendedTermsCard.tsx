@@ -8,7 +8,7 @@ import type { RecommendedTermsResult } from "../types";
 
 const PRIORITY_CONFIG = {
   critical: { label: "필수", color: "#ff3b30", bg: "rgba(255,59,48,0.08)", border: "rgba(255,59,48,0.18)", icon: AlertTriangle },
-  high:     { label: "권장", color: "#ff9500", bg: "rgba(255,149,0,0.08)", border: "rgba(255,149,0,0.18)", icon: AlertCircle },
+  high:     { label: "권장", color: "var(--accent-warning)", bg: "rgba(var(--accent-warning-rgb), 0.08)", border: "rgba(var(--accent-warning-rgb), 0.18)", icon: AlertCircle },
   medium:   { label: "선택", color: "var(--brand-primary)", bg: "rgba(0,113,227,0.08)", border: "rgba(0,113,227,0.18)", icon: Info },
 } as const;
 
@@ -16,7 +16,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   "보증금": "#ff3b30",
   "등기": "#af52de",
   "임차인": "var(--brand-primary)",
-  "임대인": "#ff9500",
+  "임대인": "var(--accent-warning)",
   "기타": "#6e6e73",
 };
 
@@ -121,7 +121,7 @@ export function RecommendedTermsCard({ recommendedTerms }: Props) {
               <p style={{ fontSize: "11.5px", color: "#6e6e73", margin: "2px 0 0" }}>
                 {criticalCount > 0 && <span style={{ color: "#ff3b30", fontWeight: 600 }}>필수 {criticalCount}건</span>}
                 {criticalCount > 0 && highCount > 0 && " · "}
-                {highCount > 0 && <span style={{ color: "#ff9500", fontWeight: 600 }}>권장 {highCount}건</span>}
+                {highCount > 0 && <span style={{ color: "var(--accent-warning)", fontWeight: 600 }}>권장 {highCount}건</span>}
                 {(criticalCount > 0 || highCount > 0) && " · "}
                 총 {recommendedTerms.terms.length}건
               </p>
