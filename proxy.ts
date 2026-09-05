@@ -60,9 +60,20 @@ export default async function proxy(req: NextRequest) {
   if (pathname === "/") {
     const token = await getToken(req);
     if (token) {
+      // 역할별 홈으로 직접 보낸다(개인·중개사는 /dashboard 구 UI를 경유하지 않음).
       if (token.role === "ADMIN") {
         return NextResponse.redirect(new URL("/admin", req.url));
       }
+      if (token.role === "LAWYER") {
+        return NextResponse.redirect(new URL("/lawyer", req.url));
+      }
+      if (token.role === "REALESTATE") {
+        return NextResponse.redirect(new URL("/realtor", req.url));
+      }
+      if (token.role === "PERSONAL") {
+        return NextResponse.redirect(new URL("/home", req.url));
+      }
+      // RENTAL_BIZ / BUSINESS: 사업자 대시보드
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
   }
