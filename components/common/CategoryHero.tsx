@@ -18,7 +18,7 @@ export function CategoryHero({
   return (
     <section
       style={{
-        marginTop: "40px",
+        marginTop: "var(--cat-hero-mt, 40px)",
         marginBottom,
       }}
     >

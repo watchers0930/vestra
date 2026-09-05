@@ -353,6 +353,8 @@ body {
   /* 주의 색: 개인은 주황 유지, 부동산은 그레이로 통일(4색) */
   --accent-warning: #ff9f0a;
   --accent-warning-rgb: 255, 159, 10;
+  /* CategoryHero 상단 여백: 개인 40px, 부동산은 절반(서브히어로가 있어 여백 축소) */
+  --cat-hero-mt: 40px;
 }
 .realtor-theme {
   --brand-primary: #2e4bd8;
@@ -361,7 +363,10 @@ body {
   --accent-positive-rgb: 46, 75, 216;
   --accent-warning: #6e6e73;
   --accent-warning-rgb: 110, 110, 115;
+  --cat-hero-mt: 20px;
 }
+/* 부동산: 서브히어로 아래 페이지 상단 여백 절반 (pt-[52px] → 26px) */
+.realtor-theme .pt-\[52px\] { padding-top: 26px !important; }
 
 /* 부동산 콘텐츠 컨테이너를 헤더 GNB 폭(max-w-1200 · 좌우 32px)에 정렬한다.
  * 각 페이지가 자체 max-width/여백(max-w-7xl·좁은 폼·풀폭)을 가져 nav와 어긋나므로,
