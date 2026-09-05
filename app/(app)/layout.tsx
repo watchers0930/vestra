@@ -32,8 +32,8 @@ export default async function AppLayout({
           <RealtorSubHero />
           <main
             id="main-content"
-            className="mx-auto px-4 lg:px-8"
-            style={{ maxWidth: 1200, minHeight: "calc(100vh - 280px)", paddingTop: 50, paddingBottom: 48 }}
+            className="mx-auto"
+            style={{ maxWidth: 1200, minHeight: "calc(100vh - 280px)", paddingTop: 50, paddingBottom: 48, paddingLeft: 32, paddingRight: 32 }}
           >
             <ErrorBoundary>{children}</ErrorBoundary>
           </main>
