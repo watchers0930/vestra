@@ -58,7 +58,6 @@ export const REALTOR_SUPPORT: RealtorMenuItem[] = [
   { href: REALTOR_ROUTES.assistant, label: "AI 어시스턴트" },
   { href: REALTOR_ROUTES.tax, label: "세금계산" },
   { href: REALTOR_ROUTES.officialPrice, label: "공시가격 조회" },
-  { href: REALTOR_ROUTES.apiHub, label: "API 데이터 허브" },
 ];
 
 /** 자주 쓰는 기능 카드의 아이콘 키 (lucide 매핑용) */
