@@ -60,10 +60,11 @@ html, body {
   --font-mono: var(--font-geist-mono);
 }
 
-/* Mobile safe-area padding */
+/* Mobile safe-area padding — 고정 상단바(52px) 보상 포함(기존 38+52=90 유지).
+ * 페이지 wrapper의 pt-[52px]/paddingTop:52를 레이아웃으로 일원화하며 여기서 보상. */
 @media (max-width: 1023px) {
   .mobile-safe-top {
-    padding-top: max(38px, env(safe-area-inset-top, 38px)) !important;
+    padding-top: max(90px, calc(env(safe-area-inset-top, 0px) + 52px)) !important;
   }
 }
 
