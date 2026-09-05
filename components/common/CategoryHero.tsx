@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useSession } from "next-auth/react";
 
 type CategoryHeroProps = {
   badge: ReactNode;
@@ -15,6 +18,20 @@ export function CategoryHero({
   actions,
   marginBottom = "28px",
 }: CategoryHeroProps) {
+  const { data } = useSession();
+  const isRealtor = data?.user?.role === "REALESTATE";
+
+  // 부동산 계정: 서브 히어로가 카테고리 타이틀 역할 → 중복 헤더(badge/title/desc) 제거.
+  // 액션 버튼만 있으면 얇은 바로 남기고, 없으면 렌더하지 않아 콘텐츠가 곧바로 시작한다.
+  if (isRealtor) {
+    if (!actions) return null;
+    return (
+      <section style={{ margin: "0 0 16px", display: "flex", justifyContent: "flex-end" }}>
+        {actions}
+      </section>
+    );
+  }
+
   return (
     <section
       className="cat-hero"
