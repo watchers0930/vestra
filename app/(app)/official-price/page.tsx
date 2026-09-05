@@ -69,7 +69,7 @@ export default function OfficialPricePage() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0, paddingTop: "52px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       <DashboardPageTopbar current="공시가격 조회" primaryHref="/tax" primaryLabel="세금계산" />
       <CategoryHero
         badge="✨ 공시가격 조회"

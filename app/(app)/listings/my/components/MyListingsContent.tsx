@@ -78,7 +78,7 @@ export function MyListingsContent() {
   }
 
   return (
-    <div style={{ paddingBottom: 48, paddingTop: 8 }}>
+    <div style={{ paddingBottom: 48 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", color: "#1d1d1f" }}>내 매물</h1>

@@ -14,7 +14,7 @@ export default function KeepzipNewPage() {
   const { form, draft, loading, error, selectCause, setField, generateDraft, setDraftContent } = useKeepzipDraft();
 
   return (
-    <div style={{ paddingBottom: "48px", paddingTop: "52px" }}>
+    <div style={{ paddingBottom: "48px" }}>
       <DashboardPageTopbar current="내용증명 작성" primaryHref="/keepzip" primaryLabel="집키퍼" />
       <CategoryHero
         badge="📮 집키퍼 내용증명 (임대인)"

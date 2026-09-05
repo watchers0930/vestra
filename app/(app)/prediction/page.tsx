@@ -67,7 +67,7 @@ export default function PredictionPage() {
   }, [result, address]);
 
   return (
-    <div style={{ paddingBottom: "48px", paddingTop: "52px" }}>
+    <div style={{ paddingBottom: "48px" }}>
       <DashboardPageTopbar current="시세전망" primaryHref="/rights" primaryLabel="권리분석" />
       <CategoryHero
         badge="📈 시세전망"

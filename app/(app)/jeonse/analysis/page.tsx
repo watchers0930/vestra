@@ -23,7 +23,7 @@ export default function JeonsePage() {
   } = useJeonseAnalysis();
 
   return (
-    <div style={{ paddingBottom: "48px", paddingTop: "52px" }}>
+    <div style={{ paddingBottom: "48px" }}>
       <DashboardPageTopbar current="전세 안전 분석" primaryHref="/jeonse" primaryLabel="전세보호" />
       <CategoryHero
         badge="🛡️ 전세 안전 분석"

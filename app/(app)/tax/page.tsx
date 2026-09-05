@@ -163,7 +163,7 @@ export default function TaxPage() {
   const sectionGap = { marginBottom: "20px" };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0, paddingTop: "52px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       <DashboardPageTopbar current="세금계산" primaryHref="/rights" primaryLabel="권리분석" />
 
       <CategoryHero

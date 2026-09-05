@@ -214,7 +214,7 @@ export default function ChecklistPage() {
   const STAGES: Stage[] = ["계약 전", "계약 중", "계약 후", "입주 전", "입주 후"];
 
   return (
-    <div style={{ paddingBottom: "48px", paddingTop: "52px" }}>
+    <div style={{ paddingBottom: "48px" }}>
       <DashboardPageTopbar current="계약 체크리스트" primaryHref="/jeonse" primaryLabel="전세보호" />
       <CategoryHero
         badge="📋 체크리스트"

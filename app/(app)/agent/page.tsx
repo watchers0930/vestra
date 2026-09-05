@@ -34,7 +34,7 @@ export default function AgentPage() {
 
   return (
     <AuthGuard featureName="중개관리">
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 pb-8 sm:px-6">
       {/* 헤더 */}
       <div className="flex items-start justify-between">
         <PageHeader

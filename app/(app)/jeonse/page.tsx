@@ -62,7 +62,7 @@ const ORDER_STEPS = [
 
 export default function JeonseHubPage() {
   return (
-    <div style={{ paddingBottom: "48px", paddingTop: "52px" }}>
+    <div style={{ paddingBottom: "48px" }}>
       <DashboardPageTopbar current="전세보호" primaryHref="/jeonse/analysis" primaryLabel="전세분석" />
       <CategoryHero
         badge="🏠 전세보호"

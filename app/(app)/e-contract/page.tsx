@@ -66,7 +66,7 @@ export default function EContractPage() {
   // ── 작성 단계: 2칼럼 (좌 설명 6 : 우 선택·입력 4)
   return (
     <AuthGuard featureName="가계약서">
-      <div className="py-6">
+      <div className="pb-6">
         <div className="econtract-2col" style={{ display: "grid", gridTemplateColumns: "minmax(0, 6fr) minmax(0, 4fr)", gap: 32, alignItems: "start" }}>
           {/* 좌측: 설명 */}
           <ContractGuidePanel step={step} />
