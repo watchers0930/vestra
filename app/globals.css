@@ -357,10 +357,8 @@ body {
  * 각 페이지가 자체 max-width/여백(max-w-7xl·좁은 폼·풀폭)을 가져 nav와 어긋나므로,
  * main 직속 자식의 자체 컨테이너 스타일을 무력화해 main 폭을 그대로 따르게 한다. */
 .realtor-theme main > * {
-  /* max-width는 각 페이지 자체 값 존중(폼=좁게, 리스트=넓게).
-   * 좌측 정렬·이중 여백만 제거해 헤더 GNB와 좌측을 맞춘다. */
-  margin-left: 0 !important;
-  margin-right: 0 !important;
+  /* 이중 좌우 여백만 제거(main이 여백 담당). max-width·정렬(mx-auto)은 각 페이지
+   * 자체 값 존중 → 리스트=풀폭, 폼=중앙, 넓은 페이지=1200 꽉참(nav 정렬). */
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
