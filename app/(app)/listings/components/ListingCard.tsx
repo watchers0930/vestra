@@ -95,7 +95,7 @@ export function ListingCard({ listing, forceCertified, href }: Props) {
           {showCertified && (
             <span style={{
               position: "absolute", top: 10, right: 10,
-              background: "#22c55e", color: "#fff",
+              background: "var(--accent-positive)", color: "#fff",
               fontSize: 12, fontWeight: 500, padding: "3px 9px", borderRadius: 12,
               display: "flex", alignItems: "center", gap: 4,
             }}>

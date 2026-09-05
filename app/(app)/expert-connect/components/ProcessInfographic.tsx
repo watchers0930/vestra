@@ -12,8 +12,8 @@ const STEPS = [
   {
     icon: UserCheck, label: "2단계: 전문가 정밀 검증",
     desc: "공인중개사·법무사가\nAI 분석 결과를 교차 검증",
-    badge: "24시간 내 완료", badgeColor: "#10b981", badgeBg: "rgba(16,185,129,0.10)",
-    iconColor: "#10b981", iconBg: "rgba(16,185,129,0.15)",
+    badge: "24시간 내 완료", badgeColor: "var(--accent-positive)", badgeBg: "rgba(16,185,129,0.10)",
+    iconColor: "var(--accent-positive)", iconBg: "rgba(16,185,129,0.15)",
   },
   {
     icon: FileCheck, label: "최종: 검증 완료 보고서",

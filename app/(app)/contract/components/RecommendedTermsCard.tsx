@@ -137,7 +137,7 @@ export function RecommendedTermsCard({ recommendedTerms }: Props) {
                 fontSize: "11.5px", fontWeight: 500, color: "#1d1d1f", cursor: "pointer",
               }}
             >
-              {allCopied ? <Check size={12} style={{ color: "#30d158" }} /> : <Copy size={12} />}
+              {allCopied ? <Check size={12} style={{ color: "var(--accent-positive)" }} /> : <Copy size={12} />}
               {allCopied ? "복사됨" : "전체 복사"}
             </button>
             <button
@@ -246,7 +246,7 @@ export function RecommendedTermsCard({ recommendedTerms }: Props) {
                           fontSize: "11px", fontWeight: 500, color: "#1d1d1f", cursor: "pointer",
                         }}
                       >
-                        {isCopied ? <Check size={11} style={{ color: "#30d158" }} /> : <Copy size={11} />}
+                        {isCopied ? <Check size={11} style={{ color: "var(--accent-positive)" }} /> : <Copy size={11} />}
                         {isCopied ? "복사됨" : "복사"}
                       </button>
                     </div>

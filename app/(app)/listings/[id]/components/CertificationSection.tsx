@@ -277,9 +277,9 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
                 const r = safety.jeonseRatio!;
                 const safe = r <= 80; const warn = r > 80 && r <= 100;
                 return (
-                  <div style={{ flex: 1, minWidth: 110, borderRadius: 12, padding: "12px 14px", background: safe ? "rgba(52,199,89,0.08)" : warn ? "rgba(255,149,0,0.08)" : "rgba(255,59,48,0.08)" }}>
+                  <div style={{ flex: 1, minWidth: 110, borderRadius: 12, padding: "12px 14px", background: safe ? "rgba(var(--accent-positive-rgb), 0.08)" : warn ? "rgba(255,149,0,0.08)" : "rgba(255,59,48,0.08)" }}>
                     <p style={{ fontSize: 10, color: "#aeaeb2", margin: "0 0 4px" }}>전세가율</p>
-                    <p style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-0.02em", margin: 0, color: safe ? "#1a9e45" : warn ? "#b45309" : "#c0392b" }}>{r.toFixed(1)}%</p>
+                    <p style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-0.02em", margin: 0, color: safe ? "var(--accent-positive)" : warn ? "#b45309" : "#c0392b" }}>{r.toFixed(1)}%</p>
                     <p style={{ fontSize: 11, color: "#6e6e73", margin: "4px 0 0" }}>{safe ? "✓ 안전" : warn ? "⚠ 주의 — 80% 초과" : "✕ 위험"}</p>
                   </div>
                 );
@@ -288,9 +288,9 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
                 const ins = safety.insurance!;
                 const eligible = ins.hugEligible || ins.sgiEligible || ins.hfEligible;
                 return (
-                  <div style={{ flex: 1, minWidth: 110, borderRadius: 12, padding: "12px 14px", background: eligible ? "rgba(52,199,89,0.08)" : "rgba(255,59,48,0.06)" }}>
+                  <div style={{ flex: 1, minWidth: 110, borderRadius: 12, padding: "12px 14px", background: eligible ? "rgba(var(--accent-positive-rgb), 0.08)" : "rgba(255,59,48,0.06)" }}>
                     <p style={{ fontSize: 10, color: "#aeaeb2", margin: "0 0 4px" }}>전세보증보험</p>
-                    <p style={{ fontSize: 13, fontWeight: 800, margin: 0, color: eligible ? "#1a9e45" : "#c0392b" }}>
+                    <p style={{ fontSize: 13, fontWeight: 800, margin: 0, color: eligible ? "var(--accent-positive)" : "#c0392b" }}>
                       {ins.hugEligible ? "HUG 가입 가능" : ins.sgiEligible ? "SGI 가입 가능" : ins.hfEligible ? "HF 가입 가능" : "가입 어려움"}
                     </p>
                   </div>

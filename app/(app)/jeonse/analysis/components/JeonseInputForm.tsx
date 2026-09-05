@@ -98,21 +98,21 @@ export function JeonseInputForm({ formData, setFormData, loading, registryLoadin
           onDrop={handleDrop}
           onClick={() => fileRef.current?.click()}
           style={{
-            border: `2px dashed ${hasRegistry ? "#30d158" : "#d2d2d7"}`,
+            border: `2px dashed ${hasRegistry ? "var(--accent-positive)" : "#d2d2d7"}`,
             borderRadius: "12px",
             padding: "16px 20px",
             display: "flex",
             alignItems: "center",
             gap: "12px",
             cursor: "pointer",
-            background: hasRegistry ? "rgba(48,209,88,0.04)" : "#fafafa",
+            background: hasRegistry ? "rgba(var(--accent-positive-rgb), 0.04)" : "#fafafa",
             transition: "all 0.15s",
           }}
         >
           {registryLoading ? (
             <Loader2 size={20} className="animate-spin" style={{ color: "var(--brand-primary)", flexShrink: 0 }} />
           ) : hasRegistry ? (
-            <CheckCircle2 size={20} style={{ color: "#30d158", flexShrink: 0 }} />
+            <CheckCircle2 size={20} style={{ color: "var(--accent-positive)", flexShrink: 0 }} />
           ) : (
             <UploadCloud size={20} style={{ color: "#aeaeb2", flexShrink: 0 }} />
           )}
@@ -121,7 +121,7 @@ export function JeonseInputForm({ formData, setFormData, loading, registryLoadin
               <p style={{ fontSize: "13px", color: "var(--brand-primary)", margin: 0 }}>등기부등본 분석 중...</p>
             ) : hasRegistry ? (
               <>
-                <p style={{ fontSize: "13px", fontWeight: 600, color: "#30d158", margin: 0 }}>등기부등본 파싱 완료</p>
+                <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--accent-positive)", margin: 0 }}>등기부등본 파싱 완료</p>
                 {parsedOwner && (
                   <p style={{ fontSize: "11px", color: "#6e6e73", margin: "2px 0 0" }}>소유자: {parsedOwner}</p>
                 )}
@@ -142,8 +142,8 @@ export function JeonseInputForm({ formData, setFormData, loading, registryLoadin
 
       {/* 소유자(임대인) 표시 */}
       {parsedOwner && (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px", borderRadius: "10px", background: "rgba(48,209,88,0.06)", border: "1px solid rgba(48,209,88,0.2)" }}>
-          <User size={13} style={{ color: "#30d158", flexShrink: 0 }} />
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px", borderRadius: "10px", background: "rgba(var(--accent-positive-rgb), 0.06)", border: "1px solid rgba(var(--accent-positive-rgb), 0.2)" }}>
+          <User size={13} style={{ color: "var(--accent-positive)", flexShrink: 0 }} />
           <span style={{ fontSize: "12.5px", color: "#1d1d1f" }}>
             등기상 소유자(임대인): <strong>{parsedOwner}</strong>
           </span>

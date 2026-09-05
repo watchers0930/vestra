@@ -6,7 +6,7 @@ import type { AnalyzedClause } from "../types";
 const RISK_CONFIG = {
   high:    { color: "#ff3b30", bg: "rgba(255,59,48,0.06)",   border: "rgba(255,59,48,0.25)",  accent: "#ff3b30", icon: XCircle,       label: "위험"  },
   warning: { color: "#b86f00", bg: "rgba(255,159,10,0.06)",  border: "rgba(255,159,10,0.25)", accent: "#ff9f0a", icon: AlertTriangle, label: "주의"  },
-  safe:    { color: "#1a9e45", bg: "rgba(48,209,88,0.05)",   border: "rgba(48,209,88,0.22)",  accent: "#30d158", icon: CheckCircle,   label: "안전"  },
+  safe:    { color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.05)",   border: "rgba(var(--accent-positive-rgb), 0.22)",  accent: "var(--accent-positive)", icon: CheckCircle,   label: "안전"  },
 } as const;
 
 interface Props { clauses: AnalyzedClause[] }

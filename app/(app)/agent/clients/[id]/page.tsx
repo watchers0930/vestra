@@ -288,7 +288,7 @@ export default function ClientDetailPage() {
                             href={`/monitoring/${prop.monitoredProperty.id}`}
                             onClick={(e) => e.stopPropagation()}
                             className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold hover:opacity-80 transition-opacity"
-                            style={{ background: "rgba(52,199,89,0.1)", color: "#1a7f37", border: "1px solid rgba(52,199,89,0.3)" }}
+                            style={{ background: "rgba(var(--accent-positive-rgb), 0.1)", color: "#1a7f37", border: "1px solid rgba(var(--accent-positive-rgb), 0.3)" }}
                           >
                             🛡 감시 중
                           </Link>

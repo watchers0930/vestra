@@ -59,7 +59,7 @@ export function UploadStep({
         <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "20px", boxShadow: "0 2px 16px rgba(0,0,0,0.05)", overflow: "hidden" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "16px 24px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
             <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Sparkles size={16} color="#22c55e" strokeWidth={1.8} />
+              <Sparkles size={16} color="var(--accent-positive)" strokeWidth={1.8} />
             </div>
             <div>
               <p style={{ fontSize: "13px", fontWeight: 700, color: "#1d1d1f", margin: 0 }}>파싱 결과</p>
@@ -74,7 +74,7 @@ export function UploadStep({
                   <span style={{ fontSize: "11px", color: "#6e6e73" }}>{f.extractedCount}개 항목</span>
                   {typeof f.pageCount === "number" && <span style={{ fontSize: "11px", color: "#6e6e73" }}>{f.pageCount}p</span>}
                   <span style={{ fontSize: "11px", color: "#6e6e73" }}>{(f.fileSize / (1024 * 1024)).toFixed(1)}MB</span>
-                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#16a34a", background: "#f0fdf4", padding: "2px 8px", borderRadius: "6px" }}>신뢰도 {f.confidence}%</span>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--accent-positive)", background: "#f0fdf4", padding: "2px 8px", borderRadius: "6px" }}>신뢰도 {f.confidence}%</span>
                 </div>
               </div>
             ))}

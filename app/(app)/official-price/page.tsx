@@ -194,7 +194,7 @@ export default function OfficialPricePage() {
               icon={Home}
               title="개별주택 공시가격"
               subtitle="단독주택 · 다가구"
-              color="#10b981"
+              color="var(--accent-positive)"
               price={result.housePrice?.price ?? null}
               rows={result.housePrice ? [
                 { label: "대지면적", value: result.housePrice.area ? `${result.housePrice.area}㎡` : "-" },

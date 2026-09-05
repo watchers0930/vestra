@@ -34,7 +34,7 @@ function formatWon(val: string | null) {
 
 const STATUS_INFO: Record<string, { label: string; color: string; bg: string }> = {
   PENDING:   { label: "검토 중",  color: "#b45309", bg: "rgba(251,191,36,0.12)" },
-  ACCEPTED:  { label: "수락됨",  color: "#1a9e45", bg: "rgba(52,199,89,0.12)"  },
+  ACCEPTED:  { label: "수락됨",  color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.12)"  },
   REJECTED:  { label: "거절됨",  color: "#c0392b", bg: "rgba(255,59,48,0.08)"  },
   WITHDRAWN: { label: "철회됨",  color: "#6e6e73", bg: "#f5f5f7"              },
 };
@@ -228,10 +228,10 @@ export function MyApplicationsContent() {
                   <div
                     style={{
                       padding: "10px 14px", borderRadius: 10, marginBottom: 14,
-                      background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.2)",
+                      background: "rgba(var(--accent-positive-rgb), 0.08)", border: "1px solid rgba(var(--accent-positive-rgb), 0.2)",
                     }}
                   >
-                    <p style={{ fontSize: 12, color: "#1a9e45", fontWeight: 600 }}>
+                    <p style={{ fontSize: 12, color: "var(--accent-positive)", fontWeight: 600 }}>
                       임대인이 의향서를 수락했습니다. 계약 진행을 협의해보세요.
                     </p>
                   </div>

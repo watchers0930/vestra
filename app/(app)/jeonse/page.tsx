@@ -12,7 +12,7 @@ const PROCEDURES = [
     title: "전입신고",
     description: "새 주소지로 주민등록을 이전하여 대항력을 확보합니다",
     badge: { text: "필수", color: "#ff3b30", bg: "rgba(255,59,48,0.10)" },
-    steps: 4, difficulty: "쉬움", diffColor: "#1a9e45",
+    steps: 4, difficulty: "쉬움", diffColor: "var(--accent-positive)",
     requiresLandlord: false,
   },
   {
@@ -21,7 +21,7 @@ const PROCEDURES = [
     title: "확정일자",
     description: "계약서에 확정일자를 받아 보증금 우선변제권을 확보합니다",
     badge: { text: "필수", color: "#ff3b30", bg: "rgba(255,59,48,0.10)" },
-    steps: 4, difficulty: "쉬움", diffColor: "#1a9e45",
+    steps: 4, difficulty: "쉬움", diffColor: "var(--accent-positive)",
     requiresLandlord: false,
   },
   {
@@ -29,7 +29,7 @@ const PROCEDURES = [
     icon: ShieldCheck,
     title: "전세권설정등기",
     description: "등기부에 물권으로 기록하여 가장 강력한 보호를 받습니다",
-    badge: { text: "최강 보호", color: "#1a9e45", bg: "rgba(48,209,88,0.10)" },
+    badge: { text: "최강 보호", color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.10)" },
     steps: 6, difficulty: "어려움", diffColor: "#ff3b30",
     requiresLandlord: true,
   },
@@ -48,7 +48,7 @@ const PROCEDURES = [
     title: "주택임대차 신고",
     description: "임대차 계약을 신고하면 확정일자가 자동 부여됩니다",
     badge: { text: "6천만원 초과 시 의무", color: "#004ab3", bg: "rgba(0,113,227,0.10)" },
-    steps: 4, difficulty: "쉬움", diffColor: "#1a9e45",
+    steps: 4, difficulty: "쉬움", diffColor: "var(--accent-positive)",
     requiresLandlord: false,
   },
 ];
@@ -57,7 +57,7 @@ const ORDER_STEPS = [
   { label: "전입신고",       description: "새 주소지로 주민등록을 이전하여 대항력을 확보합니다", color: "#ff3b30", bg: "rgba(255,59,48,0.10)" },
   { label: "확정일자",       description: "계약서에 확정일자를 받아 보증금 우선변제권을 확보합니다", color: "#ff3b30", bg: "rgba(255,59,48,0.10)" },
   { label: "주택임대차 신고", description: "보증금 6천만원 초과 시 30일 내 의무이며, 신고 시 확정일자가 자동 부여됩니다", color: "#004ab3", bg: "rgba(0,113,227,0.10)" },
-  { label: "전세권설정등기",  description: "등기부에 물권으로 기록하여 가장 강력한 보호를 받습니다", color: "#1a9e45", bg: "rgba(48,209,88,0.10)" },
+  { label: "전세권설정등기",  description: "등기부에 물권으로 기록하여 가장 강력한 보호를 받습니다", color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.10)" },
 ];
 
 export default function JeonseHubPage() {

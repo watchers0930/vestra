@@ -112,7 +112,7 @@ export function ListingDetail({ listing, onReload }: Props) {
               </span>
             </div>
             {listing.analysisId && (
-              <span style={{ position: "absolute", top: 12, right: 12, background: "rgba(52,199,89,0.9)", color: "#fff", borderRadius: 100, padding: "4px 11px", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ position: "absolute", top: 12, right: 12, background: "rgba(var(--accent-positive-rgb), 0.9)", color: "#fff", borderRadius: 100, padding: "4px 11px", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
                 <FileCheck2 size={11} strokeWidth={2} />AI분석 첨부
               </span>
             )}
@@ -162,9 +162,9 @@ export function ListingDetail({ listing, onReload }: Props) {
                   const r = listing.jeonseRatio!;
                   const safe = r <= 80; const warn = r > 80 && r <= 100;
                   return (
-                    <div style={{ flex: 1, minWidth: 120, borderRadius: 14, padding: "14px 16px", background: safe ? "rgba(52,199,89,0.08)" : warn ? "rgba(255,149,0,0.08)" : "rgba(255,59,48,0.08)" }}>
+                    <div style={{ flex: 1, minWidth: 120, borderRadius: 14, padding: "14px 16px", background: safe ? "rgba(var(--accent-positive-rgb), 0.08)" : warn ? "rgba(255,149,0,0.08)" : "rgba(255,59,48,0.08)" }}>
                       <p style={{ fontSize: 10, color: "#aeaeb2", margin: "0 0 4px" }}>전세가율</p>
-                      <p style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: 0, color: safe ? "#1a9e45" : warn ? "#b45309" : "#c0392b" }}>{r.toFixed(1)}%</p>
+                      <p style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: 0, color: safe ? "var(--accent-positive)" : warn ? "#b45309" : "#c0392b" }}>{r.toFixed(1)}%</p>
                       <p style={{ fontSize: 11, color: "#6e6e73", margin: "4px 0 0" }}>{safe ? "✓ 안전" : warn ? "⚠ 주의 — 80% 초과" : "✕ 위험"}</p>
                     </div>
                   );
@@ -173,9 +173,9 @@ export function ListingDetail({ listing, onReload }: Props) {
                   const ins = listing.insuranceResult!;
                   const eligible = ins.hugEligible || ins.sgiEligible || ins.hfEligible;
                   return (
-                    <div style={{ flex: 1, minWidth: 120, borderRadius: 14, padding: "14px 16px", background: eligible ? "rgba(52,199,89,0.08)" : "rgba(255,59,48,0.06)" }}>
+                    <div style={{ flex: 1, minWidth: 120, borderRadius: 14, padding: "14px 16px", background: eligible ? "rgba(var(--accent-positive-rgb), 0.08)" : "rgba(255,59,48,0.06)" }}>
                       <p style={{ fontSize: 10, color: "#aeaeb2", margin: "0 0 4px" }}>전세보증보험</p>
-                      <p style={{ fontSize: 13, fontWeight: 800, margin: 0, color: eligible ? "#1a9e45" : "#c0392b" }}>
+                      <p style={{ fontSize: 13, fontWeight: 800, margin: 0, color: eligible ? "var(--accent-positive)" : "#c0392b" }}>
                         {ins.hugEligible ? "HUG 가입 가능" : ins.sgiEligible ? "SGI 가입 가능" : ins.hfEligible ? "HF 가입 가능" : "가입 어려움"}
                       </p>
                     </div>
@@ -200,7 +200,7 @@ export function ListingDetail({ listing, onReload }: Props) {
             {/* 안심뱃지 */}
             {listing.isCertified && (
               <div style={{ marginBottom: 14 }}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 13px", borderRadius: 100, background: "linear-gradient(135deg, #0f6e3a 0%, #1db954 55%, #22c55e 100%)", color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: "0.05em", boxShadow: "0 3px 14px rgba(29,185,84,0.4), inset 0 1px 0 rgba(255,255,255,0.2)" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 13px", borderRadius: 100, background: "linear-gradient(135deg, #0f6e3a 0%, #1db954 55%, var(--accent-positive) 100%)", color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: "0.05em", boxShadow: "0 3px 14px rgba(29,185,84,0.4), inset 0 1px 0 rgba(255,255,255,0.2)" }}>
                   <ShieldCheck size={13} strokeWidth={2.5} />안심매물
                 </span>
               </div>
@@ -283,7 +283,7 @@ export function ListingDetail({ listing, onReload }: Props) {
             {canApply && (
               <div style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 10 }}>
                 {applicationSent ? (
-                  <div style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.25)", borderRadius: 14, padding: "15px 20px", textAlign: "center", fontSize: 13, fontWeight: 600, color: "#1a9e45" }}>
+                  <div style={{ background: "rgba(var(--accent-positive-rgb), 0.08)", border: "1px solid rgba(var(--accent-positive-rgb), 0.25)", borderRadius: 14, padding: "15px 20px", textAlign: "center", fontSize: 13, fontWeight: 600, color: "var(--accent-positive)" }}>
                     계약의향서를 전달했습니다
                   </div>
                 ) : (

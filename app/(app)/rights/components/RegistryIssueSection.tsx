@@ -275,7 +275,7 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
         border: "1px solid rgba(0,113,227,0.12)",
         borderRadius: "16px",
         overflow: "hidden",
-        background: "linear-gradient(135deg, rgba(0,113,227,0.06), rgba(48,209,88,0.05))",
+        background: "linear-gradient(135deg, rgba(0,113,227,0.06), rgba(var(--accent-positive-rgb), 0.05))",
       }}
     >
       <div style={{ padding: "16px" }}>
@@ -309,8 +309,8 @@ export function RegistryIssueSection({ applyIssuedRegistryAnalysis }: Props) {
 
         {paymentPhase === "done" && (
           <div style={{ textAlign: "center", padding: "16px 0", marginBottom: "12px" }}>
-            <CheckCircle size={28} style={{ color: "#30d158", margin: "0 auto 8px" }} />
-            <p style={{ fontSize: "13px", fontWeight: 600, color: "#1a9e45" }}>분석이 완료되었습니다.</p>
+            <CheckCircle size={28} style={{ color: "var(--accent-positive)", margin: "0 auto 8px" }} />
+            <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--accent-positive)" }}>분석이 완료되었습니다.</p>
           </div>
         )}
 

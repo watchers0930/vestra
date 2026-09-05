@@ -68,7 +68,7 @@ export function VerifyStep() {
                 style={{
                   width: "36px", height: "36px", borderRadius: "12px",
                   display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  background: isCompleted ? "#30d158" : isActive ? "var(--brand-primary)" : "#f5f5f7",
+                  background: isCompleted ? "var(--accent-positive)" : isActive ? "var(--brand-primary)" : "#f5f5f7",
                   transition: "all 0.3s ease",
                 }}
               >
@@ -80,7 +80,7 @@ export function VerifyStep() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{
                   fontSize: "13px", fontWeight: isActive ? 600 : 500, margin: "0 0 2px",
-                  color: isCompleted ? "#30d158" : isActive ? "#1d1d1f" : "#aeaeb2",
+                  color: isCompleted ? "var(--accent-positive)" : isActive ? "#1d1d1f" : "#aeaeb2",
                   transition: "color 0.3s ease",
                 }}>
                   {isCompleted ? stage.label.replace(" 중", " 완료").replace(" 실행", " 완료") : stage.label}

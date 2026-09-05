@@ -202,12 +202,12 @@ export function RightsInputCard({
             role="button"
             aria-label={fileName ? `업로드된 파일: ${fileName}. 클릭하여 변경` : "등기부등본 파일 업로드. 클릭 또는 드래그"}
             style={{
-              border: `2px dashed ${isDragging ? "var(--brand-primary)" : fileName ? "#30d158" : "rgba(0,0,0,0.12)"}`,
+              border: `2px dashed ${isDragging ? "var(--brand-primary)" : fileName ? "var(--accent-positive)" : "rgba(0,0,0,0.12)"}`,
               borderRadius: "14px",
               padding: "36px 24px",
               textAlign: "center",
               cursor: "pointer",
-              background: isDragging ? "rgba(0,113,227,0.04)" : fileName ? "rgba(48,209,88,0.04)" : "#fafafa",
+              background: isDragging ? "rgba(0,113,227,0.04)" : fileName ? "rgba(var(--accent-positive-rgb), 0.04)" : "#fafafa",
               transition: "all 0.15s",
             }}
           >
@@ -227,9 +227,9 @@ export function RightsInputCard({
               </div>
             ) : fileName ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-                <CheckCircle size={28} strokeWidth={1.5} style={{ color: "#30d158" }} />
-                <p style={{ fontSize: "13.5px", fontWeight: 600, color: "#1a9e45" }}>{fileName}</p>
-                <p style={{ fontSize: "13px", color: "#30d158" }}>텍스트 추출 완료 ({rawText.length.toLocaleString()}자) — 클릭하여 변경</p>
+                <CheckCircle size={28} strokeWidth={1.5} style={{ color: "var(--accent-positive)" }} />
+                <p style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--accent-positive)" }}>{fileName}</p>
+                <p style={{ fontSize: "13px", color: "var(--accent-positive)" }}>텍스트 추출 완료 ({rawText.length.toLocaleString()}자) — 클릭하여 변경</p>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>

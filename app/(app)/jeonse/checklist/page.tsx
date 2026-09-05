@@ -147,14 +147,14 @@ const CHECKLIST_DATA: Record<DealType, Partial<Record<Stage, CheckItem[]>>> = {
 const STAGE_META: Record<Stage, { color: string; bg: string; label: string }> = {
   "계약 전":  { color: "var(--brand-primary)", bg: "rgba(0,113,227,0.10)",  label: "계약 전" },
   "계약 중":  { color: "#b86f00", bg: "rgba(255,159,10,0.10)", label: "계약 중" },
-  "계약 후":  { color: "#1a9e45", bg: "rgba(48,209,88,0.10)",  label: "계약 후" },
+  "계약 후":  { color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.10)",  label: "계약 후" },
   "입주 전":  { color: "#6e3de8", bg: "rgba(110,61,232,0.10)", label: "입주 전" },
   "입주 후":  { color: "#636366", bg: "rgba(99,99,102,0.10)",  label: "입주 후" },
 };
 
 const DEAL_META: Record<DealType, { color: string; bg: string; icon: LucideIcon }> = {
   전세: { color: "var(--brand-primary)", bg: "rgba(0,113,227,0.10)", icon: Home },
-  매매: { color: "#1a9e45", bg: "rgba(48,209,88,0.10)", icon: Key },
+  매매: { color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.10)", icon: Key },
   월세: { color: "#b86f00", bg: "rgba(255,159,10,0.10)", icon: FileText },
 };
 
@@ -344,18 +344,18 @@ export default function ChecklistPage() {
                         height: "100%", borderRadius: "9999px", transition: "width 0.4s ease",
                         width: `${progress}%`,
                         background: progress === 100
-                          ? "linear-gradient(90deg, #1a9e45, #30d158)"
+                          ? "linear-gradient(90deg, var(--accent-positive), var(--accent-positive))"
                           : "linear-gradient(90deg, var(--brand-primary), #2997ff)",
                       }}
                     />
                   </div>
-                  <span style={{ fontSize: "20px", fontWeight: 700, color: progress === 100 ? "#1a9e45" : "var(--brand-primary)", minWidth: "48px", textAlign: "right" as const }}>
+                  <span style={{ fontSize: "20px", fontWeight: 700, color: progress === 100 ? "var(--accent-positive)" : "var(--brand-primary)", minWidth: "48px", textAlign: "right" as const }}>
                     {progress}%
                   </span>
                 </div>
                 <p style={{ fontSize: "12px", color: "#aeaeb2", marginTop: "8px" }}>
                   {completedCount}/{totalCount}개 완료
-                  {progress === 100 && <span style={{ color: "#1a9e45", fontWeight: 600, marginLeft: "6px" }}>· 모든 항목 완료!</span>}
+                  {progress === 100 && <span style={{ color: "var(--accent-positive)", fontWeight: 600, marginLeft: "6px" }}>· 모든 항목 완료!</span>}
                 </p>
               </div>
 
@@ -370,8 +370,8 @@ export default function ChecklistPage() {
                       style={{
                         display: "flex", alignItems: "flex-start", gap: "14px",
                         width: "100%", textAlign: "left" as const, cursor: "pointer",
-                        background: isChecked ? "rgba(48,209,88,0.05)" : "#fff",
-                        border: isChecked ? "1px solid rgba(48,209,88,0.25)" : "1px solid rgba(0,0,0,0.08)",
+                        background: isChecked ? "rgba(var(--accent-positive-rgb), 0.05)" : "#fff",
+                        border: isChecked ? "1px solid rgba(var(--accent-positive-rgb), 0.25)" : "1px solid rgba(0,0,0,0.08)",
                         borderRadius: "16px",
                         boxShadow: isChecked ? "none" : "0 1px 6px rgba(0,0,0,0.04)",
                         padding: "16px 18px",
@@ -383,7 +383,7 @@ export default function ChecklistPage() {
                       {/* 체크 원형 */}
                       <div style={{ flexShrink: 0, marginTop: "1px" }}>
                         {isChecked ? (
-                          <CheckCircle2 size={22} style={{ color: "#30d158" }} strokeWidth={2} />
+                          <CheckCircle2 size={22} style={{ color: "var(--accent-positive)" }} strokeWidth={2} />
                         ) : (
                           <div style={{ width: "22px", height: "22px", borderRadius: "50%", border: "1.5px solid #c7c7cc", background: "#fff" }} />
                         )}
@@ -392,7 +392,7 @@ export default function ChecklistPage() {
                       {/* 텍스트 */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: item.description ? "4px" : 0 }}>
-                          <span style={{ fontSize: "11px", fontWeight: 700, color: isChecked ? "#30d158" : stageMeta.color, background: isChecked ? "rgba(48,209,88,0.10)" : stageMeta.bg, padding: "2px 8px", borderRadius: "20px", flexShrink: 0 }}>
+                          <span style={{ fontSize: "11px", fontWeight: 700, color: isChecked ? "var(--accent-positive)" : stageMeta.color, background: isChecked ? "rgba(var(--accent-positive-rgb), 0.10)" : stageMeta.bg, padding: "2px 8px", borderRadius: "20px", flexShrink: 0 }}>
                             {String(idx + 1).padStart(2, "0")}
                           </span>
                           <p style={{ fontSize: "13.5px", fontWeight: 600, color: isChecked ? "#aeaeb2" : "#1d1d1f", textDecoration: isChecked ? "line-through" : "none", margin: 0, lineHeight: 1.4 }}>

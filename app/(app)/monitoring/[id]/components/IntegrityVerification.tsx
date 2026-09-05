@@ -15,7 +15,7 @@ interface Props {
 
 function StatusIcon({ ok }: { ok: boolean }) {
   return ok ? (
-    <CheckCircle size={16} className="text-[#30d158] flex-shrink-0" />
+    <CheckCircle size={16} className="text-[var(--accent-positive)] flex-shrink-0" />
   ) : (
     <XCircle size={16} className="text-[#ff3b30] flex-shrink-0" />
   );
@@ -90,15 +90,15 @@ export function IntegrityVerification({ result, verifying, onVerify, isUnverifie
             <div
               className="flex items-center gap-3 p-4 rounded-xl"
               style={{
-                background: result.isValid ? "rgba(48,209,88,0.08)" : "rgba(255,59,48,0.08)",
+                background: result.isValid ? "rgba(var(--accent-positive-rgb), 0.08)" : "rgba(255,59,48,0.08)",
                 border: result.isValid
-                  ? "1px solid rgba(48,209,88,0.15)"
+                  ? "1px solid rgba(var(--accent-positive-rgb), 0.15)"
                   : "1px solid rgba(255,59,48,0.15)",
               }}
             >
               <StatusIcon ok={result.isValid} />
               <div>
-                <div className="text-[13px] font-semibold" style={{ color: result.isValid ? "#30d158" : "#ff3b30" }}>
+                <div className="text-[13px] font-semibold" style={{ color: result.isValid ? "var(--accent-positive)" : "#ff3b30" }}>
                   {result.isValid ? "위변조 없음 확인" : "위변조 의심 — 확인 필요"}
                 </div>
                 <div className="text-[11.5px] text-[#6e6e73]">
@@ -152,7 +152,7 @@ export function IntegrityVerification({ result, verifying, onVerify, isUnverifie
                 </button>
 
                 {showKey && (
-                  <pre className="mt-2 p-3 rounded-lg bg-[#1d1d1f] text-[#30d158] text-[10px] font-mono overflow-x-auto whitespace-pre leading-relaxed">
+                  <pre className="mt-2 p-3 rounded-lg bg-[#1d1d1f] text-[var(--accent-positive)] text-[10px] font-mono overflow-x-auto whitespace-pre leading-relaxed">
                     {result.publicKey}
                   </pre>
                 )}

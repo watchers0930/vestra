@@ -118,7 +118,7 @@ export default function ContractReviewPage() {
                   fontSize: "12px", fontWeight: 500, color: "#1d1d1f", cursor: "pointer",
                 }}
               >
-                {copied ? <ClipboardCheck size={13} style={{ color: "#30d158" }} /> : <Copy size={13} />}
+                {copied ? <ClipboardCheck size={13} style={{ color: "var(--accent-positive)" }} /> : <Copy size={13} />}
                 {copied ? "복사됨" : "결과 복사"}
               </button>
               <PdfDownloadButton targetRef={resultRef} filename="vestra-contract-review.pdf" title="VESTRA 계약검토 리포트" />

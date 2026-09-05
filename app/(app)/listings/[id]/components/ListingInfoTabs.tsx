@@ -61,7 +61,7 @@ const INFRA_CATS = [
   { code: "MT1", name: "마트",   color: "#EA580C" },
   { code: "CE7", name: "카페",   color: "#92400E" },
   { code: "FD6", name: "음식점", color: "#DC2626" },
-  { code: "HP8", name: "병원",   color: "#059669" },
+  { code: "HP8", name: "병원",   color: "var(--accent-positive)" },
 ] as const;
 type InfraCatCode = typeof INFRA_CATS[number]["code"] | "ALL";
 interface PlaceItem { name: string; distance: string; catCode: string; lat: number; lng: number; }
@@ -229,7 +229,7 @@ export function InfraMap({ lat, lng }: { lat: number; lng: number }) {
 // ── 학군 지도 ────────────────────────────────────────────────────────────────
 const SCHOOL_TYPES = [
   { key: "초등학교", color: "#2563EB" },
-  { key: "중학교",   color: "#059669" },
+  { key: "중학교",   color: "var(--accent-positive)" },
   { key: "고등학교", color: "#DC2626" },
 ] as const;
 type SchoolKey = typeof SCHOOL_TYPES[number]["key"] | "ALL";

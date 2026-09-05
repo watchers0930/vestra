@@ -62,9 +62,9 @@ function MonitoringToggle({ clientId, active, onToggle }: { clientId: string; ac
         border: "none",
         cursor: loading ? "wait" : "pointer",
         transition: "all 0.15s",
-        background: active ? "rgba(52,199,89,0.10)" : "rgba(110,110,115,0.08)",
+        background: active ? "rgba(var(--accent-positive-rgb), 0.10)" : "rgba(110,110,115,0.08)",
         color: active ? "#1d9e44" : "#6e6e73",
-        outline: `1.5px solid ${active ? "rgba(52,199,89,0.30)" : "rgba(110,110,115,0.20)"}`,
+        outline: `1.5px solid ${active ? "rgba(var(--accent-positive-rgb), 0.30)" : "rgba(110,110,115,0.20)"}`,
         opacity: loading ? 0.6 : 1,
       }}
     >
@@ -73,7 +73,7 @@ function MonitoringToggle({ clientId, active, onToggle }: { clientId: string; ac
           width: 8,
           height: 8,
           borderRadius: "50%",
-          background: active ? "#30d158" : "#c7c7cc",
+          background: active ? "var(--accent-positive)" : "#c7c7cc",
           flexShrink: 0,
         }}
       />
@@ -217,8 +217,8 @@ export function ClientList({ clients, onDelete, onToggleMonitoring, loading }: C
                         display: "inline-flex", alignItems: "center", gap: 3,
                         padding: "3px 8px", borderRadius: 999,
                         fontSize: 11, fontWeight: 700,
-                        background: "rgba(52,199,89,0.1)", color: "#1a7f37",
-                        border: "1px solid rgba(52,199,89,0.3)",
+                        background: "rgba(var(--accent-positive-rgb), 0.1)", color: "#1a7f37",
+                        border: "1px solid rgba(var(--accent-positive-rgb), 0.3)",
                       }}>
                         🛡 감시 중
                       </span>

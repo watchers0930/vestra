@@ -116,18 +116,18 @@ export function SafetyChecklist() {
           style={{
             gridColumn: "1 / -1",
             borderRadius: "14px",
-            border: "1px solid rgba(48,209,88,0.20)",
-            background: "rgba(48,209,88,0.04)",
+            border: "1px solid rgba(var(--accent-positive-rgb), 0.20)",
+            background: "rgba(var(--accent-positive-rgb), 0.04)",
             padding: "14px 16px",
             display: "flex",
             alignItems: "flex-start",
             gap: "10px",
           }}
         >
-          <FileText size={15} style={{ color: "#30d158", marginTop: "2px", flexShrink: 0 }} />
+          <FileText size={15} style={{ color: "var(--accent-positive)", marginTop: "2px", flexShrink: 0 }} />
           <div>
-            <p style={{ fontSize: "13px", fontWeight: 600, color: "#1a9e45", marginBottom: "4px" }}>등기 상태 유지 특약</p>
-            <p style={{ fontSize: "11.5px", lineHeight: 1.65, color: "#1a9e45" }}>
+            <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--accent-positive)", marginBottom: "4px" }}>등기 상태 유지 특약</p>
+            <p style={{ fontSize: "11.5px", lineHeight: 1.65, color: "var(--accent-positive)" }}>
               <strong>&ldquo;잔금일까지 등기 상태 유지, 위반 시 계약 해제 및 배액 배상&rdquo;</strong> 특약을 반드시 기재하세요.
             </p>
           </div>

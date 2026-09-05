@@ -190,10 +190,10 @@ export function DashboardHero({ session, totalAssets, totalValue, avgSafety, mou
           />
           <StatCard
             icon={Shield}
-            iconBg="rgba(48,209,88,0.12)"
-            iconColor="#30d158"
+            iconBg="rgba(var(--accent-positive-rgb), 0.12)"
+            iconColor="var(--accent-positive)"
             value={mounted && avgSafety > 0 ? `${avgSafety}점` : "-"}
-            valueColor="#30d158"
+            valueColor="var(--accent-positive)"
             label="평균 안전지수"
           />
           </div>

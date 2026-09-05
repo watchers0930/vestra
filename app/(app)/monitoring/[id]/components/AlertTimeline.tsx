@@ -24,7 +24,7 @@ const RISK_COLOR: Record<string, string> = {
   critical: "#ff3b30",
   high: "#ff9500",
   medium: "#ffcc00",
-  low: "#30d158",
+  low: "var(--accent-positive)",
 };
 
 const RISK_LABEL: Record<string, string> = {

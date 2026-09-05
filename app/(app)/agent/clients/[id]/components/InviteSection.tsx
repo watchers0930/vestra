@@ -68,7 +68,7 @@ export function InviteSection({ clientId, status }: { clientId: string; status: 
               <button
                 onClick={handleCopy}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold shrink-0 transition-colors"
-                style={{ background: copied ? "rgba(52,199,89,0.12)" : "var(--brand-primary)", color: copied ? "#1a7f37" : "#fff" }}
+                style={{ background: copied ? "rgba(var(--accent-positive-rgb), 0.12)" : "var(--brand-primary)", color: copied ? "#1a7f37" : "#fff" }}
               >
                 {copied ? <Check size={12} /> : <Copy size={12} />}
                 {copied ? "복사됨" : "복사"}

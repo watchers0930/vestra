@@ -136,7 +136,7 @@ export function MonitoringPropertyCard({ property, unreadCount, highestRisk }: P
         hover
         className={[
           "relative overflow-hidden transition-all duration-200 group-hover:-translate-y-[2px] group-hover:shadow-lg",
-          isActive ? "border-emerald-100 shadow-[0_1px_16px_rgba(48,209,88,0.08)]" : "",
+          isActive ? "border-emerald-100 shadow-[0_1px_16px_rgba(var(--accent-positive-rgb), 0.08)]" : "",
           recent ? "ring-2 ring-emerald-200/80" : "",
         ].join(" ")}
       >
@@ -145,7 +145,7 @@ export function MonitoringPropertyCard({ property, unreadCount, highestRisk }: P
           className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl"
           style={{
             background: property.status === "active"
-              ? "linear-gradient(180deg, #30d158, #34d399)"
+              ? "linear-gradient(180deg, var(--accent-positive), var(--accent-positive))"
               : "linear-gradient(180deg, #6e6e73, #8e8e93)",
           }}
         />

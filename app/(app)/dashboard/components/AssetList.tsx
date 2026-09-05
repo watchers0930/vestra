@@ -37,20 +37,20 @@ function getTypeBadge(type: string): { cls: string; label: string } {
 }
 
 function getSafetyBarBg(score: number): string {
-  if (score >= 70) return "#30d158";
+  if (score >= 70) return "var(--accent-positive)";
   if (score >= 40) return "#ff9f0a";
   return "#ff3b30";
 }
 
 function getRiskColor(risk: number): string {
-  if (risk <= 30) return "#30d158";
+  if (risk <= 30) return "var(--accent-positive)";
   if (risk <= 60) return "#ff9f0a";
   return "#ff3b30";
 }
 
 const BADGE_STYLE: Record<string, { color: string; bg: string }> = {
   apt:   { color: "var(--brand-primary)", bg: "rgba(0,113,227,0.09)" },
-  villa: { color: "#1a9e45", bg: "rgba(48,209,88,0.09)" },
+  villa: { color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.09)" },
   ofc:   { color: "#b86f00", bg: "rgba(255,159,10,0.09)" },
   other: { color: "#6e6e73", bg: "rgba(0,0,0,0.06)" },
 };

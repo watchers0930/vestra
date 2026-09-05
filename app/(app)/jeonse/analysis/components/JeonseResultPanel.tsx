@@ -42,13 +42,13 @@ interface Props {
 const NEEDS_STYLE: Record<string, { color: string; bg: string; border: string }> = {
   required:    { color: "#ff3b30", bg: "rgba(255,59,48,0.10)",   border: "rgba(255,59,48,0.22)"  },
   recommended: { color: "#b86f00", bg: "rgba(255,159,10,0.10)",  border: "rgba(255,159,10,0.22)" },
-  optional:    { color: "#1a9e45", bg: "rgba(48,209,88,0.10)",   border: "rgba(48,209,88,0.22)"  },
+  optional:    { color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.10)",   border: "rgba(var(--accent-positive-rgb), 0.22)"  },
 };
 
 const RISK_STYLE: Record<string, { color: string; bg: string }> = {
   high:   { color: "#ff3b30", bg: "rgba(255,59,48,0.10)"  },
   medium: { color: "#b86f00", bg: "rgba(255,159,10,0.10)" },
-  low:    { color: "#1a9e45", bg: "rgba(48,209,88,0.10)"  },
+  low:    { color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.10)"  },
 };
 
 export function JeonseResultPanel({
@@ -174,7 +174,7 @@ export function JeonseResultPanel({
             <ul style={{ display: "flex", flexDirection: "column", gap: "8px", listStyle: "none", padding: 0, margin: 0 }}>
               {analysis.recommendations.map((rec, i) => (
                 <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "13px", lineHeight: 1.6 }}>
-                  <CheckCircle size={15} strokeWidth={2} style={{ color: "#30d158", flexShrink: 0, marginTop: "2px" }} />
+                  <CheckCircle size={15} strokeWidth={2} style={{ color: "var(--accent-positive)", flexShrink: 0, marginTop: "2px" }} />
                   <span style={{ color: "#1d1d1f" }}>{rec}</span>
                 </li>
               ))}

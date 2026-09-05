@@ -98,8 +98,8 @@ export function PropertyInfoHeader({ property, monitorDays }: Props) {
             </div>
             <div className="w-px h-8 bg-[#e5e5e7]" />
             <div className="flex items-center gap-1.5">
-              <Shield size={16} className="text-[#30d158]" />
-              <span className="text-[12px] font-medium text-[#30d158]">보호중</span>
+              <Shield size={16} className="text-[var(--accent-positive)]" />
+              <span className="text-[12px] font-medium text-[var(--accent-positive)]">보호중</span>
             </div>
           </div>
         </div>

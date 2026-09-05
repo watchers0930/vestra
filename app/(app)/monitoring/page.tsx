@@ -70,7 +70,7 @@ export default function MonitoringPage() {
 
       <div className="space-y-8">
         {activeCount > 0 && (
-          <div className="overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-[0_1px_12px_rgba(48,209,88,0.08)]">
+          <div className="overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-[0_1px_12px_rgba(var(--accent-positive-rgb), 0.08)]">
             <div className="h-[2px] bg-gradient-to-r from-emerald-400 via-blue-400 to-emerald-400" />
             <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">

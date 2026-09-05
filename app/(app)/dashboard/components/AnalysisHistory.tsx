@@ -21,7 +21,7 @@ const TYPE_ICON: Record<string, LucideIcon> = {
 
 const TYPE_BG: Record<string, string> = {
   rights:      "rgba(0,113,227,0.09)",
-  contract:    "rgba(48,209,88,0.09)",
+  contract:    "rgba(var(--accent-positive-rgb), 0.09)",
   prediction:  "rgba(255,159,10,0.09)",
   jeonse:      "rgba(255,59,48,0.07)",
   registry:    "rgba(130,80,255,0.07)",
@@ -30,7 +30,7 @@ const TYPE_BG: Record<string, string> = {
 
 const TYPE_COLOR: Record<string, string> = {
   rights:      "var(--brand-primary)",
-  contract:    "#1a9e45",
+  contract:    "var(--accent-positive)",
   prediction:  "#b86f00",
   jeonse:      "#ff3b30",
   registry:    "#7c3aed",
@@ -40,7 +40,7 @@ const TYPE_COLOR: Record<string, string> = {
 function getChip(summary: string): { label: string; color: string; bg: string } {
   const s = summary.toLowerCase();
   if (s.includes("안전") || s.includes("정상") || s.includes("이상없") || s.includes("문제없"))
-    return { label: `✓ ${summary.slice(0, 18)}`, color: "#1a9e45", bg: "rgba(48,209,88,0.09)" };
+    return { label: `✓ ${summary.slice(0, 18)}`, color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.09)" };
   if (s.includes("위험") || s.includes("고위험") || s.includes("불법") || s.includes("하락"))
     return { label: `↓ ${summary.slice(0, 18)}`, color: "#ff3b30", bg: "rgba(255,59,48,0.07)" };
   if (s.includes("주의") || s.includes("확인") || s.includes("권고") || s.includes("보증"))

@@ -347,10 +347,15 @@ body {
 :root {
   --brand-primary: #0071e3;
   --brand-primary-dark: #0058b0;
+  /* 성공·활성 색: 개인은 초록 유지, 부동산은 인디고로 통일(4색) */
+  --accent-positive: #30d158;
+  --accent-positive-rgb: 52, 199, 89;
 }
 .realtor-theme {
   --brand-primary: #2e4bd8;
   --brand-primary-dark: #2641c0;
+  --accent-positive: #2e4bd8;
+  --accent-positive-rgb: 46, 75, 216;
 }
 
 /* 부동산 콘텐츠 컨테이너를 헤더 GNB 폭(max-w-1200 · 좌우 32px)에 정렬한다.

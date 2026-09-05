@@ -171,7 +171,7 @@ export default function AssistantPage() {
                         className="group-hover/msg:opacity-100"
                       >
                         {copiedIdx === i
-                          ? <Check size={11} strokeWidth={2} style={{ color: "#1a9e45" }} />
+                          ? <Check size={11} strokeWidth={2} style={{ color: "var(--accent-positive)" }} />
                           : <Copy size={11} strokeWidth={1.5} style={{ color: "#aeaeb2" }} />}
                       </button>
                     )}

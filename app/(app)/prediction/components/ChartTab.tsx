@@ -94,7 +94,7 @@ export function ChartTab({
               <Tooltip formatter={(value) => [formatKRW(Number(value)), ""]} />
               <Legend />
               {(activeScenario === "all" || activeScenario === "optimistic") && (
-                <Line type="monotone" dataKey="optimistic" name="낙관적" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} strokeDasharray={activeScenario === "all" ? "5 5" : "0"} />
+                <Line type="monotone" dataKey="optimistic" name="낙관적" stroke="var(--accent-positive)" strokeWidth={2} dot={{ r: 4 }} strokeDasharray={activeScenario === "all" ? "5 5" : "0"} />
               )}
               {(activeScenario === "all" || activeScenario === "base") && (
                 <Line type="monotone" dataKey="base" name="기본" stroke="#2563eb" strokeWidth={2} dot={{ r: 4 }} />

@@ -38,7 +38,7 @@ export function ConsultForm({ selectedExpert, formState, setFormState, submittin
       {submitted ? (
         <div style={{ textAlign: "center", padding: "48px 16px" }}>
           <div style={{ width: "64px", height: "64px", borderRadius: "20px", background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.20)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-            <CheckCircle2 size={32} strokeWidth={1.5} style={{ color: "#10b981" }} />
+            <CheckCircle2 size={32} strokeWidth={1.5} style={{ color: "var(--accent-positive)" }} />
           </div>
           <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1d1d1f", margin: "0 0 8px" }}>상담 요청이 접수되었습니다</h3>
           <p style={{ fontSize: "12px", color: "#6e6e73", lineHeight: 1.7, margin: "0 0 20px", maxWidth: "320px", marginLeft: "auto", marginRight: "auto" }}>

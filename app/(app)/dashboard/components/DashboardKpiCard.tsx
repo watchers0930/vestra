@@ -12,27 +12,27 @@ interface Props {
 
 const ACCENT: Record<string, string> = {
   blue:   "linear-gradient(90deg, var(--brand-primary), #2997ff)",
-  green:  "linear-gradient(90deg, #30d158, #70e896)",
+  green:  "linear-gradient(90deg, var(--accent-positive), #70e896)",
   orange: "linear-gradient(90deg, #ff9f0a, #ffd60a)",
   red:    "linear-gradient(90deg, #ff3b30, #ff7b73)",
 };
 
 const ICON_BG: Record<string, string> = {
   blue:   "rgba(0,113,227,0.09)",
-  green:  "rgba(48,209,88,0.09)",
+  green:  "rgba(var(--accent-positive-rgb), 0.09)",
   orange: "rgba(255,159,10,0.09)",
   red:    "rgba(255,59,48,0.08)",
 };
 
 const TREND_STYLE: Record<string, { color: string; bg: string }> = {
-  up:   { color: "#30d158", bg: "rgba(48,209,88,0.09)" },
+  up:   { color: "var(--accent-positive)", bg: "rgba(var(--accent-positive-rgb), 0.09)" },
   down: { color: "#ff3b30", bg: "rgba(255,59,48,0.08)" },
   flat: { color: "#6e6e73", bg: "rgba(0,0,0,0.05)" },
 };
 
 const ICON_COLOR: Record<string, string> = {
   blue:   "var(--brand-primary)",
-  green:  "#30d158",
+  green:  "var(--accent-positive)",
   orange: "#ff9f0a",
   red:    "#ff3b30",
 };

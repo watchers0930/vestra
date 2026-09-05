@@ -204,7 +204,7 @@ export function ContractInputCard({
                 role="button"
                 aria-label={fileName ? `업로드된 파일: ${fileName}. 클릭하여 변경` : "계약서 파일 업로드"}
                 style={{
-                  border: `2px dashed ${isDragging ? "var(--brand-primary)" : fileName ? "#30d158" : "rgba(0,0,0,0.12)"}`,
+                  border: `2px dashed ${isDragging ? "var(--brand-primary)" : fileName ? "var(--accent-positive)" : "rgba(0,0,0,0.12)"}`,
                   borderRadius: "14px",
                   minHeight: "280px",
                   display: "flex",
@@ -213,7 +213,7 @@ export function ContractInputCard({
                   justifyContent: "center",
                   gap: "12px",
                   cursor: "pointer",
-                  background: isDragging ? "rgba(0,113,227,0.04)" : fileName ? "rgba(48,209,88,0.04)" : "#fafafa",
+                  background: isDragging ? "rgba(0,113,227,0.04)" : fileName ? "rgba(var(--accent-positive-rgb), 0.04)" : "#fafafa",
                   transition: "all 0.15s",
                 }}
               >
@@ -221,8 +221,8 @@ export function ContractInputCard({
                   <>
                     <div style={{ fontSize: "36px" }}>📋</div>
                     <div style={{ textAlign: "center" }}>
-                      <p style={{ fontSize: "13.5px", fontWeight: 600, color: "#1a9e45" }}>{fileName}</p>
-                      <p style={{ fontSize: "11.5px", color: "#30d158", marginTop: "4px" }}>파일이 선택됐습니다 — 클릭하여 변경</p>
+                      <p style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--accent-positive)" }}>{fileName}</p>
+                      <p style={{ fontSize: "11.5px", color: "var(--accent-positive)", marginTop: "4px" }}>파일이 선택됐습니다 — 클릭하여 변경</p>
                     </div>
                   </>
                 ) : (

@@ -24,7 +24,7 @@ type TaxTab = "acquisition" | "holding" | "transfer" | "scenario";
 
 const TAB_COLORS: Record<TaxTab, string> = {
   acquisition: "var(--brand-primary)",
-  holding: "#10b981",
+  holding: "var(--accent-positive)",
   transfer: "#f59e0b",
   scenario: "#7c3aed",
 };
@@ -155,7 +155,7 @@ export default function TaxPage() {
 
   const comparisonData = [
     { name: "취득세", value: acqResult.totalTax || acqResult.tax, fill: "var(--brand-primary)" },
-    { name: "보유세(연)", value: holdResult.totalTax, fill: "#10b981" },
+    { name: "보유세(연)", value: holdResult.totalTax, fill: "var(--accent-positive)" },
     { name: "양도세", value: transResult.totalTax || transResult.tax || 0, fill: "#f59e0b" },
   ];
 
@@ -303,10 +303,10 @@ export default function TaxPage() {
                     onSelect={handleHoldAddressSelect}
                     placeholder="지번 주소 입력 시 공시가격 자동 적용"
                   />
-                  {holdPriceLoading && <Loader2 size={16} className="animate-spin" style={{ color: "#10b981", marginTop: "10px", flexShrink: 0 }} />}
+                  {holdPriceLoading && <Loader2 size={16} className="animate-spin" style={{ color: "var(--accent-positive)", marginTop: "10px", flexShrink: 0 }} />}
                 </div>
                 {holdPriceLabel && (
-                  <p style={{ fontSize: "11px", color: holdPriceLabel.includes("찾을 수 없") ? "#dc2626" : "#059669", marginTop: "6px", marginBottom: 0 }}>
+                  <p style={{ fontSize: "11px", color: holdPriceLabel.includes("찾을 수 없") ? "#dc2626" : "var(--accent-positive)", marginTop: "6px", marginBottom: 0 }}>
                     {holdPriceLabel}
                   </p>
                 )}
@@ -333,7 +333,7 @@ export default function TaxPage() {
             </div>
             {holdResult.comprehensiveTax === 0 && (
               <div style={{ marginTop: "12px", padding: "10px 14px", borderRadius: "10px", background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)" }}>
-                <p style={{ fontSize: "11.5px", color: "#059669", margin: 0, lineHeight: 1.6 }}>공시가격이 공제금액 이하로 종합부동산세가 부과되지 않습니다.</p>
+                <p style={{ fontSize: "11.5px", color: "var(--accent-positive)", margin: 0, lineHeight: 1.6 }}>공시가격이 공제금액 이하로 종합부동산세가 부과되지 않습니다.</p>
               </div>
             )}
           </div>

@@ -69,8 +69,8 @@ export function SafetySection({ analysisId, onAnalysisIdChange, safetyDocs, onDo
   return (
     <div
       style={{
-        border: "1.5px solid rgba(52,199,89,0.25)", borderRadius: 14,
-        padding: 18, background: "rgba(52,199,89,0.03)",
+        border: "1.5px solid rgba(var(--accent-positive-rgb), 0.25)", borderRadius: 14,
+        padding: 18, background: "rgba(var(--accent-positive-rgb), 0.03)",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
@@ -112,7 +112,7 @@ export function SafetySection({ analysisId, onAnalysisIdChange, safetyDocs, onDo
           건축물대장
         </label>
         {buildingDoc ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", borderRadius: 10, background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.2)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", borderRadius: 10, background: "rgba(var(--accent-positive-rgb), 0.08)", border: "1px solid rgba(var(--accent-positive-rgb), 0.2)" }}>
             <FileText size={13} strokeWidth={1.5} style={{ color: "#34c759", flexShrink: 0 }} />
             <span style={{ fontSize: 12, color: "#1d1d1f", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {buildingDoc.filename}
@@ -150,7 +150,7 @@ export function SafetySection({ analysisId, onAnalysisIdChange, safetyDocs, onDo
           전입세대 열람 확인서
         </label>
         {tenantDoc ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", borderRadius: 10, background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.2)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", borderRadius: 10, background: "rgba(var(--accent-positive-rgb), 0.08)", border: "1px solid rgba(var(--accent-positive-rgb), 0.2)" }}>
             <FileText size={13} strokeWidth={1.5} style={{ color: "#34c759", flexShrink: 0 }} />
             <span style={{ fontSize: 12, color: "#1d1d1f", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {tenantDoc.filename}
