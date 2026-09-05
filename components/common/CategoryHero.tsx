@@ -17,8 +17,9 @@ export function CategoryHero({
 }: CategoryHeroProps) {
   return (
     <section
+      className="cat-hero"
       style={{
-        marginTop: "var(--cat-hero-mt, 40px)",
+        marginTop: "40px",
         marginBottom,
       }}
     >

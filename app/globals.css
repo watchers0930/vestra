@@ -367,6 +367,7 @@ body {
 }
 /* 부동산: 페이지 자체 상단 여백 제거 → 서브히어로~콘텐츠 여백을 main 50px로 통일 */
 .realtor-theme .pt-\[52px\] { padding-top: 0 !important; }
+.realtor-theme .cat-hero { margin-top: 0 !important; }
 
 /* 부동산 콘텐츠 컨테이너를 헤더 GNB 폭(max-w-1200 · 좌우 32px)에 정렬한다.
  * 각 페이지가 자체 max-width/여백(max-w-7xl·좁은 폼·풀폭)을 가져 nav와 어긋나므로,
