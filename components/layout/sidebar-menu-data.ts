@@ -113,7 +113,7 @@ export const rentalBizMenuGroups: MenuGroup[] = [
   { label: "메인",       items: [userMenuItems[0]] },
   { label: "매물 관리",   items: [landlordListings] },
   { label: "중개사 도구", items: [userMenuItems[13], userMenuItems[14]] },
-  { label: "분석 서비스", items: [userMenuItems[15], userMenuItems[2], userMenuItems[3], userMenuItems[4], userMenuItems[7], userMenuItems[8]] },
+  { label: "분석 서비스", items: [userMenuItems[2], userMenuItems[3], userMenuItems[4], userMenuItems[7], userMenuItems[8]] },
   { label: "도구",       items: [userMenuItems[10], userMenuItems[11], userMenuItems[5], userMenuItems[6]] },
 ];
 

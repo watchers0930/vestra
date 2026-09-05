@@ -45,7 +45,6 @@ export const REALTOR_MAIN: RealtorMenuItem[] = [
 export const REALTOR_ANALYSIS: RealtorMenuItem[] = [
   { href: REALTOR_ROUTES.rights, label: "권리분석" },
   { href: REALTOR_ROUTES.contract, label: "계약검토" },
-  { href: REALTOR_ROUTES.feasibility, label: "사업성분석" },
 ];
 
 /** GNB 우측 단독 메뉴 */
