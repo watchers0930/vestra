@@ -84,10 +84,10 @@ export function AptSlidePanel({ apt, tradeType, officialPriceLabel, onClose, onR
           onClick={() => onRiskPopup({ apt, risk: analyzeRisk(apt) })}
           style={{
             display: "block", width: "100%", borderRadius: "10px",
-            background: "var(--brand-primary)", padding: "10px",
+            background: "#0a3d91", padding: "10px",
             textAlign: "center", fontSize: "12px", fontWeight: 600,
             color: "#fff", border: "none", cursor: "pointer",
-            boxShadow: "0 2px 10px rgba(0,113,227,0.30)",
+            boxShadow: "0 2px 10px rgba(10,61,145,0.30)",
           }}
         >
           위험도 분석 →
