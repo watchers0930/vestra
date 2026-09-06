@@ -366,6 +366,18 @@ body {
   --accent-warning-rgb: 110, 110, 115;
   --cat-hero-mt: 0px;
 }
+/* Lightning CSS(Tailwind v4)는 CSS 내부에서 var()로 참조되지 않는 커스텀 프로퍼티를
+ * 빌드 시 미사용으로 판단해 제거한다. 위 브랜드 변수들은 오직 tsx 인라인 style에서만
+ * 참조되므로, 빌드가 인식할 수 있는 참조를 남겨 제거를 방지한다.
+ * (이 클래스는 실제 DOM에 부착하지 않으므로 렌더에는 영향이 없다.) */
+.vestra-inline-var-keep {
+  color: var(--brand-primary);
+  background: var(--brand-primary-dark);
+  border-color: var(--accent-positive);
+  outline-color: var(--accent-warning);
+  margin-top: var(--cat-hero-mt);
+  box-shadow: 0 0 rgba(var(--accent-positive-rgb), 0), 0 0 rgba(var(--accent-warning-rgb), 0);
+}
 /* 부동산: 페이지 자체 상단 여백 제거 → 서브히어로~콘텐츠 여백을 main 50px로 통일 */
 .realtor-theme .pt-\[52px\] { padding-top: 0 !important; }
 .realtor-theme .cat-hero { margin-top: 0 !important; }

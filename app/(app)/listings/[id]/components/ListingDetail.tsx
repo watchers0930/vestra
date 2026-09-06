@@ -200,7 +200,7 @@ export function ListingDetail({ listing, onReload }: Props) {
             {/* 안심뱃지 */}
             {listing.isCertified && (
               <div style={{ marginBottom: 14 }}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 13px", borderRadius: 100, background: "linear-gradient(135deg, #0f6e3a 0%, #1db954 55%, var(--accent-positive) 100%)", color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: "0.05em", boxShadow: "0 3px 14px rgba(29,185,84,0.4), inset 0 1px 0 rgba(255,255,255,0.2)" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 13px", borderRadius: 100, background: "linear-gradient(135deg, #0f6e3a 0%, #1db954 55%, #30d158 100%)", color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: "0.05em", boxShadow: "0 3px 14px rgba(29,185,84,0.4), inset 0 1px 0 rgba(255,255,255,0.2)" }}>
                   <ShieldCheck size={13} strokeWidth={2.5} />안심매물
                 </span>
               </div>
