@@ -86,7 +86,7 @@ export default function RealtorGnb() {
           <span className={s.div}>|</span>
           <Link href={REALTOR_ROUTES.profile}>마이페이지</Link>
           <span className={s.div}>|</span>
-          <a onClick={() => signOut({ redirectTo: REALTOR_ROUTES.landing })}>로그아웃</a>
+          <a onClick={() => signOut({ redirectTo: "/home?auth=login" })}>로그아웃</a>
         </div>
 
         <button className={s.navBurger} aria-label="메뉴 열기" onClick={() => setMenuOpen((o) => !o)}>
@@ -121,7 +121,7 @@ export default function RealtorGnb() {
           <div className={s.navMobAuth}>
             <span>{userName}님</span>
             <Link href={REALTOR_ROUTES.profile} onClick={() => setMenuOpen(false)}>마이페이지</Link>
-            <a onClick={() => signOut({ redirectTo: REALTOR_ROUTES.landing })}>로그아웃</a>
+            <a onClick={() => signOut({ redirectTo: "/home?auth=login" })}>로그아웃</a>
           </div>
         </li>
       </ul>

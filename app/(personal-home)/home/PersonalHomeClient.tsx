@@ -29,7 +29,7 @@ export default function PersonalHomeClient() {
     if (sido) params.set("sido", sido);
     if (sigungu) params.set("sigungu", sigungu);
     if (dong) params.set("dong", dong);
-    router.push(`/listings?${params.toString()}`);
+    router.push(`/renewal/listings-list?${params.toString()}`);
   }
 
   useEffect(() => {
