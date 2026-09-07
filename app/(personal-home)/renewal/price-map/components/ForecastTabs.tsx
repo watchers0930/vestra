@@ -83,7 +83,10 @@ function DashboardTab({ prediction }: { prediction: Prediction }) {
               </div>
             ))}
           </div>
-          <p style={{ fontSize: 10, color: "#aeaeb2", margin: "10px 0 0" }}>{iv.disclaimer}</p>
+          <p style={{ fontSize: 10.5, fontWeight: iv.reliability === "high" ? 400 : 700, color: iv.reliability === "low" ? "#c0392b" : iv.reliability === "medium" ? "#b8860b" : "#8e8e93", margin: "10px 0 0" }}>
+            {iv.reliability !== "high" ? "⚠ " : ""}{iv.reliabilityNote}
+          </p>
+          <p style={{ fontSize: 10, color: "#aeaeb2", margin: "4px 0 0" }}>{iv.disclaimer}</p>
         </div>
       )}
       <p className={s.fpSec}>AI 시세전망</p>

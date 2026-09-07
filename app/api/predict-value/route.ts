@@ -255,6 +255,7 @@ export async function POST(req: NextRequest) {
       policyFactor: policy,
       supplyVolume: macroFactors.supplyVolume ?? null,
       jeonseRatio: filteredJeonseRatio,
+      sampleSize: filteredTx.length,
     });
 
     // 3.55단계: 이상탐지 (단지 필터링 데이터 사용)

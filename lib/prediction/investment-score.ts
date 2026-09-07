@@ -21,7 +21,10 @@ export interface InvestmentScoreInput {
   policyFactor: number;            // 정책 계수 (policyFactor, 대략 0.95~1.03)
   supplyVolume?: number | null;    // 12개월 입주물량 (세대). 없으면 중립 처리
   jeonseRatio?: number | null;     // 전세가율 % (안전도). 없으면 중립 처리
+  sampleSize?: number;             // 근거 실거래 건수. 표본 부족 시 신뢰도 하향
 }
+
+export type ScoreReliability = "high" | "medium" | "low";
 
 export interface InvestmentScoreComponent {
   key: string;
@@ -36,6 +39,8 @@ export interface InvestmentScoreResult {
   score: number;        // 0~100
   grade: InvestmentGrade;
   breakdown: InvestmentScoreComponent[];
+  reliability: ScoreReliability;  // 근거 데이터 충분도
+  reliabilityNote: string;
   disclaimer: string;
 }
 
@@ -111,10 +116,21 @@ export function calculateInvestmentScore(input: InvestmentScoreInput): Investmen
 
   const score = Math.round(breakdown.reduce((s, c) => s + c.contribution, 0));
 
+  // 근거 실거래 표본 충분도 → 신뢰도. 백테스트 sampleCap(8/30)과 경계 일관.
+  // 실증 검증(표본 부족 단지에서 점수가 오도될 수 있음)에서 도출한 캘리브레이션.
+  const n = input.sampleSize ?? 0;
+  const reliability: ScoreReliability = n >= 30 ? "high" : n >= 8 ? "medium" : "low";
+  const reliabilityNote =
+    reliability === "high" ? `실거래 표본 충분(${n}건) — 신뢰도 높음`
+    : reliability === "medium" ? `실거래 표본 보통(${n}건) — 참고 권장`
+    : `실거래 표본 부족(${n}건) — 참고용, 점수 신뢰도 낮음`;
+
   return {
     score: clamp(score),
     grade: toGrade(score),
     breakdown,
+    reliability,
+    reliabilityNote,
     disclaimer: "투자점수는 예측 지표(전망·수요·공급·정책·안전도·신뢰도)의 정량 종합이며, 수익을 보장하지 않습니다.",
   };
 }
