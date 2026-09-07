@@ -10,6 +10,9 @@ import {
 } from "@/lib/research-journal";
 import { validateOrigin } from "@/lib/csrf";
 
+// git log / GitHub API 폴백 + 전체 이력 저장까지 여유를 두어 타임아웃을 방지한다.
+export const maxDuration = 60;
+
 export async function GET() {
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN") {

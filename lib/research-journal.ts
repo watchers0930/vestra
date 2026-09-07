@@ -296,9 +296,36 @@ export async function saveResearchJournalEntries(
   entries: ResearchJournalEntry[],
   userId?: string | null
 ): Promise<number> {
-  for (const entry of entries) {
-    await saveResearchJournalEntry(entry, userId);
-  }
+  if (entries.length === 0) return 0;
+
+  // 전체 이력을 건별 순차 저장(deleteMany+create × N)하면 항목 수만큼
+  // DB 왕복이 누적되어 서버리스 함수 타임아웃을 초과한다.
+  // 동일 날짜를 한 번에 삭제하고 한 번에 삽입해 DB 왕복을 2회로 줄인다.
+  const dates = Array.from(new Set(entries.map((entry) => entry.date)));
+
+  await prisma.auditLog.deleteMany({
+    where: {
+      action: RESEARCH_JOURNAL_ACTION,
+      target: { in: dates },
+    },
+  });
+
+  await prisma.auditLog.createMany({
+    data: entries.map((entry) => ({
+      userId: userId || null,
+      action: RESEARCH_JOURNAL_ACTION,
+      target: entry.date,
+      detail: JSON.stringify({
+        title: entry.title,
+        content: entry.content,
+        commits: entry.commits,
+        source: entry.source || "manual",
+      }),
+      ipAddress: "system",
+      userAgent: "research-journal",
+    })),
+  });
+
   return entries.length;
 }
 
