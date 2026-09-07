@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import RenewalGnb from "../renewal/_shared/RenewalGnb";
 import CertifiedListings from "./components/CertifiedListings";
+import SpecialistSection from "./components/SpecialistSection";
 import { REGIONS } from "./regions";
 import s from "./personal-home.module.css";
 
@@ -131,44 +132,8 @@ export default function PersonalHomeClient() {
         </div>
       </section>
 
-      {/* ─── SPECIALIST ─── */}
-      <section className={s.specialist}>
-        <div className={s.specialistInner}>
-          <h2 className={s.specialistTitle}>베스트라와 함께 하는 부동산 SPECIALIST</h2>
-          <div className={s.specialistGrid}>
-            <div className={s.specCard}>
-              <div className={`${s.specAvatar} ${s.savatar1}`} />
-              <span className={s.specRole}>조은법무법인</span>
-              <span className={s.specName}>변호사 홍길동</span>
-              <button className={s.specBtn}>문의하기</button>
-            </div>
-            <div className={s.specCard}>
-              <div className={`${s.specAvatar} ${s.savatar2}`} />
-              <span className={s.specRole}>회계법인 회계법인</span>
-              <span className={s.specName}>회계사 강정동</span>
-              <button className={s.specBtn}>문의하기</button>
-            </div>
-            <div className={s.specCard}>
-              <div className={`${s.specAvatar} ${s.savatar3}`} />
-              <span className={s.specRole}>대림법무법인</span>
-              <span className={s.specName}>법무사 김도현</span>
-              <button className={s.specBtn}>문의하기</button>
-            </div>
-            <div className={s.specCard}>
-              <div className={`${s.specAvatar} ${s.savatar4}`} />
-              <span className={s.specRole}>하나공인중개사사무소</span>
-              <span className={s.specName}>중개사 박민준</span>
-              <button className={s.specBtn}>문의하기</button>
-            </div>
-            <div className={s.specCard}>
-              <div className={`${s.specAvatar} ${s.savatar5}`} />
-              <span className={s.specRole}>한울법무법인</span>
-              <span className={s.specName}>변호사 이수진</span>
-              <button className={s.specBtn}>문의하기</button>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ─── SPECIALIST (실제 등록 전문가) ─── */}
+      <SpecialistSection />
 
       {/* ─── FOOTER ─── */}
       <footer className={s.footer}>
