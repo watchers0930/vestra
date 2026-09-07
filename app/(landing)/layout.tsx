@@ -32,8 +32,8 @@ export default function LandingLayout({ children }: { children: React.ReactNode 
               <div className="lnd-ft-col">
                 <h5>Product</h5>
                 <ul>
-                  <li><Link href="/login">기능 소개</Link></li>
-                  <li><Link href="/login">요금제</Link></li>
+                  <li><Link href="/home?auth=login">기능 소개</Link></li>
+                  <li><Link href="/home?auth=login">요금제</Link></li>
                 </ul>
               </div>
             </div>

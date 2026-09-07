@@ -88,7 +88,8 @@ export default async function proxy(req: NextRequest) {
   if (pathname.startsWith("/profile") || pathname.startsWith("/dashboard")) {
     const token = await getToken(req);
     if (!token) {
-      return NextResponse.redirect(new URL("/login", req.url));
+      // 개인 보호 경로 미인증 → 구 /login 대신 renewal 홈의 로그인 모달로 유도
+      return NextResponse.redirect(new URL("/home?auth=login", req.url));
     }
   }
 

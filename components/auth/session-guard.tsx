@@ -26,13 +26,19 @@ function updateHeartbeat() {
 }
 
 export default function SessionGuard({ children }: { children: React.ReactNode }) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const pathname = usePathname();
   const [checked, setChecked] = useState(false);
   const lastActivityRef = useRef<number>(0);
 
+  // 세션 만료·강제 로그아웃 후 목적지: 관리자는 구 /login(이메일·비번), 그 외는 renewal 로그인 모달.
+  const role = session?.user?.role;
+
   useEffect(() => {
     if (status === "loading") return;
+
+    // 관리자만 구 /login(이메일·비번), 그 외는 renewal 홈의 로그인 모달로 유도
+    const signOutDest = role === "ADMIN" ? "/login" : "/home?auth=login";
 
     if (status === "authenticated") {
       // 공개 페이지(매물·분석 체험)는 단일탭 강제 로그아웃 예외 —
@@ -40,7 +46,7 @@ export default function SessionGuard({ children }: { children: React.ReactNode }
       const isPublic = isPublicPath(pathname);
       const isTabAlive = sessionStorage.getItem("vestra_alive") === "1";
       if (!isPublic && !isTabAlive && !isAnotherTabAlive()) {
-        signOut({ redirectTo: "/login" });
+        signOut({ redirectTo: signOutDest });
         return; // checked 유지 → 오버레이 유지 → 리다이렉트 완료까지 콘텐츠 노출 없음
       }
 
@@ -54,7 +60,7 @@ export default function SessionGuard({ children }: { children: React.ReactNode }
 
       const inactivityTimer = setInterval(() => {
         if (Date.now() - lastActivityRef.current >= INACTIVITY_MS) {
-          signOut({ redirectTo: "/login" });
+          signOut({ redirectTo: signOutDest });
         }
       }, CHECK_INTERVAL_MS);
 
@@ -69,7 +75,7 @@ export default function SessionGuard({ children }: { children: React.ReactNode }
 
     // 비로그인 상태 → 오버레이 제거 (미들웨어가 보호)
     startTransition(() => setChecked(true));
-  }, [status, pathname]);
+  }, [status, pathname, role]);
 
   return (
     <>

@@ -47,7 +47,7 @@ export function PricingSection() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/login" className="lnd-p-btn">{p.cta}</Link>
+                <Link href="/home?auth=login" className="lnd-p-btn">{p.cta}</Link>
               </div>
             </ScrollReveal>
           ))}

@@ -29,7 +29,7 @@ export function MobilePricing() {
               <ul className={s.pfeats}>
                 {p.features.map((f) => <li key={f}><Check />{f}</li>)}
               </ul>
-              <Link className={s.buy} href="/login">{p.highlight ? "지금 시작하기" : "선택하기"}</Link>
+              <Link className={s.buy} href="/home?auth=login">{p.highlight ? "지금 시작하기" : "선택하기"}</Link>
             </div>
           );
         })}

@@ -55,7 +55,7 @@ export function SampleReportModal({ onClose }: Props) {
             <h3 className="text-xl font-extrabold mb-2 tracking-tight">이 수준의 분석을 내 매물에 적용하세요</h3>
             <p className="text-white/50 text-sm mb-6">주소만 입력하면 30초 안에 AI 심층 리포트가 생성됩니다</p>
             <Link
-              href="/login"
+              href="/home?auth=login"
               onClick={onClose}
               className="inline-flex items-center gap-2 bg-white text-[#00042a] px-8 py-3 rounded font-extrabold text-[11px] tracking-widest uppercase hover:bg-white/90 transition-colors"
             >
