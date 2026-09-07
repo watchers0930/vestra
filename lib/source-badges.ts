@@ -37,11 +37,15 @@ export type SourceBadgePageKey =
   | "rights"
   | "jeonse_analysis"
   | "contract"
-  | "prediction";
+  | "prediction"
+  | "price_map"
+  | "official_price";
 
 export const PAGE_SOURCE_BADGES: Record<SourceBadgePageKey, SourceBadgeKey[]> = {
   rights:          ["court_registry", "vworld_price", "building_registry"],
   jeonse_analysis: ["court_registry", "molit_price", "vworld_price", "building_registry"],
   contract:        ["molit_price"],
   prediction:      ["molit_price", "vworld_price"],
+  price_map:       ["molit_price", "vworld_price"],
+  official_price:  ["vworld_price", "building_registry"],
 };

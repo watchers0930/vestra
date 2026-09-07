@@ -9,6 +9,7 @@ import type { PostcodeResult } from "@/lib/keepzip/daum-postcode";
 import s from "./official-price.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import OfficialPriceFooter from "./components/OfficialPriceFooter";
+import { SourceBadge } from "@/components/common/SourceBadge";
 
 /** 결과에서 보유세 계산에 적합한 공시가격 추출 */
 function getBestPrice(result: OfficialPriceResult): number {
@@ -186,6 +187,10 @@ export default function OfficialPriceClient() {
                 <div className={s.rmAddr}>{result.address}</div>
               </div>
               {result.pnu && <div className={s.rmPnu}>PNU {result.pnu}</div>}
+            </div>
+
+            <div style={{ margin: "0 0 14px" }}>
+              <SourceBadge pageKey="official_price" />
             </div>
 
             {/* PRICE CARDS */}

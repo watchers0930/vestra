@@ -7,6 +7,7 @@ import { propertyTypes } from "@/app/(app)/jeonse/analysis/constants";
 import FraudRiskCard from "@/components/results/FraudRiskCard";
 import { GuaranteeInsuranceCard } from "@/components/results";
 import { KaptInfoCard } from "@/components/common/KaptInfoCard";
+import { SourceBadge } from "@/components/common/SourceBadge";
 import LandlordTracker from "@/components/landlord/LandlordTracker";
 import s from "../jeonse-renewal.module.css";
 
@@ -217,6 +218,7 @@ export function JeonseSafetyAnalysis() {
 
         {analysis && !loading && (
           <div ref={resultRef} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <SourceBadge pageKey="jeonse_analysis" />
             {/* 안전점수 + KPI */}
             <div style={{ background: "#fff", border: "1px solid #e8eaf2", borderRadius: "16px", padding: "22px 24px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>

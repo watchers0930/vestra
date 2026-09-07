@@ -5,6 +5,7 @@ import { AlertTriangle, Ban } from "lucide-react";
 import s from "../rights-renewal.module.css";
 import type { UnifiedResult } from "@/components/rights/RightsResult";
 import { AiDisclaimer } from "@/components/common";
+import { SourceBadge } from "@/components/common/SourceBadge";
 import type { AnalysisStep } from "@/app/(app)/rights/types";
 
 // 무거운 결과 렌더러 — done 상태에서만 로드
@@ -119,6 +120,7 @@ export default function RightsResultPanel({
     return (
       <div id="rights-result" aria-live="polite">
         <AiDisclaimer compact className="mb-4" />
+        <SourceBadge pageKey="rights" className="mb-4" />
         <RightsResult result={result} rawText={rawText} />
       </div>
     );

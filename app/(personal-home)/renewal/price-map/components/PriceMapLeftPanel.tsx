@@ -4,6 +4,7 @@ import s from "../price-map-renewal.module.css";
 import { formatMapPrice } from "@/app/(map)/price-map/lib/formatMapPrice";
 import { getSelectableSidoMap } from "@/app/(map)/price-map/constants";
 import type { AptData, PriceMapTradeType, PropertyType } from "@/app/(map)/price-map/types";
+import { SourceBadge } from "@/components/common/SourceBadge";
 
 interface Props {
   selectedGu: string;
@@ -120,6 +121,9 @@ export default function PriceMapLeftPanel({
             )}
           </>
         )}
+      </div>
+      <div style={{ padding: "10px 4px 2px" }}>
+        <SourceBadge pageKey="price_map" />
       </div>
     </div>
   );
