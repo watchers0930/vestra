@@ -4,7 +4,7 @@ export function HeroSearchInput() {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginTop: "8px" }}>
       <Link
-        href="/jeonse/analysis"
+        href="/renewal/jeonse"
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -21,7 +21,7 @@ export function HeroSearchInput() {
         전세 위험도 분석
       </Link>
       <Link
-        href="/rights"
+        href="/renewal/rights"
         style={{
           display: "inline-flex",
           alignItems: "center",

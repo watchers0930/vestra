@@ -7,8 +7,8 @@ export function MobileCta() {
       <h3>지금 바로<br />시작하세요</h3>
       <p>로그인 없이 시세지도, 공시가격, 세금계산을<br />바로 이용하세요</p>
       <div className={s.ctaBtns}>
-        <Link className={s.ctaPrimary} href="/rights">권리분석 무료 체험</Link>
-        <Link className={s.ctaGhost} href="/price-map">시세지도 바로가기</Link>
+        <Link className={s.ctaPrimary} href="/renewal/rights">권리분석 무료 체험</Link>
+        <Link className={s.ctaGhost} href="/renewal/price-map">시세지도 바로가기</Link>
       </div>
     </section>
   );

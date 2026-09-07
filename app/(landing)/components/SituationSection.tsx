@@ -9,7 +9,7 @@ const ArrowIcon = () => (
 
 const SITUATIONS = [
   {
-    href: "/jeonse/analysis",
+    href: "/renewal/jeonse",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
@@ -20,7 +20,7 @@ const SITUATIONS = [
     cta: "전세 안전 분석",
   },
   {
-    href: "/contract",
+    href: "/renewal/contract",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" />
@@ -32,7 +32,7 @@ const SITUATIONS = [
     cta: "계약서 AI 분석",
   },
   {
-    href: "/monitoring",
+    href: "/renewal/monitoring",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 01-3.46 0" />
