@@ -155,21 +155,41 @@ export function extractVal(xml: string, eng: string, kor: string): string {
 
 // ─── MOLIT API 공통 fetch ───
 
-/** MOLIT API 공통 fetch (타임아웃 + User-Agent 포함) */
+/** MOLIT API 공통 fetch (타임아웃 + User-Agent + 재시도)
+ *
+ * 부하·일시 지연으로 인한 월별 데이터 누락(timeout→빈 데이터)을 줄이기 위해
+ * timeout/네트워크 오류/5xx에 한해 1회 재시도한다(짧은 backoff). 4xx는 재시도 무의미하므로 즉시 null.
+ */
 export async function molitFetch(url: string): Promise<string | null> {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(url, {
-      headers: { Accept: "application/xml", "User-Agent": "VESTRA/1.0" },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-    if (!res.ok) return null;
-    return await res.text();
-  } catch {
-    return null;
+  const MAX_ATTEMPTS = 2; // 최초 1회 + 재시도 1회
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(url, {
+        headers: { Accept: "application/xml", "User-Agent": "VESTRA/1.0" },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (!res.ok) {
+        // 5xx(서버 일시 오류)만 재시도, 4xx는 즉시 포기
+        if (res.status >= 500 && attempt < MAX_ATTEMPTS) {
+          await new Promise((r) => setTimeout(r, 300));
+          continue;
+        }
+        return null;
+      }
+      return await res.text();
+    } catch {
+      // timeout(abort)·네트워크 오류 → 재시도
+      if (attempt < MAX_ATTEMPTS) {
+        await new Promise((r) => setTimeout(r, 300));
+        continue;
+      }
+      return null;
+    }
   }
+  return null;
 }
 
 // ─── 거래 XML 파싱 ───
