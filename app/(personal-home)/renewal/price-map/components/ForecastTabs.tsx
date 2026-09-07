@@ -56,8 +56,36 @@ function DashboardTab({ prediction }: { prediction: Prediction }) {
     { label: "신뢰도", val: `${result.confidence}%`, chg: result.confidence >= 70 ? "High Confidence" : "Moderate", conf: result.confidence, neutral: true },
   ];
 
+  const iv = result.investmentScore;
+  const gradeColor: Record<string, string> = { S: "#0a3d91", A: "#0071e3", B: "#1e8449", C: "#b8860b", D: "#8e8e93" };
+
   return (
     <>
+      {iv && (
+        <div style={{ border: "1px solid #e8eaf2", borderRadius: 14, padding: "16px 18px", marginBottom: 16, background: "#fbfcff" }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#1d1d1f" }}>투자점수</span>
+            <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+              <span style={{ fontSize: 30, fontWeight: 800, color: gradeColor[iv.grade] ?? "#0a3d91" }}>{iv.score}</span>
+              <span style={{ fontSize: 13, color: "#8e8e93" }}>/ 100</span>
+              <span style={{ marginLeft: 4, padding: "3px 10px", borderRadius: 8, background: gradeColor[iv.grade] ?? "#0a3d91", color: "#fff", fontSize: 13, fontWeight: 800 }}>{iv.grade}등급</span>
+            </span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {iv.breakdown.map((b) => (
+              <div key={b.key} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
+                <span style={{ width: 88, flexShrink: 0, color: "#3d3d3f" }}>{b.label}</span>
+                <span style={{ flex: 1, height: 7, background: "#eef0f6", borderRadius: 4, overflow: "hidden" }}>
+                  <span style={{ display: "block", height: "100%", width: `${b.subScore}%`, background: gradeColor[iv.grade] ?? "#0a3d91", opacity: 0.85 }} />
+                </span>
+                <span style={{ width: 30, textAlign: "right", color: "#6e6e73", fontWeight: 600 }}>{b.subScore}</span>
+                <span style={{ width: 128, flexShrink: 0, color: "#aeaeb2", fontSize: 10, textAlign: "right", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.note}</span>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: 10, color: "#aeaeb2", margin: "10px 0 0" }}>{iv.disclaimer}</p>
+        </div>
+      )}
       <p className={s.fpSec}>AI 시세전망</p>
       <div className={s.fpKpiGrid}>
         {kpis.map((k) => (

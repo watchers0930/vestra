@@ -25,6 +25,7 @@ import { fetchPopulationTrends, fetchAgeGroupPopulation } from "@/lib/feasibilit
 import { POLICY_TIMELINE } from "@/lib/feasibility/static-data-policy";
 import { demandFactor, policyFactor } from "@/lib/prediction/demand-factor";
 import { buildingAgeFactor } from "@/lib/prediction/building-age-factor";
+import { calculateInvestmentScore } from "@/lib/prediction/investment-score";
 
 const formatKoreanPrice = (won: number) => formatKRW(won, "없음");
 
@@ -244,6 +245,17 @@ export async function POST(req: NextRequest) {
       const blended = Math.round(predictionResult.confidence * 0.5 + (bt.accuracy12m ?? 0) * 0.5);
       predictionResult.confidence = Math.max(20, Math.min(blended, sampleCap));
     }
+
+    // 3.52단계: 투자점수 산출 (확정된 예측 지표를 도메인 가중치로 종합)
+    predictionResult.investmentScore = calculateInvestmentScore({
+      currentPrice: predictionResult.currentPrice,
+      base1yPrice: predictionResult.predictions.base["1y"],
+      confidence: predictionResult.confidence,
+      demandFactor: demand,
+      policyFactor: policy,
+      supplyVolume: macroFactors.supplyVolume ?? null,
+      jeonseRatio: filteredJeonseRatio,
+    });
 
     // 3.55단계: 이상탐지 (단지 필터링 데이터 사용)
     let anomalyReport: AnomalyDetectionReport | null = null;

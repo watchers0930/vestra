@@ -12,6 +12,7 @@ import {
 } from "./prediction/forecasting-models";
 import type { ScenarioPredictions, MacroEconomicFactors } from "./prediction/forecasting-models";
 import { purchasingPowerFactor } from "./prediction/purchasing-power";
+import type { InvestmentScoreResult } from "./prediction/investment-score";
 
 // ─── re-export (기존 import 경로 유지) ───
 
@@ -68,6 +69,7 @@ export interface PredictionResult {
   macroFactors?: MacroEconomicFactors;
   backtestResult?: BacktestResult;
   marketCycle?: MarketCycleInfo;
+  investmentScore?: InvestmentScoreResult;
 }
 
 interface TrendResult {

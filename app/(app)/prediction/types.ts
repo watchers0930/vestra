@@ -57,6 +57,7 @@ export interface PredictionResult {
   macroFactors?: import("@/lib/prediction-engine").MacroEconomicFactors;
   backtestResult?: import("@/lib/prediction-engine").BacktestResult;
   marketCycle?: import("@/lib/prediction-engine").MarketCycleInfo;
+  investmentScore?: import("@/lib/prediction/investment-score").InvestmentScoreResult;
   integrity?: {
     merkleRoot: string;
     totalSteps: number;
