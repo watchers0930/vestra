@@ -6,7 +6,7 @@ import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
 import { fetchComprehensivePrices } from "@/lib/molit-api";
 import { estimatePrice } from "@/lib/price-estimation";
-import { predictValue } from "@/lib/prediction-engine";
+import { predictValue, toMonthlyTimeSeries } from "@/lib/prediction-engine";
 import type { MacroEconomicFactors } from "@/lib/prediction-engine";
 import { fetchBaseRate } from "@/lib/bok-api";
 import { fetchSupplyVolume } from "@/lib/supply-api";
@@ -255,9 +255,9 @@ export async function POST(req: NextRequest) {
       policyFactor: policy,
       supplyVolume: macroFactors.supplyVolume ?? null,
       jeonseRatio: filteredJeonseRatio,
-      // 예측에 실제 사용된 백테스트 표본 수(단지 추세 신뢰도의 올바른 지표).
-      // filteredTx.length(지역 전체 건수)는 특정 단지 추세를 대변하지 못하므로 사용하지 않음.
-      sampleSize: predictionResult.backtestResult?.sampleCount ?? 0,
+      // 월별 실거래 데이터 개월 수 = 추세 신뢰도의 실제 지표.
+      // (backtest sampleCount는 검증창 12개월 고정이라 부적합, filteredTx.length는 지역 전체라 부적합)
+      trendMonths: toMonthlyTimeSeries(filteredTx).length,
     });
 
     // 3.55단계: 이상탐지 (단지 필터링 데이터 사용)

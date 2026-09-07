@@ -21,7 +21,7 @@ export interface InvestmentScoreInput {
   policyFactor: number;            // 정책 계수 (policyFactor, 대략 0.95~1.03)
   supplyVolume?: number | null;    // 12개월 입주물량 (세대). 없으면 중립 처리
   jeonseRatio?: number | null;     // 전세가율 % (안전도). 없으면 중립 처리
-  sampleSize?: number;             // 근거 실거래 건수. 표본 부족 시 신뢰도 하향
+  trendMonths?: number;            // 월별 실거래 데이터 개월 수(추세 신뢰도). 부족 시 신뢰도 하향
 }
 
 export type ScoreReliability = "high" | "medium" | "low";
@@ -116,14 +116,15 @@ export function calculateInvestmentScore(input: InvestmentScoreInput): Investmen
 
   const score = Math.round(breakdown.reduce((s, c) => s + c.contribution, 0));
 
-  // 근거 실거래 표본 충분도 → 신뢰도. 백테스트 sampleCap(8/30)과 경계 일관.
-  // 실증 검증(표본 부족 단지에서 점수가 오도될 수 있음)에서 도출한 캘리브레이션.
-  const n = input.sampleSize ?? 0;
-  const reliability: ScoreReliability = n >= 30 ? "high" : n >= 8 ? "medium" : "low";
+  // 근거 데이터 충분도 → 신뢰도. 지표는 "월별 실거래 데이터 개월 수"(추세 신뢰도의 실제 대변값).
+  // 백테스트 sampleCount는 검증창이 12개월로 고정돼 우량 단지도 항상 12 → 부적합.
+  // 경계는 backtest 최소요건(18개월)과 정합: 30개월+ 충분 / 18~30 보통 / 18 미만 부족.
+  const m = input.trendMonths ?? 0;
+  const reliability: ScoreReliability = m >= 30 ? "high" : m >= 18 ? "medium" : "low";
   const reliabilityNote =
-    reliability === "high" ? `실거래 표본 충분(${n}건) — 신뢰도 높음`
-    : reliability === "medium" ? `실거래 표본 보통(${n}건) — 참고 권장`
-    : `실거래 표본 부족(${n}건) — 참고용, 점수 신뢰도 낮음`;
+    reliability === "high" ? `실거래 추세 ${m}개월 — 신뢰도 높음`
+    : reliability === "medium" ? `실거래 추세 ${m}개월 — 참고 권장`
+    : `실거래 추세 ${m}개월(부족) — 참고용, 점수 신뢰도 낮음`;
 
   return {
     score: clamp(score),
