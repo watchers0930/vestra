@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { X, Search, User, MapPin, Eye, Check, UserPlus } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { FormInput, TextAreaInput } from "@/components/forms/FormInput";
-import AddressAutocomplete from "@/components/common/AddressAutocomplete";
+import { DirectClientAddressFields } from "./DirectClientAddressFields";
 
 interface MonitoredProp {
   id: string;
@@ -49,6 +49,9 @@ export function AddClientModal({ open, onClose, onSubmit }: AddClientModalProps)
   const [directEmail, setDirectEmail] = useState("");
   const [directBase, setDirectBase] = useState("");
   const [directDetail, setDirectDetail] = useState("");
+  const [directIsBuilding, setDirectIsBuilding] = useState(false);
+  const [directDong, setDirectDong] = useState("");
+  const [directHo, setDirectHo] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -82,6 +85,9 @@ export function AddClientModal({ open, onClose, onSubmit }: AddClientModalProps)
       setDirectEmail("");
       setDirectBase("");
       setDirectDetail("");
+      setDirectIsBuilding(false);
+      setDirectDong("");
+      setDirectHo("");
       setError("");
     }
   }, [open]);
@@ -124,11 +130,20 @@ export function AddClientModal({ open, onClose, onSubmit }: AddClientModalProps)
           setError("고객명을 2자 이상 입력해주세요.");
           return;
         }
-        const fullAddress = directBase.trim()
-          ? directDetail.trim()
-            ? `${directBase.trim()} ${directDetail.trim()}`
-            : directBase.trim()
-          : undefined;
+        let fullAddress: string | undefined;
+        if (directBase.trim()) {
+          if (directIsBuilding) {
+            const dongHo = [
+              directDong.trim() ? `${directDong.trim()}동` : "",
+              directHo.trim() ? `${directHo.trim()}호` : "",
+            ].filter(Boolean).join(" ");
+            fullAddress = dongHo ? `${directBase.trim()} ${dongHo}` : directBase.trim();
+          } else {
+            fullAddress = directDetail.trim()
+              ? `${directBase.trim()} ${directDetail.trim()}`
+              : directBase.trim();
+          }
+        }
 
         await onSubmit({
           clientName: directName.trim(),
@@ -227,22 +242,17 @@ export function AddClientModal({ open, onClose, onSubmit }: AddClientModalProps)
                 value={directEmail}
                 onChange={(e) => setDirectEmail(e.target.value)}
               />
-              <div>
-                <label className="block text-[11px] font-600 text-[#6e6e73] mb-1">
-                  물건 주소 (등기감시 시작)
-                </label>
-                <AddressAutocomplete
-                  value={directBase}
-                  onChange={setDirectBase}
-                  onSelect={(result) => setDirectBase(result.roadAddress || result.address)}
-                  placeholder="도로명 주소 검색"
-                />
-              </div>
-              <FormInput
-                label="상세 주소"
-                placeholder="예: 108동 1403호"
-                value={directDetail}
-                onChange={(e) => setDirectDetail(e.target.value)}
+              <DirectClientAddressFields
+                base={directBase}
+                detail={directDetail}
+                isBuilding={directIsBuilding}
+                dong={directDong}
+                ho={directHo}
+                onBaseChange={setDirectBase}
+                onDetailChange={setDirectDetail}
+                onIsBuildingChange={setDirectIsBuilding}
+                onDongChange={setDirectDong}
+                onHoChange={setDirectHo}
               />
               {error && <p className="text-xs text-red-500">{error}</p>}
             </>
