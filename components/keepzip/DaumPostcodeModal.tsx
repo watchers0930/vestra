@@ -51,22 +51,31 @@ export function DaumPostcodeModal({ onComplete, onClose }: Props) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#fff", borderRadius: 12, width: "100%", maxWidth: 512, height: 500,
+          background: "#fff", borderRadius: 12, width: "100%", maxWidth: 512, height: 540,
           overflow: "hidden", position: "relative", boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+          display: "flex", flexDirection: "column",
         }}
       >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="닫기"
+        {/* 닫기 전용 헤더 — 다음 위젯 검색창(돋보기)과 겹치지 않도록 별도 바로 분리 */}
+        <div
           style={{
-            position: "absolute", top: 8, right: 12, zIndex: 10, background: "none",
-            border: "none", fontSize: 22, lineHeight: 1, color: "#888", cursor: "pointer",
+            flexShrink: 0, height: 44, display: "flex", alignItems: "center",
+            justifyContent: "flex-end", padding: "0 8px", borderBottom: "1px solid #f0f0f0",
           }}
         >
-          ×
-        </button>
-        <div ref={ref} style={{ width: "100%", height: "100%" }} />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="닫기"
+            style={{
+              width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center",
+              background: "none", border: "none", fontSize: 22, lineHeight: 1, color: "#888", cursor: "pointer",
+            }}
+          >
+            ×
+          </button>
+        </div>
+        <div ref={ref} style={{ width: "100%", flex: 1, minHeight: 0 }} />
       </div>
     </div>
   );
