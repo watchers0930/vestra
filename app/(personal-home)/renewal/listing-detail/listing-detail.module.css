@@ -47,7 +47,7 @@
 .listingLayout { display: grid; grid-template-columns: 1fr 360px; gap: 28px; align-items: start; }
 
 /* LEFT */
-.listingLeft { display: flex; flex-direction: column; gap: 0; }
+.listingLeft { display: flex; flex-direction: column; gap: 0; position: sticky; top: 100px; align-self: start; }
 
 /* 사진 갤러리 */
 .photoGallery { border-radius: 12px; overflow: hidden; background: #e8eaf0; position: relative; }
@@ -76,7 +76,7 @@
 .mapAddrText { font-size: 12.5px; color: #444; line-height: 1.4; }
 
 /* RIGHT */
-.listingRight { position: sticky; top: 100px; background: #fff; border-radius: 12px; border: 1px solid #e8eaf0; }
+.listingRight { background: #fff; border-radius: 12px; border: 1px solid #e8eaf0; }
 
 .listingCardHeader { padding: 20px 20px 0; }
 .listingNum { font-size:12px; color: #64748b; margin-bottom: 6px; }
@@ -191,6 +191,7 @@
 
 @media (max-width: 900px) {
   .listingLayout { grid-template-columns: 1fr; }
+  .listingLeft { position: static; }
   .listingRight { position: static; }
 }
 @media (max-width: 768px) {
