@@ -15,7 +15,7 @@ import HoldingPanel from "./components/HoldingPanel";
 import TransferPanel from "./components/TransferPanel";
 import ScenarioPanel from "./components/ScenarioPanel";
 
-type TaxTab = "acq" | "hold" | "trans" | "scn";
+export type TaxTab = "acq" | "hold" | "trans" | "scn";
 
 const TAB_ACTIVE: Record<TaxTab, string> = {
   acq: s.activeAcq,
@@ -24,8 +24,14 @@ const TAB_ACTIVE: Record<TaxTab, string> = {
   scn: s.activeScn,
 };
 
-export default function TaxClient() {
-  const [activeTab, setActiveTab] = useState<TaxTab>("acq");
+export default function TaxClient({
+  initialTab = "acq",
+  initialAssessed,
+}: {
+  initialTab?: TaxTab;
+  initialAssessed?: number;
+} = {}) {
+  const [activeTab, setActiveTab] = useState<TaxTab>(initialTab);
 
   // 취득세 매매가 / 양도세 취득·양도가 — 비교카드·시나리오와 공유
   const [acqPrice, setAcqPrice] = useState(850000000);
@@ -131,7 +137,7 @@ export default function TaxClient() {
 
         {/* 패널 */}
         {activeTab === "acq" && <AcquisitionPanel price={acqPrice} setPrice={setAcqPrice} />}
-        {activeTab === "hold" && <HoldingPanel />}
+        {activeTab === "hold" && <HoldingPanel initialAssessed={initialAssessed} />}
         {activeTab === "trans" && (
           <TransferPanel acqPrice={transAcqPrice} setAcqPrice={setTransAcqPrice} />
         )}

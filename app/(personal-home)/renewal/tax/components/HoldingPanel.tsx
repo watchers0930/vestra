@@ -7,8 +7,8 @@ import { ManInput, HouseCount, CheckOpt } from "./TaxFields";
 import { heroManwon, formatManwon, formatEokMan } from "./taxFormat";
 import AddressAutocomplete, { type AddressResult } from "@/components/common/AddressAutocomplete";
 
-export default function HoldingPanel() {
-  const [assessed, setAssessed] = useState(600000000);
+export default function HoldingPanel({ initialAssessed }: { initialAssessed?: number } = {}) {
+  const [assessed, setAssessed] = useState(initialAssessed ?? 600000000);
   const [houseCount, setHouseCount] = useState(1);
   const [isAdjusted, setIsAdjusted] = useState(false);
   const [address, setAddress] = useState("");
