@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Building2, FileText, MessageCircle, Trash2, FileSignature } from "lucide-react";
+import { Building2, FileText, MessageCircle, Trash2, FileSignature, Eye } from "lucide-react";
 import { useSentApplications, useReceivedApplications, type AppItem, type AppStatus, type ReceivedFilter } from "../hooks/useApplications";
 import s from "../profile-renewal.module.css";
 
@@ -140,6 +140,14 @@ function SentList() {
               <div className={s.footActs}>
                 <span className={s.footDate}>{fmtDate(a.createdAt)}</span>
                 <Link href={`/chat/${a.id}`} className={s.actBtn}><MessageCircle size={13} strokeWidth={2} />채팅</Link>
+                {(a.status === "PENDING" || a.status === "ACCEPTED") && a.listing?.address && (
+                  <Link
+                    href={`/renewal/monitoring?address=${encodeURIComponent(a.listing.address)}&listingId=${a.listingId}`}
+                    className={s.actBtn}
+                  >
+                    <Eye size={13} strokeWidth={2} />등기감시
+                  </Link>
+                )}
                 {a.status === "ACCEPTED" && (
                   a.contractRequestedAt ? (
                     <span className={s.actBtn} style={{ opacity: 0.6, cursor: "default" }}>
