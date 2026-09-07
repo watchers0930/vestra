@@ -161,6 +161,9 @@ gtag('config', '${GA_MEASUREMENT_ID}', {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script dangerouslySetInnerHTML={{ __html: `(function(){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block';document.head.appendChild(l);})();` }} />
         <JsonLd />
+        {/* 브랜드 색 변수 — 빌드 CSS 최적화(Vercel)가 인라인 style 전용 :root 변수를
+            제거하는 문제를 피하기 위해 globals.css가 아닌 여기서 직접 주입한다. */}
+        <style dangerouslySetInnerHTML={{ __html: ":root{--brand-primary:#0071e3;--brand-primary-dark:#0058b0;--accent-positive:#30d158;--accent-positive-rgb:52,199,89;--accent-warning:#ff9f0a;--accent-warning-rgb:255,159,10;--cat-hero-mt:40px}.realtor-theme{--brand-primary:#2e4bd8;--brand-primary-dark:#2641c0;--accent-positive:#2e4bd8;--accent-positive-rgb:46,75,216;--accent-warning:#6e6e73;--accent-warning-rgb:110,110,115;--cat-hero-mt:0px}" }} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} antialiased`}

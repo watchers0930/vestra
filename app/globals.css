@@ -343,42 +343,12 @@ body {
 .econtract-2col { display: grid; grid-template-columns: 1fr; gap: 32px; align-items: start; margin-top: 24px; }
 @media (min-width: 900px) { .econtract-2col { grid-template-columns: 6fr 4fr; } }
 
-/* 브랜드 색 변수 — 인라인 style에서 var(--brand-primary)로 참조한다.
- * 기본값은 애플블루(개인회원 등 전역 불변), .realtor-theme 안에서만 인디고로 override. */
-:root {
-  --brand-primary: #0071e3;
-  --brand-primary-dark: #0058b0;
-  /* 성공·활성 색: 개인은 초록 유지, 부동산은 인디고로 통일(4색) */
-  --accent-positive: #30d158;
-  --accent-positive-rgb: 52, 199, 89;
-  /* 주의 색: 개인은 주황 유지, 부동산은 그레이로 통일(4색) */
-  --accent-warning: #ff9f0a;
-  --accent-warning-rgb: 255, 159, 10;
-  /* CategoryHero 상단 여백: 개인 40px, 부동산은 절반(서브히어로가 있어 여백 축소) */
-  --cat-hero-mt: 40px;
-}
-.realtor-theme {
-  --brand-primary: #2e4bd8;
-  --brand-primary-dark: #2641c0;
-  --accent-positive: #2e4bd8;
-  --accent-positive-rgb: 46, 75, 216;
-  --accent-warning: #6e6e73;
-  --accent-warning-rgb: 110, 110, 115;
-  --cat-hero-mt: 0px;
-}
-/* Vercel 빌드 환경의 CSS 최적화(Lightning CSS)는 CSS 내부에서 var()로 참조되지 않는
- * :root 커스텀 변수를 제거한다. 위 브랜드 변수들은 오직 tsx 인라인 style에서만 참조되므로,
- * '항상 렌더되는 html 요소'에 '시각적으로 무해한' 프로퍼티로 참조를 남겨 제거를 막는다.
- * border/outline/column-rule은 대응 -style이 없어 실제로 그려지지 않으므로 렌더 영향이 없다.
- * (DOM에 없는 클래스 앵커는 셀렉터째 tree-shake되어 실패 → html 요소에 고정한다.) */
-html {
-  border-top-color: var(--brand-primary);
-  border-right-color: var(--brand-primary-dark);
-  border-bottom-color: var(--accent-positive);
-  border-left-color: var(--accent-warning);
-  outline-color: rgb(var(--accent-positive-rgb));
-  column-rule-color: rgb(var(--accent-warning-rgb));
-}
+/* 브랜드 색 변수(--brand-primary/--accent-positive/--cat-hero-mt 등)는
+ * app/layout.tsx의 <head> 인라인 <style>로 주입한다.
+ * 이 변수들은 tsx 인라인 style의 var()에서만 참조되는데, Vercel 빌드 환경의
+ * CSS 최적화가 "CSS 내부에서 참조되지 않는 커스텀 변수"로 판단해 globals.css에서
+ * 제거해버리므로(로컬 빌드에서는 유지되어 재현 안 됨), 빌드 최적화를 거치지 않는
+ * 인라인 <style>로 정의를 옮겨 제거를 원천 차단한다. */
 /* 부동산: 페이지 자체 상단 여백 제거 → 서브히어로~콘텐츠 여백을 main 50px로 통일 */
 .realtor-theme .pt-\[52px\] { padding-top: 0 !important; }
 .realtor-theme .cat-hero { margin-top: 0 !important; }
