@@ -267,7 +267,7 @@ export default function OfficialPriceClient() {
                 <div className={s.taxCtaT}>보유세 계산에 활용하기</div>
                 <div className={s.taxCtaD}>조회된 공시가격으로 재산세·종합부동산세를 바로 계산할 수 있습니다.</div>
               </div>
-              <Link href={`/renewal/tax?tab=holding&assessed=${getBestPrice(result)}`} className={s.taxCtaBtn}>
+              <Link href={`/renewal/tax?tab=holding&assessed=${getBestPrice(result)}&address=${encodeURIComponent(result.address ?? "")}`} className={s.taxCtaBtn}>
                 세금계산 바로가기
                 <svg viewBox="0 0 24 24">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />

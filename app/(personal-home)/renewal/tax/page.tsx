@@ -16,12 +16,13 @@ const TAB_MAP: Record<string, TaxTab> = {
 export default async function TaxRenewalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; assessed?: string }>;
+  searchParams: Promise<{ tab?: string; assessed?: string; address?: string }>;
 }) {
-  const { tab, assessed } = await searchParams;
+  const { tab, assessed, address } = await searchParams;
   const initialTab: TaxTab = tab ? (TAB_MAP[tab] ?? "acq") : "acq";
   const a = assessed ? Number(assessed) : NaN;
   const initialAssessed = Number.isFinite(a) && a > 0 ? a : undefined;
+  const initialAddress = address?.trim() || undefined;
 
-  return <TaxClient initialTab={initialTab} initialAssessed={initialAssessed} />;
+  return <TaxClient initialTab={initialTab} initialAssessed={initialAssessed} initialAddress={initialAddress} />;
 }

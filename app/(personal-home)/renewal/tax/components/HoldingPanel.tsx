@@ -7,13 +7,15 @@ import { ManInput, HouseCount, CheckOpt } from "./TaxFields";
 import { heroManwon, formatManwon, formatEokMan } from "./taxFormat";
 import AddressAutocomplete, { type AddressResult } from "@/components/common/AddressAutocomplete";
 
-export default function HoldingPanel({ initialAssessed }: { initialAssessed?: number } = {}) {
+export default function HoldingPanel({ initialAssessed, initialAddress }: { initialAssessed?: number; initialAddress?: string } = {}) {
   const [assessed, setAssessed] = useState(initialAssessed ?? 600000000);
   const [houseCount, setHouseCount] = useState(1);
   const [isAdjusted, setIsAdjusted] = useState(false);
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState(initialAddress ?? "");
   const [loading, setLoading] = useState(false);
-  const [priceLabel, setPriceLabel] = useState<string | null>(null);
+  const [priceLabel, setPriceLabel] = useState<string | null>(
+    initialAddress && initialAssessed ? "조회된 공시가격이 적용되었습니다" : null
+  );
 
   const handleAddressSelect = useCallback(async (item: AddressResult) => {
     const addr = item.address || item.roadAddress;

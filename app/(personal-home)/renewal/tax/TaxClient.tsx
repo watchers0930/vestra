@@ -27,9 +27,11 @@ const TAB_ACTIVE: Record<TaxTab, string> = {
 export default function TaxClient({
   initialTab = "acq",
   initialAssessed,
+  initialAddress,
 }: {
   initialTab?: TaxTab;
   initialAssessed?: number;
+  initialAddress?: string;
 } = {}) {
   const [activeTab, setActiveTab] = useState<TaxTab>(initialTab);
 
@@ -137,7 +139,7 @@ export default function TaxClient({
 
         {/* 패널 */}
         {activeTab === "acq" && <AcquisitionPanel price={acqPrice} setPrice={setAcqPrice} />}
-        {activeTab === "hold" && <HoldingPanel initialAssessed={initialAssessed} />}
+        {activeTab === "hold" && <HoldingPanel initialAssessed={initialAssessed} initialAddress={initialAddress} />}
         {activeTab === "trans" && (
           <TransferPanel acqPrice={transAcqPrice} setAcqPrice={setTransAcqPrice} />
         )}
