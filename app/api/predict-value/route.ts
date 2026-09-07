@@ -255,7 +255,9 @@ export async function POST(req: NextRequest) {
       policyFactor: policy,
       supplyVolume: macroFactors.supplyVolume ?? null,
       jeonseRatio: filteredJeonseRatio,
-      sampleSize: filteredTx.length,
+      // 예측에 실제 사용된 백테스트 표본 수(단지 추세 신뢰도의 올바른 지표).
+      // filteredTx.length(지역 전체 건수)는 특정 단지 추세를 대변하지 못하므로 사용하지 않음.
+      sampleSize: predictionResult.backtestResult?.sampleCount ?? 0,
     });
 
     // 3.55단계: 이상탐지 (단지 필터링 데이터 사용)
