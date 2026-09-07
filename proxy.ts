@@ -13,6 +13,23 @@ import type { NextRequest } from "next/server";
 import { jwtDecrypt } from "jose";
 import { hkdf } from "@panva/hkdf";
 
+// 개인회원(PERSONAL)이 직접 접근 시 renewal 대응 페이지로 유도하는 구 개인기능 페이지 매핑.
+// 중개사(REALESTATE)·사업자는 이 구 페이지들을 그대로 공유하므로 PERSONAL만 redirect한다.
+// 정확 경로 매칭만 함(예: /jeonse만 전환, /jeonse/analysis 등 renewal 미대응 하위는 구 유지).
+const LEGACY_TO_RENEWAL: Record<string, string> = {
+  "/rights": "/renewal/rights",
+  "/contract": "/renewal/contract",
+  "/tax": "/renewal/tax",
+  "/assistant": "/renewal/assistant",
+  "/monitoring": "/renewal/monitoring",
+  "/official-price": "/renewal/official-price",
+  "/loan-check": "/renewal/loan-check",
+  "/decision-report": "/renewal/decision-report",
+  "/jeonse": "/renewal/jeonse",
+  "/price-map": "/renewal/price-map",
+  "/listings/new": "/renewal/listing-new",
+};
+
 async function getDerivedEncryptionKey(secret: string, salt: string) {
   return await hkdf(
     "sha256",
@@ -75,6 +92,16 @@ export default async function proxy(req: NextRequest) {
       }
       // RENTAL_BIZ / BUSINESS: 사업자 대시보드
       return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+  }
+
+  // 개인회원이 구 개인기능 페이지에 직접 접근하면 renewal 대응 페이지로 이동한다.
+  // (중개사·사업자는 구 페이지를 공유하므로 그대로 통과)
+  const renewalDest = LEGACY_TO_RENEWAL[pathname];
+  if (renewalDest) {
+    const token = await getToken(req);
+    if (token?.role === "PERSONAL") {
+      return NextResponse.redirect(new URL(renewalDest, req.url));
     }
   }
 
