@@ -43,7 +43,11 @@ export default function SessionGuard({ children }: { children: React.ReactNode }
     if (status === "authenticated") {
       // 공개 페이지(매물·분석 체험)는 단일탭 강제 로그아웃 예외 —
       // 새 탭으로 둘러보기만 하는 경우까지 로그인 세션을 끊지 않는다.
-      const isPublic = isPublicPath(pathname);
+      // 사업자 홈(로그인 직후 목적지)도 예외 — 로그인 직후엔 vestra_alive가 아직 없어
+      //   개인 /home(공개 경로)과 달리 강제 로그아웃되던 문제(중개사·임대사업자·기업 로그인 실패) 방지.
+      const isBizHome =
+        pathname === "/realtor" || pathname === "/landlord" || pathname === "/dashboard";
+      const isPublic = isPublicPath(pathname) || isBizHome;
       const isTabAlive = sessionStorage.getItem("vestra_alive") === "1";
       if (!isPublic && !isTabAlive && !isAnotherTabAlive()) {
         signOut({ redirectTo: signOutDest });
