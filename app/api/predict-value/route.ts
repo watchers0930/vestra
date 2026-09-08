@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
-import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
+import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL } from "@/lib/openai";
 import { VALUE_PREDICTION_OPINION_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
@@ -303,7 +303,8 @@ export async function POST(req: NextRequest) {
     try {
       const openai = getOpenAIClient();
       const completion = await openai.chat.completions.create({
-        model: "gpt-4.1-mini",
+        model: OPENAI_MODEL,
+        reasoning_effort: "minimal",
         messages: [
           { role: "system", content: VALUE_PREDICTION_OPINION_PROMPT },
           {
@@ -329,7 +330,6 @@ export async function POST(req: NextRequest) {
             }),
           },
         ],
-        temperature: 0.5,
         response_format: { type: "json_object" },
       });
 

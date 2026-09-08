@@ -7,7 +7,7 @@
  * @module lib/feasibility/feasibility-prompts
  */
 
-import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
+import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL } from "@/lib/openai";
 import type {
   MergedProjectContext,
   VerificationResult,
@@ -299,14 +299,14 @@ export async function generateChapterOpinions(
 
     try {
       const completion = await openai.chat.completions.create({
-        model: "gpt-4.1-mini",
+        model: OPENAI_MODEL,
+        reasoning_effort: "minimal",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: prompt },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.3,
-        max_tokens: 800,
+        max_completion_tokens: 2000,
       });
 
       const content = completion.choices[0]?.message?.content;

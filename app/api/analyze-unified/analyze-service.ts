@@ -1,4 +1,4 @@
-import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
+import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL } from "@/lib/openai";
 import { UNIFIED_ANALYSIS_PROMPT } from "@/lib/prompts";
 import { parseRegistry, compressFloorData } from "@/lib/registry-parser";
 import { calculateRiskScore } from "@/lib/risk-scoring";
@@ -243,7 +243,8 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
       }
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4.1-mini",
+        model: OPENAI_MODEL,
+        reasoning_effort: "minimal",
         messages: [
           { role: "system", content: UNIFIED_ANALYSIS_PROMPT },
           {
@@ -268,7 +269,6 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
             }),
           },
         ],
-        temperature: 0.3,
         response_format: { type: "json_object" },
       });
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
-import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
+import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL } from "@/lib/openai";
 import { JEONSE_ANALYSIS_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
@@ -71,7 +71,8 @@ export async function POST(req: NextRequest) {
 
     if (type === "analyze") {
       const completion = await openai.chat.completions.create({
-        model: "gpt-4.1-mini",
+        model: OPENAI_MODEL,
+        reasoning_effort: "minimal",
         messages: [
           { role: "system", content: JEONSE_ANALYSIS_PROMPT },
           {
@@ -102,7 +103,6 @@ ${registrySummary ? `
 전세권 설정 필요 여부를 판단하고 JSON 형식으로 응답하세요.`,
           },
         ],
-        temperature: 0.3,
         response_format: { type: "json_object" },
       });
 

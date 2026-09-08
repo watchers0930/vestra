@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
-import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
+import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL } from "@/lib/openai";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
@@ -16,7 +16,7 @@ import {
  * ──────────────────────────────────────────────────────────────────────────
  * 집키퍼 AI 내용증명 초안 생성 (비저장 미리보기). 설계서 §6·§8.
  * 흐름: validateOrigin → auth(로그인 필수) → rateLimit → dailyUsage
- *       → 서버 입력 재검증(cd-template) → costGuard → OpenAI(gpt-4.1-mini, JSON)
+ *       → 서버 입력 재검증(cd-template) → costGuard → OpenAI(OPENAI_MODEL, JSON)
  * ⚠️ 초안은 미리보기이며, 실제 발송 전 변호사 승인·직인이 필수(§8.2).
  */
 export async function POST(req: NextRequest) {
@@ -67,12 +67,12 @@ export async function POST(req: NextRequest) {
 
     const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
+      model: OPENAI_MODEL,
+      reasoning_effort: "minimal",
       messages: [
         { role: "system", content: causeSystemPrompt(input.cause) },
         { role: "user", content: buildUserPrompt(input) },
       ],
-      temperature: 0.3,
       response_format: { type: "json_object" },
     });
 

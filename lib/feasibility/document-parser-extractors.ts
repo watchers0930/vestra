@@ -7,7 +7,7 @@
  * @module lib/feasibility/document-parser-extractors
  */
 
-import { getOpenAIClient } from "../openai";
+import { getOpenAIClient, OPENAI_MODEL } from "../openai";
 import { extractEntities } from "../nlp-ner-pipeline";
 import type { Entity } from "../nlp-ner-pipeline";
 import type { ExtractedValue, ClaimKey } from "./feasibility-types";
@@ -400,8 +400,8 @@ export async function extractClaimsWithAI(
   ).join("\n");
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4.1-mini",
-    temperature: 0,
+    model: OPENAI_MODEL,
+    reasoning_effort: "minimal",
     response_format: { type: "json_object" },
     messages: [
       {

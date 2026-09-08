@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getOpenAIClient } from "@/lib/openai";
+import { getOpenAIClient, OPENAI_MODEL } from "@/lib/openai";
 import { validateOrigin } from "@/lib/csrf";
 import { fetchKaptInfoByAddress } from "@/lib/kapt-api";
 
@@ -251,10 +251,10 @@ export async function POST(req: NextRequest) {
 [생활] ${living.score}점 — 공원 ${park.length}개, 은행 ${bank.length}개, 최근접 ${living.nearest}m`;
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4.1-mini",
+        model: OPENAI_MODEL,
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.5,
-        max_tokens: 300,
+        reasoning_effort: "minimal",
+        max_completion_tokens: 800,
       });
       aiComment = completion.choices[0]?.message?.content?.trim() ?? "";
     } catch {

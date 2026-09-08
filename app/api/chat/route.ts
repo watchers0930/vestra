@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
-import { getOpenAIClient, checkOpenAICostGuard } from "@/lib/openai";
+import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL } from "@/lib/openai";
 import { CHAT_SYSTEM_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { sanitizeMessages } from "@/lib/sanitize";
@@ -87,10 +87,10 @@ export async function POST(req: NextRequest) {
     // ── 스트리밍 응답 ──
     if (stream) {
       const completion = await openai.chat.completions.create({
-        model: "gpt-4.1-mini",
+        model: OPENAI_MODEL,
         messages: openaiMessages,
-        temperature: 0.5,
-        max_tokens: 2000,
+        reasoning_effort: "minimal",
+        max_completion_tokens: 2000,
         stream: true,
       });
 
@@ -132,10 +132,10 @@ export async function POST(req: NextRequest) {
 
     // ── 일반 응답 (하위 호환) ──
     const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
+      model: OPENAI_MODEL,
       messages: openaiMessages,
-      temperature: 0.5,
-      max_tokens: 2000,
+      reasoning_effort: "minimal",
+      max_completion_tokens: 2000,
     });
 
     const content = completion.choices[0]?.message?.content;

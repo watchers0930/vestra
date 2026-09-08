@@ -7,7 +7,7 @@
  * @module lib/image-ocr
  */
 
-import { getOpenAIClient } from "@/lib/openai";
+import { getOpenAIClient, OPENAI_MODEL } from "@/lib/openai";
 import { IMAGE_OCR_PROMPT } from "@/lib/prompts";
 import {
   normalizeRegistryText,
@@ -54,7 +54,7 @@ async function extractWithVision(
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       const completion = await openai.chat.completions.create({
-        model: "gpt-4.1-mini",
+        model: OPENAI_MODEL,
         messages: [
           { role: "system", content: IMAGE_OCR_PROMPT },
           {
@@ -65,8 +65,8 @@ async function extractWithVision(
             ],
           },
         ],
-        max_tokens: 16384,
-        temperature: 0,
+        reasoning_effort: "minimal",
+        max_completion_tokens: 16384,
       });
 
       const text = completion.choices[0]?.message?.content?.trim() || "";
@@ -107,7 +107,8 @@ export async function extractTextFromScannedPDF(
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       const response = await openai.responses.create({
-        model: "gpt-4.1-mini",
+        model: OPENAI_MODEL,
+        reasoning: { effort: "minimal" },
         input: [
           { role: "system", content: IMAGE_OCR_PROMPT },
           {

@@ -7,7 +7,7 @@
  * @module lib/feasibility/scr-ai-narratives
  */
 
-import { getOpenAIClient } from "@/lib/openai";
+import { getOpenAIClient, OPENAI_MODEL } from "@/lib/openai";
 import type { CalcResults, ExternalApiData } from "./scr-assembler";
 
 // ─── 타입 ───
@@ -133,7 +133,8 @@ export async function generateAiNarratives(
     const prompt = buildNarrativePrompt(ctx);
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
+      model: OPENAI_MODEL,
+      reasoning_effort: "minimal",
       messages: [
         {
           role: "system",
@@ -141,8 +142,7 @@ export async function generateAiNarratives(
         },
         { role: "user", content: prompt },
       ],
-      temperature: 0.4,
-      max_tokens: 4000,
+      max_completion_tokens: 4000,
       response_format: { type: "json_object" },
     });
 
