@@ -13,6 +13,13 @@ interface Props {
 }
 
 export default function LoanForm({ form, update, loading, onSubmit }: Props) {
+  // 필수 입력 검증 — 미입력(0) 상태 제출 방지 (서버 방어와 이중 가드)
+  const missing: string[] = [];
+  if (form.deposit <= 0) missing.push("전세 보증금");
+  if (form.propertyPrice <= 0) missing.push("매매 시세");
+  if (form.annualIncome <= 0) missing.push("연소득");
+  const canSubmit = missing.length === 0;
+
   return (
     <div className={s.card}>
       <div className={s.cardHead}>
@@ -74,7 +81,13 @@ export default function LoanForm({ form, update, loading, onSubmit }: Props) {
           생애최초 주택 구입
         </label>
 
-        <button className={s.submitBtn} onClick={onSubmit} disabled={loading}>
+        {!canSubmit && (
+          <p className={s.fieldHint} style={{ color: "#dc2626", textAlign: "center" }}>
+            {missing.join(" · ")}을(를) 입력해 주세요
+          </p>
+        )}
+
+        <button className={s.submitBtn} onClick={onSubmit} disabled={loading || !canSubmit}>
           {loading ? "시뮬레이션 중..." : "대출 가심사 시작"}
         </button>
       </div>
