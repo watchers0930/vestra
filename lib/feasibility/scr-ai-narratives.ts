@@ -7,7 +7,7 @@
  * @module lib/feasibility/scr-ai-narratives
  */
 
-import { getOpenAIClient, OPENAI_MODEL } from "@/lib/openai";
+import { getOpenAIClient, OPENAI_MODEL, REASONING_ANALYTICAL } from "@/lib/openai";
 import type { CalcResults, ExternalApiData } from "./scr-assembler";
 
 // ─── 타입 ───
@@ -134,7 +134,7 @@ export async function generateAiNarratives(
 
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      reasoning_effort: "minimal",
+      reasoning_effort: REASONING_ANALYTICAL,
       messages: [
         {
           role: "system",
@@ -142,7 +142,7 @@ export async function generateAiNarratives(
         },
         { role: "user", content: prompt },
       ],
-      max_completion_tokens: 4000,
+      max_completion_tokens: 6000,
       response_format: { type: "json_object" },
     });
 

@@ -25,6 +25,17 @@ import { prisma } from "./prisma";
  */
 export const OPENAI_MODEL = "gpt-5-mini";
 
+/**
+ * 작업 의도별 추론 강도(reasoning_effort).
+ * gpt-5 계열은 reasoning_effort가 높을수록 판단·분석 품질이 오르고 대신 지연·출력토큰이 는다.
+ * 값 조정은 이 두 상수 한 곳에서만 하면 전체에 반영된다.
+ *
+ * - MECHANICAL: OCR·수치추출 등 추론이 불필요한 기계적 작업 → 최소
+ * - ANALYTICAL: 권리/계약/사업성 판단, 의견·서술 생성 등 추론이 품질을 좌우하는 작업
+ */
+export const REASONING_MECHANICAL = "minimal" as const;
+export const REASONING_ANALYTICAL = "medium" as const;
+
 // ---------------------------------------------------------------------------
 // OpenAI Client
 // ---------------------------------------------------------------------------

@@ -7,7 +7,7 @@
  * @module lib/image-ocr
  */
 
-import { getOpenAIClient, OPENAI_MODEL } from "@/lib/openai";
+import { getOpenAIClient, OPENAI_MODEL, REASONING_MECHANICAL } from "@/lib/openai";
 import { IMAGE_OCR_PROMPT } from "@/lib/prompts";
 import {
   normalizeRegistryText,
@@ -65,7 +65,7 @@ async function extractWithVision(
             ],
           },
         ],
-        reasoning_effort: "minimal",
+        reasoning_effort: REASONING_MECHANICAL,
         max_completion_tokens: 16384,
       });
 
@@ -108,7 +108,7 @@ export async function extractTextFromScannedPDF(
     try {
       const response = await openai.responses.create({
         model: OPENAI_MODEL,
-        reasoning: { effort: "minimal" },
+        reasoning: { effort: REASONING_MECHANICAL },
         input: [
           { role: "system", content: IMAGE_OCR_PROMPT },
           {

@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getOpenAIClient, OPENAI_MODEL } from "@/lib/openai";
+import { getOpenAIClient, OPENAI_MODEL, REASONING_MECHANICAL } from "@/lib/openai";
 import { validateOrigin } from "@/lib/csrf";
 import { fetchKaptInfoByAddress } from "@/lib/kapt-api";
 
@@ -253,7 +253,7 @@ export async function POST(req: NextRequest) {
       const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
         messages: [{ role: "user", content: prompt }],
-        reasoning_effort: "minimal",
+        reasoning_effort: REASONING_MECHANICAL,
         max_completion_tokens: 800,
       });
       aiComment = completion.choices[0]?.message?.content?.trim() ?? "";

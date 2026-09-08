@@ -7,7 +7,7 @@
  * @module lib/feasibility/document-parser-extractors
  */
 
-import { getOpenAIClient, OPENAI_MODEL } from "../openai";
+import { getOpenAIClient, OPENAI_MODEL, REASONING_MECHANICAL } from "../openai";
 import { extractEntities } from "../nlp-ner-pipeline";
 import type { Entity } from "../nlp-ner-pipeline";
 import type { ExtractedValue, ClaimKey } from "./feasibility-types";
@@ -401,7 +401,7 @@ export async function extractClaimsWithAI(
 
   const response = await openai.chat.completions.create({
     model: OPENAI_MODEL,
-    reasoning_effort: "minimal",
+    reasoning_effort: REASONING_MECHANICAL,
     response_format: { type: "json_object" },
     messages: [
       {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
-import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL } from "@/lib/openai";
+import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL, REASONING_ANALYTICAL } from "@/lib/openai";
 import { CHAT_SYSTEM_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { sanitizeMessages } from "@/lib/sanitize";
@@ -89,8 +89,8 @@ export async function POST(req: NextRequest) {
       const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
         messages: openaiMessages,
-        reasoning_effort: "minimal",
-        max_completion_tokens: 2000,
+        reasoning_effort: REASONING_ANALYTICAL,
+        max_completion_tokens: 4000,
         stream: true,
       });
 
@@ -134,8 +134,8 @@ export async function POST(req: NextRequest) {
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       messages: openaiMessages,
-      reasoning_effort: "minimal",
-      max_completion_tokens: 2000,
+      reasoning_effort: REASONING_ANALYTICAL,
+      max_completion_tokens: 4000,
     });
 
     const content = completion.choices[0]?.message?.content;

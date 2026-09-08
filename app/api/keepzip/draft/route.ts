@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
-import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL } from "@/lib/openai";
+import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL, REASONING_ANALYTICAL } from "@/lib/openai";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      reasoning_effort: "minimal",
+      reasoning_effort: REASONING_ANALYTICAL,
       messages: [
         { role: "system", content: causeSystemPrompt(input.cause) },
         { role: "user", content: buildUserPrompt(input) },

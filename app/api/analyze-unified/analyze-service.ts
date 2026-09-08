@@ -1,4 +1,4 @@
-import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL } from "@/lib/openai";
+import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL, REASONING_ANALYTICAL } from "@/lib/openai";
 import { UNIFIED_ANALYSIS_PROMPT } from "@/lib/prompts";
 import { parseRegistry, compressFloorData } from "@/lib/registry-parser";
 import { calculateRiskScore } from "@/lib/risk-scoring";
@@ -244,7 +244,7 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
 
       const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
-        reasoning_effort: "minimal",
+        reasoning_effort: REASONING_ANALYTICAL,
         messages: [
           { role: "system", content: UNIFIED_ANALYSIS_PROMPT },
           {
