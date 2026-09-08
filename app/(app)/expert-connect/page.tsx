@@ -1,58 +1,13 @@
-"use client";
+import ExpertClient from "@/app/(personal-home)/renewal/expert/ExpertClient";
 
-import { AuthGuard } from "@/components/auth/AuthGuard";
-import { CategoryHero } from "@/components/common/CategoryHero";
-import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
-import { ExpertCard } from "@/components/expert/ExpertCard";
-import { useExpertConsult } from "./hooks/useExpertConsult";
-import { PricingSection } from "./components/PricingSection";
-import { ReservationForm } from "./components/ReservationForm";
-import { ConsultForm } from "./components/ConsultForm";
-import { ProcessInfographic } from "./components/ProcessInfographic";
-import { EXPERTS } from "./constants";
+export const metadata = {
+  title: "전문가 연결 - VESTRA",
+  description: "부동산 전문가와 1:1 상담을 연결해 드립니다",
+};
 
+// 사업자(중개사·임대사업자)도 개인회원과 동일한 전문가 연결 플로우를 사용한다.
+// GNB·서브히어로·푸터는 (app) 레이아웃(RealtorGnb·RealtorSubHero·RealtorFooter)이 제공하므로
+// ExpertClient는 embedded 모드로 콘텐츠(분야선택→전문가목록→상담신청 3단계)만 렌더한다.
 export default function ExpertConnectPage() {
-  const {
-    selectedExpert,
-    formState, setFormState,
-    submitting, submitted, error,
-    reservationForm, setReservationForm,
-    handleReservationSubmit, handleConsult, handleSubmit, resetConsultForm,
-  } = useExpertConsult();
-
-  return (
-    <AuthGuard featureName="전문가 연결">
-    <div>
-      <DashboardPageTopbar current="전문가 연결" primaryHref="/assistant" primaryLabel="AI 상담" />
-      <div className="pb-20">
-        <CategoryHero
-          badge="👥 전문가 연결"
-          title="AI 분석 결과를 전문가가 검증합니다"
-          description={<>법무, 세무, 중개, 감정 분야 전문가에게<br />분석 결과 기반 상담을 요청할 수 있습니다.</>}
-        />
-
-      {/* ── 전문가 목록 ── */}
-      <div style={{ marginBottom: "24px" }}>
-        <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#1d1d1f", margin: "0 0 4px" }}>전문가 목록</h2>
-        <p style={{ fontSize: "13px", color: "#6e6e73", margin: "0 0 16px" }}>분야별 검증된 전문가를 선택하고 상담을 요청하세요</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[14px]">
-          {EXPERTS.map((expert) => (
-            <ExpertCard key={expert.id} expert={expert} onConsult={handleConsult} />
-          ))}
-        </div>
-      </div>
-
-      <PricingSection />
-
-      {/* ── 상담예약 + 상담요청 2칼럼 ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-        <ReservationForm reservationForm={reservationForm} setReservationForm={setReservationForm} onSubmit={handleReservationSubmit} />
-        <ConsultForm selectedExpert={selectedExpert} formState={formState} setFormState={setFormState} submitting={submitting} submitted={submitted} error={error} onSubmit={handleSubmit} onReset={resetConsultForm} />
-      </div>
-
-      <ProcessInfographic />
-      </div>
-    </div>
-    </AuthGuard>
-  );
+  return <ExpertClient embedded />;
 }

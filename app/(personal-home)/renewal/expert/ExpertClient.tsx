@@ -22,7 +22,12 @@ const backBtnStyle: React.CSSProperties = {
   fontWeight: 600, cursor: "pointer", padding: "0 0 16px", alignSelf: "flex-start",
 };
 
-export default function ExpertClient() {
+/**
+ * embedded: 사업자(중개사·임대사업자) 화면에 삽입할 때 true.
+ *   → 개인 GNB·서브히어로·푸터를 렌더하지 않고 콘텐츠(3단계 상담 플로우)만 렌더한다.
+ *     (사업자 (app)/(biz) 레이아웃이 RealtorGnb·서브히어로·푸터를 제공)
+ */
+export default function ExpertClient({ embedded = false }: { embedded?: boolean }) {
   const {
     selectedExpert,
     formState, setFormState,
@@ -84,17 +89,19 @@ export default function ExpertClient() {
 
   return (
     <div className={s.page}>
-      <RenewalGnb active="expert" />
+      {!embedded && <RenewalGnb active="expert" />}
 
-      {/* SUB HERO */}
-      <section className={s.subHero}>
-        <div className={s.subHeroBg}></div>
-        <div className={s.subHeroIn}>
-          <span className={s.heroChip}>Expert Connect</span>
-          <h1>전문가 연결</h1>
-          <p className={s.subHeroSub}>부동산 전문가와 1:1 상담을 연결해 드립니다</p>
-        </div>
-      </section>
+      {/* SUB HERO (embedded 시 사업자 레이아웃의 서브히어로로 대체) */}
+      {!embedded && (
+        <section className={s.subHero}>
+          <div className={s.subHeroBg}></div>
+          <div className={s.subHeroIn}>
+            <span className={s.heroChip}>Expert Connect</span>
+            <h1>전문가 연결</h1>
+            <p className={s.subHeroSub}>부동산 전문가와 1:1 상담을 연결해 드립니다</p>
+          </div>
+        </section>
+      )}
 
       <div className={s.panelWrap}>
         {selectedExpert ? (
@@ -146,7 +153,7 @@ export default function ExpertClient() {
         )}
       </div>
 
-      <ExpertFooter />
+      {!embedded && <ExpertFooter />}
 
       {showLogin && (
         <RenewalLoginModal
