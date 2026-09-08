@@ -6,6 +6,7 @@ import { useRealtorHomeData } from "@/app/(biz)/realtor/hooks/useRealtorHomeData
 import RealtorKpiStrip from "@/app/(biz)/realtor/components/RealtorKpiStrip";
 import RealtorTaskPanel from "@/app/(biz)/realtor/components/RealtorTaskPanel";
 import RealtorNotiPanel from "@/app/(biz)/realtor/components/RealtorNotiPanel";
+import { LANDLORD_ROUTES } from "@/app/(biz)/_shared/landlord-config";
 import LandlordHero from "./components/LandlordHero";
 import LandlordQuickMenu from "./components/LandlordQuickMenu";
 
@@ -34,7 +35,7 @@ export default function LandlordHomeClient() {
             상시 업무{!loading && todoCount > 0 && <span className={s.cnt}>진행 {todoCount}</span>}
           </h2>
           <div className={s.cols}>
-            <RealtorTaskPanel tasks={tasks} loading={loading} />
+            <RealtorTaskPanel tasks={tasks} loading={loading} moreHref={LANDLORD_ROUTES.listings} moreLabel="매물 관리 전체 →" />
             <RealtorNotiPanel notis={notis} loading={loading} />
           </div>
         </div>

@@ -9,12 +9,22 @@ const CHIP_CLASS: Record<TaskItem["kind"], string> = {
   sign: s.sign, new: s.new, talk: s.talk, due: s.due,
 };
 
-export default function RealtorTaskPanel({ tasks, loading }: { tasks: TaskItem[]; loading: boolean }) {
+export default function RealtorTaskPanel({
+  tasks,
+  loading,
+  moreHref = REALTOR_ROUTES.agent,
+  moreLabel = "중개관리 전체 →",
+}: {
+  tasks: TaskItem[];
+  loading: boolean;
+  moreHref?: string;
+  moreLabel?: string;
+}) {
   return (
     <div className={s.card}>
       <div className={s.cardHead}>
         <h3>처리 대기</h3>
-        <Link href={REALTOR_ROUTES.agent}>중개관리 전체 →</Link>
+        <Link href={moreHref}>{moreLabel}</Link>
       </div>
       <div className={s.tlist}>
         {loading ? (
