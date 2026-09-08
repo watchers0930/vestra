@@ -196,6 +196,16 @@ function estimateAnnualRepayment(loanAmount: number, rate: number): number {
   return monthlyPayment * 12;
 }
 
+/** 연간 상환 여력 → 대출 가능 원금 (estimateAnnualRepayment의 역함수) — 소득 기반 한도 산출용 */
+function loanFromAnnualRepayment(annualBudget: number, rate: number): number {
+  if (annualBudget <= 0) return 0;
+  if (rate <= 0) return annualBudget * 30; // 0% 금리: 원금 분할 역산
+  const monthlyRate = rate / 100 / 12;
+  const months = 360;
+  const factor = (monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1);
+  return (annualBudget / 12) / factor;
+}
+
 function simulateProduct(input: LoanSimulateInput, product: BankLoanProduct): LoanResult {
   const creditScore = input.creditScore || 700;
   const existingLoans = input.existingLoans || 0;
@@ -226,28 +236,48 @@ function simulateProduct(input: LoanSimulateInput, product: BankLoanProduct): Lo
     reasons.push(`연소득 ${(input.annualIncome / 10000).toLocaleString()}만원 — 소득 상한 ${(product.maxIncome / 10000).toLocaleString()}만원 초과`);
   }
 
-  // LTV 계산
-  const ltv = input.deposit / input.propertyPrice;
-  if (ltv > product.maxLTV) {
+  // 매매 시세 미입력 방어 (0 나눗셈 → Infinity 방지)
+  if (input.propertyPrice <= 0) {
+    isEligible = false;
+    reasons.push("매매 시세를 입력해 주세요");
+  }
+  // 연소득 미입력 방어 (상환능력 산정 불가)
+  if (input.annualIncome <= 0) {
+    isEligible = false;
+    reasons.push("연소득을 입력해 주세요");
+  }
+
+  // LTV 계산 (시세 유효 시에만)
+  const ltv = input.propertyPrice > 0 ? input.deposit / input.propertyPrice : 0;
+  if (input.propertyPrice > 0 && ltv > product.maxLTV) {
     isEligible = false;
     reasons.push(`LTV ${(ltv * 100).toFixed(1)}% — 한도 ${(product.maxLTV * 100)}% 초과`);
   }
 
-  // 최대 대출 가능액 (LTV 기준)
-  const maxByLTV = Math.min(input.propertyPrice * product.maxLTV, input.deposit);
-  const maxLoanAmount = Math.min(maxByLTV, product.maxAmount);
-
-  // DTI 계산
   const avgRate = (product.rateRange.min + product.rateRange.max) / 2;
-  const annualRepayment = estimateAnnualRepayment(maxLoanAmount, avgRate);
   const existingRepayment = existingLoans > 0 ? estimateAnnualRepayment(existingLoans, 4.5) : 0;
+
+  // 한도 산정 — 세 기준의 최솟값
+  // ① LTV·보증금·상품상한 기준
+  const maxByLTV = input.propertyPrice > 0
+    ? Math.min(input.propertyPrice * product.maxLTV, input.deposit)
+    : 0;
+  // ② 소득 기준(DTI 역산): 연소득 × maxDTI − 기존대출 상환액 → 신규 상환 여력 → 대출원금
+  const incomeBudget = input.annualIncome * product.maxDTI - existingRepayment;
+  const maxByIncome = loanFromAnnualRepayment(incomeBudget, avgRate);
+  // 최종 한도 (음수 방지)
+  const maxLoanAmount = Math.max(0, Math.min(maxByLTV, product.maxAmount, maxByIncome));
+
+  // DTI 계산 (실제 승인 한도 기준)
+  const annualRepayment = estimateAnnualRepayment(maxLoanAmount, avgRate);
   const dti = input.annualIncome > 0
     ? (annualRepayment + existingRepayment) / input.annualIncome
     : Infinity;
 
-  if (dti > product.maxDTI) {
+  // 소득 대비 상환 여력이 없어 한도가 0으로 산정된 경우
+  if (isEligible && input.annualIncome > 0 && maxLoanAmount <= 0) {
     isEligible = false;
-    reasons.push(`DTI ${(dti * 100).toFixed(1)}% — 한도 ${(product.maxDTI * 100)}% 초과`);
+    reasons.push("연소득 대비 상환 여력이 부족합니다");
   }
 
   if (isEligible && reasons.length === 0) {
