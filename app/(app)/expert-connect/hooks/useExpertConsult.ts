@@ -141,7 +141,38 @@ export function useExpertConsult() {
         formState.address.trim() ? `[관심 물건] ${formState.address.trim()}` : "",
         formState.contactEmail.trim() ? `[이메일] ${formState.contactEmail.trim()}` : "",
       ].filter(Boolean).join("\n");
-      const content = extras ? `${extras}\n\n${formState.content}` : formState.content;
+      let content = extras ? `${extras}\n\n${formState.content}` : formState.content;
+
+      // VESTRA AI 분석 결과 첨부 — 체크 시 사용자의 최근 분석(주소 매칭 우선)을 상담 내용 상단에 첨부한다.
+      if (formState.attachAiResult) {
+        try {
+          const r = await fetch("/api/user/my-analyses");
+          if (r.ok) {
+            const j = await r.json();
+            const list: Array<{ typeLabel?: string; address?: string; summary?: string; createdAt?: string }> =
+              Array.isArray(j?.analyses) ? j.analyses : [];
+            if (list.length > 0) {
+              const addr = formState.address.trim();
+              const matched = addr
+                ? list.find((a) => a.address && (a.address.includes(addr) || addr.includes(a.address)))
+                : null;
+              const pick = matched || list[0];
+              const dateStr = pick.createdAt ? new Date(pick.createdAt).toLocaleDateString("ko-KR") : "";
+              const aiBlock = [
+                "━━ VESTRA AI 분석 첨부 ━━",
+                pick.typeLabel ? `· 분석 유형: ${pick.typeLabel}` : "",
+                pick.address ? `· 물건: ${pick.address}` : "",
+                pick.summary ? `· 요약: ${pick.summary}` : "",
+                dateStr ? `· 분석일: ${dateStr}` : "",
+                "━━━━━━━━━━━━━━━━━━",
+              ].filter(Boolean).join("\n");
+              content = `${aiBlock}\n\n${content}`;
+            }
+          }
+        } catch {
+          // 분석 조회 실패 시 첨부 없이 상담 신청은 계속 진행한다.
+        }
+      }
 
       const res = await fetch("/api/keepzip/consults", {
         method: "POST",
