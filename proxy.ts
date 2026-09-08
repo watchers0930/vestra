@@ -90,7 +90,10 @@ export default async function proxy(req: NextRequest) {
       if (token.role === "PERSONAL") {
         return NextResponse.redirect(new URL("/home", req.url));
       }
-      // RENTAL_BIZ / BUSINESS: 사업자 대시보드
+      if (token.role === "RENTAL_BIZ") {
+        return NextResponse.redirect(new URL("/landlord", req.url));
+      }
+      // BUSINESS: 사업자 대시보드
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
   }

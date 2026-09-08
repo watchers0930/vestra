@@ -15,8 +15,9 @@ function safeInternalPath(raw: string | null | undefined): string | null {
  * - ADMIN        → /admin
  * - LAWYER       → /lawyer
  * - REALESTATE   → /realtor (중개사 전용 리뉴얼 홈)
+ * - RENTAL_BIZ   → /landlord (임대사업자 전용 리뉴얼 홈)
  * - PERSONAL     → 로그인 직전 화면(?next=) 있으면 그곳, 없으면 /home
- * - 그 외 사업자  → 대시보드 유지 (RENTAL_BIZ / BUSINESS)
+ * - 그 외 사업자  → 대시보드 유지 (BUSINESS)
  */
 export default async function DashboardPage({
   searchParams,
@@ -29,11 +30,12 @@ export default async function DashboardPage({
   if (role === "ADMIN") redirect("/admin");
   if (role === "LAWYER") redirect("/lawyer");
   if (role === "REALESTATE") redirect("/realtor");
+  if (role === "RENTAL_BIZ") redirect("/landlord");
   if (role === "PERSONAL") {
     const { next } = await searchParams;
     redirect(safeInternalPath(next) || "/home");
   }
 
-  // RENTAL_BIZ / BUSINESS (및 미확정 역할): 대시보드 콘텐츠 렌더
+  // BUSINESS (및 미확정 역할): 대시보드 콘텐츠 렌더
   return <DashboardClient />;
 }

@@ -8,6 +8,8 @@ import { auth } from "@/lib/auth";
 import RealtorGnb from "@/app/(biz)/_shared/RealtorGnb";
 import RealtorSubHero from "@/app/(biz)/_shared/RealtorSubHero";
 import RealtorFooter from "@/app/(biz)/_shared/RealtorFooter";
+import LandlordGnb from "@/app/(biz)/_shared/LandlordGnb";
+import LandlordSubHero from "@/app/(biz)/_shared/LandlordSubHero";
 
 const SKIP_LINK =
   "sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-1/2 focus:-translate-x-1/2 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-white focus:text-sm focus:font-medium focus:shadow-lg";
@@ -17,19 +19,24 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // 부동산 중개사(REALESTATE)는 사이드바 대신 renewal 톤 상단 nav로 통일한다.
+  // 부동산 중개사(REALESTATE)·임대사업자(RENTAL_BIZ)는 사이드바 대신 renewal 톤 상단 nav로 통일한다.
   const session = await auth();
-  const isRealtor = session?.user?.role === "REALESTATE";
+  const role = session?.user?.role;
+  const isRealtor = role === "REALESTATE";
+  const isLandlord = role === "RENTAL_BIZ";
 
-  if (isRealtor) {
+  if (isRealtor || isLandlord) {
     // realtor-theme: 이 wrapper 하위에서만 primary 색을 renewal 인디고로 override
     // (globals.css의 .realtor-theme 스코프 규칙 — 다른 계정 UI에는 영향 없음)
+    // 임대사업자도 동일 톤을 공유하되 GNB·서브히어로만 역할별로 분기한다.
+    const Gnb = isLandlord ? LandlordGnb : RealtorGnb;
+    const SubHero = isLandlord ? LandlordSubHero : RealtorSubHero;
     return (
       <SessionGuard>
         <div className="realtor-theme">
           <a href="#main-content" className={SKIP_LINK}>본문으로 건너뛰기</a>
-          <RealtorGnb />
-          <RealtorSubHero />
+          <Gnb />
+          <SubHero />
           <main
             id="main-content"
             className="mx-auto"

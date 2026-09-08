@@ -108,11 +108,10 @@ export const landlordMenuGroups: MenuGroup[] = [
 ];
 
 // ── RENTAL_BIZ(임대사업자) 전용 메뉴 ──
-// 임대인 메뉴 기반 + "중개사 도구"(중개관리·전자계약)를 매물 관리와 분석 서비스 사이에 삽입.
+// 임대사업자는 중개업자가 아니므로 "중개사 도구"(중개관리·전자계약)는 제외한다.
 export const rentalBizMenuGroups: MenuGroup[] = [
   { label: "메인",       items: [userMenuItems[0]] },
   { label: "매물 관리",   items: [landlordListings] },
-  { label: "중개사 도구", items: [userMenuItems[13], userMenuItems[14]] },
   { label: "분석 서비스", items: [userMenuItems[2], userMenuItems[3], userMenuItems[4], userMenuItems[7], userMenuItems[8]] },
   { label: "도구",       items: [userMenuItems[10], userMenuItems[11], userMenuItems[5], userMenuItems[6]] },
 ];

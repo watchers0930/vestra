@@ -35,8 +35,8 @@ export function DashboardPageTopbar({
   primaryLabel = "새 분석",
 }: DashboardPageTopbarProps) {
   const { data } = useSession();
-  // 부동산 중개사: 상단 nav + 서브히어로가 있어 이 고정 상단바(사이드바 기준 left-272)는 중복 → 숨김
-  if (data?.user?.role === "REALESTATE") return null;
+  // 부동산 중개사·임대사업자: 상단 nav + 서브히어로가 있어 이 고정 상단바(사이드바 기준 left-272)는 중복 → 숨김
+  if (data?.user?.role === "REALESTATE" || data?.user?.role === "RENTAL_BIZ") return null;
 
   return (
     <div
