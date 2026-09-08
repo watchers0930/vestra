@@ -16,7 +16,9 @@ export async function GET(req: NextRequest) {
     const catKey = catParam ? (LABEL_CAT[catParam] ?? catParam) : null;
 
     const partners = await prisma.lawyerPartner.findMany({
-      where: { active: true, ...(catKey && CAT_LABEL[catKey] ? { category: catKey } : {}) },
+      // 심사 통과(kycStatus=verified) + 활성 전문가만 노출한다.
+      // (active만 확인하면 심사 대기(pending) 전문가가 고객에게 노출되는 문제)
+      where: { active: true, kycStatus: "verified", ...(catKey && CAT_LABEL[catKey] ? { category: catKey } : {}) },
       orderBy: { avgRating: "desc" },
       take: 50,
     });
