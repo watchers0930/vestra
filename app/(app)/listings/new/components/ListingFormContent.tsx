@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { ImagePlus, X, Loader2, ChevronLeft } from "lucide-react";
 import { useListingForm } from "../hooks/useListingForm";
 import { SafetySection } from "./SafetySection";
@@ -53,6 +54,7 @@ export function ListingFormContent() {
   } = useListingForm();
   const fileRef = useRef<HTMLInputElement>(null);
   const [zonecode, setZonecode] = useState("");
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     if (document.getElementById("daum-postcode-script")) return;
@@ -61,6 +63,34 @@ export function ListingFormContent() {
     script.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
     document.head.appendChild(script);
   }, []);
+
+  // 매물 등록 자격 게이트 — 서버 가드(POST /api/listings) 및 renewal 페이지와 동일 규칙.
+  // 사업자(RENTAL_BIZ/BUSINESS/REALESTATE)는 인증 완료(verified) 후에만 등록 가능.
+  const user = session?.user;
+  const role = user?.role || "PERSONAL";
+  const isBizRole = role === "RENTAL_BIZ" || role === "BUSINESS" || role === "REALESTATE";
+  const bizNeedsVerify = isBizRole && user?.verifyStatus !== "verified";
+  const canManage =
+    user?.userType === "LANDLORD" || (isBizRole && user?.verifyStatus === "verified") || role === "ADMIN";
+
+  if (status !== "loading" && user && (bizNeedsVerify || !canManage)) {
+    const title = bizNeedsVerify ? "사업자 인증 후 등록할 수 있습니다" : "매물 등록 권한이 없습니다";
+    const desc = bizNeedsVerify
+      ? "사업자 인증이 완료되면 매물을 등록할 수 있습니다. 현재 인증 심사 중이거나 미신청 상태입니다. 마이페이지에서 인증을 진행해주세요."
+      : "매물 등록은 임대인·임대사업자·부동산·기업 회원만 가능합니다. 마이페이지에서 회원 유형을 확인해주세요.";
+    return (
+      <div style={{ maxWidth: 560, margin: "80px auto", padding: "0 24px", textAlign: "center" }}>
+        <p style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1f", marginBottom: 10 }}>{title}</p>
+        <p style={{ fontSize: 14, color: "#6e6e73", lineHeight: 1.6, marginBottom: 24 }}>{desc}</p>
+        <a
+          href="/profile"
+          style={{ display: "inline-block", background: "var(--brand-primary)", color: "#fff", padding: "10px 20px", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}
+        >
+          마이페이지로
+        </a>
+      </div>
+    );
+  }
 
   function openPostcode() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
