@@ -3,7 +3,6 @@ import { withAdminAuth } from "@/lib/with-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { tuneWeights, type FeedbackRecord } from "@/lib/adaptive-weight-tuner";
 import { createAuditLog } from "@/lib/audit-log";
-import { validateOrigin } from "@/lib/csrf";
 
 const DEFAULT_WEIGHTS: Record<string, number> = {
   "등기부 파싱": 0.25,
@@ -120,8 +119,7 @@ export const GET = withAdminAuth(async () => {
  * 튜닝 실행: 피드백 기반으로 가중치 최적화
  */
 export const POST = withAdminAuth(async (req: NextRequest, { session }) => {
-  const csrfError = validateOrigin(req);
-  if (csrfError) return csrfError;
+  // CSRF는 withAdminAuth에서 처리됨
 
   // 현재 가중치
   const activeConfig = await prisma.weightConfig.findFirst({

@@ -2,7 +2,7 @@
 
 import { Megaphone, Plus, Edit3, Trash2 } from "lucide-react";
 import { Card, Button } from "@/components/common";
-import type { AnnouncementItem } from "../types";
+import type { AnnouncementItem, ConfirmModalState } from "../types";
 
 interface Props {
   announcements: AnnouncementItem[];
@@ -14,13 +14,14 @@ interface Props {
   handleSaveAnnouncement: () => Promise<void>;
   handleDeleteAnnouncement: (id: string) => Promise<void>;
   startEditAnnouncement: (item: AnnouncementItem) => void;
+  setConfirmModal: (modal: ConfirmModalState | null) => void;
 }
 
 export function AnnouncementsTab({
   announcements, announcementForm, setAnnouncementForm,
   editingAnnouncementId, setEditingAnnouncementId,
   announcementLoading, handleSaveAnnouncement,
-  handleDeleteAnnouncement, startEditAnnouncement,
+  handleDeleteAnnouncement, startEditAnnouncement, setConfirmModal,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -94,7 +95,10 @@ export function AnnouncementsTab({
                     <Edit3 size={14} strokeWidth={1.5} />
                   </button>
                   <button
-                    onClick={() => handleDeleteAnnouncement(item.id)}
+                    onClick={() => setConfirmModal({
+                      message: `"${item.title}" 공지사항을 삭제하시겠습니까?`,
+                      onConfirm: () => { handleDeleteAnnouncement(item.id); setConfirmModal(null); },
+                    })}
                     className="p-1.5 rounded hover:bg-red-50 text-red-400 transition-colors"
                     title="삭제"
                   >

@@ -134,7 +134,8 @@ export const lawyerMenuGroups: MenuGroup[] = [
 export const adminMenuItems: MenuItem[] = [
   { href: "/admin",                         icon: LayoutDashboard,  label: "개요",         description: "서비스 통계, 사용량, 시스템 상태를 한눈에 확인합니다" },
   { href: "/admin?tab=users",               icon: Users,            label: "회원 관리",     description: "회원 목록 조회, 역할 변경, 사용 한도를 관리합니다" },
-  { href: "/admin?tab=verifications",       icon: CheckCircle,      label: "인증 관리",     description: "전문가 인증 요청을 검토하고 승인·거부합니다" },
+  { href: "/admin?tab=verifications",       icon: CheckCircle,      label: "인증 관리",     description: "사업자 인증 요청을 검토하고 승인·거부합니다" },
+  { href: "/admin?tab=experts",             icon: Scale,            label: "전문가 관리",   description: "변호사·법무사 등 전문가 가입 신청을 검토하고 승인합니다" },
   { href: "/admin?tab=analyses",            icon: FileText,         label: "분석 이력",     description: "전체 사용자의 분석 요청 기록을 조회합니다" },
   { href: "/admin?tab=announcements",       icon: Megaphone,        label: "공지사항",      description: "서비스 공지사항을 작성하고 관리합니다" },
   { href: "/admin?tab=ml-training",         icon: Brain,            label: "ML 학습관리",   description: "ML 학습 데이터를 관리하고 검수합니다" },
@@ -143,6 +144,7 @@ export const adminMenuItems: MenuItem[] = [
   { href: "/admin?tab=apikey",              icon: Key,              label: "API KEY",      description: "외부 API 키를 관리합니다" },
   { href: "/admin?tab=news",                icon: Newspaper,        label: "뉴스·정책",     description: "부동산 뉴스/정책 수집 현황을 확인합니다" },
   { href: "/admin?tab=guarantee-rules",     icon: ShieldCheck,      label: "보증보험 규칙", description: "보증보험 가입조건 규칙을 관리합니다" },
+  { href: "/admin?tab=loan-rates",          icon: Banknote,         label: "대출 금리",     description: "FSS 연동 전세대출 금리를 관리합니다" },
   { href: "/admin?tab=research-journal",    icon: BookOpenText,     label: "연구일지",      description: "Git 변경이력 기반 연구개발 일지를 저장하고 출력합니다" },
   { href: "/admin?tab=account",             icon: KeyRound,         label: "계정 설정",     description: "관리자 비밀번호 변경 및 계정 설정을 관리합니다" },
 ];

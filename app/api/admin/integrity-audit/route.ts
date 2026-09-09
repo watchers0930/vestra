@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAdminAuth } from "@/lib/with-admin-auth";
 import { prisma } from "@/lib/prisma";
-import { validateOrigin } from "@/lib/csrf";
 import { IntegrityChain } from "@/lib/integrity-chain";
 import { createAuditLog } from "@/lib/audit-log";
 
@@ -71,8 +70,7 @@ export const GET = withAdminAuth(async (req: NextRequest) => {
  * 전체 재검증: 모든 체인의 무결성 확인
  */
 export const POST = withAdminAuth(async (req: NextRequest, { session }) => {
-  const csrfError = validateOrigin(req);
-  if (csrfError) return csrfError;
+  // CSRF는 withAdminAuth에서 처리됨
 
   // 최근 100개 체인 재검증
   const records = await prisma.integrityRecord.findMany({

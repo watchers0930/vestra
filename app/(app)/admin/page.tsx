@@ -85,10 +85,14 @@ function AdminContent() {
 
           {tab === "users" && (
             <UsersTab
-              users={data.users}
               filteredUsers={data.filteredUsers}
               roleFilter={data.roleFilter}
               setRoleFilter={data.setRoleFilter}
+              roleCounts={data.roleCounts}
+              usersPage={data.usersPage}
+              setUsersPage={data.setUsersPage}
+              usersTotalPages={data.usersTotalPages}
+              usersLoading={data.usersLoading}
               editingUserId={data.editingUserId}
               setEditingUserId={data.setEditingUserId}
               editRole={data.editRole}
@@ -122,10 +126,14 @@ function AdminContent() {
 
           {tab === "analyses" && (
             <AnalysesTab
-              analyses={data.analyses}
               filteredAnalyses={data.filteredAnalyses}
               analysisTypeFilter={data.analysisTypeFilter}
               setAnalysisTypeFilter={data.setAnalysisTypeFilter}
+              typeCounts={data.typeCounts}
+              analysesPage={data.analysesPage}
+              setAnalysesPage={data.setAnalysesPage}
+              analysesTotalPages={data.analysesTotalPages}
+              analysesLoading={data.analysesLoading}
             />
           )}
 
@@ -140,6 +148,7 @@ function AdminContent() {
               handleSaveAnnouncement={data.handleSaveAnnouncement}
               handleDeleteAnnouncement={data.handleDeleteAnnouncement}
               startEditAnnouncement={data.startEditAnnouncement}
+              setConfirmModal={data.setConfirmModal}
             />
           )}
 

@@ -54,6 +54,8 @@ const {
     },
     analysis: {
       findMany: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+      groupBy: vi.fn().mockResolvedValue([]),
     },
     auditLog: {
       create: vi.fn().mockReturnValue({ catch: vi.fn() }),
@@ -874,9 +876,9 @@ describe("Admin API Routes", () => {
       const data = await res.json();
 
       expect(res.status).toBe(200);
-      expect(data).toHaveLength(1);
-      expect(data[0].id).toBe("an-1");
-      expect(data[0].user.name).toBe("홍길동");
+      expect(data.analyses).toHaveLength(1);
+      expect(data.analyses[0].id).toBe("an-1");
+      expect(data.analyses[0].user.name).toBe("홍길동");
     });
 
     it("type 필터 적용", async () => {
@@ -907,14 +909,14 @@ describe("Admin API Routes", () => {
       );
     });
 
-    it("최대 200건 제한", async () => {
+    it("기본 페이지네이션 (limit 50)", async () => {
       mockPrisma.analysis.findMany.mockResolvedValue([]);
 
       const req = makeGetRequest(url);
       await analysesGET(req, routeCtx);
 
       expect(mockPrisma.analysis.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ take: 200 })
+        expect.objectContaining({ take: 50, skip: 0 })
       );
     });
   });

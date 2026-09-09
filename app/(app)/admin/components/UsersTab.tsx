@@ -1,17 +1,21 @@
 "use client";
 
 import Image from "next/image";
-import { User, Save, X, Edit3, Trash2 } from "lucide-react";
+import { User, Save, X, Edit3, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, Badge } from "@/components/common";
 import { ROLE_LABELS, ROLE_COLORS, VERIFY_LABELS } from "../constants";
 import type { UserItem, ConfirmModalState } from "../types";
 
 interface Props {
-  users: UserItem[];
   filteredUsers: UserItem[];
   roleFilter: string;
   setRoleFilter: (v: string) => void;
+  roleCounts: Record<string, number>;
+  usersPage: number;
+  setUsersPage: (v: number) => void;
+  usersTotalPages: number;
+  usersLoading: boolean;
   editingUserId: string | null;
   setEditingUserId: (id: string | null) => void;
   editRole: string;
@@ -27,7 +31,8 @@ interface Props {
 }
 
 export function UsersTab({
-  users, filteredUsers, roleFilter, setRoleFilter,
+  filteredUsers, roleFilter, setRoleFilter,
+  roleCounts, usersPage, setUsersPage, usersTotalPages, usersLoading,
   editingUserId, setEditingUserId, editRole, setEditRole,
   editLimit, setEditLimit, deleteConfirmId, setDeleteConfirmId,
   startEditing, setConfirmModal, handleUserEdit, handleDeleteUser,
@@ -46,7 +51,7 @@ export function UsersTab({
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             )}
           >
-            {r === "ALL" ? "전체" : ROLE_LABELS[r]} ({r === "ALL" ? users.length : users.filter((u) => u.role === r).length})
+            {r === "ALL" ? "전체" : ROLE_LABELS[r]} ({roleCounts[r] ?? 0})
           </button>
         ))}
       </div>
@@ -200,6 +205,30 @@ export function UsersTab({
           <div className="py-12 text-center text-sm text-gray-400">해당 역할의 회원이 없습니다</div>
         )}
       </Card>
+
+      {usersTotalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <button
+            onClick={() => setUsersPage(Math.max(1, usersPage - 1))}
+            disabled={usersPage <= 1 || usersLoading}
+            className="p-2 rounded-lg border border-border text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            title="이전 페이지"
+          >
+            <ChevronLeft size={16} strokeWidth={1.5} />
+          </button>
+          <span className="text-sm text-gray-600 tabular-nums">
+            {usersPage} / {usersTotalPages}
+          </span>
+          <button
+            onClick={() => setUsersPage(Math.min(usersTotalPages, usersPage + 1))}
+            disabled={usersPage >= usersTotalPages || usersLoading}
+            className="p-2 rounded-lg border border-border text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            title="다음 페이지"
+          >
+            <ChevronRight size={16} strokeWidth={1.5} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -22,6 +22,10 @@ export function useAdminData() {
   const [pending, setPending] = useState<UserItem[]>([]);
   const [pendingExperts, setPendingExperts] = useState<ExpertItem[]>([]);
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersTotalPages, setUsersTotalPages] = useState(1);
+  const [roleCounts, setRoleCounts] = useState<Record<string, number>>({});
+  const [usersLoading, setUsersLoading] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [currentPw, setCurrentPw] = useState("");
@@ -32,6 +36,10 @@ export function useAdminData() {
 
   const [analyses, setAnalyses] = useState<AnalysisItem[]>([]);
   const [analysisTypeFilter, setAnalysisTypeFilter] = useState<string>("ALL");
+  const [analysesPage, setAnalysesPage] = useState(1);
+  const [analysesTotalPages, setAnalysesTotalPages] = useState(1);
+  const [typeCounts, setTypeCounts] = useState<Record<string, number>>({});
+  const [analysesLoading, setAnalysesLoading] = useState(false);
 
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
   const [announcementForm, setAnnouncementForm] = useState({ title: "", content: "" });
@@ -53,26 +61,60 @@ export function useAdminData() {
     notificationProviders: {},
   });
 
+  // 회원 목록: 서버 페이지네이션 + 역할 필터 (usersPage·roleFilter 변경 시 재요청)
+  const fetchUsers = useCallback(async () => {
+    setUsersLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(usersPage), limit: "50" });
+      if (roleFilter !== "ALL") params.set("role", roleFilter);
+      const res = await fetch(`/api/admin/users?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data.users ?? []);
+        setUsersTotalPages(data.totalPages ?? 1);
+        setRoleCounts(data.roleCounts ?? {});
+      }
+    } catch (e) {
+      console.error("Admin users fetch error:", e);
+    } finally {
+      setUsersLoading(false);
+    }
+  }, [usersPage, roleFilter]);
+
+  // 분석 이력: 서버 페이지네이션 + 유형 필터
+  const fetchAnalyses = useCallback(async () => {
+    setAnalysesLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(analysesPage), limit: "50" });
+      if (analysisTypeFilter !== "ALL") params.set("type", analysisTypeFilter);
+      const res = await fetch(`/api/admin/analyses?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAnalyses(data.analyses ?? []);
+        setAnalysesTotalPages(data.totalPages ?? 1);
+        setTypeCounts(data.typeCounts ?? {});
+      }
+    } catch (e) {
+      console.error("Admin analyses fetch error:", e);
+    } finally {
+      setAnalysesLoading(false);
+    }
+  }, [analysesPage, analysisTypeFilter]);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes, expertsRes, analysesRes, announcementsRes, settingsRes] = await Promise.all([
+      const [statsRes, pendingRes, expertsRes, announcementsRes, settingsRes] = await Promise.all([
         fetch("/api/admin/stats"),
-        fetch("/api/admin/users"),
+        fetch("/api/admin/verify"),
         fetch("/api/admin/experts"),
-        fetch("/api/admin/analyses"),
         fetch("/api/admin/announcements"),
         fetch("/api/admin/settings"),
       ]);
       if (statsRes.ok) setStats(await statsRes.json());
-      if (usersRes.ok) {
-        const data = await usersRes.json();
-        const list: UserItem[] = data.users ?? data;
-        setUsers(list);
-        setPending(list.filter((u) => u.verifyStatus === "pending"));
-      }
+      // 인증 대기 목록: 전체 회원 페이지네이션과 무관하게 별도 로드
+      if (pendingRes.ok) setPending(await pendingRes.json());
       if (expertsRes.ok) setPendingExperts(await expertsRes.json());
-      if (analysesRes.ok) setAnalyses(await analysesRes.json());
       if (announcementsRes.ok) setAnnouncements(await announcementsRes.json());
       if (settingsRes.ok) {
         const data = await settingsRes.json();
@@ -99,13 +141,27 @@ export function useAdminData() {
     fetchData();
   }, [fetchData, session, status, router]);
 
+  // 회원 목록은 페이지·역할 필터 변경 시 독립 재요청
+  useEffect(() => {
+    if (status === "loading") return;
+    if (!session?.user || session.user.role !== "ADMIN") return;
+    fetchUsers();
+  }, [fetchUsers, session, status]);
+
+  // 분석 이력도 페이지·유형 필터 변경 시 독립 재요청
+  useEffect(() => {
+    if (status === "loading") return;
+    if (!session?.user || session.user.role !== "ADMIN") return;
+    fetchAnalyses();
+  }, [fetchAnalyses, session, status]);
+
   const handleVerify = async (userId: string, action: "approve" | "reject", role?: string) => {
     const res = await fetch("/api/admin/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, action, role }),
     });
-    if (res.ok) fetchData();
+    if (res.ok) { fetchData(); fetchUsers(); }
   };
 
   const handleExpertReview = async (partnerId: string, action: "approve" | "reject") => {
@@ -131,7 +187,7 @@ export function useAdminData() {
     });
     if (res.ok) {
       setEditingUserId(null);
-      fetchData();
+      fetchUsers();
     }
   };
 
@@ -139,6 +195,7 @@ export function useAdminData() {
     const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
     if (res.ok) {
       setDeleteConfirmId(null);
+      fetchUsers();
       fetchData();
     }
   };
@@ -206,13 +263,22 @@ export function useAdminData() {
     setAnnouncementForm({ title: item.title, content: item.content });
   };
 
-  const filteredUsers = roleFilter === "ALL"
-    ? users
-    : users.filter((u) => u.role === roleFilter);
+  // 역할 필터는 서버에서 적용되므로 users가 곧 필터 결과
+  const filteredUsers = users;
 
-  const filteredAnalyses = analysisTypeFilter === "ALL"
-    ? analyses
-    : analyses.filter((a) => a.type === analysisTypeFilter);
+  // 역할 필터 변경 시 첫 페이지로 이동 후 재요청
+  const changeRoleFilter = (role: string) => {
+    setUsersPage(1);
+    setRoleFilter(role);
+  };
+
+  // 유형 필터는 서버에서 적용되므로 analyses가 곧 필터 결과
+  const filteredAnalyses = analyses;
+
+  const changeAnalysisTypeFilter = (type: string) => {
+    setAnalysesPage(1);
+    setAnalysisTypeFilter(type);
+  };
 
   const tabs: { key: Tab; label: string; description: string }[] = [
     { key: "overview", label: "개요", description: "서비스 통계, 사용량, 시스템 상태를 한눈에 확인합니다" },
@@ -235,8 +301,10 @@ export function useAdminData() {
   return {
     session, status,
     stats, loading,
-    users, filteredUsers, pending, pendingExperts, roleFilter, setRoleFilter,
-    analyses, filteredAnalyses, analysisTypeFilter, setAnalysisTypeFilter,
+    users, filteredUsers, pending, pendingExperts, roleFilter, setRoleFilter: changeRoleFilter,
+    usersPage, setUsersPage, usersTotalPages, roleCounts, usersLoading,
+    analyses, filteredAnalyses, analysisTypeFilter, setAnalysisTypeFilter: changeAnalysisTypeFilter,
+    analysesPage, setAnalysesPage, analysesTotalPages, typeCounts, analysesLoading,
     announcements, announcementForm, setAnnouncementForm,
     editingAnnouncementId, setEditingAnnouncementId, announcementLoading,
     editingUserId, setEditingUserId, editRole, setEditRole, editLimit, setEditLimit,

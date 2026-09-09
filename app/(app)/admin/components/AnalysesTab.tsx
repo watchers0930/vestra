@@ -1,19 +1,26 @@
 "use client";
 
-import { FileText } from "lucide-react";
+import { FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, Badge } from "@/components/common";
 import { ANALYSIS_TYPE_LABELS } from "../constants";
 import type { AnalysisItem } from "../types";
 
 interface Props {
-  analyses: AnalysisItem[];
   filteredAnalyses: AnalysisItem[];
   analysisTypeFilter: string;
   setAnalysisTypeFilter: (v: string) => void;
+  typeCounts: Record<string, number>;
+  analysesPage: number;
+  setAnalysesPage: (v: number) => void;
+  analysesTotalPages: number;
+  analysesLoading: boolean;
 }
 
-export function AnalysesTab({ analyses, filteredAnalyses, analysisTypeFilter, setAnalysisTypeFilter }: Props) {
+export function AnalysesTab({
+  filteredAnalyses, analysisTypeFilter, setAnalysisTypeFilter,
+  typeCounts, analysesPage, setAnalysesPage, analysesTotalPages, analysesLoading,
+}: Props) {
   return (
     <div className="space-y-4">
       <div className="flex gap-2 flex-wrap">
@@ -29,7 +36,7 @@ export function AnalysesTab({ analyses, filteredAnalyses, analysisTypeFilter, se
             )}
           >
             {t === "ALL" ? "전체" : ANALYSIS_TYPE_LABELS[t]}
-            {" "}({t === "ALL" ? analyses.length : analyses.filter((a) => a.type === t).length})
+            {" "}({typeCounts[t] ?? 0})
           </button>
         ))}
       </div>
@@ -75,6 +82,30 @@ export function AnalysesTab({ analyses, filteredAnalyses, analysisTypeFilter, se
           </div>
         )}
       </Card>
+
+      {analysesTotalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <button
+            onClick={() => setAnalysesPage(Math.max(1, analysesPage - 1))}
+            disabled={analysesPage <= 1 || analysesLoading}
+            className="p-2 rounded-lg border border-border text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            title="이전 페이지"
+          >
+            <ChevronLeft size={16} strokeWidth={1.5} />
+          </button>
+          <span className="text-sm text-gray-600 tabular-nums">
+            {analysesPage} / {analysesTotalPages}
+          </span>
+          <button
+            onClick={() => setAnalysesPage(Math.min(analysesTotalPages, analysesPage + 1))}
+            disabled={analysesPage >= analysesTotalPages || analysesLoading}
+            className="p-2 rounded-lg border border-border text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            title="다음 페이지"
+          >
+            <ChevronRight size={16} strokeWidth={1.5} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
