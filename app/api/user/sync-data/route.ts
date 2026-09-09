@@ -120,7 +120,7 @@ export async function GET(req: NextRequest) {
   }
   // light=1: 목록 표시용(대시보드) — 무거운 원문(data)을 제외해 payload를 줄인다.
   // (localStorage 복원용 store.ts 호출은 full로 유지 → report 페이지 원문 보존)
-  const light = req.nextUrl.searchParams.get("light") === "1";
+  const light = req?.nextUrl?.searchParams?.get("light") === "1";
 
   const userId = session.user.id;
 
