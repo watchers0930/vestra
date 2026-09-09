@@ -18,6 +18,12 @@ export const POST = withAdminAuth(async (req, { session }) => {
   if (!title?.trim() || !content?.trim()) {
     return NextResponse.json({ error: "제목과 내용을 입력해주세요" }, { status: 400 });
   }
+  if (title.trim().length > 200) {
+    return NextResponse.json({ error: "제목은 200자 이내로 입력해주세요" }, { status: 400 });
+  }
+  if (content.trim().length > 20000) {
+    return NextResponse.json({ error: "내용은 20,000자 이내로 입력해주세요" }, { status: 400 });
+  }
 
   const announcement = await prisma.announcement.create({
     data: { title: title.trim(), content: content.trim() },

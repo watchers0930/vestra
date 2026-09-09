@@ -7,6 +7,8 @@ import { NextRequest } from "next/server";
 
 // --- Mocks (route import 전에 선언) ---
 
+vi.mock("@/lib/auth", () => ({ auth: vi.fn() }));
+
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     systemSetting: {

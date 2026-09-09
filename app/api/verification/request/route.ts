@@ -93,6 +93,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 길이 상한 (스토리지 남용·DoS 방지)
+    if (String(propertyAddress).length > 200) {
+      return NextResponse.json({ error: "주소는 200자 이내로 입력해주세요." }, { status: 400 });
+    }
+    if (message != null && String(message).length > 1000) {
+      return NextResponse.json({ error: "메시지는 1,000자 이내로 입력해주세요." }, { status: 400 });
+    }
+
     // 만료일: 7일 후
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);

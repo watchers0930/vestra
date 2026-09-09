@@ -33,6 +33,14 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "분석 데이터가 불완전합니다." }, { status: 400 });
       }
 
+      // 길이·크기 상한 (스토리지 남용·DoS 방지)
+      if (String(address).length > 300 || String(summary).length > 5000) {
+        return NextResponse.json({ error: "주소 또는 요약이 허용 길이를 초과했습니다." }, { status: 400 });
+      }
+      if (JSON.stringify(analysisData ?? {}).length > 512_000) {
+        return NextResponse.json({ error: "분석 데이터 크기가 허용 범위를 초과했습니다." }, { status: 400 });
+      }
+
       // 기존 레코드가 있으면 소유권 확인 후 업데이트
       const existing = await prisma.analysis.findUnique({ where: { id } });
       if (existing) {
@@ -72,6 +80,13 @@ export async function POST(req: NextRequest) {
 
       if (!id || !address || !assetType) {
         return NextResponse.json({ error: "자산 데이터가 불완전합니다." }, { status: 400 });
+      }
+
+      if (String(address).length > 300) {
+        return NextResponse.json({ error: "주소가 허용 길이를 초과했습니다." }, { status: 400 });
+      }
+      if (priceHistory && JSON.stringify(priceHistory).length > 512_000) {
+        return NextResponse.json({ error: "가격 이력 크기가 허용 범위를 초과했습니다." }, { status: 400 });
       }
 
       await prisma.asset.upsert({

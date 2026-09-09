@@ -1,13 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractTextFromPDF } from "@/lib/pdf-parser";
 import { parseRegistry } from "@/lib/registry-parser";
+import { validateOrigin } from "@/lib/csrf";
+import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export async function POST(req: NextRequest) {
+  const csrfError = validateOrigin(req);
+  if (csrfError) return csrfError;
+
+  const ip = req.headers.get("x-forwarded-for") || "anonymous";
+  const rl = await rateLimit(`jeonse-parse-registry:${ip}`, 10);
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: "요청 한도 초과. 잠시 후 다시 시도해주세요." },
+      { status: 429, headers: rateLimitHeaders(rl) }
+    );
+  }
+
   try {
     const form = await req.formData();
     const file = form.get("file");
     if (!file || typeof file === "string") {
       return NextResponse.json({ error: "파일이 없습니다." }, { status: 400 });
+    }
+
+    const isPDF =
+      file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    if (!isPDF) {
+      return NextResponse.json({ error: "PDF 파일만 지원합니다." }, { status: 400 });
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: "파일 크기가 10MB를 초과합니다." }, { status: 400 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());

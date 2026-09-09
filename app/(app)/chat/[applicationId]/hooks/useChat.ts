@@ -45,11 +45,11 @@ export function useChat(applicationId: string) {
     fetchMessages().finally(() => setLoading(false));
   }, [fetchMessages]);
 
-  // 3초 polling
+  // 15초 polling — 증분 조회(after 커서)라 부담이 낮고, 다중 탭 시 호출량 급증을 방지
   useEffect(() => {
     const timer = setInterval(() => {
       fetchMessages(latestRef.current ?? undefined);
-    }, 3000);
+    }, 15000);
     return () => clearInterval(timer);
   }, [fetchMessages]);
 

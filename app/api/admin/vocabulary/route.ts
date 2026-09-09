@@ -64,6 +64,13 @@ export const POST = withAdminAuth(async (req, { session }) => {
     return NextResponse.json({ error: "유효하지 않은 카테고리입니다." }, { status: 400 });
   }
 
+  if (term.trim().length > 100) {
+    return NextResponse.json({ error: "용어는 100자 이내로 입력해주세요." }, { status: 400 });
+  }
+  if (definition != null && String(definition).length > 2000) {
+    return NextResponse.json({ error: "설명은 2,000자 이내로 입력해주세요." }, { status: 400 });
+  }
+
   const vocab = await prisma.domainVocabulary.upsert({
     where: { term: term.trim() },
     update: { category, definition, frequency: { increment: 1 } },

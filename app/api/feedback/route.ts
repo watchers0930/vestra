@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 import { handleApiError } from "@/lib/api-error-handler";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
@@ -54,6 +55,11 @@ export async function POST(req: NextRequest) {
       { status: 429, headers: rateLimitHeaders(rl) }
     );
   }
+
+  // 게스트도 피드백 저장은 허용하되, 전역 가중치 재계산은 로그인 사용자만 트리거 가능
+  // (게스트가 임의 analysisId로 전역 사기위험 가중치 모델을 오염시키는 것을 차단)
+  const session = await auth();
+  const isAuthed = !!session?.user?.id;
 
   try {
     const body = await req.json();
@@ -133,12 +139,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 피드백 임계치 도달 시 가중치 재계산
+    // 피드백 임계치 도달 시 가중치 재계산 (로그인 사용자 피드백일 때만 — 전역 모델 오염 방지)
     let recalculated = false;
     try {
       const feedbackCount = await prisma.weightFeedback.count();
 
-      if (feedbackCount >= FEEDBACK_THRESHOLD) {
+      if (isAuthed && feedbackCount >= FEEDBACK_THRESHOLD) {
         // 최근 피드백 로드
         const recentFeedbacks = await prisma.weightFeedback.findMany({
           orderBy: { createdAt: "desc" },

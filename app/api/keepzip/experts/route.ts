@@ -21,6 +21,19 @@ export async function GET(req: NextRequest) {
       where: { active: true, kycStatus: "verified", ...(catKey && CAT_LABEL[catKey] ? { category: catKey } : {}) },
       orderBy: { avgRating: "desc" },
       take: 50,
+      // 공개 카드에 필요한 필드만 조회 (전체 컬럼·민감정보 노출 방지)
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        photoUrl: true,
+        headline: true,
+        careers: true,
+        avgRating: true,
+        ratingCount: true,
+        hourlyFee: true,
+        active: true,
+      },
     });
 
     const experts = partners.map((p) => ({

@@ -31,6 +31,17 @@ export const PUT = withAdminAuth(async (req) => {
     return NextResponse.json({ error: "유효하지 않은 기관입니다" }, { status: 400 });
   }
 
+  // rules는 반드시 평범한 객체(배열·원시값 불가) — 잘못된 설정이 보증보험 평가 전반을 오염시키는 것 방지
+  if (typeof rules !== "object" || Array.isArray(rules)) {
+    return NextResponse.json({ error: "rules는 객체 형태여야 합니다" }, { status: 400 });
+  }
+  if (JSON.stringify(rules).length > 100_000) {
+    return NextResponse.json({ error: "rules 크기가 허용 범위를 초과했습니다" }, { status: 400 });
+  }
+  if (changelog != null && String(changelog).length > 1000) {
+    return NextResponse.json({ error: "changelog는 1,000자 이내로 입력해주세요" }, { status: 400 });
+  }
+
   // 현재 활성 규칙의 최대 version 조회
   const current = await prisma.guaranteeRule.findFirst({
     where: { provider, isActive: true },

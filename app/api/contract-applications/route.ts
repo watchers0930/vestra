@@ -30,12 +30,18 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const statusFilter = searchParams.get("status"); // PENDING | ACCEPTED | REJECTED
 
+    // 최신순 기본 상한 100건 + take/skip 페이지네이션 (무제한 로드 방지)
+    const take = Math.min(Math.max(Number(searchParams.get("take")) || 100, 1), 100);
+    const skip = Math.max(Number(searchParams.get("skip")) || 0, 0);
+
     const applications = await prisma.contractApplication.findMany({
       where: {
         listing: { ownerId: session.user.id },
         ...(statusFilter ? { status: statusFilter } : {}),
       },
       orderBy: { createdAt: "desc" },
+      take,
+      skip,
       select: {
         id: true,
         listingId: true,

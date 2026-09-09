@@ -100,6 +100,11 @@ export async function POST(req: NextRequest) {
       linkedMoveInDate = app.moveInDate ?? null;
     }
 
+    // specialTerms 길이 상한 (스토리지 남용·DoS 방지)
+    if (specialTerms && String(specialTerms).length > 10000) {
+      return NextResponse.json({ error: "특약 사항은 10,000자 이내로 입력해주세요." }, { status: 400 });
+    }
+
     // 5. 표준계약서 요약 특약: 잔금 일정을 특약 상단에 합침
     const termsParts: string[] = [];
     if (balanceVal !== null) {

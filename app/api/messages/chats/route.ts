@@ -21,6 +21,7 @@ export async function GET() {
         ],
       },
       orderBy: { updatedAt: "desc" },
+      take: 100, // 최신순 상한 (무제한 로드 방지)
       select: {
         id: true,
         status: true,
