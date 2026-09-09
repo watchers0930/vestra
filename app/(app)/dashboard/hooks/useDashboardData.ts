@@ -26,7 +26,8 @@ export function useDashboardData() {
         // 계정 전환 시 이전 계정의 localStorage 데이터 격리
         ensureUserIsolation(session.user.id);
         try {
-          const res = await fetch("/api/user/sync-data");
+          // 대시보드는 목록만 표시하므로 light 모드(무거운 원문 data 제외)로 로드한다.
+          const res = await fetch("/api/user/sync-data?light=1");
           if (res.ok) {
             const data = await res.json();
             setAnalyses(data.analyses || []);

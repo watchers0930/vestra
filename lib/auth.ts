@@ -140,9 +140,15 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
       token.id = user.id;
     }
 
-    // 매 요청마다 DB에서 최신 role/verifyStatus 동기화
-    // (어드민 승인 즉시 반영을 위해 캐시 없음 — PK SELECT 3컬럼, ~1ms)
-    if (token.id) {
+    // role/verifyStatus를 DB에서 동기화하되, 세션 확인마다 매번 조회하면 Neon 왕복이 누적돼
+    // 로그인·인증 페이지가 느려진다. 첫 로그인(user) 또는 마지막 동기화 후 60초 경과 시에만 조회한다.
+    // (어드민 승인 반영은 최대 60초 지연 — 로그인/전반 응답 속도와의 트레이드오프)
+    const SYNC_INTERVAL_MS = 60_000;
+    const now = Date.now();
+    const lastSync = (token.lastSync as number) ?? 0;
+    const needsSync = Boolean(user) || !token.role || now - lastSync > SYNC_INTERVAL_MS;
+
+    if (token.id && needsSync) {
       try {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
@@ -158,6 +164,7 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
         );
         token.verifyStatus = dbUser?.verifyStatus || "none";
         token.userType = dbUser?.userType ?? null;
+        token.lastSync = now;
       } catch {
         // DB 일시 장애 시 기존 토큰 값 유지 (OAuth 콜백 Configuration 에러 방지)
         const fallbackRole = (token.role as string) ?? "PERSONAL";

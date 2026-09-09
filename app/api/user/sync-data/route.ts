@@ -113,11 +113,14 @@ export async function POST(req: NextRequest) {
  * GET /api/user/sync-data
  * 서버 DB에 저장된 사용자의 분석/자산 데이터 조회
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   }
+  // light=1: 목록 표시용(대시보드) — 무거운 원문(data)을 제외해 payload를 줄인다.
+  // (localStorage 복원용 store.ts 호출은 full로 유지 → report 페이지 원문 보존)
+  const light = req.nextUrl.searchParams.get("light") === "1";
 
   const userId = session.user.id;
 
@@ -144,8 +147,8 @@ export async function GET() {
           typeLabel: true,
           address: true,
           summary: true,
-          data: true,
           createdAt: true,
+          ...(light ? {} : { data: true }),
         },
         orderBy: { createdAt: "desc" },
         take: 50,
@@ -176,8 +179,8 @@ export async function GET() {
       address: a.address,
       summary: a.summary,
       date: a.createdAt.toISOString(),
-      data: (() => {
-        try { return JSON.parse(a.data); } catch { return {}; }
+      data: light ? {} : (() => {
+        try { return JSON.parse((a as { data?: string }).data ?? "{}"); } catch { return {}; }
       })(),
     }));
 
