@@ -573,7 +573,8 @@
 }
 .specName { font-size: 16px; font-weight: 600; color: #1a1d2e; margin-top: -4px; }
 
-.specBtn {
+/* .wrap a { color: inherit }(특이성 0,1,1)가 덮지 않도록 .specCard 하위로 특이성을 높인다 */
+.specCard a.specBtn {
   background: #141c52;
   color: #fff;
   border: none;
@@ -585,7 +586,7 @@
   font-family: inherit;
   transition: background 0.15s;
 }
-.specBtn:hover { background: #1e2870; }
+.specCard a.specBtn:hover { background: #1e2870; }
 
 /* ─────────────── FOOTER ─────────────── */
 .footer {
