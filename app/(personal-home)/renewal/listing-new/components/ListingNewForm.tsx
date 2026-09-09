@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, X, Loader2, ChevronLeft } from "lucide-react";
 import { useListingForm } from "@/app/(app)/listings/new/hooks/useListingForm";
 import { RenewalSafetySection } from "./RenewalSafetySection";
+import { AddressSearchField, EMPTY_ADDRESS, composeAddress, type AddressValue } from "@/components/common/AddressSearchField";
 import s from "../listing-new.module.css";
 
 function formatCommas(val: string) {
@@ -37,28 +38,7 @@ export function ListingNewForm() {
     submitting, error, submit,
   } = useListingForm({ successPath: (id) => `/renewal/listing-db-detail?id=${id}` });
   const fileRef = useRef<HTMLInputElement>(null);
-  const [zonecode, setZonecode] = useState("");
-
-  useEffect(() => {
-    if (document.getElementById("daum-postcode-script")) return;
-    const script = document.createElement("script");
-    script.id = "daum-postcode-script";
-    script.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
-    document.head.appendChild(script);
-  }, []);
-
-  function openPostcode() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const daum = (window as any).daum;
-    if (!daum?.Postcode) return;
-    new daum.Postcode({
-      oncomplete: (data: { roadAddress: string; jibunAddress: string; zonecode: string }) => {
-        set("address", data.roadAddress || data.jibunAddress);
-        set("detailAddress", "");
-        setZonecode(data.zonecode);
-      },
-    }).open();
-  }
+  const [addr, setAddr] = useState<AddressValue>(EMPTY_ADDRESS);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -90,18 +70,17 @@ export function ListingNewForm() {
           </div>
         </div>
 
-        {/* 주소 */}
+        {/* 주소 — 다음 검색 + 집합건물 동/호 분리 (공통 컴포넌트) */}
         <div className={s.field}>
           <label className={s.label}>주소<span className={s.req}>*</span></label>
-          <div className={s.addrRow}>
-            <input className={`${s.input} ${s.zonecode} ${s.readonly}`} placeholder="우편번호" value={zonecode} readOnly />
-            <button type="button" onClick={openPostcode} className={s.searchBtn}>주소 검색</button>
-          </div>
-          <div className={s.addrStack}>
-            <input className={`${s.input} ${s.readonly}`} placeholder="기본주소 (주소 검색 후 자동 입력)" value={form.address} readOnly />
-            <input className={s.input} placeholder="상세주소 (동·호수 등)" value={form.detailAddress}
-              onChange={(e) => set("detailAddress", e.target.value)} />
-          </div>
+          <AddressSearchField
+            value={addr}
+            onChange={(v) => {
+              setAddr(v);
+              set("address", composeAddress(v));
+              set("detailAddress", "");
+            }}
+          />
         </div>
 
         {/* 유형 + 평수 */}
