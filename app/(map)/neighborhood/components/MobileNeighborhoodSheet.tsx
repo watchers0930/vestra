@@ -7,7 +7,7 @@ import {
   Navigation, Heart, Eye, EyeOff,
 } from "lucide-react";
 import type { AnalysisResult, FacilityGroup, FacilityItem } from "../hooks/useNeighborhoodData";
-import AddressAutocomplete, { type AddressResult } from "@/components/common/AddressAutocomplete";
+import { AddressSearchField, EMPTY_ADDRESS, type AddressValue } from "@/components/common/AddressSearchField";
 
 const CATEGORY_META = [
   { key: "transport"   as const, label: "교통", icon: Train,         color: "var(--brand-primary)", weight: "25%" },
@@ -62,6 +62,7 @@ export function MobileNeighborhoodSheet({
   toggleCat, handleAnalyze, toggleFacility, toggleAllFacilities, navigateTo, highlightItem,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [addr, setAddr] = useState<AddressValue>(EMPTY_ADDRESS);
   const startY = useRef(0);
   const startExpanded = useRef(false);
 
@@ -110,30 +111,19 @@ export function MobileNeighborhoodSheet({
       </div>
 
       {/* 검색바 — 항상 표시 */}
-      <div className="flex-shrink-0 flex gap-2 px-4 pb-2.5" onClick={(e) => e.stopPropagation()}>
-        <AddressAutocomplete
-          value={address}
-          onChange={setAddress}
-          onSelect={(r: AddressResult) => {
-            handleAnalyze(r.roadAddress || r.address);
-            setExpanded(true);
-          }}
-          onSubmit={(addr?: string) => {
-            handleAnalyze(addr);
-            setExpanded(true);
+      <div className="flex-shrink-0 px-4 pb-2.5" onClick={(e) => e.stopPropagation()}>
+        <AddressSearchField
+          value={addr}
+          allowDetail={false}
+          placeholder="주소 검색 (다음 우편번호)"
+          onChange={(v) => {
+            setAddr(v);
+            const a = v.roadAddress || v.jibunAddress;
+            setAddress(a);
+            if (a) { handleAnalyze(a); setExpanded(true); }
           }}
         />
-        <button
-          onClick={() => { handleAnalyze(); setExpanded(true); }}
-          disabled={loading || !address.trim()}
-          className="flex-shrink-0 flex items-center rounded-[10px] border-none px-4 py-[9px] text-[12.5px] font-semibold text-white transition-all duration-150"
-          style={{
-            background: loading || !address.trim() ? "rgba(0,113,227,0.35)" : "var(--brand-primary)",
-            cursor: loading || !address.trim() ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading ? <Loader2 size={14} className="animate-spin" /> : "분석"}
-        </button>
+        {loading && <p className="mt-2 text-[11px] text-[#6e6e73] inline-flex items-center gap-1"><Loader2 size={12} className="animate-spin" />분석 중…</p>}
       </div>
       {error && <p className="px-4 text-[11px] text-[#ff3b30]">{error}</p>}
 

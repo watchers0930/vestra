@@ -5,25 +5,30 @@ import s from "../tax.module.css";
 import { calculateHoldingTax } from "@/lib/tax-calculator";
 import { ManInput, HouseCount, CheckOpt } from "./TaxFields";
 import { heroManwon, formatManwon, formatEokMan } from "./taxFormat";
-import AddressAutocomplete, { type AddressResult } from "@/components/common/AddressAutocomplete";
+import { AddressSearchField, EMPTY_ADDRESS, composeAddress, type AddressValue } from "@/components/common/AddressSearchField";
 
 export default function HoldingPanel({ initialAssessed, initialAddress }: { initialAssessed?: number; initialAddress?: string } = {}) {
   const [assessed, setAssessed] = useState(initialAssessed ?? 600000000);
   const [houseCount, setHouseCount] = useState(1);
   const [isAdjusted, setIsAdjusted] = useState(false);
   const [address, setAddress] = useState(initialAddress ?? "");
+  const [addr, setAddr] = useState<AddressValue>(EMPTY_ADDRESS);
   const [loading, setLoading] = useState(false);
   const [priceLabel, setPriceLabel] = useState<string | null>(
     initialAddress && initialAssessed ? "조회된 공시가격이 적용되었습니다" : null
   );
 
-  const handleAddressSelect = useCallback(async (item: AddressResult) => {
-    const addr = item.address || item.roadAddress;
-    setAddress(addr);
+  // 주소(+집합건물 동/호)로 공시가격 조회 → 보유세 과세표준 자동 적용
+  const lookupPrice = useCallback(async (v: AddressValue) => {
+    const base = v.jibunAddress || v.roadAddress;
+    if (!base) return;
     setLoading(true);
     setPriceLabel(null);
     try {
-      const res = await fetch(`/api/official-price?address=${encodeURIComponent(addr)}`);
+      const params = new URLSearchParams({ address: base });
+      if (v.isBuilding && /^\d+$/.test(v.dong.trim())) params.set("dong", v.dong.trim());
+      if (v.isBuilding && /^\d+$/.test(v.ho.trim())) params.set("ho", v.ho.trim());
+      const res = await fetch(`/api/official-price?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         const price =
@@ -63,12 +68,24 @@ export default function HoldingPanel({ initialAssessed, initialAddress }: { init
           <div className={s.fieldLabel}>
             주소로 공시가격 조회 <span className={s.fieldHint}>✓ 공시가격 자동 적용</span>
           </div>
-          <AddressAutocomplete
-            value={address}
-            onChange={setAddress}
-            onSelect={handleAddressSelect}
-            placeholder="지번 주소 입력 시 공시가격 자동 적용"
+          <AddressSearchField
+            value={addr}
+            onChange={(v) => {
+              setAddr(v);
+              setAddress(composeAddress(v));
+              // 비집합건물은 주소 선택 즉시 조회. 집합건물은 동/호 입력 후 아래 버튼으로 조회.
+              if (!v.isBuilding) lookupPrice(v);
+            }}
           />
+          {addr.isBuilding && (addr.jibunAddress || addr.roadAddress) && (
+            <button
+              type="button"
+              onClick={() => lookupPrice(addr)}
+              style={{ marginTop: 8, padding: "9px 16px", borderRadius: 8, background: "var(--brand-primary)", color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}
+            >
+              동·호 반영 공시가격 조회
+            </button>
+          )}
           {loading && <p className={s.priceLoading}>공시가격 조회 중…</p>}
           {priceLabel && (
             <p className={priceLabel.includes("찾을 수 없") ? s.priceError : s.priceApplied}>

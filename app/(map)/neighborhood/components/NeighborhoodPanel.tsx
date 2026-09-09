@@ -5,8 +5,9 @@ import {
   ChevronDown, ChevronRight, Loader2, Sparkles, Navigation,
   Heart, Eye, EyeOff,
 } from "lucide-react";
+import { useState } from "react";
 import type { AnalysisResult, FacilityGroup, FacilityItem } from "../hooks/useNeighborhoodData";
-import AddressAutocomplete, { type AddressResult } from "@/components/common/AddressAutocomplete";
+import { AddressSearchField, EMPTY_ADDRESS, type AddressValue } from "@/components/common/AddressSearchField";
 
 const CATEGORY_META = [
   { key: "transport"   as const, label: "교통", icon: Train,         color: "var(--brand-primary)", weight: "25%" },
@@ -57,6 +58,7 @@ export function NeighborhoodPanel({
   expandedCats, visibleFacilities,
   toggleCat, handleAnalyze, toggleFacility, toggleAllFacilities, navigateTo, highlightItem,
 }: Props) {
+  const [addr, setAddr] = useState<AddressValue>(EMPTY_ADDRESS);
   return (
     <div className="hidden lg:flex h-full w-[340px] flex-shrink-0 flex-col overflow-y-auto border-r border-black/[0.08] bg-[#f5f5f7]">
       {/* 다크 헤더 */}
@@ -84,27 +86,18 @@ export function NeighborhoodPanel({
 
       {/* 검색 영역 */}
       <div className="px-3.5 pt-3.5 pb-2.5 bg-white border-b border-black/[0.07]">
-        <div className="flex gap-2">
-          <AddressAutocomplete
-            value={address}
-            onChange={setAddress}
-            onSelect={(r: AddressResult) => {
-              handleAnalyze(r.roadAddress || r.address);
-            }}
-            onSubmit={handleAnalyze}
-          />
-          <button
-            onClick={() => handleAnalyze()}
-            disabled={loading || !address.trim()}
-            className="flex-shrink-0 flex items-center rounded-[10px] border-none px-4 py-[9px] text-[12.5px] font-semibold text-white transition-all duration-150"
-            style={{
-              background: loading || !address.trim() ? "rgba(0,113,227,0.35)" : "var(--brand-primary)",
-              cursor: loading || !address.trim() ? "not-allowed" : "pointer",
-            }}
-          >
-            {loading ? <Loader2 size={14} className="animate-spin" /> : "분석"}
-          </button>
-        </div>
+        <AddressSearchField
+          value={addr}
+          allowDetail={false}
+          placeholder="주소 검색 (다음 우편번호)"
+          onChange={(v) => {
+            setAddr(v);
+            const a = v.roadAddress || v.jibunAddress;
+            setAddress(a);
+            if (a) handleAnalyze(a);
+          }}
+        />
+        {loading && <p className="mt-2 text-[11px] text-[#6e6e73] inline-flex items-center gap-1"><Loader2 size={12} className="animate-spin" />분석 중…</p>}
         {error && <p className="mt-2 text-[11px] text-[#ff3b30]">{error}</p>}
       </div>
 
