@@ -143,23 +143,27 @@ export function useExpertConsult() {
       ].filter(Boolean).join("\n");
       let content = extras ? `${extras}\n\n${formState.content}` : formState.content;
 
-      // VESTRA AI 분석 결과 첨부 — 체크 시 사용자의 최근 분석 요약을 상담 내용 상단에 첨부한다.
-      // (Analysis.address는 암호화 저장되므로 주소는 담지 않고, 사용자가 입력한 관심 물건으로 대체)
+      // VESTRA AI 분석 결과 첨부 — 체크 시 사용자의 최근 분석 요약을 상담 내용 상단에 첨부하고,
+      // 전문가가 원문을 열람할 수 있도록 analysisId를 서버로 전달한다(동의 기반).
+      // (Analysis.address는 암호화 저장되므로 요약에는 주소를 담지 않고, 관심 물건 입력값으로 대체)
+      let attachedAnalysisId: string | undefined;
       if (formState.attachAiResult) {
         try {
           const r = await fetch("/api/user/my-analyses");
           if (r.ok) {
             const j = await r.json();
-            const list: Array<{ typeLabel?: string; summary?: string; createdAt?: string }> =
+            const list: Array<{ id?: string; typeLabel?: string; summary?: string; createdAt?: string }> =
               Array.isArray(j?.analyses) ? j.analyses : [];
             if (list.length > 0) {
               const pick = list[0]; // 최근 분석
+              attachedAnalysisId = pick.id;
               const dateStr = pick.createdAt ? new Date(pick.createdAt).toLocaleDateString("ko-KR") : "";
               const aiBlock = [
                 "━━ VESTRA AI 분석 첨부 ━━",
                 pick.typeLabel ? `· 분석 유형: ${pick.typeLabel}` : "",
                 pick.summary ? `· 분석 요약: ${pick.summary}` : "",
                 dateStr ? `· 분석일: ${dateStr}` : "",
+                "· 원문 리포트는 전문가 대시보드에서 열람됩니다.",
                 "━━━━━━━━━━━━━━━━━━",
               ].filter(Boolean).join("\n");
               content = `${aiBlock}\n\n${content}`;
@@ -179,6 +183,8 @@ export function useExpertConsult() {
           phone: formState.contactPhone,
           topic: formState.type || "상담 문의",
           content,
+          // AI 분석 원문 공개 동의 — 서버가 신청자 소유 여부 검증 후 상담에 연결한다.
+          analysisId: attachedAnalysisId,
           // datetime-local(타임존 없음)을 브라우저 로컬 기준 ISO로 변환 — 캘린더 날짜 밀림 방지
           preferredAt: formState.preferredDate ? new Date(formState.preferredDate).toISOString() : undefined,
         }),

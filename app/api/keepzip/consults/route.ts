@@ -29,14 +29,23 @@ export async function POST(req: NextRequest) {
     const name = sanitizeField(String(b.name ?? ""), 100);
     const phone = sanitizeField(String(b.phone ?? ""), 30);
     const topic = sanitizeField(String(b.topic ?? ""), 200);
-    const content = String(b.content ?? "").slice(0, 5000);
-    if (!lawyerId || !name || !phone || !content.trim()) {
+    // 사용자가 위조로 삽입한 분석 마커는 제거한다(신뢰된 마커는 서버만 생성).
+    let content = String(b.content ?? "").slice(0, 5000).replace(/\[\[VS_ANALYSIS:[^\]]*\]\]/g, "").trim();
+    if (!lawyerId || !name || !phone || !content) {
       return NextResponse.json({ error: "전문가·성명·연락처·상담 내용을 입력해주세요." }, { status: 400 });
     }
     // 전문가 실존·활성 검증(공통B) — 임의 lawyerId 주입·표적 스팸 방지
     const partner = await prisma.lawyerPartner.findUnique({ where: { id: lawyerId }, select: { id: true, active: true } });
     if (!partner || !partner.active) {
       return NextResponse.json({ error: "유효한 전문가가 아닙니다." }, { status: 400 });
+    }
+
+    // AI 분석 원문 공개 동의 — analysisId가 신청자 본인 소유일 때만 상담에 연결한다(content 마커).
+    // 서버가 소유권을 검증하므로, 전문가는 이 상담에 연결된 신청자 분석만 열람할 수 있다.
+    const analysisId = b.analysisId ? sanitizeField(String(b.analysisId), 50) : "";
+    if (analysisId && userId) {
+      const owned = await prisma.analysis.findFirst({ where: { id: analysisId, userId }, select: { id: true } });
+      if (owned) content = `${content}\n\n[[VS_ANALYSIS:${owned.id}]]`;
     }
 
     // 희망 상담 시간 (datetime-local 문자열)

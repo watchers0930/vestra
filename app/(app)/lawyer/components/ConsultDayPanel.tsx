@@ -1,12 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, User, Check, X } from "lucide-react";
+import { Clock, User, Check, X, FileText } from "lucide-react";
 import { isoToKey } from "./ConsultCalendar";
+import { ConsultAnalysisModal } from "./ConsultAnalysisModal";
 import type { Consult } from "../hooks/useLawyerDashboard";
 
 const fmtTime = (iso?: string | null) => (iso ? new Date(iso).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : "-");
 const fmtFull = (iso?: string | null) => (iso ? new Date(iso).toLocaleString("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "-");
+
+// 상담 내용의 분석 첨부 마커([[VS_ANALYSIS:id]])는 신청자·전문가에게 숨기고, 원문은 전용 API로만 열람한다.
+const ANALYSIS_MARKER = /\n*\[\[VS_ANALYSIS:[^\]]*\]\]\n*/g;
+const stripMarker = (t?: string) => (t ?? "").replace(ANALYSIS_MARKER, "").trim();
+const hasAnalysis = (t?: string) => /\[\[VS_ANALYSIS:[^\]]*\]\]/.test(t ?? "");
 
 // 상담 가능 시간대 — 이용자 신청과 동일 (오전 9시~오후 5시, 12~2시 휴게 제외)
 const TIME_SLOTS: [string, string][] = [
@@ -33,6 +39,7 @@ export function ConsultDayPanel({ dateKey, consults, busy, onAccept, onPropose }
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [detail, setDetail] = useState<Consult | null>(null);
+  const [analysisConsultId, setAnalysisConsultId] = useState<string | null>(null);
   const [pDate, setPDate] = useState("");
   const [pTime, setPTime] = useState("");
   const [pMemo, setPMemo] = useState("");
@@ -67,7 +74,10 @@ export function ConsultDayPanel({ dateKey, consults, busy, onAccept, onPropose }
                 </div>
                 <p className="mt-2 text-[13px] text-gray-700"><User size={12} className="inline mr-1 text-gray-400" />{c.name} · {c.phone}</p>
                 <p className="mt-1 text-xs text-gray-500">{c.topic}</p>
-                <p className="mt-2 text-[13px] text-gray-600 whitespace-pre-wrap leading-relaxed">{c.content}</p>
+                <p className="mt-2 text-[13px] text-gray-600 whitespace-pre-wrap leading-relaxed">{stripMarker(c.content)}</p>
+                {hasAnalysis(c.content) && (
+                  <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-blue-600"><FileText size={11} />AI 분석 첨부됨</span>
+                )}
 
                 {c.status === "proposed" && c.proposedAt && (
                   <p className="mt-2 text-xs text-blue-700">제안한 시간: {fmtFull(c.proposedAt)} · 이용자 확인 대기</p>
@@ -125,10 +135,21 @@ export function ConsultDayPanel({ dateKey, consults, busy, onAccept, onPropose }
             </div>
             <div className="mt-4">
               <p className="text-xs font-semibold text-gray-500 mb-1.5">상담 내용</p>
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-[13px] leading-relaxed text-gray-800 whitespace-pre-wrap">{detail.content}</div>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-[13px] leading-relaxed text-gray-800 whitespace-pre-wrap">{stripMarker(detail.content)}</div>
             </div>
+            {hasAnalysis(detail.content) && (
+              <button
+                onClick={() => setAnalysisConsultId(detail.id)}
+                className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 text-white py-2.5 text-sm font-semibold hover:bg-blue-700 transition-colors"
+              >
+                <FileText size={15} />신청자 AI 분석 원문 보기
+              </button>
+            )}
           </div>
         </div>
+      )}
+      {analysisConsultId && (
+        <ConsultAnalysisModal consultId={analysisConsultId} onClose={() => setAnalysisConsultId(null)} />
       )}
     </div>
   );

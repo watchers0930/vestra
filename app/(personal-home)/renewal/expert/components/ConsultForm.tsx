@@ -154,7 +154,7 @@ export default function ConsultForm({
               onChange={(e) => setFormState((p) => ({ ...p, attachAiResult: e.target.checked }))}
             />
             <span className={s.fCheckTxt}>
-              <b>VESTRA AI 분석 결과 첨부</b> — 최근 전세안전분석 리포트를 전문가에게 함께 전달합니다.
+              <b>VESTRA AI 분석 결과 첨부</b> — 최근 분석 리포트(물건·위험도 등)를 담당 전문가에게 공개하는 데 동의합니다. 담당 전문가만 상담 목적으로 열람합니다.
             </span>
           </label>
 
