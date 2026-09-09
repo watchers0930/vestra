@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Printer, Info } from "lucide-react";
 import { findCourtFromAddress } from "@/lib/court-jurisdiction";
+import { AddressSearchField, EMPTY_ADDRESS, composeAddress, type AddressValue } from "@/components/common/AddressSearchField";
 
 interface FormState {
   propertyAddress: string;
@@ -92,6 +93,8 @@ export function JeonseRightForm() {
   const [initState] = useState<{ form: FormState; fromAnalysis: boolean }>(loadStorage);
   const [form, setForm] = useState<FormState>(initState.form);
   const [fromAnalysis] = useState<boolean>(initState.fromAnalysis);
+  const [landlordAddrVal, setLandlordAddrVal] = useState<AddressValue>(EMPTY_ADDRESS);
+  const [tenantAddrVal, setTenantAddrVal] = useState<AddressValue>(EMPTY_ADDRESS);
 
   useEffect(() => {
     if (document.getElementById("daum-postcode-script")) return;
@@ -110,15 +113,6 @@ export function JeonseRightForm() {
       }
       return next;
     });
-
-  function openPostcode(onSelect: (zip: string, addr: string) => void) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    new (window as any).daum.Postcode({
-      oncomplete: (data: { roadAddress: string; jibunAddress: string; zonecode: string }) => {
-        onSelect(data.zonecode, data.roadAddress || data.jibunAddress);
-      },
-    }).open();
-  }
 
   const depositNum = parseInt(form.deposit.replace(/[^0-9]/g, ""), 10) || 0;
   const regTax = Math.floor(depositNum * 0.002);
@@ -217,15 +211,15 @@ export function JeonseRightForm() {
         </div>
         <div style={{ marginBottom: "12px" }}>
           <label style={lbl}>주소</label>
-          <div style={{ display: "flex", gap: "8px", marginBottom: "6px" }}>
-            <input style={{ ...inp, width: "100px", flexShrink: 0, background: "#f5f5f7", color: "#6e6e73" }} value={form.landlordZip} placeholder="우편번호" readOnly />
-            <button type="button" onClick={() => openPostcode((zip, addr) => { set("landlordZip", zip); set("landlordAddr", addr); set("landlordAddrDetail", ""); })}
-              style={{ padding: "8px 14px", borderRadius: "8px", background: "var(--brand-primary)", color: "#fff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
-              주소 검색
-            </button>
-          </div>
-          <input style={{ ...inp, background: "#f5f5f7", color: "#1d1d1f", marginBottom: "6px" }} value={form.landlordAddr} placeholder="기본주소 (검색 후 자동 입력)" readOnly />
-          <input style={inp} value={form.landlordAddrDetail} onChange={e => set("landlordAddrDetail", e.target.value)} placeholder="상세주소 (동·호수 등)" />
+          <AddressSearchField
+            value={landlordAddrVal}
+            onChange={(v) => {
+              setLandlordAddrVal(v);
+              set("landlordZip", v.zonecode);
+              set("landlordAddr", composeAddress(v));
+              set("landlordAddrDetail", "");
+            }}
+          />
         </div>
         <div>
           <label style={lbl}>전화번호</label>
@@ -248,15 +242,15 @@ export function JeonseRightForm() {
         </div>
         <div style={{ marginBottom: "12px" }}>
           <label style={lbl}>주소</label>
-          <div style={{ display: "flex", gap: "8px", marginBottom: "6px" }}>
-            <input style={{ ...inp, width: "100px", flexShrink: 0, background: "#f5f5f7", color: "#6e6e73" }} value={form.tenantZip} placeholder="우편번호" readOnly />
-            <button type="button" onClick={() => openPostcode((zip, addr) => { set("tenantZip", zip); set("tenantAddr", addr); set("tenantAddrDetail", ""); })}
-              style={{ padding: "8px 14px", borderRadius: "8px", background: "var(--brand-primary)", color: "#fff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
-              주소 검색
-            </button>
-          </div>
-          <input style={{ ...inp, background: "#f5f5f7", color: "#1d1d1f", marginBottom: "6px" }} value={form.tenantAddr} placeholder="기본주소 (검색 후 자동 입력)" readOnly />
-          <input style={inp} value={form.tenantAddrDetail} onChange={e => set("tenantAddrDetail", e.target.value)} placeholder="상세주소 (동·호수 등)" />
+          <AddressSearchField
+            value={tenantAddrVal}
+            onChange={(v) => {
+              setTenantAddrVal(v);
+              set("tenantZip", v.zonecode);
+              set("tenantAddr", composeAddress(v));
+              set("tenantAddrDetail", "");
+            }}
+          />
         </div>
         <div>
           <label style={lbl}>전화번호</label>

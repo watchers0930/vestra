@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import s from "../expert.module.css";
-import { DaumPostcodeModal } from "@/components/keepzip/DaumPostcodeModal";
+import { AddressSearchField, EMPTY_ADDRESS, composeAddress, type AddressValue } from "@/components/common/AddressSearchField";
 import type { Expert } from "@/components/expert/ExpertCard";
 import type { ConsultFormState } from "@/app/(app)/expert-connect/hooks/useExpertConsult";
 // 상담 분야 옵션 — 제출 시 /api/keepzip/consults의 topic으로 전달된다
@@ -45,7 +45,7 @@ export default function ConsultForm({
 }: ConsultFormProps) {
   const [date, setDate] = useState(() => formState.preferredDate.split("T")[0] || "");
   const [time, setTime] = useState(() => formState.preferredDate.split("T")[1] || "");
-  const [addrOpen, setAddrOpen] = useState(false);
+  const [addr, setAddr] = useState<AddressValue>(EMPTY_ADDRESS);
   const today = new Date().toISOString().split("T")[0];
   const pickDate = (nd: string) => { setDate(nd); setFormState((p) => ({ ...p, preferredDate: nd && time ? `${nd}T${time}` : "" })); };
   const pickTime = (nt: string) => { setTime(nt); setFormState((p) => ({ ...p, preferredDate: date && nt ? `${date}T${nt}` : "" })); };
@@ -92,24 +92,13 @@ export default function ConsultForm({
 
           <div className={s.field}>
             <label className={s.fieldLabel}>관심 물건 / 주소</label>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input
-                className={s.fInput}
-                type="text"
-                style={{ flex: 1 }}
-                placeholder="주소 검색 후 상세주소를 입력하세요"
-                value={formState.address}
-                onChange={(e) => setFormState((p) => ({ ...p, address: e.target.value }))}
-              />
-              <button
-                type="button"
-                className={s.slotBtn}
-                style={{ flex: "0 0 auto", whiteSpace: "nowrap" }}
-                onClick={() => setAddrOpen(true)}
-              >
-                주소 검색
-              </button>
-            </div>
+            <AddressSearchField
+              value={addr}
+              onChange={(v) => {
+                setAddr(v);
+                setFormState((p) => ({ ...p, address: composeAddress(v) }));
+              }}
+            />
           </div>
 
           <div className={s.fieldRow}>
@@ -206,12 +195,6 @@ export default function ConsultForm({
           </p>
         </div>
       </div>
-      {addrOpen && (
-        <DaumPostcodeModal
-          onComplete={(r) => { setFormState((p) => ({ ...p, address: r.roadAddress })); setAddrOpen(false); }}
-          onClose={() => setAddrOpen(false)}
-        />
-      )}
     </div>
   );
 }
