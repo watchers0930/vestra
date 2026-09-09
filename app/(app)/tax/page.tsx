@@ -12,7 +12,7 @@ import { DashboardPageTopbar } from "@/components/common/DashboardPageChrome";
 import { SliderInput } from "@/components/forms";
 import { InfoRow, ScholarPapers } from "@/components/results";
 import { useHydrated } from "@/lib/use-hydrated";
-import AddressAutocomplete, { type AddressResult } from "@/components/common/AddressAutocomplete";
+import { AddressSearchField, EMPTY_ADDRESS, composeAddress, type AddressValue } from "@/components/common/AddressSearchField";
 import dynamic from "next/dynamic";
 
 const TaxScenarioCompare = dynamic(
@@ -106,14 +106,18 @@ export default function TaxPage() {
   const [holdAddress, setHoldAddress] = useState("");
   const [holdPriceLoading, setHoldPriceLoading] = useState(false);
   const [holdPriceLabel, setHoldPriceLabel] = useState<string | null>(null);
+  const [holdAddr, setHoldAddr] = useState<AddressValue>(EMPTY_ADDRESS);
 
-  const handleHoldAddressSelect = useCallback(async (item: AddressResult) => {
-    const addr = item.address || item.roadAddress;
-    setHoldAddress(addr);
+  const lookupHoldPrice = useCallback(async (v: AddressValue) => {
+    const base = v.jibunAddress || v.roadAddress;
+    if (!base) return;
     setHoldPriceLoading(true);
     setHoldPriceLabel(null);
     try {
-      const res = await fetch(`/api/official-price?address=${encodeURIComponent(addr)}`);
+      const params = new URLSearchParams({ address: base });
+      if (v.isBuilding && /^\d+$/.test(v.dong.trim())) params.set("dong", v.dong.trim());
+      if (v.isBuilding && /^\d+$/.test(v.ho.trim())) params.set("ho", v.ho.trim());
+      const res = await fetch(`/api/official-price?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         const price = data.aptPrice?.price || data.housePrice?.price || data.landPrice?.totalPrice || 0;
@@ -296,15 +300,24 @@ export default function TaxPage() {
               {/* 공시가격 자동 조회 */}
               <div>
                 <p style={{ fontSize: "13px", fontWeight: 500, color: "#1d1d1f", marginBottom: "8px" }}>주소로 공시가격 조회</p>
-                <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                  <AddressAutocomplete
-                    value={holdAddress}
-                    onChange={setHoldAddress}
-                    onSelect={handleHoldAddressSelect}
-                    placeholder="지번 주소 입력 시 공시가격 자동 적용"
-                  />
-                  {holdPriceLoading && <Loader2 size={16} className="animate-spin" style={{ color: "var(--accent-positive)", marginTop: "10px", flexShrink: 0 }} />}
-                </div>
+                <AddressSearchField
+                  value={holdAddr}
+                  onChange={(v) => {
+                    setHoldAddr(v);
+                    setHoldAddress(composeAddress(v));
+                    if (!v.isBuilding) lookupHoldPrice(v);
+                  }}
+                />
+                {holdAddr.isBuilding && (holdAddr.jibunAddress || holdAddr.roadAddress) && (
+                  <button
+                    type="button"
+                    onClick={() => lookupHoldPrice(holdAddr)}
+                    style={{ marginTop: 8, padding: "9px 16px", borderRadius: 8, background: "var(--brand-primary)", color: "#fff", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}
+                  >
+                    동·호 반영 공시가격 조회
+                  </button>
+                )}
+                {holdPriceLoading && <p style={{ fontSize: "11px", color: "var(--accent-positive)", marginTop: 6, display: "inline-flex", alignItems: "center", gap: 4 }}><Loader2 size={12} className="animate-spin" />공시가격 조회 중…</p>}
                 {holdPriceLabel && (
                   <p style={{ fontSize: "11px", color: holdPriceLabel.includes("찾을 수 없") ? "#dc2626" : "var(--accent-positive)", marginTop: "6px", marginBottom: 0 }}>
                     {holdPriceLabel}

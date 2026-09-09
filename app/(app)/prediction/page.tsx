@@ -18,6 +18,7 @@ import ErrorBoundary from "@/components/common/ErrorBoundary";
 import dynamic from "next/dynamic";
 import { usePredictionData } from "./hooks/usePredictionData";
 import { AddressSearchCard } from "./components/AddressSearchCard";
+import { DaumPostcodeModal } from "@/components/keepzip/DaumPostcodeModal";
 import { AddressInfoCard } from "./components/AddressInfoCard";
 import { TransactionFilter } from "./components/TransactionFilter";
 import { TransactionTrendChart } from "./components/TransactionTrendChart";
@@ -49,7 +50,7 @@ export default function PredictionPage() {
     activeScenario, setActiveScenario, selectedArea, setSelectedArea,
     selectedApt, setSelectedApt, addressTab, setAddressTab, addressInfo,
     activeTab, setActiveTab, analysisId, previousAnalysis, canSearch,
-    openDaumPostcode, handleAnalyze, availableApts, availableAreas,
+    openDaumPostcode, showPostcode, setShowPostcode, handlePostcode, handleAnalyze, availableApts, availableAreas,
     filteredTransactions, filteredStats, scenarios, disabledTabs,
     getChartData, getHistoricalData, getMonthlyTrendData,
   } = usePredictionData();
@@ -120,6 +121,9 @@ export default function PredictionPage() {
         openDaumPostcode={openDaumPostcode}
         handleAnalyze={handleAnalyze}
       />
+      {showPostcode && (
+        <DaumPostcodeModal onComplete={handlePostcode} onClose={() => setShowPostcode(false)} />
+      )}
 
       <AddressInfoCard
         address={address}

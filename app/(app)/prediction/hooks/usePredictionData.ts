@@ -6,12 +6,12 @@ import { addAnalysis, addOrUpdateAsset, getLatestAnalysisForAddress } from "@/li
 import { addNotification } from "@/lib/notification-client";
 import type { KakaoGeocoderResult, KakaoPlaceResult } from "@/components/prediction/KakaoMap";
 import type { PredictionTabId } from "@/components/prediction/PredictionTabs";
+import type { PostcodeResult } from "@/lib/keepzip/daum-postcode";
 import type {
   PredictionResult,
   RealTransaction,
   AddressTab,
   AddressInfo,
-  DaumPostcodeData,
 } from "../types";
 
 export function usePredictionData() {
@@ -31,6 +31,7 @@ export function usePredictionData() {
   const [activeTab, setActiveTab] = useState<PredictionTabId>("dashboard");
   const [analysisId, setAnalysisId] = useState<string>("");
   const [previousAnalysis, setPreviousAnalysis] = useState<{ date: string; summary: string } | null>(null);
+  const [showPostcode, setShowPostcode] = useState(false);
 
   // localStorage 프리필 + 이전 분석 기록
   useEffect(() => {
@@ -48,46 +49,13 @@ export function usePredictionData() {
     }
   }, []);
 
-  const postcodeReadyRef = useRef(false);
-
-  // Daum Postcode 스크립트 로드
-  useEffect(() => {
-    if (window.daum?.Postcode) { postcodeReadyRef.current = true; return; }
-    const existing = document.getElementById("daum-postcode-script");
-    if (existing) {
-      existing.addEventListener("load", () => { postcodeReadyRef.current = true; });
-      return;
-    }
-    const script = document.createElement("script");
-    script.id = "daum-postcode-script";
-    script.src = "https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
-    script.async = true;
-    script.onload = () => { postcodeReadyRef.current = true; };
-    document.head.appendChild(script);
-  }, []);
-
-  const openDaumPostcode = useCallback(() => {
-    const open = () => new window.daum!.Postcode({
-      oncomplete: (data: DaumPostcodeData) => {
-        const addr = data.userSelectedType === "R" ? data.roadAddress : data.jibunAddress;
-        setRoadResult(addr);
-        setBuildingName(data.buildingName || "");
-      },
-    }).open();
-
-    if (postcodeReadyRef.current && window.daum?.Postcode) {
-      open();
-    } else {
-      // 스크립트 로드 대기 후 재시도
-      const check = setInterval(() => {
-        if (window.daum?.Postcode) {
-          postcodeReadyRef.current = true;
-          clearInterval(check);
-          open();
-        }
-      }, 200);
-      setTimeout(() => clearInterval(check), 10000);
-    }
+  // 다음 우편번호 검색 — embed 모달(DaumPostcodeModal)로 통일. 스크립트는 모달이 자체 로드.
+  const openDaumPostcode = useCallback(() => setShowPostcode(true), []);
+  const handlePostcode = useCallback((r: PostcodeResult) => {
+    // 시세전망은 단지 기준 조회라 지번 주소 + 건물명(단지명)만 사용한다.
+    setRoadResult(r.jibunAddress || r.roadAddress);
+    setBuildingName(r.buildingName || "");
+    setShowPostcode(false);
   }, []);
 
   const canSearch = !!roadResult.trim();
@@ -338,6 +306,7 @@ export function usePredictionData() {
     previousAnalysis,
     canSearch,
     openDaumPostcode,
+    showPostcode, setShowPostcode, handlePostcode,
     handleAnalyze,
     availableApts,
     availableAreas,

@@ -3,6 +3,7 @@
 import { useState, useEffect, type RefObject } from "react";
 import s from "../rights-renewal.module.css";
 import type { InputMode, AnalysisStep } from "@/app/(app)/rights/types";
+import { AddressSearchField, EMPTY_ADDRESS, type AddressValue } from "@/components/common/AddressSearchField";
 
 type Mode = "addr" | "file";
 
@@ -44,7 +45,7 @@ export default function RightsAnalysisForm({
 }: Props) {
   const [mode, setMode] = useState<Mode>("addr");
   const [detail, setDetail] = useState("");
-  const [showDetail, setShowDetail] = useState(false);
+  const [tilkoAddrVal, setTilkoAddrVal] = useState<AddressValue>(EMPTY_ADDRESS);
 
   const busy = tilkoFetching || isExtracting || (step !== "idle" && step !== "done");
 
@@ -117,33 +118,19 @@ export default function RightsAnalysisForm({
           {/* 주소 조회 모드 */}
           {mode === "addr" && (
             <div>
-              <div className={s.addrSearchRow}>
-                <input
-                  className={`${s.addrInput} ${s.addrMain} ${tilkoAddress ? s.filled : ""}`}
-                  type="text"
-                  placeholder="도로명 또는 지번 주소 입력"
-                  value={tilkoAddress}
-                  onChange={(e) => setTilkoAddress(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && setShowDetail(true)}
-                />
-                <button
-                  className={s.addrSearchBtn}
-                  onClick={() => tilkoAddress.trim() && setShowDetail(true)}
-                >
-                  조회
-                </button>
-              </div>
-              {showDetail && (
-                <input
-                  className={`${s.addrInput} ${s.addrDetail}`}
-                  type="text"
-                  placeholder="동, 호수 입력 (예: 101동 1504호)"
-                  value={detail}
-                  onChange={(e) => setDetail(e.target.value)}
-                  style={{ marginTop: "8px" }}
-                  autoFocus
-                />
-              )}
+              <AddressSearchField
+                value={tilkoAddrVal}
+                onChange={(v) => {
+                  setTilkoAddrVal(v);
+                  setTilkoAddress(v.roadAddress || v.jibunAddress);
+                  if (v.isBuilding) {
+                    const d = [v.dong.trim() ? `${v.dong.trim()}동` : "", v.ho.trim() ? `${v.ho.trim()}호` : ""].filter(Boolean).join(" ");
+                    setDetail(d);
+                  } else {
+                    setDetail(v.detail);
+                  }
+                }}
+              />
               <p className={s.addrHint} style={{ marginTop: "8px" }}>
                 틸코 등기부 + 실거래가 공공데이터 기반으로 분석합니다.<br />
                 아파트·공동주택은 동·호수까지 입력하면 더 정확합니다.
