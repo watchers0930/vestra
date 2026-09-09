@@ -574,18 +574,18 @@
 .specName { font-size: 16px; font-weight: 600; color: #1a1d2e; margin-top: -4px; }
 
 .specBtn {
-  background: #fff;
-  color: #141c52;
-  border: 1px solid #141c52;
+  background: #141c52;
+  color: #fff;
+  border: none;
   padding: 9px 26px;
   border-radius: 20px;
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s;
 }
-.specBtn:hover { background: #141c52; color: #fff; }
+.specBtn:hover { background: #1e2870; }
 
 /* ─────────────── FOOTER ─────────────── */
 .footer {
