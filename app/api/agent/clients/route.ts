@@ -194,7 +194,7 @@ export const POST = withAgentAuth(async (req, { session }) => {
         agentId: session.user.id,
         clientName: clientName.trim(),
         ...(clientPhone ? { clientPhone: clientPhone.trim() } : {}),
-        ...(clientEmail ? { clientEmail: clientEmail.trim(), clientEmailHash: emailHash } : {}),
+        ...(clientEmail ? { clientEmail: clientEmail.trim().toLowerCase(), clientEmailHash: emailHash } : {}),
         ...(clientUserId ? { clientUserId } : {}),
         ...(memo ? { memo } : {}),
         ...(contractDate ? { contractDate: new Date(contractDate) } : {}),

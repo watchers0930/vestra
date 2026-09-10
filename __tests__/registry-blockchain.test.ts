@@ -105,6 +105,11 @@ describe("암호화 가역성", () => {
       previousSnapshotHash: null,
     });
 
+    // 실제 암호화됐는지 검증 (라운드트립만 보면 passthrough여도 통과하므로)
+    expect(snap.encryptedData).not.toBe(originalText);
+    expect(snap.encryptedData).not.toContain("강남구");
+    expect(snap.encryptedData.startsWith("v2:")).toBe(true);
+
     const decrypted = decryptSnapshotData(snap.encryptedData);
     expect(decrypted).toBe(originalText);
   });

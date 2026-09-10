@@ -66,17 +66,26 @@ function encryptScalars(obj: Obj, model: string): void {
   const fields = PII_FIELDS[model];
   if (!fields) return;
   for (const f of fields) {
-    if (typeof obj[f] === "string" && obj[f]) obj[f] = encryptPII(obj[f] as string);
+    const v = obj[f];
+    // 이미 v2 암호문이면 재암호화하지 않는다(이중 암호화 방지).
+    // 같은 data 객체 재사용/재시도, 복호화된 값의 재저장 등에서 두 번 암호화되는 것을 차단.
+    if (typeof v === "string" && v && !v.startsWith("v2:")) obj[f] = encryptPII(v);
   }
 }
 
 /**
  * write 페이로드(data / create / update)를 재귀 암호화한다.
- * 배열(createMany.data 등)도 지원.
+ * 배열(createMany.data 등)도 지원. depth는 배열·관계 하강마다 증가하는 상한(MAX_DEPTH) 방어용
+ * — 논리적 깊이보다 빨리 증가할 수 있으나(비대칭) 실사용 깊이가 얕아 여유가 크다.
  */
-export function encryptWriteTree(data: unknown, model: string): void {
+export function encryptWriteTree(data: unknown, model: string, depth = 0): void {
+  if (depth > MAX_DEPTH) {
+    // silent 누락은 평문 저장으로 이어지므로 최소한 관측 가능해야 한다(값 미출력).
+    console.error(`[pii-crypto-tree] write depth>${MAX_DEPTH} 초과 — 암호화 중단(누락 가능): ${model}`);
+    return;
+  }
   if (Array.isArray(data)) {
-    for (const item of data) encryptWriteTree(item, model);
+    for (const item of data) encryptWriteTree(item, model, depth + 1);
     return;
   }
   if (!isObj(data)) return;
@@ -87,12 +96,13 @@ export function encryptWriteTree(data: unknown, model: string): void {
   if (!rels) return;
   for (const [rel, childModel] of Object.entries(rels)) {
     const nested = data[rel];
-    if (isObj(nested)) encryptNestedRelationWrite(nested, childModel);
+    if (isObj(nested)) encryptNestedRelationWrite(nested, childModel, depth + 1);
   }
 }
 
 /** nested 관계 write 페이로드({create,update,upsert,connectOrCreate,createMany})를 재귀 암호화 */
-function encryptNestedRelationWrite(nested: Obj, childModel: string): void {
+function encryptNestedRelationWrite(nested: Obj, childModel: string, depth: number): void {
+  if (depth > MAX_DEPTH) return;
   const eachItem = (v: unknown, fn: (x: Obj) => void) => {
     if (Array.isArray(v)) {
       for (const el of v) if (isObj(el)) fn(el);
@@ -101,21 +111,21 @@ function encryptNestedRelationWrite(nested: Obj, childModel: string): void {
     }
   };
 
-  if ("create" in nested) eachItem(nested.create, (x) => encryptWriteTree(x, childModel));
+  if ("create" in nested) eachItem(nested.create, (x) => encryptWriteTree(x, childModel, depth + 1));
   if ("createMany" in nested && isObj(nested.createMany)) {
-    encryptWriteTree((nested.createMany as Obj).data, childModel);
+    encryptWriteTree((nested.createMany as Obj).data, childModel, depth + 1);
   }
   // nested update/updateMany는 { where, data } 형태(또는 1:1은 필드 직접) → data 우선
-  if ("update" in nested) eachItem(nested.update, (x) => encryptWriteTree("data" in x ? x.data : x, childModel));
-  if ("updateMany" in nested) eachItem(nested.updateMany, (x) => encryptWriteTree("data" in x ? x.data : x, childModel));
+  if ("update" in nested) eachItem(nested.update, (x) => encryptWriteTree("data" in x ? x.data : x, childModel, depth + 1));
+  if ("updateMany" in nested) eachItem(nested.updateMany, (x) => encryptWriteTree("data" in x ? x.data : x, childModel, depth + 1));
   if ("upsert" in nested)
     eachItem(nested.upsert, (x) => {
-      if (isObj(x.create)) encryptWriteTree(x.create, childModel);
-      if (isObj(x.update)) encryptWriteTree(x.update, childModel);
+      if (isObj(x.create)) encryptWriteTree(x.create, childModel, depth + 1);
+      if (isObj(x.update)) encryptWriteTree(x.update, childModel, depth + 1);
     });
   if ("connectOrCreate" in nested)
     eachItem(nested.connectOrCreate, (x) => {
-      if (isObj(x.create)) encryptWriteTree(x.create, childModel);
+      if (isObj(x.create)) encryptWriteTree(x.create, childModel, depth + 1);
     });
 }
 
@@ -125,7 +135,11 @@ function encryptNestedRelationWrite(nested: Obj, childModel: string): void {
  * 쿼리 결과(단일 객체)를 재귀 복호화한다. 배열은 각 요소에 대해 호출할 것.
  */
 export function decryptReadTree(node: unknown, model: string, depth = 0): void {
-  if (depth > MAX_DEPTH || !isObj(node)) return;
+  if (depth > MAX_DEPTH) {
+    console.error(`[pii-crypto-tree] read depth>${MAX_DEPTH} 초과 — 복호화 중단: ${model}`);
+    return;
+  }
+  if (!isObj(node)) return;
 
   const fields = PII_FIELDS[model];
   if (fields) {

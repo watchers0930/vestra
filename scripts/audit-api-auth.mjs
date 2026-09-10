@@ -9,7 +9,8 @@
  *   - auth()                        : NextAuth 세션 확인
  *   - withAdminAuth / withAgentAuth : 인가 래퍼
  *   - CRON_SECRET                   : cron Bearer 시크릿
- *   - signToken                     : 공개 서명 링크 토큰(토큰이 곧 인증)
+ *   (토큰 기반 공개 서명 링크는 signToken이 Prisma 컬럼명이라 substring 오탐 위험 →
+ *    자동 신호로 두지 않고 ALLOWLIST에 라우트를 명시한다)
  *
  * 의도적 공개(인증 없이 공개하되 rate-limit/CSRF로 보호)는 ALLOWLIST로 관리한다.
  * 베스트라 정책(CLAUDE.md): "인증 없이 API 공개, Rate Limit + Cost Guard로 비용 보호".
@@ -35,17 +36,19 @@ const ALLOWLIST = {
   "monitoring/parse-pdf/route.ts": "공개 PDF 파싱 — CSRF + rate limit + 파일검증",
   "extract-pdf/route.ts": "공개 PDF 추출 — rate limit",
   "landlord/report/route.ts": "비회원 임대인 제보 — IP rate limit(일 3건) + CSRF",
+  "e-contracts/sign/[token]/route.ts": "공개 서명 링크 — URL 토큰(signToken) 자체가 인증 + 만료·상태 검증",
+  "sign/[token]/complete/route.ts": "공개 서명 완료 — URL 토큰(signToken) 자체가 인증 + 만료·상태 검증",
 };
 
 const MUTATION_RE = /export\s+(?:async\s+function|const)\s+(POST|PUT|PATCH|DELETE)\b/g;
-const AUTH_SIGNALS = [/\bauth\s*\(\s*\)/, /withAdminAuth/, /withAgentAuth/, /CRON_SECRET/, /signToken/];
+const AUTH_SIGNALS = [/\bauth\s*\(\s*\)/, /withAdminAuth/, /withAgentAuth/, /CRON_SECRET/];
 
 function walk(dir) {
   const out = [];
   for (const name of readdirSync(dir)) {
     const p = join(dir, name);
     if (statSync(p).isDirectory()) out.push(...walk(p));
-    else if (name === "route.ts") out.push(p);
+    else if (/^route\.(ts|tsx|js|mjs)$/.test(name)) out.push(p);
   }
   return out;
 }
@@ -92,7 +95,7 @@ if (violations.length) {
     `\n❌ 인증 없는 변이 핸들러 ${violations.length}건 발견 (인증 추가 또는 의도적 공개면 ALLOWLIST 등록):`,
   );
   for (const v of violations) console.error(`   - ${v.path}  {${v.methods.join(",")}}`);
-  console.error("\n인증 신호: auth() / withAdminAuth / withAgentAuth / CRON_SECRET / signToken");
+  console.error("\n인증 신호: auth() / withAdminAuth / withAgentAuth / CRON_SECRET (토큰 링크는 ALLOWLIST)");
   process.exit(1);
 }
 

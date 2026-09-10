@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
 import { validateOrigin } from "@/lib/csrf";
+import { del } from "@vercel/blob";
 
 const patchSchema = z.object({
   listingType: z.enum(["JEONSE", "SALE"]).optional(),
@@ -114,13 +115,42 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     const { id } = await params;
-    const existing = await prisma.listing.findUnique({ where: { id }, select: { ownerId: true } });
+    const existing = await prisma.listing.findUnique({
+      where: { id },
+      select: { ownerId: true, photos: true, taxDocUrl: true, safetyDocuments: true },
+    });
     if (!existing) return NextResponse.json({ error: "매물을 찾을 수 없습니다." }, { status: 404 });
     if (existing.ownerId !== session.user.id) {
       return NextResponse.json({ error: "삭제 권한이 없습니다." }, { status: 403 });
     }
 
     await prisma.listing.delete({ where: { id } });
+
+    // 연결된 Blob 정리 (best-effort — 실패해도 매물 삭제는 완료). 고아 blob·민감문서 잔존 방지.
+    try {
+      // 매물 사진: public store
+      const photos = ((existing.photos as string[] | null) ?? []).filter(
+        (u) => typeof u === "string" && u.includes("blob.vercel-storage"),
+      );
+      if (photos.length && process.env.PHOTOS_READ_WRITE_TOKEN) {
+        await del(photos, { token: process.env.PHOTOS_READ_WRITE_TOKEN }).catch((e) =>
+          console.error("[listing DELETE] 사진 blob 정리 실패:", e instanceof Error ? e.message : e),
+        );
+      }
+      // 재산세·안전서류: private store (pathname 참조키)
+      const privateRefs: string[] = [];
+      if (existing.taxDocUrl) privateRefs.push(existing.taxDocUrl);
+      const docs = existing.safetyDocuments as { url?: string }[] | null;
+      if (Array.isArray(docs)) for (const d of docs) if (typeof d?.url === "string" && d.url) privateRefs.push(d.url);
+      if (privateRefs.length) {
+        await del(privateRefs).catch((e) =>
+          console.error("[listing DELETE] 문서 blob 정리 실패:", e instanceof Error ? e.message : e),
+        );
+      }
+    } catch (e) {
+      console.error("[listing DELETE] blob 정리 예외:", e instanceof Error ? e.message : e);
+    }
+
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error(e);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { auth } from "@/lib/auth";
+import { validateMagicBytes } from "@/lib/sanitize";
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
@@ -22,11 +23,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "파일 크기는 10MB 이하여야 합니다." }, { status: 400 });
     }
 
-    const ext = file.name.split(".").pop() ?? "pdf";
+    // 매직바이트 검증 — MIME 위조 방지
+    const buffer = await file.arrayBuffer();
+    if (!validateMagicBytes(buffer, file.type)) {
+      return NextResponse.json({ error: "파일 내용이 형식과 일치하지 않습니다." }, { status: 400 });
+    }
+
+    const ext = file.name.split(".").pop()?.slice(0, 10) ?? "pdf";
     const filename = `listings/docs/${session.user.id}/${Date.now()}.${ext}`;
     // S6: 안전서류(재산세납부확인서 등)는 민감 → private Blob.
     // 반환·저장은 공개 URL이 아니라 참조키(pathname). 조회는 인가된 소유자만.
-    const blob = await put(filename, file, { access: "private" });
+    const blob = await put(filename, buffer, { access: "private", contentType: file.type });
 
     return NextResponse.json({ url: blob.pathname });
   } catch (e) {

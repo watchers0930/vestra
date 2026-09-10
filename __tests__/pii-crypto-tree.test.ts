@@ -60,6 +60,15 @@ describe("encryptWriteTree — 최상위 스칼라", () => {
     expect(data.signerRrnPrefix).toBe("");
   });
 
+  it("이미 v2 암호문인 값은 재암호화하지 않음 (이중암호화 방지)", () => {
+    const enc = encryptPII("임대인홍");
+    const data = { senderName: enc, recipientName: "김임차", address: "강남" };
+    encryptWriteTree(data, "KeepzipCase");
+    expect(data.senderName).toBe(enc); // 이미 v2라 그대로 (재암호화 X)
+    expect(decryptPII(data.senderName)).toBe("임대인홍"); // 한 번만 복호화하면 원본
+    expect(isEncrypted(data.recipientName, "김임차")).toBe(true); // 평문은 정상 암호화
+  });
+
   it("비PII·미등록 모델은 무변경", () => {
     const data = { title: "공지", content: "본문" };
     const snapshot = JSON.stringify(data);

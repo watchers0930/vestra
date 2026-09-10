@@ -162,6 +162,29 @@ export const PUT = withAgentAuth<{ id: string }>(
         );
       }
 
+      // 이메일 정규화(소문자·trim — hash 기준과 저장값 일치) + blind index 동기화
+      let emailUpdate: { clientEmail: string | null; clientEmailHash: string | null } | undefined;
+      if (clientEmail !== undefined) {
+        const normalized = clientEmail ? String(clientEmail).trim().toLowerCase() : null;
+        const emailHash = normalized ? hashForSearch(normalized) : null;
+        // 이메일 변경 시 동일 중개사의 다른 활성 고객과 중복 방지(POST와 동일한 409 응답)
+        if (emailHash) {
+          const dup = await prisma.agentClient.findFirst({
+            where: {
+              agentId: session.user.id,
+              clientEmailHash: emailHash,
+              status: { not: "inactive" },
+              id: { not: params.id },
+            },
+            select: { id: true },
+          });
+          if (dup) {
+            return NextResponse.json({ error: "이미 등록된 이메일의 고객입니다." }, { status: 409 });
+          }
+        }
+        emailUpdate = { clientEmail: normalized, clientEmailHash: emailHash };
+      }
+
       const updated = await prisma.agentClient.update({
         where: { id: params.id },
         data: {
@@ -169,10 +192,7 @@ export const PUT = withAgentAuth<{ id: string }>(
             ? { clientName: clientName.trim() }
             : {}),
           ...(clientPhone !== undefined ? { clientPhone } : {}),
-          // 이메일 변경 시 blind index(clientEmailHash)도 동기화 (null이면 hash도 null)
-          ...(clientEmail !== undefined
-            ? { clientEmail, clientEmailHash: clientEmail ? hashForSearch(String(clientEmail).trim()) : null }
-            : {}),
+          ...(emailUpdate ?? {}),
           ...(memo !== undefined ? { memo } : {}),
           ...(status !== undefined ? { status } : {}),
           ...(contractDate !== undefined
@@ -184,6 +204,10 @@ export const PUT = withAgentAuth<{ id: string }>(
 
       return NextResponse.json({ client: updated });
     } catch (error) {
+      // unique(agentId, clientEmailHash) 충돌 → 친절한 409 (500으로 뭉개지 않음)
+      if (error && typeof error === "object" && "code" in error && (error as { code?: string }).code === "P2002") {
+        return NextResponse.json({ error: "이미 등록된 이메일의 고객입니다." }, { status: 409 });
+      }
       const message =
         error instanceof Error ? error.message : "알 수 없는 오류";
       console.error(`[agent/clients/[id] PUT] ${message}`);

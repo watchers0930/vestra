@@ -33,6 +33,20 @@ describe("encryptPII / decryptPII", () => {
     expect(decryptPII("")).toBe("");
   });
 
+  it("암호문은 v2: prefix로 시작하고 평문과 다르다 (실제 암호화 검증)", () => {
+    const enc = encryptPII("서울시 강남구 역삼동");
+    expect(enc.startsWith("v2:")).toBe(true);
+    expect(enc).not.toContain("역삼동");
+  });
+
+  it("v2 암호문 변조 시 복호화 실패 → 평문이 아니라 원본(암호문) 반환", () => {
+    const enc = encryptPII("민감데이터");
+    const tampered = enc.slice(0, -6) + "AAAAAA"; // tag/ciphertext 변조
+    const dec = decryptPII(tampered);
+    expect(dec).not.toBe("민감데이터"); // 변조본이 평문으로 복원되면 안 됨
+    expect(dec).toBe(tampered); // 실패 시 원본 반환(평문과 구분됨)
+  });
+
   it("동일 평문도 매번 다른 암호문 생성 (IV 랜덤)", () => {
     const plain = "1234567890";
     const enc1 = encryptPII(plain);

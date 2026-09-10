@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
+import { validateMagicBytes } from "@/lib/sanitize";
+
+// 매물 사진 전용 public store 토큰. 누락 시 기본(private) store로 잘못 유입되는 것을 차단.
+function photosToken(): string {
+  const t = process.env.PHOTOS_READ_WRITE_TOKEN;
+  if (!t) throw new Error("PHOTOS_READ_WRITE_TOKEN 미설정 — 매물 사진 store가 연결되지 않았습니다.");
+  return t;
+}
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -39,12 +47,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "사진은 최대 10장까지 등록 가능합니다." }, { status: 400 });
     }
 
-    const ext = file.name.split(".").pop() ?? "jpg";
+    // 매직바이트 검증 — MIME 위조 방지
+    const buffer = await file.arrayBuffer();
+    if (!validateMagicBytes(buffer, file.type)) {
+      return NextResponse.json({ error: "파일 내용이 형식과 일치하지 않습니다." }, { status: 400 });
+    }
+
+    const ext = file.name.split(".").pop()?.slice(0, 10) ?? "jpg";
     // 매물 사진은 공개 자산 → public store(vestra-photos). 재산세(private store)와 분리.
-    const blob = await put(`listings/${id}/${Date.now()}.${ext}`, file, {
+    const blob = await put(`listings/${id}/${Date.now()}.${ext}`, buffer, {
       access: "public",
       contentType: file.type,
-      token: process.env.PHOTOS_READ_WRITE_TOKEN,
+      token: photosToken(),
     });
 
     const newPhotos = [...existing_photos, blob.url];
@@ -82,6 +96,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const photos = ((existing.photos as string[] | null) ?? []).filter((p) => p !== url);
 
     await prisma.listing.update({ where: { id }, data: { photos } });
+
+    // public store에서 실제 blob 삭제 — URL만 알면 열리므로 DB에서만 빼면 영구 노출된다.
+    if (typeof url === "string" && url.includes("blob.vercel-storage")) {
+      await del(url, { token: photosToken() }).catch((e) =>
+        console.error("[photos DELETE] blob 삭제 실패(무시하고 진행):", e instanceof Error ? e.message : e),
+      );
+    }
+
     return NextResponse.json({ photos });
   } catch (e) {
     console.error(e);

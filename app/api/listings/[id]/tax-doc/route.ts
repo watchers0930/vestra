@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 import { put, get } from "@vercel/blob";
+import { validateMagicBytes } from "@/lib/sanitize";
 
 // GET /api/listings/[id]/tax-doc — 재산세납부확인서 조회 (인가 프록시)
 // private Blob이라 소유자만 이 라우트를 통해서만 열람 가능(공개 URL 없음).
@@ -81,21 +82,29 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "파일 크기는 10MB 이하여야 합니다." }, { status: 400 });
     }
 
-    const ext = file.name.split(".").pop() ?? "pdf";
+    // 매직바이트 검증 — MIME 위조 방지(선언 타입과 실제 바이트 일치 확인)
+    const buffer = await file.arrayBuffer();
+    if (!validateMagicBytes(buffer, file.type)) {
+      return NextResponse.json({ error: "파일 내용이 형식과 일치하지 않습니다." }, { status: 400 });
+    }
+    // 파일명 길이 제한 (헤더·저장 남용 방지)
+    const filename = file.name.slice(0, 200);
+
+    const ext = filename.split(".").pop()?.slice(0, 10) ?? "pdf";
     // S6: 민감 문서 → private Blob. DB에는 공개 URL이 아니라 참조키(pathname)만 저장.
     // 조회는 GET /api/listings/[id]/tax-doc 인가 프록시를 통해서만 가능.
     const blob = await put(
       `listings/tax-doc/${session.user.id}/${id}.${ext}`,
-      file,
-      { access: "private", allowOverwrite: true },
+      buffer,
+      { access: "private", allowOverwrite: true, contentType: file.type },
     );
 
     await prisma.listing.update({
       where: { id },
-      data: { taxDocUrl: blob.pathname, taxDocFilename: file.name },
+      data: { taxDocUrl: blob.pathname, taxDocFilename: filename },
     });
 
-    return NextResponse.json({ ok: true, filename: file.name });
+    return NextResponse.json({ ok: true, filename });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
