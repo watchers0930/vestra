@@ -1,6 +1,7 @@
 # 베스트라 민감정보 보호 아키텍처 설계서 (근본 처리)
 
-> 상태: **S1~S7 완료·운영반영 (v5.149.2) / 남은 것: S8(v1 키 폐기)** | 작성 2026-09-10, 갱신 2026-09-10
+> 상태: **S1~S8 전 단계 완료·운영반영 (v5.150.0) — 보안 아키텍처 개편 완결** | 작성 2026-09-10, 갱신 2026-09-10
+> 잔여 후속(선택): SEARCH_INDEX_KEY 실제 분리(현재 AUTH_SECRET 폴백).
 > ⏩ 다음 세션 착수점: 아래 **§8 진행 현황** 참조. 트리거 예: "베스트라 보안 아키텍처 S5(blind index)부터 이어서 하자"
 > 목적: 필드별 임기응변 암호화를 끝내고, 민감정보 보호를 키·범위·표면 3축에서 근본 재설계한다.
 > 우선순위 원칙(CLAUDE.md): 보안 > 검증 > 구조/성능 > 편의. 각 단계는 백필·검증·배포를 분리하고 롤백 경로를 먼저 확보한다.
@@ -194,6 +195,11 @@
 - **빌드 게이트**: `package.json` `prebuild`에 연결 → `npm run build`(로컬·Vercel 모두) 시 자동 실행. 미인증 변이핸들러 신규 추가 시 빌드 실패 → 회귀 차단. (`npm run audit:api`로 단독 실행도)
 - **검증**: 현재 위반 0(139 route 통과), negative test(임시 미인증 POST → 검출·exit 1) 확인, 전체 1025 테스트 통과. 테스트 배포 시 Vercel 빌드 prebuild 게이트 실전 통과.
 
-### 남은 단계 (다음 세션)
-- **S8 v1 키 폐기** (2단계): S8a 감지로그(운영 v1 접근 0 관찰) → S8b `lib/crypto.ts`에서 v1 복호화 경로 제거 → AUTH_SECRET 유출로도 PII 복호화 불가. PII_FIELDS는 전량 v2라 진행 가능.
-- (후속) **SEARCH_INDEX_KEY 실제 분리** — env 추가 + textHash·clientEmailHash 재백필(현재는 AUTH_SECRET 폴백).
+### S8 완료 ✅ — v1 키(AUTH_SECRET 파생) 폐기 (v5.150.0 운영반영 2026-09-10) · 위협모델 1위 해소
+- **S8a 재확인**: PII_FIELDS 전량 + orphaned 재스캔 → **v1 암호문 0건**(전부 v2 또는 평문). 제거 안전 확인.
+- **S8b 제거**: `lib/crypto.ts`에서 v1 경로 삭제. `encryptPII`는 항상 v2(`PII_ENCRYPTION_KEY` 필수), `decryptPII`는 `v2:` prefix만 복호화·없으면 평문 원본 반환(v1 AUTH_SECRET 복호화 시도 제거). `deriveKey`/`activeKeyVersion`에서 AUTH_SECRET 기반 제거. → **AUTH_SECRET이 유출돼도 PII 복호화 불가**(PII_ENCRYPTION_KEY 별도 필요).
+- **검증**: 테스트 4파일 v2 키 설정 갱신(crypto·pii-crypto-tree·registry-blockchain beforeAll에 PII_ENCRYPTION_KEY, "PII_ENCRYPTION_KEY 없으면 에러"·"v2 prefix 없으면 평문 원본" 테스트 추가) → 전체 **1026 통과**. tsc/lint/build 클린. 새 crypto(v1제거판)로 **운영 v2 데이터 12건 복호화 성공** 확인. t-vestra 스모크 통과.
+- ⚠️ 이후 `encryptPII`는 PII_ENCRYPTION_KEY 필수 — 운영·preview·로컬 모두 설정됨(누락 시 신규 PII 저장 에러). AUTH_SECRET은 세션(JWE)·hashForSearch 폴백에만 잔존.
+
+### 개편 완결 — 잔여 후속(선택)
+- **SEARCH_INDEX_KEY 실제 분리** — 현재 blind index(clientEmailHash)·training textHash는 AUTH_SECRET 폴백. 전용 키로 분리하려면 env 추가 + 해당 hash 재백필 필요. AUTH_SECRET 유출 시에도 hash는 단방향이라 평문 복원 불가(우선순위 낮음).
