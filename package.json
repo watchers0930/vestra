@@ -1,10 +1,12 @@
 {
   "name": "vestra",
-  "version": "5.149.1",
+  "version": "5.149.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "postinstall": "prisma generate",
+    "audit:api": "node scripts/audit-api-auth.mjs",
+    "prebuild": "node scripts/audit-api-auth.mjs",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
