@@ -83,6 +83,15 @@ export interface UnifiedResult {
     jeonseRatio: number | null;
   } | null;
   aiOpinion: string;
+  qualityGate?: {
+    accuracy: number;
+    grounding: number;
+    completeness: number;
+    overall: number;
+    pass: boolean;
+    status: "judged" | "skipped";
+    regenerated: boolean;
+  } | null;
   sources?: SourceCitation[];
   graphAnalysis?: {
     graph: { nodeCount: number; edgeCount: number; maxDepth: number };
@@ -458,6 +467,26 @@ export function RightsResult({ result, rawText }: RightsResultProps) {
           <h3 className="text-lg font-semibold text-gray-900">AI 종합 의견</h3>
         </div>
         <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-line">{result.aiOpinion}</p>
+        {/* AI 품질게이트: 결정적 사실 기준 자동 채점 결과 */}
+        {result.qualityGate && result.qualityGate.status === "judged" && (
+          result.qualityGate.pass ? (
+            <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-600">
+              <CheckCircle size={14} strokeWidth={2} />
+              <span>
+                AI 품질검증 통과 (정확·근거·완결 종합 {result.qualityGate.overall}점)
+                {result.qualityGate.regenerated && " · 자동 재생성됨"}
+              </span>
+            </div>
+          ) : (
+            <div className="mt-3 flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-700">
+              <AlertTriangle size={14} strokeWidth={2} className="mt-0.5 shrink-0" />
+              <span>
+                이 의견은 자동 품질검증(종합 {result.qualityGate.overall}점)에서 기준에 미달했습니다.
+                참고용으로만 활용하고, 수치·등급은 위 분석 결과를 기준으로 판단하세요.
+              </span>
+            </div>
+          )
+        )}
         {/* AI 판단의 실제 근거 데이터(citation) */}
         <SourceCitations sources={result.sources} />
       </div>

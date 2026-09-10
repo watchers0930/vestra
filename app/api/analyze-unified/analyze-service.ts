@@ -1,4 +1,9 @@
 import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL, REASONING_ANALYTICAL } from "@/lib/openai";
+import {
+  judgeAnalysisQuality,
+  type QualityJudgment,
+  type QualityGroundTruth,
+} from "@/lib/ai-quality-gate";
 import { UNIFIED_ANALYSIS_PROMPT } from "@/lib/prompts";
 import { parseRegistry, compressFloorData } from "@/lib/registry-parser";
 import { calculateRiskScore } from "@/lib/risk-scoring";
@@ -26,6 +31,9 @@ import { generateContractClauses } from "@/lib/contract-clause-generator";
 // ─── 유틸리티 ───
 
 const formatKoreanPrice = (won: number) => formatKRW(won, "없음");
+
+/** OpenAI chat 메시지(사용 역할 한정) */
+type OpenAIMessage = { role: "system" | "user" | "assistant"; content: string };
 
 /** 면적 문자열에서 숫자 추출 */
 function parseAreaValue(areaStr: string): number {
@@ -209,8 +217,9 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
     })),
   };
 
-  // 7단계: AI 종합 의견
+  // 7단계: AI 종합 의견 + 품질게이트(LLM-as-judge)
   let aiOpinion = "";
+  let qualityGate: QualityJudgment | null = null;
   try {
     const costGuard = await checkOpenAICostGuard(ip);
     if (!costGuard.allowed) {
@@ -235,40 +244,92 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
         marketContext += `\n전세가율: ${jeonseRatio}%`;
       }
 
-      const completion = await openai.chat.completions.create({
-        model: OPENAI_MODEL,
-        reasoning_effort: REASONING_ANALYTICAL,
-        messages: [
-          { role: "system", content: UNIFIED_ANALYSIS_PROMPT },
-          {
-            role: "user",
-            content: JSON.stringify({
-              parsedTitle: parsed.title,
-              activeGapgu: parsed.gapgu.filter((e) => !e.isCancelled),
-              activeEulgu: parsed.eulgu.filter((e) => !e.isCancelled),
-              summary: parsed.summary,
-              riskScore: {
-                totalScore: riskScore.totalScore,
-                grade: riskScore.grade,
-                gradeLabel: riskScore.gradeLabel,
-                factors: riskScore.factors,
-                mortgageRatio: riskScore.mortgageRatio,
-              },
-              estimatedPrice,
-              estimatedPriceFormatted: formatKoreanPrice(estimatedPrice),
-              jeonsePriceFormatted: formatKoreanPrice(propertyInfo.jeonsePrice),
-              recentTransaction: propertyInfo.recentTransaction,
-              marketContext: marketContext || "실거래 데이터 없음",
-            }),
-          },
-        ],
-        response_format: { type: "json_object" },
-      });
+      // 생성 로직을 재사용 함수로 분리 — 초기 생성 + (품질 미달 시) 교정 재생성에 동일 사용
+      const opinionPayload = {
+        parsedTitle: parsed.title,
+        activeGapgu: parsed.gapgu.filter((e) => !e.isCancelled),
+        activeEulgu: parsed.eulgu.filter((e) => !e.isCancelled),
+        summary: parsed.summary,
+        riskScore: {
+          totalScore: riskScore.totalScore,
+          grade: riskScore.grade,
+          gradeLabel: riskScore.gradeLabel,
+          factors: riskScore.factors,
+          mortgageRatio: riskScore.mortgageRatio,
+        },
+        estimatedPrice,
+        estimatedPriceFormatted: formatKoreanPrice(estimatedPrice),
+        jeonsePriceFormatted: formatKoreanPrice(propertyInfo.jeonsePrice),
+        recentTransaction: propertyInfo.recentTransaction,
+        marketContext: marketContext || "실거래 데이터 없음",
+      };
 
-      const content = completion.choices[0]?.message?.content;
-      if (content) {
+      const generateOpinion = async (correctionIssues?: string[]): Promise<string> => {
+        const messages: OpenAIMessage[] = [
+          { role: "system", content: UNIFIED_ANALYSIS_PROMPT },
+          { role: "user", content: JSON.stringify(opinionPayload) },
+        ];
+        if (correctionIssues && correctionIssues.length > 0) {
+          messages.push({
+            role: "user",
+            content:
+              "이전 의견이 자동 품질검증에서 아래 문제로 미달했습니다. 반드시 교정하여 다시 작성하세요. " +
+              "제공된 사실(수치·등급·금액)을 벗어나거나 새 수치를 지어내지 말고, 누락된 치명 위험을 반드시 포함하세요:\n- " +
+              correctionIssues.join("\n- "),
+          });
+        }
+        const completion = await openai.chat.completions.create({
+          model: OPENAI_MODEL,
+          reasoning_effort: REASONING_ANALYTICAL,
+          messages,
+          response_format: { type: "json_object" },
+        });
+        const content = completion.choices[0]?.message?.content;
+        if (!content) return "";
         const aiResult = JSON.parse(content);
-        aiOpinion = aiResult.opinion || aiResult.aiOpinion || "";
+        return aiResult.opinion || aiResult.aiOpinion || "";
+      };
+
+      aiOpinion = await generateOpinion();
+
+      // 품질게이트: 결정적 사실 기준 채점 → 미달 시 판사 지적을 피드백해 1회 재생성
+      if (aiOpinion) {
+        const groundTruth: QualityGroundTruth = {
+          riskGrade: riskScore.gradeLabel,
+          safetyScore: riskScore.totalScore,
+          mortgageRatio: riskScore.mortgageRatio,
+          jeonseRatio: jeonseRatio > 0 ? jeonseRatio : undefined,
+          estimatedPriceFormatted: formatKoreanPrice(estimatedPrice),
+          criticalFactors: riskScore.factors
+            .filter((f) => f.severity === "critical" || f.severity === "high")
+            .map((f) => f.description),
+          sourceLabels: [
+            "등기부등본 파싱",
+            "위험도 스코어링",
+            ...(marketData?.sale ? ["국토부 매매 실거래가"] : []),
+            ...(marketData?.rent ? ["국토부 전세 실거래가"] : []),
+            ...(buildingPurpose ? ["건축물대장"] : []),
+          ],
+        };
+
+        qualityGate = await judgeAnalysisQuality({ opinion: aiOpinion, groundTruth });
+
+        if (qualityGate.status === "judged" && !qualityGate.pass) {
+          const regenerated = await generateOpinion(qualityGate.issues);
+          if (regenerated) {
+            const rejudged = await judgeAnalysisQuality({ opinion: regenerated, groundTruth });
+            const newScore = rejudged.status === "judged" ? rejudged.overall : qualityGate.overall;
+            // 재생성본이 원본 이상이면 채택, 아니면 원본 유지(경고 플래그로 노출)
+            if (newScore >= qualityGate.overall) {
+              aiOpinion = regenerated;
+              qualityGate = { ...rejudged, regenerated: true };
+            } else {
+              qualityGate = { ...qualityGate, regenerated: true };
+            }
+          } else {
+            qualityGate = { ...qualityGate, regenerated: true };
+          }
+        }
       }
     }
   } catch {
@@ -364,6 +425,7 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
     marketData,
     marketDataFiltered,
     aiOpinion,
+    qualityGate,
     graphAnalysis: serializedGraphAnalysis,
     redemptionSimulation,
     confidencePropagation,

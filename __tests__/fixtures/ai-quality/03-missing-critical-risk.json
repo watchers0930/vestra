@@ -1,0 +1,17 @@
+{
+  "name": "누락: 치명 위험을 다루지 않고 일반론만(완결성·근거성 미달)",
+  "expectPass": false,
+  "groundTruth": {
+    "riskGrade": "위험",
+    "safetyScore": 35,
+    "mortgageRatio": 0.72,
+    "jeonseRatio": 95,
+    "estimatedPriceFormatted": "3억 5,000만원",
+    "criticalFactors": [
+      "근저당 비율 72%로 과다",
+      "전세가율 95%로 깡통전세 위험"
+    ],
+    "sourceLabels": ["등기부등본 파싱", "위험도 스코어링", "국토부 매매 실거래가"]
+  },
+  "opinion": "부동산 계약 시에는 일반적으로 등기부등본을 꼼꼼히 확인하는 것이 좋습니다. 시세와 주변 환경을 잘 살펴보고, 공인중개사와 충분히 상담하시기 바랍니다. 계약 전에는 항상 신중하게 결정하는 것이 중요합니다. 좋은 거래 되시길 바랍니다."
+}

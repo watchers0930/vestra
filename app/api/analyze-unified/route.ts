@@ -179,6 +179,7 @@ export async function POST(req: NextRequest) {
       riskScore: result.riskScore,
       marketData: result.marketData,
       aiOpinion: result.aiOpinion,
+      qualityGate: result.qualityGate,
       graphAnalysis: result.graphAnalysis,
       redemptionSimulation: result.redemptionSimulation,
       confidencePropagation: result.confidencePropagation,
