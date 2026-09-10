@@ -1,6 +1,6 @@
 # 베스트라 민감정보 보호 아키텍처 설계서 (근본 처리)
 
-> 상태: **S1~S3 완료·운영반영 (v5.146.0) / A2(S4) 코드+테스트 완료·배포대기** | 작성 2026-09-10, 갱신 2026-09-10
+> 상태: **S1~S3 + A2(S4) 완료·운영반영 (v5.147.0) / 다음 S5(blind index)** | 작성 2026-09-10, 갱신 2026-09-10
 > ⏩ 다음 세션 착수점: 아래 **§8 진행 현황** 참조. 트리거 예: "베스트라 보안 아키텍처 S5(blind index)부터 이어서 하자"
 > 목적: 필드별 임기응변 암호화를 끝내고, 민감정보 보호를 키·범위·표면 3축에서 근본 재설계한다.
 > 우선순위 원칙(CLAUDE.md): 보안 > 검증 > 구조/성능 > 편의. 각 단계는 백필·검증·배포를 분리하고 롤백 경로를 먼저 확보한다.
@@ -150,7 +150,9 @@
 - 진단 결과 **로컬·운영 키 둘 다로 복호화 불가** = 과거 `AUTH_SECRET`/`PII_SALT` 로테이션으로 손상된 **복구 불능 orphaned**(기존부터 손상, 운영 앱도 이미 못 읽는 중). **재암호화 불가 → 방치 결정**. RegistrySnapshot 무결성 메타(머클·서명·섹션해시)는 유효, 신규 스냅샷은 v2로 정상.
 - ⚠️ 교훈: S8(v1 폐기) 전 "encryptPII로 저장되는 모든 것이 v2인지" 확인 필요했고, 이 두 필드가 그 사각지대였음. 단 orphaned라 S8과 무관(이미 못 읽음).
 
-### A2 (S4) 완료 ✅ — 전자계약 서명정보 nested 암호화 (코드+테스트 완료·배포대기)
+### A2 (S4) 완료 ✅ — 전자계약 서명정보 nested 암호화 (v5.147.0 운영반영·백필완료 2026-09-10)
+- **운영 반영·백필 완료**: v5.147.0 운영 승격 후 백필 `--commit` 실행 → `EContractSignature` 평문 **signerName 5 + signerEmail 5 = 10건 v2 정규화**(signerPhone·signerRrnPrefix는 기존 데이터 0건). 재실행 dry-run 전량 v2 skip·평문 0 확인(멱등 검증). 기존 58건은 그대로 v2 유지.
+
 - **옵션 A(재귀 확장) 구현.** 순수 변환 로직을 `lib/pii-crypto-tree.ts`로 분리(PrismaClient 비의존 → 단위테스트 용이). `lib/prisma.ts`는 이걸 import해 확장에 배선하고 `PII_FIELDS`/`MODEL_RELATIONS` 재-export(백필 import 경로 유지).
   - `PII_FIELDS.EContractSignature = [signerName, signerPhone, signerEmail, signerRrnPrefix]` 추가. **signerRrnPrefix는 생년월일 포함이라 PII로 확정·포함**.
   - `MODEL_RELATIONS = { EContract:{signatures:"EContractSignature"}, EContractSignature:{contract:"EContract"} }` — 선언적 관계매핑(§7-1). PII 모델 도달 경로만 등록(정밀).
