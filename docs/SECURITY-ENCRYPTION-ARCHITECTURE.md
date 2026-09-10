@@ -1,6 +1,6 @@
 # 베스트라 민감정보 보호 아키텍처 설계서 (근본 처리)
 
-> 상태: **S1~S3 + A2(S4) + S5(blind index) + S6(Blob private) 완료·운영반영 (v5.149.1) / 다음 S7(API 인가 CI)** | 작성 2026-09-10, 갱신 2026-09-10
+> 상태: **S1~S7 완료·운영반영 (v5.149.2) / 남은 것: S8(v1 키 폐기)** | 작성 2026-09-10, 갱신 2026-09-10
 > ⏩ 다음 세션 착수점: 아래 **§8 진행 현황** 참조. 트리거 예: "베스트라 보안 아키텍처 S5(blind index)부터 이어서 하자"
 > 목적: 필드별 임기응변 암호화를 끝내고, 민감정보 보호를 키·범위·표면 3축에서 근본 재설계한다.
 > 우선순위 원칙(CLAUDE.md): 보안 > 검증 > 구조/성능 > 편의. 각 단계는 백필·검증·배포를 분리하고 롤백 경로를 먼저 확보한다.
@@ -188,7 +188,12 @@
   - 두 store 프로젝트 연결(대시보드 Connect) → `BLOB_*`(private)·`PHOTOS_*`(public) env 자동 주입. ⚠️ store 생성만으론 연결 안 됨(CLI는 미연결 store link 불가) → **대시보드 Connect Project 필수**.
 - **실화면 검증 완료**: 재산세 업로드→소유자 프록시 다운로드(이미지 표시)→비인증 401 ✅. 매물사진 업로드→`*.public.blob.vercel-storage.com`(public store) 저장 확인 ✅. 테스트 데이터 정리 완료.
 
+### S7 완료 ✅ — API 인가 CI 게이트 (v5.149.2 운영반영 2026-09-10)
+- **전수 조사**: app/api route 139개 중 변이핸들러(POST/PUT/PATCH/DELETE) 보유 98개. 인증 래퍼 분포 auth 75·withAdminAuth 24·withAgentAuth 9. **인증신호 없는 변이핸들러 11건 전수 확인 → 전부 정당**(진짜 취약점 0): token 인증 2(sign/[token]·sign complete), CRON_SECRET 1(price-map DELETE), NextAuth 1, 의도적 공개+rate limit 7(chat·neighborhood·fraud-risk·jeonse/parse-registry·monitoring/parse-pdf·extract-pdf·landlord/report).
+- **스크립트** `scripts/audit-api-auth.mjs`(순수 JS, node 실행 — tsx 의존 없이 Vercel 빌드에서도 안정): 변이핸들러 검출 → 인증신호(`auth()`/`withAdminAuth`/`withAgentAuth`/`CRON_SECRET`/`signToken`) 없고 ALLOWLIST에도 없으면 exit 1. 의도적 공개 8건만 사유와 함께 allowlist. stale allowlist(파일없음/이제 인증됨) 경고도 출력.
+- **빌드 게이트**: `package.json` `prebuild`에 연결 → `npm run build`(로컬·Vercel 모두) 시 자동 실행. 미인증 변이핸들러 신규 추가 시 빌드 실패 → 회귀 차단. (`npm run audit:api`로 단독 실행도)
+- **검증**: 현재 위반 0(139 route 통과), negative test(임시 미인증 POST → 검출·exit 1) 확인, 전체 1025 테스트 통과. 테스트 배포 시 Vercel 빌드 prebuild 게이트 실전 통과.
+
 ### 남은 단계 (다음 세션)
-- **S7 API 인가 CI 게이트** — `scripts/audit-api-auth.ts`로 무인증 변이핸들러 빌드 검출.
 - **S8 v1 키 폐기** (2단계): S8a 감지로그(운영 v1 접근 0 관찰) → S8b `lib/crypto.ts`에서 v1 복호화 경로 제거 → AUTH_SECRET 유출로도 PII 복호화 불가. PII_FIELDS는 전량 v2라 진행 가능.
 - (후속) **SEARCH_INDEX_KEY 실제 분리** — env 추가 + textHash·clientEmailHash 재백필(현재는 AUTH_SECRET 폴백).
