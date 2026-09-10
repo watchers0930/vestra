@@ -1,6 +1,6 @@
 # 베스트라 민감정보 보호 아키텍처 설계서 (근본 처리)
 
-> 상태: **S1~S3 + A2(S4) + S5(blind index) 완료·운영반영 (v5.148.0) / 다음 S6(Blob private)** | 작성 2026-09-10, 갱신 2026-09-10
+> 상태: **S1~S3 + A2(S4) + S5(blind index) + S6(Blob private) 완료·운영반영 (v5.149.1) / 다음 S7(API 인가 CI)** | 작성 2026-09-10, 갱신 2026-09-10
 > ⏩ 다음 세션 착수점: 아래 **§8 진행 현황** 참조. 트리거 예: "베스트라 보안 아키텍처 S5(blind index)부터 이어서 하자"
 > 목적: 필드별 임기응변 암호화를 끝내고, 민감정보 보호를 키·범위·표면 3축에서 근본 재설계한다.
 > 우선순위 원칙(CLAUDE.md): 보안 > 검증 > 구조/성능 > 편의. 각 단계는 백필·검증·배포를 분리하고 롤백 경로를 먼저 확보한다.
@@ -178,9 +178,17 @@
 - **복구**: 운영키 데이터가 0건이라 **무손실**. 운영·preview `PII_ENCRYPTION_KEY`를 로컬값으로 교체(`vercel env rm/add`) + 재배포. 데이터 무변경으로 전 PII 동시 복구. 운영 실화면에서 복호화·부분검색 실증.
 - **재발방지**: §5에 "백필 전 키 sha 일치 검증" + "배포 후 운영 실화면 검증" 필수 원칙 추가.
 
+### S6 완료 ✅ — 민감문서 private Blob + 인가 프록시 (v5.149.0~5.149.1 운영반영·실화면검증완료 2026-09-10)
+- **범위 정정(규칙 0-2)**: 설계서가 지목한 3개 중 실제 public Blob 민감문서는 **재산세납부확인서뿐**. `finalPdfUrl`=온디맨드 라우트(`/api/e-contracts/[id]/pdf`, 이미 auth+당사자체크)·`licenseFileUrl`=dataURL(Blob아님)·`documentUrl`=미구현 → **대상 아님**. 조사 중 `safetyDocuments[].url`(등록시 temp-doc)도 public Blob이었고, 상세 GET(`/api/listings/[id]`)이 인증없이 전체필드 노출하던 취약점도 발견 → 함께 차단.
+- **코드**(v5.149.0): `tax-doc`·`temp-doc` `put(access:"private")`, DB엔 공개URL 대신 pathname. 신규 `GET /api/listings/[id]/tax-doc` 인가 프록시(소유자만 `get(pathname,{access:"private"})` 스트리밍·no-store). 목록/상세 API에서 taxDocUrl·safetyDocuments url 제거(hasTaxDoc boolean+메타만). CertificationSection은 프록시 경로. 전체 1025 테스트 통과.
+- 🔴 **인프라 발견(실화면검증)**: 업로드가 500 → 로그 확인 결과 **운영에 Vercel Blob store 자체가 미연결**(BLOB_READ_WRITE_TOKEN 없음). 즉 재산세·매물사진 등 **모든 Blob 업로드가 원래부터 불가**(사진 9건도 non-blob 외부 시드 URL, blob 실사용 0). 로컬만 믿었으면 또 놓칠 뻔(규칙 0-1이 잡음).
+- **Blob store 2개 구성**(Vercel은 store 단위 access, private/public 혼용 불가):
+  - `vestra-blob` (**Private**, Seoul) — 재산세. 런타임 OIDC+`BLOB_STORE_ID`로 인증(토큰 명시 안 함).
+  - `vestra-photos` (**Public**, Seoul, env prefix `PHOTOS`) — 매물사진. `photos`·`temp-photo`가 `put({access:"public", token: process.env.PHOTOS_READ_WRITE_TOKEN})`로 이 store 지정.
+  - 두 store 프로젝트 연결(대시보드 Connect) → `BLOB_*`(private)·`PHOTOS_*`(public) env 자동 주입. ⚠️ store 생성만으론 연결 안 됨(CLI는 미연결 store link 불가) → **대시보드 Connect Project 필수**.
+- **실화면 검증 완료**: 재산세 업로드→소유자 프록시 다운로드(이미지 표시)→비인증 401 ✅. 매물사진 업로드→`*.public.blob.vercel-storage.com`(public store) 저장 확인 ✅. 테스트 데이터 정리 완료.
+
 ### 남은 단계 (다음 세션)
-- **S6 Blob private화** — 세금서류(`listings/[id]/tax-doc`)·계약PDF(`finalPdfUrl`)·자격증(`licenseFileUrl`) public Blob → private + 인가 프록시 라우트. DB엔 URL 대신 참조키(pathname). 기존 URL 사용처 전수 수정 필요(단계적 전환).
 - **S7 API 인가 CI 게이트** — `scripts/audit-api-auth.ts`로 무인증 변이핸들러 빌드 검출.
 - **S8 v1 키 폐기** (2단계): S8a 감지로그(운영 v1 접근 0 관찰) → S8b `lib/crypto.ts`에서 v1 복호화 경로 제거 → AUTH_SECRET 유출로도 PII 복호화 불가. PII_FIELDS는 전량 v2라 진행 가능.
 - (후속) **SEARCH_INDEX_KEY 실제 분리** — env 추가 + textHash·clientEmailHash 재백필(현재는 AUTH_SECRET 폴백).
-- **S5 blind index**(clientName·clientEmail) → **S6 Blob private**(tax-doc·finalPdfUrl·licenseFileUrl) → **S7 API 인가 CI 게이트**.
