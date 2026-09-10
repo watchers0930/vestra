@@ -26,7 +26,11 @@ export async function POST(req: NextRequest) {
 
     const ext = file.name.split(".").pop() ?? "jpg";
     const filename = `listings/temp/${session.user.id}/${Date.now()}.${ext}`;
-    const blob = await put(filename, file, { access: "public" });
+    // 매물 사진(공개 자산) → public store(vestra-photos). 재산세(private store)와 분리.
+    const blob = await put(filename, file, {
+      access: "public",
+      token: process.env.PHOTOS_READ_WRITE_TOKEN,
+    });
 
     return NextResponse.json({ url: blob.url });
   } catch (e) {

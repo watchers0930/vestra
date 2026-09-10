@@ -40,9 +40,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const ext = file.name.split(".").pop() ?? "jpg";
+    // 매물 사진은 공개 자산 → public store(vestra-photos). 재산세(private store)와 분리.
     const blob = await put(`listings/${id}/${Date.now()}.${ext}`, file, {
       access: "public",
       contentType: file.type,
+      token: process.env.PHOTOS_READ_WRITE_TOKEN,
     });
 
     const newPhotos = [...existing_photos, blob.url];
