@@ -1,6 +1,6 @@
 # 베스트라 민감정보 보호 아키텍처 설계서 (근본 처리)
 
-> 상태: **S1~S8 전 단계 완료·운영반영 (v5.150.0) — 보안 아키텍처 개편 완결** | 작성 2026-09-10, 갱신 2026-09-10
+> 상태: **S1~S8 완료 + 자기검증 하드닝 (v5.150.1) — 보안 아키텍처 개편 완결·견고화** | 작성 2026-09-10, 갱신 2026-09-10
 > 잔여 후속(선택): SEARCH_INDEX_KEY 실제 분리(현재 AUTH_SECRET 폴백).
 > ⏩ 다음 세션 착수점: 아래 **§8 진행 현황** 참조. 트리거 예: "베스트라 보안 아키텍처 S5(blind index)부터 이어서 하자"
 > 목적: 필드별 임기응변 암호화를 끝내고, 민감정보 보호를 키·범위·표면 3축에서 근본 재설계한다.
@@ -200,6 +200,20 @@
 - **S8b 제거**: `lib/crypto.ts`에서 v1 경로 삭제. `encryptPII`는 항상 v2(`PII_ENCRYPTION_KEY` 필수), `decryptPII`는 `v2:` prefix만 복호화·없으면 평문 원본 반환(v1 AUTH_SECRET 복호화 시도 제거). `deriveKey`/`activeKeyVersion`에서 AUTH_SECRET 기반 제거. → **AUTH_SECRET이 유출돼도 PII 복호화 불가**(PII_ENCRYPTION_KEY 별도 필요).
 - **검증**: 테스트 4파일 v2 키 설정 갱신(crypto·pii-crypto-tree·registry-blockchain beforeAll에 PII_ENCRYPTION_KEY, "PII_ENCRYPTION_KEY 없으면 에러"·"v2 prefix 없으면 평문 원본" 테스트 추가) → 전체 **1026 통과**. tsc/lint/build 클린. 새 crypto(v1제거판)로 **운영 v2 데이터 12건 복호화 성공** 확인. t-vestra 스모크 통과.
 - ⚠️ 이후 `encryptPII`는 PII_ENCRYPTION_KEY 필수 — 운영·preview·로컬 모두 설정됨(누락 시 신규 PII 저장 에러). AUTH_SECRET은 세션(JWE)·hashForSearch 폴백에만 잔존.
+
+### 자기검증 하드닝 ✅ — 병렬 코드리뷰 후속 수정 11건 (v5.150.1 운영반영 2026-09-10)
+> S1~S8 완료 후 대장 지시로 오늘 작업 전체를 4개 병렬 리뷰어(적대적)로 자기검증 → 대충/땜빵 결함 다수 발견 → 수정 → 2개 병렬 재리뷰(회귀 없음 확인). 근본원인·재발방지는 글로벌 CLAUDE.md 규칙 0-5(견고성 4문: 규모·수명주기·비정상경로·적대적자문)로 명문화.
+
+- **성능(규모)**: `lib/crypto.ts` `deriveKey`를 env 기준 메모이즈. scrypt는 무거운 KDF인데 목록 API가 행×PII필드마다 복호화→매번 재파생하면 요청당 수백~수천 회 scrypt. 캐시 식별자 `${k.length}:${k}\x00${salt}`(NUL 구분자로 경계 모호성 제거), env 변경 시 재파생(테스트·로테이션 안전).
+- **견고성**: `pii-crypto-tree.ts` `encryptScalars`에 `!startsWith("v2:")` 가드(객체 재사용·재시도 이중암호화 차단), `encryptWriteTree` depth 가드+초과 시 경고(silent 누락→평문저장 방지).
+- **파일검증(비정상경로)**: tax-doc·temp-doc·photos·temp-photo에 `validateMagicBytes`(MIME 위조 차단, 기존 표준 미적용분). `put`에 buffer+contentType.
+- **수명주기**: `photos` DELETE가 DB만 지우던 것→실제 blob `del`(public URL 영구노출 방지). 매물 DELETE 시 연결 blob(재산세 private·사진 public·안전서류) 정리(고아 방지, best-effort).
+- **store 오배치 방지**: photos/temp-photo에 `PHOTOS_READ_WRITE_TOKEN` 가드(누락 시 throw — private store 오유입 차단).
+- **S5 정합**: `agent/clients/[id]` PUT 이메일 변경 시 중복체크(409)+저장 이메일 정규화(소문자·trim, hash 기준 일치), P2002→409(POST와 일관). POST 저장도 소문자.
+- **관측성**: `decryptPII` catch에 실패 로그(프로세스당 상한 5회+error.name, 값·키 미출력 — hot path 폭주 방지).
+- **CI 게이트 정밀화**: `audit-api-auth.mjs`에서 `signToken`(Prisma 컬럼명 substring 오탐) 신호 제거→sign 라우트 2개 ALLOWLIST 명시(현 allowlist 10건), route 확장자 `route.(ts|tsx|js|mjs)`.
+- **테스트**: v2 prefix·GCM 변조 원본반환·이중암호화 가드·registry 실암호화(평문 아님) 검증 추가 → 전체 **1029 통과**. tsc/lint/build/audit 클린.
+- ⚠️ 잔존 저심각(반영 보류): 레거시 공개 URL taxDocUrl(운영 0건이라 무관), webp 매직바이트 RIFF만 검사(기존 한계), "v2:"로 시작하는 사용자 평문 미암호화(현실성 극미). SEARCH_INDEX_KEY AUTH_SECRET 폴백은 아래 후속.
 
 ### 개편 완결 — 잔여 후속(선택)
 - **SEARCH_INDEX_KEY 실제 분리** — 현재 blind index(clientEmailHash)·training textHash는 AUTH_SECRET 폴백. 전용 키로 분리하려면 env 추가 + 해당 hash 재백필 필요. AUTH_SECRET 유출 시에도 hash는 단방향이라 평문 복원 불가(우선순위 낮음).
