@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { withAgentAuth } from "@/lib/with-agent-auth";
-import { hashForSearch } from "@/lib/crypto";
+import { hashForSearch, hashForSearchCandidates } from "@/lib/crypto";
 import { recordPiiAccess } from "@/lib/audit-log";
 
 // ---------------------------------------------------------------------------
@@ -177,11 +177,11 @@ export const PUT = withAgentAuth<{ id: string }>(
         const normalized = clientEmail ? String(clientEmail).trim().toLowerCase() : null;
         const emailHash = normalized ? hashForSearch(normalized) : null;
         // 이메일 변경 시 동일 중개사의 다른 활성 고객과 중복 방지(POST와 동일한 409 응답)
-        if (emailHash) {
+        if (normalized) {
           const dup = await prisma.agentClient.findFirst({
             where: {
               agentId: session.user.id,
-              clientEmailHash: emailHash,
+              clientEmailHash: { in: hashForSearchCandidates(normalized) },
               status: { not: "inactive" },
               id: { not: params.id },
             },
