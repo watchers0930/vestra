@@ -8,7 +8,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 beforeAll(() => {
   process.env.AUTH_SECRET = "test-secret-key-for-vitest-32chars!!";
   process.env.PII_SALT = "test-pii-salt-for-vitest";
-  delete process.env.PII_ENCRYPTION_KEY; // v1 경로로 테스트(라운드트립만 검증하면 충분)
+  process.env.PII_ENCRYPTION_KEY = "test-pii-encryption-key-for-vitest-32b!!"; // v2 전용(S8: v1 폐기)
 });
 
 import { encryptPII, decryptPII } from "@/lib/crypto";

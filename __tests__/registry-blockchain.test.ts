@@ -9,6 +9,7 @@ beforeAll(() => {
   process.env.REGISTRY_SIGNING_SEED = "test-seed-for-signing-2024";
   process.env.PII_SALT = "test-salt-for-pii-encryption";
   process.env.AUTH_SECRET = "test-secret-key-for-vitest-32chars!!";
+  process.env.PII_ENCRYPTION_KEY = "test-pii-encryption-key-for-vitest-32b!!"; // v2 전용(S8: v1 폐기)
 });
 
 import {

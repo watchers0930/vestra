@@ -8,6 +8,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 beforeAll(() => {
   process.env.AUTH_SECRET = "test-secret-key-for-vitest-32chars!!";
   process.env.PII_SALT = "test-pii-salt-for-vitest";
+  process.env.PII_ENCRYPTION_KEY = "test-pii-encryption-key-for-vitest-32b!!"; // v2 전용 키(S8: v1 폐기)
 });
 
 import {
@@ -124,15 +125,19 @@ describe("maskEmail", () => {
   });
 });
 
-describe("AUTH_SECRET 미설정 시 에러", () => {
-  it("AUTH_SECRET 없으면 encryptPII가 에러 발생", () => {
-    const original = process.env.AUTH_SECRET;
-    delete process.env.AUTH_SECRET;
+describe("PII_ENCRYPTION_KEY 미설정 시 에러 (S8: v1 폐기)", () => {
+  it("PII_ENCRYPTION_KEY 없으면 encryptPII가 에러 발생", () => {
+    const original = process.env.PII_ENCRYPTION_KEY;
+    delete process.env.PII_ENCRYPTION_KEY;
 
-    // 모듈이 이미 로드되어 있으므로 getSecret()이 호출될 때 에러
-    // crypto 모듈의 getSecret은 매번 process.env를 읽음
-    expect(() => encryptPII("test")).toThrow("AUTH_SECRET");
+    // v1(AUTH_SECRET) 폴백이 폐기됐으므로 PII_ENCRYPTION_KEY가 없으면 암호화 불가
+    expect(() => encryptPII("test")).toThrow("PII_ENCRYPTION_KEY");
 
-    process.env.AUTH_SECRET = original;
+    process.env.PII_ENCRYPTION_KEY = original;
+  });
+
+  it("v2 prefix 없는 값은 평문으로 간주해 원본 반환 (v1 복호화 시도 안 함)", () => {
+    // 과거 v1 암호문 포맷(prefix 없음)도 이제 평문처럼 원본 반환 — 운영 v1 0건 확인 후 폐기
+    expect(decryptPII("no-prefix-legacy-value")).toBe("no-prefix-legacy-value");
   });
 });
