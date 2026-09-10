@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { withAgentAuth } from "@/lib/with-agent-auth";
 import { hashForSearch } from "@/lib/crypto";
+import { recordPiiAccess } from "@/lib/audit-log";
 
 // ---------------------------------------------------------------------------
 // GET — 고객 목록
@@ -60,8 +61,16 @@ export const GET = withAgentAuth(async (req, { session }) => {
           (v) => typeof v === "string" && v.toLowerCase().includes(q)
         )
       );
+      const pageItems = matched.slice((page - 1) * limit, (page - 1) * limit + limit);
+      recordPiiAccess({
+        req,
+        userId: session.user.id,
+        resource: "agent_client_list_search",
+        targetId: session.user.id,
+        recordCount: pageItems.length,
+      });
       return NextResponse.json({
-        clients: matched.slice((page - 1) * limit, (page - 1) * limit + limit).map(toClient),
+        clients: pageItems.map(toClient),
         total: matched.length,
         page,
         totalPages: Math.ceil(matched.length / limit),
@@ -78,6 +87,14 @@ export const GET = withAgentAuth(async (req, { session }) => {
       }),
       prisma.agentClient.count({ where }),
     ]);
+
+    recordPiiAccess({
+      req,
+      userId: session.user.id,
+      resource: "agent_client_list",
+      targetId: session.user.id,
+      recordCount: raw.length,
+    });
 
     return NextResponse.json({
       clients: raw.map(toClient),

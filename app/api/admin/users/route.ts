@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAdminAuth } from "@/lib/with-admin-auth";
+import { recordPiiAccess } from "@/lib/audit-log";
 
-export const GET = withAdminAuth(async (request) => {
+export const GET = withAdminAuth(async (request, { session }) => {
   const { searchParams } = request.nextUrl;
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 50));
@@ -42,6 +43,14 @@ export const GET = withAdminAuth(async (request) => {
     allCount += g._count._all;
   }
   roleCounts.ALL = allCount;
+
+  recordPiiAccess({
+    req: request,
+    userId: session.user.id,
+    resource: "admin_user_list",
+    targetId: role || "ALL",
+    recordCount: users.length,
+  });
 
   return NextResponse.json({ users, total, page, limit, totalPages: Math.ceil(total / limit), roleCounts });
 });

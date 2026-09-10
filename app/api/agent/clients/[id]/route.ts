@@ -10,12 +10,13 @@ import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { withAgentAuth } from "@/lib/with-agent-auth";
 import { hashForSearch } from "@/lib/crypto";
+import { recordPiiAccess } from "@/lib/audit-log";
 
 // ---------------------------------------------------------------------------
 // GET — 고객 상세 + 물건 목록
 // ---------------------------------------------------------------------------
 export const GET = withAgentAuth<{ id: string }>(
-  async (_req, { session, params }) => {
+  async (req, { session, params }) => {
     try {
       const client = await prisma.agentClient.findUnique({
         where: { id: params.id },
@@ -75,6 +76,14 @@ export const GET = withAgentAuth<{ id: string }>(
           }),
         ]);
       }
+
+      recordPiiAccess({
+        req,
+        userId: session.user.id,
+        resource: "agent_client_detail",
+        targetId: params.id,
+        recordCount: 1,
+      });
 
       return NextResponse.json({ client, clientListings, clientApplications });
     } catch (error) {
