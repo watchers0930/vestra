@@ -173,6 +173,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       propertyInfo: result.propertyInfo,
       riskAnalysis: result.riskAnalysis,
+      sources: result.sources,
       parsed: result.parsed,
       validation: result.validation,
       riskScore: result.riskScore,

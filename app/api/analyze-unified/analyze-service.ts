@@ -6,6 +6,7 @@ import { validateParsedRegistry } from "@/lib/validation-engine";
 import { fetchComprehensivePrices, type PriceResult, type RentPriceResult } from "@/lib/molit-api";
 import { fetchBuildingInfoByAddress } from "@/lib/building-api";
 import { estimatePrice } from "@/lib/price-estimation";
+import { buildAnalysisSources } from "@/lib/analysis-sources";
 import { stripHtml, truncateInput } from "@/lib/sanitize";
 import { simulateRedemption } from "@/lib/redemption-simulator";
 import { propagateConfidence } from "@/lib/confidence-engine";
@@ -340,9 +341,23 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
     },
   };
 
+  // 분석 근거(citation) — 실제 fetch·계산한 값만 구조화(환각 0)
+  const sources = buildAnalysisSources({
+    marketData,
+    marketDataFiltered,
+    buildingPurpose,
+    buildYear: parsed.title.buildingDetail || undefined,
+    estimatedPrice,
+    priceMethod: priceEstimation.method,
+    priceConfidence: priceEstimation.confidence,
+    riskScore,
+    vScore,
+  });
+
   return {
     propertyInfo,
     riskAnalysis,
+    sources,
     parsed,
     validation,
     riskScore,

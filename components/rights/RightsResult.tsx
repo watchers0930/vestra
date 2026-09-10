@@ -22,6 +22,8 @@ import { ChecklistSection } from "@/components/common/ChecklistSection";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
 import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
+import { SourceCitations } from "@/components/common/SourceCitations";
+import type { SourceCitation } from "@/lib/analysis-sources";
 import { NerHighlight } from "@/components/common/NerHighlight";
 import { StructuredRegistryView } from "@/components/rights/StructuredRegistryView";
 import { SafetyChecklist } from "@/components/rights/SafetyChecklist";
@@ -81,6 +83,7 @@ export interface UnifiedResult {
     jeonseRatio: number | null;
   } | null;
   aiOpinion: string;
+  sources?: SourceCitation[];
   graphAnalysis?: {
     graph: { nodeCount: number; edgeCount: number; maxDepth: number };
     cycles: { hasCycle: boolean; cycles: Array<{ path: string[]; riskScore: number; description: string }> };
@@ -455,6 +458,8 @@ export function RightsResult({ result, rawText }: RightsResultProps) {
           <h3 className="text-lg font-semibold text-gray-900">AI 종합 의견</h3>
         </div>
         <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-line">{result.aiOpinion}</p>
+        {/* AI 판단의 실제 근거 데이터(citation) */}
+        <SourceCitations sources={result.sources} />
       </div>
 
       {/* 공신력 부재 경고 */}
