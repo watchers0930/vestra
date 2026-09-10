@@ -1,7 +1,7 @@
 # 베스트라 민감정보 보호 아키텍처 설계서 (근본 처리)
 
-> 상태: **S1~S3 완료·운영반영 (v5.146.0) / A2부터 진행 예정** | 작성 2026-09-10, 갱신 2026-09-10
-> ⏩ 다음 세션 착수점: 아래 **§8 진행 현황** 참조. 트리거 예: "베스트라 보안 아키텍처 A2(전자계약 서명정보 암호화)부터 이어서 하자"
+> 상태: **S1~S3 완료·운영반영 (v5.146.0) / A2(S4) 코드+테스트 완료·배포대기** | 작성 2026-09-10, 갱신 2026-09-10
+> ⏩ 다음 세션 착수점: 아래 **§8 진행 현황** 참조. 트리거 예: "베스트라 보안 아키텍처 S5(blind index)부터 이어서 하자"
 > 목적: 필드별 임기응변 암호화를 끝내고, 민감정보 보호를 키·범위·표면 3축에서 근본 재설계한다.
 > 우선순위 원칙(CLAUDE.md): 보안 > 검증 > 구조/성능 > 편의. 각 단계는 백필·검증·배포를 분리하고 롤백 경로를 먼저 확보한다.
 
@@ -150,12 +150,16 @@
 - 진단 결과 **로컬·운영 키 둘 다로 복호화 불가** = 과거 `AUTH_SECRET`/`PII_SALT` 로테이션으로 손상된 **복구 불능 orphaned**(기존부터 손상, 운영 앱도 이미 못 읽는 중). **재암호화 불가 → 방치 결정**. RegistrySnapshot 무결성 메타(머클·서명·섹션해시)는 유효, 신규 스냅샷은 v2로 정상.
 - ⚠️ 교훈: S8(v1 폐기) 전 "encryptPII로 저장되는 모든 것이 v2인지" 확인 필요했고, 이 두 필드가 그 사각지대였음. 단 orphaned라 S8과 무관(이미 못 읽음).
 
+### A2 (S4) 완료 ✅ — 전자계약 서명정보 nested 암호화 (코드+테스트 완료·배포대기)
+- **옵션 A(재귀 확장) 구현.** 순수 변환 로직을 `lib/pii-crypto-tree.ts`로 분리(PrismaClient 비의존 → 단위테스트 용이). `lib/prisma.ts`는 이걸 import해 확장에 배선하고 `PII_FIELDS`/`MODEL_RELATIONS` 재-export(백필 import 경로 유지).
+  - `PII_FIELDS.EContractSignature = [signerName, signerPhone, signerEmail, signerRrnPrefix]` 추가. **signerRrnPrefix는 생년월일 포함이라 PII로 확정·포함**.
+  - `MODEL_RELATIONS = { EContract:{signatures:"EContractSignature"}, EContractSignature:{contract:"EContract"} }` — 선언적 관계매핑(§7-1). PII 모델 도달 경로만 등록(정밀).
+  - `encryptWriteTree(data, model)`: 스칼라 + nested write(create/createMany/update/updateMany/upsert/connectOrCreate) 재귀 암호화. `decryptReadTree(node, model, depth)`: 스칼라 + nested include 재귀 복호화(MAX_DEPTH=8 안전장치).
+  - 확장 가드: `PII_FIELDS[model] || MODEL_RELATIONS[model]` — EContract는 PII 스칼라 없어도 관계 때문에 처리 대상.
+- **커버된 지점**: nested write = `e-contracts/route.ts`(signatures.create 배열). 직접 top-level write(`sign/[token]/complete` update/create, `e-contracts/sign/[token]` updateMany)는 EContractSignature가 PII_FIELDS에 들어가며 기존 최상위 로직으로 자동 커버. nested read = pdf/keepzip cases·my-contracts/e-contracts sign(GET·PATCH)/sign complete — 전부 재귀 복호화로 커버. 교차의존 `KeepzipCase.recipientName ← signerName`은 복호화된 signerName→recipientName 재암호화로 라운드트립 정상.
+- **검증**: `__tests__/pii-crypto-tree.test.ts` 17개(스칼라/nested create 배열·단일/update·upsert·createMany/nested include/깊은 include/라운드트립/교차의존/null안전) + 기존 전체 **1023 통과**. `tsc --noEmit` 클린(기존 api-sync-data 무관 에러 제외), lint 클린, `npm run build` 성공.
+- **⚠️ 배포·백필 순서**: ①코드 test배포→대장 확인→운영 승격, ②운영 배포 **후** 백필 `scripts/backfill-pii-encryption.ts --commit`(PII_FIELDS 순회라 EContractSignature 4필드 자동 포함, 기존 평문 서명행 v2 정규화). 배포 전 백필 금지(구코드가 v2 복호화 못함). DB 스냅샷+대장 승인 후.
+
 ### 남은 단계 (다음 세션)
-- **A2 (S4) — `EContractSignature.signer*` 암호화**: 옵션 A(재귀 확장)로. **`lib/prisma.ts` 확장 코어를 강화하는 큰 작업**이라 깨끗한 컨텍스트에서 집중 필요.
-  - Write 지점(암호화): `e-contracts/route.ts`(nested create :122,:123,:145), `sign/[token]/complete/route.ts`(update :107,:108 / signerEmail :130,:137)
-  - Read 지점(복호화): `e-contracts/[id]/pdf/route.ts`(:62-76), `keepzip/cases/route.ts`(:65,:71), `keepzip/my-contracts/route.ts`(:31,:43), `e-contracts/sign/[token]/route.ts`(:25,:49,:50,:76,:132)
-  - 교차의존: `KeepzipCase.recipientName ← signatures[0].signerName`(cases/route.ts:71) — signer 암호화 시 함께 처리
-  - 대상 필드: signerName·signerPhone·signerEmail (signerRrnPrefix는 이미 성별1자리, 포함 검토)
-  - 안정성: nested write/read round-trip 테스트 광범위 추가 + 기존 1006 테스트 통과
-- **S8 v1 키 폐기** (2단계): S8a 감지로그(운영 v1 접근 0 관찰) → S8b `lib/crypto.ts`에서 v1 복호화 경로 제거 → AUTH_SECRET 유출로도 PII 복호화 불가. PII_FIELDS는 전량 v2라 진행 가능.
+- **S8 v1 키 폐기** (2단계): S8a 감지로그(운영 v1 접근 0 관찰) → S8b `lib/crypto.ts`에서 v1 복호화 경로 제거 → AUTH_SECRET 유출로도 PII 복호화 불가. PII_FIELDS는 전량 v2라 진행 가능(A2 백필 완료 후).
 - **S5 blind index**(clientName·clientEmail) → **S6 Blob private**(tax-doc·finalPdfUrl·licenseFileUrl) → **S7 API 인가 CI 게이트**.
