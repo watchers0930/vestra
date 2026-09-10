@@ -1,6 +1,7 @@
 # 베스트라 민감정보 보호 아키텍처 설계서 (근본 처리)
 
-> 상태: **설계 (구현 전, 대장 승인 대기)** | 작성 2026-09-10
+> 상태: **S1~S3 완료·운영반영 (v5.146.0) / A2부터 진행 예정** | 작성 2026-09-10, 갱신 2026-09-10
+> ⏩ 다음 세션 착수점: 아래 **§8 진행 현황** 참조. 트리거 예: "베스트라 보안 아키텍처 A2(전자계약 서명정보 암호화)부터 이어서 하자"
 > 목적: 필드별 임기응변 암호화를 끝내고, 민감정보 보호를 키·범위·표면 3축에서 근본 재설계한다.
 > 우선순위 원칙(CLAUDE.md): 보안 > 검증 > 구조/성능 > 편의. 각 단계는 백필·검증·배포를 분리하고 롤백 경로를 먼저 확보한다.
 
@@ -130,8 +131,31 @@
 - `SEARCH_INDEX_KEY` (blind index HMAC 전용).
 - (선택) `REGISTRY_SIGNING_SEED`는 기존 유지(무결성 서명용, 기밀성과 무관).
 
-## 7. 미결정·확정 필요 (대장 결정)
-1. nested 처리 옵션 A(재귀 확장) vs B(서비스 헬퍼) — 기본 권장 A, 리스크 크면 B.
-2. blind index 도입 범위 — clientEmail만 vs 검색되는 모든 PII.
-3. 키 관리 최종 형태 — env 시크릿 유지 vs 외부 KMS(장기).
-4. S1~S8 전부 진행 vs 핵심(S1~S3, S8)만 우선.
+## 7. 결정 완료 (2026-09-10 대장 확정)
+1. **nested 처리 = 옵션 A(재귀 확장) 확정.** 옵션 B(서비스 헬퍼)는 "지점별 수동 = 임기응변 재발"이라 근본책 아님으로 철회.
+   - read 재귀의 모델추론 문제는 **선언적 관계매핑**으로 해결: `RELATION_MODEL = { signatures: "EContractSignature", ... }`를 PII_FIELDS 옆에 단일 소스로 두고, include 결과의 nested 객체를 관계명→모델로 매핑해 재귀 복호화. (PII_FIELDS와 동급 체계)
+2. blind index 범위 = **검색되는 PII만**(현재 clientName·clientEmail).
+3. 키 관리 = **env 시크릿 유지**(외부 KMS는 장기 과제).
+4. 범위 = **S1~S8 전부**, 단계적.
+
+## 8. 진행 현황 (2026-09-10 세션)
+
+### 완료 ✅
+- **S1 키 버전 태깅** (v5.146.0 운영반영): `lib/crypto.ts`에 v1(레거시, prefix 없음, AUTH_SECRET 파생)/v2(`v2:` prefix, `PII_ENCRYPTION_KEY` 파생). `PII_ENCRYPTION_KEY` 있으면 신규 v2, 없으면 v1 폴백. 복호화는 prefix로 키 판별. **무중단 검증 완료**(v2 활성 중 v1·평문 모두 정상). `PII_ENCRYPTION_KEY`는 **Vercel Production/Preview + 로컬 .env.local에 설정 완료**(동일 값, 로컬=운영 키 확인됨).
+- **S2 자동확장 3그룹** (v5.146.0): `PII_FIELDS`에 `Listing.registryText`, `LawyerPartner.[phone,officePhone,bizNo,licenseNo]`, `KeepzipCase.[senderName,recipientName,address]` 추가. `PII_FIELDS` export → 백필 단일 소스화.
+- **S3 v1→v2 재암호화 백필**: `scripts/backfill-pii-encryption.ts`(PII_FIELDS 순회, 평문→v2·v1→v2·v2 skip 멱등, 비확장 클라, dry-run/`--commit`). **운영 58건 v2 정규화 완료·검증**(재실행 시 전량 v2 skip).
+
+### 중요 발견 — orphaned 데이터 (방치 결정) ⚠️
+- `RegistrySnapshot.encryptedData`(12건)·`TrainingData.rawTextEncrypted`(102건)는 `encryptPII`로 수동 암호화되지만 **PII_FIELDS 밖**이라 백필 대상 아니었음.
+- 진단 결과 **로컬·운영 키 둘 다로 복호화 불가** = 과거 `AUTH_SECRET`/`PII_SALT` 로테이션으로 손상된 **복구 불능 orphaned**(기존부터 손상, 운영 앱도 이미 못 읽는 중). **재암호화 불가 → 방치 결정**. RegistrySnapshot 무결성 메타(머클·서명·섹션해시)는 유효, 신규 스냅샷은 v2로 정상.
+- ⚠️ 교훈: S8(v1 폐기) 전 "encryptPII로 저장되는 모든 것이 v2인지" 확인 필요했고, 이 두 필드가 그 사각지대였음. 단 orphaned라 S8과 무관(이미 못 읽음).
+
+### 남은 단계 (다음 세션)
+- **A2 (S4) — `EContractSignature.signer*` 암호화**: 옵션 A(재귀 확장)로. **`lib/prisma.ts` 확장 코어를 강화하는 큰 작업**이라 깨끗한 컨텍스트에서 집중 필요.
+  - Write 지점(암호화): `e-contracts/route.ts`(nested create :122,:123,:145), `sign/[token]/complete/route.ts`(update :107,:108 / signerEmail :130,:137)
+  - Read 지점(복호화): `e-contracts/[id]/pdf/route.ts`(:62-76), `keepzip/cases/route.ts`(:65,:71), `keepzip/my-contracts/route.ts`(:31,:43), `e-contracts/sign/[token]/route.ts`(:25,:49,:50,:76,:132)
+  - 교차의존: `KeepzipCase.recipientName ← signatures[0].signerName`(cases/route.ts:71) — signer 암호화 시 함께 처리
+  - 대상 필드: signerName·signerPhone·signerEmail (signerRrnPrefix는 이미 성별1자리, 포함 검토)
+  - 안정성: nested write/read round-trip 테스트 광범위 추가 + 기존 1006 테스트 통과
+- **S8 v1 키 폐기** (2단계): S8a 감지로그(운영 v1 접근 0 관찰) → S8b `lib/crypto.ts`에서 v1 복호화 경로 제거 → AUTH_SECRET 유출로도 PII 복호화 불가. PII_FIELDS는 전량 v2라 진행 가능.
+- **S5 blind index**(clientName·clientEmail) → **S6 Blob private**(tax-doc·finalPdfUrl·licenseFileUrl) → **S7 API 인가 CI 게이트**.
