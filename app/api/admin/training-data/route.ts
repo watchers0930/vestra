@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { parseRegistry } from "@/lib/registry-parser";
 import { extractTextFromPDF, normalizeRegistryText, detectRegistryConfidence } from "@/lib/pdf-parser";
 import { encryptPII, hashForSearch } from "@/lib/crypto";
+import { validateMagicBytes } from "@/lib/sanitize";
 import { extractVocabularyFromParsed } from "@/lib/domain-vocabulary";
 import { createAuditLog } from "@/lib/audit-log";
 
@@ -99,6 +100,10 @@ export const POST = withAdminAuth(async (req: NextRequest, { session }) => {
     if (isPdf) {
       sourceType = "pdf";
       const buffer = Buffer.from(await file.arrayBuffer());
+      // 매직바이트 검증 (MIME/확장자 스푸핑 방어)
+      if (!validateMagicBytes(buffer, "application/pdf")) {
+        return NextResponse.json({ error: "유효한 PDF 파일이 아닙니다." }, { status: 400 });
+      }
       const result = await extractTextFromPDF(buffer, file.name);
       rawText = result.text;
     } else if (isTxt) {

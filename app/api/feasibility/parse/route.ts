@@ -4,6 +4,7 @@ import { gunzipSync } from "zlib";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { assertFeasibilityAccess } from "@/lib/feasibility-guard";
+import { validateMagicBytes } from "@/lib/sanitize";
 import { parseDocument } from "@/lib/feasibility/document-parser";
 import { validateOrigin } from "@/lib/csrf";
 
@@ -92,6 +93,14 @@ export async function POST(req: NextRequest) {
     if (!ext || !ALLOWED_EXTENSIONS.has(ext)) {
       return NextResponse.json(
         { error: `${filename}: 지원하지 않는 파일 형식입니다. (PDF, DOCX, XLSX, HWP 지원)` },
+        { status: 400 }
+      );
+    }
+
+    // PDF는 매직바이트 검증 (확장자 스푸핑 방어). 그 외 포맷은 시그니처 미등록으로 자동 통과.
+    if (ext === "pdf" && !validateMagicBytes(buffer, "application/pdf")) {
+      return NextResponse.json(
+        { error: `${filename}: 유효한 PDF 파일이 아닙니다.` },
         { status: 400 }
       );
     }

@@ -64,8 +64,9 @@ export async function sendAlimtalk(
   const from = await getNotificationSettingOrEnv("SOLAPI_SENDER_PHONE");
 
   if (!solapi || !pfId || !from) {
+    // PII 보호: 전화번호는 뒤 4자리만, 개인화 변수는 로깅하지 않음
     console.info(
-      `[SOLAPI:ALIMTALK:MOCK] phone=${phone} template=${templateId} vars=${JSON.stringify(variables)}`
+      `[SOLAPI:ALIMTALK:MOCK] phone=${phone.replace(/\d(?=\d{4})/g, "*")} template=${templateId}`
     );
     return { channel: "kakao_mock", success: true };
   }
@@ -105,8 +106,9 @@ export async function sendSms(
   const from = await getNotificationSettingOrEnv("SOLAPI_SENDER_PHONE");
 
   if (!solapi || !from) {
+    // PII 보호: 전화번호는 뒤 4자리만, 본문은 로깅하지 않음
     console.info(
-      `[SOLAPI:SMS:MOCK] phone=${phone} text="${text.slice(0, 50)}"`
+      `[SOLAPI:SMS:MOCK] phone=${phone.replace(/\d(?=\d{4})/g, "*")} textLen=${text.length}`
     );
     return { channel: "sms_mock", success: true };
   }

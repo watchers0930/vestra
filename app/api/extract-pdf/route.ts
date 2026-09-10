@@ -5,6 +5,7 @@ import { extractTextFromImages, extractTextFromScannedPDF, isImageFile } from "@
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { checkOpenAICostGuard } from "@/lib/openai";
 import { validateOrigin } from "@/lib/csrf";
+import { validateMagicBytes } from "@/lib/sanitize";
 
 /** 최대 파일 크기: 10MB */
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -56,6 +57,10 @@ export async function POST(req: NextRequest) {
 
       const arrayBuffer = await firstFile.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
+      // 매직바이트 검증 (MIME/확장자 스푸핑 방어)
+      if (!validateMagicBytes(buffer, "application/pdf")) {
+        return NextResponse.json({ error: "유효한 PDF 파일이 아닙니다." }, { status: 400 });
+      }
 
       try {
         // 1차: 텍스트 기반 PDF 추출 시도
@@ -111,8 +116,16 @@ export async function POST(req: NextRequest) {
       }
 
       const ab = await imgFile.arrayBuffer();
+      const imgBuffer = Buffer.from(ab);
+      // 매직바이트 검증 (MIME/확장자 스푸핑 방어)
+      if (!validateMagicBytes(imgBuffer, imgFile.type || "image/jpeg")) {
+        return NextResponse.json(
+          { error: `유효한 이미지 파일이 아닙니다: ${imgFile.name}` },
+          { status: 400 }
+        );
+      }
       images.push({
-        buffer: Buffer.from(ab),
+        buffer: imgBuffer,
         mimeType: imgFile.type || "image/jpeg",
       });
     }

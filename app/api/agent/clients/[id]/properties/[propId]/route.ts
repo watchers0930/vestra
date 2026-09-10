@@ -14,10 +14,13 @@ export const DELETE = withAgentAuth<{ id: string; propId: string }>(
       const csrfError = validateOrigin(req);
       if (csrfError) return csrfError;
 
-      // 물건 조회 + 고객 include (소유권 검증용)
+      // 물건 조회 (소유권 검증용 — 고객 PII 전체 대신 필요한 필드만 select)
       const property = await prisma.agentClientProperty.findUnique({
         where: { id: params.propId },
-        include: { agentClient: true },
+        select: {
+          agentClientId: true,
+          agentClient: { select: { agentId: true } },
+        },
       });
 
       if (!property) {

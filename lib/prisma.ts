@@ -3,10 +3,14 @@ import { encryptPII, decryptPII } from "./crypto";
 
 // ─── PII 자동 암호화/복호화 대상 필드 ───
 
+// 주의: where(검색)·nested create는 이 확장이 처리하지 않는다.
+// → 검색에 쓰이는 필드(clientName·clientEmail 등)와 nested로 저장되는 필드(EContractSignature)는 넣지 말 것.
 const PII_FIELDS: Record<string, string[]> = {
   User: ["businessNumber"],
   Analysis: ["address"],
   Asset: ["address"],
+  AgentClient: ["clientPhone"], // clientName/clientEmail은 검색에 사용되어 제외
+  NotificationSetting: ["kakaoPhoneNumber", "smsPhoneNumber"],
 };
 
 // ─── Prisma Client Extensions로 PII 자동 암/복호화 ───

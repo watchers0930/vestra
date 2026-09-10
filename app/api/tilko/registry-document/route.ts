@@ -18,10 +18,13 @@ export async function POST(req: NextRequest) {
     }
 
     const session = await auth();
-    const ip = req.headers.get("x-forwarded-for") || "anonymous";
     const userId = session?.user?.id;
+    // 등기부 원문 조회는 민감정보 반환 + 유료 포인트 차감 → 로그인 필수
+    if (!userId) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
 
-    const rl = await rateLimit(`tilko-registry-doc:${userId || ip}`, 5);
+    const rl = await rateLimit(`tilko-registry-doc:${userId}`, 5);
     if (!rl.success) {
       return NextResponse.json(
         { error: "요청 한도 초과. 잠시 후 다시 시도해주세요." },

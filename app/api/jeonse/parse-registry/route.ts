@@ -3,6 +3,7 @@ import { extractTextFromPDF } from "@/lib/pdf-parser";
 import { parseRegistry } from "@/lib/registry-parser";
 import { validateOrigin } from "@/lib/csrf";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { validateMagicBytes } from "@/lib/sanitize";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -37,6 +38,10 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
+    // 매직바이트 검증 (MIME/확장자 스푸핑 방어)
+    if (!validateMagicBytes(buffer, "application/pdf")) {
+      return NextResponse.json({ error: "유효한 PDF 파일이 아닙니다." }, { status: 400 });
+    }
     const { text } = await extractTextFromPDF(buffer, file.name ?? "registry.pdf");
 
     if (!text || text.trim().length < 50) {

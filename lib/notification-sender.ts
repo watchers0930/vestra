@@ -61,8 +61,9 @@ async function sendEmail(
   const fromEmail = await getNotificationSettingOrEnv("RESEND_FROM_EMAIL");
 
   if (!apiKey || !fromEmail) {
+    // PII 보호: 이메일은 로컬 첫 글자만, 본문은 로깅하지 않음
     console.info(
-      `[NOTIFICATION:EMAIL:MOCK] To=${email} Title="${title}" Body="${body.slice(0, 100)}"`
+      `[NOTIFICATION:EMAIL:MOCK] To=${email.replace(/^(.).*(@.*)$/, "$1***$2")} Title="${title}"`
     );
     return { channel: "email_mock", success: true };
   }
