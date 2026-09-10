@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { withAgentAuth } from "@/lib/with-agent-auth";
-import { hashForSearch, hashForSearchCandidates } from "@/lib/crypto";
+import { hashForSearch } from "@/lib/crypto";
 import { recordPiiAccess } from "@/lib/audit-log";
 
 // ---------------------------------------------------------------------------
@@ -155,16 +155,15 @@ export const POST = withAgentAuth(async (req, { session }) => {
       }
     }
 
-    // 이메일 blind index (쓰기=신규키). 조회는 전환기 후보(신·구키)로 매칭(P0-3 듀얼리드).
+    // 이메일 blind index (정확일치·중복체크·unique 용도, SEARCH_INDEX_KEY 전용키)
     const emailHash = clientEmail ? hashForSearch(clientEmail.trim()) : null;
-    const emailHashCandidates = clientEmail ? hashForSearchCandidates(clientEmail.trim()) : [];
 
     // --- 중복 체크 (동일 agentId + clientEmail, inactive 제외) ---
     if (clientEmail) {
       const existing = await prisma.agentClient.findFirst({
         where: {
           agentId: session.user.id,
-          clientEmailHash: { in: emailHashCandidates },
+          clientEmailHash: emailHash,
           status: { not: "inactive" },
         },
       });
@@ -196,7 +195,7 @@ export const POST = withAgentAuth(async (req, { session }) => {
     // create 전 처리: 기존 inactive 레코드의 unique 필드 클리어 (재등록 충돌 방지)
     if (clientEmail) {
       await prisma.agentClient.updateMany({
-        where: { agentId: session.user.id, clientEmailHash: { in: emailHashCandidates }, status: "inactive" },
+        where: { agentId: session.user.id, clientEmailHash: emailHash, status: "inactive" },
         data: { clientEmail: null, clientEmailHash: null },
       });
     }

@@ -3,7 +3,7 @@ import { withAdminAuth } from "@/lib/with-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { parseRegistry } from "@/lib/registry-parser";
 import { extractTextFromPDF, normalizeRegistryText, detectRegistryConfidence } from "@/lib/pdf-parser";
-import { encryptPII, hashForSearch, hashForSearchCandidates } from "@/lib/crypto";
+import { encryptPII, hashForSearch } from "@/lib/crypto";
 import { validateMagicBytes } from "@/lib/sanitize";
 import { extractVocabularyFromParsed } from "@/lib/domain-vocabulary";
 import { createAuditLog } from "@/lib/audit-log";
@@ -131,10 +131,10 @@ export const POST = withAdminAuth(async (req: NextRequest, { session }) => {
   const normalized = normalizeRegistryText(rawText);
   const { confidence } = detectRegistryConfidence(normalized);
 
-  // 중복 검사 (쓰기=신규키, 조회는 전환기 후보 신·구키로 매칭 — P0-3 듀얼리드)
+  // 중복 검사 (rawTextHash unique, SEARCH_INDEX_KEY 전용키)
   const textHash = hashForSearch(normalized);
-  const existing = await prisma.trainingData.findFirst({
-    where: { rawTextHash: { in: hashForSearchCandidates(normalized) } },
+  const existing = await prisma.trainingData.findUnique({
+    where: { rawTextHash: textHash },
   });
   if (existing) {
     return NextResponse.json(
