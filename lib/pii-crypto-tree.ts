@@ -19,14 +19,17 @@ import { encryptPII, decryptPII } from "./crypto";
 
 // ─── 암호화 대상 필드 (단일 소스) ───
 //
-// 주의: where(검색)은 이 확장이 처리하지 않는다.
-// → 검색에 쓰이는 필드(clientName·clientEmail 등)는 넣지 말 것(blind index는 별도 단계 S5).
+// 주의: where(검색)은 이 확장이 처리하지 않는다(암호문은 IV 랜덤이라 contains/정확일치 불가).
+// → 암호화 필드로 검색해야 하면 정확일치는 blind index(hashForSearch 컬럼), 부분검색은
+//    앱레벨 복호화 필터로 처리한다. 예) AgentClient.clientEmail=clientEmailHash, 통합검색=앱레벨(S5).
 // nested create/include는 아래 MODEL_RELATIONS 재귀로 커버된다.
 export const PII_FIELDS: Record<string, string[]> = {
   User: ["businessNumber"],
   Analysis: ["address"],
   Asset: ["address"],
-  AgentClient: ["clientPhone"], // clientName/clientEmail은 검색에 사용되어 제외
+  // S5: clientName·clientEmail 암호화. 부분검색은 앱레벨 복호화 필터,
+  //     이메일 정확일치·중복체크는 clientEmailHash(blind index)로 처리(where 검색 아님).
+  AgentClient: ["clientPhone", "clientName", "clientEmail"],
   NotificationSetting: ["kakaoPhoneNumber", "smsPhoneNumber"],
   // 등기 원문 (평문 중복 제거). write/read 모두 최상위라 안전.
   MonitoredProperty: ["baselineData"],

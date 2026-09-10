@@ -81,6 +81,22 @@ describe("hashForSearch", () => {
     const hash = hashForSearch("test");
     expect(hash).toMatch(/^[0-9a-f]{64}$/);
   });
+
+  it("SEARCH_INDEX_KEY 폴백 — 미설정 시 AUTH_SECRET 기반(하위호환), 설정 시 분리된 해시", () => {
+    delete process.env.SEARCH_INDEX_KEY;
+    const withAuth = hashForSearch("client@example.com");
+
+    process.env.SEARCH_INDEX_KEY = "separate-search-index-key-for-vitest-32c!";
+    const withSearchKey = hashForSearch("client@example.com");
+    expect(withSearchKey).not.toBe(withAuth); // 키가 다르면 해시도 다름
+
+    delete process.env.SEARCH_INDEX_KEY;
+    expect(hashForSearch("client@example.com")).toBe(withAuth); // 미설정 시 AUTH_SECRET로 복귀
+  });
+
+  it("이메일 대소문자·공백 정규화로 동일 blind index (중복체크 일관성)", () => {
+    expect(hashForSearch("  Client@Example.com ")).toBe(hashForSearch("client@example.com"));
+  });
 });
 
 describe("maskBusinessNumber", () => {

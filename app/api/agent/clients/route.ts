@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { withAgentAuth } from "@/lib/with-agent-auth";
+import { hashForSearch } from "@/lib/crypto";
 
 // ---------------------------------------------------------------------------
 // GET — 고객 목록
@@ -23,19 +24,49 @@ export const GET = withAgentAuth(async (req, { session }) => {
     const search = searchParams.get("search")?.trim() || "";
     const status = searchParams.get("status") || undefined;
 
+    // agentId 스코프 기본 필터 (검색어는 아래에서 별도 처리)
     const where = {
       agentId: session.user.id,
       ...(status ? { status } : { status: { not: "inactive" } }),
-      ...(search
-        ? {
-            OR: [
-              { clientName: { contains: search, mode: "insensitive" as const } },
-              { clientEmail: { contains: search, mode: "insensitive" as const } },
-              { propertyAddress: { contains: search, mode: "insensitive" as const } },
-            ],
-          }
-        : {}),
     };
+
+    const include = {
+      _count: { select: { properties: true } },
+      properties: {
+        where: { status: "active" as const },
+        select: { monitoredProperty: { select: { status: true } } },
+      },
+    };
+
+    // 복호화된 행 → 응답 형태 변환 (monitoringActive 파생)
+    const toClient = <
+      T extends { properties: { monitoredProperty: { status: string } | null }[] }
+    >(row: T) => {
+      const { properties, ...c } = row;
+      return {
+        ...c,
+        monitoringActive: properties.some((p) => p.monitoredProperty?.status === "active"),
+      };
+    };
+
+    // clientName·clientEmail은 암호화 저장이라 DB contains 검색 불가(IV 랜덤).
+    // 검색어가 있으면 해당 중개사 고객을 로드 → 자동 복호화 → 앱레벨 부분매칭 필터.
+    // (중개사당 고객 수는 소수라 실용적. 검색어가 없으면 기존 DB 페이지네이션 유지)
+    if (search) {
+      const q = search.toLowerCase();
+      const all = await prisma.agentClient.findMany({ where, orderBy: { createdAt: "desc" }, include });
+      const matched = all.filter((c) =>
+        [c.clientName, c.clientEmail, c.propertyAddress].some(
+          (v) => typeof v === "string" && v.toLowerCase().includes(q)
+        )
+      );
+      return NextResponse.json({
+        clients: matched.slice((page - 1) * limit, (page - 1) * limit + limit).map(toClient),
+        total: matched.length,
+        page,
+        totalPages: Math.ceil(matched.length / limit),
+      });
+    }
 
     const [raw, total] = await Promise.all([
       prisma.agentClient.findMany({
@@ -43,24 +74,13 @@ export const GET = withAgentAuth(async (req, { session }) => {
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
-        include: {
-          _count: { select: { properties: true } },
-          properties: {
-            where: { status: "active" },
-            select: { monitoredProperty: { select: { status: true } } },
-          },
-        },
+        include,
       }),
       prisma.agentClient.count({ where }),
     ]);
 
-    const clients = raw.map(({ properties, ...c }) => ({
-      ...c,
-      monitoringActive: properties.some((p) => p.monitoredProperty?.status === "active"),
-    }));
-
     return NextResponse.json({
-      clients,
+      clients: raw.map(toClient),
       total,
       page,
       totalPages: Math.ceil(total / limit),
@@ -118,12 +138,15 @@ export const POST = withAgentAuth(async (req, { session }) => {
       }
     }
 
+    // 이메일 blind index (정확일치·중복체크·unique 용도)
+    const emailHash = clientEmail ? hashForSearch(clientEmail.trim()) : null;
+
     // --- 중복 체크 (동일 agentId + clientEmail, inactive 제외) ---
     if (clientEmail) {
       const existing = await prisma.agentClient.findFirst({
         where: {
           agentId: session.user.id,
-          clientEmail: clientEmail.trim(),
+          clientEmailHash: emailHash,
           status: { not: "inactive" },
         },
       });
@@ -155,8 +178,8 @@ export const POST = withAgentAuth(async (req, { session }) => {
     // create 전 처리: 기존 inactive 레코드의 unique 필드 클리어 (재등록 충돌 방지)
     if (clientEmail) {
       await prisma.agentClient.updateMany({
-        where: { agentId: session.user.id, clientEmail: clientEmail.trim(), status: "inactive" },
-        data: { clientEmail: null },
+        where: { agentId: session.user.id, clientEmailHash: emailHash, status: "inactive" },
+        data: { clientEmail: null, clientEmailHash: null },
       });
     }
     if (clientUserId) {
@@ -171,7 +194,7 @@ export const POST = withAgentAuth(async (req, { session }) => {
         agentId: session.user.id,
         clientName: clientName.trim(),
         ...(clientPhone ? { clientPhone: clientPhone.trim() } : {}),
-        ...(clientEmail ? { clientEmail: clientEmail.trim() } : {}),
+        ...(clientEmail ? { clientEmail: clientEmail.trim(), clientEmailHash: emailHash } : {}),
         ...(clientUserId ? { clientUserId } : {}),
         ...(memo ? { memo } : {}),
         ...(contractDate ? { contractDate: new Date(contractDate) } : {}),

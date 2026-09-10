@@ -130,8 +130,17 @@ export function decryptPII(encoded: string): string {
 // ─── 검색용 해시 ───
 
 /**
- * 검색 가능한 단방향 해시 생성 (SHA-256)
- * DB에서 암호화된 필드를 검색할 때 사용.
+ * 검색 인덱스(blind index) 전용 HMAC 키.
+ * SEARCH_INDEX_KEY가 있으면 그것을(마스터키 분리, 설계서 §1),
+ * 없으면 AUTH_SECRET으로 폴백 → env 미설정 시 기존 해시와 완전 호환.
+ */
+function getSearchKey(): string {
+  return process.env.SEARCH_INDEX_KEY || getSecret();
+}
+
+/**
+ * 검색 가능한 단방향 해시 생성 (HMAC-SHA256, blind index)
+ * DB에서 암호화된 필드를 정확일치로 검색할 때 사용.
  *
  * 예: addressHash = hashForSearch(address)
  *     WHERE addressHash = hashForSearch(searchTerm)
@@ -139,7 +148,7 @@ export function decryptPII(encoded: string): string {
 export function hashForSearch(value: string): string {
   if (!value) return "";
   return crypto
-    .createHmac("sha256", getSecret())
+    .createHmac("sha256", getSearchKey())
     .update(value.trim().toLowerCase())
     .digest("hex");
 }

@@ -684,9 +684,10 @@ model GuaranteeRule {
 model AgentClient {
   id              String                @id @default(cuid())
   agentId         String // 중개사 User.id
-  clientName      String // 고객명
+  clientName      String // 고객명 (AES 암호화, S5)
   clientPhone     String? // 전화번호 (AES 암호화)
-  clientEmail     String? // 이메일
+  clientEmail     String? // 이메일 (AES 암호화, S5)
+  clientEmailHash String? // 이메일 blind index (HMAC, 정확일치·중복체크용, S5)
   clientUserId    String?               @unique // VESTRA 가입 시 연결
   status          String                @default("active") // active | inactive | invited
   inviteToken     String?               @unique // 초대 링크 토큰
@@ -700,9 +701,10 @@ model AgentClient {
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
 
-  @@unique([agentId, clientEmail])
+  @@unique([agentId, clientEmailHash])
   @@index([agentId])
   @@index([status])
+  @@index([clientEmailHash])
 }
 
 model AgentClientProperty {

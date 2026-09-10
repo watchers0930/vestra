@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { withAgentAuth } from "@/lib/with-agent-auth";
+import { hashForSearch } from "@/lib/crypto";
 
 // ---------------------------------------------------------------------------
 // GET — 고객 상세 + 물건 목록
@@ -168,7 +169,10 @@ export const PUT = withAgentAuth<{ id: string }>(
             ? { clientName: clientName.trim() }
             : {}),
           ...(clientPhone !== undefined ? { clientPhone } : {}),
-          ...(clientEmail !== undefined ? { clientEmail } : {}),
+          // 이메일 변경 시 blind index(clientEmailHash)도 동기화 (null이면 hash도 null)
+          ...(clientEmail !== undefined
+            ? { clientEmail, clientEmailHash: clientEmail ? hashForSearch(String(clientEmail).trim()) : null }
+            : {}),
           ...(memo !== undefined ? { memo } : {}),
           ...(status !== undefined ? { status } : {}),
           ...(contractDate !== undefined
@@ -220,9 +224,9 @@ export const DELETE = withAgentAuth<{ id: string }>(
 
       await prisma.agentClient.update({
         where: { id: params.id },
-        // clientEmail, clientUserId를 null로 클리어해야 unique constraint 해제됨
+        // clientEmailHash, clientUserId를 null로 클리어해야 unique constraint 해제됨
         // (재등록 시 동일 이메일/userId로 새 레코드 생성 가능)
-        data: { status: "inactive", clientEmail: null, clientUserId: null },
+        data: { status: "inactive", clientEmail: null, clientEmailHash: null, clientUserId: null },
       });
 
       return NextResponse.json({ success: true });
