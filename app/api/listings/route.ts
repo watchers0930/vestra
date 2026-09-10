@@ -208,10 +208,20 @@ export async function POST(req: NextRequest) {
 }
 
 function serialize(l: Record<string, unknown>) {
+  // S6: 민감 문서 참조키는 목록 응답에서 제외 — taxDocUrl은 존재여부(hasTaxDoc)만,
+  // safetyDocuments는 표시용 메타(type·filename)만. 실제 파일은 소유자 인가 프록시로만 조회.
+  const { taxDocUrl, safetyDocuments, ...rest } = l;
   return {
-    ...l,
+    ...rest,
     deposit: (l.deposit as bigint)?.toString() ?? null,
     managementFee: (l.managementFee as bigint | null)?.toString() ?? null,
     officialPrice: (l.officialPrice as bigint | null)?.toString() ?? null,
+    hasTaxDoc: !!taxDocUrl,
+    safetyDocuments: Array.isArray(safetyDocuments)
+      ? safetyDocuments.map((d) => {
+          const doc = d as Record<string, unknown>;
+          return { type: doc?.type ?? null, filename: doc?.filename ?? null };
+        })
+      : (safetyDocuments ?? null),
   };
 }

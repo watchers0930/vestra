@@ -19,7 +19,7 @@ export interface ListingItem {
   availableFrom: string | null;
   photos: string[] | null;
   description: string | null;
-  safetyDocuments: { type: string; url: string; filename: string }[] | null;
+  safetyDocuments: { type: string; filename: string }[] | null;
   officialPrice: string | null;
   jeonseRatio: number | null;
   isCertified: boolean;
@@ -28,7 +28,7 @@ export interface ListingItem {
   isRentalBusiness?: boolean;
   /** 등기명의인표시변경 부기등기 — 소유자 동일성 확인 필요 */
   hasNameChange?: boolean;
-  taxDocUrl: string | null;
+  hasTaxDoc: boolean; // S6: 실제 URL 대신 존재여부만. 조회는 GET /api/listings/[id]/tax-doc 프록시
   taxDocFilename: string | null;
   buildingDocUrl: string | null;
   insuranceResult: { hugEligible: boolean; sgiEligible: boolean; hfEligible: boolean; recommendation: string } | null;

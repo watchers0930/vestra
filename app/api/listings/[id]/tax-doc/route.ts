@@ -2,7 +2,51 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
-import { put } from "@vercel/blob";
+import { put, get } from "@vercel/blob";
+
+// GET /api/listings/[id]/tax-doc — 재산세납부확인서 조회 (인가 프록시)
+// private Blob이라 소유자만 이 라우트를 통해서만 열람 가능(공개 URL 없음).
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const listing = await prisma.listing.findUnique({
+      where: { id },
+      select: { ownerId: true, taxDocUrl: true, taxDocFilename: true },
+    });
+    if (!listing) return NextResponse.json({ error: "매물을 찾을 수 없습니다." }, { status: 404 });
+    if (listing.ownerId !== session.user.id) {
+      return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+    }
+    if (!listing.taxDocUrl) {
+      return NextResponse.json({ error: "업로드된 서류가 없습니다." }, { status: 404 });
+    }
+
+    // taxDocUrl은 pathname(참조키). private Blob을 서버에서 스트리밍.
+    const result = await get(listing.taxDocUrl, { access: "private" });
+    if (!result || result.statusCode !== 200) {
+      return NextResponse.json({ error: "서류를 불러올 수 없습니다." }, { status: 404 });
+    }
+    // 민감 문서 → 브라우저·CDN 캐시 금지. 필요한 헤더만 명시적으로 구성.
+    const outHeaders = new Headers();
+    outHeaders.set("Content-Type", result.blob.contentType || "application/octet-stream");
+    outHeaders.set("Cache-Control", "private, no-store, max-age=0");
+    if (listing.taxDocFilename) {
+      outHeaders.set(
+        "Content-Disposition",
+        `inline; filename*=UTF-8''${encodeURIComponent(listing.taxDocFilename)}`,
+      );
+    }
+    return new NextResponse(result.stream as unknown as ReadableStream, { headers: outHeaders });
+  } catch (e) {
+    console.error("[GET tax-doc]", e);
+    return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
+  }
+}
 
 // POST /api/listings/[id]/tax-doc — 재산세납부확인서 업로드
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -38,18 +82,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const ext = file.name.split(".").pop() ?? "pdf";
+    // S6: 민감 문서 → private Blob. DB에는 공개 URL이 아니라 참조키(pathname)만 저장.
+    // 조회는 GET /api/listings/[id]/tax-doc 인가 프록시를 통해서만 가능.
     const blob = await put(
       `listings/tax-doc/${session.user.id}/${id}.${ext}`,
       file,
-      { access: "public" },
+      { access: "private", allowOverwrite: true },
     );
 
     await prisma.listing.update({
       where: { id },
-      data: { taxDocUrl: blob.url, taxDocFilename: file.name },
+      data: { taxDocUrl: blob.pathname, taxDocFilename: file.name },
     });
 
-    return NextResponse.json({ url: blob.url, filename: file.name });
+    return NextResponse.json({ ok: true, filename: file.name });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });

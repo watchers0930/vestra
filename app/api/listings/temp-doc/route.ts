@@ -24,9 +24,11 @@ export async function POST(req: NextRequest) {
 
     const ext = file.name.split(".").pop() ?? "pdf";
     const filename = `listings/docs/${session.user.id}/${Date.now()}.${ext}`;
-    const blob = await put(filename, file, { access: "public" });
+    // S6: 안전서류(재산세납부확인서 등)는 민감 → private Blob.
+    // 반환·저장은 공개 URL이 아니라 참조키(pathname). 조회는 인가된 소유자만.
+    const blob = await put(filename, file, { access: "private" });
 
-    return NextResponse.json({ url: blob.url });
+    return NextResponse.json({ url: blob.pathname });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });

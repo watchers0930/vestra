@@ -130,9 +130,18 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function serializeListing(l: any) {
+  // S6: 민감 문서는 공개 응답에서 제외.
+  // - taxDocUrl(pathname)은 노출하지 않고 존재여부(hasTaxDoc)만.
+  // - safetyDocuments는 파일 참조키(url) 제거하고 표시용 메타(type·filename)만.
+  //   조회는 소유자 인가 프록시(GET /api/listings/[id]/tax-doc)로만.
+  const { taxDocUrl, safetyDocuments, ...rest } = l;
   return {
-    ...l,
+    ...rest,
     deposit: l.deposit?.toString() ?? null,
     managementFee: l.managementFee?.toString() ?? null,
+    hasTaxDoc: !!taxDocUrl,
+    safetyDocuments: Array.isArray(safetyDocuments)
+      ? safetyDocuments.map((d: Record<string, unknown>) => ({ type: d?.type ?? null, filename: d?.filename ?? null }))
+      : (safetyDocuments ?? null),
   };
 }

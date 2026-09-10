@@ -41,7 +41,7 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
 
   const isJeonse = listing.listingType === "JEONSE";
 
-  const hasTaxDoc = uploadDone || !!listing.taxDocUrl;
+  const hasTaxDoc = uploadDone || !!listing.hasTaxDoc;
   const checks = certResult?.checks ?? {
     registry: listing.isCertified,
     building: listing.isCertified,
@@ -104,7 +104,8 @@ export function CertificationSection({ listing, isOwner, onReload }: Props) {
       key: "taxDoc" as const,
       label: "재산세납부확인서",
       desc: hasTaxDoc ? (listing.taxDocFilename ?? "업로드 완료") : "직접 업로드 필요",
-      url: listing.taxDocUrl,
+      // S6: private Blob → 소유자 인가 프록시 경로로만 열람 (공개 URL 없음)
+      url: hasTaxDoc ? `/api/listings/${listing.id}/tax-doc` : null,
     },
     {
       key: "registry" as const,
