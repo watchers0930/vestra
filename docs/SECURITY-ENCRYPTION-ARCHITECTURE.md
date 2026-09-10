@@ -125,6 +125,8 @@
 - 배치(cursor) 처리, 진행 로그에 **원문 미출력**(PII 노출 금지).
 - 실행 전 **DB 스냅샷**, 기본 dry-run → `--commit`, 대장 승인 후 실행.
 - 순서: **코드 운영배포 → 백필** (배포 전 백필 시 구코드가 신포맷 복호화 못 함).
+- 🔴 **[필수] 백필 전 키 일치 검증**: 로컬 `PII_ENCRYPTION_KEY` == 운영·preview(`vercel env pull` 후) sha256 비교. **다르면 백필 금지**(로컬키로 암호화하면 운영이 복호화 못 함). 2026-09-10 이 검증 누락으로 전 PII 암호문 노출 장애 발생(§8 인시던트).
+- 🔴 **[필수] 백필·배포 후 운영 실화면 검증**: 로컬 라운드트립 통과는 검증이 아님. 반드시 운영 앱에서 사람이 읽을 수 있게 복호화되는지 확인(로그인 필요 시 대장에게 요청).
 
 ## 6. 필요한 신규 환경변수
 - `PII_ENCRYPTION_KEY` (32B, PII 전용) — Vercel env, 운영/프리뷰 각각.
@@ -168,6 +170,13 @@
 - **코드**: `lib/crypto.ts` `hashForSearch`에 `SEARCH_INDEX_KEY` 폴백(미설정 시 AUTH_SECRET → 기존 textHash 등 완전 호환, 실제 키분리는 재백필과 함께 후속). `PII_FIELDS.AgentClient`에 clientName·clientEmail 추가. `agent/clients/route.ts` GET=검색어 있으면 앱레벨 필터(agentId 스코프 로드→자동복호화→name·email·address 부분매칭→앱레벨 페이지네이션)·없으면 기존 DB 페이지네이션 / POST 중복체크·재활성화·create를 clientEmailHash 기반. `[id]/route.ts` PATCH 이메일수정 시 hash 동기화·소프트삭제 시 hash null.
 - **백필**(운영, 6건): ①`backfill-agentclient-emailhash.ts --commit`(hash 채우기, decryptPII 기반이라 순서무관·멱등) → ②`backfill-pii-encryption.ts --commit`(clientName·clientEmail 암호화, PII_FIELDS 자동포함). 안전순서=hash먼저(실패해도 중복체크 정상). 검증: 재실행 전량 skip, **운영 6행 hash 전부 일치**(hashForSearch(decryptPII(email))===clientEmailHash) 확인 → 검색·중복체크 실동작 보장.
 - 데이터 규모: AgentClient 6건·중개사 2명·중개사당 최대 5건 → 앱레벨 필터 성능 안전. 향후 규모 커지면 재검토.
+
+### 🔴 인시던트 — PII_ENCRYPTION_KEY 로컬≠운영 (2026-09-10 발견·복구완료)
+- **증상**: 운영 중개관리(agent/clients) 목록에서 고객명·이메일이 `v2:...` 암호문 그대로 노출. 실제로는 값 있는 **모든 v2 PII**(주소·서명자·사업자번호·전문가·내용증명 등)가 운영에서 복호화 실패 상태였음.
+- **근본원인**: S1에서 "로컬=운영 키 동일 확인"이라 잘못 기록. 실제로는 로컬(`771b93…`)≠운영·preview(`c33d0f…`, 둘은 동일)로 처음부터 달랐다. 모든 백필을 로컬키로 실행 → 운영 앱은 운영키라 복호화 실패. AUTH_SECRET·PII_SALT는 일치해서 hash·세션·v1은 정상 → 로컬 스크립트 검증만으로는 안 드러났고, 운영 실화면을 안 봐서 A2·S5 3회 배포 내내 놓침.
+- **전수진단**: PII_FIELDS 전량 + orphaned 확인 → 값 있는 v2는 전부 로컬키, 운영키 암호화 데이터 0건, 손상 0건, v1 데이터 0건. (orphaned 114건은 기존 손상, 무관)
+- **복구**: 운영키 데이터가 0건이라 **무손실**. 운영·preview `PII_ENCRYPTION_KEY`를 로컬값으로 교체(`vercel env rm/add`) + 재배포. 데이터 무변경으로 전 PII 동시 복구. 운영 실화면에서 복호화·부분검색 실증.
+- **재발방지**: §5에 "백필 전 키 sha 일치 검증" + "배포 후 운영 실화면 검증" 필수 원칙 추가.
 
 ### 남은 단계 (다음 세션)
 - **S6 Blob private화** — 세금서류(`listings/[id]/tax-doc`)·계약PDF(`finalPdfUrl`)·자격증(`licenseFileUrl`) public Blob → private + 인가 프록시 라우트. DB엔 URL 대신 참조키(pathname). 기존 URL 사용처 전수 수정 필요(단계적 전환).
