@@ -64,9 +64,9 @@ export async function sendAlimtalk(
   const from = await getNotificationSettingOrEnv("SOLAPI_SENDER_PHONE");
 
   if (!solapi || !pfId || !from) {
-    // PII 보호: 전화번호는 뒤 4자리만, 개인화 변수는 로깅하지 않음
+    // PII 보호: 전화번호는 뒤 4자리만(하이픈 제거 후 마스킹), 개인화 변수는 로깅하지 않음
     console.info(
-      `[SOLAPI:ALIMTALK:MOCK] phone=${phone.replace(/\d(?=\d{4})/g, "*")} template=${templateId}`
+      `[SOLAPI:ALIMTALK:MOCK] phone=${phone.replace(/-/g, "").replace(/\d(?=\d{4})/g, "*")} template=${templateId}`
     );
     return { channel: "kakao_mock", success: true };
   }
@@ -106,9 +106,9 @@ export async function sendSms(
   const from = await getNotificationSettingOrEnv("SOLAPI_SENDER_PHONE");
 
   if (!solapi || !from) {
-    // PII 보호: 전화번호는 뒤 4자리만, 본문은 로깅하지 않음
+    // PII 보호: 전화번호는 뒤 4자리만(하이픈 제거 후 마스킹), 본문은 로깅하지 않음
     console.info(
-      `[SOLAPI:SMS:MOCK] phone=${phone.replace(/\d(?=\d{4})/g, "*")} textLen=${text.length}`
+      `[SOLAPI:SMS:MOCK] phone=${phone.replace(/-/g, "").replace(/\d(?=\d{4})/g, "*")} textLen=${text.length}`
     );
     return { channel: "sms_mock", success: true };
   }
