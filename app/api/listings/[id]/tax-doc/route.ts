@@ -85,7 +85,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // 매직바이트 검증 — MIME 위조 방지(선언 타입과 실제 바이트 일치 확인)
     const buffer = await file.arrayBuffer();
     if (!validateMagicBytes(buffer, file.type)) {
-      return NextResponse.json({ error: "파일 내용이 형식과 일치하지 않습니다." }, { status: 400 });
+      return NextResponse.json({ error: "파일이 손상되었거나 형식이 올바르지 않습니다. 정상적인 PDF 또는 이미지(JPG·PNG) 파일인지 확인해주세요." }, { status: 400 });
     }
     // 파일명 길이 제한 (헤더·저장 남용 방지)
     const filename = file.name.slice(0, 200);
