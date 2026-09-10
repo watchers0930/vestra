@@ -5,7 +5,8 @@ import { encryptPII, decryptPII } from "./crypto";
 
 // 주의: where(검색)·nested create는 이 확장이 처리하지 않는다.
 // → 검색에 쓰이는 필드(clientName·clientEmail 등)와 nested로 저장되는 필드(EContractSignature)는 넣지 말 것.
-const PII_FIELDS: Record<string, string[]> = {
+// 이 맵은 백필 스크립트(scripts/backfill-pii-encryption.ts)의 단일 소스이기도 하다 → export.
+export const PII_FIELDS: Record<string, string[]> = {
   User: ["businessNumber"],
   Analysis: ["address"],
   Asset: ["address"],
@@ -16,6 +17,10 @@ const PII_FIELDS: Record<string, string[]> = {
   // ⚠️ 향후 nested include/select로 이 필드를 끌어오면 자동복호화가 안 되니 최상위 조회만 할 것.
   MonitoredProperty: ["baselineData"],
   RegistryIssueOrder: ["documentText"],
+  // S2 추가: 자동확장 안전 검증 완료(write 최상위·read 최상위·where/nested/unique 미사용)
+  Listing: ["registryText"], // 매물 등기부 원문
+  LawyerPartner: ["phone", "officePhone", "bizNo", "licenseNo"], // 전문가 연락처·사업자·자격번호
+  KeepzipCase: ["senderName", "recipientName", "address"], // 내용증명 당사자·주소
 };
 
 // ─── Prisma Client Extensions로 PII 자동 암/복호화 ───

@@ -19,6 +19,21 @@ import crypto from "crypto";
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
 const TAG_LENGTH = 16;
+
+// ─── 키 버전 태깅 (무중단 로테이션 지원) ───
+//
+// 암호문 포맷:
+//   v1 (레거시): base64(iv+tag+ciphertext)           ← prefix 없음, scrypt(AUTH_SECRET, PII_SALT)
+//   v2 (신규)  : "v2:" + base64(iv+tag+ciphertext)   ← scrypt(PII_ENCRYPTION_KEY, PII_SALT)
+//
+// - PII_ENCRYPTION_KEY가 설정돼 있으면 신규 암호화는 v2, 없으면 기존 v1로 동작(폴백).
+//   → env 설정 순서와 무관하게 기존 동작이 절대 깨지지 않는다.
+// - 복호화는 prefix로 키 버전을 판별한다. 구 데이터(prefix 없음)는 v1로 복호화 → 무중단 호환.
+// - 재암호화 완료 후 v1(AUTH_SECRET 파생)을 폐기하면 AUTH_SECRET 유출로도 PII 복호화 불가.
+
+type KeyVersion = "v1" | "v2";
+const V2_PREFIX = "v2:";
+
 function getPIISalt(): string {
   const salt = process.env.PII_SALT;
   if (!salt) {
@@ -37,7 +52,21 @@ function getSecret(): string {
   return secret;
 }
 
-function derivePIIKey(): Buffer {
+/** 신규 암호화에 사용할 활성 키 버전 (PII_ENCRYPTION_KEY 있으면 v2) */
+function activeKeyVersion(): KeyVersion {
+  return process.env.PII_ENCRYPTION_KEY ? "v2" : "v1";
+}
+
+/** 키 버전별 32바이트 키 파생 */
+function deriveKey(version: KeyVersion): Buffer {
+  if (version === "v2") {
+    const k = process.env.PII_ENCRYPTION_KEY;
+    if (!k) {
+      throw new Error("PII_ENCRYPTION_KEY 환경변수가 설정되지 않았습니다.");
+    }
+    return crypto.scryptSync(k, getPIISalt(), 32);
+  }
+  // v1 (레거시): AUTH_SECRET 기반
   return crypto.scryptSync(getSecret(), getPIISalt(), 32);
 }
 
@@ -51,7 +80,8 @@ function derivePIIKey(): Buffer {
 export function encryptPII(plaintext: string): string {
   if (!plaintext) return "";
 
-  const key = derivePIIKey();
+  const version = activeKeyVersion();
+  const key = deriveKey(version);
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
   const encrypted = Buffer.concat([
@@ -61,7 +91,9 @@ export function encryptPII(plaintext: string): string {
   const tag = cipher.getAuthTag();
 
   // iv(16) + tag(16) + ciphertext → base64
-  return Buffer.concat([iv, tag, encrypted]).toString("base64");
+  const payload = Buffer.concat([iv, tag, encrypted]).toString("base64");
+  // v2는 키 버전 prefix, v1은 레거시 포맷(prefix 없음) 유지 → 하위호환
+  return version === "v2" ? `${V2_PREFIX}${payload}` : payload;
 }
 
 /**
@@ -73,8 +105,16 @@ export function decryptPII(encoded: string): string {
   if (!encoded) return "";
 
   try {
-    const key = derivePIIKey();
-    const buf = Buffer.from(encoded, "base64");
+    // 키 버전 판별: "v2:" prefix면 v2, 없으면 레거시 v1
+    let version: KeyVersion = "v1";
+    let payload = encoded;
+    if (encoded.startsWith(V2_PREFIX)) {
+      version = "v2";
+      payload = encoded.slice(V2_PREFIX.length);
+    }
+
+    const key = deriveKey(version);
+    const buf = Buffer.from(payload, "base64");
     const iv = buf.subarray(0, IV_LENGTH);
     const tag = buf.subarray(IV_LENGTH, IV_LENGTH + TAG_LENGTH);
     const ciphertext = buf.subarray(IV_LENGTH + TAG_LENGTH);
@@ -82,7 +122,7 @@ export function decryptPII(encoded: string): string {
     decipher.setAuthTag(tag);
     return decipher.update(ciphertext) + decipher.final("utf8");
   } catch {
-    // 복호화 실패 시 원본 반환 (미암호화 데이터 호환)
+    // 복호화 실패 시 원본 반환 (미암호화 평문 데이터 호환)
     return encoded;
   }
 }
