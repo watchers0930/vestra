@@ -11,6 +11,11 @@ const PII_FIELDS: Record<string, string[]> = {
   Asset: ["address"],
   AgentClient: ["clientPhone"], // clientName/clientEmail은 검색에 사용되어 제외
   NotificationSetting: ["kakaoPhoneNumber", "smsPhoneNumber"],
+  // 등기 원문 (평문 중복 제거). write는 전부 최상위 data, read도 최상위 결과라 안전.
+  // cron 변동감지는 lastHash(평문 해시)로 판정 + 자동복호화된 평문끼리 비교 → 영향 없음.
+  // ⚠️ 향후 nested include/select로 이 필드를 끌어오면 자동복호화가 안 되니 최상위 조회만 할 것.
+  MonitoredProperty: ["baselineData"],
+  RegistryIssueOrder: ["documentText"],
 };
 
 // ─── Prisma Client Extensions로 PII 자동 암/복호화 ───
