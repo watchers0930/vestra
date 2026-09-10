@@ -1,6 +1,6 @@
 # 베스트라 민감정보 보호 아키텍처 설계서 (근본 처리)
 
-> 상태: **S1~S3 + A2(S4) 완료·운영반영 (v5.147.0) / 다음 S5(blind index)** | 작성 2026-09-10, 갱신 2026-09-10
+> 상태: **S1~S3 + A2(S4) + S5(blind index) 완료·운영반영 (v5.148.0) / 다음 S6(Blob private)** | 작성 2026-09-10, 갱신 2026-09-10
 > ⏩ 다음 세션 착수점: 아래 **§8 진행 현황** 참조. 트리거 예: "베스트라 보안 아키텍처 S5(blind index)부터 이어서 하자"
 > 목적: 필드별 임기응변 암호화를 끝내고, 민감정보 보호를 키·범위·표면 3축에서 근본 재설계한다.
 > 우선순위 원칙(CLAUDE.md): 보안 > 검증 > 구조/성능 > 편의. 각 단계는 백필·검증·배포를 분리하고 롤백 경로를 먼저 확보한다.
@@ -162,6 +162,16 @@
 - **검증**: `__tests__/pii-crypto-tree.test.ts` 17개(스칼라/nested create 배열·단일/update·upsert·createMany/nested include/깊은 include/라운드트립/교차의존/null안전) + 기존 전체 **1023 통과**. `tsc --noEmit` 클린(기존 api-sync-data 무관 에러 제외), lint 클린, `npm run build` 성공.
 - **⚠️ 배포·백필 순서**: ①코드 test배포→대장 확인→운영 승격, ②운영 배포 **후** 백필 `scripts/backfill-pii-encryption.ts --commit`(PII_FIELDS 순회라 EContractSignature 4필드 자동 포함, 기존 평문 서명행 v2 정규화). 배포 전 백필 금지(구코드가 v2 복호화 못함). DB 스냅샷+대장 승인 후.
 
+### S5 완료 ✅ — AgentClient 고객명·이메일 암호화 + 이메일 blind index (v5.148.0 운영반영·백필완료 2026-09-10)
+- **하이브리드 방식 확정·구현**(대장 결정): clientName·clientEmail을 암호화하되, ①통합검색(부분매칭)은 **앱레벨 복호화 필터**, ②이메일 정확일치·중복체크·unique는 **blind index(clientEmailHash, HMAC)** 로 처리. 순수 blind index는 부분검색(contains) UX를 잃어서 부적합했음(통합 검색창이 name·email·address를 contains).
+- **DB 스키마 변경**(db push, 운영반영): `AgentClient.clientEmailHash String?` 컬럼 추가 + `@@unique([agentId, clientEmail])` → `@@unique([agentId, clientEmailHash])` 이전 + `@@index([clientEmailHash])`. 암호문은 IV 랜덤이라 평문 email unique 불가 → hash로 이전 필수. migrate diff로 SQL 사전확인(컬럼추가+인덱스교체, 데이터 무손실), --accept-data-loss는 unique 추가 관용문구.
+- **코드**: `lib/crypto.ts` `hashForSearch`에 `SEARCH_INDEX_KEY` 폴백(미설정 시 AUTH_SECRET → 기존 textHash 등 완전 호환, 실제 키분리는 재백필과 함께 후속). `PII_FIELDS.AgentClient`에 clientName·clientEmail 추가. `agent/clients/route.ts` GET=검색어 있으면 앱레벨 필터(agentId 스코프 로드→자동복호화→name·email·address 부분매칭→앱레벨 페이지네이션)·없으면 기존 DB 페이지네이션 / POST 중복체크·재활성화·create를 clientEmailHash 기반. `[id]/route.ts` PATCH 이메일수정 시 hash 동기화·소프트삭제 시 hash null.
+- **백필**(운영, 6건): ①`backfill-agentclient-emailhash.ts --commit`(hash 채우기, decryptPII 기반이라 순서무관·멱등) → ②`backfill-pii-encryption.ts --commit`(clientName·clientEmail 암호화, PII_FIELDS 자동포함). 안전순서=hash먼저(실패해도 중복체크 정상). 검증: 재실행 전량 skip, **운영 6행 hash 전부 일치**(hashForSearch(decryptPII(email))===clientEmailHash) 확인 → 검색·중복체크 실동작 보장.
+- 데이터 규모: AgentClient 6건·중개사 2명·중개사당 최대 5건 → 앱레벨 필터 성능 안전. 향후 규모 커지면 재검토.
+
 ### 남은 단계 (다음 세션)
-- **S8 v1 키 폐기** (2단계): S8a 감지로그(운영 v1 접근 0 관찰) → S8b `lib/crypto.ts`에서 v1 복호화 경로 제거 → AUTH_SECRET 유출로도 PII 복호화 불가. PII_FIELDS는 전량 v2라 진행 가능(A2 백필 완료 후).
+- **S6 Blob private화** — 세금서류(`listings/[id]/tax-doc`)·계약PDF(`finalPdfUrl`)·자격증(`licenseFileUrl`) public Blob → private + 인가 프록시 라우트. DB엔 URL 대신 참조키(pathname). 기존 URL 사용처 전수 수정 필요(단계적 전환).
+- **S7 API 인가 CI 게이트** — `scripts/audit-api-auth.ts`로 무인증 변이핸들러 빌드 검출.
+- **S8 v1 키 폐기** (2단계): S8a 감지로그(운영 v1 접근 0 관찰) → S8b `lib/crypto.ts`에서 v1 복호화 경로 제거 → AUTH_SECRET 유출로도 PII 복호화 불가. PII_FIELDS는 전량 v2라 진행 가능.
+- (후속) **SEARCH_INDEX_KEY 실제 분리** — env 추가 + textHash·clientEmailHash 재백필(현재는 AUTH_SECRET 폴백).
 - **S5 blind index**(clientName·clientEmail) → **S6 Blob private**(tax-doc·finalPdfUrl·licenseFileUrl) → **S7 API 인가 CI 게이트**.
