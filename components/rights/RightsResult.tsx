@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   Shield,
   AlertTriangle,
   CheckCircle,
-  XCircle,
   MapPin,
   FileText,
   ChevronDown,
@@ -14,21 +13,17 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { formatKRW, cn } from "@/lib/utils";
-import type { ParsedRegistry } from "@/lib/registry-parser";
-import type { RiskScore } from "@/lib/risk-scoring";
-import type { ValidationResult } from "@/lib/validation-engine";
 import { Card, Alert } from "@/components/common";
 import { ChecklistSection } from "@/components/common/ChecklistSection";
 import AiDisclaimer from "@/components/common/ai-disclaimer";
 import { PdfDownloadButton } from "@/components/common/PdfDownloadButton";
 import { IntegrityBadge } from "@/components/common/IntegrityBadge";
 import { SourceCitations } from "@/components/common/SourceCitations";
-import type { SourceCitation } from "@/lib/analysis-sources";
 import { NerHighlight } from "@/components/common/NerHighlight";
 import { StructuredRegistryView } from "@/components/rights/StructuredRegistryView";
 import { SafetyChecklist } from "@/components/rights/SafetyChecklist";
 import { ScoreGauge, ScholarPapers } from "@/components/results";
-import { KaptInfoCard, type KaptInfoData } from "@/components/common/KaptInfoCard";
+import { KaptInfoCard } from "@/components/common/KaptInfoCard";
 import SafetyDiagnosisCard from "@/components/results/SafetyDiagnosisCard";
 import TitleInsuranceCard from "@/components/results/TitleInsuranceCard";
 import ContractClauseCard from "@/components/results/ContractClauseCard";
@@ -38,107 +33,12 @@ const RightsGraphView = dynamic(
   () => import("@/components/rights/RightsGraphView").then((mod) => ({ default: mod.RightsGraphView })),
   { ssr: false, loading: () => <div className="h-48 animate-pulse bg-gray-100 rounded-xl" /> }
 );
-import type { KakaoGeocoderResult } from "@/components/prediction/KakaoMap";
+import { useAddressGeocode } from "./hooks/useAddressGeocode";
+import type { AddressTab, UnifiedResult } from "./rights-result-types";
+import { SEVERITY_STYLES, RISK_CONFIG, getScoreLabel } from "./rights-result-styles";
 
-// ─── 타입 ───
-
-type AddressTab = "admin" | "jibun" | "road";
-
-interface AddressInfo {
-  admin: string;
-  jibun: string;
-  road: string;
-  zipCode: string;
-}
-
-interface RiskItem {
-  level: "danger" | "warning" | "safe";
-  title: string;
-  description: string;
-}
-
-export interface UnifiedResult {
-  propertyInfo: {
-    address: string;
-    type: string;
-    area: string;
-    buildYear: string;
-    estimatedPrice: number;
-    jeonsePrice: number;
-    recentTransaction: string;
-  };
-  riskAnalysis: {
-    jeonseRatio: number;
-    mortgageRatio: number;
-    safetyScore: number;
-    riskScore: number;
-    risks: RiskItem[];
-  };
-  parsed: ParsedRegistry;
-  validation: ValidationResult;
-  riskScore: RiskScore;
-  marketData: {
-    sale: { avgPrice: number; transactionCount: number } | null;
-    rent: { avgDeposit: number; jeonseCount: number } | null;
-    jeonseRatio: number | null;
-  } | null;
-  aiOpinion: string;
-  qualityGate?: {
-    accuracy: number;
-    grounding: number;
-    completeness: number;
-    overall: number;
-    pass: boolean;
-    status: "judged" | "skipped";
-    regenerated: boolean;
-  } | null;
-  sources?: SourceCitation[];
-  graphAnalysis?: {
-    graph: { nodeCount: number; edgeCount: number; maxDepth: number };
-    cycles: { hasCycle: boolean; cycles: Array<{ path: string[]; riskScore: number; description: string }> };
-    riskPropagation: {
-      nodeRisks: Record<string, number>;
-      propagationSteps: Array<{ from: string; to: string; riskDelta: number; iteration: number }>;
-      convergenceIterations: number;
-      totalSystemRisk: number;
-    };
-    chainAnalysis: { chains: Array<{ id: string; nodes: string[]; totalAmount: number; riskLevel: string; description: string }>; longestChain: number; maxChainAmount: number };
-    criticalPath: { path: string[]; totalRisk: number; maxLossAmount: number; description: string };
-    clusterAnalysis: { clusters: Array<{ id: number; nodes: string[]; internalRisk: number; connectedTo: number[] }>; isolatedNodes: string[] };
-  };
-  checklist?: import("@/lib/checklist-generator").ChecklistItem[];
-  checklistByCategory?: Record<string, import("@/lib/checklist-generator").ChecklistItem[]>;
-  kaptInfo?: KaptInfoData | null;
-  safetyDiagnosis?: import("@/lib/safety-diagnosis").SafetyDiagnosisResult;
-  titleInsurance?: import("@/lib/title-insurance").TitleInsuranceResult | null;
-  contractClauses?: import("@/lib/contract-clause-generator").ContractClauseResult;
-  dataSource: {
-    registryParsed: boolean;
-    molitAvailable: boolean;
-    estimatedPriceSource: string;
-  };
-}
-
-// ─── 스타일 상수 ───
-
-const SEVERITY_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  critical: { bg: "bg-red-50 border-red-200", text: "text-red-700", label: "치명" },
-  high: { bg: "bg-orange-50 border-orange-200", text: "text-orange-700", label: "고위험" },
-  medium: { bg: "bg-amber-50 border-amber-200", text: "text-amber-700", label: "주의" },
-  low: { bg: "bg-blue-50 border-blue-200", text: "text-blue-700", label: "참고" },
-};
-
-const RISK_CONFIG = {
-  danger: { bg: "bg-red-50 border-red-200", text: "text-red-700", descText: "text-red-600", icon: XCircle, iconColor: "text-red-500" },
-  warning: { bg: "bg-amber-50 border-amber-200", text: "text-amber-700", descText: "text-amber-600", icon: AlertTriangle, iconColor: "text-amber-500" },
-  safe: { bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-700", descText: "text-emerald-600", icon: CheckCircle, iconColor: "text-emerald-500" },
-};
-
-function getScoreLabel(score: number) {
-  if (score >= 70) return "안전";
-  if (score >= 40) return "주의";
-  return "위험";
-}
+// UnifiedResult는 여러 화면이 이 경로에서 import하므로 재노출 유지
+export type { UnifiedResult } from "./rights-result-types";
 
 // ─── 컴포넌트 ───
 
@@ -150,55 +50,12 @@ interface RightsResultProps {
 export function RightsResult({ result, rawText }: RightsResultProps) {
   const resultRef = useRef<HTMLDivElement>(null);
   const [addressTab, setAddressTab] = useState<AddressTab>("admin");
-  const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null);
   const [showGapgu, setShowGapgu] = useState(false);
   const [showEulgu, setShowEulgu] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
   const [registryViewTab, setRegistryViewTab] = useState<"structured" | "raw">("structured");
 
-  const propertyAddress = result?.propertyInfo?.address;
-
-  useEffect(() => {
-    if (!propertyAddress) return;
-
-    const address = propertyAddress;
-
-    const geocode = () => {
-      if (!window.kakao?.maps) return;
-
-      window.kakao.maps.load(() => {
-        const geocoder = new window.kakao.maps.services.Geocoder();
-        geocoder.addressSearch(address, (results: KakaoGeocoderResult[], status: string) => {
-          if (status === window.kakao.maps.services.Status.OK && results[0]) {
-            const r = results[0];
-            setAddressInfo({
-              admin: r.address
-                ? `${r.address.region_1depth_name} ${r.address.region_2depth_name} ${r.address.region_3depth_h_name}`
-                : address,
-              jibun: r.address?.address_name || address,
-              road: r.road_address?.address_name || "-",
-              zipCode: r.road_address?.zone_no || "-",
-            });
-          } else {
-            setAddressInfo({ admin: address, jibun: address, road: "-", zipCode: "-" });
-          }
-        });
-      });
-    };
-
-    if (window.kakao?.maps) {
-      geocode();
-    } else {
-      const timeout = setTimeout(() => {
-        if (window.kakao?.maps) {
-          geocode();
-        } else {
-          setAddressInfo({ admin: address, jibun: address, road: "-", zipCode: "-" });
-        }
-      }, 3000);
-      return () => clearTimeout(timeout);
-    }
-  }, [propertyAddress]);
+  const addressInfo = useAddressGeocode(result?.propertyInfo?.address);
 
   return (
     <div ref={resultRef} className="space-y-6">
