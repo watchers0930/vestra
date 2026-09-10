@@ -37,6 +37,13 @@ export default function Footer() {
               </a>
               <span className="text-gray-300">|</span>
               <a
+                href="/methodology"
+                className="text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                V-Score 방법론
+              </a>
+              <span className="text-gray-300">|</span>
+              <a
                 href="/terms"
                 className="text-gray-500 hover:text-gray-900 transition-colors"
               >
