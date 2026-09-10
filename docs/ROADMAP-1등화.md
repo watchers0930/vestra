@@ -10,11 +10,11 @@
   - `lib/analysis-sources.ts`(실제 fetch·계산값만 sources[]로, 환각 0) + `components/common/SourceCitations.tsx` + `RightsResult`(공통) 연결 → rights·중개·renewal 전 화면. 단위테스트 7개.
 - ✅ **P0-2 AI 품질게이트(LLM-as-judge)** — v5.152.0 운영반영 (2026-09-10)
   - `lib/ai-quality-gate.ts`(정확·근거·완결 3축 채점, 종합 가중 재계산, accuracy 하드플로어 60·임계 70, 판사 실패 시 fail-open) + `analyze-unified` 런타임 게이트(생성→채점→미달 시 판사 피드백 1회 재생성→더 나은 쪽 채택, `qualityGate` 반환) + `RightsResult` 통과배지/미달경고. 회귀 하버스 `npm run audit:ai-quality`(골든픽스처 3, prebuild 미연결). 단위테스트 8. 운영 실측: qualityGate overall 93·재생성 루프 실동작 확인. 기존 `selfVerify`(규칙기반)·P0-1 sources 보완.
-- ⬜ **P0-3 SEARCH_INDEX_KEY 실분리** — 현재 blind index(clientEmailHash)·training textHash가 AUTH_SECRET 폴백. 전용 키 분리 + 해당 hash 재백필. (보안 개편 잔여 후속)
-- ⬜ **P0-4 PII 접근 감사 로그 + 이상탐지** — 누가 언제 어떤 PII 조회했는지 기록, 비정상 대량조회 알림. (스키마 or 기존 AuditLog 활용)
-- ⬜ **P0-5 SAST + 의존성 스캔(SCA) CI** — API 인가 게이트(prebuild)에 이어 코드·패키지 취약점 자동 검출.
-- ⬜ **P0-6 V-Score 적중률 대외 공표** — 백테스트(r=0.687)·사고 예측 성능 투명 공개(공공앱 대비 공신력).
-- ⬜ **P0-7 공공데이터 연계 확대** — 악성임대인 명단·HUG 보증사고 이력·건축물대장 위반을 위험도에 반영.
+- 🟡 **P0-3 SEARCH_INDEX_KEY 실분리** — 듀얼리드 코드 완료(env 미설정 시 무동작). `lib/crypto.ts` hashForSearchLegacy·hashForSearchCandidates + 조회 4곳 후보 IN 매칭 + rekey 백필(`scripts/backfill-search-index-rekey.ts`, AgentClient만 기본). **활성화(env 설정+백필)는 배치2에서.** ⚠️TrainingData 102건은 과거 해시가 현재 hashForSearch와 불일치(현재 파이프라인 이전 생성)→rekey 기본 제외.
+- ✅ **P0-4 PII 접근 감사 로그 + 이상탐지** — 기존 `AuditLog` 재사용(마이그레이션 0). `lib/audit-log.ts` recordPiiAccess(무PII·fire-and-forget)+detectPiiAnomaly(5분 50건 임계). agent/clients·admin/users 계측.
+- ✅ **P0-5 SAST + 의존성 스캔(SCA) CI** — `scripts/audit-security.mjs` prebuild 연결. 회귀차단(기존 부채 유예, 신규만 차단). SAST(eval·dangerouslySetInnerHTML 래칫)+SCA(npm audit baseline, 툴 실패 fail-open).
+- ✅ **P0-6 V-Score 방법론·검증 공개** — `/methodology` 공개페이지. 검증가능 사실만(가중치·r=0.687·물건별 백테스트·한계). 근거 없는 적중률 헤드라인 배제.
+- ⬜ **P0-7 공공데이터 연계 확대** — 악성임대인·HUG는 확인된 무료 공개 API 부재, 건축물대장 위반은 gov API 지연으로 필드 미검증 → **API 접근 확인 후 진행(보류)**.
 
 ## P1 (다음 단계, 요약)
 - AI 능동 에이전트화(내 매물·계약·감시 추적 선제 알림) / 프롬프트 캐싱
