@@ -193,7 +193,7 @@ describe("GET /api/user/sync-data", () => {
   it("미인증 → 401", async () => {
     vi.mocked(auth).mockResolvedValue(null as any);
 
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/user/sync-data") as never);
 
     expect(res.status).toBe(401);
     const body = await res.json();
@@ -229,7 +229,7 @@ describe("GET /api/user/sync-data", () => {
       },
     ] as any);
 
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/user/sync-data") as never);
 
     expect(res.status).toBe(200);
     const body = await res.json();
