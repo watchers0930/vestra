@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { isPaidMember } from "@/lib/subscription-guard";
+import { isPaidMember, getMonitoringLimit } from "@/lib/subscription-guard";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { validateOrigin } from "@/lib/csrf";
@@ -185,20 +185,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ property: reactivated, reactivated: true });
     }
 
-    // 모니터링 등록 제한 (역할별)
+    // 등기감시 등록 제한 (구독 플랜별 — 요금제: PRO 5건 / BUSINESS 20건 / ADMIN 무제한)
     const monitorCount = await prisma.monitoredProperty.count({
       where: { userId: session.user.id, status: "active" },
     });
-    const limits: Record<string, number> = {
-      GUEST: 1,
-      PERSONAL: 3,
-      RENTAL_BIZ: 10,
-      BUSINESS: 10,
-      REALESTATE: 30,
-      ADMIN: 100,
-    };
-    const maxMonitors =
-      limits[session.user.role as string] || limits.PERSONAL;
+    const maxMonitors = await getMonitoringLimit(session.user.id, session.user.role);
     if (monitorCount >= maxMonitors) {
       return NextResponse.json(
         {
