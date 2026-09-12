@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import s from "./jeonse-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
+import RegistryIssueBar from "../_shared/RegistryIssueBar";
 import { JeonseEnvAnalysis } from "./components/JeonseEnvAnalysis";
 import { JeonseSafetyAnalysis } from "./components/JeonseSafetyAnalysis";
 import { CommunityCenterModal } from "./components/CommunityCenterModal";
@@ -76,6 +77,8 @@ export default function JeonseRenewalContent() {
           <p className={s.subHeroSub}>계약 전 AI가 전세 위험 요소를 빠짐없이 검사합니다</p>
         </div>
       </section>
+
+      <RegistryIssueBar />
 
       {/* SUB NAV */}
       <div className={s.snavWrap} ref={snavRef}>
