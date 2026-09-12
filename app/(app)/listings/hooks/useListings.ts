@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 export type ListingType = "JEONSE" | "SALE";
 export type ListingStatus = "ACTIVE" | "HIDDEN" | "CONTRACTED" | "COMPLETED";
@@ -63,8 +63,13 @@ export function useListings(listingType?: ListingType, extra?: ListingExtraFilte
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  // 진행 중 요청 취소용 — 필터 빠른 변경 시 오래된 응답이 최신 목록을 덮어쓰는 race 방지
+  const abortRef = useRef<AbortController | null>(null);
 
   const load = useCallback(async (p = 1) => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(p), limit: "50" });
@@ -73,18 +78,25 @@ export function useListings(listingType?: ListingType, extra?: ListingExtraFilte
       if (extra?.minSize)  params.set("minSize",  String(extra.minSize));
       if (extra?.maxSize)  params.set("maxSize",  String(extra.maxSize));
       if (extra?.region)   params.set("region",   extra.region);
-      const res = await fetch(`/api/listings?${params}`);
+      const res = await fetch(`/api/listings?${params}`, { signal: controller.signal });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setListings(data.listings);
       setTotal(data.total);
       setPage(p);
+    } catch (e) {
+      if ((e as Error)?.name === "AbortError") return; // 취소된 요청은 상태 갱신하지 않음
+      // 그 외 네트워크/파싱 오류는 기존 동작대로 조용히 무시(목록 유지)
     } finally {
-      setLoading(false);
+      // 취소된 요청이 뒤이은 요청의 로딩 상태를 덮어쓰지 않도록 방어
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [listingType, extra?.roomType, extra?.minSize, extra?.maxSize, extra?.region]);
 
-  useEffect(() => { load(1); }, [load]);
+  useEffect(() => {
+    load(1);
+    return () => abortRef.current?.abort();
+  }, [load]);
 
   return { listings, total, loading, page, setPage, reload: load };
 }

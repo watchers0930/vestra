@@ -28,9 +28,9 @@ export function ChatModal({ listingId, partnerName, address, onClose }: ChatModa
   const [channelLoading, setChannelLoading] = useState(true);
   const [channelError, setChannelError] = useState("");
 
-  // 채팅 채널(의향서) 확보
+  // 채팅 채널(의향서) 확보 — 생성이 필요하므로 POST(멱등: 기존 있으면 재사용). CSRF 보호 경로.
   useEffect(() => {
-    fetch(`/api/listings/${listingId}/chat-channel`)
+    fetch(`/api/listings/${listingId}/chat-channel`, { method: "POST" })
       .then((r) => r.json())
       .then((d) => {
         if (d.applicationId) setApplicationId(d.applicationId);

@@ -179,7 +179,7 @@ export function ListingsContent() {
           <div ref={filterRef} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <FilterDropdown
               defaultLabel="건물유형"
-              options={["아파트", "단독", "다가구", "연립", "빌라"]}
+              options={["아파트", "빌라/다세대", "오피스텔", "단독주택"]}
               value={roomType}
               onChange={(v) => { setRoomType(v); setOpenDd(null); }}
               open={openDd === "type"}
@@ -187,7 +187,7 @@ export function ListingsContent() {
             />
             <FilterDropdown
               defaultLabel="거래유형"
-              options={["매매", "전세", "단기임대", "초단기임대"]}
+              options={["매매", "전세"]}
               value={tradeType}
               onChange={(v) => { setTradeType(v); setOpenDd(null); }}
               open={openDd === "trade"}

@@ -124,21 +124,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
 
-    // 매물 등록 권한: 임차인(TENANT)은 등록 불가.
-    // 클라이언트 게이트(ListingsContent: userType !== "TENANT")의 서버측 강제 — 클라 우회 방지.
-    if (session.user.userType === "TENANT") {
+    // 매물 등록 권한 — 클라이언트 게이트(ListingNewClient canManage)와 동일 기준으로 서버 강제(클라 우회 방지).
+    // 등록 가능: 임대인(LANDLORD) / 인증된 사업자(임대사업자·부동산·기업) / 관리자.
+    const role = session.user.role ?? "";
+    const userType = session.user.userType;
+    const BIZ_ROLES = ["RENTAL_BIZ", "BUSINESS", "REALESTATE"];
+    const isBizRole = BIZ_ROLES.includes(role);
+
+    // 사업자 회원은 관리자 인증 완료(verified) 후에만 — 인증 대기/미신청은 별도 안내
+    if (isBizRole && session.user.verifyStatus !== "verified") {
       return NextResponse.json(
-        { error: "임차인 회원은 매물을 등록할 수 없습니다. 임대인 회원으로 전환 후 이용해주세요." },
+        { error: "사업자 인증 완료 후 매물을 등록할 수 있습니다. 마이페이지에서 인증 상태를 확인해주세요." },
         { status: 403 },
       );
     }
 
-    // 사업자 회원(임대사업자·부동산·기업)은 관리자 인증 완료(verified) 후에만 등록 가능.
-    // 개인 임대인(PERSONAL/LANDLORD)·관리자는 인증 대상 아님.
-    const BIZ_ROLES = ["RENTAL_BIZ", "BUSINESS", "REALESTATE"];
-    if (BIZ_ROLES.includes(session.user.role ?? "") && session.user.verifyStatus !== "verified") {
+    const canManage =
+      userType === "LANDLORD" || (isBizRole && session.user.verifyStatus === "verified") || role === "ADMIN";
+    if (!canManage) {
       return NextResponse.json(
-        { error: "사업자 인증 완료 후 매물을 등록할 수 있습니다. 마이페이지에서 인증 상태를 확인해주세요." },
+        { error: "매물 등록은 임대인·임대사업자·부동산·기업 회원만 가능합니다. 마이페이지에서 회원 유형을 확인해주세요." },
         { status: 403 },
       );
     }

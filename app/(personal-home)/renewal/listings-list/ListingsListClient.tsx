@@ -40,7 +40,8 @@ const SIZE_RANGES: Record<string, { min?: number; max?: number }> = {
   '50평형 이상': { min: 181 },
 };
 
-const BUILDING_TYPES = ['아파트', '단독', '다가구', '연립', '빌라'];
+// 매물 등록폼(ListingNewForm ROOM_TYPES)과 동일 어휘 — 필터-저장값 정합(where roomType contains)
+const BUILDING_TYPES = ['아파트', '빌라/다세대', '오피스텔', '단독주택'];
 
 // Fisher-Yates 셔플 (원본 불변)
 function shuffle<T>(arr: T[]): T[] {
@@ -222,8 +223,8 @@ export default function ListingsListClient() {
                 </svg>
                 <span>안심인증만</span>
               </button>
-              {renderDropdown('type', '건물유형', ['아파트', '단독', '다가구', '연립', '빌라'])}
-              {renderDropdown('trade', '거래유형', ['매매', '전세', '단기임대', '초단기임대'])}
+              {renderDropdown('type', '건물유형', ['아파트', '빌라/다세대', '오피스텔', '단독주택'])}
+              {renderDropdown('trade', '거래유형', ['매매', '전세'])}
               {renderDropdown('size', '전체 평형', ['10평형', '20평형', '30평형', '40평형', '50평형', '50평형 이상'])}
 
               <div style={{ width: '1px', height: '20px', background: '#e8eaf0', margin: '0 4px' }}></div>
