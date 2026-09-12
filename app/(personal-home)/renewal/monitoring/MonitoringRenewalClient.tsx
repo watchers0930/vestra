@@ -8,6 +8,7 @@ import s from "./monitoring-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import RenewalLoginModal from "../_shared/RenewalLoginModal";
 import AddPropertyModalRenewal from "./components/AddPropertyModalRenewal";
+import { isPaidPlan } from "@/lib/subscription-guard";
 
 // 등기감시 페이지 = 프로세스 설명 + 물건 추가(등록) 전용.
 // 감시 결과(현황·알림)는 마이페이지 > 등기감시 탭에서 확인(역할 분리).
@@ -23,14 +24,32 @@ export default function MonitoringRenewalClient({ initialAddress = "", initialLi
   const isLoggedIn = !!session?.user;
   const [showAddModal, setShowAddModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showPaidModal, setShowPaidModal] = useState(false);
+  const [isPaid, setIsPaid] = useState<boolean | null>(null);
+
+  // 유료 회원(PRO/BUSINESS 구독 또는 ADMIN) 여부 조회 — 등기감시는 유료 전용
+  useEffect(() => {
+    if (!isLoggedIn) { setIsPaid(null); return; }
+    if (session?.user?.role === "ADMIN") { setIsPaid(true); return; }
+    let alive = true;
+    fetch("/api/subscription")
+      .then((r) => r.json())
+      .then((s) => { if (alive) setIsPaid(isPaidPlan(s?.plan, s?.status)); })
+      .catch(() => { if (alive) setIsPaid(false); });
+    return () => { alive = false; };
+  }, [isLoggedIn, session?.user?.role]);
 
   const handleAdd = useCallback(() => {
     if (!isLoggedIn) {
       setShowLoginModal(true);
       return;
     }
+    if (isPaid === false) {
+      setShowPaidModal(true);
+      return;
+    }
     setShowAddModal(true);
-  }, [isLoggedIn]);
+  }, [isLoggedIn, isPaid]);
 
   // 매물 상세 등에서 ?address= 로 진입 시 감시 등록 모달 자동 오픈(주소 프리필)
   useEffect(() => {
@@ -103,6 +122,21 @@ export default function MonitoringRenewalClient({ initialAddress = "", initialLi
           description="로그인하면 물건을 등록하고 등기 변동을 실시간 감시할 수 있습니다."
           onClose={() => setShowLoginModal(false)}
         />
+      )}
+
+      {showPaidModal && (
+        <div onClick={() => setShowPaidModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, padding: "28px 24px", maxWidth: 380, width: "100%", textAlign: "center" }}>
+            <p style={{ fontSize: 16, fontWeight: 700, color: "#1d1d1f", marginBottom: 8 }}>등기감시는 유료 회원 전용입니다</p>
+            <p style={{ fontSize: 13, color: "#6e6e73", lineHeight: 1.6, marginBottom: 22 }}>
+              PRO·BUSINESS 구독 회원만 등기부 변동 감시를 이용할 수 있습니다.<br />구독하시면 하루 2회 자동 감시와 변동 알림을 받아보실 수 있습니다.
+            </p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+              <Link href="/profile?tab=tier" style={{ display: "inline-block", background: "var(--brand-primary)", color: "#fff", padding: "10px 22px", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>구독 업그레이드</Link>
+              <button onClick={() => setShowPaidModal(false)} style={{ padding: "10px 18px", borderRadius: 10, border: "1px solid #dde0ec", background: "#fff", color: "#6e6e73", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>닫기</button>
+            </div>
+          </div>
+        </div>
       )}
 
       <RenewalFooter />

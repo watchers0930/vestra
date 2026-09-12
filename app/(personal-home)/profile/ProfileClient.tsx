@@ -7,6 +7,7 @@ import { clearAll } from "@/lib/store";
 import RenewalGnb from "../renewal/_shared/RenewalGnb";
 import RealtorGnb from "@/app/(biz)/_shared/RealtorGnb";
 import { useProfileData } from "./hooks/useProfileData";
+import { isPaidPlan } from "@/lib/subscription-guard";
 import { PROFILE_TABS, type ProfileTab } from "./components/profileConstants";
 import ProfileDashboardPanel from "./components/ProfileDashboardPanel";
 import ProfileMonitoringPanel from "./components/ProfileMonitoringPanel";
@@ -70,6 +71,8 @@ export default function ProfileClient() {
 
   const user = session.user;
   const role = user.role || "PERSONAL";
+  // 등기감시는 유료 회원(PRO/BUSINESS 구독) 또는 ADMIN 전용
+  const isPaidMonitoring = role === "ADMIN" || isPaidPlan(subscription?.plan);
   // 매물 등록·내 매물 관리 자격: 임대인(LANDLORD) / 임대사업자 / 부동산 / 기업 / 관리자 (임차인 제외)
   const canManageListings =
     user.userType === "LANDLORD" || role === "RENTAL_BIZ" || role === "BUSINESS" || role === "REALESTATE" || role === "ADMIN";
@@ -148,7 +151,7 @@ export default function ProfileClient() {
               <p className={s.contentD}>{tabDesc}</p>
 
               {tab === "dashboard" && <ProfileDashboardPanel usage={usage} />}
-              {tab === "monitoring" && <ProfileMonitoringPanel />}
+              {tab === "monitoring" && <ProfileMonitoringPanel isPaid={isPaidMonitoring} />}
               {tab === "listings" && canManageListings && <ProfileListingsPanel />}
               {tab === "applications" && <ProfileApplicationsPanel />}
               {tab === "keepzip" && <ProfileKeepzipPanel />}
