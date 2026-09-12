@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import s from "./rights-renewal.module.css";
 import { useRightsAnalysis } from "@/app/(app)/rights/hooks/useRightsAnalysis";
 import RenewalGnb from "../_shared/RenewalGnb";
+import RegistryIssueBar from "../_shared/RegistryIssueBar";
 import RightsRenewalFooter from "./components/RightsRenewalFooter";
 import RightsAnalysisForm from "./components/RightsAnalysisForm";
 import RightsResultPanel from "./components/RightsResultPanel";
@@ -68,6 +69,8 @@ export default function RightsRenewalClient({ initialAddress = "" }: { initialAd
           <p className={s.subHeroSub}>갑구·을구 권리관계를 AI가 종합 분석하여 위험도와 투자 적합성을 판단합니다</p>
         </div>
       </section>
+
+      <RegistryIssueBar />
 
       {/* SUB NAV */}
       <div className={s.snavWrap} ref={snavRef}>

@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import s from "./monitoring-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import RenewalLoginModal from "../_shared/RenewalLoginModal";
+import RegistryIssueBar from "../_shared/RegistryIssueBar";
 import AddPropertyModalRenewal from "./components/AddPropertyModalRenewal";
 import { isPaidPlan } from "@/lib/subscription-plan";
 
@@ -68,6 +69,8 @@ export default function MonitoringRenewalClient({ initialAddress = "", initialLi
           <p className={s.subHeroSub}>등기부 변동을 실시간 감시하고, 블록체인으로 기록을 보호합니다</p>
         </div>
       </section>
+
+      <RegistryIssueBar />
 
       <div className={s.pageWrap}>
         <div style={{ maxWidth: 920, margin: "0 auto" }}>
