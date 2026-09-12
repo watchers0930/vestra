@@ -129,7 +129,7 @@ export default function MonitoringRenewalClient({ initialAddress = "", initialLi
               PRO·BUSINESS 구독 회원만 등기부 변동 감시를 이용할 수 있습니다.<br />구독하시면 하루 2회 자동 감시와 변동 알림을 받아보실 수 있습니다.
             </p>
             <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
-              <Link href="/pricing" style={{ display: "inline-block", background: "var(--brand-primary)", color: "#fff", padding: "10px 22px", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>구독 안내 보기</Link>
+              <Link href="/renewal/pricing" style={{ display: "inline-block", background: "var(--brand-primary)", color: "#fff", padding: "10px 22px", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>구독 안내 보기</Link>
               <button onClick={() => setShowPaidModal(false)} style={{ padding: "10px 18px", borderRadius: 10, border: "1px solid #dde0ec", background: "#fff", color: "#6e6e73", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>닫기</button>
             </div>
           </div>

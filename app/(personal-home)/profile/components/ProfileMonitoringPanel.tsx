@@ -40,7 +40,7 @@ export default function ProfileMonitoringPanel({ isPaid }: { isPaid: boolean }) 
           PRO·BUSINESS 구독 회원만 등기부 변동 감시를 이용할 수 있습니다.<br />구독하시면 하루 2회 자동 감시와 변동 알림을 받아보실 수 있습니다.
         </p>
         <Link
-          href="/pricing"
+          href="/renewal/pricing"
           style={{ display: "inline-block", background: "var(--brand-primary)", color: "#fff", padding: "10px 22px", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}
         >
           구독 안내 보기
