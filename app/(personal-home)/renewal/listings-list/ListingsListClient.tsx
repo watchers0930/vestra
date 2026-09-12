@@ -188,9 +188,10 @@ export default function ListingsListClient() {
   };
 
   return (
-    <div className={s.page}>
-      {/* NAV */}
+    <>
+      {/* NAV — .page 리셋(.page *) 침범 방지 위해 컨테이너 밖에 렌더 */}
       <RenewalGnb active="listings" />
+      <div className={s.page}>
 
       {/* SUB HERO */}
       <section className={s.subHero}>
@@ -356,5 +357,6 @@ export default function ListingsListClient() {
         </div>
       </footer>
     </div>
+    </>
   );
 }
