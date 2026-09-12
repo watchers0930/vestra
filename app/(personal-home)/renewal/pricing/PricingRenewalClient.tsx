@@ -31,13 +31,13 @@ const TIERS = [
     price: "99,000원",
     period: "/월",
     desc: "팀과 함께 사용하는 부동산 전문가를 위해",
-    features: ["등기감시 (협의)", "프로 플랜 전체 포함", "REST API 접근", "다중 사용자 (최대 10명)", "전담 매니저 배정"],
+    features: ["등기감시 (최대 20건)", "프로 플랜 전체 포함", "REST API 접근", "다중 사용자 (최대 10명)", "전담 매니저 배정"],
     highlight: false,
   },
 ];
 
 const COMPARISON: { feature: string; free: string | boolean; pro: string | boolean; business: string | boolean }[] = [
-  { feature: "등기감시", free: false, pro: "5건", business: "협의" },
+  { feature: "등기감시", free: false, pro: "5건", business: "20건" },
   { feature: "AI 분석 횟수", free: "일 3회", pro: "무제한", business: "무제한" },
   { feature: "시세 조회", free: true, pro: true, business: true },
   { feature: "실시간 시세 알림", free: false, pro: true, business: true },
