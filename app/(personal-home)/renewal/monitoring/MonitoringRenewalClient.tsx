@@ -123,7 +123,7 @@ export default function MonitoringRenewalClient({ initialAddress = "", initialLi
 
       {showPaidModal && (
         <div onClick={() => setShowPaidModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, padding: "28px 24px", maxWidth: 380, width: "100%", textAlign: "center" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, padding: "28px 30px", maxWidth: 460, width: "100%", textAlign: "center" }}>
             <p style={{ fontSize: 16, fontWeight: 700, color: "#1d1d1f", marginBottom: 8 }}>등기감시는 유료 회원 전용입니다</p>
             <p style={{ fontSize: 13, color: "#6e6e73", lineHeight: 1.6, marginBottom: 22 }}>
               PRO·BUSINESS 구독 회원만 등기부 변동 감시를 이용할 수 있습니다.<br />구독하시면 하루 2회 자동 감시와 변동 알림을 받아보실 수 있습니다.
