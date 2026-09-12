@@ -196,7 +196,7 @@
 .detailBack{display:flex;align-items:center;gap:6px;font-size:13px;color:#888;cursor:pointer;transition:color .15s}
 .detailBack:hover{color:#2e4bd8}
 .detailActions{display:flex;gap:8px}
-.dBtnDel{height:38px;padding:0 16px;border:1px solid #e0e3ef;background:#fff;color:#888;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s}
+.dBtnDel{height:38px;padding:0 18px;border:1px solid #e0e3ef;background:#fff;color:#888;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
 .dBtnDel:hover{border-color:#fca5a5;color:#b91c1c;background:#fff1f2}
 .dBtnPdf{height:38px;padding:0 16px;border:1px solid #2e4bd8;background:#fff;color:#2e4bd8;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
 .dBtnPdf:hover{background:#2e4bd8;color:#fff}
