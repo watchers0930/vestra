@@ -38,7 +38,16 @@ export interface ListingItem {
   latitude: number | null;
   longitude: number | null;
   createdAt: string;
-  owner: { id: string; name: string | null; role: string; companyName: string | null };
+  owner: {
+    id: string;
+    name: string | null;
+    role: string;
+    companyName: string | null;
+    /** 상세 조회 시에만 내려옴 — 사업자 유형 등록자의 공개정보(개인은 null) */
+    representName?: string | null;
+    businessNumber?: string | null;
+    verifyStatus?: string | null;
+  };
   _count: { applications: number };
 }
 

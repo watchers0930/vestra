@@ -4,7 +4,29 @@ import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
 import { validateOrigin } from "@/lib/csrf";
+import { decryptPII, maskBusinessNumber } from "@/lib/crypto";
 import { del } from "@vercel/blob";
+
+// 등록자(owner) 공개정보 노출 정책: 사업자 유형만 대표자명·사업자번호 공개(공인중개사법상 게시 의무 정보),
+// 개인 임대인은 미노출. 사업자번호는 PII 자동 복호화 대상이나 nested include는 확장이 복호화하지 않으므로
+// 여기서 수동 복호화하고, 실패(키 불일치 등)로 v2 암호문이 남으면 노출하지 않는다.
+const BIZ_ROLES = new Set(["REALESTATE", "RENTAL_BIZ", "BUSINESS"]);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function sanitizeOwner(owner: any) {
+  if (!owner) return;
+  if (BIZ_ROLES.has(owner.role)) {
+    if (owner.businessNumber) {
+      const dec = decryptPII(owner.businessNumber);
+      // 복호화 실패(v2 잔존)는 노출 차단, 성공분은 서버에서 마스킹(123-45-****)해 완전번호 미전송
+      owner.businessNumber = dec.startsWith("v2:") ? null : maskBusinessNumber(dec);
+    }
+  } else {
+    // 개인 등록자: 대표자명·사업자번호 미노출
+    owner.representName = null;
+    owner.businessNumber = null;
+  }
+}
 
 const patchSchema = z.object({
   listingType: z.enum(["JEONSE", "SALE"]).optional(),
@@ -30,7 +52,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const listing = await prisma.listing.findUnique({
       where: { id },
       include: {
-        owner: { select: { id: true, name: true, role: true, companyName: true, image: true } },
+        owner: {
+          select: {
+            id: true, name: true, role: true, companyName: true, image: true,
+            representName: true, businessNumber: true, verifyStatus: true,
+          },
+        },
         _count: { select: { applications: true } },
       },
     });
@@ -38,6 +65,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!listing) {
       return NextResponse.json({ error: "매물을 찾을 수 없습니다." }, { status: 404 });
     }
+
+    sanitizeOwner(listing.owner);
 
     // viewCount 비동기 증가
     prisma.listing.update({ where: { id }, data: { viewCount: { increment: 1 } } }).catch(() => {});

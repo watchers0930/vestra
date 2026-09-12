@@ -33,6 +33,13 @@ function parseAddress(address: string): { region: string; dong: string; apt: str
 
 const centerBox: React.CSSProperties = { padding: "80px 20px", textAlign: "center", color: "#64748b", fontSize: 14 };
 
+// 등록자 역할 배지 (매물 카드 ListingCard와 동일 기준). 개인 임대인은 배지 없이 '개인 임대인' 표기.
+const OWNER_ROLE_LABEL: Record<string, { text: string; color: string; bg: string }> = {
+  REALESTATE: { text: "공인중개사", color: "#2563eb", bg: "#e0edff" },
+  RENTAL_BIZ: { text: "임대사업자", color: "#15803d", bg: "#dcfce7" },
+  BUSINESS: { text: "기업", color: "#7c3aed", bg: "#ede9fe" },
+};
+
 export default function ListingDbDetailContent() {
   const router = useRouter();
   const sp = useSearchParams();
@@ -84,7 +91,15 @@ export default function ListingDbDetailContent() {
   const isJeonse = listing.listingType === "JEONSE";
   const priceNum = Number(listing.deposit || 0);
   const photos = listing.photos ?? [];
-  const ownerName = listing.owner?.companyName || listing.owner?.name || "등록자";
+  const owner = listing.owner;
+  const ownerName = owner?.companyName || owner?.name || "등록자";
+  const ownerRole = owner?.role ? OWNER_ROLE_LABEL[owner.role] : undefined;
+  const ownerVerified = owner?.verifyStatus === "verified";
+  const isPersonalOwner = !ownerRole; // 사업자 유형이 아니면 개인 임대인
+  const ownerBizLine = [
+    owner?.representName ? `대표 ${owner.representName}` : null,
+    owner?.businessNumber ? `사업자 ${owner.businessNumber}` : null,
+  ].filter(Boolean).join(" · ");
   // 국토부 상세보기(listing-detail)와 동일하게 위치·인프라·학군·시세 탭 노출용 파생값
   const { region, dong, apt } = parseAddress(listing.address);
   const lat = listing.latitude ?? null;
@@ -159,7 +174,29 @@ export default function ListingDbDetailContent() {
             <div className={s.listingRegistrant}>
               <div>
                 <div className={s.registrantInfo}>등록자</div>
-                <div className={s.registrantName}>{ownerName}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  <span className={s.registrantName}>{ownerName}</span>
+                  {ownerRole ? (
+                    <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6, color: ownerRole.color, background: ownerRole.bg }}>
+                      {ownerRole.text}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6, color: "#64748b", background: "#f1f5f9" }}>
+                      개인 임대인
+                    </span>
+                  )}
+                  {ownerVerified && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6, color: "#0f766e", background: "#ccfbf1" }}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      베스트라 인증
+                    </span>
+                  )}
+                </div>
+                {!isPersonalOwner && ownerBizLine && (
+                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>{ownerBizLine}</div>
+                )}
               </div>
               <div className={s.registrantDate}>조회 {listing.viewCount ?? 0}회 · 의향서 {listing._count?.applications ?? 0}건</div>
             </div>
