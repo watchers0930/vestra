@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import s from "./listings-list.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
@@ -60,13 +60,16 @@ type DropdownKey = 'type' | 'trade' | 'size' | null;
 export default function ListingsListClient() {
   const [openDropdown, setOpenDropdown] = useState<DropdownKey>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [dropdownLabels, setDropdownLabels] = useState({
     type: '건물유형',   // 전체 (진입 시 모든 건물유형 노출)
     trade: '거래유형',  // 전체 (진입 시 매매·전세 모두 노출)
     size: '전체 평형',
   });
-  const [sido, setSido] = useState('서울특별시');
-  const [sigungu, setSigungu] = useState('강남구');
+  // 홈 히어로에서 넘어온 지역(시도/시군구/동)을 초기 필터로 반영
+  const [sido, setSido] = useState(() => searchParams.get('sido') || '서울특별시');
+  const [sigungu, setSigungu] = useState(() => searchParams.get('sigungu') || '강남구');
+  const [dong, setDong] = useState(() => searchParams.get('dong') || '');
   // 베스트라 안심인증매물만 보기 토글 (isCertified === true 만 노출)
   const [certifiedOnly, setCertifiedOnly] = useState(false);
 
@@ -97,7 +100,9 @@ export default function ListingsListClient() {
   const roomType = BUILDING_TYPES.includes(dropdownLabels.type) ? dropdownLabels.type : undefined;
   const sizeRange = SIZE_RANGES[dropdownLabels.size] ?? {};
   // 시/군/구는 정확히, 시/도만 선택 시 접미사 제거해 주소 부분일치(예: '서울특별시'→'서울' ⊂ '서울시…')
-  const region = sigungu
+  // 동이 있으면 동 단위(주소 부분일치)로, 없으면 시군구, 없으면 시도로 검색
+  const region = dong
+    || sigungu
     || (sido ? sido.replace(/(특별시|광역시|특별자치시|특별자치도|도)$/, '') : undefined);
 
   const { listings, loading } = useListings(listingType, {
@@ -233,7 +238,7 @@ export default function ListingsListClient() {
                 <select
                   className={s.locationSelect}
                   value={sido}
-                  onChange={(e) => { setSido(e.target.value); setSigungu(''); }}
+                  onChange={(e) => { setSido(e.target.value); setSigungu(''); setDong(''); }}
                 >
                   <option value="">시 / 도</option>
                   {Object.keys(REGIONS).map((r) => <option key={r} value={r}>{r}</option>)}
@@ -241,7 +246,7 @@ export default function ListingsListClient() {
                 <select
                   className={s.locationSelect}
                   value={sigungu}
-                  onChange={(e) => setSigungu(e.target.value)}
+                  onChange={(e) => { setSigungu(e.target.value); setDong(''); }}
                   disabled={sigunguList.length === 0}
                 >
                   <option value="">시 / 군 / 구</option>

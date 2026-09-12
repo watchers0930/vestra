@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import s from "./listings-list-mobile.module.css";
 import { useListings, type ListingType } from "@/app/(app)/listings/hooks/useListings";
@@ -29,7 +30,8 @@ const REGIONS: Record<string, string[]> = {
   "제주특별자치도": ["서귀포시","제주시"],
 };
 
-const BUILDING_TYPES = ["아파트", "단독", "다가구", "연립", "빌라"];
+// 매물 등록폼(ROOM_TYPES)과 동일 어휘 — 필터-저장값 정합(PC listings-list와 동일)
+const BUILDING_TYPES = ["아파트", "빌라/다세대", "오피스텔", "단독주택"];
 
 const SIZE_RANGES: Record<string, { min?: number; max?: number }> = {
   "10평형": { max: 49 },
@@ -62,11 +64,14 @@ const emptyMsgStyle: React.CSSProperties = {
 };
 
 export default function ListingsListMobileClient() {
+  const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<DropdownKey>(null);
   const [filterLabels, setFilterLabels] = useState<FilterState>({ ...DEFAULT_LABELS });
-  const [sido, setSido] = useState("서울특별시");
-  const [sigungu, setSigungu] = useState("");
+  // 홈 히어로에서 넘어온 지역(시도/시군구/동)을 초기 필터로 반영
+  const [sido, setSido] = useState(() => searchParams.get("sido") || "서울특별시");
+  const [sigungu, setSigungu] = useState(() => searchParams.get("sigungu") || "");
+  const [dong, setDong] = useState(() => searchParams.get("dong") || "");
 
   // 테스트 샘플 매물: 운영 도메인에서는 노출하지 않음.
   // 실데이터가 비어있을 때만 테스트 화면 확인용 샘플 카드를 보여준다. (PC 목록과 동일)
@@ -86,7 +91,8 @@ export default function ListingsListMobileClient() {
     undefined;
   const roomType = BUILDING_TYPES.includes(filterLabels.type) ? filterLabels.type : undefined;
   const sizeRange = SIZE_RANGES[filterLabels.size] ?? {};
-  const region = sigungu || (sido ? sido.replace(/(특별시|광역시|특별자치시|특별자치도|도)$/, "") : undefined);
+  // 동이 있으면 동 단위(주소 부분일치)로, 없으면 시군구, 없으면 시도로 검색
+  const region = dong || sigungu || (sido ? sido.replace(/(특별시|광역시|특별자치시|특별자치도|도)$/, "") : undefined);
 
   const { listings, loading } = useListings(listingType, {
     roomType,
@@ -185,10 +191,9 @@ export default function ListingsListMobileClient() {
             <div className={`${s.filterDdPanel} ${openDropdown === "type" ? s.open : ""}`}>
               <button className={`${s.filterDdOpt} ${filterLabels.type === "건물유형" ? s.selected : ""}`} onClick={() => selectDd("type", "건물유형")}>건물유형 (전체)</button>
               <button className={`${s.filterDdOpt} ${filterLabels.type === "아파트" ? s.selected : ""}`} onClick={() => selectDd("type", "아파트")}>아파트</button>
-              <button className={`${s.filterDdOpt} ${filterLabels.type === "단독" ? s.selected : ""}`} onClick={() => selectDd("type", "단독")}>단독</button>
-              <button className={`${s.filterDdOpt} ${filterLabels.type === "다가구" ? s.selected : ""}`} onClick={() => selectDd("type", "다가구")}>다가구</button>
-              <button className={`${s.filterDdOpt} ${filterLabels.type === "연립" ? s.selected : ""}`} onClick={() => selectDd("type", "연립")}>연립</button>
-              <button className={`${s.filterDdOpt} ${filterLabels.type === "빌라" ? s.selected : ""}`} onClick={() => selectDd("type", "빌라")}>빌라</button>
+              <button className={`${s.filterDdOpt} ${filterLabels.type === "빌라/다세대" ? s.selected : ""}`} onClick={() => selectDd("type", "빌라/다세대")}>빌라/다세대</button>
+              <button className={`${s.filterDdOpt} ${filterLabels.type === "오피스텔" ? s.selected : ""}`} onClick={() => selectDd("type", "오피스텔")}>오피스텔</button>
+              <button className={`${s.filterDdOpt} ${filterLabels.type === "단독주택" ? s.selected : ""}`} onClick={() => selectDd("type", "단독주택")}>단독주택</button>
             </div>
           </div>
           {/* 거래유형 */}
@@ -204,8 +209,6 @@ export default function ListingsListMobileClient() {
               <button className={`${s.filterDdOpt} ${filterLabels.trade === "거래유형" ? s.selected : ""}`} onClick={() => selectDd("trade", "거래유형")}>거래유형 (전체)</button>
               <button className={`${s.filterDdOpt} ${filterLabels.trade === "매매" ? s.selected : ""}`} onClick={() => selectDd("trade", "매매")}>매매</button>
               <button className={`${s.filterDdOpt} ${filterLabels.trade === "전세" ? s.selected : ""}`} onClick={() => selectDd("trade", "전세")}>전세</button>
-              <button className={`${s.filterDdOpt} ${filterLabels.trade === "단기임대" ? s.selected : ""}`} onClick={() => selectDd("trade", "단기임대")}>단기임대</button>
-              <button className={`${s.filterDdOpt} ${filterLabels.trade === "초단기임대" ? s.selected : ""}`} onClick={() => selectDd("trade", "초단기임대")}>초단기임대</button>
             </div>
           </div>
           {/* 전체 평형 */}
@@ -230,7 +233,7 @@ export default function ListingsListMobileClient() {
           <select
             className={s.locationSelect}
             value={sido}
-            onChange={(e) => { setSido(e.target.value); setSigungu(""); }}
+            onChange={(e) => { setSido(e.target.value); setSigungu(""); setDong(""); }}
           >
             <option value="">시 / 도</option>
             <option value="서울특별시">서울특별시</option>
@@ -254,7 +257,7 @@ export default function ListingsListMobileClient() {
           <select
             className={s.locationSelect}
             value={sigungu}
-            onChange={(e) => setSigungu(e.target.value)}
+            onChange={(e) => { setSigungu(e.target.value); setDong(""); }}
           >
             <option value="">시 / 군 / 구</option>
             {sigunguList.map((sg) => (
