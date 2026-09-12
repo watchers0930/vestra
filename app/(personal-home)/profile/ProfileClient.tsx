@@ -7,7 +7,7 @@ import { clearAll } from "@/lib/store";
 import RenewalGnb from "../renewal/_shared/RenewalGnb";
 import RealtorGnb from "@/app/(biz)/_shared/RealtorGnb";
 import { useProfileData } from "./hooks/useProfileData";
-import { isPaidPlan } from "@/lib/subscription-guard";
+import { isPaidPlan } from "@/lib/subscription-plan";
 import { PROFILE_TABS, type ProfileTab } from "./components/profileConstants";
 import ProfileDashboardPanel from "./components/ProfileDashboardPanel";
 import ProfileMonitoringPanel from "./components/ProfileMonitoringPanel";

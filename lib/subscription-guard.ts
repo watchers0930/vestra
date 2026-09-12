@@ -1,17 +1,11 @@
 /**
- * 유료 회원(구독) 판별 유틸.
- * 유료 = 구독 plan이 PRO/BUSINESS 이고 status가 active. ADMIN은 예외로 허용.
+ * 유료 회원(구독) 판별 — 서버 전용 (prisma 조회).
+ * 순수 판별 함수(isPaidPlan)는 lib/subscription-plan.ts에 분리(클라 안전).
  * @module lib/subscription-guard
  */
 
 import { prisma } from "@/lib/prisma";
-
-const PAID_PLANS = ["PRO", "BUSINESS"];
-
-/** 유료 플랜 여부 (순수 함수 — 클라/서버 공용). */
-export function isPaidPlan(plan?: string | null, status?: string | null): boolean {
-  return !!plan && PAID_PLANS.includes(plan) && (status ?? "active") === "active";
-}
+import { isPaidPlan } from "@/lib/subscription-plan";
 
 /** 서버: userId로 유료 회원 여부 판별. ADMIN은 예외 허용. */
 export async function isPaidMember(userId: string, role?: string | null): Promise<boolean> {

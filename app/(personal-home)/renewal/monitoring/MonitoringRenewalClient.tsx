@@ -8,7 +8,7 @@ import s from "./monitoring-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import RenewalLoginModal from "../_shared/RenewalLoginModal";
 import AddPropertyModalRenewal from "./components/AddPropertyModalRenewal";
-import { isPaidPlan } from "@/lib/subscription-guard";
+import { isPaidPlan } from "@/lib/subscription-plan";
 
 // 등기감시 페이지 = 프로세스 설명 + 물건 추가(등록) 전용.
 // 감시 결과(현황·알림)는 마이페이지 > 등기감시 탭에서 확인(역할 분리).
