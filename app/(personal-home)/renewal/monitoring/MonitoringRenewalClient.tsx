@@ -40,11 +40,8 @@ export default function MonitoringRenewalClient({ initialAddress = "", initialLi
   }, [isLoggedIn, session?.user?.role]);
 
   const handleAdd = useCallback(() => {
-    if (!isLoggedIn) {
-      setShowLoginModal(true);
-      return;
-    }
-    if (isPaid === false) {
+    // 비회원이거나 무료회원이면 처음부터 유료 전용 안내 모달 → 구독 안내로 유도
+    if (!isLoggedIn || isPaid === false) {
       setShowPaidModal(true);
       return;
     }
@@ -132,7 +129,7 @@ export default function MonitoringRenewalClient({ initialAddress = "", initialLi
               PRO·BUSINESS 구독 회원만 등기부 변동 감시를 이용할 수 있습니다.<br />구독하시면 하루 2회 자동 감시와 변동 알림을 받아보실 수 있습니다.
             </p>
             <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
-              <Link href="/profile?tab=tier" style={{ display: "inline-block", background: "var(--brand-primary)", color: "#fff", padding: "10px 22px", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>구독 업그레이드</Link>
+              <Link href="/pricing" style={{ display: "inline-block", background: "var(--brand-primary)", color: "#fff", padding: "10px 22px", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>구독 안내 보기</Link>
               <button onClick={() => setShowPaidModal(false)} style={{ padding: "10px 18px", borderRadius: 10, border: "1px solid #dde0ec", background: "#fff", color: "#6e6e73", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>닫기</button>
             </div>
           </div>
