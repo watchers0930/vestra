@@ -264,8 +264,19 @@ export async function GET(req: NextRequest) {
 
     for (const prop of allProperties) {
       try {
-        // commUniqueNo 없는 물건: Tilko 등기부 발급으로 직접 해시 비교
-        // commUniqueNo가 있는 물건은 아래 사건 처리현황 경로로 진행
+        // commUniqueNo 없는 물건: 등기부 발급 API 폐기(2025 인터넷등기소 개편)로 직접 조회 불가.
+        // 이용자가 등기부 PDF를 등록해 고유번호를 확보해야 프리체크(등기신청사건) 감시가 가능하다.
+        // → 헛돌지 않도록 "PDF 등록 필요" 상태로 표시하고 스킵.
+        if (!simulate && !prop.commUniqueNo) {
+          await prisma.monitoredProperty.update({
+            where: { id: prop.id },
+            data: { lastCheckedAt: new Date(), registrySignalStatus: "needs_registration" },
+          }).catch(() => {});
+          skipped++;
+          continue;
+        }
+
+        // (dead) 구 직접발급 경로 — 위 가드로 commUniqueNo 없는 물건은 도달하지 않음. 후속 제거 예정.
         if (!simulate && !prop.commUniqueNo && isTilkoRegistryDocAvailable()) {
           const now = new Date();
           try {
