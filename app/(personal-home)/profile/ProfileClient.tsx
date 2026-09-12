@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { clearAll } from "@/lib/store";
 import RenewalGnb from "../renewal/_shared/RenewalGnb";
@@ -8,6 +9,7 @@ import RealtorGnb from "@/app/(biz)/_shared/RealtorGnb";
 import { useProfileData } from "./hooks/useProfileData";
 import { PROFILE_TABS, type ProfileTab } from "./components/profileConstants";
 import ProfileDashboardPanel from "./components/ProfileDashboardPanel";
+import ProfileMonitoringPanel from "./components/ProfileMonitoringPanel";
 import ProfileListingsPanel from "./components/ProfileListingsPanel";
 import ProfileApplicationsPanel from "./components/ProfileApplicationsPanel";
 import ProfileKeepzipPanel from "./components/ProfileKeepzipPanel";
@@ -26,7 +28,12 @@ export default function ProfileClient() {
     handleToggleNotification, handlePhoneChange, handlePhoneSave, showToast,
   } = useProfileData();
 
-  const [tab, setTab] = useState<ProfileTab>("dashboard");
+  const searchParams = useSearchParams();
+  // 딥링크(?tab=monitoring 등)로 진입 시 해당 탭을 초기 선택
+  const [tab, setTab] = useState<ProfileTab>(() => {
+    const t = searchParams.get("tab");
+    return PROFILE_TABS.some((x) => x.key === t) ? (t as ProfileTab) : "dashboard";
+  });
   const [confirmWithdraw, setConfirmWithdraw] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
 
@@ -141,6 +148,7 @@ export default function ProfileClient() {
               <p className={s.contentD}>{tabDesc}</p>
 
               {tab === "dashboard" && <ProfileDashboardPanel usage={usage} />}
+              {tab === "monitoring" && <ProfileMonitoringPanel />}
               {tab === "listings" && canManageListings && <ProfileListingsPanel />}
               {tab === "applications" && <ProfileApplicationsPanel />}
               {tab === "keepzip" && <ProfileKeepzipPanel />}

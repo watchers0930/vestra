@@ -2,51 +2,27 @@
 
 import Image from "next/image";
 import { useState, useCallback, useEffect } from "react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 import s from "./monitoring-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import RenewalLoginModal from "../_shared/RenewalLoginModal";
-import { useMonitoringData } from "@/app/(app)/monitoring/hooks/useMonitoringData";
-import MonitoringEmptyView from "./components/MonitoringEmptyView";
-import MonitoringListView from "./components/MonitoringListView";
-import MonitoringDetailView from "./components/MonitoringDetailView";
 import AddPropertyModalRenewal from "./components/AddPropertyModalRenewal";
 
-export default function MonitoringRenewalClient({ initialAddress = "", initialListingId = "" }: { initialAddress?: string; initialListingId?: string }) {
-  const {
-    session,
-    properties,
-    filteredProperties,
-    loading,
-    mounted,
-    statusFilter,
-    setStatusFilter,
-    activeCount,
-    unreadAlertCount,
-    highRiskCount,
-    unreadByProperty,
-    highestRiskByProperty,
-    refresh,
-  } = useMonitoringData();
+// 등기감시 페이지 = 프로세스 설명 + 물건 추가(등록) 전용.
+// 감시 결과(현황·알림)는 마이페이지 > 등기감시 탭에서 확인(역할 분리).
+const STEPS = [
+  { n: "1", title: "등기부 등록", desc: "내 부동산 등기부(PDF)를 등록하면 부동산 고유번호와 기준 상태를 안전하게 저장합니다." },
+  { n: "2", title: "하루 2회 자동 감시", desc: "등기신청사건을 자동으로 프리체크해 등기 변동 조짐을 조기에 포착합니다." },
+  { n: "3", title: "변동 시 즉시 알림", desc: "근저당 설정·압류·소유권 이전 등 위험 변동을 위험도에 따라 알려드립니다." },
+  { n: "4", title: "직접 확인", desc: "알림을 받으면 등기부를 발급해 실제 반영 내용을 확인하실 수 있습니다." },
+];
 
+export default function MonitoringRenewalClient({ initialAddress = "", initialListingId = "" }: { initialAddress?: string; initialListingId?: string }) {
+  const { data: session } = useSession();
   const isLoggedIn = !!session?.user;
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-
-  const scrollTop = () => {
-    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleSelect = useCallback((id: string) => {
-    setSelectedId(id);
-    scrollTop();
-  }, []);
-
-  const handleBack = useCallback(() => {
-    setSelectedId(null);
-    scrollTop();
-    refresh();
-  }, [refresh]);
 
   const handleAdd = useCallback(() => {
     if (!isLoggedIn) {
@@ -58,26 +34,11 @@ export default function MonitoringRenewalClient({ initialAddress = "", initialLi
 
   // 매물 상세 등에서 ?address= 로 진입 시 감시 등록 모달 자동 오픈(주소 프리필)
   useEffect(() => {
-    if (!initialAddress || !mounted) return;
+    if (!initialAddress) return;
     if (isLoggedIn) setShowAddModal(true);
     else setShowLoginModal(true);
-    // 최초 진입 시 1회만 열림 (deps 안정)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialAddress, mounted, isLoggedIn]);
-
-  // ── 상세 뷰 ──
-  if (selectedId) {
-    return (
-      <>
-        <RenewalGnb active="monitoring" />
-        <MonitoringDetailView propertyId={selectedId} onBack={handleBack} />
-        <RenewalFooter />
-      </>
-    );
-  }
-
-  // ── 목록 / 빈 상태 ──
-  const isEmpty = mounted && !loading && properties.length === 0;
+  }, [initialAddress, isLoggedIn]);
 
   return (
     <>
@@ -93,37 +54,38 @@ export default function MonitoringRenewalClient({ initialAddress = "", initialLi
       </section>
 
       <div className={s.pageWrap}>
-        <div className={s.topbar}>
-          <div className={s.topbarTitle}>나의 등기감시</div>
-          <button className={s.addBtn} onClick={handleAdd}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            물건 추가
-          </button>
-        </div>
+        <div style={{ maxWidth: 920, margin: "0 auto" }}>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: "#1d1d1f", textAlign: "center", marginBottom: 8 }}>등기감시는 이렇게 작동합니다</h2>
+          <p style={{ fontSize: 14, color: "#6e6e73", textAlign: "center", marginBottom: 28, lineHeight: 1.6 }}>
+            등기부를 등록해두면, 담보 대출(근저당)·압류 같은 위험 변동을 놓치지 않도록 자동으로 감시합니다.
+          </p>
 
-        {!mounted || loading ? (
-          <div style={{ textAlign: "center", padding: "80px 0", color: "#999", fontSize: "14px" }}>
-            불러오는 중...
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 36 }}>
+            {STEPS.map((st) => (
+              <div key={st.n} style={{ background: "#fff", border: "1px solid #e8eaf2", borderRadius: 14, padding: "20px 18px" }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--brand-primary)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 15, marginBottom: 12 }}>{st.n}</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#1d1d1f", marginBottom: 6 }}>{st.title}</div>
+                <p style={{ fontSize: 13, color: "#6e6e73", lineHeight: 1.6, margin: 0 }}>{st.desc}</p>
+              </div>
+            ))}
           </div>
-        ) : isEmpty ? (
-          <MonitoringEmptyView onAdd={handleAdd} />
-        ) : (
-          <MonitoringListView
-            properties={properties}
-            filteredProperties={filteredProperties}
-            statusFilter={statusFilter}
-            onFilterChange={setStatusFilter}
-            activeCount={activeCount}
-            unreadAlertCount={unreadAlertCount}
-            highRiskCount={highRiskCount}
-            unreadByProperty={unreadByProperty}
-            highestRiskByProperty={highestRiskByProperty}
-            onSelect={handleSelect}
-          />
-        )}
+
+          <div style={{ textAlign: "center", display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            <button className={s.addBtn} onClick={handleAdd}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              등기부 물건 추가
+            </button>
+            <Link href="/profile?tab=monitoring" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 18px", borderRadius: 10, border: "1px solid #dde0ec", background: "#fff", color: "#2e4bd8", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
+              내 감시 현황 보기
+            </Link>
+          </div>
+          <p style={{ textAlign: "center", fontSize: 12.5, color: "#8e8e93", marginTop: 14, lineHeight: 1.6 }}>
+            등록한 물건의 감시 현황·알림은 <strong style={{ color: "#2e4bd8" }}>마이페이지 &gt; 등기감시</strong>에서 확인하실 수 있습니다.
+          </p>
+        </div>
       </div>
 
       {showAddModal && (
@@ -131,10 +93,7 @@ export default function MonitoringRenewalClient({ initialAddress = "", initialLi
           initialAddress={initialAddress}
           initialListingId={initialListingId}
           onClose={() => setShowAddModal(false)}
-          onSuccess={() => {
-            setShowAddModal(false);
-            refresh();
-          }}
+          onSuccess={() => setShowAddModal(false)}
         />
       )}
 

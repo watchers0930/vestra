@@ -1,4 +1,4 @@
-import { Crown, Home, Building2, User, CheckCircle2, Clock, XCircle, LayoutDashboard, FileText, ScrollText, Bell, CalendarClock, type LucideIcon } from "lucide-react";
+import { Crown, Home, Building2, User, CheckCircle2, Clock, XCircle, LayoutDashboard, FileText, ScrollText, Bell, CalendarClock, Eye, type LucideIcon } from "lucide-react";
 
 export const ROLE_INFO: Record<string, { label: string; color: string; limit: number; icon: typeof Crown; features: string[] }> = {
   ADMIN: { label: "관리자", color: "bg-red-500", limit: 9999, icon: Crown, features: ["전체 기능", "관리자 패널"] },
@@ -16,10 +16,11 @@ export const VERIFY_STATUS: Record<string, { label: string; icon: typeof CheckCi
   rejected: { label: "반려", icon: XCircle, color: "text-red-500" },
 };
 
-export type ProfileTab = "dashboard" | "listings" | "applications" | "keepzip" | "consult" | "info" | "tier" | "notif";
+export type ProfileTab = "dashboard" | "monitoring" | "listings" | "applications" | "keepzip" | "consult" | "info" | "tier" | "notif";
 
 export const PROFILE_TABS: { key: ProfileTab; label: string; desc: string; icon: LucideIcon }[] = [
   { key: "dashboard", label: "대시보드", desc: "내 활동과 자산 현황을 한눈에 확인하세요.", icon: LayoutDashboard },
+  { key: "monitoring", label: "등기감시", desc: "내 부동산 등기 변동 감시 현황과 알림을 확인하세요.", icon: Eye },
   { key: "listings", label: "내 매물", desc: "등록한 매물을 관리하세요.", icon: Building2 },
   { key: "applications", label: "의향서", desc: "보낸·받은 임대차 의향서를 관리하세요.", icon: FileText },
   { key: "keepzip", label: "내용증명", desc: "변호사에게 요청한 내용증명의 내용과 진행상황을 확인하세요.", icon: ScrollText },
