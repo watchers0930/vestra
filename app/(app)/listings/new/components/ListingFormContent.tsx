@@ -66,6 +66,22 @@ export function ListingFormContent() {
   const canManage =
     user?.userType === "LANDLORD" || (isBizRole && user?.verifyStatus === "verified") || role === "ADMIN";
 
+  // 비로그인 — 로그인 안내 (renewal ListingNewClient와 동일 규칙). 폼 노출 후 401 방지.
+  if (status !== "loading" && !user) {
+    return (
+      <div style={{ maxWidth: 560, margin: "80px auto", padding: "0 24px", textAlign: "center" }}>
+        <p style={{ fontSize: 18, fontWeight: 700, color: "#1d1d1f", marginBottom: 10 }}>로그인이 필요합니다</p>
+        <p style={{ fontSize: 14, color: "#6e6e73", lineHeight: 1.6, marginBottom: 24 }}>매물 등록은 로그인 후 이용하실 수 있습니다.</p>
+        <a
+          href="/home?auth=login"
+          style={{ display: "inline-block", background: "var(--brand-primary)", color: "#fff", padding: "10px 20px", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none" }}
+        >
+          로그인하기
+        </a>
+      </div>
+    );
+  }
+
   if (status !== "loading" && user && (bizNeedsVerify || !canManage)) {
     const title = bizNeedsVerify ? "사업자 인증 후 등록할 수 있습니다" : "매물 등록 권한이 없습니다";
     const desc = bizNeedsVerify
