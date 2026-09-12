@@ -22,7 +22,7 @@ const TIERS = [
     price: "29,900원",
     period: "/월",
     desc: "적극적으로 자산을 관리하는 투자자를 위해",
-    features: ["무제한 AI 분석", "등기감시 (등기 변동 실시간 감시)", "실시간 시세 알림", "PDF 리포트 다운로드", "전문가 상담 월 1회", "권리분석 상세 리포트"],
+    features: ["등기감시 (최대 5건)", "무제한 AI 분석", "실시간 시세 알림", "PDF 리포트 다운로드", "전문가 상담 월 1회", "권리분석 상세 리포트"],
     highlight: true,
   },
   {
@@ -31,9 +31,23 @@ const TIERS = [
     price: "99,000원",
     period: "/월",
     desc: "팀과 함께 사용하는 부동산 전문가를 위해",
-    features: ["프로 플랜 전체 포함", "등기감시 다수 물건", "REST API 접근", "다중 사용자 (최대 10명)", "전담 매니저 배정"],
+    features: ["등기감시 (협의)", "프로 플랜 전체 포함", "REST API 접근", "다중 사용자 (최대 10명)", "전담 매니저 배정"],
     highlight: false,
   },
+];
+
+const COMPARISON: { feature: string; free: string | boolean; pro: string | boolean; business: string | boolean }[] = [
+  { feature: "등기감시", free: false, pro: "5건", business: "협의" },
+  { feature: "AI 분석 횟수", free: "일 3회", pro: "무제한", business: "무제한" },
+  { feature: "시세 조회", free: true, pro: true, business: true },
+  { feature: "실시간 시세 알림", free: false, pro: true, business: true },
+  { feature: "PDF 리포트", free: false, pro: true, business: true },
+  { feature: "전문가 상담", free: false, pro: "월 1회", business: "무제한" },
+  { feature: "권리분석 상세", free: false, pro: true, business: true },
+  { feature: "세금 시뮬레이션", free: false, pro: true, business: true },
+  { feature: "API 접근", free: false, pro: false, business: true },
+  { feature: "다중 사용자", free: false, pro: false, business: "최대 10명" },
+  { feature: "전담 매니저", free: false, pro: false, business: true },
 ];
 
 export default function PricingRenewalClient() {
@@ -93,6 +107,48 @@ export default function PricingRenewalClient() {
               )}
             </div>
           ))}
+        </div>
+
+        {/* 기능 비교 */}
+        <div style={{ maxWidth: 980, margin: "40px auto 0", background: "#fff", border: "1px solid #e8eaf2", borderRadius: 16, overflow: "hidden" }}>
+          <div style={{ padding: "18px 22px", borderBottom: "1px solid #eef1f8" }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#1a1d2e" }}>기능 비교</div>
+          </div>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: "#f8fafc" }}>
+                  <th style={{ textAlign: "left", padding: "12px 20px", color: "#8e8e93", fontWeight: 600 }}>기능</th>
+                  <th style={{ textAlign: "center", padding: "12px", color: "#8e8e93", fontWeight: 600, minWidth: 72 }}>무료</th>
+                  <th style={{ textAlign: "center", padding: "12px", color: "#2e4bd8", fontWeight: 700, minWidth: 72 }}>프로</th>
+                  <th style={{ textAlign: "center", padding: "12px", color: "#8e8e93", fontWeight: 600, minWidth: 72 }}>비즈니스</th>
+                </tr>
+              </thead>
+              <tbody>
+                {COMPARISON.map((row) => (
+                  <tr key={row.feature} style={{ borderTop: "1px solid #f0f2f6" }}>
+                    <td style={{ padding: "12px 20px", color: "#3d3d3f" }}>{row.feature}</td>
+                    {(["free", "pro", "business"] as const).map((k) => {
+                      const v = row[k];
+                      return (
+                        <td key={k} style={{ textAlign: "center", padding: "12px" }}>
+                          {typeof v === "boolean" ? (
+                            v ? (
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2e4bd8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}><polyline points="20 6 9 17 4 12" /></svg>
+                            ) : (
+                              <span style={{ color: "#cbd0dc" }}>–</span>
+                            )
+                          ) : (
+                            <span style={{ fontSize: 12, fontWeight: 700, color: "#3d3d3f" }}>{v}</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <p style={{ textAlign: "center", fontSize: 12, color: "#8e8e93", marginTop: 28 }}>
