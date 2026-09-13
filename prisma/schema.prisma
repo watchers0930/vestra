@@ -330,6 +330,7 @@ model MonitoredProperty {
   listingId                String? // 감시 대상 매물(Listing) — 있으면 매물과 연결, 없으면 주소 직접 등록
   alerts                   MonitoringAlert[]
   snapshots                RegistrySnapshot[]
+  checkLogs                MonitoringCheckLog[]
   agentClientProperties    AgentClientProperty[]
   user                     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   listing                  Listing?              @relation("ListingMonitors", fields: [listingId], references: [id], onDelete: SetNull)
@@ -373,6 +374,21 @@ model MonitoringAlert {
 
   @@index([monitoredPropertyId])
   @@index([isRead])
+}
+
+// 프리체크(감시) 실행 이력 — 변동 유무와 무관하게 매 실행마다 1행 기록.
+// "하루 2회 성실히 감시했다"를 이용자 마이페이지에 증명하는 용도.
+model MonitoringCheckLog {
+  id                  String            @id @default(cuid())
+  monitoredPropertyId String
+  checkedAt           DateTime          @default(now())
+  method              String // precheck (등기신청사건 조회) | full_doc (등기부 발급 확정조회) | skipped
+  result              String // no_change | signal_detected | changed | needs_registration | fetch_failed
+  summary             String?           @db.Text // 결과 한 줄 요약 (선택)
+  monitoredProperty   MonitoredProperty @relation(fields: [monitoredPropertyId], references: [id], onDelete: Cascade)
+
+  @@index([monitoredPropertyId, checkedAt(sort: Desc)])
+  @@index([checkedAt]) // 90일 초과분 일괄 정리(deleteMany) 시 인덱스 탄다
 }
 
 // ---------------------------------------------------------------------------

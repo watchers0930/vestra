@@ -140,6 +140,49 @@ export function formatDateShort(dateStr: string | null): string {
   return new Date(dateStr).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/\.$/, "");
 }
 
+// ── 감시 실행 로그 ──
+
+/** 실행 결과 → 표시 라벨 */
+export const CHECK_RESULT_LABEL: Record<string, string> = {
+  no_change: "이상 없음",
+  signal_detected: "신청사건 감지",
+  changed: "등기 변동 감지",
+  needs_registration: "PDF 등록 필요",
+  fetch_failed: "조회 실패",
+};
+
+/** 실행 방식 → 표시 라벨 */
+export const CHECK_METHOD_LABEL: Record<string, string> = {
+  precheck: "등기신청사건 조회",
+  full_doc: "등기부등본 대조",
+  skipped: "건너뜀",
+};
+
+/** 실행 결과 → 상태 톤 (정상/주의/위험/중립) */
+export function checkResultTone(result: string): "ok" | "warn" | "danger" | "muted" {
+  switch (result) {
+    case "no_change":
+      return "ok";
+    case "signal_detected":
+      return "warn";
+    case "changed":
+      return "danger";
+    default:
+      return "muted"; // needs_registration | fetch_failed
+  }
+}
+
+/** 실행 시각 포맷 (YYYY.MM.DD HH:mm) */
+export function formatDateTime(dateStr: string): string {
+  return new Date(dateStr).toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 /** 스냅샷 섹션 라벨 */
 export const SECTION_LABEL: Record<string, string> = {
   title: "표제부",

@@ -70,10 +70,25 @@ export async function GET(
       );
     }
 
+    // 감시 실행 로그(최근 60건) — 별도 쿼리로 분리해 테이블 미생성 시에도
+    // 물건 상세 조회 자체는 깨지지 않게 한다.
+    let checkLogs: { id: string; checkedAt: Date; method: string; result: string; summary: string | null }[] = [];
+    try {
+      checkLogs = await prisma.monitoringCheckLog.findMany({
+        where: { monitoredPropertyId: id },
+        orderBy: { checkedAt: "desc" },
+        take: 60,
+        select: { id: true, checkedAt: true, method: true, result: true, summary: true },
+      });
+    } catch {
+      /* 테이블 미생성/조회 실패 시 빈 배열 폴백 */
+    }
+
     return NextResponse.json({
       property: {
         ...property,
         snapshotCount: property._count.snapshots,
+        checkLogs,
         _count: undefined,
       },
     });

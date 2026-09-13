@@ -18,6 +18,7 @@ export interface PropertyDetail {
   createdAt: string;
   snapshotCount: number;
   alerts: AlertItem[];
+  checkLogs: CheckLogItem[];
 }
 
 export interface AlertItem {
@@ -28,6 +29,14 @@ export interface AlertItem {
   riskLevel: string;
   isRead: boolean;
   createdAt: string;
+}
+
+export interface CheckLogItem {
+  id: string;
+  checkedAt: string;
+  method: string; // precheck | full_doc | skipped
+  result: string; // no_change | signal_detected | changed | needs_registration | fetch_failed
+  summary: string | null;
 }
 
 export interface SnapshotItem {
