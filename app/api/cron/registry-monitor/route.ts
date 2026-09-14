@@ -46,7 +46,8 @@ async function recordCheckLog(
   propertyId: string,
   method: CheckMethod,
   result: CheckResult,
-  summary?: string
+  summary?: string,
+  riskLevel?: "low" | "medium" | "high" | "critical"
 ): Promise<void> {
   await prisma.monitoringCheckLog
     .create({
@@ -55,9 +56,18 @@ async function recordCheckLog(
         method,
         result,
         ...(summary ? { summary: summary.slice(0, 500) } : {}),
+        ...(riskLevel ? { riskLevel } : {}),
       },
     })
     .catch(() => {});
+}
+
+const RISK_ORDER: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 };
+function topRiskLevel(changes: ChangeDetection[]): "low" | "medium" | "high" | "critical" {
+  return changes.reduce<"low" | "medium" | "high" | "critical">(
+    (max, c) => (RISK_ORDER[c.riskLevel] > RISK_ORDER[max] ? c.riskLevel : max),
+    "low"
+  );
 }
 
 function mapSignalStatus(phase: TilkoCaseStatusResult["phase"]): string {
@@ -471,7 +481,7 @@ export async function GET(req: NextRequest) {
                 registrySignalRaw: caseStatus.rawData,
               },
             });
-            await recordCheckLog(prop.id, "precheck", "signal_detected", caseStatus.summary);
+            await recordCheckLog(prop.id, "precheck", "signal_detected", caseStatus.summary, signalStatus === "dismissed" ? "low" : "medium");
 
             if (shouldCreateSignalAlert) {
               await prisma.monitoringAlert.create({
@@ -659,7 +669,8 @@ export async function GET(req: NextRequest) {
           prop.id,
           "full_doc",
           isRealChange ? "changed" : "no_change",
-          isRealChange ? changes.map((c) => c.summary).join(", ") : "최초 등기부 기준점 저장"
+          isRealChange ? changes.map((c) => c.summary).join(", ") : "최초 등기부 기준점 저장",
+          isRealChange ? topRiskLevel(changes) : undefined
         );
       } catch (propError) {
         console.error(

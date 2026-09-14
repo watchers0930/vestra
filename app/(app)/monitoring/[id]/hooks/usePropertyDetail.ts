@@ -36,6 +36,7 @@ export interface CheckLogItem {
   checkedAt: string;
   method: string; // precheck | full_doc | skipped
   result: string; // no_change | signal_detected | changed | needs_registration | fetch_failed
+  riskLevel: string | null; // low | medium | high | critical (달력 색상용)
   summary: string | null;
 }
 

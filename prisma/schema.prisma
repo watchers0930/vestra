@@ -384,6 +384,7 @@ model MonitoringCheckLog {
   checkedAt           DateTime          @default(now())
   method              String // precheck (등기신청사건 조회) | full_doc (등기부 발급 확정조회) | skipped
   result              String // no_change | signal_detected | changed | needs_registration | fetch_failed
+  riskLevel           String? // low | medium | high | critical (변동/신호 감지 시 위험도, 달력 색상용)
   summary             String?           @db.Text // 결과 한 줄 요약 (선택)
   monitoredProperty   MonitoredProperty @relation(fields: [monitoredPropertyId], references: [id], onDelete: Cascade)
 

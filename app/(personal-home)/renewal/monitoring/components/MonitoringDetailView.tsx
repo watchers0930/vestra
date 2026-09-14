@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trash2, AlertTriangle, Bell, Folder, ShieldCheck, Sparkles, Lock, CheckCircle2, Clock, Loader2, FileText, Wallet } from "lucide-react";
+import { Trash2, AlertTriangle, Bell, Folder, ShieldCheck, Sparkles, Lock, CheckCircle2, Loader2, FileText, Wallet } from "lucide-react";
 import s from "../monitoring-renewal.module.css";
 import { useToast } from "@/components/common/toast";
 import { addOrUpdateAsset, getAssets } from "@/lib/store";
 import { analyzeAndSaveMonitoredAsset } from "@/lib/monitor-asset-register";
 import { usePropertyDetail } from "@/app/(app)/monitoring/[id]/hooks/usePropertyDetail";
+import MonitoringActivityCalendar from "./MonitoringActivityCalendar";
 import {
   CHANGE_TYPE_LABEL,
   RISK_LABEL,
@@ -16,10 +17,6 @@ import {
   getRiskExplanation,
   formatRelativeTime,
   formatDateShort,
-  formatDateTime,
-  CHECK_RESULT_LABEL,
-  CHECK_METHOD_LABEL,
-  checkResultTone,
   SECTION_LABEL,
   truncHash,
 } from "./alertHelpers";
@@ -304,35 +301,7 @@ export default function MonitoringDetailView({ propertyId, onBack }: Props) {
         <div className={s.detTitle}>감시 실행 내역</div>
         <div className={s.detSub}>하루 2회 등기 상태를 자동 점검한 기록입니다</div>
         {checkLogs.length > 0 ? (
-          <>
-            <div className={`${s.detCountBadge} ${s.dcbBlue}`}>
-              <ShieldCheck size={13} /> 최근 {checkLogs.length}회 감시 실행 기록
-            </div>
-            <div className={s.logList}>
-              {checkLogs.map((log) => {
-                const tone = checkResultTone(log.result);
-                const Icon =
-                  tone === "ok" ? CheckCircle2 : tone === "warn" ? Bell : tone === "danger" ? AlertTriangle : Clock;
-                const dotClass =
-                  tone === "ok" ? s.logDotOk : tone === "warn" ? s.logDotWarn : tone === "danger" ? s.logDotDanger : s.logDotMuted;
-                return (
-                  <div className={s.logRow} key={log.id}>
-                    <div className={`${s.logDot} ${dotClass}`}>
-                      <Icon size={14} />
-                    </div>
-                    <div className={s.logMain}>
-                      <div className={s.logResult}>{CHECK_RESULT_LABEL[log.result] || log.result}</div>
-                      {log.summary && <div className={s.logSummary}>{log.summary}</div>}
-                    </div>
-                    <div className={s.logMeta}>
-                      <div className={s.logTime}>{formatDateTime(log.checkedAt)}</div>
-                      <div className={s.logMethod}>{CHECK_METHOD_LABEL[log.method] || log.method}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
+          <MonitoringActivityCalendar logs={checkLogs} />
         ) : (
           <div style={{ textAlign: "center", padding: "32px 0", color: "#999", fontSize: "13px" }}>
             아직 감시 실행 기록이 없습니다. 다음 정기 점검(하루 2회) 후 표시됩니다.

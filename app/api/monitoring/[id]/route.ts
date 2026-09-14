@@ -72,13 +72,13 @@ export async function GET(
 
     // 감시 실행 로그(최근 60건) — 별도 쿼리로 분리해 테이블 미생성 시에도
     // 물건 상세 조회 자체는 깨지지 않게 한다.
-    let checkLogs: { id: string; checkedAt: Date; method: string; result: string; summary: string | null }[] = [];
+    let checkLogs: { id: string; checkedAt: Date; method: string; result: string; riskLevel: string | null; summary: string | null }[] = [];
     try {
       checkLogs = await prisma.monitoringCheckLog.findMany({
         where: { monitoredPropertyId: id },
         orderBy: { checkedAt: "desc" },
-        take: 60,
-        select: { id: true, checkedAt: true, method: true, result: true, summary: true },
+        take: 120, // 달력 표시용(월 단위·하루 2회 → 약 2개월치)
+        select: { id: true, checkedAt: true, method: true, result: true, riskLevel: true, summary: true },
       });
     } catch {
       /* 테이블 미생성/조회 실패 시 빈 배열 폴백 */

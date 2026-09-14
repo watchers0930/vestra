@@ -172,6 +172,28 @@ export function checkResultTone(result: string): "ok" | "warn" | "danger" | "mut
   }
 }
 
+/** 달력 원형 블릿 색상 (회색=미실행/불가, 파랑=이상없음, 노랑=주의, 주황=경고, 빨강=위험) */
+export function checkLogBulletColor(result: string, riskLevel?: string | null): string {
+  switch (result) {
+    case "no_change":
+      return "#3452c5"; // 파랑 — 이상 없음
+    case "signal_detected":
+      return "#f59e0b"; // 노랑 — 주의(신청사건 감지)
+    case "changed":
+      return riskLevel === "high" || riskLevel === "critical" ? "#ef4444" : "#f97316"; // 빨강 위험 / 주황 경고
+    default:
+      return "#cbd5e1"; // 회색 — needs_registration · fetch_failed · 미실행
+  }
+}
+
+/** 달력 블릿 상태 라벨 (툴팁용) */
+export function checkLogStatusLabel(result: string, riskLevel?: string | null): string {
+  if (result === "changed") {
+    return riskLevel === "high" || riskLevel === "critical" ? "위험 (등기 변동)" : "경고 (등기 변동)";
+  }
+  return CHECK_RESULT_LABEL[result] || result;
+}
+
 /** 실행 시각 포맷 (YYYY.MM.DD HH:mm) */
 export function formatDateTime(dateStr: string): string {
   return new Date(dateStr).toLocaleString("ko-KR", {
