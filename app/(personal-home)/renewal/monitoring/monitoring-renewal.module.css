@@ -382,6 +382,10 @@
   .footerIn{grid-template-columns:1fr;gap:24px}
   .fbot{flex-direction:column;gap:6px;text-align:center;padding:16px 0}
   .engineBadges{display:none}
+  /* 상세 액션 버튼 3개: 모바일에서도 균등 3열 한 줄 */
+  .detailActions{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%}
+  .detailActions>*{width:100%;justify-content:center;font-size:11px;padding:0 4px;gap:4px}
+  .detailActions>* svg{width:12px;height:12px}
   /* 감시 달력: 좁은 7열 셀에 맞게 알약·여백 축소 */
   .calGrid{gap:3px}
   .calCell{min-height:54px;padding:4px 2px;gap:3px}
