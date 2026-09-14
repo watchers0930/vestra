@@ -4,9 +4,10 @@ import { useState, useEffect, useRef, startTransition } from "react";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { isPublicPath } from "@/lib/public-paths";
+import { INACTIVITY_MS } from "@/lib/session-config";
 
-const INACTIVITY_MS = 60 * 60 * 1000;
-const CHECK_INTERVAL_MS = 60 * 1000;
+// 유휴 만료 검사 주기. 표시 타이머가 00:00에 닿은 뒤 실제 로그아웃까지의 지연을 줄이려 짧게 둔다.
+const CHECK_INTERVAL_MS = 10 * 1000;
 const HEARTBEAT_INTERVAL_MS = 20 * 1000;
 const HEARTBEAT_STALE_MS = 35 * 1000;
 

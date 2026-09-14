@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { scopeSessionCookiesToBrowserSession } from "@/lib/session-cookie";
 
 function hasSessionCookie(req: NextRequest) {
   return req.cookies.getAll().some(({ name }) =>
@@ -24,11 +25,11 @@ export async function GET(req: NextRequest) {
   try {
     const { createDynamicAuth } = await import("@/lib/auth");
     const { handlers } = await createDynamicAuth();
-    return await handlers.GET(req);
+    return scopeSessionCookiesToBrowserSession(await handlers.GET(req));
   } catch (error) {
     console.error("[auth] dynamic GET fallback:", error);
     const { handlers: staticHandlers } = await import("@/lib/auth");
-    return staticHandlers.GET(req);
+    return scopeSessionCookiesToBrowserSession(await staticHandlers.GET(req));
   }
 }
 
@@ -36,10 +37,10 @@ export async function POST(req: NextRequest) {
   try {
     const { createDynamicAuth } = await import("@/lib/auth");
     const { handlers } = await createDynamicAuth();
-    return await handlers.POST(req);
+    return scopeSessionCookiesToBrowserSession(await handlers.POST(req));
   } catch (error) {
     console.error("[auth] dynamic POST fallback:", error);
     const { handlers: staticHandlers } = await import("@/lib/auth");
-    return staticHandlers.POST(req);
+    return scopeSessionCookiesToBrowserSession(await staticHandlers.POST(req));
   }
 }

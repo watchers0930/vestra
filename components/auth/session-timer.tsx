@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { Timer } from "lucide-react";
-
-const INACTIVITY_MS = 60 * 60 * 1000;
+import { INACTIVITY_MS } from "@/lib/session-config";
 
 const ACTIVITY_EVENTS = [
   "mousemove", "keydown", "click", "scroll", "touchstart", "pointerdown",

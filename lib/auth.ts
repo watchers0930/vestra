@@ -282,7 +282,11 @@ function buildProviders(settings: Record<string, string>) {
   return providers;
 }
 
-// ─── 브라우저 닫힘 = 로그아웃: maxAge 없는 세션 쿠키로 설정 ───
+// ─── 브라우저 닫힘 = 로그아웃 ───
+// ⚠️ 쿠키 옵션에서 maxAge를 빼도 Auth.js v5 코어가 세션 쿠키에 항상
+//    `Expires = now + session.maxAge`(기본 30일)를 강제 주입한다(영속 쿠키가 됨).
+//    실제 "브라우저 닫으면 삭제"는 route 핸들러(app/api/auth/[...nextauth]/route.ts)에서
+//    응답 Set-Cookie의 Expires/Max-Age를 제거해 달성한다.
 
 const isSecure = process.env.NODE_ENV === "production";
 const SESSION_COOKIE_CONFIG: NextAuthConfig["cookies"] = {
@@ -294,7 +298,6 @@ const SESSION_COOKIE_CONFIG: NextAuthConfig["cookies"] = {
       sameSite: "lax",
       path: "/",
       secure: isSecure,
-      // maxAge 없음 → 브라우저 세션 쿠키 → 닫히면 삭제
     },
   },
 };
