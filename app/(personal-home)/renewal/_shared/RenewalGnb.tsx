@@ -8,6 +8,7 @@ import s from "./RenewalGnb.module.css";
 import { RENEWAL_MAIN as MAIN, RENEWAL_SUPPORT as SUPPORT, RENEWAL_ROUTES, type RenewalKey } from "./renewal-config";
 import RenewalLoginModal from "./RenewalLoginModal";
 import RenewalSignupModal from "./RenewalSignupModal";
+import SessionTimer from "@/components/auth/session-timer";
 
 /**
  * renewal 공통 헤더 GNB — 모든 renewal 페이지에서 <RenewalGnb active="..." /> 로 사용.
@@ -81,6 +82,7 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
         <div className={s.navAuth}>
           {isLoggedIn ? (
             <>
+              <SessionTimer />
               <span className={s.greet}>{userName}님</span>
               <span className={s.div}>|</span>
               <Link href={RENEWAL_ROUTES.profile}>마이페이지</Link>
@@ -115,6 +117,7 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
           <div className={s.navMobAuth}>
             {isLoggedIn ? (
               <>
+                <SessionTimer />
                 <span>{userName}님</span>
                 <Link href={RENEWAL_ROUTES.profile}>마이페이지</Link>
                 <a onClick={() => signOut({ redirectTo: RENEWAL_ROUTES.home })} style={{ cursor: "pointer" }}>로그아웃</a>
