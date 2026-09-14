@@ -12,6 +12,12 @@ import { createHash } from "crypto";
 const ISSUE_PRICE = 1000;
 const CONSENT_VERSION = "registry-issue-v1";
 
+// ⚠️ [보류 — 2026-09-14] 틸코 자동발급을 잠시 보류(이용자 직접 발급으로 운영).
+// 기존 발급 로직은 삭제하지 않고 그대로 보존한다. 복구 시 이 플래그만 false 로 바꾸면 즉시 재개.
+const REGISTRY_ISSUE_SUSPENDED = true;
+const SUSPENDED_MESSAGE =
+  "등기부 자동발급은 현재 보류 중입니다. 인터넷등기소(iros.go.kr)에서 직접 발급해 주세요.";
+
 function extractCurrentOwner(gapgu: Array<{ purpose: string; holder: string; isCancelled: boolean }>): string {
   const active = [...gapgu]
     .reverse()
@@ -337,6 +343,10 @@ async function executePaidOrder(params: {
 
 export async function POST(req: NextRequest) {
   try {
+    if (REGISTRY_ISSUE_SUSPENDED) {
+      return NextResponse.json({ error: SUSPENDED_MESSAGE }, { status: 503 });
+    }
+
     const csrfError = validateOrigin(req);
     if (csrfError) return csrfError;
 
@@ -454,6 +464,10 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    if (REGISTRY_ISSUE_SUSPENDED) {
+      return NextResponse.json({ error: SUSPENDED_MESSAGE }, { status: 503 });
+    }
+
     const csrfError = validateOrigin(req);
     if (csrfError) return csrfError;
 

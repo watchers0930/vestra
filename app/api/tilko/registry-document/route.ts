@@ -5,8 +5,19 @@ import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 
+// ⚠️ [보류 — 2026-09-14] 틸코 등기부 원문 조회(발급 계열) 보류. 이용자 직접 발급으로 운영.
+// 로직은 보존. 복구 시 이 플래그만 false 로.
+const REGISTRY_DOC_SUSPENDED = true;
+
 export async function POST(req: NextRequest) {
   try {
+    if (REGISTRY_DOC_SUSPENDED) {
+      return NextResponse.json(
+        { error: "등기부 자동조회는 현재 보류 중입니다. 인터넷등기소(iros.go.kr)에서 직접 발급해 주세요." },
+        { status: 503 }
+      );
+    }
+
     const csrfError = validateOrigin(req);
     if (csrfError) return csrfError;
 

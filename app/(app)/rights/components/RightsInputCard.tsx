@@ -14,7 +14,9 @@ import { formatKRW } from "@/lib/utils";
 import { SliderInput } from "@/components/forms";
 import type { InputMode, AnalysisStep } from "../types";
 import type { IssuedRegistryAnalysisPayload } from "../hooks/useRightsAnalysis";
-import { RegistryIssueSection } from "./RegistryIssueSection";
+// [보류] 틸코 자동발급(RegistryIssueSection)은 잠시 보류. 이용자 직접 발급(인터넷등기소) 안내로 대체.
+// 복구 시 아래 import 주석 해제 + 렌더 위치 원복. 컴포넌트 파일은 그대로 보존됨.
+// import { RegistryIssueSection } from "./RegistryIssueSection";
 
 interface Props {
   inputMode: InputMode;
@@ -59,7 +61,8 @@ export function RightsInputCard({
   fileInputRef,
   loadSample, handleAddressAnalyze,
   handleDrop, handleDragOver, handleDragLeave,
-  handleFileChange, handleAnalyze, applyIssuedRegistryAnalysis,
+  handleFileChange, handleAnalyze,
+  // [보류] applyIssuedRegistryAnalysis 는 틸코 자동발급 UI 복구 시 재사용 (Props 정의는 유지)
 }: Props) {
   const isAnalyzing = step !== "idle" && step !== "done";
 
@@ -135,7 +138,46 @@ export function RightsInputCard({
 
       {/* 입력 영역 */}
       <div style={{ padding: "20px" }}>
-        <RegistryIssueSection applyIssuedRegistryAnalysis={applyIssuedRegistryAnalysis} />
+        {/* [보류] 틸코 자동발급 → 이용자 직접 발급(인터넷등기소) 안내 */}
+        <div
+          style={{
+            marginBottom: "18px",
+            border: "1px solid rgba(0,113,227,0.12)",
+            borderRadius: "16px",
+            background: "linear-gradient(135deg, rgba(0,113,227,0.06), rgba(0,113,227,0.02))",
+            padding: "16px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "6px" }}>
+            <FileText size={16} style={{ color: "var(--brand-primary)" }} />
+            <p style={{ fontSize: "13.5px", fontWeight: 800, color: "#1d1d1f" }}>등기부등본이 필요하신가요?</p>
+          </div>
+          <p style={{ fontSize: "13px", color: "#6e6e73", lineHeight: 1.55, marginBottom: "12px" }}>
+            대법원 인터넷등기소에서 직접 발급하신 뒤, 발급받은 PDF를 업로드하면 권리분석에 사용할 수 있습니다.
+          </p>
+          <a
+            href="https://www.iros.go.kr"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "9px 16px",
+              borderRadius: "10px",
+              background: "var(--brand-primary)",
+              color: "#fff",
+              fontSize: "13px",
+              fontWeight: 700,
+              textDecoration: "none",
+            }}
+          >
+            <FileText size={13} /> 등기부등본 발급하기 →
+          </a>
+          <p style={{ fontSize: "12px", color: "#86868b", marginTop: "10px", lineHeight: 1.5 }}>
+            인터넷등기소 접속 후: 열람·발급 → 부동산 → 주소 입력 → 발급(제출용)/열람(확인용) 선택
+          </p>
+        </div>
 
         {/* 주소 자동 분석 */}
         {inputMode === "tilko" && (

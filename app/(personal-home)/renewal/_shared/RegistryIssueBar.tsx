@@ -6,6 +6,10 @@ export default function RegistryIssueBar() {
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <span style={{ fontSize: 14, color: "#3d3d3f", lineHeight: 1.5 }}>
           등기부등본이 필요하신가요? 대법원 인터넷등기소에서 바로 발급받으실 수 있습니다.
+          <br />
+          <span style={{ fontSize: 12.5, color: "#8a8a8f" }}>
+            접속 후: 열람·발급 → 부동산 → 주소 입력 → 발급(제출용)/열람(확인용) 선택
+          </span>
         </span>
         <a
           href="https://www.iros.go.kr"

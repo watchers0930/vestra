@@ -8,6 +8,10 @@ import { fetchBuildingInfoByAddress } from "@/lib/building-api";
 import { fetchOfficialPrices } from "@/lib/official-price-api";
 import { checkGuaranteeInsurance } from "@/lib/guarantee-insurance";
 
+// ⚠️ [보류 — 2026-09-14] 매물 인증 시 틸코 발급 계열 자동조회 보류(이용자 직접 발급으로 운영).
+// 건축물대장·공시가·보증보험 등 나머지 인증 로직은 그대로 유지. 복구 시 이 플래그만 false 로.
+const CERTIFY_TILKO_SUSPENDED = true;
+
 // 등기부 텍스트에서 선순위 채권(근저당) 합계 파싱
 function parseSeniorLiens(text: string): number {
   const matches = [...text.matchAll(/채권최고액\s*금?\s*([\d,]+)원/g)];
@@ -51,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const errors: string[] = [];
 
     // 1. 틸코 등기부 자동조회 + 선순위 채권 파싱
-    if (isTilkoRegistryDocAvailable()) {
+    if (!CERTIFY_TILKO_SUSPENDED && isTilkoRegistryDocAvailable()) {
       try {
         const reg = await fetchRegistryDocumentByAddress({ address: listing.address });
         if (reg.text && reg.text.length > 50) {

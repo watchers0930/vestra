@@ -176,11 +176,17 @@ export default function MonitoringDetailView({ propertyId, onBack }: Props) {
             href="https://www.iros.go.kr"
             target="_blank"
             rel="noopener noreferrer"
+            title="인터넷등기소 접속 후: 열람·발급 → 부동산 → 주소 입력 → 발급(제출용)/열람(확인용) 선택"
           >
             <FileText size={13} /> 등기부등본 발급
           </a>
         </div>
       </div>
+
+      {/* 발급 안내 (이용자 직접 발급) */}
+      <p style={{ fontSize: 12, color: "#8a8a8f", margin: "0 0 12px", lineHeight: 1.5 }}>
+        ※ 등기부등본은 인터넷등기소에서 직접 발급합니다: 열람·발급 → 부동산 → 주소 입력 → 발급(제출용)/열람(확인용) 선택
+      </p>
 
       {/* Property Info Card */}
       <div className={s.propInfoCard}>

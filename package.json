@@ -1,6 +1,6 @@
 {
   "name": "vestra",
-  "version": "5.160.7",
+  "version": "5.161.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

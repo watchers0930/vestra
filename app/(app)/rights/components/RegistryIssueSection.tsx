@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * ⚠️ [보류 — 2026-09-14] 틸코 자동발급 + 토스결제 등기부 발급 UI.
+ * 현재 발급은 "이용자 직접 발급(인터넷등기소)" 방식으로 운영하므로 이 컴포넌트는 렌더하지 않는다.
+ * (사용처 RightsInputCard 에서 iros 안내 박스로 대체됨)
+ * 삭제하지 말 것 — 향후 틸코 발급(전자민원캐시 확보) 재개 시 그대로 복구해 사용한다.
+ * 관련 보류: /api/registry/issue-order, /api/tilko/registry-document, listings/[id]/certify(틸코 조회)
+ */
+
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
