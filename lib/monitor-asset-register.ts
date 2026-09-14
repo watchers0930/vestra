@@ -30,7 +30,8 @@ export async function analyzeAndSaveMonitoredAsset({ address, registryText }: Pa
       if (data.error) throw new Error(data.error);
 
       addOrUpdateAsset({
-        address: data.propertyInfo?.address || address,
+        // 감시 주소로 통일(등기 파싱 주소와 표기 차이로 인한 중복 저장 방지)
+        address,
         type: data.propertyInfo?.type || "부동산",
         estimatedPrice: data.propertyInfo?.estimatedPrice || 0,
         jeonsePrice: data.propertyInfo?.jeonsePrice || 0,
