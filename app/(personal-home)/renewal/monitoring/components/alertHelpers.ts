@@ -186,6 +186,20 @@ export function checkLogBulletColor(result: string, riskLevel?: string | null): 
   }
 }
 
+/** 달력 알약(pill) 연한 배경색 */
+export function checkLogPillBg(result: string, riskLevel?: string | null): string {
+  switch (result) {
+    case "no_change":
+      return "#eef1fb"; // 연파랑
+    case "signal_detected":
+      return "#fef3c7"; // 연노랑
+    case "changed":
+      return riskLevel === "high" || riskLevel === "critical" ? "#fee2e2" : "#ffedd5"; // 연빨강 / 연주황
+    default:
+      return "#f1f5f9"; // 연회색
+  }
+}
+
 /** 달력 블릿 상태 라벨 (툴팁용) */
 export function checkLogStatusLabel(result: string, riskLevel?: string | null): string {
   if (result === "changed") {

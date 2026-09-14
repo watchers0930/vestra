@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import s from "../monitoring-renewal.module.css";
-import { checkLogBulletColor, checkLogStatusLabel } from "./alertHelpers";
+import { checkLogBulletColor, checkLogPillBg, checkLogStatusLabel } from "./alertHelpers";
 import type { CheckLogItem } from "@/app/(app)/monitoring/[id]/hooks/usePropertyDetail";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -60,19 +60,26 @@ export default function MonitoringActivityCalendar({ logs }: { logs: CheckLogIte
           const key = `${ym.y}-${ym.m}-${day}`;
           const dayLogs = byDate.get(key) || [];
           const isToday = key === todayKey;
+          // 하루 2회: 오전(정오 점검, <15시) · 오후(17시 점검, >=15시) 대표 회차
+          const am = [...dayLogs].filter((l) => new Date(l.checkedAt).getHours() < 15).pop();
+          const pm = [...dayLogs].filter((l) => new Date(l.checkedAt).getHours() >= 15).pop();
+          const slots = [am, pm].filter(Boolean) as typeof dayLogs;
           return (
             <div key={key} className={`${s.calCell} ${isToday ? s.calToday : ""}`}>
               <span className={s.calDay}>{day}</span>
-              <div className={s.calBullets}>
-                {dayLogs.slice(0, 3).map((l) => {
-                  const t = new Date(l.checkedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+              <div className={s.calSlots}>
+                {slots.map((l) => {
+                  const h = new Date(l.checkedAt).getHours();
                   return (
                     <span
                       key={l.id}
-                      className={s.calBullet}
-                      style={{ background: checkLogBulletColor(l.result, l.riskLevel) }}
-                      title={`${t} · ${checkLogStatusLabel(l.result, l.riskLevel)}`}
-                    />
+                      className={s.calPill}
+                      style={{ background: checkLogPillBg(l.result, l.riskLevel), color: checkLogBulletColor(l.result, l.riskLevel) }}
+                      title={`${h}시 · ${checkLogStatusLabel(l.result, l.riskLevel)}`}
+                    >
+                      <i style={{ background: checkLogBulletColor(l.result, l.riskLevel) }} />
+                      {h}시
+                    </span>
                   );
                 })}
               </div>

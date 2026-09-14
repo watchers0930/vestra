@@ -355,11 +355,12 @@
 .calTitle{font-size:15px;font-weight:700;color:#1a1d2e;min-width:120px;text-align:center}
 .calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .calWd{text-align:center;font-size:11px;font-weight:600;color:#aaa;padding:4px 0}
-.calCell{aspect-ratio:1;border:1px solid #f1f2f8;border-radius:8px;padding:5px;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:52px}
+.calCell{border:1px solid #f1f2f8;border-radius:8px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:5px;min-height:66px}
 .calToday{border-color:#2e4bd8;background:#f5f7ff}
 .calDay{font-size:11.5px;color:#666;font-weight:500}
-.calBullets{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}
-.calBullet{width:9px;height:9px;border-radius:50%;display:inline-block}
+.calSlots{display:flex;flex-direction:column;gap:3px;width:100%;align-items:center}
+.calPill{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;line-height:1.4;white-space:nowrap}
+.calPill i{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0}
 .calLegend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:16px;padding-top:14px;border-top:1px solid #f1f2f8}
 .calLg{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:#666}
 .calLg i{width:9px;height:9px;border-radius:50%;display:inline-block}
