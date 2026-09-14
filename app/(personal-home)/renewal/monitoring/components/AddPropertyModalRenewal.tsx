@@ -2,6 +2,8 @@
 
 import { useState, useRef } from "react";
 import { MapPin, Upload } from "lucide-react";
+import { useToast } from "@/components/common/toast";
+import { analyzeAndSaveMonitoredAsset } from "@/lib/monitor-asset-register";
 import s from "../monitoring-renewal.module.css";
 
 interface SearchResult {
@@ -28,7 +30,11 @@ function isCollectiveBuilding(type: string): boolean {
  * 시안 디자인 + 실 API 연동: /api/monitoring/parse-pdf, POST /api/monitoring
  */
 export default function AddPropertyModalRenewal({ onClose, onSuccess, initialAddress = "", initialListingId = "" }: Props) {
+  const { showToast } = useToast();
   const [tab, setTab] = useState<"addr" | "pdf">("addr");
+  // 내 자산 포함 여부 (등기감시 = 내 물건이라 기본 포함)
+  const [includeAsset, setIncludeAsset] = useState(true);
+  const [assetAnalyzing, setAssetAnalyzing] = useState(false);
 
   // 주소 검색 (매물 상세 등에서 진입 시 주소 프리필)
   const [query, setQuery] = useState(initialAddress);
@@ -138,17 +144,58 @@ export default function AddPropertyModalRenewal({ onClose, onSuccess, initialAdd
         setSubmitError(data.error || "등록에 실패했습니다.");
         return;
       }
+
+      // "내 자산으로 등록" 선택 시 권리분석 실행 후 자산 저장 (실패해도 감시 등록은 유지)
+      if (includeAsset) {
+        setAssetAnalyzing(true);
+        const r = await analyzeAndSaveMonitoredAsset({
+          address: fullAddress,
+          registryText: pdfRawText || undefined,
+        });
+        setAssetAnalyzing(false);
+        if (!r.ok) {
+          showToast("감시는 등록됐지만 자산 분석에 실패했습니다. 나중에 권리분석에서 다시 시도해 주세요.", "error");
+        } else if (r.analyzed) {
+          showToast("감시 등록 및 자산 분석 완료 — 대시보드에 반영되었습니다.", "success");
+        } else {
+          showToast("감시 등록 완료 · 시세를 자산에 반영했습니다(안전도는 등기부 PDF 등록 시 분석).", "success");
+        }
+      }
+
       onSuccess();
     } catch {
       setSubmitError("네트워크 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
+      setAssetAnalyzing(false);
     }
   }
 
   const previewAddress = selected
     ? [selected.address, dong.trim() ? `${dong.trim()}동` : "", ho.trim() ? `${ho.trim()}호` : ""].filter(Boolean).join(" ")
     : "";
+
+  const busyLabel = assetAnalyzing ? "자산 분석 중..." : submitting ? "등록 중..." : "등록하기";
+
+  const assetChoiceBlock = (
+    <div className={s.assetChoice}>
+      <div className={s.mSecTitle}>이 물건을 어떻게 관리할까요?</div>
+      <label className={`${s.assetOpt} ${includeAsset ? s.assetOptOn : ""}`}>
+        <input type="radio" name="assetChoice" checked={includeAsset} onChange={() => setIncludeAsset(true)} />
+        <div>
+          <div className={s.assetOptT}>내 자산으로 등록</div>
+          <div className={s.assetOptS}>권리분석을 함께 실행해 자산가치·안전도를 대시보드에 표시합니다</div>
+        </div>
+      </label>
+      <label className={`${s.assetOpt} ${!includeAsset ? s.assetOptOn : ""}`}>
+        <input type="radio" name="assetChoice" checked={!includeAsset} onChange={() => setIncludeAsset(false)} />
+        <div>
+          <div className={s.assetOptT}>감시만</div>
+          <div className={s.assetOptS}>대시보드 자산에 넣지 않고 등기 변동만 감시합니다</div>
+        </div>
+      </label>
+    </div>
+  );
 
   return (
     <div className={s.modalOverlay} onClick={onClose}>
@@ -248,10 +295,12 @@ export default function AddPropertyModalRenewal({ onClose, onSuccess, initialAdd
               </>
             )}
 
+            {selected && assetChoiceBlock}
+
             {submitError && <p style={{ color: "#ef4444", fontSize: "12px" }}>{submitError}</p>}
 
-            <button className={s.mSubmit} onClick={handleSubmit} disabled={!selected || submitting}>
-              {submitting ? "등록 중..." : "등록하기"}
+            <button className={s.mSubmit} onClick={handleSubmit} disabled={!selected || submitting || assetAnalyzing}>
+              {busyLabel}
             </button>
           </div>
         )}
@@ -294,9 +343,10 @@ export default function AddPropertyModalRenewal({ onClose, onSuccess, initialAdd
                 <div className={s.mAddrPreview}>
                   <MapPin size={13} /> {selected.address}
                 </div>
+                {assetChoiceBlock}
                 {submitError && <p style={{ color: "#ef4444", fontSize: "12px" }}>{submitError}</p>}
-                <button className={s.mSubmit} onClick={handleSubmit} disabled={submitting}>
-                  {submitting ? "등록 중..." : "등록하기"}
+                <button className={s.mSubmit} onClick={handleSubmit} disabled={submitting || assetAnalyzing}>
+                  {busyLabel}
                 </button>
               </>
             )}
