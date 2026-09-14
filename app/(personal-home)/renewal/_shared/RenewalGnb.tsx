@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { signOut, useSession } from "next-auth/react";
+import { LogOut } from "lucide-react";
 import s from "./RenewalGnb.module.css";
 import { RENEWAL_MAIN as MAIN, RENEWAL_SUPPORT as SUPPORT, RENEWAL_ROUTES, type RenewalKey } from "./renewal-config";
 import RenewalLoginModal from "./RenewalLoginModal";
@@ -86,8 +87,15 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
               <span className={s.greet}>{userName}님</span>
               <span className={s.div}>|</span>
               <Link href={RENEWAL_ROUTES.profile}>마이페이지</Link>
-              <span className={s.div}>|</span>
-              <a onClick={() => signOut({ redirectTo: RENEWAL_ROUTES.home })} style={{ cursor: "pointer" }}>로그아웃</a>
+              <button
+                type="button"
+                className={s.logoutIcon}
+                onClick={() => signOut({ redirectTo: RENEWAL_ROUTES.home })}
+                aria-label="로그아웃"
+                title="로그아웃"
+              >
+                <LogOut size={17} strokeWidth={1.8} />
+              </button>
             </>
           ) : (
             <>
@@ -120,7 +128,9 @@ export default function RenewalGnb({ active }: { active?: RenewalGnbKey }) {
                 <SessionTimer />
                 <span>{userName}님</span>
                 <Link href={RENEWAL_ROUTES.profile}>마이페이지</Link>
-                <a onClick={() => signOut({ redirectTo: RENEWAL_ROUTES.home })} style={{ cursor: "pointer" }}>로그아웃</a>
+                <a onClick={() => signOut({ redirectTo: RENEWAL_ROUTES.home })} style={{ cursor: "pointer" }} className={s.mobLogout}>
+                  <LogOut size={15} strokeWidth={1.8} /> 로그아웃
+                </a>
               </>
             ) : (
               <>
