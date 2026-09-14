@@ -377,4 +377,13 @@
   .footerIn{grid-template-columns:1fr;gap:24px}
   .fbot{flex-direction:column;gap:6px;text-align:center;padding:16px 0}
   .engineBadges{display:none}
+  /* 감시 달력: 좁은 7열 셀에 맞게 알약·여백 축소 */
+  .calGrid{gap:3px}
+  .calCell{min-height:54px;padding:4px 2px;gap:3px}
+  .calDay{font-size:10.5px}
+  .calPill{font-size:9px;padding:1px 5px;gap:3px}
+  .calPill i{width:5px;height:5px}
+  .calLegend{gap:8px 10px}
+  .calLg{font-size:10.5px}
+  .calTitle{font-size:14px;min-width:100px}
 }
