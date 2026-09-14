@@ -152,19 +152,6 @@ export default function MonitoringDetailView({ propertyId, onBack }: Props) {
       <div className={s.detailTop}>
         <div className={s.detailBack} onClick={onBack}>‹ 목록으로</div>
         <div className={s.detailActions}>
-          {confirmDelete ? (
-            <>
-              <span style={{ fontSize: "12px", color: "#888", alignSelf: "center" }}>삭제할까요?</span>
-              <button className={s.dBtnDel} onClick={() => setConfirmDelete(false)} style={{ opacity: 0.7 }}>취소</button>
-              <button className={s.dBtnDel} onClick={handleDelete} disabled={deleting}>
-                {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />} 삭제
-              </button>
-            </>
-          ) : (
-            <button className={s.dBtnDel} onClick={() => setConfirmDelete(true)}>
-              <Trash2 size={13} /> 삭제
-            </button>
-          )}
           {assetAdded ? (
             <span className={s.dBtnAssetOn}><Wallet size={13} /> 자산에 포함됨</span>
           ) : (
@@ -233,6 +220,21 @@ export default function MonitoringDetailView({ propertyId, onBack }: Props) {
           <div className={s.pis}><Folder size={13} /> 스냅샷 <span className={s.pisN}>{property.snapshotCount}건</span></div>
           <div className={s.pis}><Bell size={13} /> 미확인 알림 <span className={s.pisN} style={{ color: unreadCount > 0 ? "#ef4444" : undefined }}>{unreadCount}건</span></div>
           <div className={s.pis}><ShieldCheck size={13} /> <span className={s.pisN} style={{ color: "#2e4bd8" }}>보호중</span></div>
+          <div className={s.pisDelWrap}>
+            {confirmDelete ? (
+              <>
+                <span style={{ fontSize: "12px", color: "#888" }}>삭제할까요?</span>
+                <button className={s.pisDelCancel} onClick={() => setConfirmDelete(false)}>취소</button>
+                <button className={s.pisDel} onClick={handleDelete} disabled={deleting}>
+                  {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />} 삭제
+                </button>
+              </>
+            ) : (
+              <button className={s.pisDel} onClick={() => setConfirmDelete(true)}>
+                <Trash2 size={12} /> 삭제
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
