@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2, AlertTriangle, Bell, Folder, ShieldCheck, Sparkles, Lock, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { Trash2, AlertTriangle, Bell, Folder, ShieldCheck, Sparkles, Lock, CheckCircle2, Clock, Loader2, FileText } from "lucide-react";
 import s from "../monitoring-renewal.module.css";
 import { usePropertyDetail } from "@/app/(app)/monitoring/[id]/hooks/usePropertyDetail";
 import {
@@ -139,6 +139,14 @@ export default function MonitoringDetailView({ propertyId, onBack }: Props) {
             )}
             증명서 PDF
           </button>
+          <a
+            className={s.dBtnIssue}
+            href="https://www.iros.go.kr"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <FileText size={13} /> 등기부등본 발급
+          </a>
         </div>
       </div>
 
@@ -249,7 +257,7 @@ export default function MonitoringDetailView({ propertyId, onBack }: Props) {
         <div className={s.detSub}>하루 2회 등기 상태를 자동 점검한 기록입니다</div>
         {checkLogs.length > 0 ? (
           <>
-            <div className={`${s.detCountBadge} ${s.dcbGreen}`}>
+            <div className={`${s.detCountBadge} ${s.dcbBlue}`}>
               <ShieldCheck size={13} /> 최근 {checkLogs.length}회 감시 실행 기록
             </div>
             <div className={s.logList}>
