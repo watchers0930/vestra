@@ -311,8 +311,10 @@
 .contentD{font-size:13px;color:#888;margin:0 0 20px}
 /* 모바일 탭 */
 .mobileTabs{display:none}
-.mTab{white-space:nowrap;font-size:13px;font-weight:600;padding:8px 15px;border-radius:20px;border:1px solid #e8eaf2;background:#fff;color:#888;cursor:pointer;flex-shrink:0;font-family:inherit}
-.mTab.navOn{background:#2e4bd8;color:#fff;border-color:#2e4bd8}
+.mTab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:600;padding:13px 6px;border-radius:12px;border:1px solid #e8eaf2;background:#fff;color:#888;cursor:pointer;font-family:inherit;transition:all .14s}
+.mTab svg{width:20px;height:20px}
+.mTab:hover{border-color:#c0c7e8;color:#2e4bd8}
+.mTab.navOn{background:#eef1fe;color:#2e4bd8;border-color:#2e4bd8}
 /* 내용증명 목록 카드 미니 타임라인 */
 .kzMini{display:flex;align-items:center;margin-top:13px}
 .kzMiniStep{position:relative;flex:1;display:flex;flex-direction:column;align-items:center}
@@ -340,5 +342,5 @@
   .husage{width:100%;min-width:0}
   .layoutBody{grid-template-columns:1fr}
   .sideNav{display:none}
-  .mobileTabs{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;margin-top:18px}
+  .mobileTabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}
 }

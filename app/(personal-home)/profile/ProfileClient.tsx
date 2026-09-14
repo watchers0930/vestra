@@ -120,13 +120,17 @@ export default function ProfileClient() {
             usage={usage}
           />
 
-          {/* 모바일 가로 탭 */}
+          {/* 모바일 아이콘 그리드 메뉴 */}
           <div className={s.mobileTabs}>
-            {visibleTabs.map((t) => (
-              <button key={t.key} onClick={() => setTab(t.key)} className={`${s.mTab} ${tab === t.key ? s.navOn : ""}`}>
-                {t.label}
-              </button>
-            ))}
+            {visibleTabs.map((t) => {
+              const Icon = t.icon;
+              return (
+                <button key={t.key} onClick={() => setTab(t.key)} className={`${s.mTab} ${tab === t.key ? s.navOn : ""}`}>
+                  <Icon size={20} strokeWidth={1.6} />
+                  <span>{t.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <div className={s.layoutBody}>
