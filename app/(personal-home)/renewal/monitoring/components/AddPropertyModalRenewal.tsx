@@ -32,8 +32,9 @@ function isCollectiveBuilding(type: string): boolean {
 export default function AddPropertyModalRenewal({ onClose, onSuccess, initialAddress = "", initialListingId = "" }: Props) {
   const { showToast } = useToast();
   const [tab, setTab] = useState<"addr" | "pdf">("addr");
-  // 내 자산 포함 여부 (등기감시 = 내 물건이라 기본 포함)
-  const [includeAsset, setIncludeAsset] = useState(true);
+  // 내 자산 포함 여부 — 감시 신청의 기본은 "감시만". 자산 등록은 이용자가 명시적으로 선택할 때만.
+  // (기본 true였을 때 이용자가 의도치 않게 자산에 추가되는 문제가 있어 false 로 변경)
+  const [includeAsset, setIncludeAsset] = useState(false);
   const [assetAnalyzing, setAssetAnalyzing] = useState(false);
 
   // 주소 검색 (매물 상세 등에서 진입 시 주소 프리필)

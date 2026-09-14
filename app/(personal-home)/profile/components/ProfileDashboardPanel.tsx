@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BarChart3, Wallet, Shield, FileText, ArrowRight } from "lucide-react";
+import { BarChart3, Wallet, Shield, FileText, ArrowRight, Trash2 } from "lucide-react";
 import { useDashboardData } from "@/app/(app)/dashboard/hooks/useDashboardData";
 import s from "../profile-renewal.module.css";
 
@@ -18,7 +18,13 @@ function formatEok(won: number): string {
 }
 
 export default function ProfileDashboardPanel({ usage }: Props) {
-  const { assets, analyses, totalAssets, totalValue, avgSafety, mounted } = useDashboardData();
+  const { assets, analyses, totalAssets, totalValue, avgSafety, mounted, handleDeleteAsset } = useDashboardData();
+
+  async function onDeleteAsset(id: string | undefined, name: string) {
+    if (!id) return;
+    if (!confirm(`"${name}" 자산을 삭제하시겠습니까?`)) return;
+    await handleDeleteAsset(id);
+  }
 
   const metrics = [
     { icon: Wallet, label: "등록 자산", value: `${totalAssets ?? 0}건` },
@@ -107,7 +113,18 @@ export default function ProfileDashboardPanel({ usage }: Props) {
             {assets.slice(0, 5).map((a: { id?: string; address?: string; currentValue?: number; value?: number }, i: number) => (
               <div key={a.id || i} className={s.listRow}>
                 <span className={s.listAddr}>{a.address || "자산"}</span>
-                <span className={s.listVal}>{formatEok(a.currentValue ?? a.value ?? 0)}</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+                  <span className={s.listVal}>{formatEok(a.currentValue ?? a.value ?? 0)}</span>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteAsset(a.id, a.address || "자산")}
+                    title="자산 삭제"
+                    aria-label="자산 삭제"
+                    style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, border: "none", background: "transparent", color: "#b0b0b5", cursor: "pointer", borderRadius: 6 }}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </span>
               </div>
             ))}
           </div>

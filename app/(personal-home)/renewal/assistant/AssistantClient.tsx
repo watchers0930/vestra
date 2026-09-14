@@ -28,6 +28,7 @@ export default function AssistantClient() {
     messages, input, setInput, loading, streamingContent, messagesEndRef,
     sendMessage, isGuest, guestRemaining,
     showSignupModal, setShowSignupModal,
+    clearConversation,
   } = useAssistantData();
 
   // 새 메시지/스트리밍 시 하단으로 자동 스크롤
@@ -66,6 +67,29 @@ export default function AssistantClient() {
             <span className={s.chatHeadDot} />
             <span className={s.chatHeadT}>VESTRA AI 어시스턴트</span>
             <span className={s.chatHeadS}>GPT 기반 · 부동산 특화</span>
+            {messages.length > 0 && (
+              <button
+                type="button"
+                onClick={clearConversation}
+                title="대화 내용을 지우고 새로 시작합니다"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  padding: "5px 12px",
+                  border: "1px solid rgba(0,0,0,0.12)",
+                  borderRadius: 8,
+                  background: "#fff",
+                  color: "#6e6e73",
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>
+                새 대화
+              </button>
+            )}
           </div>
 
           <div className={s.chatBody} role="log" aria-live="polite" aria-label="채팅 메시지">
