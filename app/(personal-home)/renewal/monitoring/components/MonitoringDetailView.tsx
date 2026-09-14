@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Trash2, AlertTriangle, Bell, Folder, ShieldCheck, Sparkles, Lock, CheckCircle2, Clock, Loader2, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Trash2, AlertTriangle, Bell, Folder, ShieldCheck, Sparkles, Lock, CheckCircle2, Clock, Loader2, FileText, Wallet } from "lucide-react";
 import s from "../monitoring-renewal.module.css";
+import { useToast } from "@/components/common/toast";
+import { addOrUpdateAsset, getAssets } from "@/lib/store";
+import { analyzeAndSaveMonitoredAsset } from "@/lib/monitor-asset-register";
 import { usePropertyDetail } from "@/app/(app)/monitoring/[id]/hooks/usePropertyDetail";
 import {
   CHANGE_TYPE_LABEL,
@@ -52,10 +55,47 @@ export default function MonitoringDetailView({ propertyId, onBack }: Props) {
     deleteProperty,
   } = usePropertyDetail(propertyId);
 
+  const { showToast } = useToast();
   const [showPubkey, setShowPubkey] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [addingAsset, setAddingAsset] = useState(false);
+  const [assetAdded, setAssetAdded] = useState(false);
+
+  // 이미 내 자산에 있는 물건인지 (주소 매칭)
+  useEffect(() => {
+    if (property) setAssetAdded(getAssets().some((a) => a.address === property.address));
+  }, [property]);
+
+  async function handleAddAsset() {
+    if (!property || addingAsset) return;
+    setAddingAsset(true);
+    try {
+      const res = await fetch(`/api/monitoring/${propertyId}/to-asset`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.asset) {
+        addOrUpdateAsset(data.asset);
+        setAssetAdded(true);
+        showToast("내 자산에 추가됐습니다 — 대시보드에 반영됩니다.", "success");
+      } else if (res.ok && data.analyzed === false) {
+        // 등기 원문 없음 → 주소 기반 시세만 반영
+        const r = await analyzeAndSaveMonitoredAsset({ address: property.address });
+        if (r.ok) {
+          setAssetAdded(true);
+          showToast("시세를 자산에 반영했습니다(안전도는 등기부 PDF 등록 시 분석).", "success");
+        } else {
+          showToast("자산 추가에 실패했습니다.", "error");
+        }
+      } else {
+        showToast(data.error || "자산 추가에 실패했습니다.", "error");
+      }
+    } catch {
+      showToast("네트워크 오류가 발생했습니다.", "error");
+    } finally {
+      setAddingAsset(false);
+    }
+  }
 
   async function handleDelete() {
     setDeleting(true);
@@ -126,6 +166,14 @@ export default function MonitoringDetailView({ propertyId, onBack }: Props) {
           ) : (
             <button className={s.dBtnDel} onClick={() => setConfirmDelete(true)}>
               <Trash2 size={13} /> 삭제
+            </button>
+          )}
+          {assetAdded ? (
+            <span className={s.dBtnAssetOn}><Wallet size={13} /> 자산에 포함됨</span>
+          ) : (
+            <button className={s.dBtnAsset} onClick={handleAddAsset} disabled={addingAsset}>
+              {addingAsset ? <Loader2 size={13} className="animate-spin" /> : <Wallet size={13} />}
+              내 자산으로 추가
             </button>
           )}
           <button className={s.dBtnPdf} onClick={handleExportPdf} disabled={pdfLoading}>

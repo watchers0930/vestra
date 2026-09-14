@@ -195,13 +195,17 @@
 .detailTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
 .detailBack{display:flex;align-items:center;gap:6px;font-size:13px;color:#888;cursor:pointer;transition:color .15s}
 .detailBack:hover{color:#2e4bd8}
-.detailActions{display:flex;gap:8px}
+.detailActions{display:flex;gap:8px;flex-wrap:wrap}
 .dBtnDel{height:38px;padding:0 18px;border:1px solid #e0e3ef;background:#fff;color:#888;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
 .dBtnDel:hover{border-color:#fca5a5;color:#b91c1c;background:#fff1f2}
 .dBtnPdf{height:38px;padding:0 16px;border:1px solid #2e4bd8;background:#fff;color:#2e4bd8;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
 .dBtnPdf:hover{background:#2e4bd8;color:#fff}
 .dBtnIssue{height:38px;padding:0 16px;border:1px solid #2e4bd8;background:#2e4bd8;color:#fff;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;text-decoration:none}
 .dBtnIssue:hover{background:#2439b0;border-color:#2439b0}
+.dBtnAsset{height:38px;padding:0 16px;border:1px solid #2e4bd8;background:#fff;color:#2e4bd8;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.dBtnAsset:hover{background:#2e4bd8;color:#fff}
+.dBtnAsset:disabled{opacity:.6;cursor:default}
+.dBtnAssetOn{height:38px;padding:0 16px;border:1px solid #cdd6f5;background:#eef1fb;color:#3452c5;border-radius:8px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 
 /* PROP INFO CARD */
 .propInfoCard{background:#fff;border:1px solid #e0e3ef;border-radius:16px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.04);margin-bottom:20px}
