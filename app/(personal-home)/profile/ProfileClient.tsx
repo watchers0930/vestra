@@ -158,7 +158,7 @@ export default function ProfileClient() {
               {tab === "consult" && <ProfileConsultsPanel />}
               {tab === "info" && (
                 <>
-                  <ProfileInfoPanel user={user} />
+                  <ProfileInfoPanel user={user} subscription={subscription} />
                   {withdrawSection}
                 </>
               )}

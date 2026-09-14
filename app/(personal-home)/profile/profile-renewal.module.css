@@ -64,6 +64,10 @@
 .roleBiz{background:#3b82f6}
 .rolePersonal{background:#8b8d98}
 .verifyBadge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600}
+.planBadge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;color:#fff;padding:3px 10px;border-radius:20px}
+.planFree{background:#a1a1aa}
+.planPro{background:#0ea5e9}
+.planBiz{background:linear-gradient(135deg,#7c3aed,#4f46e5)}
 .vNone{color:#8b8d98}
 .vPending{color:#f59e0b}
 .vVerified{color:#22c55e}

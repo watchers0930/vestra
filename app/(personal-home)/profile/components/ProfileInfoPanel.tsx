@@ -1,6 +1,7 @@
 import Image from "next/image";
-import { User, Shield, CheckCircle2 } from "lucide-react";
+import { User, Shield, CheckCircle2, Crown } from "lucide-react";
 import { ROLE_INFO, VERIFY_STATUS } from "./profileConstants";
+import { isPaidPlan } from "@/lib/subscription-plan";
 import s from "../profile-renewal.module.css";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
     role?: string;
     verifyStatus?: string;
   };
+  subscription?: { plan?: string; status?: string } | null;
 }
 
 const ROLE_CLASS: Record<string, string> = {
@@ -19,14 +21,18 @@ const ROLE_CLASS: Record<string, string> = {
 const VERIFY_CLASS: Record<string, string> = {
   none: s.vNone, pending: s.vPending, verified: s.vVerified, rejected: s.vRejected,
 };
+const PLAN_LABEL: Record<string, string> = { FREE: "무료 플랜", PRO: "프로 플랜", BUSINESS: "비즈니스 플랜" };
+const PLAN_CLASS: Record<string, string> = { FREE: s.planFree, PRO: s.planPro, BUSINESS: s.planBiz };
 
-export default function ProfileInfoPanel({ user }: Props) {
+export default function ProfileInfoPanel({ user, subscription }: Props) {
   const role = user.role || "PERSONAL";
   const roleInfo = ROLE_INFO[role] || ROLE_INFO.PERSONAL;
   const RoleIcon = roleInfo.icon;
   const verifyKey = user.verifyStatus || "none";
   const verifyInfo = VERIFY_STATUS[verifyKey];
   const VerifyIcon = verifyInfo.icon;
+  // 현재 구독 플랜 (isPaidPlan과 동일 기준: PRO/BUSINESS + active만 유료, 그 외 무료)
+  const activePlan = isPaidPlan(subscription?.plan, subscription?.status) ? subscription!.plan! : "FREE";
 
   return (
     <div>
@@ -51,6 +57,10 @@ export default function ProfileInfoPanel({ user }: Props) {
               <span className={`${s.verifyBadge} ${VERIFY_CLASS[verifyKey]}`}>
                 <VerifyIcon size={12} />
                 {verifyInfo.label}
+              </span>
+              <span className={`${s.planBadge} ${PLAN_CLASS[activePlan] || s.planFree}`}>
+                {activePlan !== "FREE" && <Crown size={12} />}
+                {PLAN_LABEL[activePlan] || "무료 플랜"}
               </span>
             </div>
           </div>
