@@ -192,8 +192,8 @@
 .mParseBtn:hover{background:#2e4bd8}
 
 /* DETAIL PAGE */
-.detailTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
-.detailBack{display:flex;align-items:center;gap:6px;font-size:13px;color:#888;cursor:pointer;transition:color .15s}
+.detailTop{display:flex;flex-direction:column;align-items:flex-start;gap:14px;margin-bottom:24px}
+.detailBack{display:flex;align-items:center;gap:6px;font-size:13px;color:#888;cursor:pointer;transition:color .15s;white-space:nowrap}
 .detailBack:hover{color:#2e4bd8}
 .detailActions{display:flex;gap:8px;flex-wrap:wrap}
 .dBtnDel{height:38px;padding:0 18px;border:1px solid #e0e3ef;background:#fff;color:#888;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
