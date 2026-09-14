@@ -187,7 +187,7 @@ export default function MonitoringDetailView({ propertyId, onBack }: Props) {
         <div className={s.picStats}>
           <div className={s.pis}><Folder size={13} /> 스냅샷 <span className={s.pisN}>{property.snapshotCount}건</span></div>
           <div className={s.pis}><Bell size={13} /> 미확인 알림 <span className={s.pisN} style={{ color: unreadCount > 0 ? "#ef4444" : undefined }}>{unreadCount}건</span></div>
-          <div className={s.pis}><ShieldCheck size={13} /> <span className={s.pisN} style={{ color: "#22c55e" }}>보호중</span></div>
+          <div className={s.pis}><ShieldCheck size={13} /> <span className={s.pisN} style={{ color: "#2e4bd8" }}>보호중</span></div>
         </div>
       </div>
 
