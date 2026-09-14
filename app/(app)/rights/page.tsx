@@ -29,6 +29,7 @@ export default function RightsAnalysisPage() {
     step, result, error, setError,
     fileName, fileType, isDragging, isExtracting,
     analysisId, previousAnalysis,
+    saveToAsset, assetSaved,
     tilkoAddress, setTilkoAddress,
     tilkoFetching, tilkoSource, setTilkoSource,
     fileInputRef,
@@ -188,7 +189,23 @@ export default function RightsAnalysisPage() {
       {result && step === "done" && ownerMatch !== false && (
         <>
           <div id="rights-result" aria-live="polite">
-            <AiDisclaimer compact className="mb-4" />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+              <AiDisclaimer compact />
+              <button
+                type="button"
+                onClick={saveToAsset}
+                disabled={assetSaved}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 5,
+                  padding: "8px 14px", borderRadius: 10, border: "none",
+                  background: assetSaved ? "rgba(0,0,0,0.06)" : "var(--brand-primary)",
+                  color: assetSaved ? "#86868b" : "#fff",
+                  fontSize: 13, fontWeight: 700, cursor: assetSaved ? "default" : "pointer", whiteSpace: "nowrap",
+                }}
+              >
+                {assetSaved ? "✓ 자산에 저장됨" : "＋ 내 자산으로 저장"}
+              </button>
+            </div>
             <RightsResult result={result} rawText={rawText} />
           </div>
 

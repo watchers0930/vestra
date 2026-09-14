@@ -32,6 +32,7 @@ export function usePredictionData() {
   const [analysisId, setAnalysisId] = useState<string>("");
   const [previousAnalysis, setPreviousAnalysis] = useState<{ date: string; summary: string } | null>(null);
   const [showPostcode, setShowPostcode] = useState(false);
+  const [assetSaved, setAssetSaved] = useState(false); // '내 자산으로 저장' 여부
 
   // localStorage 프리필 + 이전 분석 기록
   useEffect(() => {
@@ -66,6 +67,7 @@ export function usePredictionData() {
     setAddress(builtAddress);
     setLoading(true);
     setResult(null);
+    setAssetSaved(false);
     setSelectedArea(null);
     setSelectedApt(null);
     setAddressInfo(null);
@@ -106,13 +108,7 @@ export function usePredictionData() {
         summary: `현재 ${formatKRW(data.currentPrice)}, 신뢰도 ${data.confidence}%`,
         data: data as Record<string, unknown>,
       });
-      addOrUpdateAsset({
-        address: builtAddress,
-        type: "부동산",
-        estimatedPrice: data.currentPrice,
-        safetyScore: data.confidence,
-        riskScore: 100 - data.confidence,
-      });
+      // [변경] 조회만으로 자동 자산화하지 않는다. '내 자산으로 저장' 버튼(saveToAsset)으로만 등록.
 
       addNotification(`시세전망 완료: ${builtAddress}`);
       setAnalysisId(`prediction_${Date.now()}`);
@@ -125,6 +121,20 @@ export function usePredictionData() {
       setLoading(false);
     }
   };
+
+  // '내 자산으로 저장' — 조회 결과를 명시적으로 대시보드 자산에 등록
+  const saveToAsset = useCallback(() => {
+    if (!result || !address || assetSaved) return;
+    addOrUpdateAsset({
+      address,
+      type: "부동산",
+      estimatedPrice: result.currentPrice,
+      safetyScore: result.confidence,
+      riskScore: 100 - result.confidence,
+    });
+    setAssetSaved(true);
+    addNotification("내 자산으로 저장되었습니다.");
+  }, [result, address, assetSaved]);
 
   // 카카오 Geocoder 주소 변환
   useEffect(() => {
@@ -308,6 +318,7 @@ export function usePredictionData() {
     openDaumPostcode,
     showPostcode, setShowPostcode, handlePostcode,
     handleAnalyze,
+    saveToAsset, assetSaved,
     availableApts,
     availableAreas,
     filteredTransactions,

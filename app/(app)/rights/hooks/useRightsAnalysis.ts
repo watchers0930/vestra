@@ -43,6 +43,7 @@ export function useRightsAnalysis() {
   const [autoAddress, setAutoAddress] = useState<string | null>(null);
   const [ownerMatch, setOwnerMatch] = useState<boolean | null>(null);
   const [registryOwnerMasked, setRegistryOwnerMasked] = useState<string>("");
+  const [assetSaved, setAssetSaved] = useState(false); // '내 자산으로 저장' 여부
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -201,14 +202,7 @@ export function useRightsAnalysis() {
         summary: `${data.riskScore?.grade || "?"}등급 (${data.riskScore?.gradeLabel || ""}, ${data.riskScore?.totalScore || 0}점) | ${summaryLabel}`,
         data: data as unknown as Record<string, unknown>,
       });
-      addOrUpdateAsset({
-        address: addr,
-        type: data.propertyInfo?.type || "부동산",
-        estimatedPrice: priceForAnalysis || data.propertyInfo?.estimatedPrice || 0,
-        jeonsePrice: data.propertyInfo?.jeonsePrice || 0,
-        safetyScore: data.riskAnalysis?.safetyScore || 0,
-        riskScore: data.riskAnalysis?.riskScore || 0,
-      });
+      // [변경] 조회만으로 자동 자산화하지 않는다. '내 자산으로 저장' 버튼(saveToAsset)으로만 등록.
     } catch (e) {
       setError(e instanceof Error ? e.message : "분석에 실패했습니다.");
       setStep("idle");
@@ -311,14 +305,7 @@ export function useRightsAnalysis() {
         summary: `${data.riskScore?.grade || "?"}등급 (${data.riskScore?.gradeLabel || ""}, ${data.riskScore?.totalScore || 0}점) | 근저당비율 ${data.riskScore?.mortgageRatio?.toFixed(1) || 0}%`,
         data: data as unknown as Record<string, unknown>,
       });
-      addOrUpdateAsset({
-        address: data.propertyInfo?.address || "직접 입력",
-        type: data.propertyInfo?.type || "부동산",
-        estimatedPrice: data.propertyInfo?.estimatedPrice || 0,
-        jeonsePrice: data.propertyInfo?.jeonsePrice || 0,
-        safetyScore: data.riskAnalysis?.safetyScore || 0,
-        riskScore: data.riskAnalysis?.riskScore || 0,
-      });
+      // [변경] 조회만으로 자동 자산화하지 않는다. '내 자산으로 저장' 버튼(saveToAsset)으로만 등록.
 
       const addr = data.parsed?.title?.address || (fileName || "직접 입력");
       addNotification(`권리분석 완료: ${addr}`);
@@ -361,16 +348,28 @@ export function useRightsAnalysis() {
       summary: `${data.riskScore?.grade || "?"}등급 (${data.riskScore?.gradeLabel || ""}, ${data.riskScore?.totalScore || 0}점) | 틸코 등기부 발급`,
       data: data as unknown as Record<string, unknown>,
     });
-    addOrUpdateAsset({
-      address: data.propertyInfo?.address || addr,
-      type: data.propertyInfo?.type || "부동산",
-      estimatedPrice: data.propertyInfo?.estimatedPrice || 0,
-      jeonsePrice: data.propertyInfo?.jeonsePrice || 0,
-      safetyScore: data.riskAnalysis?.safetyScore || 0,
-      riskScore: data.riskAnalysis?.riskScore || 0,
-    });
+    // [변경] 조회만으로 자동 자산화하지 않는다. '내 자산으로 저장' 버튼(saveToAsset)으로만 등록.
     addNotification(`틸코 등기부 발급 및 권리분석 완료: ${addr}`);
   }, []);
+
+  // 새 분석 결과가 나오면 저장 상태 초기화
+  useEffect(() => { setAssetSaved(false); }, [result]);
+
+  // '내 자산으로 저장' — 분석 결과를 명시적으로 대시보드 자산에 등록
+  const saveToAsset = useCallback(() => {
+    if (!result || assetSaved) return;
+    const addr = result.propertyInfo?.address || result.parsed?.title?.address || autoAddress || "직접 입력";
+    addOrUpdateAsset({
+      address: addr,
+      type: result.propertyInfo?.type || "부동산",
+      estimatedPrice: result.propertyInfo?.estimatedPrice || 0,
+      jeonsePrice: result.propertyInfo?.jeonsePrice || 0,
+      safetyScore: result.riskAnalysis?.safetyScore || 0,
+      riskScore: result.riskAnalysis?.riskScore || 0,
+    });
+    setAssetSaved(true);
+    addNotification("내 자산으로 저장되었습니다.");
+  }, [result, assetSaved, autoAddress]);
 
   // autoAddress 세팅 시 자동 분석 실행 (handleAddressAnalyze 정의 이후에 선언)
   useEffect(() => {
@@ -387,6 +386,7 @@ export function useRightsAnalysis() {
     step, result, error, setError,
     fileName, fileType, isDragging, isExtracting,
     analysisId, previousAnalysis,
+    saveToAsset, assetSaved,
     tilkoAddress, setTilkoAddress,
     tilkoFetching, tilkoSource, setTilkoSource,
     fileInputRef,

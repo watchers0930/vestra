@@ -53,6 +53,7 @@ export default function PredictionPage() {
     openDaumPostcode, showPostcode, setShowPostcode, handlePostcode, handleAnalyze, availableApts, availableAreas,
     filteredTransactions, filteredStats, scenarios, disabledTabs,
     getChartData, getHistoricalData, getMonthlyTrendData,
+    saveToAsset, assetSaved,
   } = usePredictionData();
 
   const [officialPrice, setOfficialPrice] = useState<OfficialPriceResult | null>(null);
@@ -165,9 +166,25 @@ export default function PredictionPage() {
         <div ref={resultRef} style={{ display: "flex", flexDirection: "column", gap: "20px" }} aria-live="polite">
 
           {/* 결과 상단 액션 */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
             <AiDisclaimer compact />
-            <PdfDownloadButton targetRef={resultRef} filename="vestra-prediction.pdf" title="VESTRA 시세전망 리포트" />
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                type="button"
+                onClick={saveToAsset}
+                disabled={assetSaved}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 5,
+                  padding: "8px 14px", borderRadius: 10, border: "none",
+                  background: assetSaved ? "rgba(0,0,0,0.06)" : "var(--brand-primary)",
+                  color: assetSaved ? "#86868b" : "#fff",
+                  fontSize: 13, fontWeight: 700, cursor: assetSaved ? "default" : "pointer", whiteSpace: "nowrap",
+                }}
+              >
+                {assetSaved ? "✓ 자산에 저장됨" : "＋ 내 자산으로 저장"}
+              </button>
+              <PdfDownloadButton targetRef={resultRef} filename="vestra-prediction.pdf" title="VESTRA 시세전망 리포트" />
+            </div>
           </div>
 
           <TransactionFilter
