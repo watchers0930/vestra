@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       where: { id },
       select: {
         userId: true, lawyerId: true, status: true,
-        cause: true, senderName: true, draftContent: true,
+        cause: true, senderName: true, recipientName: true, address: true, draftContent: true,
         signatureUrl: true, stampUrl: true,
       },
     });
@@ -66,6 +66,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         title,
         content: kz.draftContent,
         senderName: kz.senderName,
+        recipientName: kz.recipientName ?? undefined,
+        address: kz.address ?? undefined,
         signature: kz.signatureUrl ?? undefined,
         date,
         lawyerName: lawyer?.name ?? undefined,

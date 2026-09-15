@@ -37,6 +37,8 @@ export async function POST(req: NextRequest) {
 
     const title = sanitizeField(String(body.title ?? ""), 200);
     const senderName = sanitizeField(String(body.senderName ?? ""), 100);
+    const recipientName = sanitizeField(String(body.recipientName ?? ""), 100) || undefined;
+    const address = sanitizeField(String(body.address ?? ""), 400) || undefined;
     const content = String(body.content ?? "").slice(0, 20000);
     const lawyerName = sanitizeField(String(body.lawyerName ?? ""), 100) || undefined;
     // 서명·직인은 data:image/ PNG data URL만 허용 (그 외 무시)
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     const pdfBuffer = await renderToBuffer(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      React.createElement(KeepzipCdPdf, { data: { title, content, senderName, signature, date, lawyerName, stamp } }) as any
+      React.createElement(KeepzipCdPdf, { data: { title, content, senderName, recipientName, address, signature, date, lawyerName, stamp } }) as any
     );
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
