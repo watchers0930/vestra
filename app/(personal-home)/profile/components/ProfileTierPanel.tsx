@@ -29,6 +29,8 @@ export default function ProfileTierPanel({
 }: Props) {
   const planLabel = subscription?.plan === "FREE" || !subscription?.plan ? "무료"
     : subscription.plan === "PRO" ? "프로" : subscription.plan === "BUSINESS" ? "비즈니스" : subscription.plan;
+  // 현재 구독 중인 플랜(무료 기본) — 아래 플랜 카드에서 이 플랜을 선택 표시
+  const currentPlan = subscription?.plan && subscription.plan !== "FREE" ? subscription.plan : "FREE";
 
   return (
     <div>
@@ -120,15 +122,19 @@ export default function ProfileTierPanel({
 
         <div className={s.planGrid}>
           {[
-            { label: "무료", price: "0원", active: true },
-            { label: "프로", price: "29,900원", active: false },
-            { label: "비즈니스", price: "99,000원", active: false },
-          ].map((p) => (
-            <div key={p.label} className={`${s.planCard} ${p.active ? s.onPlan : ""}`}>
-              <div className={s.planName}>{p.label}</div>
-              <div className={s.planPrice}>{p.price}/월</div>
-            </div>
-          ))}
+            { label: "무료", price: "0원", plan: "FREE" },
+            { label: "프로", price: "29,900원", plan: "PRO" },
+            { label: "비즈니스", price: "99,000원", plan: "BUSINESS" },
+          ].map((p) => {
+            const on = currentPlan === p.plan;
+            return (
+              <div key={p.label} className={`${s.planCard} ${on ? s.onPlan : ""}`}>
+                <div className={s.planName}>{p.label}</div>
+                <div className={s.planPrice}>{p.price}/월</div>
+                {on && <div className={s.planCurrent}>이용 중</div>}
+              </div>
+            );
+          })}
         </div>
 
         <div className={s.notifyBox}>

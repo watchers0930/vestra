@@ -1,9 +1,13 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, Crown } from "lucide-react";
 import { ROLE_INFO } from "./profileConstants";
+import { isPaidPlan } from "@/lib/subscription-plan";
 import type { UsageData } from "../hooks/useProfileData";
 import s from "../profile-renewal.module.css";
+
+const PLAN_LABEL: Record<string, string> = { PRO: "프로 플랜", BUSINESS: "비즈니스 플랜" };
+const PLAN_CLASS: Record<string, string> = { PRO: s.planPro, BUSINESS: s.planBiz };
 
 interface Props {
   name: string;
@@ -11,11 +15,14 @@ interface Props {
   role: string;
   verifyStatus?: string;
   usage: UsageData | null;
+  subscription?: { plan?: string; status?: string } | null;
 }
 
 /** 마이페이지 상단 개인화 헤더(서브 히어로) — 아바타·이름·등급·인증·사용량 */
-export default function ProfileHeader({ name, email, role, verifyStatus, usage }: Props) {
+export default function ProfileHeader({ name, email, role, verifyStatus, usage, subscription }: Props) {
   const roleLabel = ROLE_INFO[role]?.label ?? "개인";
+  // 유료 구독(PRO/BUSINESS + active)일 때만 히어로에 플랜 배지 노출
+  const paidPlan = isPaidPlan(subscription?.plan, subscription?.status) ? subscription!.plan! : null;
   const initial = (name || "회").charAt(0);
   const used = usage?.used ?? 0;
   const limit = usage?.limit ?? ROLE_INFO[role]?.limit ?? 5;
@@ -33,6 +40,11 @@ export default function ProfileHeader({ name, email, role, verifyStatus, usage }
           {email && <div className={s.pmail}>{email}</div>}
           <div className={s.pbadges}>
             <span className={`${s.hpill} ${s.hpillRole}`}>{roleLabel} 회원</span>
+            {paidPlan && (
+              <span className={`${s.planBadge} ${PLAN_CLASS[paidPlan] || s.planPro}`}>
+                <Crown size={12} /> {PLAN_LABEL[paidPlan] || "플랜"} 이용 중
+              </span>
+            )}
             {verified && (
               <span className={`${s.hpill} ${s.hpillOk}`}><Check size={12} strokeWidth={2.6} /> 인증 완료</span>
             )}

@@ -119,6 +119,7 @@ export default function ProfileClient() {
             role={role}
             verifyStatus={user.verifyStatus}
             usage={usage}
+            subscription={subscription}
           />
 
           {/* 모바일 아이콘 그리드 메뉴 */}
