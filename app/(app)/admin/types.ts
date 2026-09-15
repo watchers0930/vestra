@@ -31,6 +31,7 @@ export interface UserItem {
   email: string;
   image: string | null;
   role: string;
+  requestedRole?: string | null;
   verifyStatus: string;
   dailyLimit: number;
   businessNumber: string | null;

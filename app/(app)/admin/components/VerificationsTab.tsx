@@ -38,8 +38,8 @@ export function VerificationsTab({ pending, setConfirmModal, handleVerify }: Pro
               <div>
                 <p className="font-medium text-gray-900">{user.name || "이름 없음"}</p>
                 <p className="text-xs text-gray-500">{user.email}</p>
-                {user.role && user.role !== "PERSONAL" && (
-                  <p className="text-xs text-teal-600 font-medium mt-1">신청 등급: {ROLE_LABELS[user.role] ?? user.role}</p>
+                {user.requestedRole && (
+                  <p className="text-xs text-teal-600 font-medium mt-1">신청 등급: {ROLE_LABELS[user.requestedRole] ?? user.requestedRole}</p>
                 )}
                 {user.businessNumber && (
                   <p className="text-xs text-gray-500 mt-1">사업자번호: {user.businessNumber}</p>

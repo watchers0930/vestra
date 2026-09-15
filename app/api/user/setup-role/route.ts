@@ -51,12 +51,12 @@ export async function POST(req: NextRequest) {
     });
 
     if (user?.companyName) {
-      // [보안] 이미 business info가 있어도 사업자 역할 전환은 재승인을 거친다.
-      // verifyStatus를 pending으로 재설정해, 재검증 없이 REALESTATE/BUSINESS 권한을
-      // 무단 획득(권한 상승)하는 것을 차단한다. (실기능 게이팅은 verified 필수)
+      // [보안] 사업자 역할은 관리자 승인 전까지 부여하지 않는다.
+      // role은 그대로 두고(PERSONAL 유지) 요청 역할만 requestedRole에 기록 →
+      // 승인 전 권한 상승·화면 오전환을 원천 차단한다. (승인 시 admin/verify가 role 부여)
       await prisma.user.update({
         where: { id: session.user.id },
-        data: { role, verifyStatus: "pending" },
+        data: { requestedRole: role, verifyStatus: "pending" },
       });
 
       await logAuditWithRequest({
@@ -83,11 +83,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "대표자명을 입력해주세요 (2~20자)" }, { status: 400 });
   }
 
-  // business info 저장 + 역할 전환
+  // business info 저장 + 승인 대기(요청 역할만 기록, role은 승인 시 부여)
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
-      role,
+      requestedRole: role,
       businessNumber: businessNumber.trim(),
       companyName: companyName.trim(),
       representName: representName.trim(),

@@ -13,6 +13,7 @@ export const GET = withAdminAuth(async () => {
       name: true,
       email: true,
       image: true,
+      requestedRole: true,
       businessNumber: true,
       companyName: true,
       representName: true,
@@ -33,7 +34,7 @@ export const POST = withAdminAuth(async (req, { session }) => {
 
   const targetUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { verifyStatus: true },
+    select: { verifyStatus: true, requestedRole: true },
   });
 
   if (!targetUser || targetUser.verifyStatus !== "pending") {
@@ -41,12 +42,13 @@ export const POST = withAdminAuth(async (req, { session }) => {
   }
 
   if (action === "approve") {
-    const approvedRole = role || "BUSINESS";
+    // 승인 역할 우선순위: 관리자가 지정한 role > 사용자가 신청한 requestedRole > 기본 BUSINESS
+    const approvedRole = role || targetUser.requestedRole || "BUSINESS";
     const dailyLimit = ROLE_LIMITS[approvedRole] || ROLE_LIMITS.BUSINESS;
 
     await prisma.user.update({
       where: { id: userId },
-      data: { role: approvedRole, verifyStatus: "verified", dailyLimit },
+      data: { role: approvedRole, verifyStatus: "verified", dailyLimit, requestedRole: null },
     });
 
     createAuditLog({
@@ -62,7 +64,7 @@ export const POST = withAdminAuth(async (req, { session }) => {
 
   await prisma.user.update({
     where: { id: userId },
-    data: { verifyStatus: "rejected" },
+    data: { verifyStatus: "rejected", requestedRole: null },
   });
 
   createAuditLog({
