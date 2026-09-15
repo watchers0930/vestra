@@ -41,16 +41,16 @@ export interface KeepzipCdPdfData {
 const styles = StyleSheet.create({
   page: { paddingTop: 56, paddingBottom: 56, paddingHorizontal: 54, fontFamily: "Paperlogy", fontSize: 12, color: "#1a1d2e" },
   title: { fontSize: 18, fontWeight: 700, textAlign: "center", marginBottom: 24 },
-  // 발신인·수신인·부동산 표시 테이블 (한국 내용증명 표준 형식)
-  infoTable: { borderWidth: 1, borderColor: "#333", borderBottomWidth: 0, marginBottom: 26 },
+  // 수신인·발신인·부동산 표시 테이블 (라벨 | 값)
+  infoTable: { borderWidth: 1, borderColor: "#333", borderBottomWidth: 0, marginBottom: 22 },
   infoRow: { flexDirection: "row", borderBottomWidth: 1, borderColor: "#333" },
-  infoLabel: { width: 92, paddingVertical: 7, paddingHorizontal: 8, fontSize: 12, fontWeight: 700, borderRightWidth: 1, borderColor: "#333", backgroundColor: "#f2f4f8" },
+  infoLabel: { width: 104, paddingVertical: 7, paddingHorizontal: 10, fontSize: 12, fontWeight: 700, borderRightWidth: 1, borderColor: "#333" },
   infoValue: { flex: 1, paddingVertical: 7, paddingHorizontal: 10, fontSize: 12 },
-  // 본문 항목 테이블 (번호 | 내용)
-  bodyTable: { borderWidth: 1, borderColor: "#333", borderBottomWidth: 0, marginBottom: 24 },
-  bodyRow: { flexDirection: "row", borderBottomWidth: 1, borderColor: "#333" },
-  bodyNo: { width: 34, paddingVertical: 7, paddingHorizontal: 4, fontSize: 12, fontWeight: 700, textAlign: "center", borderRightWidth: 1, borderColor: "#333", backgroundColor: "#f2f4f8" },
-  bodyCell: { flex: 1, paddingVertical: 7, paddingHorizontal: 10, fontSize: 12, lineHeight: 1.7, textAlign: "justify" },
+  // 본문 테이블 ("내용" 헤더 + 본문 전체 단일 셀)
+  bodyTable: { borderWidth: 1, borderColor: "#333", marginBottom: 24 },
+  bodyHeader: { paddingVertical: 7, fontSize: 12, fontWeight: 700, textAlign: "center", borderBottomWidth: 1, borderColor: "#333" },
+  bodyContent: { paddingVertical: 12, paddingHorizontal: 12 },
+  bodyLine: { fontSize: 12, lineHeight: 1.8, marginBottom: 8, textAlign: "justify" },
   date: { fontSize: 12, textAlign: "center", marginTop: 28, marginBottom: 28 },
   signWrap: { marginTop: 8, alignItems: "flex-end" },
   signRow: { flexDirection: "row", alignItems: "center" },
@@ -67,16 +67,12 @@ export function KeepzipCdPdf({ data }: { data: KeepzipCdPdfData }) {
     .split(/\n+/)
     .map((l) => l.trim())
     .filter((l) => l.length > 0 && !HEADER_LINE.test(l));
+  // 수신인 → 발신인 → 부동산의 표시 순서
   const rows: { label: string; value: string }[] = [
-    { label: "발신인", value: data.senderName },
     ...(data.recipientName ? [{ label: "수신인", value: data.recipientName }] : []),
+    { label: "발신인", value: data.senderName },
     ...(data.address ? [{ label: "부동산의 표시", value: data.address }] : []),
   ];
-  // 본문 각 항목을 "번호 | 내용"으로 분리. "1. 내용" 형태면 번호 셀로, 아니면 번호 없이 내용만.
-  const bodyRows = paras.map((p) => {
-    const m = p.match(/^(\d+)\s*[.)]\s*([\s\S]*)$/);
-    return m ? { no: m[1], text: m[2] } : { no: "", text: p };
-  });
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -90,12 +86,12 @@ export function KeepzipCdPdf({ data }: { data: KeepzipCdPdfData }) {
           ))}
         </View>
         <View style={styles.bodyTable}>
-          {bodyRows.map((r, i) => (
-            <View key={i} style={styles.bodyRow}>
-              <Text style={styles.bodyNo}>{r.no}</Text>
-              <Text style={styles.bodyCell}>{r.text}</Text>
-            </View>
-          ))}
+          <Text style={styles.bodyHeader}>내용</Text>
+          <View style={styles.bodyContent}>
+            {paras.map((line, i) => (
+              <Text key={i} style={styles.bodyLine}>{line}</Text>
+            ))}
+          </View>
         </View>
         <Text style={styles.date}>{data.date}</Text>
         <View style={styles.signWrap}>
