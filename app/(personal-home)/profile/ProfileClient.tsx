@@ -186,7 +186,6 @@ export default function ProfileClient() {
                   subscription={subscription}
                   cancelLoading={cancelLoading}
                   handleCancelSubscription={handleCancelSubscription}
-                  showToast={showToast}
                 />
               )}
               {tab === "notif" && (

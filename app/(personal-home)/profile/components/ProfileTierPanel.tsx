@@ -18,14 +18,13 @@ interface Props {
   subscription: { plan?: string; status?: string } | null;
   cancelLoading: boolean;
   handleCancelSubscription: () => void;
-  showToast: (msg: string) => void;
 }
 
 export default function ProfileTierPanel({
   role, verifyStatus, businessNumber, setBusinessNumber, companyName, setCompanyName,
   representName, setRepresentName, selectedRole, setSelectedRole,
   upgradeLoading, upgradeMessage, handleUpgrade, subscription, cancelLoading,
-  handleCancelSubscription, showToast,
+  handleCancelSubscription,
 }: Props) {
   const planLabel = subscription?.plan === "FREE" || !subscription?.plan ? "무료"
     : subscription.plan === "PRO" ? "프로" : subscription.plan === "BUSINESS" ? "비즈니스" : subscription.plan;
@@ -100,7 +99,6 @@ export default function ProfileTierPanel({
             <CreditCard size={18} strokeWidth={1.5} className={s.cardIco} />
             <h3 className={s.cardTitle}>구독 관리</h3>
           </div>
-          <span className={s.comingBadge}>출시 예정</span>
         </div>
 
         <div className={s.subRow}>
@@ -137,31 +135,6 @@ export default function ProfileTierPanel({
           })}
         </div>
 
-        <div className={s.notifyBox}>
-          <p className={s.notifyT}>프리미엄 플랜이 곧 출시됩니다</p>
-          <p className={s.notifyS}>출시 시 알림을 받아보세요.</p>
-          <div className={s.notifyRow}>
-            <input
-              type="email"
-              placeholder="이메일 주소 입력"
-              defaultValue={typeof window !== "undefined" ? localStorage.getItem("vestra_payment_notify_email") || "" : ""}
-              id="payment-notify-email"
-              className={s.formInput}
-            />
-            <button
-              onClick={() => {
-                const input = document.getElementById("payment-notify-email") as HTMLInputElement;
-                const email = input?.value?.trim();
-                if (!email) return;
-                localStorage.setItem("vestra_payment_notify_email", email);
-                showToast("출시 알림이 등록되었습니다.");
-              }}
-              className={s.btnDark}
-            >
-              출시 알림 받기
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
