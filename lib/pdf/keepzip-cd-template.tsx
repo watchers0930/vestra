@@ -46,7 +46,11 @@ const styles = StyleSheet.create({
   infoRow: { flexDirection: "row", borderBottomWidth: 1, borderColor: "#333" },
   infoLabel: { width: 92, paddingVertical: 7, paddingHorizontal: 8, fontSize: 12, fontWeight: 700, borderRightWidth: 1, borderColor: "#333", backgroundColor: "#f2f4f8" },
   infoValue: { flex: 1, paddingVertical: 7, paddingHorizontal: 10, fontSize: 12 },
-  para: { fontSize: 12, lineHeight: 1.8, marginBottom: 8, textAlign: "justify" },
+  // 본문 항목 테이블 (번호 | 내용)
+  bodyTable: { borderWidth: 1, borderColor: "#333", borderBottomWidth: 0, marginBottom: 24 },
+  bodyRow: { flexDirection: "row", borderBottomWidth: 1, borderColor: "#333" },
+  bodyNo: { width: 34, paddingVertical: 7, paddingHorizontal: 4, fontSize: 12, fontWeight: 700, textAlign: "center", borderRightWidth: 1, borderColor: "#333", backgroundColor: "#f2f4f8" },
+  bodyCell: { flex: 1, paddingVertical: 7, paddingHorizontal: 10, fontSize: 12, lineHeight: 1.7, textAlign: "justify" },
   date: { fontSize: 12, textAlign: "center", marginTop: 28, marginBottom: 28 },
   signWrap: { marginTop: 8, alignItems: "flex-end" },
   signRow: { flexDirection: "row", alignItems: "center" },
@@ -68,6 +72,11 @@ export function KeepzipCdPdf({ data }: { data: KeepzipCdPdfData }) {
     ...(data.recipientName ? [{ label: "수신인", value: data.recipientName }] : []),
     ...(data.address ? [{ label: "부동산의 표시", value: data.address }] : []),
   ];
+  // 본문 각 항목을 "번호 | 내용"으로 분리. "1. 내용" 형태면 번호 셀로, 아니면 번호 없이 내용만.
+  const bodyRows = paras.map((p) => {
+    const m = p.match(/^(\d+)\s*[.)]\s*([\s\S]*)$/);
+    return m ? { no: m[1], text: m[2] } : { no: "", text: p };
+  });
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -80,9 +89,14 @@ export function KeepzipCdPdf({ data }: { data: KeepzipCdPdfData }) {
             </View>
           ))}
         </View>
-        {paras.map((line, i) => (
-          <Text key={i} style={styles.para}>{line}</Text>
-        ))}
+        <View style={styles.bodyTable}>
+          {bodyRows.map((r, i) => (
+            <View key={i} style={styles.bodyRow}>
+              <Text style={styles.bodyNo}>{r.no}</Text>
+              <Text style={styles.bodyCell}>{r.text}</Text>
+            </View>
+          ))}
+        </View>
         <Text style={styles.date}>{data.date}</Text>
         <View style={styles.signWrap}>
           <View style={styles.signRow}>
