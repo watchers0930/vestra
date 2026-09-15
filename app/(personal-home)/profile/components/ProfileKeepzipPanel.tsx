@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, X, CheckCircle2 } from "lucide-react";
+import { FileText, X, CheckCircle2, Trash2 } from "lucide-react";
 import { CAUSE_LABELS } from "@/lib/keepzip/case-form";
 import { annotateAmounts } from "@/lib/keepzip/amount";
 import { statusMeta, KEEPZIP_TIMELINE, timelineStep, isRatable, type StatusTone } from "@/lib/keepzip/case-status";
@@ -130,6 +130,45 @@ export default function ProfileKeepzipPanel() {
   const [opening, setOpening] = useState<string | null>(null);
   const [rating, setRating] = useState<KzListItem | null>(null);
   const [revising, setRevising] = useState<KzDetail | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const allSelected = items.length > 0 && selected.size === items.length;
+  const toggleAll = () => {
+    setSelected(allSelected ? new Set() : new Set(items.map((i) => i.id)));
+  };
+
+  const del = async (ids: string[]) => {
+    if (ids.length === 0 || deleting) return;
+    if (!window.confirm(`선택한 ${ids.length}건의 내용증명을 삭제하시겠습니까?\n삭제 후 되돌릴 수 없습니다.`)) return;
+    setDeleting(true);
+    try {
+      const r = await fetch("/api/keepzip/cases", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      if (r.ok) {
+        setSelected(new Set());
+        reload();
+      } else {
+        const d = await r.json().catch(() => ({}));
+        window.alert(d.error || "삭제에 실패했습니다.");
+      }
+    } catch {
+      window.alert("네트워크 오류가 발생했습니다.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const openDetail = async (id: string) => {
     setOpening(id);
@@ -160,12 +199,41 @@ export default function ProfileKeepzipPanel() {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+        <label style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, color: "#555", cursor: "pointer" }}>
+          <input type="checkbox" checked={allSelected} onChange={toggleAll} style={{ width: 16, height: 16, cursor: "pointer" }} />
+          전체 선택
+        </label>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            className={s.actBtn}
+            disabled={selected.size === 0 || deleting}
+            onClick={() => del([...selected])}
+          >
+            <Trash2 size={13} strokeWidth={2} /> 선택 삭제{selected.size > 0 ? ` (${selected.size})` : ""}
+          </button>
+          <button
+            className={`${s.actBtn} ${s.actDanger}`}
+            disabled={items.length === 0 || deleting}
+            onClick={() => del(items.map((i) => i.id))}
+          >
+            <Trash2 size={13} strokeWidth={2} /> 전체 삭제
+          </button>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {items.map((c: KzListItem) => {
         const m = statusMeta(c.status);
         return (
           <div key={c.id} className={s.appCard}>
             <div className={s.appTop}>
+              <input
+                type="checkbox"
+                checked={selected.has(c.id)}
+                onChange={() => toggle(c.id)}
+                style={{ width: 16, height: 16, cursor: "pointer", flexShrink: 0, alignSelf: "flex-start", marginTop: 2 }}
+                aria-label="선택"
+              />
               <div className={s.thumb}><FileText size={22} strokeWidth={1.4} className={s.kzIco} /></div>
               <div className={s.appTopInfo}>
                 <div className={s.appTitle}>{causeLabel(c.cause)}</div>

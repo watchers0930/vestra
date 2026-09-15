@@ -90,6 +90,38 @@ export async function POST(req: NextRequest) {
   }
 }
 
+/**
+ * DELETE /api/keepzip/cases — 본인 내용증명 사건 선택/전체 삭제
+ * body: { ids: string[] } — 삭제할 사건 id 목록
+ * 본인(userId) 사건만 삭제(IDOR 방지). LawyerReview·PostalTracking은 Cascade로 함께 정리.
+ */
+export async function DELETE(req: NextRequest) {
+  try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
+    const session = await auth();
+    const userId = session?.user?.id;
+    if (!userId) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+
+    const rl = await rateLimit(`keepzip-del:${userId}`, 20);
+    if (!rl.success) return NextResponse.json({ error: "요청 한도 초과." }, { status: 429, headers: rateLimitHeaders(rl) });
+
+    const b = await req.json().catch(() => null);
+    const ids = Array.isArray(b?.ids)
+      ? b.ids.filter((x: unknown): x is string => typeof x === "string" && x.length > 0).slice(0, 100)
+      : [];
+    if (ids.length === 0) return NextResponse.json({ error: "삭제할 항목이 없습니다." }, { status: 400 });
+
+    // where에 userId 포함 → 타인 사건 id를 섞어 보내도 본인 것만 삭제됨(IDOR 차단)
+    const result = await prisma.keepzipCase.deleteMany({ where: { id: { in: ids }, userId } });
+    return NextResponse.json({ ok: true, deleted: result.count });
+  } catch (e) {
+    console.error("[DELETE /api/keepzip/cases]", e);
+    return NextResponse.json({ error: "삭제 중 오류가 발생했습니다." }, { status: 500 });
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
