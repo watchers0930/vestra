@@ -49,17 +49,32 @@ async function recordCheckLog(
   summary?: string,
   riskLevel?: "low" | "medium" | "high" | "critical"
 ): Promise<void> {
-  await prisma.monitoringCheckLog
-    .create({
-      data: {
-        monitoredPropertyId: propertyId,
-        method,
-        result,
-        ...(summary ? { summary: summary.slice(0, 500) } : {}),
-        ...(riskLevel ? { riskLevel } : {}),
-      },
-    })
-    .catch(() => {});
+  // 감시 실행 로그는 "체크했으면 반드시 달력에 남는다"가 핵심이므로,
+  // 일시적 DB 실패(서버리스 콜드스타트 커넥션 등)에 재시도로 대응하고,
+  // 최종 실패 시에는 조용히 삼키지 않고 원인을 로그로 남긴다(은폐 금지).
+  const data = {
+    monitoredPropertyId: propertyId,
+    method,
+    result,
+    ...(summary ? { summary: summary.slice(0, 500) } : {}),
+    ...(riskLevel ? { riskLevel } : {}),
+  };
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await prisma.monitoringCheckLog.create({ data });
+      return;
+    } catch (e) {
+      if (attempt < 3) {
+        await new Promise((r) => setTimeout(r, 200 * attempt));
+        continue;
+      }
+      // 3회 모두 실패 → cron 전체는 계속 진행하되(감시 자체를 막지 않음) 원인을 남긴다.
+      console.error(
+        `[CRON:MONITOR] recordCheckLog 실패 (property=${propertyId}, method=${method}, result=${result}):`,
+        e instanceof Error ? e.message : e
+      );
+    }
+  }
 }
 
 const RISK_ORDER: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 };
