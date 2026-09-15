@@ -23,7 +23,8 @@ import s from "./profile-renewal.module.css";
 
 export default function ProfileClient() {
   const {
-    session, usage, businessNumber, setBusinessNumber, selectedRole, setSelectedRole,
+    session, usage, businessNumber, setBusinessNumber, companyName, setCompanyName,
+    representName, setRepresentName, selectedRole, setSelectedRole,
     upgradeLoading, upgradeMessage, subscription, cancelLoading, notifications,
     notifLoading, phoneSaving, handleUpgrade, handleCancelSubscription,
     handleToggleNotification, handlePhoneChange, handlePhoneSave, showToast,
@@ -172,6 +173,10 @@ export default function ProfileClient() {
                   verifyStatus={user.verifyStatus}
                   businessNumber={businessNumber}
                   setBusinessNumber={setBusinessNumber}
+                  companyName={companyName}
+                  setCompanyName={setCompanyName}
+                  representName={representName}
+                  setRepresentName={setRepresentName}
                   selectedRole={selectedRole}
                   setSelectedRole={setSelectedRole}
                   upgradeLoading={upgradeLoading}

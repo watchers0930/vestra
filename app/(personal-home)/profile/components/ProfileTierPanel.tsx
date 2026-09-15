@@ -6,6 +6,10 @@ interface Props {
   verifyStatus?: string;
   businessNumber: string;
   setBusinessNumber: (v: string) => void;
+  companyName: string;
+  setCompanyName: (v: string) => void;
+  representName: string;
+  setRepresentName: (v: string) => void;
   selectedRole: string;
   setSelectedRole: (v: "REALESTATE" | "BUSINESS") => void;
   upgradeLoading: boolean;
@@ -18,7 +22,8 @@ interface Props {
 }
 
 export default function ProfileTierPanel({
-  role, verifyStatus, businessNumber, setBusinessNumber, selectedRole, setSelectedRole,
+  role, verifyStatus, businessNumber, setBusinessNumber, companyName, setCompanyName,
+  representName, setRepresentName, selectedRole, setSelectedRole,
   upgradeLoading, upgradeMessage, handleUpgrade, subscription, cancelLoading,
   handleCancelSubscription, showToast,
 }: Props) {
@@ -53,13 +58,33 @@ export default function ProfileTierPanel({
           </div>
           <input
             type="text"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            placeholder="회사명 (2~50자)"
+            className={s.formInput}
+            style={{ marginBottom: 8 }}
+          />
+          <input
+            type="text"
+            value={representName}
+            onChange={(e) => setRepresentName(e.target.value)}
+            placeholder="대표자명 (2~20자)"
+            className={s.formInput}
+            style={{ marginBottom: 8 }}
+          />
+          <input
+            type="text"
             value={businessNumber}
             onChange={(e) => setBusinessNumber(e.target.value)}
             placeholder="사업자등록번호 (000-00-00000)"
             className={s.formInput}
             style={{ marginBottom: 12 }}
           />
-          <button onClick={handleUpgrade} disabled={upgradeLoading || !businessNumber.trim()} className={s.btnPrimary}>
+          <button
+            onClick={handleUpgrade}
+            disabled={upgradeLoading || !businessNumber.trim() || !companyName.trim() || !representName.trim()}
+            className={s.btnPrimary}
+          >
             {upgradeLoading ? "신청 중..." : "업그레이드 신청"}
           </button>
           {upgradeMessage && <p className={s.upgradeMsg}>{upgradeMessage}</p>}
