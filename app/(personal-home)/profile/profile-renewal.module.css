@@ -292,6 +292,7 @@
 .hpillRole{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.2)}
 .hpillOk{background:rgba(52,211,153,.16);color:#6ee7b7;border:1px solid rgba(52,211,153,.3)}
 .hpillWarn{background:rgba(245,158,11,.16);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+.planUntil{display:inline-flex;align-items:center;font-size:11px;color:rgba(255,255,255,.6);white-space:nowrap}
 .husage{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:16px;padding:15px 18px;min-width:200px}
 .husageTop{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:rgba(255,255,255,.7)}
 .husageTop b{color:#fff;font-size:15px;font-weight:800}

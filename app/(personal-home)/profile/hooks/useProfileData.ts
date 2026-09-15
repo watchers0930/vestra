@@ -16,6 +16,7 @@ export interface SubscriptionData {
   plan: string;
   price: number;
   status: string;
+  endDate?: string | null;
 }
 
 // ---------------------------------------------------------------------------
