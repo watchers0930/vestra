@@ -44,11 +44,11 @@ const styles = StyleSheet.create({
   // 수신인·발신인·부동산 표시 테이블 (라벨 | 값)
   infoTable: { borderWidth: 1, borderColor: "#333", borderBottomWidth: 0, marginBottom: 22 },
   infoRow: { flexDirection: "row", borderBottomWidth: 1, borderColor: "#333" },
-  infoLabel: { width: 104, paddingVertical: 7, paddingHorizontal: 10, fontSize: 12, fontWeight: 700, borderRightWidth: 1, borderColor: "#333" },
+  infoLabel: { width: 104, paddingVertical: 7, paddingHorizontal: 10, fontSize: 12, fontWeight: 700, borderRightWidth: 1, borderColor: "#333", backgroundColor: "#f2f2f2" },
   infoValue: { flex: 1, paddingVertical: 7, paddingHorizontal: 10, fontSize: 12 },
   // 본문 테이블 ("내용" 헤더 + 본문 전체 단일 셀)
   bodyTable: { borderWidth: 1, borderColor: "#333", marginBottom: 24 },
-  bodyHeader: { paddingVertical: 7, fontSize: 12, fontWeight: 700, textAlign: "center", borderBottomWidth: 1, borderColor: "#333" },
+  bodyHeader: { paddingVertical: 7, fontSize: 12, fontWeight: 700, textAlign: "center", borderBottomWidth: 1, borderColor: "#333", backgroundColor: "#f2f2f2" },
   bodyContent: { paddingVertical: 12, paddingHorizontal: 12 },
   bodyLine: { fontSize: 12, lineHeight: 1.8, marginBottom: 8, textAlign: "justify" },
   date: { fontSize: 12, textAlign: "center", marginTop: 28, marginBottom: 28 },
