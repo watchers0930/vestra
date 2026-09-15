@@ -26,6 +26,9 @@
 .navAuth a { padding: 4px 8px; color: #555; transition: color .15s; cursor: pointer; }
 .navAuth a:hover { color: #2e4bd8; }
 .navAuth .div { color: #d4d6de; font-size: 12px; }
+.logoutIcon { display: inline-flex; align-items: center; justify-content: center; margin-left: 6px; padding: 5px; color: #555; background: none; border: none; cursor: pointer; border-radius: 8px; transition: color .15s, background .15s; }
+.logoutIcon:hover { color: #2e4bd8; background: #f0f2fb; }
+.mobLogout { display: inline-flex; align-items: center; gap: 6px; }
 .navBurger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; margin-left: auto; background: none; border: none; }
 .navBurger span { display: block; width: 22px; height: 2px; background: #1a1d2e; border-radius: 2px; }
 .navMob { display: none; position: absolute; top: 80px; left: 0; right: 0; background: #fff; border-top: 1px solid #e8eaf0; padding: 8px 24px 20px; z-index: 99; box-shadow: 0 8px 20px rgba(0, 0, 0, .08); list-style: none; margin: 0; }

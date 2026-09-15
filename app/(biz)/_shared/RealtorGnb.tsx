@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { LogOut } from "lucide-react";
 import s from "./RealtorGnb.module.css";
 import {
   REALTOR_ROUTES,
@@ -85,8 +86,7 @@ export default function RealtorGnb() {
           <span className={s.greet}>{userName}님</span>
           <span className={s.div}>|</span>
           <Link href={REALTOR_ROUTES.profile}>마이페이지</Link>
-          <span className={s.div}>|</span>
-          <a onClick={() => signOut({ redirectTo: "/home?auth=login" })}>로그아웃</a>
+          <button type="button" className={s.logoutIcon} onClick={() => signOut({ redirectTo: "/home?auth=login" })} aria-label="로그아웃" title="로그아웃"><LogOut size={17} strokeWidth={1.8} /></button>
         </div>
 
         <button className={s.navBurger} aria-label="메뉴 열기" onClick={() => setMenuOpen((o) => !o)}>
@@ -121,7 +121,7 @@ export default function RealtorGnb() {
           <div className={s.navMobAuth}>
             <span>{userName}님</span>
             <Link href={REALTOR_ROUTES.profile} onClick={() => setMenuOpen(false)}>마이페이지</Link>
-            <a onClick={() => signOut({ redirectTo: "/home?auth=login" })}>로그아웃</a>
+            <a onClick={() => signOut({ redirectTo: "/home?auth=login" })} style={{ cursor: "pointer" }} className={s.mobLogout}><LogOut size={15} strokeWidth={1.8} /> 로그아웃</a>
           </div>
         </li>
       </ul>
