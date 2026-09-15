@@ -21,6 +21,9 @@ const PILL: Record<StatusTone, string> = {
 const fmtDate = (v: string) => new Date(v).toLocaleDateString("ko-KR");
 const causeLabel = (c: string) => CAUSE_LABELS[c as keyof typeof CAUSE_LABELS] ?? c;
 
+/** 본문에서 상단 표로 이동한 헤더 줄(발신인/수신인/부동산 표시 등) 제거 — PDF와 동일 */
+const CD_HEADER_LINE = /^(발신인|수신인|발신인\s*주소|수신인\s*주소|부동산의?\s*표시|부동산\s*표시|물건의?\s*표시|제목)\s*[:：]/;
+
 /** 진행 타임라인 — 4단계 가로 스텝 */
 function Timeline({ status }: { status: string }) {
   const cur = timelineStep(status);
@@ -95,7 +98,30 @@ function DetailModal({ detail, onClose }: { detail: KzDetail; onClose: () => voi
         )}
 
         <p className={s.kzDocLabel}>내용증명 원문</p>
-        <div className={s.kzDoc}>{detail.draftContent ? annotateAmounts(detail.draftContent) : "본문이 없습니다."}</div>
+        {/* 당사자 테이블: 수신인 → 발신인 → 부동산의 표시 */}
+        <div className={s.cdTable}>
+          {detail.recipientName && (
+            <div className={s.cdRow}><div className={s.cdLabel}>수신인</div><div className={s.cdValue}>{detail.recipientName}</div></div>
+          )}
+          <div className={s.cdRow}><div className={s.cdLabel}>발신인</div><div className={s.cdValue}>{detail.senderName}</div></div>
+          {detail.address && (
+            <div className={s.cdRow}><div className={s.cdLabel}>부동산의 표시</div><div className={s.cdValue}>{detail.address}</div></div>
+          )}
+        </div>
+        {/* 본문 테이블: "내용" 헤더 + 본문 전체 */}
+        <div className={s.cdBodyTable}>
+          <div className={s.cdBodyHeader}>내용</div>
+          <div className={s.cdBodyContent}>
+            {(() => {
+              const lines = (detail.draftContent ?? "")
+                .split(/\n+/).map((l) => l.trim())
+                .filter((l) => l.length > 0 && !CD_HEADER_LINE.test(l));
+              return lines.length > 0
+                ? lines.map((l, i) => <p key={i} className={s.cdBodyLine}>{annotateAmounts(l)}</p>)
+                : <p className={s.cdBodyLine}>본문이 없습니다.</p>;
+            })()}
+          </div>
+        </div>
         {detail.stampUrl && (
           <>
             <div className={s.kzStamp}><CheckCircle2 size={14} /> 변호사 전자직인 날인 완료</div>
