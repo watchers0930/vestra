@@ -202,9 +202,9 @@
 .stAccepted{background:#dcfce7;color:#15803d}
 .stRejected{background:#fee2e2;color:#b91c1c}
 .stWithdrawn{background:#f1f2f6;color:#888}
-.footActs{display:flex;align-items:center;gap:6px}
+.footActs{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .footDate{font-size:11px;color:#aab}
-.actBtn{padding:6px 12px;border-radius:9px;border:1px solid #e0e3ef;background:#fff;font-size:12px;font-weight:600;color:#555;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all .15s}
+.actBtn{padding:6px 12px;border-radius:9px;border:1px solid #e0e3ef;background:#fff;font-size:12px;font-weight:600;color:#555;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;transition:all .15s}
 .actBtn:hover{border-color:#c0c7e8;color:#2e4bd8}
 .actBtn:disabled{opacity:.5;cursor:not-allowed}
 .actAccept{border:none;background:#2e4bd8;color:#fff}
@@ -335,6 +335,8 @@
   .kpiRow{grid-template-columns:repeat(2,1fr)}
   .planGrid{grid-template-columns:repeat(3,1fr)}
   .appFoot{align-items:flex-start;flex-direction:column}
+  .footActs{width:100%;gap:5px}
+  .actBtn{padding:6px 9px;font-size:11.5px}
   .lstCard{flex-wrap:wrap}
   .kzStepLabel{font-size:9.5px}
   .kzModal{padding:20px}
