@@ -55,7 +55,8 @@ export const GET = withAgentAuth(async (req, { session }) => {
     // (중개사당 고객 수는 소수라 실용적. 검색어가 없으면 기존 DB 페이지네이션 유지)
     if (search) {
       const q = search.toLowerCase();
-      const all = await prisma.agentClient.findMany({ where, orderBy: { createdAt: "desc" }, include });
+      // 검색 후보 상한 — 암호화 필드라 전체 로드→복호화(KDF) 후 앱레벨 필터. 폭주·비용 방지.
+      const all = await prisma.agentClient.findMany({ where, orderBy: { createdAt: "desc" }, include, take: 2000 });
       const matched = all.filter((c) =>
         [c.clientName, c.clientEmail, c.propertyAddress].some(
           (v) => typeof v === "string" && v.toLowerCase().includes(q)

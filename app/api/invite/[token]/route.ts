@@ -9,6 +9,16 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 
+// 공개 응답용 이름 마스킹 — 초대 대상 본인은 알아보되, 토큰 유출 시 제3자에게 실명 전체 노출 방지.
+// 예: "홍길동" → "홍*동", "김철" → "김*"
+function maskName(name: string | null): string | null {
+  if (!name) return name;
+  const n = name.trim();
+  if (n.length <= 1) return n;
+  if (n.length === 2) return n[0] + "*";
+  return n[0] + "*".repeat(n.length - 2) + n[n.length - 1];
+}
+
 // GET /api/invite/[token] — 초대 정보 조회 (공개)
 export async function GET(
   _req: NextRequest,
@@ -37,7 +47,7 @@ export async function GET(
       valid: !expired && !accepted,
       expired,
       accepted,
-      clientName: client.clientName,
+      clientName: maskName(client.clientName),
       agentName: client.agent?.companyName || client.agent?.name || "중개사",
     });
   } catch (error) {

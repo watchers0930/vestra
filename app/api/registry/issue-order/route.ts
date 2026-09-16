@@ -130,10 +130,19 @@ async function executePaidOrder(params: {
     return NextResponse.json({ error: "감시 물건을 찾을 수 없거나 권한이 없습니다." }, { status: 403 });
   }
 
-  await prisma.registryIssueOrder.update({
-    where: { id: order.id },
+  // 낙관적 잠금: paid → issuing 원자적 전이. 위 status 사전검사는 read-check-write라
+  // 동시 요청 2건이 모두 통과해 이중발급(이중 과금·이중 분석)될 수 있다.
+  // 조건부 updateMany의 count로 딱 하나만 선점하게 만든다.
+  const claimed = await prisma.registryIssueOrder.updateMany({
+    where: { id: order.id, status: "paid" },
     data: { status: "issuing" },
   });
+  if (claimed.count === 0) {
+    return NextResponse.json(
+      { error: "이미 처리 중이거나 발급된 주문입니다.", order: { orderId: order.orderId } },
+      { status: 409 }
+    );
+  }
 
   try {
     const registry = await fetchRegistryDocumentByAddress({

@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "인증 필요" }, { status: 401 });
     }
 
-    // 내가 보낸 요청 + 내가 받은 요청
+    // 내가 보낸 요청 + 내가 받은 요청 (최신 100건 상한 — 무제한 로드 방지)
     const [sent, received] = await Promise.all([
       prisma.verificationRequest.findMany({
         where: { requesterId: session.user.id },
@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
           _count: { select: { sharedReports: true } },
         },
         orderBy: { createdAt: "desc" },
+        take: 100,
       }),
       prisma.verificationRequest.findMany({
         where: { targetEmail: session.user.email! },
@@ -42,6 +43,7 @@ export async function GET(req: NextRequest) {
           sharedReports: true,
         },
         orderBy: { createdAt: "desc" },
+        take: 100,
       }),
     ]);
 

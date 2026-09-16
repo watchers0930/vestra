@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
         status: "active",
       },
       select: { monitoredPropertyId: true },
+      take: 5000, // 연결 물건 ID 수집 상한 — 극단적 폭주 방지(중개사 관리물건 현실 상한 이상)
     });
     const linkedPropertyIds = linkedProps
       .map((l) => l.monitoredPropertyId)
@@ -125,6 +126,7 @@ export async function PATCH(req: NextRequest) {
         status: "active",
       },
       select: { monitoredPropertyId: true },
+      take: 5000, // 연결 물건 ID 수집 상한 — 극단적 폭주 방지(중개사 관리물건 현실 상한 이상)
     });
     const linkedPropertyIds = linkedProps
       .map((l) => l.monitoredPropertyId)

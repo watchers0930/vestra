@@ -7,6 +7,7 @@ import { withAdminAuth } from "@/lib/with-admin-auth";
 export const GET = withAdminAuth(async () => {
   const announcements = await prisma.announcement.findMany({
     orderBy: { createdAt: "desc" },
+    take: 200, // 최신 200건 상한 — 무제한 로드 방지
   });
   return NextResponse.json(announcements);
 });
