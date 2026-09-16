@@ -12,6 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createHash } from "crypto";
 import { sendNotification } from "@/lib/notification-sender";
@@ -31,6 +32,11 @@ import {
 
 const BATCH_SIZE = 50;
 
+// 틸코 외부 API(콜드스타트 시 지연) 호출이 있어 기본 타임아웃이면 recordCheck 도달 전
+// 함수가 강제 종료돼 "체크는 됐는데 로그 없음"이 발생한다. 여유 있게 60초로 명시.
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
 function generateContentHash(content: string): string {
   return createHash("sha256").update(content).digest("hex");
 }
@@ -42,15 +48,19 @@ function generateContentHash(content: string): string {
 type CheckMethod = "precheck" | "full_doc" | "skipped";
 type CheckResult = "no_change" | "signal_detected" | "changed" | "needs_registration" | "fetch_failed";
 
-async function recordCheckLog(
+async function recordCheck(
   propertyId: string,
+  updateData: Prisma.MonitoredPropertyUpdateInput | null,
   method: CheckMethod,
   result: CheckResult,
   summary?: string,
   riskLevel?: "low" | "medium" | "high" | "critical"
 ): Promise<void> {
-  // 감시 실행 로그는 "체크했으면 반드시 달력에 남는다"가 핵심이므로,
-  // 일시적 DB 실패(서버리스 콜드스타트 커넥션 등)에 재시도로 대응하고,
+  // 감시 실행 로그는 "체크했으면 반드시 달력에 남는다"가 핵심이다.
+  // 체크시각(lastCheckedAt 등) 갱신과 로그 기록을 **하나의 트랜잭션**으로 묶어,
+  // 로그 기록이 실패하면 체크시각 갱신도 롤백되게 한다 → 다음 cron이 "미처리"로 보고
+  // 재시도한다("정규 cron이 lastCheckedAt만 갱신하고 로그는 유실"되던 불일치를 원천 차단).
+  // 일시적 DB 실패(서버리스 콜드스타트 커넥션 등)에는 재시도로 대응하고,
   // 최종 실패 시에는 조용히 삼키지 않고 원인을 로그로 남긴다(은폐 금지).
   const data = {
     monitoredPropertyId: propertyId,
@@ -61,7 +71,14 @@ async function recordCheckLog(
   };
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      await prisma.monitoringCheckLog.create({ data });
+      if (updateData) {
+        await prisma.$transaction([
+          prisma.monitoredProperty.update({ where: { id: propertyId }, data: updateData }),
+          prisma.monitoringCheckLog.create({ data }),
+        ]);
+      } else {
+        await prisma.monitoringCheckLog.create({ data });
+      }
       return;
     } catch (e) {
       if (attempt < 3) {
@@ -70,7 +87,7 @@ async function recordCheckLog(
       }
       // 3회 모두 실패 → cron 전체는 계속 진행하되(감시 자체를 막지 않음) 원인을 남긴다.
       console.error(
-        `[CRON:MONITOR] recordCheckLog 실패 (property=${propertyId}, method=${method}, result=${result}):`,
+        `[CRON:MONITOR] recordCheck 실패 (property=${propertyId}, method=${method}, result=${result}):`,
         e instanceof Error ? e.message : e
       );
     }
@@ -325,11 +342,13 @@ export async function GET(req: NextRequest) {
         // 이용자가 등기부 PDF를 등록해 고유번호를 확보해야 프리체크(등기신청사건) 감시가 가능하다.
         // → 헛돌지 않도록 "PDF 등록 필요" 상태로 표시하고 스킵.
         if (!simulate && !prop.commUniqueNo) {
-          await prisma.monitoredProperty.update({
-            where: { id: prop.id },
-            data: { lastCheckedAt: new Date(), registrySignalStatus: "needs_registration" },
-          }).catch(() => {});
-          await recordCheckLog(prop.id, "skipped", "needs_registration", "등기 고유번호 미등록 — 등기부 PDF 등록이 필요합니다");
+          await recordCheck(
+            prop.id,
+            { lastCheckedAt: new Date(), registrySignalStatus: "needs_registration" },
+            "skipped",
+            "needs_registration",
+            "등기 고유번호 미등록 — 등기부 PDF 등록이 필요합니다"
+          );
           skipped++;
           continue;
         }
@@ -467,15 +486,13 @@ export async function GET(req: NextRequest) {
 
             const now = new Date();
             if (!caseStatus.hasSignal) {
-              await prisma.monitoredProperty.update({
-                where: { id: prop.id },
-                data: {
-                  tilkoLastCaseCheckedAt: now,
-                  lastCheckedAt: now,
-                  registrySignalStatus: "idle",
-                },
-              });
-              await recordCheckLog(prop.id, "precheck", "no_change", "등기신청 사건 없음 — 이상 없음");
+              await recordCheck(
+                prop.id,
+                { tilkoLastCaseCheckedAt: now, lastCheckedAt: now, registrySignalStatus: "idle" },
+                "precheck",
+                "no_change",
+                "등기신청 사건 없음 — 이상 없음"
+              );
               continue;
             }
 
@@ -485,18 +502,21 @@ export async function GET(req: NextRequest) {
               prop.registrySignalStatus !== signalStatus ||
               prop.registrySignalSummary !== caseStatus.summary;
 
-            await prisma.monitoredProperty.update({
-              where: { id: prop.id },
-              data: {
+            await recordCheck(
+              prop.id,
+              {
                 tilkoLastCaseCheckedAt: now,
                 lastCheckedAt: now,
                 registrySignalStatus: signalStatus,
                 registrySignalDetectedAt: prop.registrySignalDetectedAt || now,
                 registrySignalSummary: caseStatus.summary,
-                registrySignalRaw: caseStatus.rawData,
+                registrySignalRaw: caseStatus.rawData as Prisma.InputJsonValue,
               },
-            });
-            await recordCheckLog(prop.id, "precheck", "signal_detected", caseStatus.summary, signalStatus === "dismissed" ? "low" : "medium");
+              "precheck",
+              "signal_detected",
+              caseStatus.summary,
+              signalStatus === "dismissed" ? "low" : "medium"
+            );
 
             if (shouldCreateSignalAlert) {
               await prisma.monitoringAlert.create({
@@ -559,13 +579,20 @@ export async function GET(req: NextRequest) {
             docFetchFailures++; // 확정조회 실패로 이 주기 변동감지 스킵됨 (관측용 계측)
             console.warn(`[CRON:MONITOR] 확정조회 결과 없음 → 이 주기 변동감지 스킵: ${prop.address}`);
           }
-          // 체크 시간은 갱신 (조회 시도 기록)
-          await prisma.monitoredProperty.update({
-            where: { id: prop.id },
-            data: { lastCheckedAt: new Date() },
-          });
+          // 체크 시간 갱신 + 로그 기록 (조회 시도 기록). 시뮬레이션은 로그 없이 시각만 갱신.
           if (!simulate) {
-            await recordCheckLog(prop.id, "full_doc", "fetch_failed", "등기부 발급 조회 실패 — 다음 주기에 재시도합니다");
+            await recordCheck(
+              prop.id,
+              { lastCheckedAt: new Date() },
+              "full_doc",
+              "fetch_failed",
+              "등기부 발급 조회 실패 — 다음 주기에 재시도합니다"
+            );
+          } else {
+            await prisma.monitoredProperty.update({
+              where: { id: prop.id },
+              data: { lastCheckedAt: new Date() },
+            });
           }
           continue;
         }
@@ -575,14 +602,13 @@ export async function GET(req: NextRequest) {
 
         // 해시가 동일하면 변동 없음
         if (prop.lastHash === newHash) {
-          await prisma.monitoredProperty.update({
-            where: { id: prop.id },
-            data: {
-              lastCheckedAt: new Date(),
-              registrySignalStatus: "confirmed_no_change",
-            },
-          });
-          await recordCheckLog(prop.id, "full_doc", "no_change", "등기부등본 대조 결과 변동 없음 — 이상 없음");
+          await recordCheck(
+            prop.id,
+            { lastCheckedAt: new Date(), registrySignalStatus: "confirmed_no_change" },
+            "full_doc",
+            "no_change",
+            "등기부등본 대조 결과 변동 없음 — 이상 없음"
+          );
           continue;
         }
 
@@ -668,20 +694,15 @@ export async function GET(req: NextRequest) {
 
         // 해시 및 baseline 업데이트
         const isRealChange = changes.some((change) => change.changeType !== "baseline_set");
-        await prisma.monitoredProperty.update({
-          where: { id: prop.id },
-          data: {
+        await recordCheck(
+          prop.id,
+          {
             lastCheckedAt: new Date(),
             lastHash: newHash,
-            registrySignalStatus: isRealChange
-              ? "confirmed_changed"
-              : "confirmed_no_change",
+            registrySignalStatus: isRealChange ? "confirmed_changed" : "confirmed_no_change",
             // 최초 조회 시 baseline 저장
             ...(!prop.baselineData ? { baselineData: registry.text } : {}),
           },
-        });
-        await recordCheckLog(
-          prop.id,
           "full_doc",
           isRealChange ? "changed" : "no_change",
           isRealChange ? changes.map((c) => c.summary).join(", ") : "최초 등기부 기준점 저장",
@@ -693,7 +714,8 @@ export async function GET(req: NextRequest) {
           propError instanceof Error ? propError.message : propError
         );
         // 예외로 빠진 물건도 "실행 시도"는 로그에 남긴다(감시 공백처럼 보이지 않도록).
-        await recordCheckLog(prop.id, "skipped", "fetch_failed", "처리 중 오류 발생 — 다음 주기에 재시도합니다");
+        // 이 경로는 처리 실패라 안전하게 갱신할 상태가 없어 로그만 남긴다(updateData=null).
+        await recordCheck(prop.id, null, "skipped", "fetch_failed", "처리 중 오류 발생 — 다음 주기에 재시도합니다");
       }
     }
 
