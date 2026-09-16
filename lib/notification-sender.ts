@@ -237,19 +237,3 @@ function checkTypeEnabled(
       return true;
   }
 }
-
-/**
- * 다수 사용자에게 일괄 알림 발송 (배치)
- */
-export async function sendBulkNotification(
-  payloads: NotificationPayload[]
-): Promise<Map<string, SendResult[]>> {
-  const resultMap = new Map<string, SendResult[]>();
-
-  for (const payload of payloads) {
-    const results = await sendNotification(payload);
-    resultMap.set(payload.userId, results);
-  }
-
-  return resultMap;
-}

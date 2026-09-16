@@ -6,7 +6,7 @@
  */
 
 import { SolapiMessageService } from "solapi";
-import { getNotificationSettingOrEnv, invalidateNotificationCache } from "./system-settings";
+import { getNotificationSettingOrEnv } from "./system-settings";
 
 // ─── Lazy Init (DB 설정 변경 시 재생성) ───
 
@@ -31,16 +31,6 @@ async function getClient(): Promise<SolapiMessageService | null> {
   cachedApiKey = apiKey;
   cachedApiSecret = apiSecret;
   return client;
-}
-
-/**
- * 설정 변경 시 클라이언트 캐시 초기화
- */
-export function resetSolapiClient() {
-  client = null;
-  cachedApiKey = null;
-  cachedApiSecret = null;
-  invalidateNotificationCache();
 }
 
 // ─── 카카오 알림톡 ───

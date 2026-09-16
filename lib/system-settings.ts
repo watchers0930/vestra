@@ -90,14 +90,6 @@ export async function getOAuthSettings(): Promise<Record<string, string>> {
 }
 
 /**
- * DB 값 우선, 없으면 env 폴백.
- */
-export async function getOAuthSettingOrEnv(key: string): Promise<string | undefined> {
-  const settings = await getOAuthSettings();
-  return settings[key] || process.env[key] || undefined;
-}
-
-/**
  * OAuth 설정 값을 암호화하여 DB에 저장.
  */
 export async function setOAuthSetting(key: string, value: string): Promise<void> {

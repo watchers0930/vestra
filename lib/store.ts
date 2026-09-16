@@ -199,14 +199,6 @@ export function clearAll(): void {
   localStorage.removeItem(LAST_USER_KEY);
 }
 
-/** 특정 날짜(기본: 오늘)의 분석 이력 삭제 */
-export function clearByDate(dateStr?: string): void {
-  if (typeof window === "undefined") return;
-  const target = dateStr ?? new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
-  const analyses = getAnalyses().filter((a) => !a.date.startsWith(target));
-  safeSetItem(ANALYSIS_KEY, encode(analyses));
-}
-
 // ─── 서버 동기화 (DB 영속화) ───
 
 /**

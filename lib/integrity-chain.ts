@@ -7,10 +7,7 @@
  * - 블록체인 불필요, 자체 Merkle Tree 구현
  */
 
-import {
-  sha256, deterministicStringify,
-  MerkleTree, IntegrityChain,
-} from "./integrity/merkle-chain";
+import { IntegrityChain } from "./integrity/merkle-chain";
 import type { AnalysisStep, MerkleProof, IntegrityReport } from "./integrity/merkle-chain";
 
 // ─── re-export (기존 import 경로 유지) ───
@@ -113,33 +110,4 @@ export class VerifiedPipeline {
   serialize(): string {
     return this.chain.serialize();
   }
-}
-
-// ─── 독립 검증 유틸리티 ───
-
-/**
- * 직렬화된 체인의 무결성을 독립적으로 검증
- */
-export async function verifyChainIntegrity(serializedChain: string): Promise<IntegrityReport> {
-  const chain = await IntegrityChain.deserialize(serializedChain);
-  return chain.verify();
-}
-
-/**
- * Merkle Proof의 독립 검증
- */
-export async function verifyStepInclusion(proof: MerkleProof): Promise<boolean> {
-  return MerkleTree.verifyProof(proof);
-}
-
-/**
- * 두 분석 결과의 데이터 무결성 비교
- */
-export async function compareAnalysisOutputs(
-  output1: unknown,
-  output2: unknown
-): Promise<{ match: boolean; hash1: string; hash2: string }> {
-  const hash1 = await sha256(deterministicStringify(output1));
-  const hash2 = await sha256(deterministicStringify(output2));
-  return { match: hash1 === hash2, hash1, hash2 };
 }

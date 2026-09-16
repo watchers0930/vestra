@@ -55,45 +55,6 @@ export interface HousePriceItem {
 // ─── PNU 코드 생성 ───
 
 /**
- * 지번 문자열에서 본번/부번 파싱
- * "123-4" → { main: "0123", sub: "0004" }
- * "123"   → { main: "0123", sub: "0000" }
- */
-export function parseJibun(jibun: string): { main: string; sub: string } | null {
-  const cleaned = jibun.replace(/[^0-9-]/g, "").trim();
-  if (!cleaned) return null;
-
-  const parts = cleaned.split("-");
-  const mainNo = parseInt(parts[0], 10);
-  if (isNaN(mainNo) || mainNo <= 0) return null;
-
-  const subNo = parts[1] ? parseInt(parts[1], 10) : 0;
-
-  return {
-    main: String(mainNo).padStart(4, "0"),
-    sub: String(isNaN(subNo) ? 0 : subNo).padStart(4, "0"),
-  };
-}
-
-/**
- * 주소에서 지번 부분 추출
- * "서울 강남구 역삼동 123-4" → "123-4"
- */
-export function extractJibunFromAddress(address: string): string | null {
-  // 숫자-숫자 또는 숫자로 끝나는 패턴
-  const match = address.match(/(\d+(?:-\d+)?)\s*$/);
-  return match ? match[1] : null;
-}
-
-/**
- * 주소가 산(山)인지 판별
- * "서울 강남구 역삼동 산 123" → true
- */
-export function isMountainLot(address: string): boolean {
-  return /산\s*\d/.test(address);
-}
-
-/**
  * 주소 문자열에서 공동주택 동/호 추출
  * "경기 광명시 철산동 367 108동 1403호" → { dong: "108", ho: "1403" }
  * 숫자+"동"/"호" 패턴만 매칭하므로 "역삼동" 같은 법정동명은 걸리지 않는다.

@@ -8,60 +8,7 @@
 import type { RiskScore } from "./risk-scoring";
 import type { PredictionResult } from "./prediction-engine";
 import type { ContractAnalysisResult } from "./contract-analyzer";
-import type { CrossAnalysisResult, CrossAnalysisLink } from "./patent-types";
-
-// ─── 교차 분석 규칙 정의 ───
-
-const CROSS_ANALYSIS_LINKS: CrossAnalysisLink[] = [
-  {
-    id: "registry_to_tax",
-    from: "registry",
-    to: "tax",
-    dataFlow: "소유권 변동 이력, 근저당 설정 정보",
-    triggerCondition: "소유권 이전 이력 존재",
-    description: "소유권이전 이력 → 양도세 자동 계산",
-  },
-  {
-    id: "price_to_jeonse",
-    from: "price",
-    to: "jeonse",
-    dataFlow: "시세 하락 예측값",
-    triggerCondition: "시세 하락 예측 5% 이상",
-    description: "시세 하락 예측 시 깡투자 위험도 상향",
-  },
-  {
-    id: "contract_to_registry",
-    from: "contract",
-    to: "registry",
-    dataFlow: "계약서 특약사항",
-    triggerCondition: "특약사항 존재",
-    description: "특약사항 ↔ 등기부 교차 검증",
-  },
-  {
-    id: "jeonse_to_price",
-    from: "jeonse",
-    to: "price",
-    dataFlow: "전세가율 변동",
-    triggerCondition: "전세가율 70% 이상",
-    description: "전세가율 변동 → 시세예측 피드백",
-  },
-  {
-    id: "tax_to_assistant",
-    from: "tax",
-    to: "assistant",
-    dataFlow: "절세 전략 결과",
-    triggerCondition: "세금 계산 완료",
-    description: "절세 전략 → 맞춤형 상담 컨텍스트",
-  },
-  {
-    id: "vscore_to_all",
-    from: "vscore",
-    to: "all",
-    dataFlow: "위험도 변동",
-    triggerCondition: "V-Score 5점 이상 변동",
-    description: "위험도 변동 시 관련 분석 재계산",
-  },
-];
+import type { CrossAnalysisResult } from "./patent-types";
 
 // ─── 교차 분석 입력 타입 ───
 
@@ -279,11 +226,4 @@ export function evaluateCrossAnalysis(
     cascadeUpdates: triggeredCount,
     totalLinksEvaluated: results.length,
   };
-}
-
-/**
- * 교차 분석 링크 정의 조회
- */
-export function getCrossAnalysisLinks(): CrossAnalysisLink[] {
-  return CROSS_ANALYSIS_LINKS;
 }

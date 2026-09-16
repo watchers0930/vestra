@@ -36,8 +36,3 @@ export function addNotification(message: string): void {
   const updated = [newNotification, ...notifications].slice(0, MAX_NOTIFICATIONS);
   saveNotifications(updated);
 }
-
-export function getUnreadCount(): number {
-  const notifications = getNotifications();
-  return notifications.filter((n) => !n.read).length;
-}

@@ -150,31 +150,3 @@ async function fetchCourtCasesRaw(apiKey: string, query: string, maxResults: num
     return [];
   }
 }
-
-/**
- * 계약 분석용 관련 판례 검색
- *
- * 계약서 텍스트에서 핵심 키워드를 추출하여 관련 판례를 검색.
- */
-export async function searchRelatedCases(
-  contractKeywords: string[]
-): Promise<CourtCase[]> {
-  if (contractKeywords.length === 0) return [];
-
-  // 최대 3개 키워드로 병렬 검색
-  const queries = contractKeywords.slice(0, 3);
-  const promises = queries.map((q) => searchCourtCases(q, 3));
-  const results = await Promise.all(promises);
-
-  // 중복 제거 (사건번호 기준)
-  const seen = new Set<string>();
-  const unique: CourtCase[] = [];
-  for (const c of results.flat()) {
-    if (!seen.has(c.caseNumber)) {
-      seen.add(c.caseNumber);
-      unique.push(c);
-    }
-  }
-
-  return unique.slice(0, 5);
-}

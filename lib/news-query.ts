@@ -70,36 +70,6 @@ export async function logNewsUsage(articleIds: string[], usedIn: string) {
 }
 
 /**
- * 90일 초과 데이터 삭제 (보존 정책)
- * 알림 데이터는 1년 보존
- */
-export async function cleanupOldArticles(): Promise<number> {
-  const cutoff90 = new Date();
-  cutoff90.setDate(cutoff90.getDate() - 90);
-
-  const cutoff365 = new Date();
-  cutoff365.setDate(cutoff365.getDate() - 365);
-
-  // 일반 기사: 90일
-  const normal = await prisma.newsArticle.deleteMany({
-    where: {
-      isAlert: false,
-      collectedAt: { lt: cutoff90 },
-    },
-  });
-
-  // 알림 기사: 1년
-  const alerts = await prisma.newsArticle.deleteMany({
-    where: {
-      isAlert: true,
-      collectedAt: { lt: cutoff365 },
-    },
-  });
-
-  return normal.count + alerts.count;
-}
-
-/**
  * AI 어시스턴트용 뉴스 컨텍스트 문자열 생성
  */
 export async function buildNewsContext(): Promise<{ context: string; articleIds: string[] }> {

@@ -102,21 +102,3 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
 
   return { sent, failed };
 }
-
-/** 여러 사용자에게 Push 알림 일괄 발송 */
-export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
-  const results = await Promise.allSettled(
-    userIds.map((id) => sendPushToUser(id, payload)),
-  );
-
-  let totalSent = 0;
-  let totalFailed = 0;
-  for (const r of results) {
-    if (r.status === "fulfilled") {
-      totalSent += r.value.sent;
-      totalFailed += r.value.failed;
-    }
-  }
-
-  return { sent: totalSent, failed: totalFailed };
-}
