@@ -1,18 +1,16 @@
 {
   "_note": "보안 회귀 게이트 베이스라인(P0-5). 기존 취약점은 유예, 신규만 차단. 의존성 정리 후 이 파일을 재생성해 부채를 줄인다.",
   "_generatedAt": "2026-09-11",
-  "_history": "npm audit fix로 호환 취약점 패치 후 재생성(18→10 high/critical). 잔여=메이저(next/prisma/serwist)·xlsx(fix없음)",
+  "_history": "npm audit fix로 호환 취약점 패치 후 재생성(18→10 high/critical). 잔여=메이저(next/prisma/serwist). xlsx는 v5.167.5에서 SheetJS 공식 0.20.3(CDN)으로 교체해 취약점 2건(1108110·1108111) 해소·baseline에서 제거.",
   "scaSummaryAtBaseline": {
     "info": 0,
     "low": 0,
     "moderate": 0,
-    "high": 9,
+    "high": 7,
     "critical": 1,
-    "total": 10
+    "total": 8
   },
   "advisoryIds": [
-    1108110,
-    1108111,
     1114898,
     1114941,
     1114942,

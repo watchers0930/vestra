@@ -1,6 +1,6 @@
 {
   "name": "vestra",
-  "version": "5.167.4",
+  "version": "5.167.5",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -54,7 +54,7 @@
     "tailwind-merge": "^3.5.0",
     "unpdf": "^1.4.0",
     "web-push": "^3.6.7",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
