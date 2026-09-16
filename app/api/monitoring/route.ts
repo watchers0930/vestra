@@ -256,10 +256,11 @@ export async function POST(req: NextRequest) {
 
         await recordRegistrySnapshot({ propertyId: property.id, fullText: registry.text });
 
-        console.log(`[MONITORING] 최초 등기부 발급 완료: ${address.trim()}${extractedNo ? ` / 고유번호: ${extractedNo}` : ""}`);
+        // 주소·등기부 고유번호는 민감정보 → 로그에 남기지 않고 식별자(propertyId)만 기록
+        console.log(`[MONITORING] 최초 등기부 발급 완료: propertyId=${property.id}${extractedNo ? " / 고유번호 확보" : ""}`);
       } catch (e) {
         // 발급 실패해도 등록 자체는 완료 — 크론에서 재시도 가능
-        console.error(`[MONITORING] 최초 등기부 발급 실패 (등록은 완료): ${address.trim()}`, e instanceof Error ? e.message : e);
+        console.error(`[MONITORING] 최초 등기부 발급 실패 (등록은 완료): propertyId=${property.id}`, e instanceof Error ? e.message : e);
       }
     }
 

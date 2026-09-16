@@ -61,11 +61,34 @@ export const POST = withAgentAuth<{ id: string }>(
         );
       }
 
-      // monitoredPropertyId 미지정 시 주소로 자동 매칭
-      let resolvedMonitorId = monitoredPropertyId || null;
+      // 링크 가능한 물건 소유자 후보 = 세션 중개사 본인 또는 해당 고객(가입자)
+      // 다운스트림 인가(monitoring/alerts·snapshots·integrity·to-asset)가 이 링크를 신뢰하므로,
+      // 타 사용자 물건 id·주소를 링크하면 교차 테넌트 침해(IDOR)가 된다. 소유자 범위로 차단.
+      const ownerCandidates = [session.user.id, client.clientUserId].filter(
+        (v): v is string => Boolean(v),
+      );
+
+      let resolvedMonitorId: string | null = null;
+
+      // 케이스 0: 명시적 monitoredPropertyId → 반드시 소유 후보 소유여야 링크 허용
+      if (monitoredPropertyId) {
+        const owned = await prisma.monitoredProperty.findFirst({
+          where: { id: monitoredPropertyId, userId: { in: ownerCandidates } },
+          select: { id: true },
+        });
+        if (!owned) {
+          return NextResponse.json(
+            { error: "해당 물건에 대한 권한이 없습니다." },
+            { status: 403 }
+          );
+        }
+        resolvedMonitorId = owned.id;
+      }
+
+      // 케이스 1: 미지정 → 소유 후보 소유의 동일 주소 물건만 매칭
       if (!resolvedMonitorId) {
         const matched = await prisma.monitoredProperty.findFirst({
-          where: { address: address.trim(), status: "active" },
+          where: { address: address.trim(), status: "active", userId: { in: ownerCandidates } },
           select: { id: true },
         });
         if (matched) {

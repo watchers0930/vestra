@@ -22,6 +22,8 @@ const ENV_VARS: EnvVar[] = [
   { key: "LAW_API_KEY", required: false, description: "국가법령정보 판례 검색 API" },
   { key: "NEXT_PUBLIC_KAKAO_MAP_KEY", required: false, description: "카카오 지도" },
   { key: "PII_SALT", required: true, description: "PII 암호화 salt" },
+  { key: "PII_ENCRYPTION_KEY", required: true, description: "PII 암호화 마스터키(v2, AUTH_SECRET과 독립). 미설정 시 PII 저장/조회 전 경로가 런타임 throw" },
+  { key: "SEARCH_INDEX_KEY", required: false, description: "blind index 전용 HMAC 키(미설정 시 AUTH_SECRET 폴백). 운영은 전용키 백필 완료 상태여야 함" },
   { key: "CRON_SECRET", required: true, description: "Vercel Cron 인증 시크릿" },
   { key: "DART_API_KEY", required: false, description: "DART 전자공시 API" },
   { key: "KOSIS_API_KEY", required: false, description: "통계청 KOSIS API" },

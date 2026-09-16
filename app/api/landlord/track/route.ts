@@ -18,23 +18,6 @@ import { fetchRecentPrices } from "@/lib/molit-api";
 import { searchCourtCases } from "@/lib/court-api";
 import { validateOrigin } from "@/lib/csrf";
 
-// 시드 데이터: 소유자별 물건 목록 (실 데이터 연동 전)
-// TODO: MOLIT 등기부 API 또는 한국평가데이터 API 연동
-const SEED_OWNERS: Record<string, LandlordProperty[]> = {
-  "김영수": [
-    { address: "서울특별시 강남구 압구정동 123", mortgageTotal: 350_000_000, liensTotal: 0, estimatedPrice: 1_200_000_000, riskLevel: "MEDIUM" },
-    { address: "서울특별시 서초구 반포동 456", mortgageTotal: 500_000_000, liensTotal: 0, estimatedPrice: 900_000_000, riskLevel: "HIGH" },
-    { address: "서울특별시 마포구 상암동 789", mortgageTotal: 120_000_000, liensTotal: 0, estimatedPrice: 650_000_000, riskLevel: "LOW" },
-  ],
-  "이정희": [
-    { address: "서울특별시 송파구 잠실동 101", mortgageTotal: 200_000_000, liensTotal: 50_000_000, estimatedPrice: 800_000_000, riskLevel: "HIGH" },
-    { address: "서울특별시 강동구 천호동 202", mortgageTotal: 150_000_000, liensTotal: 0, estimatedPrice: 550_000_000, riskLevel: "MEDIUM" },
-  ],
-  "박지민": [
-    { address: "서울특별시 용산구 이촌동 303", mortgageTotal: 80_000_000, liensTotal: 0, estimatedPrice: 1_500_000_000, riskLevel: "LOW" },
-  ],
-};
-
 /**
  * 주소 기반으로 MOLIT 실거래가 API에서 추정 시세를 조회
  * - 최근 6개월 거래 데이터의 평균가를 사용
@@ -100,32 +83,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "ownerName이 필요합니다." }, { status: 400 });
     }
 
-    // 시드 데이터에서 조회 (실 연동 시 MOLIT API 교체)
-    let properties = SEED_OWNERS[ownerName.trim()];
-
-    if (!properties) {
-      if (baseAddress) {
-        // MOLIT 실거래가 API로 추정 시세 조회
-        const estimatedPrice = await estimatePriceFromMolit(baseAddress);
-        const finalPrice = estimatedPrice > 0 ? estimatedPrice : 0;
-
-        properties = [{
-          address: baseAddress,
-          mortgageTotal: 0,
-          liensTotal: 0,
-          estimatedPrice: finalPrice,
-          riskLevel: assessPropertyRisk(0, 0, finalPrice),
-        }];
-      } else {
-        properties = [];
-      }
+    // 실 데이터만 사용: 기준 주소가 있으면 MOLIT 실거래가로 추정 시세를 조회한다.
+    // (하드코딩 시드 데이터 제거 — 가짜 물건이 실제 위험 프로파일로 노출되던 문제 해결)
+    let properties: LandlordProperty[] = [];
+    if (baseAddress) {
+      const estimatedPrice = await estimatePriceFromMolit(baseAddress);
+      properties = [{
+        address: baseAddress,
+        mortgageTotal: 0,
+        liensTotal: 0,
+        estimatedPrice,
+        riskLevel: assessPropertyRisk(0, 0, estimatedPrice),
+      }];
     }
-
-    // 위험도 재계산
-    properties = properties.map((p) => ({
-      ...p,
-      riskLevel: assessPropertyRisk(p.mortgageTotal, p.liensTotal, p.estimatedPrice),
-    }));
 
     // 법제처 Open API 판례 검색 (LAW_API_KEY 없으면 graceful fallback으로 0 반환)
     let courtCaseCount = 0;

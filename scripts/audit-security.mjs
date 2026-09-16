@@ -43,6 +43,29 @@ function grepCount(pattern) {
   }
 }
 
+// 바이너리로 취급되는 tracked 소스 파일 검출 — SAST(git grep -I)는 바이너리를 건너뛰므로
+// NUL 바이트 등이 섞인 소스는 영구 사각지대가 된다(예: lib/crypto.ts NUL 사고). 신규 도입 차단.
+function findBinarySources() {
+  try {
+    const files = execSync(
+      "git ls-files -- 'app/**/*.ts' 'app/**/*.tsx' 'lib/**/*.ts' 'lib/**/*.tsx' 'components/**/*.ts' 'components/**/*.tsx'",
+      { cwd: ROOT, encoding: "utf-8" },
+    )
+      .split("\n")
+      .filter(Boolean);
+    return files.filter((f) => readFileSync(join(ROOT, f)).includes(0));
+  } catch {
+    return [];
+  }
+}
+const binSources = findBinarySources();
+if (binSources.length > 0) {
+  failed = true;
+  log(`❌ SAST: 바이너리로 취급되는 소스 파일 ${binSources.length}건 — SAST(git grep -I) 사각지대: ${binSources.join(", ")}`);
+} else {
+  log("✅ SAST: 바이너리 취급 소스 파일 없음 (SAST 사각지대 없음)");
+}
+
 // eval( — baseline 0. 신규 발견 시 차단.
 const evalCount = grepCount("[^A-Za-z0-9_.]eval\\\\(");
 if (evalCount > 0) {

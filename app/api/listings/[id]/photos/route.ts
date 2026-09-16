@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { put, del } from "@vercel/blob";
 import { validateMagicBytes } from "@/lib/sanitize";
+import { validateOrigin } from "@/lib/csrf";
 
 // 매물 사진 전용 public store 토큰. 누락 시 기본(private) store로 잘못 유입되는 것을 차단.
 function photosToken(): string {
@@ -17,6 +18,9 @@ const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 // POST /api/listings/[id]/photos — 사진 업로드 (Vercel Blob)
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
@@ -77,6 +81,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 // DELETE /api/listings/[id]/photos — 사진 삭제
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });

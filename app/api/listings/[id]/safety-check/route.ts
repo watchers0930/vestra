@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
+import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { fetchOfficialPrices } from "@/lib/official-price-api";
 import { checkGuaranteeInsurance } from "@/lib/guarantee-insurance";
 
@@ -28,6 +29,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!listing) return NextResponse.json({ error: "매물을 찾을 수 없습니다." }, { status: 404 });
     if (listing.ownerId !== session.user.id) {
       return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+    }
+
+    // 외부 API(공시가·보증보험) 호출 남용 방지 — 사용자당 rate limit
+    const rl = await rateLimit(`safety-check:${session.user.id}`, 10);
+    if (!rl.success) {
+      return NextResponse.json({ error: "요청 한도 초과" }, { status: 429, headers: rateLimitHeaders(rl) });
     }
 
     const deposit = Number(listing.deposit);

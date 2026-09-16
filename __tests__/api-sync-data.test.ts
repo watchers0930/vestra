@@ -265,10 +265,23 @@ describe("GET /api/user/sync-data", () => {
 // ════════════════════════════════════════════════════════════════════
 
 describe("DELETE /api/user/sync-data", () => {
+  const validOrigin = { origin: "http://localhost:3000" };
+
+  it("CSRF 실패 → 403", async () => {
+    mockAuthenticated();
+
+    const req = makeRequest("DELETE", { analysisId: "a1" }, { origin: "https://evil.com" });
+    const res = await DELETE(req);
+
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error).toBe("잘못된 요청 출처입니다");
+  });
+
   it("미인증 → 401", async () => {
     vi.mocked(auth).mockResolvedValue(null as any);
 
-    const req = makeRequest("DELETE", { analysisId: "a1" });
+    const req = makeRequest("DELETE", { analysisId: "a1" }, validOrigin);
     const res = await DELETE(req);
 
     expect(res.status).toBe(401);
@@ -279,7 +292,7 @@ describe("DELETE /api/user/sync-data", () => {
   it("analysisId 누락 → 400", async () => {
     mockAuthenticated();
 
-    const req = makeRequest("DELETE", {});
+    const req = makeRequest("DELETE", {}, validOrigin);
     const res = await DELETE(req);
 
     expect(res.status).toBe(400);
@@ -291,7 +304,7 @@ describe("DELETE /api/user/sync-data", () => {
     mockAuthenticated();
     vi.mocked(prisma.analysis.deleteMany).mockResolvedValue({ count: 1 } as any);
 
-    const req = makeRequest("DELETE", { analysisId: "a1" });
+    const req = makeRequest("DELETE", { analysisId: "a1" }, validOrigin);
     const res = await DELETE(req);
 
     expect(res.status).toBe(200);

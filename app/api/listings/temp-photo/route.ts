@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { auth } from "@/lib/auth";
 import { validateMagicBytes } from "@/lib/sanitize";
+import { validateOrigin } from "@/lib/csrf";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -15,6 +16,9 @@ function photosToken(): string {
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });

@@ -231,6 +231,9 @@ export async function GET(req: NextRequest) {
  * Body: { analysisId: string }
  */
 export async function DELETE(req: NextRequest) {
+  const csrfError = validateOrigin(req);
+  if (csrfError) return csrfError;
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "인증 필요" }, { status: 401 });

@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { auth } from "@/lib/auth";
 import { validateMagicBytes } from "@/lib/sanitize";
+import { validateOrigin } from "@/lib/csrf";
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = validateOrigin(req);
+    if (csrfError) return csrfError;
+
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });

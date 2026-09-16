@@ -41,7 +41,7 @@ const ALLOWLIST = {
 };
 
 const MUTATION_RE = /export\s+(?:async\s+function|const)\s+(POST|PUT|PATCH|DELETE)\b/g;
-const AUTH_SIGNALS = [/\bauth\s*\(\s*\)/, /withAdminAuth/, /withAgentAuth/, /CRON_SECRET/];
+const AUTH_SIGNALS = [/\bauth\s*\(\s*\)/, /withAdminAuth/, /withAgentAuth/, /CRON_SECRET/, /verifyCronSecret/];
 
 function walk(dir) {
   const out = [];
