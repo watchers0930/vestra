@@ -102,3 +102,4 @@ wiki/
 - 2026-06-22: 개념 아티클 디렉토리(concepts/) 초기 생성 — two-stage-principle, uncalibrated-parameters 추가
 - 2026-06-22: Topics/Concepts 목록 섹션 schema.md에 추가
 - 2026-08-22: 이번 세션(v5.87~5.90.2) 반영 재컴파일 — features·api·frontend·security·platform-overview 5개 토픽 갱신(가계약서 전면개편·거래 FK 무결성·역할 계층·권한 가드). 신규 개념 role-based-feature-gating 추가
+- 2026-09-16: 세션(v5.166.0~5.167.6) 반영 — security·api·features·deployment 4개 토픽 갱신(전수 보안감사·등기감시 P1017 근본수정·cleanup cron·xlsx 취약점 해소·dead code 대규모 정리·500줄 분리). 신규 토픽/개념 없음

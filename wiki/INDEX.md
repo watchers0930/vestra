@@ -1,8 +1,8 @@
 # VESTRA Wiki INDEX
 
-> **컴파일 날짜**: 2026-08-22
-> **프로젝트 버전**: v5.90.2
-> **배포 URL**: https://vestra-plum.vercel.app
+> **컴파일 날짜**: 2026-09-16
+> **프로젝트 버전**: v5.167.6
+> **배포 URL**: https://vestra.ai.kr (구 vestra-plum.vercel.app)
 > **총 토픽**: 7개 | **개념 아티클**: 3개 | **소스 문서**: 51개+
 
 ---
@@ -13,11 +13,11 @@
 |------|------|------|---------|----------|
 | 플랫폼 개요 | [topics/platform-overview.md](topics/platform-overview.md) | 전체 아키텍처, 회원 역할 계층, 거래 FK 무결성, v5.90.2 | 13 | high |
 | 핵심 알고리즘 | [topics/algorithm.md](topics/algorithm.md) | 7개 특허 알고리즘, 공공 API 10종, 예측 강화 로드맵 | 11 | high |
-| API 명세 | [topics/api.md](topics/api.md) | 거래 API·가계약서·권한 가드·접근 매트릭스 | 8 | high |
+| API 명세 | [topics/api.md](topics/api.md) | 거래 API·권한 가드·findMany 상한·cleanup cron·issue-order 분리 | 12 | high |
 | 프론트엔드 | [topics/frontend.md](topics/frontend.md) | renewal UI, 매물등록·가계약서·서명패드, PDF | 16 | high |
-| 보안 | [topics/security.md](topics/security.md) | RBAC·역할 게이팅·PII 최소화·PDF 접근격리·OWASP | 14 | high |
-| 주요 기능 | [topics/features.md](topics/features.md) | 가계약서·의향서·등기감시·전세·사업성(기업전용) | 20 | high |
-| 배포/인프라 | [topics/deployment.md](topics/deployment.md) | 2단계 배포, Vercel, Neon, 환경변수 15종 | 5 | high |
+| 보안 | [topics/security.md](topics/security.md) | RBAC·PII·CSRF·IDOR·crypto NUL 게이트·xlsx 취약점 해소·OWASP | 23 | high |
+| 주요 기능 | [topics/features.md](topics/features.md) | 등기감시(P1017 원자화)·의향서·전세·dead code 정리·가짜데이터 제거 | 24 | high |
+| 배포/인프라 | [topics/deployment.md](topics/deployment.md) | 2단계 배포, Vercel, cron 8종·cleanup, prebuild 보안게이트, xlsx CDN | 8 | high |
 
 ---
 
@@ -140,6 +140,18 @@
 
 ## 최근 변경 이력
 
+- **2026-09-16**: 세션(v5.166.0~5.167.6) 반영 — security·api·features·deployment 4개 토픽 갱신 (전수 보안감사 + 등기감시 근본수정 + 대규모 정리)
+  - **전수 보안감사·수정**: crypto.ts NUL 바이트 제거(보안 SAST 게이트가 PII 암호화 파일을 바이너리로 취급해 건너뛰던 사각지대) + 재발방지 게이트 신설, CSRF 4곳(photos·temp-doc·temp-photo·sync-data DELETE), IDOR(agent/clients properties 소유권 검증), PII env 등록·로그 마스킹, 이중발급 낙관적 잠금, invite 실명 마스킹
+  - **등기감시 로그 유실 근본수정**: 반복 문제의 진짜 원인=간헐 Neon P1017(커넥션 닫힘)로 cron이 lastCheckedAt만 갱신하고 별도 recordCheckLog create가 실패해 유실. update+로그를 `$transaction` 원자화+3회 재시도+maxDuration=60. 운영 실측 검증
+  - **성능**: findMany 상한(verification·monitoring/alerts·agent/clients·admin/announcements), certify·safety-check rate limit
+  - **인프라**: cleanup cron 신설(temp 고아 Blob 정리+AuditLog/Notification retention), xlsx 취약점 해소(SheetJS 공식 0.20.3 CDN)
+  - **대규모 정리**: dead code — 구 서명(/api/sign)·/ai-trust·SCR 뷰어 파이프라인 29파일·미연결 컴포넌트 17개·미사용 lib export 34심볼 제거. molit-api(613)·issue-order(535) 500줄 분리. 가짜 임대인 시드데이터 제거
+- **2026-09-15**: 세션(v5.162.0~5.165.4) 반영 — security·features 갱신 (deep_scan off라 문서 소스 변경은 package.json 버전뿐; 아래는 코드 변경을 세션 컨텍스트로 반영)
+  - **세션 자동 로그아웃**: 유휴 10분(`lib/session-config.ts` 단일상수) + 브라우저 닫힘=로그아웃(Auth.js v5가 세션쿠키에 강제주입하는 Expires/Max-Age를 route에서 제거, `lib/session-cookie.ts`)
+  - **사업자 승인 전 PERSONAL 유지**: 신청 시 role 즉시 변경 대신 `User.requestedRole`에 기록, 관리자 승인 시에만 role 부여(승인 전 권한상승·화면 오전환 차단), 거부 시 requestedRole 정리
+  - **내용증명(keepzip)**: 생성 속도 개선(reasoning medium→minimal, 44.6s→9.6s), 지연이자 항목(민법 제379조 연 5%) 추가·한 줄화, PDF·화면 테이블 형식(수신인/발신인/부동산 표시 + '내용' 셀, 12pt, 회색 배경), 체크박스 선택·전체삭제(DELETE `/api/keepzip/cases`, 본인 것만 IDOR 차단)
+  - **등기감시 cron 로그 근본수정**: `recordCheckLog` 빈 catch 제거 + 3회 재시도(일시적 DB실패 복구), lastCheckedAt만 갱신되고 로그 누락되던 문제 해결
+  - **마이페이지**: 유료 플랜 배지+만료일, 구독 카드 현재 플랜 선택, GNB 로그아웃 아이콘화, 의향서 카드 폭 확대
 - **2026-08-22**: 이번 세션(v5.87~5.90.2) 반영 — 5개 토픽 갱신(features·api·frontend·security·platform-overview)
   - 가계약서 전면 개편(양측 손글씨 서명→PDF A4 1페이지→오프라인 확정, 표준계약 10개 조항 요약, 주민번호 성별1자리)
   - 거래 데이터 FK 무결성(EContract↔의향서/매물/임차인, MonitoredProperty↔매물)

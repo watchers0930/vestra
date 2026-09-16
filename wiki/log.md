@@ -1,5 +1,32 @@
 # Wiki Compile Log
 
+## 2026-09-16 — 증분 컴파일 (세션 v5.166.0~5.167.6)
+
+- 모드: codebase (deep_scan off — 코드 변경 위주 세션이라 세션 컨텍스트로 반영)
+- 업데이트 토픽: 4개 (security, api, features, deployment) — 병렬 컴파일
+- 신규 토픽/개념: 없음 (새 non-obvious 교차 패턴 없어 개념 미신설)
+- 소스 스캔: 문서 소스 변경은 package.json(버전·xlsx CDN)·.env.example·vercel.json 등 인프라 파일; 코드 변경 다수(보안·cron·분리·삭제)는 세션 컨텍스트로 반영
+
+### 이번 세션 반영 요약 (8개 커밋 v5.166.0~5.167.6)
+- **security**: crypto NUL 바이트 제거+SAST 바이너리 검출 게이트 신설, CSRF 4곳, IDOR(agent properties 소유권 검증), PII env 등록·로그 마스킹, xlsx 취약점 해소(SheetJS 0.20.3, baseline advisory 2건 제거), 이중발급 낙관적 잠금, invite 실명 마스킹, rate limit
+- **api**: findMany 상한 4곳, cleanup cron 신설, registry-monitor recordCheck 원자화(P1017), issue-order route/service 분리, dead endpoint 4종 삭제(sign·ai-trust·dart·reps)
+- **features**: 등기감시 로그 유실 근본수정(P1017 $transaction 원자화, 운영검증), 가짜 임대인 시드데이터 제거, dead code 대량 정리(SCR 뷰어 29파일·컴포넌트 17·심볼 34), cleanup 정기정리
+- **deployment**: cleanup cron(vercel.json, KST 04:00), registry-monitor maxDuration=60, xlsx CDN 의존성, prebuild 보안게이트 강화(바이너리 검출·verifyCronSecret 신호)
+
+## 2026-09-15 — 증분 컴파일 (세션 v5.162.0~5.165.4)
+
+- 모드: codebase (deep_scan off — 문서 소스 변경은 package.json 버전뿐, 코드 변경은 세션 컨텍스트로 반영)
+- 업데이트 토픽: 2개 (security, features)
+- 신규 토픽/개념: 없음
+- 소스 스캔: 문서 기준 변경 미미 (코드 변경 34개 중 30개, 위키 미스캔)
+
+### 토픽별 변경 요약
+
+| 토픽 | 주요 추가 내용 |
+|------|----------------|
+| security | 세션 자동 로그아웃(유휴 10분 + 브라우저 닫힘 쿠키 제거), 사업자 승인 전 PERSONAL 유지(requestedRole) |
+| features | 등기감시 실행 로그(MonitoringCheckLog) + cron 재시도 근본수정, FR-015 내용증명(테이블 형식·속도개선·선택삭제·지연이자) 신규 항목, cron 스케줄 12·17시 갱신 |
+
 ## 2026-07-27 — 증분 컴파일
 
 - 모드: codebase

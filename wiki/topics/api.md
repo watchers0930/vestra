@@ -1,7 +1,7 @@
 ---
 topic: api
-last_compiled: 2026-08-22
-sources: 8
+last_compiled: 2026-09-16
+sources: 12
 ---
 
 # API
@@ -74,6 +74,23 @@ Vercel Serverless Functions
 
 Rate Limit 응답 헤더: `X-RateLimit-Remaining`, `X-RateLimit-Reset`. 식별자: `userId || IP`.
 
+이번 세션 rate limit 추가: `listings/[id]/certify`·`listings/[id]/safety-check`.
+
+### 무제한 로드 방지 (findMany 상한)
+
+DB 목록 조회에 상한을 명시해 대량 누적 시 메모리·응답 폭주를 차단한다.
+
+| 라우트 | 상한 |
+|--------|------|
+| `verification/request` | `take: 100` |
+| `monitoring/alerts` (linkedProps 조회) | `take: 5000` |
+| `agent/clients` (검색) | `take: 2000` |
+| `admin/announcements` | `take: 200` |
+
+### CSRF 변이 가드 추가 (이번 세션)
+
+`listings/[id]/photos`·`listings/[id]/temp-doc`·`listings/[id]/temp-photo`·`user/sync-data` **DELETE**에 `validateOrigin` 추가.
+
 ### Web Push 알림 연동
 
 `lib/push-subscriptions.ts`의 `sendPushToUser(userId, {title, body, url})`로 특정 사용자에게 브라우저 Web Push 발송. fire-and-forget(`.catch(() => {})`)이며 실패해도 원 트랜잭션에 영향 없음. 의향서 제출/수락/거절 이벤트에서 사용.
@@ -82,8 +99,20 @@ Rate Limit 응답 헤더: `X-RateLimit-Remaining`, `X-RateLimit-Reset`. 식별�
 
 | 작업 | 경로 | 스케줄 | 보안 |
 |------|------|--------|------|
-| 등기변동 모니터링 | `/api/cron/registry-monitor` | 매일 09:00 (`0 9 * * *`) | CRON_SECRET, 프로덕션 강제 |
+| 등기변동 모니터링 | `/api/cron/registry-monitor` | 하루 2회 (`0 3,8 * * *` UTC = KST 12·17시) | CRON_SECRET, `maxDuration=60` |
 | 전세사기 데이터 수집 | `/api/cron/fraud-import` | 매주 월 03:00 (`0 3 * * 1`) | CRON_SECRET |
+| 정기 정리 (cleanup) | `/api/cron/cleanup` | 하루 1회 (`0 19 * * *`) | CRON_SECRET, `maxDuration=60` |
+
+#### `/api/cron/cleanup` (신설)
+
+`lib/cron/cleanup.ts`의 두 단계를 독립 try/catch로 실행(하나 실패해도 나머지 진행).
+
+1. **고아 temp Blob 정리** (`cleanupOrphanTempBlobs`) — 폼 이탈로 버려진 임시 업로드만 삭제. ⚠️ temp URL은 매물 등록 시 이관 없이 `Listing.photos`/`safetyDocuments[].url`에 **그대로** 저장되므로 prefix만으로 지우면 활성 매물 자산을 삭제한다. 반드시 **DB 참조를 전수 수집 → 미참조 + 24h 경과** 파일만 삭제(회당 상한 1000). public store(`listings/temp/*`, url로 대조)·private store(`listings/docs/*`, pathname으로 대조) 양쪽. `PHOTOS_READ_WRITE_TOKEN` 미설정 시 public 정리를 건너뜀(엉뚱한 기본 store 미접근).
+2. **retention 정리** (`cleanupOldRecords`) — `AuditLog`(365일 초과)·`Notification`(180일 초과) 삭제.
+
+#### `/api/cron/registry-monitor` 원자성 근본수정
+
+기존 `recordCheckLog`(lastCheckedAt 갱신과 로그 create를 분리 실행) → **`recordCheck`**로 교체. lastCheckedAt 등 체크시각 갱신과 `MonitoringCheckLog` create를 **하나의 `$transaction`으로 원자화**(간헐 Neon `P1017`로 로그만 유실되고 체크시각만 갱신되던 불일치 차단 — 로그 실패 시 체크시각도 롤백돼 다음 cron이 "미처리"로 재시도). 일시 DB 실패에 **최대 3회 재시도**(200ms×attempt 백오프), 최종 실패는 은폐 없이 `console.error`. `maxDuration=60`으로 콜드스타트 지연 시에도 recordCheck 도달 보장.
 
 ---
 
@@ -122,7 +151,9 @@ Rate Limit 응답 헤더: `X-RateLimit-Remaining`, `X-RateLimit-Reset`. 식별�
 | GET | `/api/e-contracts` | 필수 | 임대인/작성자/연결 임차인/중개 | 내 가계약 목록(tenantId 포함), 페이지 20건 |
 | POST | `/api/e-contracts` | 필수 | 의향서 연결 시 본인 매물 소유자 | 가계약서 생성(양측 서명 즉시 COMPLETED) |
 | GET | `/api/e-contracts/[id]/pdf` | (계약 참여자) | - | 온디맨드 PDF 렌더링 |
-| POST | `/api/sign/[token]/complete` | 서명 토큰 | 토큰 검증(만료 72h) | 이메일 서명 링크 서명 저장 + 상태 진행 |
+| POST | `/api/e-contracts/sign/[token]` | 서명 토큰 | 토큰(signToken) 검증 | 이메일 서명 링크 서명 저장 + 상태 진행 (구 `/api/sign/[token]` 대체) |
+| POST | `/api/registry/issue-order` | 필수 | 본인 감시물건(선택) | 등기부 발급 결제 주문 생성(현재 `REGISTRY_ISSUE_SUSPENDED`=503 보류), 10/min |
+| PATCH | `/api/registry/issue-order` | 필수 | 본인 주문(orderId) | 결제 완료 주문 발급 실행(`executePaidOrder`), 10/min |
 
 ### 모니터링 API
 
@@ -262,7 +293,11 @@ Rate Limit 응답 헤더: `X-RateLimit-Remaining`, `X-RateLimit-Reset`. 식별�
 
 7. **중개관리 고객 상세에 고객 소유 매물·의향서 포함** — `GET /api/agent/clients/[id]`는 고객이 VESTRA 가입회원(`clientUserId` 존재)일 때 그 고객의 매물 목록과 받은 의향서를 함께 조회해 반환(각 최대 50건). 중개인이 담당 고객의 거래 현황을 한 화면에서 파악하도록 설계.
 
-8. **`generate-document` jeonse/lease 법원 공식 양식** — `type=jeonse`/`type=lease`는 OpenAI 미호출, 법원 서식 정적 템플릿 반환(등기부 파싱 값 자동 삽입, 미입력은 `(기재 필요)`). `type=analyze`만 OpenAI GPT-4.1-mini + Cost Guard.
+8. **등기 발급 주문 route/service 분리** — `app/api/registry/issue-order/route.ts`(535줄)를 얇은 route(POST/PATCH, 198줄, CSRF·인증·rate limit·주문 생성·소유권 검증)와 `lib/registry-issue-service.ts`(356줄, `executePaidOrder`·상수·헬퍼)로 분리. 동작 불변. POST=결제 대기 주문 생성, PATCH=결제 완료 주문에 대해 `executePaidOrder` 실행. 현재 `REGISTRY_ISSUE_SUSPENDED` 플래그로 두 핸들러 모두 503 보류(틸코 자동발급 제외, 이용자 직접발급 정책).
+
+9. **dead endpoint 삭제** — 클라이언트 미호출/대체된 라우트 4종 제거: `/api/sign/[token]`(구 서명 흐름, `/api/e-contracts/sign/[token]`로 대체) · `/api/ai-trust` · `/api/dart-api` · `/api/reps-api`. `scripts/audit-api-auth.mjs` allowlist에서도 `sign` 항목 제거(공개 서명 링크 예외는 `e-contracts/sign/[token]`만 유지).
+
+10. **`generate-document` jeonse/lease 법원 공식 양식** — `type=jeonse`/`type=lease`는 OpenAI 미호출, 법원 서식 정적 템플릿 반환(등기부 파싱 값 자동 삽입, 미입력은 `(기재 필요)`). `type=analyze`만 OpenAI GPT-4.1-mini + Cost Guard.
 
 ---
 
@@ -270,7 +305,11 @@ Rate Limit 응답 헤더: `X-RateLimit-Remaining`, `X-RateLimit-Reset`. 식별�
 
 [coverage: medium -- 3 sources]
 
-- **가계약 vs 전자계약 흐름 혼동 주의** — `POST /api/e-contracts`(가계약: 즉시 COMPLETED, 양측 손글씨)와 `POST /api/sign/[token]/complete`(전자계약: 순차 이메일 서명, 상태 단계 진행)는 별개 흐름. 전자는 CSRF+세션, 후자는 서명 토큰(72h 만료)으로 인증.
+- **가계약 vs 전자계약 흐름 혼동 주의** — `POST /api/e-contracts`(가계약: 즉시 COMPLETED, 양측 손글씨)와 `POST /api/e-contracts/sign/[token]`(전자계약: 순차 이메일 서명, 상태 단계 진행)는 별개 흐름. 전자는 CSRF+세션, 후자는 서명 토큰으로 인증. ⚠️ 구 `/api/sign/[token]`은 이번 세션에 삭제됨(대체 경로 사용).
+
+- **monitoring 로그 PII 제거** — 등기 모니터링 로그에서 주소·등기부 고유번호(commUniqueNo) 평문 출력을 제거. 민감정보가 서버 로그에 남지 않도록 함.
+
+- **cleanup cron 오삭제 방지** — `/api/cron/cleanup`의 Blob 정리는 반드시 DB 참조 전수 수집이 성공한 뒤에만 삭제 루프에 진입한다. 참조 조회가 throw하면 삭제에 도달하지 못해 활성 매물 자산 오삭제가 원천 차단된다. temp URL은 매물 등록 시 이관 없이 DB에 그대로 저장되므로 prefix 기반 삭제는 금물.
 
 - **매물 등록 403 두 갈래** — TENANT는 `userType` 기준, 사업자 미인증은 `role + verifyStatus` 기준으로 각각 403. 에러 메시지가 다르므로 프론트에서 구분 처리 필요.
 
@@ -302,8 +341,14 @@ Rate Limit 응답 헤더: `X-RateLimit-Remaining`, `X-RateLimit-Reset`. 식별�
 - [[app/api/feasibility/scr-report/route.ts]]
 - [[app/api/feasibility/scr-report/stream/route.ts]]
 - [[app/api/agent/clients/[id]/route.ts]]
-- [[app/api/sign/[token]/complete/route.ts]]
+- [[app/api/e-contracts/sign/[token]/route.ts]]
+- [[app/api/registry/issue-order/route.ts]]
+- [[app/api/cron/cleanup/route.ts]]
+- [[app/api/cron/registry-monitor/route.ts]]
+- [[lib/registry-issue-service.ts]]
+- [[lib/cron/cleanup.ts]]
 - [[lib/feasibility-guard.ts]]
 - [[lib/push-subscriptions.ts]]
+- [[scripts/audit-api-auth.mjs]]
 - [[docs/04-API-Spec.md]]
 - [[docs/security/access-control-matrix.md]]

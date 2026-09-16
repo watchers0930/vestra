@@ -1,7 +1,7 @@
 ---
 topic: security
-last_compiled: 2026-08-22
-sources: 14
+last_compiled: 2026-09-16
+sources: 23
 ---
 
 # 보안 정책 및 가이드 (Security)
@@ -16,13 +16,17 @@ VESTRA의 보안 아키텍처는 행정안전부 SW 개발보안 가이드 및 O
 
 v4.5.1 종합평점 (2026-06-22 기준) 에서는 `withAdminAuth` HOF 통일, `crypto.ts` PII 암호화 강화, `sanitize.ts` 개선 등으로 보안 영역 점수가 **9.0/10** 으로 상향되었다. OWASP Top 10 (2021) 기준 10개 항목 중 **8개 완전 충족, 2개 부분 충족**.
 
-**이번 세션(2026-08-22) 반영 사항** — 임대 플랫폼(매물/전자계약/가계약) 도메인의 접근 제어와 개인정보 최소화가 강화되었다.
+**이번 세션(v5.166.0~5.167.6, 2026-09-16) 반영 사항** — 보안 회귀 게이트의 사각지대 제거, CSRF/IDOR/PII 취약점 다수 수정, 취약 의존성(xlsx) 교체, 동시성·인증 신호 하드닝.
 
-- **매물등록 권한 가드**: 사업자 회원(RENTAL_BIZ / BUSINESS / REALESTATE)은 `verifyStatus=verified` 상태여야만 매물 등록 가능(서버 + 클라이언트 이중 게이트). 개인 임대인(LANDLORD/PERSONAL)·ADMIN은 인증 대상 아님. 임차인(TENANT)은 등록 자체 불가.
-- **사업성분석 기업 전용 가드**: `lib/feasibility-guard.ts` 신설. FeasibilityReport는 BUSINESS·ADMIN만 접근 가능하며 생성 API 5종 + 화면에 일괄 적용.
-- **개인정보 최소화(가계약서 주민번호)**: 서명자 주민등록번호는 생년월일 6자리 + 성별 1자리(`890101-1`)까지만 `signerRrnPrefix`로 저장. 뒷 6자리는 수집·저장하지 않음.
-- **전자계약/가계약 PDF 접근 격리**: 로그인한 계약 당사자(landlordId / tenantId / creatorId / 당사자 이메일)만 PDF 다운로드 허용.
-- **조회 권한 격리 유지**: 매물·의향서·채팅방 조회는 소유자(ownerId)·신청자(applicantId)·본인(userId) 필터로 격리.
+- **crypto.ts NUL 바이트 제거(사각지대 해소)**: PII 키 파생 캐시 식별자에 NUL(`\x00`)이 섞여 있어 git이 `lib/crypto.ts`를 바이너리로 취급 → SAST 게이트(`git grep -I`)가 이 파일을 통째로 건너뛰던 영구 사각지대였다. 식별자를 `${k.length}:${k}:${salt}`로 교체하고, `audit-security.mjs`에 "바이너리 취급 tracked 소스 검출" 게이트를 신설해 재발을 차단한다.
+- **CSRF 방어 보강**: `validateOrigin`이 누락됐던 업로드/삭제 변이 핸들러에 추가 — listings photos(POST/DELETE)·temp-doc(POST)·temp-photo(POST) 업로드, user/sync-data(DELETE).
+- **IDOR 수정(교차 테넌트 물건 링크)**: `agent/clients/[id]/properties` POST가 `monitoredPropertyId`를 소유권 검증 없이 링크하던 것을 차단. 명시적 id는 소유 후보(중개사 본인·고객 본인) 소유일 때만 링크하고, 자동 매칭도 소유자 범위로 제한.
+- **PII 보호 강화**: `PII_ENCRYPTION_KEY`·`SEARCH_INDEX_KEY`를 `lib/env.ts` 검증 목록에 등록(전자는 required)하고 `.env.example`에 문서화. monitoring 최초 발급 로그에서 주소·등기고유번호 평문을 제거하고 `propertyId`만 남김.
+- **취약 의존성 교체(xlsx)**: npm의 `xlsx@0.18.5`(SheetJS 배포중단·취약: Prototype Pollution CVE-2023-30533, ReDoS CVE-2024-22363)를 SheetJS 공식 0.20.3(cdn.sheetjs.com)으로 교체. `security-baseline.json`에서 advisory 2건(1108110·1108111)을 제거(high 9→7).
+- **이중발급 방지(낙관적 잠금)**: registry issue-order의 `paid → issuing` 전이를 조건부 `updateMany`(count 기반 선점)로 원자화해 동시 요청 이중 과금·이중 분석을 차단.
+- **초대 토큰 공개 GET 실명 마스킹**: `invite/[token]` 공개 조회 응답의 고객 실명을 부분 마스킹(`홍길동`→`홍*동`)해 토큰 유출 시 제3자 실명 노출을 방지.
+- **인증 게이트 신호 보강**: `audit-api-auth.mjs`의 인증 신호에 `verifyCronSecret`을 추가.
+- **Rate limit 추가**: listings `certify`·`safety-check`에 사용자별 분당 10회 rate limit 적용.
 
 ---
 
@@ -94,6 +98,7 @@ v4.5.1 종합평점 (2026-06-22 기준) 에서는 `withAdminAuth` HOF 통일, `c
 - **비밀번호 정책**: bcrypt(cost=12), 8자 이상 3종 조합 필수
 - **소셜 로그인**: Google, Kakao, Naver + Credentials (동적 OAuth — DB 우선, 환경변수 폴백)
 - **fail-fast**: `AUTH_SECRET` 환경변수 미설정 시 서버 시작 차단 (`lib/env.ts`)
+- **자동 로그아웃 (v5.162.0)**: ①유휴 10분 — `lib/session-config.ts` `INACTIVITY_MS` 단일상수를 `SessionTimer`(표시)·`SessionGuard`(로그아웃)가 공유. ②브라우저 닫힘=로그아웃 — ⚠️Auth.js v5 코어는 쿠키 옵션에서 maxAge를 빼도 세션쿠키에 항상 `Expires`(30일)를 강제 주입한다. 이를 route 핸들러(`app/api/auth/[...nextauth]`)에서 응답 Set-Cookie의 Expires/Max-Age를 제거해 진짜 세션쿠키로 되돌린다(`lib/session-cookie.ts`, 로그아웃 삭제쿠키는 보존). ⚠️Chrome '세션 복원' 켜지면 쿠키가 복원돼 유지(브라우저 한계).
 
 ```typescript
 // API Route 인증 패턴
@@ -105,6 +110,8 @@ if (session.user.role !== "ADMIN") return NextResponse.json({ error: "권한 없
 ### 2. 접근 제어 (RBAC + 상태 기반 + 리소스 소유권)
 
 인증(로그인)에 더해 **역할·인증상태·리소스 소유권**을 계층적으로 검사한다. 클라이언트 게이트가 있어도 항상 서버에서 재검증한다(클라 우회 방지).
+
+> **사업자 승인 전 role 미부여 (v5.163.0)**: 사업자(REALESTATE/BUSINESS/RENTAL_BIZ) 전환 신청 시 `role`을 즉시 바꾸지 않고 `User.requestedRole`에만 기록하고 `verifyStatus="pending"`으로 둔다. 관리자 승인(`app/api/admin/verify`) 시에만 `requestedRole`(또는 관리자 지정)로 role을 부여한다. 승인 전에는 role이 PERSONAL로 유지되어 권한 상승·화면 오전환(개인→사업자 GNB/대시보드)이 원천 차단된다. 거부 시에도 requestedRole을 정리하고 PERSONAL을 유지한다(구버전은 신청 즉시 role 변경 + 거부해도 role 미복구 결함이 있었음).
 
 #### 2-1. 매물 등록 권한 가드 (`app/api/listings/route.ts` — POST)
 
@@ -177,6 +184,13 @@ export function assertFeasibilityAccess(session): NextResponse | null {
 
 상태 전이 검증도 함께 수행한다 — 예: 이미 처리된 의향서(`status !== "PENDING"`)는 409, 철회/거절되지 않은 의향서는 삭제 불가.
 
+**IDOR 수정 — 고객 물건 링크 (v5.166.0~5.167.6, `app/api/agent/clients/[id]/properties/route.ts`)**: 중개관리에서 고객에게 `MonitoredProperty`를 연결할 때, 다운스트림 인가(monitoring alerts·snapshots·integrity·to-asset)가 이 링크를 신뢰하므로 타 사용자 물건 id를 링크하면 교차 테넌트 침해(IDOR)가 된다. 링크 가능한 소유자 후보를 **세션 중개사 본인(`session.user.id`) 또는 해당 고객(`client.clientUserId`)** 로 제한한다.
+
+- **명시적 `monitoredPropertyId`**: `userId ∈ ownerCandidates` 인 물건만 링크 허용, 아니면 403.
+- **미지정(주소만)**: 소유 후보 소유의 동일 주소·active 물건만 자동 매칭. 매칭 없으면 고객(가입자면 고객 소유, 아니면 중개사 소유)으로 `upsert` 신규 생성.
+
+이 외에도 `client.agentId === session.user.id` 소유권 검사와 `validateOrigin` CSRF 검사를 선두에서 수행한다.
+
 #### 2-5. 전자계약/가계약 PDF 접근 격리 (`app/api/e-contracts/[id]/pdf/route.ts`)
 
 PDF에는 실명·서명 이미지·보증금·주소 등 개인정보가 포함되므로 **ID 열거(enumeration)로 유출되지 않도록** 로그인 당사자만 허용한다. COMPLETED 상태여도 비당사자·비로그인 접근은 금지.
@@ -195,12 +209,14 @@ if (!isParty) return NextResponse.json({ error: "접근 권한이 없습니다."
 
 | 항목 | 알고리즘 | 대상 |
 |------|----------|------|
-| PII 암호화 | AES-256-GCM | address, businessNumber |
-| 키 파생 | scrypt | AUTH_SECRET + 용도별 salt (PII/OAuth 분리) |
-| 검색용 해시 | HMAC-SHA256 | 암호화 필드 검색 지원 |
+| PII 암호화 | AES-256-GCM (`v2:` 접두) | address, businessNumber 외 PII_FIELDS |
+| 키 파생 | scrypt | `PII_ENCRYPTION_KEY` + `PII_SALT` (AUTH_SECRET과 독립, v2) |
+| 검색용 해시 | HMAC-SHA256 (blind index) | `SEARCH_INDEX_KEY`(없으면 AUTH_SECRET 폴백) |
 | 관리자 비밀번호 | bcrypt(12) | Credentials 로그인 |
-| 저장 형식 | Base64 | iv(16B) + tag(16B) + ciphertext |
+| 저장 형식 | `v2:` + Base64 | iv(16B) + tag(16B) + ciphertext |
 | 전송 암호화 | HTTPS | Vercel 기본, HSTS 1년 |
+
+> **키 파생 캐시(성능) + NUL 사각지대 수정 (v5.166.0~5.167.6)**: `deriveKey()`는 scrypt(무거운 KDF)를 목록 API에서 행×PII필드마다 재파생하지 않도록 프로세스 수명 동안 메모이즈한다(env가 바뀌면 캐시 식별자가 달라져 재파생). ⚠️이 캐시 식별자는 원래 NUL(`\x00`)을 포함해 git이 `lib/crypto.ts`를 **바이너리로 취급** → SAST 게이트(`git grep -I`)가 파일 전체를 건너뛰는 사각지대였다. 식별자를 `${k.length}:${k}:${salt}`(NUL 없음)로 교체하고, `audit-security.mjs`에 바이너리 취급 tracked 소스 검출 게이트를 추가해 재발을 차단했다. 복호화 실패 로그는 프로세스당 5건 상한(hot path 로그 폭주·값 노출 방지).
 
 ```
 // Prisma Extension 자동 처리 흐름
@@ -250,13 +266,21 @@ Origin/Referer 헤더 검증 방식 (`lib/csrf.ts`). 상태 변경 API(POST/PUT/
 | 엔드포인트 | 용도 |
 |-----------|------|
 | `POST /api/listings` | 매물 등록 |
+| `POST/DELETE /api/listings/[id]/photos` | 매물 사진 업로드/삭제 (v5.166~) |
+| `POST /api/listings/temp-doc` | 임시 문서 업로드 (v5.166~) |
+| `POST /api/listings/temp-photo` | 임시 사진 업로드 (v5.166~) |
 | `PATCH /api/contract-applications/[id]` | 의향서 수락/거절/철회 |
 | `DELETE /api/contract-applications/[id]` | 의향서 삭제 |
+| `DELETE /api/user/sync-data` | 동기화 데이터 삭제 (v5.166~) |
+| `POST /api/agent/clients/[id]/properties` | 고객 물건 모니터링 등록 |
+| `POST /api/invite/[token]` | 초대 수락 |
 | `PUT /api/admin/account` | 비밀번호 변경 |
 | `PUT /api/admin/settings` | OAuth/PG 설정 |
 | `POST /api/user/setup-role` | 역할 변경 신청 |
 
-> **주의 (H-04)**: Origin과 Referer가 모두 없는 요청을 통과시키는 로직 존재 (`csrf.ts:28-29`). JSON body가 필요한 API는 `Content-Type: application/json`이 필요하여 일부 완화되나, 개선 필요.
+> **v5.166.0~5.167.6 CSRF 보강**: 그동안 `validateOrigin`이 누락됐던 업로드/삭제 변이 핸들러에 추가 — listings photos(POST/DELETE)·temp-doc(POST)·temp-photo(POST) 업로드, user/sync-data(DELETE). (H-03에서 지적됐던 sync-data 계열 보강.)
+
+> **Origin/Referer 부재 요청 처리 (`csrf.ts:35-47`)**: Origin·Referer가 모두 없는 요청은 **기본 차단(403)**하되, `Authorization: Bearer ${CRON_SECRET}`이 일치하는 Vercel Cron 내부 호출만 통과시킨다. (구버전 H-04의 "무조건 통과" 로직은 이미 시크릿 검증 방식으로 강화됨.)
 
 ### 7. Rate Limit 정책
 
@@ -264,6 +288,7 @@ Origin/Referer 헤더 검증 방식 (`lib/csrf.ts`). 상태 변경 API(POST/PUT/
 |-----------|-----|--------|--------|
 | 분당 요청 | 30회/60초 | IP + userId | `RateLimit` 테이블 |
 | 일일 분석 | 역할별 한도 | userId | `DailyUsage` 테이블 |
+| 매물 인증/안전점검 | 10회/분 (v5.166~) | userId (`certify:`·`safety-check:`) | `RateLimit` 테이블 |
 | Cost Guard | OpenAI 일일 제한 | 별도 카운터 | `lib/openai.ts` (메모리 폴백 포함) |
 | 개발 모드 | 무제한 | - | - |
 
@@ -330,7 +355,7 @@ v4.5.1 종합평점 기준 (출처: `VESTRA_종합평점_v4.5.1.md`)
 | A03 | Injection | ✅ 완전 충족 (Prisma 파라미터 바인딩, Zod 스키마, sanitize.ts) |
 | A04 | Insecure Design | ✅ 완전 충족 (Rate Limit + Cost Guard 이중 방어, PDF ID 열거 차단) |
 | A05 | Security Misconfiguration | ✅ 완전 충족 (AUTH_SECRET fail-fast, 보안 헤더 전체 적용) |
-| A06 | Vulnerable Components | ✅ 완전 충족 |
+| A06 | Vulnerable Components | ✅ 완전 충족 (prebuild SCA 회귀 게이트 `audit-security.mjs`, xlsx→SheetJS 공식 0.20.3 교체로 CVE 2건 제거) |
 | A07 | Auth & Session Management | ✅ 완전 충족 (NextAuth v5 JWE, HttpOnly 쿠키) |
 | A08 | Software Integrity Failures | ✅ 완전 충족 |
 | A09 | Logging & Monitoring | ⚠️ 부분 충족 (감사 로그 구현됨, 자동 파기 스케줄러 미구현) |
@@ -454,12 +479,23 @@ middleware.ts (Edge Function)
 
 10. **OWASP SSRF 해당 없음**: 사용자 입력 URL 미사용. 외부 API 호출은 서버에서 하드코딩된 도메인만 사용. (매물 사진/안전서류 URL은 저장·표시용이며 서버가 fetch하지 않음.)
 
+11. **SAST 사각지대 자체를 게이트로 방어 (v5.166~)**: NUL 바이트 등으로 git이 바이너리로 취급하는 소스는 `git grep -I` 기반 SAST가 통째로 건너뛴다. `lib/crypto.ts` NUL 사고로 이를 인지하고, 키 파생 캐시 식별자에서 NUL을 제거하는 근본 수정 + `audit-security.mjs`에 "바이너리 취급 tracked 소스 검출" 게이트를 신설해 회귀를 원천 차단.
+
+12. **취약 의존성은 회귀 게이트로 유예·차단, 정리 시 baseline 축소 (v5.167.5)**: `security-baseline.json`은 기존 취약점을 유예(advisoryIds)하고 신규 advisory만 차단(래칫). 배포중단된 `xlsx@0.18.5`를 SheetJS 공식 0.20.3(CDN)으로 교체해 CVE 2건을 실제로 제거하고, baseline에서 해당 advisory(1108110·1108111)를 삭제해 부채(high 9→7)를 줄였다.
+
+13. **동시성 이중발급 방지는 조건부 updateMany 선점 (v5.166~)**: registry issue-order의 status 사전검사(read-check-write)는 동시 요청 2건이 모두 통과해 이중 과금·이중 분석될 수 있어, `where:{status:"paid"}` 조건부 `updateMany`의 `count`로 딱 하나만 `issuing`을 선점하게 원자화한다.
+
+14. **공개 토큰 응답은 실명 부분 마스킹**: 초대 링크 공개 GET(`invite/[token]`)은 초대 대상 본인이 알아볼 정도로만 고객 실명을 마스킹(`홍*동`)하여 토큰 유출 시 제3자 실명 전체 노출을 방지.
+
 ---
 
 ## Gotchas [coverage: high -- 3 sources]
 
-### 이번 세션 접근 제어 관련 주의
+### 이번 세션(v5.166~) 보안 하드닝 관련 주의
 
+- **`PII_ENCRYPTION_KEY`는 이제 fail-fast 필수 env**: `lib/env.ts`에 required로 등록됨 → 미설정 시 PII 저장/조회 전 경로가 런타임 throw. `SEARCH_INDEX_KEY`는 선택(미설정 시 AUTH_SECRET 폴백)이나 운영은 전용키 백필 완료 상태여야 함. ⚠️로컬≠운영 키 불일치는 전 PII 복호화 실패로 이어지므로 운영 실환경 검증 필수.
+- **바이너리 취급 소스 = SAST 사각지대**: 소스 파일에 NUL 바이트가 섞이면 `git grep -I` 기반 SAST가 파일 전체를 건너뛴다. 이제 `audit-security.mjs`가 tracked `.ts/.tsx` 소스에 NUL 포함 여부를 검출해 빌드를 실패시킨다(신규 도입 차단).
+- **로그에 주소·등기고유번호 평문 금지**: monitoring 최초 발급 로그는 `propertyId`만 남기고 주소·고유번호 평문은 제거했다. 신규 로그 작성 시 PII 평문 노출 재발 주의.
 - **매물 등록 역할 판정은 `role` + `userType` + `verifyStatus` 3축**: `BIZ_ROLES`(RENTAL_BIZ/BUSINESS/REALESTATE) 판정과 `userType==="TENANT"` 판정이 분리되어 있다. 신규 역할/타입 추가 시 두 조건 모두 갱신 필요.
 - **사업성분석 가드는 `role` 기준(BUSINESS·ADMIN)** — REALESTATE는 verified여도 사업성분석 접근 불가. feasibility API 신설 시 `assertFeasibilityAccess` 호출 누락 주의(5종에 이미 적용).
 - **PDF 당사자 판정에 이메일 매칭 포함**: `tenantEmail`/`brokerEmail`은 아직 계정과 연결 전 단계일 수 있어 세션 이메일과 대조한다. 이메일 변경 시 접근 관계가 달라질 수 있음.
@@ -474,7 +510,7 @@ middleware.ts (Edge Function)
 
 - **[H-01] system-settings.ts 폴백 시크릿**: `AUTH_SECRET` 미설정 시 `"vestra-default-secret-change-me"`로 폴백(`lib/system-settings.ts:18`). DB 저장 OAuth 키가 예측 가능한 키로 암호화됨.
 - **[H-02] Cron 인증 불일치**: `fraud-import`, `news-collector`는 `CRON_SECRET` 미설정 시 인증 없이 공개 접근 가능. `registry-monitor`는 프로덕션에서만 인증. 패턴 통일 및 fail-closed 필요.
-- **[H-03] CSRF 방어 미적용 API 다수**: `/api/subscription`, `/api/user/sync-data`, `/api/feedback`, `/api/cascade-update` 등 상태 변경 API에 `validateOrigin` 미적용. (매물·의향서 API에는 적용됨.)
+- **[H-03] CSRF 방어 미적용 API (일부 해소)**: `/api/subscription`, `/api/feedback`, `/api/cascade-update` 등 일부 상태 변경 API에 `validateOrigin` 미적용. ✅ v5.166.0~5.167.6에서 listings photos/temp-doc/temp-photo 업로드·`user/sync-data`(DELETE)는 보강 완료.
 - **[H-04] CSRF Origin 부재 시 통과**: `csrf.ts:28-29`에서 Origin·Referer 모두 없는 요청 통과. JSON body 요구로 일부 완화되나 개선 필요.
 - **[H-05] Rate Limit fail-open**: DB 장애 시 Rate Limit 비활성화. DDoS + DB 장애 동시 발생 시 비용 폭발 가능.
 
@@ -522,5 +558,14 @@ middleware.ts (Edge Function)
 12. [[app/api/e-contracts/[id]/pdf/route]]
 13. [[app/api/e-contracts/route]]
 14. [[lib/pdf/contract-template]]
+15. [[lib/crypto]]
+16. [[lib/csrf]]
+17. [[lib/env]]
+18. [[scripts/audit-security.mjs]]
+19. [[scripts/audit-api-auth.mjs]]
+20. [[scripts/security-baseline.json]]
+21. [[app/api/agent/clients/[id]/properties/route]]
+22. [[app/api/invite/[token]/route]]
+23. [[lib/registry-issue-service]]
 </content>
 </invoke>

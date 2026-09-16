@@ -1,7 +1,7 @@
 ---
 topic: features
-last_compiled: 2026-08-22
-sources: 20
+last_compiled: 2026-09-16
+sources: 24
 ---
 
 # 주요 기능 (Features)
@@ -80,12 +80,20 @@ PDF 출력 (/api/e-contracts/[id]/pdf)  ─ A4 1페이지, 표준계약 10개 �
 
 ### Cron 스케줄
 
-| Cron 경로 | 스케줄 | 기능 |
+| Cron 경로 | 스케줄 (UTC) | 기능 |
 |----------|--------|------|
-| `/api/cron/registry-monitor` | 매일 09:00 | 등기 변동 감시 (배치 50건) |
-| `/api/cron/fraud-import` | 매주 월 03:00 | 전세사기 사례 데이터 갱신 |
-| `/api/cron/news-collector` | 매일 06:00 | 뉴스/정책 RSS 수집 |
-| `/api/cron/guarantee-monitor` | 매주 월 09:00 | 보증보험 공식 사이트 변경 감지 |
+| `/api/cron/registry-monitor` | `0 3,8 * * *` (KST 12·17시) | 등기 변동 감시 (틸코 프리체크, 배치), `maxDuration=60` |
+| `/api/cron/fraud-import` | `0 3 * * 1` (매주 월) | 전세사기 사례 데이터 갱신 |
+| `/api/cron/news-collector` | `0 6 * * *` (매일) | 뉴스/정책 RSS 수집 |
+| `/api/cron/guarantee-monitor` | `0 0 * * 1` (매주 월) | 보증보험 공식 사이트 변경 감지 |
+| `/api/cron/loan-rate-update` | `0 9 1,11,21 * *` | 대출금리 갱신 |
+| `/api/cron/contract-expiry` | `0 9 * * *` (매일) | 계약 만기 알림 |
+| `/api/cron/research-journal` | `30 8 * * *` (매일) | 리서치 저널 |
+| `/api/cron/cleanup` | `0 19 * * *` (매일 1회) | **정기 정리** — temp 고아 Blob + AuditLog(365일)·Notification(180일) retention |
+
+> **등기감시 실행 로그 (`MonitoringCheckLog`)**: cron이 매 실행마다 결과(no_change/signal_detected/changed/needs_registration/fetch_failed)를 기록하고 마이페이지 "감시 실행 내역" 달력에 5색으로 표시한다. ⚠️**v5.166.x 근본수정 (로그 유실)** — 정상 표시가 반복적으로 안 뜨던 문제. 근본원인은 간헐 Neon 커넥션 닫힘(`P1017`)으로 cron이 `lastCheckedAt`은 갱신하나 별도 `recordCheckLog` create가 실패해 **로그만 유실**되던 불일치. 해결: `recordCheck()`가 `MonitoredProperty.update`(체크시각 갱신)와 `MonitoringCheckLog.create`(로그)를 **하나의 `prisma.$transaction([...])`으로 원자화** → 로그 실패 시 체크시각 갱신도 롤백돼 다음 cron이 "미처리"로 보고 재시도. 추가로 **3회 재시도(200ms×attempt 백오프)** + 최종 실패 시 `console.error`(은폐 금지), `maxDuration=60`. 운영 실측 검증 완료.
+
+> **정기 정리 cron (`/api/cron/cleanup`, v5.166.x 신설)**: `lib/cron/cleanup.ts`의 ①`cleanupOrphanTempBlobs` — 폼 이탈로 버려진 temp 업로드(고아 Blob)를 DB 참조 대조 후 미참조만 삭제, ②`cleanupOldRecords` — AuditLog·Notification retention 정리. 각 단계 독립 try/catch(하나 실패해도 나머지 진행), `verifyCronSecret` 인증.
 
 ---
 
@@ -125,7 +133,7 @@ PDF 출력 (/api/e-contracts/[id]/pdf)  ─ A4 1페이지, 표준계약 10개 �
 
 ### 기타 API
 
-`/api/auth/[...nextauth]`, `/api/user/*`, `/api/subscription`(+`/cancel`), `/api/feasibility/*`(BUSINESS 전용), Cron 4종
+`/api/auth/[...nextauth]`, `/api/user/*`, `/api/subscription`(+`/cancel`), `/api/feasibility/*`(BUSINESS 전용), Cron 8종(registry-monitor·fraud-import·news-collector·guarantee-monitor·loan-rate-update·contract-expiry·research-journal·**cleanup**)
 
 ---
 
@@ -315,7 +323,20 @@ NextAuth v5 소셜 로그인(Google, 네이버 — 카카오 설정 중) + 5단�
 
 등기 변동 감시 등록·조회. 매물 상세 "이 매물 등기감시"에서 **`?address=`(주소 프리필) + `?listingId=`**로 진입하면 감시 등록 모달(`AddPropertyModalRenewal`)이 자동 오픈되고 주소가 채워진다. 등록 시 `listingId`를 함께 전송해 매물-감시 연결.
 
-Cron `/api/cron/registry-monitor` — 매일 09:00, 배치 50건, SHA-256 해시 비교(현재 실제 등기부 API 미연동 시뮬레이션 구조).
+Cron `/api/cron/registry-monitor` — 매일 KST 12·17시, 틸코 프리체크(등기신청사건 조회) 기반 저비용 감시 + 실행 로그(`MonitoringCheckLog`)를 마이페이지 달력에 표시. commUniqueNo(등기 고유번호) 없는 물건은 `needs_registration`(등기부 PDF 등록 필요).
+
+---
+
+#### FR-015: 내용증명 (Keepzip)
+
+임차인/임대인이 변호사에게 내용증명 작성을 의뢰 → 변호사 검토·직인 → 우편 발송하는 워크플로우(`KeepzipCase`).
+
+- **AI 초안**: 사유 5종(보증금반환 / 해지통지 세입자·임대인 / 월세·관리비 청구) → `POST /api/keepzip/draft` (gpt-5-mini, `reasoning_effort: minimal` — 템플릿 기반이라 medium 44.6s→minimal 9.6s로 품질 손실 없이 개선, v5.164.3). 프롬프트는 `lib/keepzip/cd-template.ts`.
+- **문서 형식 (v5.165.x)**: PDF·화면('내용 보기') 모두 **테이블 형식** — 상단 수신인/발신인/부동산의 표시 테이블(라벨 회색 배경) + '내용' 헤더 + 본문 단일 셀, 폰트 12pt. 본문에 섞인 당사자 헤더 줄은 필터 제거(테이블과 중복 방지). 보증금반환은 기한 내 미반환 시 **민법 제379조 연 5% 법정이율 지연손해금** 청구 항목 포함(한 줄).
+- **목록 관리**: 마이페이지 `ProfileKeepzipPanel`에서 체크박스 선택삭제/전체삭제 — `DELETE /api/keepzip/cases`({ids[]}, where `userId` 포함으로 **본인 것만 삭제=IDOR 차단**, LawyerReview·PostalTracking Cascade 정리).
+- **PDF**: `@react-pdf/renderer` + `lib/pdf/keepzip-cd-template.tsx`. 변호사 직인 완료본만 미리보기(`/api/keepzip/cases/[id]/preview-pdf`).
+
+**관련 API**: `/api/keepzip/draft`, `/api/keepzip/cases`(GET·POST·DELETE), `/api/keepzip/cases/[id]`, `/preview-pdf`, `/pdf`
 
 ---
 
@@ -347,7 +368,7 @@ FREE(0원, 일 5회) / PRO(50,000원, 일 50회, 계약서 AI 검토·PDF·AI �
 | 대시보드 | `/dashboard` | 보유 자산 포트폴리오 |
 | 문서 생성 | `/api/generate-document` | 법원 공식 양식(임차권등기명령·전세권설정등기) |
 | API 데이터 허브 | `/api-hub` | 공공 API 통합 대시보드 |
-| 임대인 추적 | `landlord-profiler.ts` | 동일 임대인 물건 수집, 안전 등급(A~F) |
+| 임대인 추적 | `landlord-profiler.ts`, `/api/landlord/track` | 동일 임대인 물건 수집, 안전 등급(A~F). **v2(v5.167.x)**: 하드코딩 시드 임대인 제거 — MOLIT 실거래가(`fetchRecentPrices`)로만 추정 시세 조회 |
 
 ---
 
@@ -364,10 +385,12 @@ SCR 서울신용평가 사업성평가보고서 동일 구조(5장+부록, 표 6
 | Phase 1 | 데이터 수집 인프라 (KOSIS/DART/REPS/MOIS + 정적DB) | 90% |
 | Phase 2 | 파싱 엔진 (45개+ 항목, 정규식+NER) | 80% |
 | Phase 3 | 계산 엔진 (사업수지/48개월 자금수지/시나리오/BEP/DSCR/민감도) | 85% |
-| Phase 4 | 보고서 렌더링 이중화(React 미리보기 + 서버 HTML→PDF) | 70% |
+| Phase 4 | 보고서 렌더링 — 서버 HTML→PDF (`FeasibilityReport`, `lib/feasibility/report-html.ts`) | 70% |
 | Phase 5 | UI/UX(3단계 위저드, SSE 스트리밍, PDF 다운로드) | 60% |
 
 **핵심 API**: `POST /api/feasibility/scr-parse`, `scr-calculate`, `scr-report`(+`/stream`), `parse`, `merge`, `verify` — 모두 BUSINESS 가드 적용.
+
+> ⚠️ **SCR React 뷰어 경로는 dead code로 제거됨 (v5.167.x)**: 구 SCR 사업성 뷰어 파이프라인(`scr-orchestrator`/`scr-assembler` 및 뷰어 컴포넌트 등 테스트 전용 dead 29파일)은 실제 사용되지 않아 삭제됐다. **실사용 사업성 리포트는 서버 HTML 렌더러 `lib/feasibility/report-html.ts`(`FeasibilityReport`)** 하나이며 이번 정리에 영향받지 않는다. 혼동 주의: `lib/pdf/report-html.ts`가 아니라 `lib/feasibility/report-html.ts`.
 
 ---
 
@@ -438,6 +461,16 @@ SCR 사업성 보고서는 고비용·전문 기능이므로 BUSINESS·ADMIN으�
 
 코드 기본 상수(`DEFAULT_GUARANTEE_RULES`) fallback + 관리자 DB 동적 갱신 + 버전 이력/롤백.
 
+### Dead code 대량 제거 (v5.167.x)
+
+미사용 코드가 실화면 오해·유지보수 부담을 유발하므로 실사용 경로만 남기고 정리. 제거 대상: 구 서명 플로우(`/api/sign`·관련 페이지), 고아 `/ai-trust`, **SCR 사업성 뷰어 파이프라인**(테스트 전용 dead 29파일 — `scr-orchestrator`/`scr-assembler`/뷰어 React 컴포넌트 등, live 참조 0), 미연결 컴포넌트 17개, 미사용 `lib` export 34심볼. **실사용 사업성 리포트(`lib/feasibility/report-html.ts`의 `FeasibilityReport`)는 무영향**. 판단 기준: 클라이언트/훅/액션에서의 실제 호출 여부.
+
+### 성능·견고성 하드닝 (v5.167.x)
+
+- **findMany 상한**: 목록 조회에 take 상한을 걸어 대량 데이터에서의 과다 로드 방지.
+- **이중발급 낙관적 잠금**: 등기 발급(`executePaidOrder`, `lib/registry-issue-service.ts`)에서 read-check-write 경쟁 조건을 제거. `updateMany({ where:{ id, status:"paid" }, data:{ status:"issuing" } })`의 `count`로 딱 하나만 선점, `count===0`이면 409("이미 처리 중이거나 발급된 주문"). 동시 요청 시 이중 과금·이중 분석 차단.
+- **invite 실명 마스킹**: 중개관리 고객 초대 공개 조회(`GET /api/invite/[token]`)에서 `clientName`을 `maskName`으로 마스킹("홍길동"→"홍*동", "김철"→"김*"). 토큰 유출 시 제3자 실명 전체 노출 방지.
+
 ---
 
 ## Gotchas [coverage: high — 5 sources]
@@ -457,6 +490,9 @@ SCR 사업성 보고서는 고비용·전문 기능이므로 BUSINESS·ADMIN으�
 - **이메일 발송**은 Mock 모드만 구현.
 - **Rate Limit DB 오류** 시 요청 허용(가용성 우선).
 - **listing-db-detail 샘플 매물** — 사진 없는 매물/테스트 fixture는 임의 실내 예시 이미지 노출(안심인증 등록 시 실제 사진 대체).
+- **임대인 추적 가짜 시드 제거됨** — v5.167.x 이전 `/api/landlord/track`은 하드코딩 임대인("김영수/이정희/박지민")을 전세 안전분석 실화면에 **실제 위험 프로파일처럼** 노출했다. 이를 제거하고 MOLIT 실거래가만 사용하도록 수정. 실거래 데이터 없는 지역은 추정 시세 없이 반환.
+- **SCR 리포트 렌더러 경로 주의** — 실사용 사업성 리포트는 `lib/feasibility/report-html.ts`(`FeasibilityReport`)다. 유사 이름 `lib/pdf/report-html.ts`는 존재하지 않으며, SCR React 뷰어(`scr-orchestrator`/`scr-assembler` 등)는 dead code로 제거됐으므로 참조 금지.
+- **등기감시 로그 유실(P1017)** — cron이 `lastCheckedAt`은 갱신했는데 달력에 정상 로그가 안 뜨면 과거엔 Neon 커넥션 닫힘으로 로그 create만 실패한 것이었다. v5.166.x에서 update+로그를 `$transaction`으로 원자화하고 재시도를 추가해 해소.
 
 ---
 
@@ -477,6 +513,14 @@ SCR 사업성 보고서는 고비용·전문 기능이므로 BUSINESS·ADMIN으�
 - [[../../app/(personal-home)/renewal/monitoring/components/AddPropertyModalRenewal.tsx]]
 - [[../../app/(app)/feasibility/page.tsx]]
 - [[../../lib/feasibility-guard.ts]]
+- [[../../app/api/cron/registry-monitor/route.ts]]
+- [[../../app/api/cron/cleanup/route.ts]]
+- [[../../lib/cron/cleanup.ts]]
+- [[../../app/api/landlord/track/route.ts]]
+- [[../../lib/feasibility/report-html.ts]]
+- [[../../lib/registry-issue-service.ts]]
+- [[../../app/api/invite/[token]/route.ts]]
+- [[../../vercel.json]]
 - [[../../docs/VESTRA-플랫폼-완료보고서.md]]
 - [[../../docs/01-SRS.md]]
 - [[../../docs/02-design/features/feasibility-scr-upgrade.design.md]]

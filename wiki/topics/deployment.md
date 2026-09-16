@@ -1,7 +1,7 @@
 ---
 topic: deployment
-last_compiled: 2026-06-22
-sources: 5
+last_compiled: 2026-09-16
+sources: 8
 ---
 
 # 배포 및 인프라 (Deployment)
@@ -40,10 +40,12 @@ VESTRA의 프로덕션 배포 환경, 인프라 구성, 환경변수, Cron Job, 
 | 런타임 | Node.js Serverless + Edge (Middleware) |
 | DB 호스팅 | Neon PostgreSQL (서버리스, 연결 풀링) |
 | CDN | Vercel Edge Network |
-| 프로덕션 도메인 | https://vestra-plum.vercel.app |
+| 프로덕션 도메인 | https://vestra.ai.kr (구 vestra-plum.vercel.app) |
 | 테스트 도메인 | https://t-vestra.vercel.app |
 | GitHub | watchers0930/vestra |
 | CI/CD | git push → Vercel 자동 배포 |
+| 배포 리전 | icn1 (서울) — `vercel.json regions` 고정 |
+| 현재 운영 버전 | v5.167.6 |
 
 ---
 
@@ -63,7 +65,7 @@ VESTRA의 프로덕션 배포 환경, 인프라 구성, 환경변수, Cron Job, 
          ├─ t-vestra.vercel.app alias 갱신
          └─ smoke check (/, /login, /api/health)
 
-2. 운영 승격 → vestra-plum.vercel.app
+2. 운영 승격 → vestra.ai.kr
    └─ npm run deploy:promote
          ├─ 새 빌드 생성 없음
          ├─ t-vestra.vercel.app 동일 deployment → 운영 alias 승격
@@ -96,15 +98,38 @@ deploy vestra   # ~/scripts/deploy.sh 경유
 ### 로컬 개발 명령어
 
 ```bash
-npm run dev           # 개발 서버 (localhost:3000)
-npm run build         # 프로덕션 빌드 (--webpack 플래그 포함)
-npm run start         # 프로덕션 서버 로컬 실행
-npm run test          # Vitest 테스트 실행
-npm run test:watch    # Vitest watch 모드
-npm run lint          # ESLint
-npm run seed:fraud    # 전세사기 사례 시드 데이터
-npm run seed:training # ML 학습 데이터 시드
+npm run dev            # 개발 서버 (localhost:3000)
+npm run build          # 프로덕션 빌드 (prebuild 게이트 후 next build --webpack)
+npm run start          # 프로덕션 서버 로컬 실행
+npm run test           # Vitest 테스트 실행
+npm run test:watch     # Vitest watch 모드
+npm run lint           # ESLint
+npm run audit:api      # API 인가 게이트 단독 실행
+npm run audit:security # 보안 회귀 게이트(SAST+SCA) 단독 실행
+npm run seed:fraud     # 전세사기 사례 시드 데이터
+npm run seed:training  # ML 학습 데이터 시드
 ```
+
+### prebuild 보안 게이트 (빌드 차단)
+
+`npm run build`는 `prebuild`가 먼저 실행되어, 두 게이트를 AND로 통과해야만 `next build`로 진입한다. 하나라도 실패하면 빌드 자체가 실패(회귀 차단).
+
+```
+prebuild = node scripts/audit-api-auth.mjs && node scripts/audit-security.mjs
+```
+
+**1. API 인가 게이트 (`audit-api-auth.mjs`)**
+- `app/api/**/route.ts`의 변이 핸들러(POST/PUT/PATCH/DELETE) 중 "인증 신호"가 전혀 없는 것을 검출해 빌드 실패.
+- 인증 신호(하나라도 있으면 통과): `auth()`, `withAdminAuth`, `withAgentAuth`, `CRON_SECRET`, **`verifyCronSecret`(v5.166+ 신설)**.
+- 의도적 공개(rate-limit/CSRF로 보호)는 `ALLOWLIST`로 명시 관리. 미사용 ALLOWLIST 항목은 정리 권장 경고.
+
+**2. 보안 회귀 게이트 (`audit-security.mjs`)** — SAST(경량) + SCA(의존성 취약점)
+- 철학: 기존 부채는 유예(`scripts/security-baseline.json`), **신규 도입만 차단**.
+- SAST(로컬 결정적, 하드 차단):
+  - **바이너리 취급 tracked 소스 검출(v5.166+ 신설)**: `git grep -I` SAST는 NUL 바이트 섞인 바이너리 소스를 건너뛰어 영구 사각지대가 됨(과거 `lib/crypto.ts` NUL 사고). `git ls-files`로 tracked 소스를 직접 읽어 NUL 포함 파일을 검출·차단.
+  - `eval(` baseline 0 → 신규 발견 시 차단.
+  - `dangerouslySetInnerHTML` baseline 초과 시 차단(래칫).
+- SCA(`npm audit`): baseline에 없는 신규 advisory가 나오면 차단. 네트워크/레지스트리 이슈로 명령 자체가 실패하면 fail-open(배포 계속). security-baseline advisory는 45→43건으로 감축.
 
 ### 환경변수
 
@@ -123,12 +148,22 @@ npm run seed:training # ML 학습 데이터 시드
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth 소셜 로그인 | 선택 |
 | `NAVER_CLIENT_ID` / `NAVER_CLIENT_SECRET` | Naver OAuth 소셜 로그인 | 선택 |
 
-### Cron Jobs
+### Cron Jobs (총 8개, `vercel.json crons`)
 
-| 작업 | 스케줄 | 설명 |
-|------|--------|------|
-| 등기 모니터링 | 매일 09:00 | 감시 중인 부동산 등기 변동 확인 및 알림 |
-| 사기 데이터 수집 | 매주 월요일 03:00 | 전세사기 사례 데이터 자동 수집/갱신 |
+| 경로 | 스케줄 (UTC) | KST | 설명 |
+|------|-------------|-----|------|
+| `/api/cron/registry-monitor` | `0 3,8 * * *` | 12:00, 17:00 | 감시 중인 부동산 등기 변동 프리체크·알림 |
+| `/api/cron/fraud-import` | `0 3 * * 1` | 월 12:00 | 전세사기 사례 데이터 자동 수집/갱신 |
+| `/api/cron/news-collector` | `0 6 * * *` | 15:00 | 부동산 뉴스 수집 |
+| `/api/cron/research-journal` | `30 8 * * *` | 17:30 | 리서치 저널 생성 |
+| `/api/cron/guarantee-monitor` | `0 0 * * 1` | 월 09:00 | 보증 규칙 모니터링 |
+| `/api/cron/loan-rate-update` | `0 9 1,11,21 * *` | 1·11·21일 18:00 | 대출 금리 갱신 |
+| `/api/cron/contract-expiry` | `0 9 * * *` | 18:00 | 계약 만료 알림 |
+| `/api/cron/cleanup` | `0 19 * * *` | 04:00 | **(신설, v5.166+)** 고아 temp Blob 정리 + retention 정리(AuditLog 365일·Notification 180일) |
+
+- **cleanup cron 신설**: 폼 이탈로 버려진 temp 업로드(고아 Blob)를 DB 참조 대조 후 미참조만 삭제 + 오래된 레코드 정리. 각 단계 독립 try/catch(하나 실패해도 다른 정리 진행). `maxDuration=60`, `dynamic=force-dynamic`.
+- **cron 인증**: 모든 cron 핸들러는 `verifyCronSecret(authorization 헤더)`로 Bearer 시크릿 검증(`CRON_SECRET`). 실패 시 401.
+- **`registry-monitor` maxDuration=60**: 틸코 외부 API 콜드스타트 지연으로 인한 함수 타임아웃을 방지하기 위해 `export const maxDuration = 60` + `dynamic = "force-dynamic"` 명시.
 
 ### 데이터베이스 마이그레이션
 
@@ -152,7 +187,9 @@ prisma generate
 - **`npm run build`에 `--webpack` 플래그 사용**: Turbopack과 호환되지 않는 패키지(pdfjs-dist 등) 대응을 위해 Webpack 빌더 강제 지정
 - **Neon Serverless + 연결 풀링 분리**: `DATABASE_URL`은 연결 풀링 엔드포인트, `DIRECT_URL`은 마이그레이션 전용 직접 연결로 분리하여 서버리스 환경에서 연결 수 폭증 방지
 - **Vercel Hobby 플랜**: 함수 최대 실행 시간 제한이 있으며, AI 분석 API는 타임아웃에 주의 필요
-- **`deploy vestra` alias 필수**: 계정(`watchers0930`)과 alias(`vestra-plum.vercel.app`) 자동 갱신을 위해 `~/scripts/deploy.sh` 경유 배포가 강제됨
+- **`deploy vestra` alias 필수**: 계정(`watchers0930`)과 alias(`vestra.ai.kr`) 자동 갱신을 위해 `~/scripts/deploy.sh` 경유 배포가 강제됨
+- **`xlsx` 의존성을 npm 대신 CDN tgz로 고정**: `package.json`의 `xlsx`를 `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`로 지정. npm 레지스트리 버전에 알려진 취약점이 있어, 공식 SheetJS CDN 배포 tgz로 대체. Vercel 빌드에서 CDN tgz 정상 설치·빌드 확인됨.
+- **prebuild 게이트로 신규 보안 회귀 차단**: `next build` 진입 전 API 인가 게이트 + 보안 회귀(SAST/SCA) 게이트를 강제. 기존 부채는 baseline 유예, 신규 도입만 하드 차단하는 래칫 방식.
 
 ---
 
@@ -162,6 +199,9 @@ prisma generate
 - **Neon DB 콜드 스타트**: 유휴 후 첫 연결 시 지연 발생 가능. 연결 풀링으로 완화되지만 완전히 제거되지 않음
 - **운영 배포 시 새 빌드 금지**: `deploy:promote`는 새 빌드를 만들지 않는다. `t-vestra`가 가리키는 deployment를 그대로 승격.
 - **`prisma generate` 자동 실행**: `postinstall`에 걸려 있어 `npm install` 및 배포 시 항상 실행됨. Prisma 스키마 오류 시 빌드 실패 원인
+- **틸코 외부 API 콜드스타트 → cron 타임아웃**: `registry-monitor` cron은 틸코 외부 API 콜드스타트 지연으로 기본 함수 한도 내 완료가 어려울 수 있어 `maxDuration=60`으로 상향. `cleanup` cron도 동일하게 `maxDuration=60`.
+- **`xlsx`는 CDN tgz 의존성**: `package.json`에 URL(`cdn.sheetjs.com/...tgz`)로 박혀 있어 lockfile/설치 시 CDN 접근 필요. 오프라인/네트워크 차단 환경에서 설치 실패 가능. 버전 변경 시 취약점 회피 목적임을 유의(npm 레지스트리 버전으로 되돌리지 말 것).
+- **prebuild 게이트가 빌드를 막는다**: 인증 없는 신규 변이 핸들러, NUL 바이트 섞인 바이너리 소스, 신규 `eval(`/`dangerouslySetInnerHTML`/의존성 취약점 도입 시 `next build` 이전에 빌드 실패. 배포 전 `npm run audit:api`·`npm run audit:security`로 사전 확인 가능.
 - **`npx vercel` 직접 실행 금지**: 직접 실행 시 계정 라우팅과 alias 갱신이 누락됨. 반드시 `npm run deploy:preview` 사용
 - **파라미터 실증 미검증**: 위험도 스코어링·사기 진단·시세 예측의 가중치 수치는 전문가 휴리스틱 기반 초기값이며, 실제 사고 데이터로 캘리브레이션이 완료되지 않은 상태
 - **배포 전 체크리스트**: lint + test + build 통과, 미커밋 변경 없음, main이 origin/main과 동기화 → 세 조건 모두 충족 시에만 배포 진행
@@ -175,3 +215,6 @@ prisma generate
 - `/Users/watchers/Desktop/vestra/docs/TECHNICAL-STATUS-REPORT.md`
 - `/Users/watchers/Desktop/vestra/docs/VESTRA-플랫폼-완료보고서.md`
 - `/Users/watchers/Desktop/vestra/package.json`
+- `/Users/watchers/Desktop/vestra/vercel.json`
+- `/Users/watchers/Desktop/vestra/scripts/audit-security.mjs`
+- `/Users/watchers/Desktop/vestra/scripts/audit-api-auth.mjs`
