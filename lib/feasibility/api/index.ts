@@ -33,33 +33,6 @@ export type {
   KOSISHousingResult,
 } from "./kosis-api";
 
-// ─── DART 전자공시 API ───
-export {
-  fetchCorpInfo,
-  fetchFinancials,
-  searchCorpCode,
-} from "./dart-api";
-
-export type {
-  DARTCorpInfo,
-  IncomeStatement,
-  BalanceSheet,
-  DARTFinancialResult,
-} from "./dart-api";
-
-// ─── 한국부동산원 REPS API ───
-export {
-  fetchSalePriceIndex,
-  fetchRentPriceIndex,
-  extractRegionCode,
-} from "./reps-api";
-
-export type {
-  PriceIndex,
-  REPSSalePriceResult,
-  REPSRentPriceResult,
-} from "./reps-api";
-
 // ─── 행안부 주민등록 API ───
 export {
   fetchMOISPopulation,
