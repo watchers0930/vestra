@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { verifyCronSecret } from "@/lib/cron-auth";
 
 /**
  * 보증보험 조건 변경 모니터링 (Vercel Cron)
  * ──────────────────────────────────────────
  * 매주 월요일 09:00 KST 실행
- * HUG·HF·SGI 공식 페이지를 fetch하여 주요 키워드 변경을 감지하고,
- * 변경 시 관리자 공지사항에 알림을 자동 생성한다.
+ * HUG·HF·SGI 공식 페이지를 fetch하여 주요 키워드 변경을 감지한다.
+ *
+ * ⚠️ 공지사항 자동 생성은 2026-09-17 중단함.
+ *   현 감지 방식(키워드 유무)이 HUG·SGI 페이지 개편에 매주 오탐만 양산해
+ *   어드민 공지가 오탐으로 누적됐다(21건 삭제). 감지 결과는 응답 JSON/로그로만
+ *   남기고, 실제 변경 감시는 향후 스냅샷(contentLength/해시) 비교로 고도화 필요.
  */
 
 const MONITOR_TARGETS = [
@@ -64,22 +67,9 @@ export async function GET(req: Request) {
     }
   }
 
-  // 변경 감지 시 공지사항 생성
+  // 변경 감지 결과는 응답 JSON/로그로만 남긴다 (공지 자동생성 중단 — 상단 주석 참고).
   if (changes.length > 0) {
-    try {
-      await prisma.announcement.create({
-        data: {
-          title: "[자동감지] 보증보험 조건 변경 가능성",
-          content:
-            `보증보험 공식 사이트에서 변경이 감지되었습니다.\n\n` +
-            changes.map((c) => `• ${c}`).join("\n") +
-            `\n\n관리자 대시보드 > 보증보험 규칙 탭에서 확인 후 업데이트하세요.\n` +
-            `감지일: ${new Date().toISOString().slice(0, 10)}`,
-        },
-      });
-    } catch {
-      // 공지사항 생성 실패 시 무시 (로그만)
-    }
+    console.warn("[CRON:GUARANTEE] 변경 감지(공지 미생성):", changes.join(" | "));
   }
 
   return NextResponse.json({
