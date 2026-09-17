@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useMemo } from "react";
 import s from "./tax.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
+import SiteFooter from "@/components/layout/SiteFooter";
 import {
   calculateAcquisitionTax,
   calculateHoldingTax,
@@ -160,28 +160,7 @@ export default function TaxClient({
       </div>
 
       {/* FOOTER */}
-      <footer className={s.footer}>
-        <div className={s.footerIn}>
-          <div>
-            <div className={s.flogo}><Image src="/vestra-symbol.png" alt="VESTRA" width={26} height={26} className={s.flogoI} /><span className={s.flogoT}>VESTRA</span></div>
-            <p className={s.ftag}>The Digital Curator of Real Estate<br />AI 기반 부동산 자산관리 플랫폼</p>
-            <div className={s.fcontact}>
-              BMI C&amp;S | 대표이사 김동의<br />
-              사업자등록번호 263-87-03481 | 통신판매신고번호 2025-경기광명-0189<br />
-              서울시 강남구 강남대로 354(역삼동, 혜천빌딩) 1126-5호<br />
-              고객센터 010-8490-9271
-            </div>
-          </div>
-          <div><p className={s.fcolT}>Legal</p><ul className={s.flinks}><li><a href="#">개인정보처리방침</a></li><li><a href="#">이용약관</a></li></ul></div>
-          <div><p className={s.fcolT}>Product</p><ul className={s.flinks}><li><a href="#">기능 소개</a></li><li><a href="#">요금제</a></li></ul></div>
-          <div><p className={s.fcolT}>Company</p><ul className={s.flinks}><li><a href="#">회사 소개</a></li><li><a href="#">채용</a></li><li><a href="#">뉴스레터</a></li></ul></div>
-          <div><p className={s.fcolT}>Connect</p><ul className={s.flinks}><li><a href="#">LinkedIn</a></li></ul></div>
-        </div>
-        <div className={s.fbot}>
-          <span>© 2026 BMI-C&amp;S All rights reserved.</span>
-          <span>The Digital Curator of Real Estate</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

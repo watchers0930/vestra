@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import s from "./listing-detail-mobile.module.css";
 import MobileDetailTabs from "./components/MobileDetailTabs";
 import MapThumbnail from "../listing-detail/MapThumbnail";
+import SiteFooter from "@/components/layout/SiteFooter";
 
 function formatKoreanWon(won: number): string {
   if (!won) return "-";
@@ -206,54 +206,7 @@ export default function ListingDetailMobileClient() {
       </div>
 
       {/* FOOTER */}
-      <footer className={s.footer}>
-        <div className={s.footerLogo}>
-          <Image src="/vestra-symbol.png" alt="VESTRA" width={24} height={24} className={s.flogoIcon} />
-          <span className={s.flogoText}>VESTRA</span>
-        </div>
-        <p className={s.footerTagline}>The Digital Curator of Real Estate<br />AI 기반 부동산 자산관리 플랫폼</p>
-        <div className={s.footerContact}>
-          BMI C&amp;S | 대표이사 김동의<br />
-          사업자등록번호 263-87-03481<br />
-          통신판매신고번호 2025-경기광명-0189<br />
-          서울시 강남구 강남대로 354 혜천빌딩 1126-5호<br />
-          고객센터 010-8490-9271
-        </div>
-        <div className={s.footerLinksRow}>
-          <div>
-            <p className={s.footerColTitle}>Legal</p>
-            <ul className={s.footerLinks}>
-              <li><a href="#">개인정보처리방침</a></li>
-              <li><a href="#">이용약관</a></li>
-            </ul>
-          </div>
-          <div>
-            <p className={s.footerColTitle}>Product</p>
-            <ul className={s.footerLinks}>
-              <li><a href="#">기능 소개</a></li>
-              <li><a href="#">요금제</a></li>
-            </ul>
-          </div>
-          <div>
-            <p className={s.footerColTitle}>Company</p>
-            <ul className={s.footerLinks}>
-              <li><a href="#">회사 소개</a></li>
-              <li><a href="#">채용</a></li>
-              <li><a href="#">뉴스레터</a></li>
-            </ul>
-          </div>
-          <div>
-            <p className={s.footerColTitle}>Connect</p>
-            <ul className={s.footerLinks}>
-              <li><a href="#">LinkedIn</a></li>
-            </ul>
-          </div>
-        </div>
-        <div className={s.footerBottom}>
-          © 2026 BMI-C&amp;S All rights reserved.<br />
-          The Digital Curator of Real Estate
-        </div>
-      </footer>
+      <SiteFooter />
 
       {/* STICKY CTA — 실거래 정보 매물은 등록매물로 유도(갭8) */}
       <div className={s.stickyCta}>

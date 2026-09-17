@@ -8,7 +8,7 @@ import { DaumPostcodeModal } from "@/components/keepzip/DaumPostcodeModal";
 import type { PostcodeResult } from "@/lib/keepzip/daum-postcode";
 import s from "./official-price.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
-import OfficialPriceFooter from "./components/OfficialPriceFooter";
+import SiteFooter from "@/components/layout/SiteFooter";
 import { SourceBadge } from "@/components/common/SourceBadge";
 
 /** 결과에서 보유세 계산에 적합한 공시가격 추출 */
@@ -318,7 +318,7 @@ export default function OfficialPriceClient() {
         </div>
       </div>
 
-      <OfficialPriceFooter />
+      <SiteFooter />
     </>
   );
 }

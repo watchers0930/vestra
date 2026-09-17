@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import RenewalGnb from "../_shared/RenewalGnb";
 import ExpertLoginGate from "./ExpertLoginGate";
 import ExpertIntro from "./ExpertIntro";
-import ExpertFooter from "../expert/components/ExpertFooter";
+import SiteFooter from "@/components/layout/SiteFooter";
 import ExpertRegisterCard from "./ExpertRegisterCard";
 
 /**
@@ -33,7 +33,7 @@ export default function ExpertSignupContent() {
         )}
       </div>
 
-      <ExpertFooter />
+      <SiteFooter />
     </>
   );
 }

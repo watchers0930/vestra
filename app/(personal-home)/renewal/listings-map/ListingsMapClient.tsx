@@ -9,7 +9,7 @@ import { formatEok } from "./lib/format";
 import MapFilterRow from "./components/MapFilterRow";
 import MapListPanel from "./components/MapListPanel";
 import MapDetailPanel from "./components/MapDetailPanel";
-import ListingsMapFooter from "./components/ListingsMapFooter";
+import SiteFooter from "@/components/layout/SiteFooter";
 
 export default function ListingsMapClient() {
   const {
@@ -118,7 +118,7 @@ export default function ListingsMapClient() {
       <div style={{ height: 50 }} />
 
       {/* FOOTER */}
-      <ListingsMapFooter />
+      <SiteFooter />
     </>
   );
 }

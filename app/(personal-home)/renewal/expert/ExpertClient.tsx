@@ -7,7 +7,7 @@ import { useExpertConsult } from "@/app/(app)/expert-connect/hooks/useExpertCons
 import RenewalGnb from "../_shared/RenewalGnb";
 import RenewalLoginModal from "../_shared/RenewalLoginModal";
 import RenewalSignupModal from "../_shared/RenewalSignupModal";
-import ExpertFooter from "./components/ExpertFooter";
+import SiteFooter from "@/components/layout/SiteFooter";
 import ExpertFields from "./components/ExpertFields";
 import ExpertList from "./components/ExpertList";
 import ConsultForm from "./components/ConsultForm";
@@ -153,7 +153,7 @@ export default function ExpertClient({ embedded = false }: { embedded?: boolean 
         )}
       </div>
 
-      {!embedded && <ExpertFooter />}
+      {!embedded && <SiteFooter />}
 
       {showLogin && (
         <RenewalLoginModal
