@@ -59,6 +59,22 @@ export default function SiteFooter() {
         </div>
 
         <div>
+          <p className={s.colT}>공지사항</p>
+          {notices.length > 0 ? (
+            <ul className={s.notices}>
+              {notices.map((n) => (
+                <li key={n.id} className={s.noticeItem}>
+                  <span className={s.noticeTitle}>{n.title}</span>
+                  <span className={s.noticeDate}>{new Date(n.createdAt).toLocaleDateString("ko-KR")}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={s.noticeEmpty}>등록된 공지사항이 없습니다.</p>
+          )}
+        </div>
+
+        <div>
           <ul className={s.links}>
             <li>
               <Link href="/privacy">개인정보처리방침</Link>
@@ -73,22 +89,6 @@ export default function SiteFooter() {
               <a href="#">채용</a>
             </li>
           </ul>
-        </div>
-
-        <div>
-          <p className={s.colT}>공지사항</p>
-          {notices.length > 0 ? (
-            <ul className={s.notices}>
-              {notices.map((n) => (
-                <li key={n.id} className={s.noticeItem}>
-                  <span className={s.noticeTitle}>{n.title}</span>
-                  <span className={s.noticeDate}>{new Date(n.createdAt).toLocaleDateString("ko-KR")}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className={s.noticeEmpty}>등록된 공지사항이 없습니다.</p>
-          )}
         </div>
       </div>
 
