@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { User, X, FileText, Building2, Eye, Home } from "lucide-react";
+import { User, X, FileText, Building2, Eye, Home, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, Badge } from "@/components/common";
 import { ROLE_LABELS, ROLE_COLORS, VERIFY_LABELS, ANALYSIS_TYPE_LABELS } from "../constants";
@@ -131,6 +131,16 @@ export function UserDetailModal({ userId, onClose }: Props) {
                   </div>
                 </div>
               </div>
+
+              {/* 등급 전환 승인 대기 안내 (개인 role인데 상위 등급을 신청한 상태) */}
+              {data.verifyStatus === "pending" && data.requestedRole && (
+                <div className="flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5">
+                  <Clock size={16} strokeWidth={1.75} className="text-amber-600 shrink-0" />
+                  <span className="text-sm font-medium text-amber-800">
+                    {ROLE_LABELS[data.requestedRole] || data.requestedRole} 전환 승인 대기중
+                  </span>
+                </div>
+              )}
 
               {/* 활동 요약 카운트 */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
