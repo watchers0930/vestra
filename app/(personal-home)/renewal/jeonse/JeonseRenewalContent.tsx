@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import s from "./jeonse-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
+import SiteFooter from "@/components/layout/SiteFooter";
 import RegistryIssueBar from "../_shared/RegistryIssueBar";
 import { JeonseEnvAnalysis } from "./components/JeonseEnvAnalysis";
 import { JeonseSafetyAnalysis } from "./components/JeonseSafetyAnalysis";
@@ -477,6 +478,8 @@ export default function JeonseRenewalContent() {
       </div>
 
       <CommunityCenterModal open={centerOpen} onClose={() => setCenterOpen(false)} />
+
+      <SiteFooter />
     </>
   );
 }

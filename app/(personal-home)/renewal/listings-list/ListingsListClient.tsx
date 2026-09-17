@@ -306,9 +306,9 @@ export default function ListingsListClient() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <SiteFooter />
     </div>
+    {/* FOOTER — .page 리셋(.page *) 밖에 두어 공통 SiteFooter 스타일 보존 */}
+    <SiteFooter />
     </>
   );
 }
