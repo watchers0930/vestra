@@ -8,6 +8,7 @@ import { parseRegistry } from "@/lib/registry-parser";
 import { fetchBuildingInfoByAddress } from "@/lib/building-api";
 import { fetchOfficialPrices } from "@/lib/official-price-api";
 import { checkGuaranteeInsurance } from "@/lib/guarantee-insurance";
+import { loadActiveGuaranteeRules } from "@/lib/guarantee-rules-loader";
 
 // ⚠️ [보류 — 2026-09-14] 매물 인증 시 틸코 발급 계열 자동조회 보류(이용자 직접 발급으로 운영).
 // 건축물대장·공시가·보증보험 등 나머지 인증 로직은 그대로 유지. 복구 시 이 플래그만 false 로.
@@ -118,7 +119,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
               contractStartDate: today.toISOString().slice(0, 10),
               contractEndDate: endDate.toISOString().slice(0, 10),
               hasJeonseLoan: false,
-            });
+            }, await loadActiveGuaranteeRules());
             insuranceResult = {
               hugEligible: insuranceCheck.results.find((r) => r.provider === "HUG")?.status === "eligible",
               sgiEligible: insuranceCheck.results.find((r) => r.provider === "SGI")?.status === "eligible",

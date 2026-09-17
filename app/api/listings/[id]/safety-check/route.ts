@@ -5,6 +5,7 @@ import { validateOrigin } from "@/lib/csrf";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { fetchOfficialPrices } from "@/lib/official-price-api";
 import { checkGuaranteeInsurance } from "@/lib/guarantee-insurance";
+import { loadActiveGuaranteeRules } from "@/lib/guarantee-rules-loader";
 
 // POST /api/listings/[id]/safety-check — 전세가율 + 보증보험 자동 계산
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         contractStartDate: today.toISOString().slice(0, 10),
         contractEndDate: endDate.toISOString().slice(0, 10),
         hasJeonseLoan: false,
-      });
+      }, await loadActiveGuaranteeRules());
 
       insurance = {
         hugEligible: result.results.find((r) => r.provider === "HUG")?.status === "eligible",

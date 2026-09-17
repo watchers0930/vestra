@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAdminAuth } from "@/lib/with-admin-auth";
+import { invalidateGuaranteeRulesCache } from "@/lib/guarantee-rules-loader";
 
 /** GET — 현재 활성 규칙 + 변경 이력 조회 */
 export const GET = withAdminAuth(async () => {
@@ -70,6 +71,9 @@ export const PUT = withAdminAuth(async (req) => {
       },
     });
   });
+
+  // 계산이 즉시 새 규칙을 쓰도록 로더 캐시 무효화(같은 인스턴스 한정 — 타 인스턴스는 최대 60초 내 반영)
+  invalidateGuaranteeRulesCache();
 
   return NextResponse.json({ success: true, rule: newRule });
 });

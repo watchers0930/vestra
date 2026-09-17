@@ -6,7 +6,7 @@ import { addNotification } from "@/lib/notification-client";
 import { checkGuaranteeInsurance } from "@/lib/guarantee-insurance";
 import { useToast } from "@/components/common/toast";
 import type { FraudRiskResult } from "@/lib/patent-types";
-import type { GuaranteeInsuranceResult } from "@/lib/guarantee-insurance";
+import type { GuaranteeInsuranceResult, GuaranteeRules } from "@/lib/guarantee-insurance";
 import type { KaptInfoData } from "@/components/common/KaptInfoCard";
 import type { JeonseFormData, JeonseAnalysis, GeneratedDocument } from "../types";
 
@@ -104,6 +104,15 @@ export function useJeonseAnalysis() {
         .catch(() => showToast("전세사기 위험도 분석에 실패했습니다."))
         .finally(() => setFraudLoading(false));
 
+      // 보증보험 활성 규칙 로드 (어드민 규칙 반영). 실패 시 undefined → 계산 함수의 기본값 사용
+      let gRules: GuaranteeRules | undefined;
+      try {
+        const rr = await fetch("/api/guarantee-rules");
+        if (rr.ok) gRules = (await rr.json()).rules as GuaranteeRules;
+      } catch {
+        // 규칙 로드 실패 시 기본값으로 계산 (계산 자체는 막지 않음)
+      }
+
       // 보증보험 가입 가능성 (클라이언트 즉시 계산)
       const gResult = checkGuaranteeInsurance({
         deposit: formData.deposit,
@@ -114,7 +123,7 @@ export function useJeonseAnalysis() {
         contractStartDate: formData.startDate,
         contractEndDate: formData.endDate,
         hasJeonseLoan: formData.hasJeonseLoan,
-      });
+      }, gRules);
       setGuaranteeResult(gResult);
 
       addAnalysis({
