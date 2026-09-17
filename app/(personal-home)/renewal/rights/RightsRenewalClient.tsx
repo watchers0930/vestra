@@ -5,7 +5,7 @@ import s from "./rights-renewal.module.css";
 import { useRightsAnalysis } from "@/app/(app)/rights/hooks/useRightsAnalysis";
 import RenewalGnb from "../_shared/RenewalGnb";
 import RegistryIssueBar from "../_shared/RegistryIssueBar";
-import RightsRenewalFooter from "./components/RightsRenewalFooter";
+import SiteFooter from "@/components/layout/SiteFooter";
 import RightsAnalysisForm from "./components/RightsAnalysisForm";
 import RightsResultPanel from "./components/RightsResultPanel";
 import RightsMarketingSections from "./components/RightsMarketingSections";
@@ -137,7 +137,7 @@ export default function RightsRenewalClient({ initialAddress = "" }: { initialAd
         registryOwnerMasked={registryOwnerMasked}
       />
 
-      <RightsRenewalFooter />
+      <SiteFooter />
     </>
   );
 }

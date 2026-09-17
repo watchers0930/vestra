@@ -1,0 +1,38 @@
+/* 공통 사이트 푸터 — 기존 renewal 다크 푸터 디자인을 재현하고 링크4 + 공지 구조로 재편 */
+.bar { background: #080c28; color: rgba(255,255,255,.9); padding: 56px 32px 0; }
+.in {
+  max-width: 1200px; margin: 0 auto;
+  display: grid; grid-template-columns: 400px 1fr 1.5fr; gap: 40px;
+  padding-bottom: 52px;
+}
+
+.logo { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+.logoI { width: 26px; height: 26px; border-radius: 5px; object-fit: contain; display: block; }
+.logoT { font-size: 15px; font-weight: 700; letter-spacing: .5px; }
+.tag { font-size: 12px; line-height: 1.25; color: rgba(255,255,255,.7); margin-bottom: 20px; }
+.contact { font-size: 12px; line-height: 1.75; color: rgba(255,255,255,.6); }
+
+.colT { font-size: 12px; letter-spacing: 1.4px; text-transform: uppercase; color: rgba(255,255,255,.75); font-weight: 600; margin-bottom: 16px; }
+
+.links { list-style: none; display: flex; flex-direction: column; gap: 10px; padding: 0; margin: 0; }
+.links a { font-size: 13px; color: rgba(255,255,255,.8); text-decoration: none; }
+.links a:hover { color: #fff; }
+
+.notices { list-style: none; display: flex; flex-direction: column; gap: 12px; padding: 0; margin: 0; }
+.noticeItem { display: flex; flex-direction: column; gap: 2px; }
+.noticeTitle { font-size: 13px; color: rgba(255,255,255,.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.noticeDate { font-size: 11px; color: rgba(255,255,255,.45); }
+.noticeEmpty { font-size: 12px; color: rgba(255,255,255,.4); }
+
+.bot {
+  max-width: 1200px; margin: 0 auto;
+  border-top: 1px solid rgba(255,255,255,.07);
+  padding: 18px 0; display: flex; justify-content: space-between;
+  font-size: 11.5px; color: rgba(255,255,255,.5);
+}
+
+@media (max-width: 768px) {
+  .bar { padding: 40px 20px 0; }
+  .in { grid-template-columns: 1fr; gap: 28px; }
+  .bot { flex-direction: column; gap: 6px; text-align: center; padding: 16px 0; }
+}
