@@ -58,7 +58,7 @@ export default function SiteFooter() {
           </div>
         </div>
 
-        <div>
+        <div className={s.noticeCol}>
           <p className={s.colT}>공지사항</p>
           {notices.length > 0 ? (
             <ul className={s.notices}>
