@@ -77,13 +77,13 @@ export default function SiteFooter() {
         <div>
           <ul className={s.links}>
             <li>
+              <Link href="/legal">회사소개</Link>
+            </li>
+            <li>
               <Link href="/privacy">개인정보처리방침</Link>
             </li>
             <li>
               <Link href="/terms">이용약관</Link>
-            </li>
-            <li>
-              <Link href="/legal">회사소개</Link>
             </li>
             <li>
               <a href="#">채용</a>
