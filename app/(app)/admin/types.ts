@@ -41,6 +41,49 @@ export interface UserItem {
   createdAt: string;
 }
 
+export interface UserDetailAnalysis {
+  id: string;
+  type: string;
+  typeLabel: string;
+  address: string;
+  createdAt: string;
+}
+
+export interface UserDetailSubscription {
+  plan: string;
+  status: string;
+  price: number;
+  startDate: string;
+  endDate: string | null;
+  canceledAt: string | null;
+}
+
+export interface UserDetail {
+  id: string;
+  name: string | null;
+  email: string;
+  image: string | null;
+  role: string;
+  requestedRole: string | null;
+  userType: string | null;
+  businessNumber: string | null;
+  companyName: string | null;
+  representName: string | null;
+  verifyStatus: string;
+  dailyLimit: number;
+  emailVerified: string | null;
+  createdAt: string;
+  updatedAt: string;
+  subscription: UserDetailSubscription | null;
+  _count: {
+    analyses: number;
+    assets: number;
+    monitoredProperties: number;
+    ownedListings: number;
+  };
+  analyses: UserDetailAnalysis[];
+}
+
 export interface ExpertItem {
   id: string;
   userId: string;

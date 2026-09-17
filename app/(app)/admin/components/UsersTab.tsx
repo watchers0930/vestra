@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
-import { User, Save, X, Edit3, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { User, Save, X, Edit3, Trash2, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, Badge } from "@/components/common";
 import { ROLE_LABELS, ROLE_COLORS, VERIFY_LABELS } from "../constants";
 import type { UserItem, ConfirmModalState } from "../types";
+import { UserDetailModal } from "./UserDetailModal";
 
 interface Props {
   filteredUsers: UserItem[];
@@ -37,6 +39,8 @@ export function UsersTab({
   editLimit, setEditLimit, deleteConfirmId, setDeleteConfirmId,
   startEditing, setConfirmModal, handleUserEdit, handleDeleteUser,
 }: Props) {
+  const [detailUserId, setDetailUserId] = useState<string | null>(null);
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2 flex-wrap">
@@ -156,6 +160,13 @@ export function UsersTab({
                       ) : (
                         <>
                           <button
+                            onClick={() => setDetailUserId(user.id)}
+                            className="p-1.5 rounded hover:bg-gray-100 text-gray-500 transition-colors"
+                            title="상세 보기"
+                          >
+                            <Eye size={14} strokeWidth={1.5} />
+                          </button>
+                          <button
                             onClick={() => startEditing(user)}
                             className="p-1.5 rounded hover:bg-gray-100 text-gray-500 transition-colors"
                             title="편집"
@@ -228,6 +239,10 @@ export function UsersTab({
             <ChevronRight size={16} strokeWidth={1.5} />
           </button>
         </div>
+      )}
+
+      {detailUserId && (
+        <UserDetailModal key={detailUserId} userId={detailUserId} onClose={() => setDetailUserId(null)} />
       )}
     </div>
   );

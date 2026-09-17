@@ -1,8 +1,62 @@
 import { NextResponse } from "next/server";
 import { ROLE_LIMITS } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { logAuditWithRequest, createAuditLog } from "@/lib/audit-log";
+import { logAuditWithRequest, createAuditLog, recordPiiAccess } from "@/lib/audit-log";
 import { withAdminAuth } from "@/lib/with-admin-auth";
+
+/** GET: 사용자 상세 (기본정보 + 활동 카운트 + 구독 + 최근 분석 이력) */
+export const GET = withAdminAuth<{ id: string }>(async (request, { session, params }) => {
+  const { id } = params;
+
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      role: true,
+      requestedRole: true,
+      userType: true,
+      businessNumber: true, // PII — Prisma 확장이 최상위 select 자동 복호화
+      companyName: true,
+      representName: true,
+      verifyStatus: true,
+      dailyLimit: true,
+      emailVerified: true,
+      createdAt: true,
+      updatedAt: true,
+      subscription: {
+        select: { plan: true, status: true, price: true, startDate: true, endDate: true, canceledAt: true },
+      },
+      // 관계 카운트는 _count로 집계 (N+1·대량 로드 방지)
+      _count: {
+        select: { analyses: true, assets: true, monitoredProperties: true, ownedListings: true },
+      },
+      // 최근 분석 이력만 제한 조회 (전체 로드 금지)
+      analyses: {
+        select: { id: true, type: true, typeLabel: true, address: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      },
+    },
+  });
+
+  if (!user) {
+    return NextResponse.json({ error: "회원을 찾을 수 없습니다" }, { status: 404 });
+  }
+
+  // 사업자번호(PII) 노출을 포함하므로 접근 감사 기록
+  recordPiiAccess({
+    req: request,
+    userId: session.user.id,
+    resource: "admin_user_detail",
+    targetId: id,
+    recordCount: 1,
+  });
+
+  return NextResponse.json({ user });
+});
 
 /** PATCH: 사용자 역할/일일한도 변경 */
 export const PATCH = withAdminAuth<{ id: string }>(async (req, { session, params }) => {
