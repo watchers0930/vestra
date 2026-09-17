@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import {
-  Users, UserPlus, MousePointerClick, Eye, Clock, TrendingUp, Activity,
+  Users, UserPlus, Repeat, Eye, Clock, TrendingUp, Activity,
   FileText, Share2, Globe, Smartphone, Chrome, MonitorSmartphone, MapPin,
-  RefreshCw, Radio, AlertCircle,
+  RefreshCw, Radio, AlertCircle, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { Card } from "@/components/common";
 import { KpiCard } from "@/components/results";
@@ -29,6 +30,12 @@ const cleanPath = (p: string) => (p.length > 40 ? p.slice(0, 40) + "…" : p) ||
 
 export function StatisticsTab() {
   const { period, setPeriod, data, loading, error, reload } = useStatistics();
+  const [showMore, setShowMore] = useState(false);
+
+  // 재방문률 = 재방문자 비율 = (활성 사용자 − 신규 사용자) / 활성 사용자
+  const revisitRate = data && data.summary.activeUsers > 0
+    ? Math.max(0, (data.summary.activeUsers - data.summary.newUsers) / data.summary.activeUsers)
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -92,16 +99,31 @@ export function StatisticsTab() {
 
       {data && (
         <>
-          {/* KPI */}
+          {/* KPI (기본 4개) */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <KpiCard label="활성 사용자" value={`${data.summary.activeUsers.toLocaleString()}명`} description={`최근 ${period}일`} icon={Users} />
+            <KpiCard label="활성 사용자" value={`${data.summary.activeUsers.toLocaleString()}명`} description={`최근 ${period}일 방문자 수`} icon={Users} />
             <KpiCard label="신규 사용자" value={`${data.summary.newUsers.toLocaleString()}명`} description="첫 방문자" icon={UserPlus} />
-            <KpiCard label="세션" value={`${data.summary.sessions.toLocaleString()}회`} description="방문 세션 수" icon={MousePointerClick} />
+            <KpiCard label="재방문률" value={fmtPct(revisitRate)} description="방문자 중 재방문 비율" icon={Repeat} />
             <KpiCard label="페이지뷰" value={`${data.summary.screenPageViews.toLocaleString()}회`} description="총 조회수" icon={Eye} />
-            <KpiCard label="평균 참여시간" value={fmtDuration(data.summary.averageSessionDuration)} description="세션당 평균" icon={Clock} />
-            <KpiCard label="참여율" value={fmtPct(data.summary.engagementRate)} description="참여 세션 비율" icon={TrendingUp} />
-            <KpiCard label="이탈률" value={fmtPct(data.summary.bounceRate)} description="이탈 세션 비율" icon={Activity} />
-            <KpiCard label="이벤트" value={`${data.summary.eventCount.toLocaleString()}회`} description="총 이벤트 수" icon={Activity} />
+          </div>
+
+          {/* 상세 지표 (접기/펼치기) */}
+          {showMore && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <KpiCard label="평균 참여시간" value={fmtDuration(data.summary.averageSessionDuration)} description="세션당 평균" icon={Clock} />
+              <KpiCard label="참여율" value={fmtPct(data.summary.engagementRate)} description="참여 세션 비율" icon={TrendingUp} />
+              <KpiCard label="이탈률" value={fmtPct(data.summary.bounceRate)} description="이탈 세션 비율" icon={Activity} />
+              <KpiCard label="이벤트" value={`${data.summary.eventCount.toLocaleString()}회`} description="총 이벤트 수" icon={Activity} />
+            </div>
+          )}
+          <div className="flex justify-center">
+            <button
+              onClick={() => setShowMore((v) => !v)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#e5e5e7] bg-white px-4 py-2 text-sm text-[#4b4b4f] hover:bg-[#f5f5f7]"
+            >
+              {showMore ? <ChevronUp size={15} strokeWidth={1.8} /> : <ChevronDown size={15} strokeWidth={1.8} />}
+              {showMore ? "상세 지표 접기" : "상세 지표 더보기 (참여시간·참여율·이탈률·이벤트)"}
+            </button>
           </div>
 
           {/* 추이 */}
