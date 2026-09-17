@@ -32,9 +32,9 @@ export function StatisticsTab() {
   const { period, setPeriod, data, loading, error, reload } = useStatistics();
   const [showMore, setShowMore] = useState(false);
 
-  // 재방문률 = 재방문자 비율 = (활성 사용자 − 신규 사용자) / 활성 사용자
-  const revisitRate = data && data.summary.activeUsers > 0
-    ? Math.max(0, (data.summary.activeUsers - data.summary.newUsers) / data.summary.activeUsers)
+  // 1인당 평균 방문 횟수 = 세션 / 활성 사용자
+  const visitsPerUser = data && data.summary.activeUsers > 0
+    ? data.summary.sessions / data.summary.activeUsers
     : 0;
 
   return (
@@ -103,7 +103,7 @@ export function StatisticsTab() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard label="활성 사용자" value={`${data.summary.activeUsers.toLocaleString()}명`} description={`최근 ${period}일 방문자 수`} icon={Users} />
             <KpiCard label="신규 사용자" value={`${data.summary.newUsers.toLocaleString()}명`} description="첫 방문자" icon={UserPlus} />
-            <KpiCard label="재방문률" value={fmtPct(revisitRate)} description="방문자 중 재방문 비율" icon={Repeat} />
+            <KpiCard label="1인당 방문" value={`${visitsPerUser.toFixed(1)}회`} description="1인당 평균 방문 횟수" icon={Repeat} />
             <KpiCard label="페이지뷰" value={`${data.summary.screenPageViews.toLocaleString()}회`} description="총 조회수" icon={Eye} />
           </div>
 
