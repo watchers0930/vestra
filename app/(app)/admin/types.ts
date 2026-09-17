@@ -1,5 +1,6 @@
 export type Tab =
   | "overview"
+  | "statistics"
   | "users"
   | "verifications"
   | "experts"

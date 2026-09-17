@@ -5,7 +5,7 @@ import {
   KeyRound, ClipboardCheck, Brain, SlidersHorizontal,
   ShieldAlert, Key, Newspaper, MapPin, Landmark, Eye,
   Handshake, BookOpenText, Building2, ClipboardList, FileSignature,
-  Scale, CalendarCheck, UserCog, Banknote,
+  Scale, CalendarCheck, UserCog, Banknote, LineChart,
   type LucideIcon,
 } from "lucide-react";
 
@@ -133,6 +133,7 @@ export const lawyerMenuGroups: MenuGroup[] = [
 
 export const adminMenuItems: MenuItem[] = [
   { href: "/admin",                         icon: LayoutDashboard,  label: "개요",         description: "서비스 통계, 사용량, 시스템 상태를 한눈에 확인합니다" },
+  { href: "/admin?tab=statistics",          icon: LineChart,        label: "방문 통계",     description: "Google Analytics 4 기반 방문자·유입·행동 통계를 확인합니다" },
   { href: "/admin?tab=users",               icon: Users,            label: "회원 관리",     description: "회원 목록 조회, 역할 변경, 사용 한도를 관리합니다" },
   { href: "/admin?tab=verifications",       icon: CheckCircle,      label: "인증 관리",     description: "사업자 인증 요청을 검토하고 승인·거부합니다" },
   { href: "/admin?tab=experts",             icon: Scale,            label: "전문가 관리",   description: "변호사·법무사 등 전문가 가입 신청을 검토하고 승인합니다" },

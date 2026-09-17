@@ -13,6 +13,7 @@ import { LoanRatesTab } from "@/components/admin/LoanRatesTab";
 import dynamic from "next/dynamic";
 import { useAdminData } from "./hooks/useAdminData";
 import { OverviewTab } from "./components/OverviewTab";
+import { StatisticsTab } from "./components/StatisticsTab";
 import { UsersTab } from "./components/UsersTab";
 import { VerificationsTab } from "./components/VerificationsTab";
 import { ExpertsTab } from "./components/ExpertsTab";
@@ -82,6 +83,8 @@ function AdminContent() {
       ) : (
         <>
           {tab === "overview" && data.stats && <OverviewTab stats={data.stats} />}
+
+          {tab === "statistics" && <StatisticsTab />}
 
           {tab === "users" && (
             <UsersTab
