@@ -17,7 +17,7 @@ export default function JeonsePage() {
     guaranteeResult,
     kaptInfo,
     checklist, setChecklist,
-    registryLoading, parsedOwner, parsedPropUid,
+    registryLoading, parsedOwner, parsedPropUid, registryParse,
     resultRef,
     handleAnalyze, handleGenerateDoc, handleRegistryUpload, copyToClipboard,
   } = useJeonseAnalysis();
@@ -39,6 +39,7 @@ export default function JeonsePage() {
             loading={loading}
             registryLoading={registryLoading}
             parsedOwner={parsedOwner}
+            registryParse={registryParse}
             onAnalyze={handleAnalyze}
             onRegistryUpload={handleRegistryUpload}
           />

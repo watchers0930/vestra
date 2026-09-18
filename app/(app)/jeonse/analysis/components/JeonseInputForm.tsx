@@ -12,6 +12,12 @@ interface Props {
   loading: boolean;
   registryLoading: boolean;
   parsedOwner: string;
+  registryParse?: {
+    mortgageActiveCount: number;
+    mortgageCancelledCount: number;
+    totalMortgage: number;
+    ocrUsed: boolean;
+  } | null;
   onAnalyze: () => void;
   onRegistryUpload: (file: File) => void;
 }
@@ -46,7 +52,7 @@ const MONEY_LABEL_STYLE: React.CSSProperties = {
   marginBottom: "6px",
 };
 
-export function JeonseInputForm({ formData, setFormData, loading, registryLoading, parsedOwner, onAnalyze, onRegistryUpload }: Props) {
+export function JeonseInputForm({ formData, setFormData, loading, registryLoading, parsedOwner, registryParse, onAnalyze, onRegistryUpload }: Props) {
   const update = (patch: Partial<JeonseFormData>) => setFormData({ ...formData, ...patch });
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -91,7 +97,7 @@ export function JeonseInputForm({ formData, setFormData, loading, registryLoadin
       {/* 등기부등본 업로드 */}
       <div>
         <label style={{ display: "block", fontSize: "12.5px", fontWeight: 600, color: "#1d1d1f", marginBottom: "8px" }}>
-          등기부등본 <span style={{ fontWeight: 400, color: "#6e6e73" }}>(PDF 업로드 시 주소·근저당 자동 입력)</span>
+          등기부등본 <span style={{ fontWeight: 400, color: "#6e6e73" }}>(PDF·이미지 업로드 시 주소·근저당 자동 입력)</span>
         </label>
         <div
           onDragOver={(e) => e.preventDefault()}
@@ -128,7 +134,7 @@ export function JeonseInputForm({ formData, setFormData, loading, registryLoadin
               </>
             ) : (
               <>
-                <p style={{ fontSize: "13px", fontWeight: 600, color: "#3d3d3f", margin: 0 }}>등기부등본 PDF 업로드</p>
+                <p style={{ fontSize: "13px", fontWeight: 600, color: "#3d3d3f", margin: 0 }}>등기부등본 PDF·이미지 업로드</p>
                 <p style={{ fontSize: "11px", color: "#aeaeb2", margin: "2px 0 0" }}>클릭하거나 파일을 여기에 끌어다 놓으세요</p>
               </>
             )}
@@ -137,7 +143,27 @@ export function JeonseInputForm({ formData, setFormData, loading, registryLoadin
             <span style={{ marginLeft: "auto", fontSize: "11px", color: "#aeaeb2", flexShrink: 0 }}>재업로드</span>
           )}
         </div>
-        <input ref={fileRef} type="file" accept=".pdf" style={{ display: "none" }} onChange={handleFileChange} />
+        <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: "none" }} onChange={handleFileChange} />
+
+        {/* 근저당 자동반영 결과 요약 */}
+        {registryParse && (
+          <div style={{ marginTop: "10px", padding: "11px 13px", borderRadius: "10px", border: `1px solid ${registryParse.mortgageActiveCount > 0 ? "rgba(184,111,0,0.25)" : "rgba(26,158,69,0.25)"}`, background: registryParse.mortgageActiveCount > 0 ? "rgba(255,159,10,0.07)" : "rgba(48,209,88,0.07)" }}>
+            {registryParse.ocrUsed && (
+              <p style={{ fontSize: "11.5px", color: "var(--brand-primary)", fontWeight: 600, margin: "0 0 4px" }}>
+                📷 이미지·스캔 PDF를 AI OCR로 분석했습니다
+              </p>
+            )}
+            <p style={{ fontSize: "12.5px", lineHeight: 1.55, color: "#1d1d1f", fontWeight: 500, margin: 0 }}>
+              {registryParse.mortgageActiveCount > 0 ? (
+                <>근저당 <b style={{ color: "#b86f00" }}>{registryParse.mortgageActiveCount}건</b>을 선순위채권 <b>{registryParse.totalMortgage.toLocaleString("ko-KR")}원</b>으로 자동 반영했습니다{registryParse.mortgageCancelledCount > 0 ? ` (말소 ${registryParse.mortgageCancelledCount}건 제외)` : ""}.</>
+              ) : registryParse.mortgageCancelledCount > 0 ? (
+                <>활성 근저당이 없어 선순위채권 <b style={{ color: "#1a9e45" }}>0원</b>으로 반영했습니다 (말소된 근저당 {registryParse.mortgageCancelledCount}건은 모두 제외).</>
+              ) : (
+                <>등기부에 근저당이 없어 선순위채권 <b style={{ color: "#1a9e45" }}>0원</b>으로 반영했습니다.</>
+              )}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* 소유자(임대인) 표시 */}

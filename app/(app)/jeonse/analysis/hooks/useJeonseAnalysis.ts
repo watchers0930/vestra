@@ -43,6 +43,13 @@ export function useJeonseAnalysis() {
   const [parsedOwner, setParsedOwner] = useState("");
   const [parsedPropUid, setParsedPropUid] = useState("");
   const [registrySummary, setRegistrySummary] = useState<Record<string, unknown> | null>(null);
+  // 등기부 파싱 후 근저당 자동반영 결과 (화면 피드백용)
+  const [registryParse, setRegistryParse] = useState<{
+    mortgageActiveCount: number;
+    mortgageCancelledCount: number;
+    totalMortgage: number;
+    ocrUsed: boolean;
+  } | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
   // localStorage 주소 프리필
@@ -178,9 +185,21 @@ export function useJeonseAnalysis() {
       if (data.ownerName) setParsedOwner(data.ownerName);
       if (data.propUid) setParsedPropUid(data.propUid);
       if (data.registrySummary) setRegistrySummary(data.registrySummary);
-      showToast("등기부등본에서 정보를 가져왔습니다.", "success");
+      setRegistryParse({
+        mortgageActiveCount: data.mortgageActiveCount ?? 0,
+        mortgageCancelledCount: data.mortgageCancelledCount ?? 0,
+        totalMortgage: data.totalMortgage ?? 0,
+        ocrUsed: !!data.ocrUsed,
+      });
+      const activeCnt = data.mortgageActiveCount ?? 0;
+      showToast(
+        activeCnt > 0
+          ? `근저당 ${activeCnt}건을 선순위채권으로 자동 반영했습니다.`
+          : "등기부 분석 완료 — 활성 근저당이 없어 선순위채권 0원으로 반영했습니다.",
+        "success"
+      );
     } catch {
-      showToast("등기부등본 파싱에 실패했습니다. 텍스트 기반 PDF인지 확인해 주세요.");
+      showToast("등기부등본 파싱에 실패했습니다. 등기부 원본(PDF·선명한 이미지)인지 확인해 주세요.");
     } finally {
       setRegistryLoading(false);
     }
@@ -200,7 +219,7 @@ export function useJeonseAnalysis() {
     guaranteeResult,
     kaptInfo,
     checklist, setChecklist,
-    registryLoading, parsedOwner, parsedPropUid,
+    registryLoading, parsedOwner, parsedPropUid, registryParse,
     resultRef,
     handleAnalyze, handleGenerateDoc, handleRegistryUpload, copyToClipboard,
   };

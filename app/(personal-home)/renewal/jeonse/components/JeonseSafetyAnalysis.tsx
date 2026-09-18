@@ -49,7 +49,7 @@ export function JeonseSafetyAnalysis() {
     fraudRisk, fraudLoading,
     guaranteeResult, kaptInfo,
     checklist, setChecklist,
-    registryLoading, parsedOwner,
+    registryLoading, parsedOwner, registryParse,
     resultRef,
     handleAnalyze, handleRegistryUpload,
   } = useJeonseAnalysis();
@@ -76,18 +76,38 @@ export function JeonseSafetyAnalysis() {
 
           {/* 등기부등본 업로드 */}
           <label style={labelStyle}>
-            등기부등본 <span style={{ fontWeight: 400, color: "#8a90a6" }}>(PDF 업로드 시 주소·근저당 자동 입력)</span>
+            등기부등본 <span style={{ fontWeight: 400, color: "#8a90a6" }}>(PDF·이미지 업로드 시 주소·근저당 자동 입력)</span>
           </label>
           <div
             onClick={() => fileRef.current?.click()}
-            style={{ display: "flex", alignItems: "center", gap: "10px", padding: "14px", marginBottom: "18px", border: "1.5px dashed #c4cce4", borderRadius: "10px", background: "#f9fafe", cursor: "pointer" }}
+            style={{ display: "flex", alignItems: "center", gap: "10px", padding: "14px", marginBottom: registryParse ? "10px" : "18px", border: "1.5px dashed #c4cce4", borderRadius: "10px", background: "#f9fafe", cursor: "pointer" }}
           >
             {registryLoading ? <Loader2 size={18} className="animate-spin" style={{ color: "#2e4bd8" }} /> : parsedOwner ? <CheckCircle size={18} style={{ color: "#1a9e45" }} /> : <Paperclip size={18} style={{ color: "#2e4bd8" }} />}
             <span style={{ fontSize: "13px", fontWeight: 500, color: registryLoading ? "#2e4bd8" : parsedOwner ? "#1a9e45" : "#3d3d3f" }}>
-              {registryLoading ? "등기부등본 분석 중..." : parsedOwner ? `파싱 완료 — 소유자 ${parsedOwner}` : "등기부등본 PDF 업로드"}
+              {registryLoading ? "등기부등본 분석 중..." : parsedOwner ? `파싱 완료 — 소유자 ${parsedOwner}` : "등기부등본 PDF·이미지 업로드"}
             </span>
           </div>
-          <input ref={fileRef} type="file" accept=".pdf" style={{ display: "none" }} onChange={(e) => { if (e.target.files?.[0]) handleRegistryUpload(e.target.files[0]); }} />
+          <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: "none" }} onChange={(e) => { if (e.target.files?.[0]) handleRegistryUpload(e.target.files[0]); }} />
+
+          {/* 근저당 자동반영 결과 요약 */}
+          {registryParse && (
+            <div style={{ marginBottom: "18px", padding: "11px 13px", borderRadius: "10px", border: `1px solid ${registryParse.mortgageActiveCount > 0 ? "rgba(184,111,0,0.25)" : "rgba(26,158,69,0.25)"}`, background: registryParse.mortgageActiveCount > 0 ? "rgba(255,159,10,0.07)" : "rgba(48,209,88,0.07)" }}>
+              {registryParse.ocrUsed && (
+                <p style={{ fontSize: "11.5px", color: "#2e4bd8", fontWeight: 600, marginBottom: "4px" }}>
+                  📷 이미지·스캔 PDF를 AI OCR로 분석했습니다
+                </p>
+              )}
+              <p style={{ fontSize: "12.5px", lineHeight: 1.55, color: "#1a1d2e", fontWeight: 500 }}>
+                {registryParse.mortgageActiveCount > 0 ? (
+                  <>근저당 <b style={{ color: "#b86f00" }}>{registryParse.mortgageActiveCount}건</b>을 선순위채권 <b>{toKoreanMoney(registryParse.totalMortgage)}</b>으로 자동 반영했습니다{registryParse.mortgageCancelledCount > 0 ? ` (말소 ${registryParse.mortgageCancelledCount}건 제외)` : ""}.</>
+                ) : registryParse.mortgageCancelledCount > 0 ? (
+                  <>활성 근저당이 없어 선순위채권 <b style={{ color: "#1a9e45" }}>0원</b>으로 반영했습니다 (말소된 근저당 {registryParse.mortgageCancelledCount}건은 모두 제외).</>
+                ) : (
+                  <>등기부에 근저당이 없어 선순위채권 <b style={{ color: "#1a9e45" }}>0원</b>으로 반영했습니다.</>
+                )}
+              </p>
+            </div>
+          )}
 
           {/* 주소 */}
           <div style={{ marginBottom: "14px" }}>
