@@ -61,10 +61,13 @@ const FALLBACK_LIMIT = 20; // DB 장애 시 보수적 한도
 
 export async function checkOpenAICostGuard(
   userId: string,
-  dailyLimit: number = DEFAULT_DAILY_LIMIT
+  dailyLimit: number = DEFAULT_DAILY_LIMIT,
+  keyPrefix: string = ""
 ): Promise<{ allowed: boolean; remaining: number; limit: number }> {
+  // keyPrefix로 기능별 카운터를 분리한다(기본값 ""=기존 공용 카운터, 하위호환).
+  // 예: "briefing:" → 능동 브리핑이 권리분석 등 실기능의 일일 한도를 잠식하지 않도록 격리.
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-  const id = `usage:${userId}`;
+  const id = `usage:${keyPrefix}${userId}`;
 
   try {
     const entry = await prisma.dailyUsage.findUnique({ where: { id } });
@@ -97,7 +100,7 @@ export async function checkOpenAICostGuard(
     };
   } catch {
     // DB 장애 시 메모리 기반 폴백 (보수적 한도 적용)
-    const key = `${userId}:${today}`;
+    const key = `${keyPrefix}${userId}:${today}`;
     const fb = fallbackCounter.get(key) || { date: today, count: 0 };
     if (fb.date !== today) {
       fb.date = today;

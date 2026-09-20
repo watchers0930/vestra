@@ -7,6 +7,7 @@ import RenewalGnb from "../renewal/_shared/RenewalGnb";
 import SiteFooter from "@/components/layout/SiteFooter";
 import CertifiedListings from "./components/CertifiedListings";
 import SpecialistSection from "./components/SpecialistSection";
+import ProactiveBriefingCard from "./components/ProactiveBriefingCard";
 import { REGIONS } from "./regions";
 import s from "./personal-home.module.css";
 
@@ -91,6 +92,9 @@ export default function PersonalHomeClient() {
           <span>출원번호: 10-2026-0085160</span>
         </div>
       </section>
+
+      {/* ─── AI 능동 브리핑 (로그인 사용자만 노출) ─── */}
+      <ProactiveBriefingCard />
 
       {/* ─── FEATURES ─── */}
       <section className={s.features}>
