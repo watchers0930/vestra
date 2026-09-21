@@ -1,11 +1,8 @@
 .wrap {
   max-width: 1120px;
-  margin: 24px auto 0;
-  padding: 20px 22px;
-  background: #ffffff;
-  border: 1px solid #e5e8f0;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(52, 82, 197, 0.06);
+  /* 카드(박스) 없이 섹션으로 표시. 상단 여백과 하단 여백을 동일하게. */
+  margin: 0 auto;
+  padding: 40px 22px;
 }
 
 .head {
@@ -162,8 +159,8 @@
 
 @media (max-width: 640px) {
   .wrap {
-    margin: 16px 12px 0;
-    padding: 16px;
+    margin: 0 auto;
+    padding: 28px 16px;
   }
   .item {
     flex-wrap: wrap;
