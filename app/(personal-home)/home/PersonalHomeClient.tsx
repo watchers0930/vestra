@@ -7,7 +7,7 @@ import RenewalGnb from "../renewal/_shared/RenewalGnb";
 import SiteFooter from "@/components/layout/SiteFooter";
 import CertifiedListings from "./components/CertifiedListings";
 import SpecialistSection from "./components/SpecialistSection";
-import ProactiveBriefingCard from "./components/ProactiveBriefingCard";
+import ProactiveBriefingModal from "./components/ProactiveBriefingModal";
 import { REGIONS } from "./regions";
 import s from "./personal-home.module.css";
 
@@ -93,8 +93,8 @@ export default function PersonalHomeClient() {
         </div>
       </section>
 
-      {/* ─── AI 능동 브리핑 (로그인 사용자만 노출) ─── */}
-      <ProactiveBriefingCard />
+      {/* ─── AI 능동 브리핑 (로그인 사용자 · 챙길 사건 있을 때만 모달 자동 노출) ─── */}
+      <ProactiveBriefingModal />
 
       {/* ─── FEATURES ─── */}
       <section className={s.features}>

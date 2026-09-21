@@ -1,8 +1,25 @@
-.wrap {
-  max-width: 1120px;
-  /* 카드(박스) 없이 섹션으로 표시. 상단 여백과 하단 여백을 동일하게. */
-  margin: 0 auto;
-  padding: 40px 22px;
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(17, 20, 32, 0.45);
+  animation: fade 0.15s ease;
+}
+
+.modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: 82vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 22px 22px 20px;
+  box-shadow: 0 12px 40px rgba(17, 20, 32, 0.25);
+  animation: pop 0.18s ease;
 }
 
 .head {
@@ -10,7 +27,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .titleRow {
@@ -32,36 +49,33 @@
 }
 
 .title {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   color: #1a1d29;
   margin: 0;
 }
 
-.refresh {
+.close {
   flex-shrink: 0;
-  padding: 6px 12px;
-  font-size: 13px;
-  color: #3452c5;
-  background: #eef1fb;
+  width: 30px;
+  height: 30px;
+  font-size: 15px;
+  color: #7a8091;
+  background: #f2f4f9;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s;
 }
-.refresh:hover:not(:disabled) {
-  background: #dfe5f9;
-}
-.refresh:disabled {
-  color: #9aa0b4;
-  cursor: default;
+.close:hover {
+  background: #e5e8f0;
 }
 
 .headline {
   font-size: 15px;
   line-height: 1.6;
   color: #2b2f3d;
-  margin: 0 0 14px;
+  margin: 0 0 16px;
   white-space: pre-wrap;
 }
 
@@ -142,25 +156,35 @@
   background: #eef1fb;
 }
 
-.empty {
-  font-size: 14px;
-  color: #5b6072;
-  margin: 0;
-  padding: 12px 14px;
-  background: #f8f9fc;
-  border-radius: 12px;
-}
-
 .foot {
   font-size: 12px;
   color: #9aa0b4;
-  margin: 12px 0 0;
+  margin: 14px 0 0;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @media (max-width: 640px) {
-  .wrap {
-    margin: 0 auto;
-    padding: 28px 16px;
+  .modal {
+    padding: 18px 16px 16px;
   }
   .item {
     flex-wrap: wrap;
