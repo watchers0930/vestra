@@ -176,3 +176,10 @@
 **Sources scanned:** 55+
 **Sources changed:** docs/ALGORITHM.md(§7 신규), docs/ROADMAP-1등화.md(P1 완료), package.json(v5.174.0)
 **Changes:** 부동산 유형 커버리지 확대(v5.174.0) — 시세전망·매물시세 아파트 전용→4주거유형(아파트/연립·다세대/단독·다가구/오피스텔). 계정별 구독 대응 다중키 폴백 molitFetchRtms(미구독 403·오류XML 감지+메모이제이션), 아파트 전월세 키 폴백으로 전세가율 복구. algorithm 아티클에 "실거래 시세 조회 계층" 섹션 추가.
+
+## 2026-09-22 (2차)
+
+**Topics updated:** algorithm
+**New topics:** none
+**Sources changed:** docs/ALGORITHM.md(§7.3 전국확대·§7.4 능동신호 추가), docs/ROADMAP-1등화.md(P1 진행 갱신), package.json(v5.177.0)
+**Changes:** 시세지도 오피스텔+전국확대(강원/전북 자치도 LAWD 코드 정정·250시군구·동적 GU_CENTER), 능동 신호 소스 확대(전세가율 위험·등기감시 미등록), chat 프롬프트 캐싱. 외부KMS 보류, preview 환경 정합(env).

@@ -1,7 +1,7 @@
 # VESTRA Wiki INDEX
 
 > **컴파일 날짜**: 2026-09-22
-> **프로젝트 버전**: v5.174.0
+> **프로젝트 버전**: v5.177.0
 > **배포 URL**: https://vestra.ai.kr (구 vestra-plum.vercel.app)
 > **총 토픽**: 7개 | **개념 아티클**: 3개 | **소스 문서**: 51개+
 
@@ -12,7 +12,7 @@
 | 토픽 | 파일 | 설명 | Sources | Coverage |
 |------|------|------|---------|----------|
 | 플랫폼 개요 | [topics/platform-overview.md](topics/platform-overview.md) | 전체 아키텍처, 회원 역할 계층, 거래 FK 무결성, v5.90.2 | 13 | high |
-| 핵심 알고리즘 | [topics/algorithm.md](topics/algorithm.md) | 7개 특허 알고리즘, 공공 API 10종, 실거래 유형 커버리지·다중키 폴백(v5.174.0), 예측 강화 로드맵 | 11 | high |
+| 핵심 알고리즘 | [topics/algorithm.md](topics/algorithm.md) | 7개 특허 알고리즘, 공공 API 10종, 실거래 유형 커버리지·다중키 폴백·전국 확대(v5.177.0), 능동 신호, 예측 강화 로드맵 | 11 | high |
 | API 명세 | [topics/api.md](topics/api.md) | 거래 API·권한 가드·findMany 상한·cleanup cron·issue-order 분리 | 12 | high |
 | 프론트엔드 | [topics/frontend.md](topics/frontend.md) | renewal UI, 매물등록·가계약서·서명패드, PDF | 16 | high |
 | 보안 | [topics/security.md](topics/security.md) | RBAC·PII·CSRF·IDOR·crypto NUL 게이트·xlsx 취약점 해소·OWASP | 23 | high |
@@ -140,7 +140,9 @@
 
 ## 최근 변경 이력
 
-- **2026-09-22**: 세션(v5.174.0) 반영 — algorithm 토픽 갱신 (부동산 유형 커버리지 확대)
+- **2026-09-22 (2차, v5.175.0~5.177.0)**: algorithm 토픽 추가 갱신
+  - 시세지도 오피스텔+**전국 확대**(강원42→51·전북45→52 자치도 코드 정정, 250시군구, 동적 GU_CENTER), **능동 신호 확대**(전세가율 위험·등기감시 미등록), chat 프롬프트 캐싱. 외부 KMS 보류, preview 환경 정합.
+- **2026-09-22 (v5.174.0)**: 세션 반영 — algorithm 토픽 갱신 (부동산 유형 커버리지 확대)
   - 시세전망·매물시세를 아파트 전용 → 4개 주거유형(아파트/연립·다세대/단독·다가구/오피스텔)으로 확대. 엔진(`lib/molit/`)은 8개 엔드포인트 완비, API/UI 미연결을 연결.
   - 계정별 구독 대응 다중키 폴백(`molitFetchRtms`): data.go.kr MOLIT/KAPT 2계정 엔드포인트 구독 차이를 미구독(HTTP 403·오류XML) 감지+메모이제이션으로 처리. 아파트 전월세 키 폴백으로 전세가율 누락 복구. 상세 `docs/ALGORITHM.md` §7.
   - 운영 실키 4유형 검증·운영 실화면 확인·공통계층 7개 소비기능 회귀검사(회귀0)·병렬 적대적 코드리뷰 반영.
