@@ -21,7 +21,7 @@ import type { AptData, PriceMapTradeType, PropertyType } from "@/app/(map)/price
 // 카카오 REST API로 아파트 실제 좌표 검색
 const GEOCODE_TTL = 7 * 24 * 60 * 60 * 1000; // 7일
 
-const PROPERTY_TYPES = ["아파트", "연립/빌라/다세대"] as const satisfies readonly PropertyType[];
+const PROPERTY_TYPES = ["아파트", "연립/빌라/다세대", "오피스텔"] as const satisfies readonly PropertyType[];
 
 function parsePropertyType(value: string | null): PropertyType {
   return PROPERTY_TYPES.includes(value as PropertyType) ? value as PropertyType : "아파트";

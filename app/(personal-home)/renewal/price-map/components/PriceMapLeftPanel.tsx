@@ -21,7 +21,7 @@ interface Props {
   onSelectApt: (apt: AptData) => void;
 }
 
-const PROPERTY_TYPES: PropertyType[] = ["아파트", "연립/빌라/다세대"];
+const PROPERTY_TYPES: PropertyType[] = ["아파트", "연립/빌라/다세대", "오피스텔"];
 
 /** 시세지도 좌측 패널 — 지역/거래유형/매물유형 필터 + 변동 TOP 리스트 (실데이터) */
 export default function PriceMapLeftPanel({

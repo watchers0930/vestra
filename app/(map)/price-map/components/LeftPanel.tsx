@@ -22,7 +22,7 @@ interface Props {
 }
 
 const RANK_COLORS = ["var(--brand-primary)", "#1a9e45", "#b86f00"];
-const PROPERTY_TYPES: PropertyType[] = ["아파트", "연립/빌라/다세대"];
+const PROPERTY_TYPES: PropertyType[] = ["아파트", "연립/빌라/다세대", "오피스텔"];
 const TRADE_TYPES: PriceMapTradeType[] = ["매매", "전세"];
 
 export function LeftPanel({
