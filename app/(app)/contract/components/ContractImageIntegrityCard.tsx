@@ -76,6 +76,10 @@ export default function ContractImageIntegrityCard({
   if (!integrity || !integrity.available) return null;
 
   const { signaturePresent, sealPresent, handwrittenEdits, handwrittenEditNote, blankFields, illegibleAreas, illegibleNote, warnings } = integrity;
+  // 모델 노트 끝의 마침표를 제거해 뒤 문장과 자연스럽게 이어붙인다
+  const trimTail = (v?: string) => (v ? v.replace(/[.\s]+$/, "") : "");
+  const editNote = trimTail(handwrittenEditNote);
+  const illegNote = trimTail(illegibleNote);
 
   return (
     <div
@@ -133,7 +137,7 @@ export default function ContractImageIntegrityCard({
           <div style={{ fontSize: "12.5px", color: "#9a3412", display: "flex", gap: "6px" }}>
             <span aria-hidden>✏️</span>
             <span>
-              손글씨 정정·가필 흔적이 있습니다{handwrittenEditNote ? ` — ${handwrittenEditNote}` : ""}. 정정 부분에 양측 날인이 있는지 확인하세요.
+              손글씨 정정·가필 흔적이 있습니다{editNote ? ` — ${editNote}` : ""}. 정정 부분에 양측 날인이 있는지 확인하세요.
             </span>
           </div>
         )}
@@ -147,7 +151,7 @@ export default function ContractImageIntegrityCard({
           <div style={{ fontSize: "12.5px", color: "#6b7280", display: "flex", gap: "6px" }}>
             <span aria-hidden>🔍</span>
             <span>
-              판독이 어려운 영역이 있습니다{illegibleNote ? ` — ${illegibleNote}` : ""}. 더 선명한 이미지로 재확인을 권장합니다.
+              판독이 어려운 영역이 있습니다{illegNote ? ` — ${illegNote}` : ""}. 더 선명한 이미지로 재확인을 권장합니다.
             </span>
           </div>
         )}
