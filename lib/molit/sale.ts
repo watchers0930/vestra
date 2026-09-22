@@ -176,7 +176,7 @@ function endpointForResidentialSale(type: ResidentialSaleType): {
   if (type === "officetel") {
     return {
       endpoint: MOLIT_ENDPOINTS.officeTelTrade,
-      nameTag: "단지명",
+      nameTag: "offiNm",
       cachePrefix: "molit-officetel-trade",
       fallbackName: "오피스텔",
     };

@@ -291,6 +291,7 @@ export function parseTransactions(xml: string): RealTransaction[] {
       aptName:
         extractVal(item, "aptNm", "아파트") ||
         extractVal(item, "aptNm", "단지명") ||
+        extractXmlValue(item, "offiNm") ||
         extractXmlValue(item, "mhouseNm") ||
         extractVal(item, "houseType", "주택유형") ||
         extractXmlValue(item, "연립다세대") ||
@@ -332,6 +333,7 @@ export function parseRentTransactions(xml: string): RentTransaction[] {
       aptName:
         extractVal(item, "aptNm", "아파트") ||
         extractVal(item, "aptNm", "단지명") ||
+        extractXmlValue(item, "offiNm") ||
         extractXmlValue(item, "mhouseNm") ||
         extractVal(item, "houseType", "주택유형") ||
         extractXmlValue(item, "연립다세대") ||
