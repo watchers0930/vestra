@@ -7,6 +7,7 @@ import RenewalGnb from "../_shared/RenewalGnb";
 import SiteFooter from "@/components/layout/SiteFooter";
 import { useContractAnalysis } from "@/app/(app)/contract/hooks/useContractAnalysis";
 import ContractResultSections, { SEC_IDS } from "./components/ContractResultSections";
+import ContractImageIntegrityCard from "@/app/(app)/contract/components/ContractImageIntegrityCard";
 
 // Sample contract texts
 const SAMPLES: Record<string, string> = {
@@ -18,7 +19,7 @@ const SAMPLES: Record<string, string> = {
 export default function ContractRenewalClient() {
   const {
     contractText, setContractText,
-    fileName, isLoading, result,
+    fileName, contractIntegrity, isLoading, result,
     error, setError,
     isDragging,
     fileInputRef,
@@ -283,6 +284,12 @@ export default function ContractRenewalClient() {
             <p className={s.subHeroSub}>분석 결과</p>
           </div>
         </section>
+
+        {result && contractIntegrity?.available && (
+          <div style={{ marginBottom: "16px" }}>
+            <ContractImageIntegrityCard integrity={contractIntegrity} />
+          </div>
+        )}
 
         {result && (
           <ContractResultSections

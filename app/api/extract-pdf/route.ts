@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
 import { extractTextFromPDF } from "@/lib/pdf-parser";
 import { extractTextFromImages, extractTextFromScannedPDF, isImageFile } from "@/lib/image-ocr";
+import { analyzeContractImage } from "@/lib/contract-image";
+import { CONTRACT_OCR_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { checkOpenAICostGuard } from "@/lib/openai";
 import { validateOrigin } from "@/lib/csrf";
@@ -42,6 +44,9 @@ export async function POST(req: NextRequest) {
 
     const firstFile = files[0] as File;
 
+    // 문서 유형 힌트 (contract=계약서 전용 경로, 기본=등기부/범용)
+    const isContract = formData.get("docType") === "contract";
+
     // PDF인지 이미지인지 판별
     const isPDF =
       firstFile.type === "application/pdf" ||
@@ -81,7 +86,18 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        const result = await extractTextFromScannedPDF(buffer, firstFile.name);
+        const result = await extractTextFromScannedPDF(
+          buffer,
+          firstFile.name,
+          isContract
+            ? {
+                skipRegistryNormalization: true,
+                systemPrompt: CONTRACT_OCR_PROMPT,
+                userPrompt:
+                  "이 부동산 계약서 PDF에서 모든 텍스트를 추출해주세요. 금액·날짜·기간·특약 등을 빠짐없이 포함해주세요.",
+              }
+            : undefined
+        );
         return NextResponse.json(result);
       }
     }
@@ -142,12 +158,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await extractTextFromImages(
-      images,
-      imageFiles.length === 1
-        ? imageFiles[0].name
-        : `${imageFiles.length}개 이미지`
-    );
+    const label =
+      imageFiles.length === 1 ? imageFiles[0].name : `${imageFiles.length}개 이미지`;
+
+    // 계약서 이미지: OCR + 이미지 무결성 신호를 단일 Vision 호출로 처리
+    if (isContract) {
+      const { text, integrity } = await analyzeContractImage(images);
+      return NextResponse.json({
+        text,
+        pageCount: images.length,
+        fileName: `${label} (계약서 AI OCR)`,
+        charCount: text.length,
+        isRegistry: false,
+        confidence: 0,
+        contractIntegrity: integrity,
+      });
+    }
+
+    const result = await extractTextFromImages(images, label);
 
     return NextResponse.json(result);
   } catch (error: unknown) {

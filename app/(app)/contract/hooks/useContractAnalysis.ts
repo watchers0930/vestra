@@ -3,12 +3,14 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { addAnalysis } from "@/lib/store";
 import { addNotification } from "@/lib/notification-client";
+import type { ContractImageIntegrity } from "@/lib/contract-image";
 import type { AnalysisResult, SampleContract, InputMode } from "../types";
 
 export function useContractAnalysis() {
   const [inputMode, setInputMode] = useState<InputMode>("text");
   const [contractText, setContractText] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
+  const [contractIntegrity, setContractIntegrity] = useState<ContractImageIntegrity | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,13 +55,17 @@ export function useContractAnalysis() {
     if (isPdf || isImage) {
       setFileName(file.name);
       setError(null);
+      setContractIntegrity(null);
       try {
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("docType", "contract");
         const res = await fetch("/api/extract-pdf", { method: "POST", body: formData });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         setContractText(data.text);
+        // 이미지 기반 무결성 신호(서명·날인·수기정정·공란 등) — 이미지 업로드에서만 제공
+        setContractIntegrity(data.contractIntegrity ?? null);
         setError(null);
       } catch (e) {
         setError(
@@ -70,11 +76,13 @@ export function useContractAnalysis() {
               : "PDF 텍스트 추출에 실패했습니다."
         );
         setFileName(null);
+        setContractIntegrity(null);
       }
       return;
     }
 
     // txt → 클라이언트에서 직접 읽기
+    setContractIntegrity(null);
     const reader = new FileReader();
     reader.onload = (e) => {
       setContractText(e.target?.result as string);
@@ -165,6 +173,7 @@ export function useContractAnalysis() {
   const fillSample = (sample: SampleContract) => {
     setContractText(sample.text);
     setFileName(null);
+    setContractIntegrity(null);
     setError(null);
     setInputMode("text");
     setShowSampleMenu(false);
@@ -174,6 +183,7 @@ export function useContractAnalysis() {
     inputMode, setInputMode,
     contractText, setContractText,
     fileName,
+    contractIntegrity,
     isLoading,
     result,
     error, setError,

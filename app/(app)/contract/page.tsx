@@ -18,6 +18,7 @@ import { MissingClausesCard } from "./components/MissingClausesCard";
 import { SafetyChecklist } from "./components/SafetyChecklist";
 import { RecommendedTermsCard } from "./components/RecommendedTermsCard";
 import { ContractExecutiveSummary } from "./components/ContractExecutiveSummary";
+import ContractImageIntegrityCard from "./components/ContractImageIntegrityCard";
 import { getScoreLabel, riskBadgeLabel } from "./constants";
 import { SourceBadge } from "@/components/common/SourceBadge";
 
@@ -25,7 +26,7 @@ export default function ContractReviewPage() {
   const {
     inputMode, setInputMode,
     contractText, setContractText,
-    fileName, isLoading, result,
+    fileName, contractIntegrity, isLoading, result,
     error, setError,
     isDragging, showSampleMenu, setShowSampleMenu,
     analysisId, copied, setCopied,
@@ -159,6 +160,7 @@ export default function ContractReviewPage() {
           </div>
 
           <ContractExecutiveSummary extractedInfo={result.extractedInfo} reviewIssues={result.reviewIssues} />
+          <ContractImageIntegrityCard integrity={contractIntegrity} />
           <ClauseAnalysisCard clauses={result.clauses} />
           <MissingClausesCard missingClauses={result.missingClauses} />
 

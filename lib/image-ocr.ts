@@ -92,7 +92,13 @@ async function extractWithVision(
 export async function extractTextFromScannedPDF(
   buffer: Buffer,
   fileName: string,
-  options?: { skipRegistryNormalization?: boolean }
+  options?: {
+    skipRegistryNormalization?: boolean;
+    /** OCR 시스템 프롬프트 override (기본: 등기부 전용) */
+    systemPrompt?: string;
+    /** user 지시문 override */
+    userPrompt?: string;
+  }
 ): Promise<PDFExtractResult> {
   const openai = getOpenAIClient();
   const base64 = buffer.toString("base64");
@@ -100,9 +106,12 @@ export async function extractTextFromScannedPDF(
   console.info(`[PDF OCR] Responses API input_file로 스캔 PDF 처리: ${fileName}`);
 
   let extractedText = "";
-  const userPrompt = options?.skipRegistryNormalization
-    ? "이 PDF 문서에서 모든 텍스트를 추출해주세요. 표, 숫자, 항목 등을 빠짐없이 포함해주세요."
-    : "이 등기부등본 PDF에서 모든 텍스트를 추출해주세요.";
+  const systemPrompt = options?.systemPrompt ?? IMAGE_OCR_PROMPT;
+  const userPrompt =
+    options?.userPrompt ??
+    (options?.skipRegistryNormalization
+      ? "이 PDF 문서에서 모든 텍스트를 추출해주세요. 표, 숫자, 항목 등을 빠짐없이 포함해주세요."
+      : "이 등기부등본 PDF에서 모든 텍스트를 추출해주세요.");
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -110,7 +119,7 @@ export async function extractTextFromScannedPDF(
         model: OPENAI_MODEL,
         reasoning: { effort: REASONING_MECHANICAL },
         input: [
-          { role: "system", content: IMAGE_OCR_PROMPT },
+          { role: "system", content: systemPrompt },
           {
             role: "user",
             content: [
