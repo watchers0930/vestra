@@ -19,6 +19,7 @@ export function usePredictionData() {
 
   const [roadResult, setRoadResult] = useState("");
   const [buildingName, setBuildingName] = useState("");
+  const [propertyType, setPropertyType] = useState<string>("아파트");
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PredictionResult | null>(null);
@@ -61,6 +62,15 @@ export function usePredictionData() {
 
   const canSearch = !!roadResult.trim();
 
+  // 유형 변경 시 이전(다른 유형) 결과가 새 유형인 것처럼 오인되지 않도록 결과·필터를 초기화한다.
+  const changePropertyType = useCallback((v: string) => {
+    setPropertyType(v);
+    setResult(null);
+    setSelectedApt(null);
+    setSelectedArea(null);
+    setAssetSaved(false);
+  }, []);
+
   const handleAnalyze = async () => {
     const builtAddress = roadResult.trim();
     if (!builtAddress) return;
@@ -78,7 +88,7 @@ export function usePredictionData() {
       const res = await fetch("/api/predict-value", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: builtAddress, buildingName: buildingName || undefined, basePrice: basePrice ?? undefined }),
+        body: JSON.stringify({ address: builtAddress, buildingName: buildingName || undefined, basePrice: basePrice ?? undefined, propertyType }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -302,6 +312,7 @@ export function usePredictionData() {
     resultRef,
     roadResult, setRoadResult,
     buildingName, setBuildingName,
+    propertyType, setPropertyType: changePropertyType,
     setBasePrice,
     address,
     loading,

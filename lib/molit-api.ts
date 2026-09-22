@@ -17,6 +17,8 @@ export type {
   ComprehensivePriceResult, ResidentialSaleType, ResidentialRentType,
 } from "./molit/types";
 
+export { toResidentialType } from "./molit/types";
+
 export { extractLawdCode, extractAddressFilters, batchFetch } from "./molit/address-utils";
 
 export {

@@ -10,7 +10,7 @@ import {
   fetchRecentResidentialSalePrices,
   fetchRecentRentPrices,
   LAWD_CODE_MAP,
-  type ResidentialSaleType,
+  toResidentialType,
 } from "@/lib/molit-api";
 // fetchREBMarketData 제거 — 단지별 실거래 데이터만 사용
 import { APICache } from "@/lib/api-cache";
@@ -25,11 +25,6 @@ const PROPERTY_TYPES = ["아파트", "연립/빌라/다세대"] as const satisfi
 
 function parsePropertyType(value: string | null): PropertyType {
   return PROPERTY_TYPES.includes(value as PropertyType) ? value as PropertyType : "아파트";
-}
-
-function toResidentialType(propertyType: PropertyType): ResidentialSaleType {
-  if (propertyType === "연립/빌라/다세대") return "rowhouse";
-  return "apartment";
 }
 
 function parseTradeType(value: string | null): PriceMapTradeType {

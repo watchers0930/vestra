@@ -59,3 +59,26 @@ export interface ComprehensivePriceResult {
 
 export type ResidentialSaleType = "apartment" | "rowhouse" | "singlehouse" | "officetel";
 export type ResidentialRentType = ResidentialSaleType;
+
+/**
+ * 사용자 표기(매물 roomType·전세안전분석 라벨·시세전망 선택 등)를 MOLIT 실거래 유형으로 매핑.
+ * MOLIT 실거래 API는 아파트/연립다세대/단독다가구/오피스텔 4종만 제공하므로,
+ * 표기 변형(빌라·연립·원룸/투룸 등)을 가장 가까운 유형으로 정규화한다.
+ * - 오피스텔 → officetel
+ * - 단독/다가구 → singlehouse
+ * - 빌라/다세대/연립/원룸/투룸 → rowhouse (원룸·투룸은 대체로 다세대·연립 건물이라 근접 대체)
+ * - 그 외(아파트·미지정) → apartment (기본)
+ */
+export function toResidentialType(label?: string | null): ResidentialSaleType {
+  const s = (label || "").replace(/\s/g, "");
+  if (!s) return "apartment";
+  if (s.includes("오피스텔")) return "officetel";
+  if (s.includes("단독") || s.includes("다가구")) return "singlehouse";
+  if (
+    s.includes("빌라") || s.includes("다세대") || s.includes("연립") ||
+    s.includes("원룸") || s.includes("투룸")
+  ) {
+    return "rowhouse";
+  }
+  return "apartment";
+}

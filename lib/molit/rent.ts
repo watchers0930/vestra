@@ -2,7 +2,7 @@
  * 국토교통부 실거래가 API — 전월세 실거래 (아파트/연립다세대/단독다가구/오피스텔)
  */
 import { apiCache, APICache } from "../api-cache";
-import { molitFetch, parseRentTransactions, filterTransactions, MOLIT_ENDPOINTS } from "./molit-data";
+import { molitFetchRtms, parseRentTransactions, filterTransactions, MOLIT_ENDPOINTS } from "./molit-data";
 import type { RentTransaction, RentPriceResult, ResidentialRentType } from "./types";
 import { extractLawdCode, extractAddressFilters, batchFetch } from "./address-utils";
 
@@ -11,23 +11,24 @@ export async function fetchAptRentTransactions(
   lawdCd: string,
   dealYmd: string
 ): Promise<RentTransaction[]> {
-  // 아파트 전월세 전용 키 우선, 없으면 기본 MOLIT 키 사용
-  const serviceKey = process.env.MOLIT_APT_RENT_KEY || process.env.MOLIT_API_KEY;
-  if (!serviceKey) return [];
+  const cacheKey = APICache.makeKey("molit-apt-rent", lawdCd, dealYmd);
+  const cached = apiCache.get<RentTransaction[]>(cacheKey);
+  if (cached) return cached;
 
-  const baseUrl = MOLIT_ENDPOINTS.aptRent;
-
-  const params = new URLSearchParams({
-    serviceKey,
-    LAWD_CD: lawdCd,
-    DEAL_YMD: dealYmd,
-    pageNo: "1",
-    numOfRows: "1000",
-  });
-
-  const xml = await molitFetch(`${baseUrl}?${params.toString()}`);
+  // 아파트 전월세 키 우선순위: 전용키 → KAPT키(전월세 엔드포인트 구독분) → 기본 MOLIT키.
+  // (MOLIT 실거래가 API는 매매/전월세 구독이 분리돼 MOLIT키만으로는 전월세 미등록일 수 있음.
+  //  molitFetchRtms가 "미구독일 때만" 다음 키로 폴백해, 잘못된 우선키가 있어도 전세가율 누락을 막는다.)
+  const xml = await molitFetchRtms(
+    MOLIT_ENDPOINTS.aptRent,
+    [process.env.MOLIT_APT_RENT_KEY, process.env.KAPT_API_KEY, process.env.MOLIT_API_KEY],
+    lawdCd,
+    dealYmd,
+  );
   if (!xml) return [];
-  return parseRentTransactions(xml);
+
+  const result = parseRentTransactions(xml);
+  apiCache.set(cacheKey, result, 30 * 60 * 1000);
+  return result;
 }
 
 function endpointForResidentialRent(type: ResidentialRentType): {
@@ -65,23 +66,18 @@ export async function fetchResidentialRentTransactions(
 ): Promise<RentTransaction[]> {
   if (type === "apartment") return fetchAptRentTransactions(lawdCd, dealYmd);
 
-  const serviceKey = process.env.KAPT_API_KEY || process.env.MOLIT_API_KEY;
-  if (!serviceKey) return [];
-
   const { endpoint, cachePrefix } = endpointForResidentialRent(type);
   const cacheKey = APICache.makeKey(cachePrefix, lawdCd, dealYmd);
   const cached = apiCache.get<RentTransaction[]>(cacheKey);
   if (cached) return cached;
 
-  const params = new URLSearchParams({
-    serviceKey,
-    LAWD_CD: lawdCd,
-    DEAL_YMD: dealYmd,
-    pageNo: "1",
-    numOfRows: "1000",
-  });
-
-  const xml = await molitFetch(`${endpoint}?${params.toString()}`);
+  // 매매와 동일하게 KAPT→MOLIT 미구독 폴백 (계정별 전월세 구독처가 갈릴 수 있음)
+  const xml = await molitFetchRtms(
+    endpoint,
+    [process.env.KAPT_API_KEY, process.env.MOLIT_API_KEY],
+    lawdCd,
+    dealYmd,
+  );
   if (!xml) return [];
 
   const result = parseRentTransactions(xml);

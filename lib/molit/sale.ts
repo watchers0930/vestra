@@ -3,7 +3,7 @@
  */
 import { apiCache, APICache } from "../api-cache";
 import {
-  molitFetch, parseTransactions, filterTransactions,
+  molitFetch, molitFetchRtms, parseTransactions, filterTransactions,
   extractXmlValue, extractVal, MOLIT_ENDPOINTS,
 } from "./molit-data";
 import type { RealTransaction, PriceResult, ResidentialSaleType } from "./types";
@@ -111,18 +111,14 @@ export async function fetchGenericSaleTransactions(
   dealYmd: string,
   fallbackName: string = ""
 ): Promise<RealTransaction[]> {
-  const serviceKey = process.env.KAPT_API_KEY || process.env.MOLIT_API_KEY;
-  if (!serviceKey) return [];
-
-  const params = new URLSearchParams({
-    serviceKey,
-    LAWD_CD: lawdCd,
-    DEAL_YMD: dealYmd,
-    pageNo: "1",
-    numOfRows: "1000",
-  });
-
-  const xml = await molitFetch(`${endpoint}?${params.toString()}`);
+  // 연립/오피스텔/단독 매매는 두 계정(KAPT·MOLIT)에 활용신청이 갈릴 수 있어
+  // KAPT키 우선 시도 후 "미구독"이면 MOLIT키로 폴백한다(molitFetchRtms가 미구독 감지·메모이제이션 담당).
+  const xml = await molitFetchRtms(
+    endpoint,
+    [process.env.KAPT_API_KEY, process.env.MOLIT_API_KEY],
+    lawdCd,
+    dealYmd,
+  );
   if (!xml) return [];
 
   const items: RealTransaction[] = [];

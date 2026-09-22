@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { fetchRecentRentPrices, fetchRecentPrices } from "@/lib/molit-api";
+import { fetchRecentRentPrices, fetchRecentResidentialSalePrices, toResidentialType } from "@/lib/molit-api";
 
 export async function GET(
   _req: Request,
@@ -11,14 +11,17 @@ export async function GET(
 
     const listing = await prisma.listing.findUnique({
       where: { id },
-      select: { address: true, deposit: true, listingType: true },
+      select: { address: true, deposit: true, listingType: true, roomType: true },
     });
     if (!listing) {
       return NextResponse.json({ error: "매물을 찾을 수 없습니다." }, { status: 404 });
     }
 
+    // 매물 유형(아파트/빌라/오피스텔/단독)에 맞는 실거래 유형으로 조회 (미지정은 아파트 폴백)
+    const residentialType = toResidentialType(listing.roomType);
+
     // 전월세 데이터 우선 시도, 없으면 매매 데이터로 폴백
-    const rentResult = await fetchRecentRentPrices(listing.address, 6);
+    const rentResult = await fetchRecentRentPrices(listing.address, 6, residentialType);
     const hasRent = rentResult && rentResult.transactions.length > 0;
 
     if (hasRent) {
@@ -55,7 +58,7 @@ export async function GET(
     }
 
     // ── 매매 데이터 폴백 ─────────────────────────────────────────
-    const saleResult = await fetchRecentPrices(listing.address, 6);
+    const saleResult = await fetchRecentResidentialSalePrices(listing.address, 6, residentialType);
     if (!saleResult || saleResult.transactions.length === 0) {
       return NextResponse.json({ error: "조회 가능한 시세 데이터가 없습니다." }, { status: 404 });
     }

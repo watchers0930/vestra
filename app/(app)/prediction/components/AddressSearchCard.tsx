@@ -2,15 +2,19 @@
 
 import { Search, Loader2 } from "lucide-react";
 
+const PROPERTY_TYPES = ["아파트", "빌라/다세대", "오피스텔", "단독주택"] as const;
+
 interface Props {
   roadResult: string;
   loading: boolean;
   canSearch: boolean;
+  propertyType: string;
+  setPropertyType: (v: string) => void;
   openDaumPostcode: () => void;
   handleAnalyze: () => Promise<void>;
 }
 
-export function AddressSearchCard({ roadResult, loading, canSearch, openDaumPostcode, handleAnalyze }: Props) {
+export function AddressSearchCard({ roadResult, loading, canSearch, propertyType, setPropertyType, openDaumPostcode, handleAnalyze }: Props) {
   return (
     <div
       role="search"
@@ -24,9 +28,37 @@ export function AddressSearchCard({ roadResult, loading, canSearch, openDaumPost
         marginBottom: "20px",
       }}
     >
-      <p style={{ fontSize: "12px", color: "#6e6e73", marginBottom: "14px", textAlign: "center" }}>
-        주소를 검색하여 선택하세요.
+      <p style={{ fontSize: "12px", color: "#6e6e73", marginBottom: "10px", textAlign: "center" }}>
+        부동산 유형을 선택하고 주소를 검색하세요.
       </p>
+      <div role="radiogroup" aria-label="부동산 유형" style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center", marginBottom: "14px" }}>
+        {PROPERTY_TYPES.map((t) => {
+          const active = propertyType === t;
+          return (
+            <button
+              key={t}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => setPropertyType(t)}
+              disabled={loading}
+              style={{
+                padding: "7px 16px",
+                borderRadius: "999px",
+                border: active ? "1.5px solid var(--brand-primary)" : "1.5px solid rgba(0,0,0,0.12)",
+                background: active ? "rgba(0,113,227,0.08)" : "#fff",
+                color: active ? "var(--brand-primary)" : "#6e6e73",
+                fontSize: "13px",
+                fontWeight: active ? 700 : 500,
+                cursor: loading ? "not-allowed" : "pointer",
+                transition: "all 0.15s",
+              }}
+            >
+              {t}
+            </button>
+          );
+        })}
+      </div>
       <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
         <div
           onClick={openDaumPostcode}

@@ -4,7 +4,7 @@ import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL, REASONING_ANALYTIC
 import { VALUE_PREDICTION_OPINION_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { sanitizeField } from "@/lib/sanitize";
-import { fetchComprehensivePrices } from "@/lib/molit-api";
+import { fetchComprehensivePrices, toResidentialType } from "@/lib/molit-api";
 import { estimatePrice } from "@/lib/price-estimation";
 import { predictValue, toMonthlyTimeSeries } from "@/lib/prediction-engine";
 import type { MacroEconomicFactors } from "@/lib/prediction-engine";
@@ -65,17 +65,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { address: rawAddress, buildingName: rawBuildingName, basePrice: rawBasePrice } = await req.json();
+    const { address: rawAddress, buildingName: rawBuildingName, basePrice: rawBasePrice, propertyType: rawPropertyType } = await req.json();
     const address = sanitizeField(rawAddress || "", 200);
     const buildingName = sanitizeField(rawBuildingName || "", 100);
+    // 부동산 유형(아파트/빌라·다세대/오피스텔/단독주택) → MOLIT 실거래 유형. 미지정·비정상값은 아파트로 폴백.
+    const residentialType = toResidentialType(sanitizeField(rawPropertyType || "", 20));
+    const isApartment = residentialType === "apartment";
 
     if (!address) {
       return NextResponse.json({ error: "주소를 입력해주세요." }, { status: 400 });
     }
 
     // 1단계: 종합 데이터 병렬 조회 (6개 소스)
+    // K-apt 단지정보는 아파트 전용 데이터 소스이므로 비아파트 유형에서는 조회하지 않는다.
     const [comprehensive, bokData, supplyData, rebData, buildingInfo, seoulData, kaptInfo] = await Promise.all([
-      fetchComprehensivePrices(address, 36).catch((e) => {
+      fetchComprehensivePrices(address, 36, residentialType).catch((e) => {
         console.warn("MOLIT API 종합 조회 실패:", e);
         return null;
       }),
@@ -86,7 +90,7 @@ export async function POST(req: NextRequest) {
       fetchREBMarketData().catch(() => null),
       fetchBuildingInfoByAddress(address).catch(() => null),
       fetchSeoulTransactions(address).catch(() => null),
-      fetchKaptInfoByAddress(address).catch(() => null),
+      isApartment ? fetchKaptInfoByAddress(address).catch(() => null) : Promise.resolve(null),
     ]);
 
     // 서울시 데이터 교차 검증

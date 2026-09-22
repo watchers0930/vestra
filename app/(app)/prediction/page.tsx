@@ -46,7 +46,7 @@ const AnomalyDetectionView = dynamic(
 
 export default function PredictionPage() {
   const {
-    resultRef, roadResult, buildingName, address, loading, result,
+    resultRef, roadResult, buildingName, propertyType, setPropertyType, address, loading, result,
     activeScenario, setActiveScenario, selectedArea, setSelectedArea,
     selectedApt, setSelectedApt, addressTab, setAddressTab, addressInfo,
     activeTab, setActiveTab, analysisId, previousAnalysis, canSearch,
@@ -119,6 +119,8 @@ export default function PredictionPage() {
         roadResult={roadResult}
         loading={loading}
         canSearch={canSearch}
+        propertyType={propertyType}
+        setPropertyType={setPropertyType}
         openDaumPostcode={openDaumPostcode}
         handleAnalyze={handleAnalyze}
       />

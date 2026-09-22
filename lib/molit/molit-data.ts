@@ -160,7 +160,32 @@ export function extractVal(xml: string, eng: string, kor: string): string {
  * 부하·일시 지연으로 인한 월별 데이터 누락(timeout→빈 데이터)을 줄이기 위해
  * timeout/네트워크 오류/5xx에 한해 1회 재시도한다(짧은 backoff). 4xx는 재시도 무의미하므로 즉시 null.
  */
-export async function molitFetch(url: string): Promise<string | null> {
+/**
+ * data.go.kr 인증키가 해당 엔드포인트에 미구독일 때의 응답 여부.
+ * ⚠️ 미구독 신호는 두 형태로 온다:
+ *   ① HTTP 403 (apis.data.go.kr가 미등록 키에 반환 — 본문은 SERVICE_KEY_IS_NOT_REGISTERED_ERROR)
+ *   ② HTTP 200 + 오류 XML (일부 엔드포인트) — reasonCode 30
+ * molitFetch는 403을 null로 변환하므로 상태코드까지 봐야 ①을 구분할 수 있다(molitFetchRtms에서 처리).
+ */
+function isKeyNotRegisteredXml(xml: string): boolean {
+  return /SERVICE_KEY_IS_NOT_REGISTERED_ERROR|<returnReasonCode>\s*30\s*</.test(xml);
+}
+
+/**
+ * 엔드포인트별로 "미구독으로 확인된 인증키"를 기억한다(프로세스 수명 내).
+ * 미구독은 계정 활용신청 상태라 사실상 불변이므로, 콜드 스타트마다 헛호출 1회로 제한한다.
+ * (드물게 활용신청을 새로 하면 콜드 스타트로 자연 리셋)
+ */
+const unsubscribedEndpointKeys = new Map<string, Set<string>>();
+
+function markUnsubscribed(endpoint: string, serviceKey: string): void {
+  let set = unsubscribedEndpointKeys.get(endpoint);
+  if (!set) { set = new Set(); unsubscribedEndpointKeys.set(endpoint, set); }
+  set.add(serviceKey);
+}
+
+/** fetch + 재시도. 본문과 HTTP 상태코드를 함께 반환한다(미구독 403 구분용). status 0 = 타임아웃/네트워크 오류 */
+async function molitFetchStatus(url: string): Promise<{ text: string | null; status: number }> {
   const MAX_ATTEMPTS = 2; // 최초 1회 + 재시도 1회
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
@@ -172,24 +197,71 @@ export async function molitFetch(url: string): Promise<string | null> {
       });
       clearTimeout(timeout);
       if (!res.ok) {
-        // 5xx(서버 일시 오류)만 재시도, 4xx는 즉시 포기
+        // 5xx(서버 일시 오류)만 재시도, 4xx는 즉시 포기(상태코드는 보존)
         if (res.status >= 500 && attempt < MAX_ATTEMPTS) {
           await new Promise((r) => setTimeout(r, 300));
           continue;
         }
-        return null;
+        return { text: null, status: res.status };
       }
-      return await res.text();
+      return { text: await res.text(), status: res.status };
     } catch {
       // timeout(abort)·네트워크 오류 → 재시도
       if (attempt < MAX_ATTEMPTS) {
         await new Promise((r) => setTimeout(r, 300));
         continue;
       }
-      return null;
+      return { text: null, status: 0 };
     }
   }
-  return null;
+  return { text: null, status: 0 };
+}
+
+/**
+ * 여러 인증키(계정)를 우선순위대로 시도해 RTMS 실거래 XML을 가져온다.
+ * 연립/오피스텔/단독·전월세는 두 계정(KAPT·MOLIT)에 활용신청이 갈릴 수 있어 계정별 폴백이 필요하다.
+ * - 미구독(HTTP 403 또는 200+오류XML)이면 그 (endpoint,key)를 기억하고 다음 키로 폴백한다.
+ * - 일시 오류(5xx·타임아웃·네트워크, molitFetch가 이미 재시도함)도 다음 키로 시도한다.
+ *   (다음 키가 구독돼 있으면 데이터 확보, 없으면 결국 null → 빈 결과. 기존 동작과 동일하게 커버리지 우선)
+ *   단, 일시 오류는 미구독으로 기억하지 않는다(회복 시 재시도 가능하도록).
+ * - 정상 응답(거래 0건인 빈 결과 포함)이면 그대로 반환한다.
+ * @param keys 우선순위 순 인증키(중복·falsy는 내부에서 제거)
+ */
+export async function molitFetchRtms(
+  endpoint: string,
+  keys: (string | undefined)[],
+  lawdCd: string,
+  dealYmd: string,
+): Promise<string | null> {
+  const uniqueKeys = [...new Set(keys.filter(Boolean) as string[])];
+  if (uniqueKeys.length === 0) return null;
+
+  for (const serviceKey of uniqueKeys) {
+    if (unsubscribedEndpointKeys.get(endpoint)?.has(serviceKey)) continue;
+
+    const params = new URLSearchParams({
+      serviceKey,
+      LAWD_CD: lawdCd,
+      DEAL_YMD: dealYmd,
+      pageNo: "1",
+      numOfRows: "1000",
+    });
+    const { text, status } = await molitFetchStatus(`${endpoint}?${params.toString()}`);
+
+    // 미구독: 403(본문 null) 또는 200+오류XML → 기억 후 다음 키
+    if (status === 403 || (text !== null && isKeyNotRegisteredXml(text))) {
+      markUnsubscribed(endpoint, serviceKey);
+      continue;
+    }
+    // 일시 오류(5xx·타임아웃): 기억하지 않고 다음 키 시도
+    if (text === null) continue;
+    return text; // 성공(정상 빈 결과 포함)
+  }
+  return null; // 모든 키가 미구독/실패
+}
+
+export async function molitFetch(url: string): Promise<string | null> {
+  return (await molitFetchStatus(url)).text;
 }
 
 // ─── 거래 XML 파싱 ───
