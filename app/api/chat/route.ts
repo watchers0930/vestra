@@ -74,14 +74,27 @@ export async function POST(req: NextRequest) {
     }
 
     const openai = getOpenAIClient();
-    const systemPrompt = CHAT_SYSTEM_PROMPT + courtContext + newsContext;
+
+    // 프롬프트 캐싱 최적화: system은 정적 CHAT_SYSTEM_PROMPT로 고정해 안정적 캐시 프리픽스를 만들고,
+    // 매 호출 달라지는 판례·뉴스 컨텍스트는 마지막 사용자 메시지 뒤에 붙여 프리픽스 밖(동적 꼬리)에 둔다.
+    // (기존엔 system에 보간해 매 호출 프리픽스가 깨져 캐시 미스 → 다중턴 대화에서 system+이전대화가 캐시됨)
+    const dynamicContext = courtContext + newsContext;
+    const mapped = messages.map((m: { role: string; content: string }) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    }));
+    if (dynamicContext) {
+      for (let i = mapped.length - 1; i >= 0; i--) {
+        if (mapped[i].role === "user") {
+          mapped[i] = { ...mapped[i], content: mapped[i].content + dynamicContext };
+          break;
+        }
+      }
+    }
 
     const openaiMessages = [
-      { role: "system" as const, content: systemPrompt },
-      ...messages.map((m: { role: string; content: string }) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      })),
+      { role: "system" as const, content: CHAT_SYSTEM_PROMPT },
+      ...mapped,
     ];
 
     // ── 스트리밍 응답 ──
