@@ -230,7 +230,7 @@ export function ContractInputCard({
                     <div style={{ fontSize: "36px" }}>{isDragging ? "📂" : "📁"}</div>
                     <div style={{ textAlign: "center" }}>
                       <p style={{ fontSize: "13.5px", fontWeight: 500, color: "#3c3c43" }}>파일을 드래그하거나 클릭하여 업로드</p>
-                      <p style={{ fontSize: "11.5px", color: "#aeaeb2", marginTop: "4px" }}>.txt, .pdf 파일 지원</p>
+                      <p style={{ fontSize: "11.5px", color: "#aeaeb2", marginTop: "4px" }}>.txt, .pdf, 이미지(JPG·PNG) 지원 — 계약서 사진·스캔본도 인식</p>
                     </div>
                   </>
                 )}
@@ -238,7 +238,7 @@ export function ContractInputCard({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".txt,.pdf"
+                accept=".txt,.pdf,.jpg,.jpeg,.png,image/jpeg,image/png"
                 onChange={handleFileChange}
                 aria-label="계약서 파일 선택"
                 className="hidden"

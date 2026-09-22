@@ -7,6 +7,9 @@ import { checkOpenAICostGuard } from "@/lib/openai";
 import { validateOrigin } from "@/lib/csrf";
 import { validateMagicBytes } from "@/lib/sanitize";
 
+/** 이미지/스캔 PDF Vision OCR은 지연될 수 있어 타임아웃 상향 (동종 parse-registry와 일치) */
+export const maxDuration = 60;
+
 /** 최대 파일 크기: 10MB */
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 /** 이미지 최대 업로드 수 */

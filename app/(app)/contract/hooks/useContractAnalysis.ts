@@ -34,13 +34,23 @@ export function useContractAnalysis() {
 
   const readFile = useCallback(async (file: File) => {
     if (!file) return;
-    const allowedTypes = ["text/plain", "application/pdf"];
     const ext = file.name.split(".").pop()?.toLowerCase();
-    if (!allowedTypes.includes(file.type) && ext !== "txt" && ext !== "pdf") {
-      setError(".txt 또는 .pdf 파일만 업로드할 수 있습니다.");
+    const isPdf = ext === "pdf" || file.type === "application/pdf";
+    const isImage =
+      file.type === "image/jpeg" ||
+      file.type === "image/png" ||
+      ext === "jpg" ||
+      ext === "jpeg" ||
+      ext === "png";
+    const isTxt = file.type === "text/plain" || ext === "txt";
+
+    if (!isPdf && !isImage && !isTxt) {
+      setError(".txt, .pdf 또는 이미지(JPG·PNG) 파일만 업로드할 수 있습니다.");
       return;
     }
-    if (ext === "pdf" || file.type === "application/pdf") {
+
+    // PDF·이미지(계약서 사진/스캔본) → 서버 OCR(extract-pdf)로 텍스트 추출
+    if (isPdf || isImage) {
       setFileName(file.name);
       setError(null);
       try {
@@ -52,11 +62,19 @@ export function useContractAnalysis() {
         setContractText(data.text);
         setError(null);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "PDF 텍스트 추출에 실패했습니다.");
+        setError(
+          e instanceof Error
+            ? e.message
+            : isImage
+              ? "이미지에서 텍스트 인식에 실패했습니다."
+              : "PDF 텍스트 추출에 실패했습니다."
+        );
         setFileName(null);
       }
       return;
     }
+
+    // txt → 클라이언트에서 직접 읽기
     const reader = new FileReader();
     reader.onload = (e) => {
       setContractText(e.target?.result as string);

@@ -193,14 +193,14 @@ export default function ContractRenewalClient() {
                       type="file"
                       ref={fileInputRef}
                       onChange={handleFileChange}
-                      accept=".pdf,.txt"
+                      accept=".pdf,.txt,.jpg,.jpeg,.png,image/jpeg,image/png"
                       style={{ display: "none" }}
                     />
                     <div className={s.fileDropIco}><FileText size={36} /></div>
                     <div className={s.fileDropT}>
                       {fileName ? `${fileName} — 업로드 완료` : "계약서 파일을 여기에 끌어다 놓거나 클릭하세요"}
                     </div>
-                    <div className={s.fileDropS}>지원 형식: PDF, TXT · 최대 20MB</div>
+                    <div className={s.fileDropS}>지원 형식: PDF, TXT, 이미지(JPG·PNG) · 계약서 사진·스캔본 인식 · 최대 10MB</div>
                   </div>
                 </div>
               </div>
