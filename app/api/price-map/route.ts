@@ -118,7 +118,7 @@ function formatRegionAddressForSearch(regionAddress: string): string {
   return regionAddress.replace(/^(부산|대구|인천|광주|대전|울산)(.+구)$/, "$1 $2");
 }
 
-async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: string, propertyType: PropertyType = "아파트"): Promise<{ lat: number; lng: number } | null> {
+async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: string, propertyType: PropertyType = "아파트", centerOverride?: { lat: number; lng: number }): Promise<{ lat: number; lng: number } | null> {
   const isApt = propertyType === "아파트";
   // 아파트: geocode-v4 유지 (기존 캐시 보존), 비아파트: geocode-v5-nonapt (아파트 오매핑 수정)
   const geocodeVersion = isApt ? "geocode-v4" : "geocode-v5-nonapt";
@@ -129,7 +129,8 @@ async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: str
   const kakaoKey = process.env.KAKAO_REST_KEY;
   if (!kakaoKey) return null;
 
-  const guCenter = GU_CENTER[gu];
+  // 정적 GU_CENTER가 없으면(전국 확대로 좌표 미보유 구) 동적으로 구한 중심을 반경 바이어스에 사용
+  const guCenter = GU_CENTER[gu] || centerOverride;
   const center = DONG_CENTER[dong] || guCenter;
   const regionAddress = formatRegionAddressForSearch(GU_ADDRESS_MAP[gu] || gu);
   const MAX_DISTANCE_KM = 5;
@@ -204,8 +205,24 @@ async function geocodeApt(gu: string, dong: string, aptName: string, jibun?: str
   return null;
 }
 
+/** 구 중심 좌표 해석 — 정적 GU_CENTER 없으면(전국 확대) 카카오로 1회 조회 후 KV 캐시 */
+async function resolveGuCenter(gu: string, guToAddress: string, kakaoKey: string | undefined): Promise<{ lat: number; lng: number } | undefined> {
+  const known = GU_CENTER[gu];
+  if (known) return known;
+  if (!kakaoKey) return undefined;
+  const cacheKey = `gu-center-v1:${gu}`;
+  const cached = await kvCache.get<{ lat: number; lng: number }>(cacheKey);
+  if (cached) return cached;
+  const coord = await kakaoAddressSearch(kakaoKey, formatRegionAddressForSearch(guToAddress));
+  if (coord) {
+    await kvCache.set(cacheKey, coord, GEOCODE_TTL);
+    return coord;
+  }
+  return undefined;
+}
+
 // 여러 아파트 좌표를 병렬로 조회 (배치 단위 + 전체 타임아웃)
-async function geocodeAll(apartments: { gu: string; dong: string; name: string; jibun?: string; propertyType?: PropertyType }[]): Promise<Map<string, { lat: number; lng: number }>> {
+async function geocodeAll(apartments: { gu: string; dong: string; name: string; jibun?: string; propertyType?: PropertyType }[], centerOverride?: { lat: number; lng: number }): Promise<Map<string, { lat: number; lng: number }>> {
   const results = new Map<string, { lat: number; lng: number }>();
   const BATCH_SIZE = 10;
   const TOTAL_TIMEOUT = 8000; // 전체 geocoding 8초 제한 (Vercel 10초 함수 제한 고려)
@@ -219,7 +236,7 @@ async function geocodeAll(apartments: { gu: string; dong: string; name: string; 
     }
     const batch = apartments.slice(i, i + BATCH_SIZE);
     const promises = batch.map(async (apt) => {
-      const coord = await geocodeApt(apt.gu, apt.dong, apt.name, apt.jibun, apt.propertyType);
+      const coord = await geocodeApt(apt.gu, apt.dong, apt.name, apt.jibun, apt.propertyType, centerOverride);
       if (coord) results.set(`${apt.name}@@${apt.dong}@@${apt.jibun || ""}`, coord);
     });
     await Promise.allSettled(promises);
@@ -344,6 +361,9 @@ export async function GET(req: NextRequest) {
   const guToAddress = GU_ADDRESS_MAP[gu] || gu;
   const lawdCode = guToAddress ? LAWD_CODE_MAP[guToAddress] : undefined;
 
+  // 구 중심 좌표(전국 확대): 정적 GU_CENTER 없으면 카카오로 동적 확보(반경 바이어스·무데이터 폴백용)
+  const guCenterResolved = await resolveGuCenter(gu, guToAddress, process.env.KAKAO_REST_KEY);
+
   if (lawdCode && process.env.MOLIT_API_KEY) {
     try {
       // 전세/매매 공통 처리
@@ -387,7 +407,7 @@ export async function GET(req: NextRequest) {
           }));
 
           if (needsGeocode.length > 0) {
-            const freshCoords = await geocodeAll(needsGeocode);
+            const freshCoords = await geocodeAll(needsGeocode, guCenterResolved);
             for (const [key, coord] of freshCoords) geocoded.set(key, coord);
           }
 
@@ -445,7 +465,7 @@ export async function GET(req: NextRequest) {
     apartments: data,
     center: data.length > 0
       ? { lat: data.reduce((s, d) => s + d.lat, 0) / data.length, lng: data.reduce((s, d) => s + d.lng, 0) / data.length }
-      : GU_CENTER[gu] || { lat: 37.4979, lng: 127.0276 },
+      : GU_CENTER[gu] || guCenterResolved || { lat: 37.4979, lng: 127.0276 },
     availableGus,
     regionGroups: REGION_GROUPS,
     total: data.length,
