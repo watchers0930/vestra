@@ -133,6 +133,7 @@ describe("collectSignals", () => {
         return Promise.resolve([
           { address: "서울특별시 강남구 대치동 111" }, // 감시중(정규화 매칭)
           { address: "서울 마포구 합정동 222" }, // 미등록
+          { address: "서울특별시 마포구 합정동 222" }, // 위와 정규화 동일 → 중복 제거되어야 함
         ]);
       }
       return Promise.resolve([]);

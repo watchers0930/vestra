@@ -246,10 +246,15 @@ async function fromUnmonitoredAssets(userId: string): Promise<Signal[]> {
     if (assets.length === 0) return [];
 
     const monNorms = monitored.map((m) => normalizeAddr(m.address));
+    const seen = new Set<string>();
     const unmonitored = assets.filter((a) => {
       const an = normalizeAddr(a.address);
       // 관대한 매칭(양방향 포함) — 실제 감시중을 미등록으로 오탐하지 않도록
-      return !monNorms.some((mn) => mn.length > 0 && (mn.includes(an) || an.includes(mn)));
+      if (monNorms.some((mn) => mn.length > 0 && (mn.includes(an) || an.includes(mn)))) return false;
+      // 같은 건물(정규화 주소 동일)이 여러 자산 행으로 중복 노출되지 않도록 제거
+      if (seen.has(an)) return false;
+      seen.add(an);
+      return true;
     });
 
     return unmonitored.slice(0, 3).map((a) => ({
