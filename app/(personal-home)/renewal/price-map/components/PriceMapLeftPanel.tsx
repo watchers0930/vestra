@@ -19,6 +19,9 @@ interface Props {
   loading: boolean;
   selectedApt: AptData | null;
   onSelectApt: (apt: AptData) => void;
+  /** 모바일 바텀시트 펼침 상태 (데스크탑 무시) */
+  sheetExpanded?: boolean;
+  onToggleSheet?: () => void;
 }
 
 const PROPERTY_TYPES: PropertyType[] = ["아파트", "연립/빌라/다세대", "오피스텔"];
@@ -28,6 +31,7 @@ export default function PriceMapLeftPanel({
   selectedGu, setSelectedGu, selectedSido, setSelectedSido,
   tradeType, setTradeType, propertyType, setPropertyType,
   topChanges, loading, selectedApt, onSelectApt,
+  sheetExpanded, onToggleSheet,
 }: Props) {
   const sidoMap = getSelectableSidoMap(propertyType);
   const sidoList = Object.keys(sidoMap);
@@ -38,7 +42,17 @@ export default function PriceMapLeftPanel({
   const downs = topChanges.filter((a) => (a.change ?? 0) < 0);
 
   return (
-    <div className={s.leftPanel}>
+    <div className={`${s.leftPanel} ${sheetExpanded ? s.sheetExpanded : ""}`}>
+      {/* 모바일 전용 바텀시트 핸들 (데스크탑 CSS로 숨김) */}
+      <button
+        type="button"
+        className={s.sheetHandle}
+        onClick={onToggleSheet}
+        aria-label={sheetExpanded ? "목록 접기" : "목록 펼치기"}
+        aria-expanded={!!sheetExpanded}
+      >
+        <span className={s.sheetHandleBar} />
+      </button>
       <div className={s.lpHeader}>
         <div className={s.lpTitle}>시세지도</div>
         <div className={s.tradeToggle}>

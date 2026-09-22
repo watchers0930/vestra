@@ -23,6 +23,8 @@ export default function PriceMapRenewalClient() {
   const prediction = usePredictionData();
   const { roadResult, setRoadResult, buildingName, setBuildingName, setBasePrice, handleAnalyze } = prediction;
   const [forecastOpen, setForecastOpen] = useState(false);
+  // 모바일 바텀시트 펼침/접힘 (데스크탑에선 무시 — 사이드 패널 고정)
+  const [sheetExpanded, setSheetExpanded] = useState(false);
   // 분석 대기 중인 지역·단지 — ref로 관리(리렌더/cascading setState 방지)
   const pendingRef = useRef<{ region: string; apt: string } | null>(null);
   // 이미 조회한 지역|단지 키 — 동일 물건 재클릭 시 중복 API 호출 방지
@@ -76,6 +78,8 @@ export default function PriceMapRenewalClient() {
           loading={loading}
           selectedApt={selectedApt}
           onSelectApt={handleSelectApt}
+          sheetExpanded={sheetExpanded}
+          onToggleSheet={() => setSheetExpanded((v) => !v)}
         />
 
         {/* MAP CENTER */}
