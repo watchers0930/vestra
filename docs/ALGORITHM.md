@@ -236,3 +236,46 @@ ratio ≤  50% →   0점 (안전)
 3. **한국 부동산법 특화**: 31개 등기 키워드 분류, 6가지 한국식 금액 패턴 인식
 4. **12개 위험 평가 항목**: 한국 부동산 거래에서 발생 가능한 모든 위험을 정량화
 5. **경쟁사 모방 장벽**: 동일 엔진 구축에 6개월 이상의 도메인 전문성 필요
+
+---
+
+## 7. 실거래 시세 조회 계층 (부동산 유형 커버리지 · 다중키 폴백)
+
+국토교통부(MOLIT) 실거래가 API 기반 시세 조회 계층(`lib/molit/`). 시세전망·권리분석·전세안전분석·매물시세·시세지도가 공통 소비한다.
+
+### 7.1 부동산 유형 커버리지
+
+실거래가 API는 부동산 유형별로 매매·전월세 8개 엔드포인트로 분리돼 있으며, 4개 주거 유형을 지원한다.
+
+| 유형 | 매매 | 전월세 |
+|------|------|--------|
+| 아파트 (apartment) | RTMSDataSvcAptTradeDev | RTMSDataSvcAptRent |
+| 연립·다세대 (rowhouse) | RTMSDataSvcRHTrade | RTMSDataSvcRHRent |
+| 단독·다가구 (singlehouse) | RTMSDataSvcSHTrade | RTMSDataSvcSHRent |
+| 오피스텔 (officetel) | RTMSDataSvcOffiTrade | RTMSDataSvcOffiRent |
+
+- **유형 정규화**: 사용자 표기(빌라/다세대/연립/원룸·투룸/오피스텔/단독/다가구 등)를 `toResidentialType()`이 4개 유형으로 매핑. 미지정·미지원 표기는 `apartment` 폴백.
+- **종합 시세(`fetchComprehensivePrices`)**: 아파트일 때만 표본 부족(<3건) 시 연립·오피스텔로 지역 시세를 보충 병합. 비아파트는 요청 유형만 순수 조회(유형 혼재 방지).
+- **K-apt 단지정보**는 아파트 전용이라 비아파트 조회 시 생략.
+- 단독주택 시세전망은 K-apt 단지 개념이 없어 지역 평균 수준으로 제한.
+
+### 7.2 계정별 구독 대응 다중키 폴백 (`molitFetchRtms`)
+
+data.go.kr 실거래가 API는 인증키(계정)당 트래픽 한도가 있어 두 계정(`MOLIT_API_KEY`, `KAPT_API_KEY`)으로 분산 발급하며, 엔드포인트별 활용신청(구독)이 계정마다 다를 수 있다. 이를 위해 우선순위 키 목록을 순회하는 폴백 알고리즘을 둔다.
+
+```
+molitFetchRtms(endpoint, [key1, key2, ...], lawdCd, dealYmd):
+  for key in keys (중복·미설정 제거):
+    if (endpoint,key) ∈ 미구독캐시: continue
+    (text, status) ← molitFetchStatus(endpoint, key)   # HTTP 상태 보존
+    if status == 403 or text가 미구독오류XML(reasonCode 30):
+        미구독캐시.add(endpoint,key); continue           # 미구독 → 다음 키
+    if text == null: continue                            # 일시오류(5xx/타임아웃) → 다음 키(캐시 안 함)
+    return text                                          # 성공(정상 빈 결과 포함)
+  return null
+```
+
+- **미구독 신호**: data.go.kr은 미구독 키에 대해 **HTTP 403(본문 null)** 또는 200+오류XML로 응답한다. 상태코드까지 인지해야 구분 가능(`molitFetchStatus`).
+- **엔드포인트별 미구독키 메모이제이션**: 미구독으로 확인된 (endpoint,key)를 프로세스 수명 내 기억해 콜드 스타트당 헛호출을 1회로 제한. 일시 오류는 기억하지 않아 회복 가능.
+- 매매(`fetchGenericSaleTransactions`)·아파트 전월세(`fetchAptRentTransactions`)·비아파트 전월세(`fetchResidentialRentTransactions`)가 동일 로직으로 통일.
+- 아파트 전월세는 전용키→KAPT→MOLIT 순 폴백으로, 특정 계정의 전월세 미구독으로 전세가율이 누락되지 않도록 한다.

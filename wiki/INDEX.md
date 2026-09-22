@@ -1,7 +1,7 @@
 # VESTRA Wiki INDEX
 
-> **컴파일 날짜**: 2026-09-16
-> **프로젝트 버전**: v5.167.6
+> **컴파일 날짜**: 2026-09-22
+> **프로젝트 버전**: v5.174.0
 > **배포 URL**: https://vestra.ai.kr (구 vestra-plum.vercel.app)
 > **총 토픽**: 7개 | **개념 아티클**: 3개 | **소스 문서**: 51개+
 
@@ -12,7 +12,7 @@
 | 토픽 | 파일 | 설명 | Sources | Coverage |
 |------|------|------|---------|----------|
 | 플랫폼 개요 | [topics/platform-overview.md](topics/platform-overview.md) | 전체 아키텍처, 회원 역할 계층, 거래 FK 무결성, v5.90.2 | 13 | high |
-| 핵심 알고리즘 | [topics/algorithm.md](topics/algorithm.md) | 7개 특허 알고리즘, 공공 API 10종, 예측 강화 로드맵 | 11 | high |
+| 핵심 알고리즘 | [topics/algorithm.md](topics/algorithm.md) | 7개 특허 알고리즘, 공공 API 10종, 실거래 유형 커버리지·다중키 폴백(v5.174.0), 예측 강화 로드맵 | 11 | high |
 | API 명세 | [topics/api.md](topics/api.md) | 거래 API·권한 가드·findMany 상한·cleanup cron·issue-order 분리 | 12 | high |
 | 프론트엔드 | [topics/frontend.md](topics/frontend.md) | renewal UI, 매물등록·가계약서·서명패드, PDF | 16 | high |
 | 보안 | [topics/security.md](topics/security.md) | RBAC·PII·CSRF·IDOR·crypto NUL 게이트·xlsx 취약점 해소·OWASP | 23 | high |
@@ -140,6 +140,10 @@
 
 ## 최근 변경 이력
 
+- **2026-09-22**: 세션(v5.174.0) 반영 — algorithm 토픽 갱신 (부동산 유형 커버리지 확대)
+  - 시세전망·매물시세를 아파트 전용 → 4개 주거유형(아파트/연립·다세대/단독·다가구/오피스텔)으로 확대. 엔진(`lib/molit/`)은 8개 엔드포인트 완비, API/UI 미연결을 연결.
+  - 계정별 구독 대응 다중키 폴백(`molitFetchRtms`): data.go.kr MOLIT/KAPT 2계정 엔드포인트 구독 차이를 미구독(HTTP 403·오류XML) 감지+메모이제이션으로 처리. 아파트 전월세 키 폴백으로 전세가율 누락 복구. 상세 `docs/ALGORITHM.md` §7.
+  - 운영 실키 4유형 검증·운영 실화면 확인·공통계층 7개 소비기능 회귀검사(회귀0)·병렬 적대적 코드리뷰 반영.
 - **2026-09-16**: 세션(v5.166.0~5.167.6) 반영 — security·api·features·deployment 4개 토픽 갱신 (전수 보안감사 + 등기감시 근본수정 + 대규모 정리)
   - **전수 보안감사·수정**: crypto.ts NUL 바이트 제거(보안 SAST 게이트가 PII 암호화 파일을 바이너리로 취급해 건너뛰던 사각지대) + 재발방지 게이트 신설, CSRF 4곳(photos·temp-doc·temp-photo·sync-data DELETE), IDOR(agent/clients properties 소유권 검증), PII env 등록·로그 마스킹, 이중발급 낙관적 잠금, invite 실명 마스킹
   - **등기감시 로그 유실 근본수정**: 반복 문제의 진짜 원인=간헐 Neon P1017(커넥션 닫힘)로 cron이 lastCheckedAt만 갱신하고 별도 recordCheckLog create가 실패해 유실. update+로그를 `$transaction` 원자화+3회 재시도+maxDuration=60. 운영 실측 검증

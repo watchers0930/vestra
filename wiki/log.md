@@ -167,3 +167,12 @@
 **Sources scanned:** 51+
 **Sources changed:** 이번 세션 코드(app/·lib/·prisma) v5.87~5.90.2
 **Changes:** 가계약서 전면 개편(양측 손글씨 서명→PDF 1페이지→오프라인 확정), 거래 FK 무결성, 회원 역할 계층+권한 가드, 매물등록 renewal 이식·매물→감시 연결·의향서 Web Push, 중개사 CRM 거래조회
+
+## 2026-09-22
+
+**Topics updated:** algorithm
+**New topics:** none
+**New concepts:** none
+**Sources scanned:** 55+
+**Sources changed:** docs/ALGORITHM.md(§7 신규), docs/ROADMAP-1등화.md(P1 완료), package.json(v5.174.0)
+**Changes:** 부동산 유형 커버리지 확대(v5.174.0) — 시세전망·매물시세 아파트 전용→4주거유형(아파트/연립·다세대/단독·다가구/오피스텔). 계정별 구독 대응 다중키 폴백 molitFetchRtms(미구독 403·오류XML 감지+메모이제이션), 아파트 전월세 키 폴백으로 전세가율 복구. algorithm 아티클에 "실거래 시세 조회 계층" 섹션 추가.

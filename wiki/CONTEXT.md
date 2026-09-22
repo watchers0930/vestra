@@ -14,8 +14,8 @@ VESTRA는 한국 부동산 전세사기 예방에 특화된 AI 플랫폼으로, 
 
 | 항목 | 값 |
 |------|-----|
-| 현재 버전 | v5.90.2 |
-| 배포 URL | https://vestra-plum.vercel.app |
+| 현재 버전 | v5.174.0 |
+| 배포 URL | https://vestra.ai.kr (구 vestra-plum.vercel.app) |
 | 소스 코드 규모 | 31,315 LOC |
 | 독자 알고리즘 | 7종 (특허 출원 대상) |
 | API 엔드포인트 | 51개 |
@@ -23,7 +23,7 @@ VESTRA는 한국 부동산 전세사기 예방에 특화된 AI 플랫폼으로, 
 | 페이지 수 | 27개 |
 | 테스트 | 14개 파일 |
 | 종합 평점 | 9.2/10 A등급 (v4.5.1) |
-| Wiki 컴파일 | 2026-08-22 · 7 topics · 3 concepts |
+| Wiki 컴파일 | 2026-09-22 · 7 topics · 3 concepts |
 
 ---
 
