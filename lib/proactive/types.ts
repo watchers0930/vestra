@@ -16,7 +16,9 @@ export type SignalKind =
   | "contract_expiry" // 임대차 계약 만료 임박
   | "subscription_expiry" // 구독 만료 임박
   | "high_risk_asset" // 안전도 낮은 보유 자산
-  | "unanalyzed_asset"; // 아직 분석되지 않은 자산
+  | "unanalyzed_asset" // 아직 분석되지 않은 자산
+  | "high_jeonse_ratio" // 전세가율 위험(깡통전세 우려) 자산
+  | "unmonitored_asset"; // 등기감시 미등록 보유 자산
 
 /** 사용자가 챙겨야 할 단일 신호(규칙 기반으로 추출, AI 아님) */
 export interface Signal {

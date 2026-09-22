@@ -27,9 +27,20 @@ const CONTRACT_GRACE_DAYS = 7;
 const SUB_HORIZON_DAYS = 14;
 /** 안전도 이 값 미만이면 고위험 자산으로 경고 */
 const LOW_SAFETY_THRESHOLD = 40;
+/** 전세가율(전세보증금/시세) 경고·위험 임계(%) */
+const JEONSE_RATIO_WARN = 80;
+const JEONSE_RATIO_DANGER = 90;
 
 function daysBetween(from: Date, to: Date): number {
   return Math.round((to.getTime() - from.getTime()) / (24 * 60 * 60 * 1000));
+}
+
+/** 주소 정규화 — 감시 등록 여부 매칭용(행정 접미사·공백 차이 흡수) */
+function normalizeAddr(s: string): string {
+  return s
+    .replace(/\s+/g, "")
+    .replace(/특별자치시|특별자치도|특별시|광역시|자치시|자치도/g, "")
+    .replace(/^서울시/, "서울");
 }
 
 /** 미확인 등기 변동 알림 → 신호 */
@@ -184,6 +195,77 @@ async function fromAssets(userId: string): Promise<Signal[]> {
   }
 }
 
+/** 전세가율(전세보증금/시세) 위험 자산 → 신호 (안전도와 다른 렌즈: 깡통전세 특화) */
+async function fromJeonseRatio(userId: string): Promise<Signal[]> {
+  try {
+    const assets = await prisma.asset.findMany({
+      where: { userId, jeonsePrice: { gt: 0 }, estimatedPrice: { gt: 0 } },
+      select: { address: true, estimatedPrice: true, jeonsePrice: true },
+      take: 30,
+    });
+
+    const flagged = assets
+      .map((a) => ({ ...a, ratio: Math.round((a.jeonsePrice! / a.estimatedPrice) * 100) }))
+      .filter((a) => a.ratio >= JEONSE_RATIO_WARN)
+      .sort((a, b) => b.ratio - a.ratio)
+      .slice(0, 5);
+
+    return flagged.map((a) => {
+      const danger = a.ratio >= JEONSE_RATIO_DANGER;
+      return {
+        kind: "high_jeonse_ratio" as const,
+        severity: danger ? ("high" as const) : ("medium" as const),
+        title: `전세가율 ${a.ratio}% ${danger ? "위험" : "주의"}: ${a.address}`,
+        detail: danger
+          ? `전세보증금이 시세의 ${a.ratio}%로 깡통전세 위험 구간입니다. 보증금 반환보증(HUG 등) 가입 여부와 선순위 채권을 점검하세요.`
+          : `전세가율이 ${a.ratio}%로 다소 높습니다. 시세 하락 시 보증금 회수 위험이 커질 수 있어 보증보험 가입을 검토하세요.`,
+        actionUrl: "/renewal/jeonse",
+        actionLabel: "전세 안전 점검",
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+/** 등기감시 미등록 보유 자산 → 신호 (분석은 됐으나 감시 미설정: 변동 조기감지 권유) */
+async function fromUnmonitoredAssets(userId: string): Promise<Signal[]> {
+  try {
+    const [assets, monitored] = await Promise.all([
+      prisma.asset.findMany({
+        where: { userId, safetyScore: { gt: 0 } },
+        select: { address: true },
+        take: 30,
+      }),
+      prisma.monitoredProperty.findMany({
+        where: { userId },
+        select: { address: true },
+        take: 50,
+      }),
+    ]);
+    if (assets.length === 0) return [];
+
+    const monNorms = monitored.map((m) => normalizeAddr(m.address));
+    const unmonitored = assets.filter((a) => {
+      const an = normalizeAddr(a.address);
+      // 관대한 매칭(양방향 포함) — 실제 감시중을 미등록으로 오탐하지 않도록
+      return !monNorms.some((mn) => mn.length > 0 && (mn.includes(an) || an.includes(mn)));
+    });
+
+    return unmonitored.slice(0, 3).map((a) => ({
+      kind: "unmonitored_asset" as const,
+      severity: "info" as const,
+      title: `등기감시 미등록: ${a.address}`,
+      detail:
+        "보유 자산에 등기감시가 설정돼 있지 않습니다. 근저당·소유권 등 등기 변동을 조기에 감지하려면 등기감시를 등록하세요.",
+      actionUrl: "/renewal/monitoring",
+      actionLabel: "등기감시 등록",
+    }));
+  } catch {
+    return [];
+  }
+}
+
 /**
  * 사용자의 모든 능동 신호를 수집해 심각도순으로 정렬·절단한다.
  * @param userId 인증된 사용자 ID (반드시 세션에서 전달 — 본인 데이터만)
@@ -195,6 +277,8 @@ export async function collectSignals(userId: string): Promise<Signal[]> {
     fromContractExpiry(userId, now),
     fromSubscription(userId, now),
     fromAssets(userId),
+    fromJeonseRatio(userId),
+    fromUnmonitoredAssets(userId),
   ]);
   const all = groups.flat();
   all.sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]);

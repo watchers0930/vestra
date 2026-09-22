@@ -11,6 +11,7 @@ const m = vi.hoisted(() => ({
   contractFind: vi.fn(),
   subFind: vi.fn(),
   assetFind: vi.fn(),
+  monFind: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -19,6 +20,7 @@ vi.mock("@/lib/prisma", () => ({
     eContract: { findMany: m.contractFind },
     subscription: { findUnique: m.subFind },
     asset: { findMany: m.assetFind },
+    monitoredProperty: { findMany: m.monFind },
   },
 }));
 
@@ -39,6 +41,7 @@ beforeEach(() => {
   m.contractFind.mockReset().mockResolvedValue([]);
   m.subFind.mockReset().mockResolvedValue(null);
   m.assetFind.mockReset().mockResolvedValue([]);
+  m.monFind.mockReset().mockResolvedValue([]);
   oa.getClient.mockReset().mockImplementation(() => {
     throw new Error("no-ai-in-test");
   });
@@ -77,8 +80,9 @@ describe("collectSignals", () => {
     m.alertFind.mockRejectedValue(new Error("db down"));
     m.assetFind.mockResolvedValue([{ address: "X", safetyScore: 10, riskScore: 90 }]);
     const signals = await collectSignals("u1");
-    expect(signals.length).toBe(1);
-    expect(signals[0].kind).toBe("high_risk_asset");
+    // 실패한 소스(등기)는 빠지고, 정상 소스의 신호는 반환된다
+    expect(signals.some((s) => s.kind === "registry_alert")).toBe(false);
+    expect(signals.some((s) => s.kind === "high_risk_asset")).toBe(true);
   });
 
   it("최대 12개로 절단한다", async () => {
@@ -100,6 +104,46 @@ describe("collectSignals", () => {
     m.subFind.mockResolvedValue({ plan: "FREE", status: "active", endDate: new Date() });
     const s1 = await collectSignals("u1");
     expect(s1.some((s) => s.kind === "subscription_expiry")).toBe(false);
+  });
+
+  it("전세가율 위험: ≥90%는 high, 80~90%는 medium 신호", async () => {
+    // asset.findMany는 세 함수(fromAssets/fromJeonseRatio/fromUnmonitoredAssets)가 공유 → where로 분기
+    m.assetFind.mockImplementation((args: { where?: Record<string, unknown> }) => {
+      const w = args?.where || {};
+      if ("jeonsePrice" in w) {
+        return Promise.resolve([
+          { address: "서울 강남구 깡통", estimatedPrice: 100_000_000, jeonsePrice: 95_000_000 }, // 95% high
+          { address: "서울 강남구 주의", estimatedPrice: 100_000_000, jeonsePrice: 85_000_000 }, // 85% medium
+          { address: "서울 강남구 안전", estimatedPrice: 100_000_000, jeonsePrice: 50_000_000 }, // 50% 제외
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+    const signals = await collectSignals("u1");
+    const jeonse = signals.filter((s) => s.kind === "high_jeonse_ratio");
+    expect(jeonse.length).toBe(2); // 50%는 제외
+    expect(jeonse.find((s) => s.title.includes("95%"))?.severity).toBe("high");
+    expect(jeonse.find((s) => s.title.includes("85%"))?.severity).toBe("medium");
+  });
+
+  it("등기감시 미등록: 감시 없는 분석완료 자산만 info 신호(주소 정규화 매칭)", async () => {
+    m.assetFind.mockImplementation((args: { where?: Record<string, unknown> }) => {
+      const w = args?.where || {};
+      if ("safetyScore" in w && (w.safetyScore as { gt?: number })?.gt === 0) {
+        return Promise.resolve([
+          { address: "서울특별시 강남구 대치동 111" }, // 감시중(정규화 매칭)
+          { address: "서울 마포구 합정동 222" }, // 미등록
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+    // 감시 목록: 접미사·공백 다른 표기 → 정규화로 매칭되어야 함
+    m.monFind.mockResolvedValue([{ address: "서울시 강남구 대치동 111" }]);
+    const signals = await collectSignals("u1");
+    const un = signals.filter((s) => s.kind === "unmonitored_asset");
+    expect(un.length).toBe(1);
+    expect(un[0].title).toContain("합정동");
+    expect(un[0].severity).toBe("info");
   });
 });
 
