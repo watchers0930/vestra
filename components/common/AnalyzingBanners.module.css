@@ -1,0 +1,89 @@
+.wrap {
+  width: 100%;
+  max-width: 520px;
+  margin: 8px auto 0;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: linear-gradient(120deg, #f4f6ff 0%, #eef1fb 100%);
+  border: 1px solid #e0e5f7;
+  text-align: left;
+  animation: bnFade 0.5s ease;
+}
+
+.adBanner {
+  background: linear-gradient(120deg, #fff7ed 0%, #fef3e2 100%);
+  border-color: #fcd9a8;
+}
+
+@keyframes bnFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ico {
+  font-size: 30px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #2e4bd8;
+  background: rgba(46, 75, 216, 0.1);
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-bottom: 6px;
+}
+
+.adTag {
+  color: #b45309;
+  background: rgba(180, 83, 9, 0.1);
+}
+
+.title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #1a1d2e;
+  margin-bottom: 3px;
+}
+
+.desc {
+  font-size: 12.5px;
+  color: #6b7089;
+  line-height: 1.5;
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d3d9ee;
+  transition: all 0.3s;
+}
+
+.dotOn {
+  width: 18px;
+  border-radius: 3px;
+  background: #2e4bd8;
+}

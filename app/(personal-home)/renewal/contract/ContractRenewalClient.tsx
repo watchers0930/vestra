@@ -8,6 +8,7 @@ import SiteFooter from "@/components/layout/SiteFooter";
 import { useContractAnalysis } from "@/app/(app)/contract/hooks/useContractAnalysis";
 import ContractResultSections from "./components/ContractResultSections";
 import ContractImageIntegrityCard from "@/app/(app)/contract/components/ContractImageIntegrityCard";
+import AnalyzingBanners from "@/components/common/AnalyzingBanners";
 
 // Sample contract texts
 const SAMPLES: Record<string, string> = {
@@ -234,37 +235,8 @@ export default function ContractRenewalClient() {
             <div className={s.analyzingCard}>
               <div className={s.analyzingSpinner}></div>
               <div className={s.analyzingT}>계약서를 분석하고 있습니다</div>
-              <div className={s.analyzingS}>AI가 조항을 읽고 위험 요소를 파악 중입니다.<br />잠시만 기다려 주세요.</div>
-              <div className={s.stepList}>
-                <div className={`${s.step} ${s.stepDone}`}>
-                  <div className={s.stepIco}>✓</div>
-                  <div>
-                    <div className={s.stepT}>계약서 텍스트 추출 완료</div>
-                    <div className={s.stepS}>총 {contractText.length.toLocaleString()}자 인식</div>
-                  </div>
-                </div>
-                <div className={`${s.step} ${s.stepDone}`}>
-                  <div className={s.stepIco}>✓</div>
-                  <div>
-                    <div className={s.stepT}>핵심 조항 식별 완료</div>
-                    <div className={s.stepS}>조항 파싱 완료</div>
-                  </div>
-                </div>
-                <div className={`${s.step} ${s.stepActive}`}>
-                  <div className={s.stepIco}>⋯</div>
-                  <div>
-                    <div className={s.stepT}>위험 조항 분석 중</div>
-                    <div className={s.stepS}>AI 법률 모델 처리 중</div>
-                  </div>
-                </div>
-                <div className={`${s.step} ${s.stepPending}`}>
-                  <div className={s.stepIco}>4</div>
-                  <div>
-                    <div className={s.stepT}>안전 점수 산출 및 보고서 생성</div>
-                    <div className={s.stepS}>대기 중</div>
-                  </div>
-                </div>
-              </div>
+              <div className={s.analyzingS}>AI가 조항·위험·특약을 분석 중입니다. 최대 1분 정도 걸릴 수 있어요.</div>
+              <AnalyzingBanners />
             </div>
           </div>
         </div>
