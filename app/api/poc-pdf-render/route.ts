@@ -56,6 +56,8 @@ export async function POST(req: NextRequest) {
       canvasImport: () => import("@napi-rs/canvas"),
     });
 
+    // dump=1 이면 렌더 PNG를 base64로 반환(회전 반영 여부 확인용, PII 없는 더미 전용)
+    const dump = new URL(req.url).searchParams.get("dump") === "1";
     return NextResponse.json({
       ok: true,
       pngBytes: png.byteLength,
@@ -63,6 +65,7 @@ export async function POST(req: NextRequest) {
       pageRotate,
       ms: Date.now() - started,
       note: "서버리스 PDF→PNG 렌더 성공",
+      pngBase64: dump ? Buffer.from(png).toString("base64") : undefined,
     });
   } catch (e) {
     return NextResponse.json({
