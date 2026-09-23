@@ -151,11 +151,8 @@ gtag('config', '${GA_MEASUREMENT_ID}', {
         ) : null}
         <meta name="theme-color" content="#4F46E5" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-        {/* Paperlogy 주요 weight preload — 자가 호스팅 */}
-        <link rel="preload" href="/fonts/Paperlogy-4Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-        <link rel="preload" href="/fonts/Paperlogy-5Medium.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-        <link rel="preload" href="/fonts/Paperlogy-6SemiBold.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-        <link rel="preload" href="/fonts/Paperlogy-7Bold.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        {/* Paperlogy 폰트는 globals.css @font-face + font-display:swap 로 로드.
+            수동 preload는 Chrome "preloaded but not used" 경고만 유발해 제거(성능 이득 미미). */}
         {/* Material Symbols — 비동기 로드 (렌더 블로킹 제거) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
