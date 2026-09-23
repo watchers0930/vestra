@@ -22,6 +22,7 @@ export interface DeepAnalysisResult {
   clauses: AnalyzedClause[];
   missingClauses: MissingClause[];
   recommendedTerms: RecommendedTermsResult;
+  aiOpinion: string;
 }
 
 type RiskLevel = AnalyzedClause["riskLevel"];
@@ -123,23 +124,31 @@ export function coerceDeepAnalysis(raw: unknown): DeepAnalysisResult {
     clauses: coerceClauses(r.clauses),
     missingClauses: coerceMissing(r.missingClauses),
     recommendedTerms: coerceTerms(r.recommendedTerms),
+    aiOpinion: str(r.aiOpinion, 6000),
   };
 }
 
 /**
- * 계약서 심층 분석. 실패/빈 결과 시 null(규칙 폴백).
+ * 계약서 심층 분석(조항·누락·특약·종합의견). 실패/빈 결과 시 null(규칙 폴백).
+ * @param extraContext 판례·정책 등 의견 보강용 컨텍스트(선택)
  */
-export async function analyzeContractDeepAI(text: string): Promise<DeepAnalysisResult | null> {
+export async function analyzeContractDeepAI(
+  text: string,
+  extraContext?: string,
+): Promise<DeepAnalysisResult | null> {
   try {
     const openai = getOpenAIClient();
+    const userContent =
+      text.slice(0, MAX_INPUT_CHARS) +
+      (extraContext ? `\n\n[참고 컨텍스트]${extraContext.slice(0, 3000)}` : "");
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       messages: [
         { role: "system", content: CONTRACT_DEEP_ANALYSIS_PROMPT },
-        { role: "user", content: text.slice(0, MAX_INPUT_CHARS) },
+        { role: "user", content: userContent },
       ],
       reasoning_effort: REASONING_ANALYTICAL,
-      max_completion_tokens: 8000,
+      max_completion_tokens: 9000,
       response_format: { type: "json_object" },
     });
     const content = completion.choices[0]?.message?.content?.trim();

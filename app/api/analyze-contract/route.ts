@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
-import { getOpenAIClient, checkOpenAICostGuard, OPENAI_MODEL, REASONING_ANALYTICAL } from "@/lib/openai";
-import { CONTRACT_ANALYSIS_OPINION_PROMPT } from "@/lib/prompts";
+import { checkOpenAICostGuard } from "@/lib/openai";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { stripHtml, truncateInput } from "@/lib/sanitize";
 import { searchCourtCases } from "@/lib/court-api";
@@ -74,10 +73,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1단계: 핵심정보 추출 + 심층 분석(조항·누락·특약)을 AI로 병렬 수행
+    // 1단계: 판례·정책 컨텍스트 먼저 조회(의견 보강용, 병렬·빠름)
+    let policyArticleIds: string[] = [];
+    const [courtRes, policyRes] = await Promise.allSettled([
+      (async () => {
+        const keywords = extractContractKeywords(contractText);
+        if (keywords.length === 0) return "";
+        const cases = await searchCourtCases(keywords[0], 3);
+        if (cases.length === 0) return "";
+        return `\n\n관련 판례:\n${cases
+          .map(
+            (c) =>
+              `- [${c.caseNumber}] ${c.caseName} (${c.courtName}, ${c.judgmentDate})\n  판시사항: ${c.summary}`
+          )
+          .join("\n")}`;
+      })(),
+      buildPolicyContext(["전세", "규제", "대출"]),
+    ]);
+    const courtContext = courtRes.status === "fulfilled" ? courtRes.value : "";
+    let policyContext = "";
+    if (policyRes.status === "fulfilled") {
+      policyContext = policyRes.value.context;
+      policyArticleIds = policyRes.value.articleIds;
+    }
+    const aiExtraContext = `${courtContext}${policyContext ? `\n\n관련 정책:\n${policyContext}` : ""}`.trim();
+
+    // 2단계: 핵심정보 추출 + 심층분석(조항·누락·특약·종합의견)을 AI 병렬 1라운드로 수행
     const [aiInfo, aiDeep] = await Promise.all([
       extractContractInfoAI(contractText),
-      analyzeContractDeepAI(contractText),
+      analyzeContractDeepAI(contractText, aiExtraContext || undefined),
     ]);
     const engineResult = analyzeContract(contractText, aiInfo);
 
@@ -95,71 +119,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2단계: 판례 검색 (LLM 의견 보강용)
-    let courtContext = "";
-    try {
-      const keywords = extractContractKeywords(contractText);
-      if (keywords.length > 0) {
-        const cases = await searchCourtCases(keywords[0], 3);
-        if (cases.length > 0) {
-          courtContext = `\n\n관련 판례:\n${cases
-            .map(
-              (c) =>
-                `- [${c.caseNumber}] ${c.caseName} (${c.courtName}, ${c.judgmentDate})\n  판시사항: ${c.summary}`
-            )
-            .join("\n")}`;
-        }
-      }
-    } catch (e) {
-      console.warn("판례 검색 실패:", e);
-    }
-
-    // 2.5단계: 최근 관련 정책 조회
-    let policyContext = "";
-    let policyArticleIds: string[] = [];
-    try {
-      const policy = await buildPolicyContext(["전세", "규제", "대출"]);
-      policyContext = policy.context;
-      policyArticleIds = policy.articleIds;
-    } catch {
-      // 정책 조회 실패 시 무시
-    }
-
-    // 3단계: LLM으로 종합 의견만 생성
-    let aiOpinion = "";
-    try {
-      const openai = getOpenAIClient();
-      const completion = await openai.chat.completions.create({
-        model: OPENAI_MODEL,
-        reasoning_effort: REASONING_ANALYTICAL,
-        messages: [
-          { role: "system", content: CONTRACT_ANALYSIS_OPINION_PROMPT },
-          {
-            role: "user",
-            content: JSON.stringify({
-              clauses: engineResult.clauses,
-              missingClauses: engineResult.missingClauses,
-              safetyScore: engineResult.safetyScore,
-              extractedInfo: engineResult.extractedInfo,
-              reviewIssues: engineResult.reviewIssues,
-              highRiskCount: engineResult.clauses.filter((c) => c.riskLevel === "high").length,
-              warningCount: engineResult.clauses.filter((c) => c.riskLevel === "warning").length,
-              courtContext: courtContext || "관련 판례 없음",
-              policyContext: policyContext || "관련 정책 없음",
-            }),
-          },
-        ],
-        response_format: { type: "json_object" },
-      });
-
-      const content = completion.choices[0]?.message?.content;
-      if (content) {
-        const parsed = JSON.parse(content);
-        aiOpinion = parsed.aiOpinion || parsed.opinion || "";
-      }
-    } catch {
-      aiOpinion = "AI 의견 생성에 실패했습니다. 자체 분석 결과를 참고해주세요.";
-    }
+    // 종합 의견 (심층분석 호출에 통합됨). 실패 시 안내 문구.
+    const aiOpinion =
+      aiDeep?.aiOpinion?.trim() || "AI 의견 생성에 실패했습니다. 자체 분석 결과를 참고해주세요.";
 
     // 정책 활용 로그
     if (policyArticleIds.length > 0) {
