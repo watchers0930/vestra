@@ -7,7 +7,7 @@
  * @module lib/image-ocr
  */
 
-import { getOpenAIClient, OPENAI_MODEL, REASONING_MECHANICAL } from "@/lib/openai";
+import { getOpenAIClient, OPENAI_MODEL } from "@/lib/openai";
 import { IMAGE_OCR_PROMPT } from "@/lib/prompts";
 import {
   normalizeRegistryText,
@@ -32,6 +32,23 @@ export function isImageFile(file: File): boolean {
   if (SUPPORTED_IMAGE_TYPES.has(file.type)) return true;
   const ext = "." + file.name.split(".").pop()?.toLowerCase();
   return SUPPORTED_EXTENSIONS.has(ext);
+}
+
+/**
+ * OCR 결과가 판독불가/과다 불확실이면 조작된 텍스트로 분석되지 않도록 사용자에게
+ * 재업로드를 유도하는 에러를 던진다. (흐린 스캔에서 모델이 예시값을 지어내는 것 방지)
+ */
+export function assertLegibleOcr(text: string): void {
+  const t = (text || "").trim();
+  const compact = t.replace(/\s/g, "");
+  if (compact.length < 15 || /^판독\s*불가/.test(t) || compact === "판독불가") {
+    throw new Error("스캔·사진이 흐려 문서를 읽을 수 없습니다. 더 선명한 파일로 다시 올려주세요.");
+  }
+  const qMarks = (t.match(/\[\?\]/g) || []).length;
+  const meaningful = compact.length || 1;
+  if (qMarks >= 10 && qMarks / meaningful > 0.06) {
+    throw new Error("스캔·사진이 흐려 일부만 인식됐습니다. 더 선명한 파일로 다시 올려주세요.");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -65,7 +82,7 @@ async function extractWithVision(
             ],
           },
         ],
-        reasoning_effort: REASONING_MECHANICAL,
+        reasoning_effort: "low",
         max_completion_tokens: 16384,
       });
 
@@ -117,7 +134,7 @@ export async function extractTextFromScannedPDF(
     try {
       const response = await openai.responses.create({
         model: OPENAI_MODEL,
-        reasoning: { effort: REASONING_MECHANICAL },
+        reasoning: { effort: "low" },
         input: [
           { role: "system", content: systemPrompt },
           {
@@ -146,6 +163,8 @@ export async function extractTextFromScannedPDF(
     await new Promise((r) => setTimeout(r, RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1)));
   }
 
+  // 판독불가·과다 불확실 → 조작 텍스트로 분석되지 않도록 차단
+  assertLegibleOcr(extractedText);
   if (!extractedText || extractedText.length < 20) {
     throw new Error(
       "PDF에서 텍스트를 추출할 수 없습니다. 텍스트가 포함된 PDF를 업로드해주세요."
@@ -187,6 +206,7 @@ export async function extractTextFromImages(
 ): Promise<PDFExtractResult> {
   const extractedText = await extractWithVision(images);
 
+  assertLegibleOcr(extractedText);
   if (!extractedText || extractedText.length < 20) {
     throw new Error(
       "이미지에서 텍스트를 추출할 수 없습니다. 선명한 등기부등본 이미지를 업로드해주세요."

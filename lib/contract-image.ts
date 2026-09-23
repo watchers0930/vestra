@@ -14,6 +14,7 @@
 import { getOpenAIClient, OPENAI_MODEL, REASONING_ANALYTICAL } from "@/lib/openai";
 import { CONTRACT_IMAGE_PROMPT } from "@/lib/prompts";
 import { normalizeRegistryText } from "@/lib/pdf-parser";
+import { assertLegibleOcr } from "@/lib/image-ocr";
 
 const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY_MS = 1000;
@@ -121,6 +122,7 @@ export async function analyzeContractImage(
   }));
 
   let lastText = "";
+  let result: ContractImageResult | null = null;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -149,8 +151,8 @@ export async function analyzeContractImage(
         const rawText = typeof parsed.text === "string" ? parsed.text.trim() : "";
         if (rawText.length >= 20) {
           // 등기부용이 아닌 범용 공백/페이지마커 정리(계약서 텍스트 무손상)
-          const text = normalizeRegistryText(rawText);
-          return { text, integrity: coerceIntegrity(parsed.integrity) };
+          result = { text: normalizeRegistryText(rawText), integrity: coerceIntegrity(parsed.integrity) };
+          break;
         }
         lastText = rawText;
         console.warn(
@@ -165,8 +167,12 @@ export async function analyzeContractImage(
     await new Promise((r) => setTimeout(r, RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1)));
   }
 
+  // 판독불가·과다 불확실 → 조작 텍스트로 분석되지 않도록 차단(재시도 루프 밖)
+  const finalText = result?.text ?? normalizeRegistryText(lastText);
+  assertLegibleOcr(finalText);
+  if (result) return result;
   if (lastText.length >= 20) {
-    return { text: normalizeRegistryText(lastText), integrity: emptyIntegrity(false) };
+    return { text: finalText, integrity: emptyIntegrity(false) };
   }
   throw new Error(
     "계약서 이미지에서 텍스트를 추출할 수 없습니다. 선명한 계약서 이미지를 업로드해주세요."
