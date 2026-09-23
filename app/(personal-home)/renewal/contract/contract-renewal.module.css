@@ -32,7 +32,7 @@
 .subHeroSub{font-size:13.5px;font-weight:300;color:rgba(255,255,255,.7)}
 
 /* PAGE WRAP */
-.pageWrap{max-width:920px;margin:0 auto;padding:40px 32px 80px}
+.pageWrap{max-width:1200px;margin:0 auto;padding:40px 32px 80px}
 
 /* INPUT VIEW */
 .inputNotice{background:#fffbeb;border:1px solid #fbbf24;border-radius:12px;padding:14px 18px;display:flex;align-items:flex-start;gap:12px;margin-bottom:28px}
@@ -130,6 +130,15 @@
 .shAiLabel{font-size:10.5px;font-weight:700;color:#2e4bd8;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
 .shAiText{font-size:13px;color:#444;line-height:1.8}
 
+/* AI 종합 의견 — 전폭 + 넘버링 항목별 줄바꿈 */
+.shOpinionFull{grid-column:1 / -1;background:#f8f9fc;border:1px solid #e8eaf2;border-left:3px solid #2e4bd8;border-radius:0 12px 12px 0;padding:18px 20px}
+.aiOpinion{display:flex;flex-direction:column;gap:14px}
+.aiBlock{display:flex;flex-direction:column;gap:6px}
+.aiBlockLabel{font-size:13px;font-weight:700;color:#1a1d2e}
+.aiBlockLead{font-size:13px;color:#444;line-height:1.75;margin:0}
+.aiItemList{display:flex;flex-direction:column;gap:5px;margin:2px 0 0;padding:0;list-style:none}
+.aiItem{font-size:13px;color:#3a3a3a;line-height:1.65;padding:6px 12px;background:#fff;border:1px solid #eceef5;border-radius:8px}
+
 .shRight{display:flex;flex-direction:column;gap:16px}
 .shBarSection{}
 .shBarLabelRow{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
@@ -166,17 +175,18 @@
 .sscWarning{background:#dbeafe;color:#1d4ed8}
 .shSumText{font-size:12.5px;font-weight:600;color:#1a1d2e;line-height:1.5}
 
-/* 2-COL LAYOUT */
-.resultLayout{display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start}
+/* RESULT BODY (탭 전환형) */
+.resultLayout{display:block}
 
-/* Sidebar */
-.resultSidebar{position:sticky;top:136px;background:#fff;border:1px solid #e0e3ef;border-radius:14px;padding:16px 0;box-shadow:0 1px 6px rgba(46,75,216,.04)}
-.rsLabel{font-size:10.5px;font-weight:700;color:#aaa;letter-spacing:1.5px;text-transform:uppercase;padding:0 16px;margin-bottom:8px}
-.rsNav{list-style:none;display:flex;flex-direction:column}
-.rsItem{display:flex;align-items:center;gap:8px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13px;font-weight:500;color:#888}
-.rsItem:hover{color:#2e4bd8;background:#f8f9ff}
-.rsItemOn{color:#2e4bd8;font-weight:700;border-left-color:#2e4bd8;background:#f0f2fd}
-.rsDot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+/* 가로 탭바 (구 세로 목차 대체) */
+.resultTabs{position:sticky;top:80px;z-index:20;display:flex;flex-wrap:wrap;gap:6px;background:#fff;border:1px solid #e0e3ef;border-radius:12px;padding:8px;margin-bottom:20px;box-shadow:0 1px 6px rgba(46,75,216,.04)}
+.rtItem{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;cursor:pointer;border-radius:8px;font-size:13px;font-weight:600;color:#888;transition:all .15s;white-space:nowrap;border:none;background:transparent;font-family:inherit}
+.rtItem:hover{color:#2e4bd8;background:#f8f9ff}
+.rtItemOn{color:#fff;background:#2e4bd8}
+.rtItemOn:hover{color:#fff;background:#2540c0}
+.rtDot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.rtBadge{font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(0,0,0,.06)}
+.rtItemOn .rtBadge{background:rgba(255,255,255,.22);color:#fff}
 .rsdCritical{background:#ef4444}
 .rsdHigh{background:#f59e0b}
 .rsdBlue{background:#6366f1}

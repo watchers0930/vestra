@@ -53,3 +53,43 @@ export const termPriorityMeta: Record<string, { label: string; classKey: string 
 };
 
 export type Styles = Record<string, string>;
+
+// AI 종합 의견 파싱 — 문단(라벨: 본문) + 넘버링 항목별 줄바꿈용 구조화
+export interface OpinionBlock {
+  label?: string;
+  lead: string;
+  items: string[];
+}
+
+export function parseOpinion(text: string): OpinionBlock[] {
+  if (!text) return [];
+  const blocks = text
+    .split(/\n{2,}/)
+    .map((b) => b.replace(/\s*\n\s*/g, " ").trim())
+    .filter(Boolean);
+
+  return blocks.map((block) => {
+    // 선행 라벨 "라벨:" 추출 (콜론 앞 2~40자, 숫자로 시작하지 않을 때)
+    let label: string | undefined;
+    let rest = block;
+    const m = block.match(/^([^:：\d][^:：]{1,39})[:：]\s*(.+)$/);
+    if (m) {
+      label = m[1].trim();
+      rest = m[2].trim();
+    }
+    // 넘버링 마커 "(1)" 또는 "1)" 앞에서 분리
+    const parts = rest
+      .split(/(?=\(\d+\)|(?<!\()\d+\))/g)
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    const items: string[] = [];
+    let lead = "";
+    parts.forEach((p) => {
+      if (/^\(?\d+\)/.test(p)) items.push(p);
+      else if (!lead) lead = p;
+      else items.push(p);
+    });
+    return { label, lead, items };
+  });
+}

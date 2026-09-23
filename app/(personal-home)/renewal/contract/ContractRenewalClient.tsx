@@ -6,7 +6,7 @@ import s from "./contract-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import SiteFooter from "@/components/layout/SiteFooter";
 import { useContractAnalysis } from "@/app/(app)/contract/hooks/useContractAnalysis";
-import ContractResultSections, { SEC_IDS } from "./components/ContractResultSections";
+import ContractResultSections from "./components/ContractResultSections";
 import ContractImageIntegrityCard from "@/app/(app)/contract/components/ContractImageIntegrityCard";
 
 // Sample contract texts
@@ -34,9 +34,6 @@ export default function ContractRenewalClient() {
   const [openClauses, setOpenClauses] = useState<Record<number, boolean>>({});
   const [openTerms, setOpenTerms] = useState<Record<number, boolean>>({});
 
-  // Sidebar active section
-  const [activeSec, setActiveSec] = useState(0);
-
   // 훅 상태 기반 파생 뷰
   const activeView: "input" | "analyzing" | "result" = isLoading ? "analyzing" : result ? "result" : "input";
 
@@ -62,33 +59,7 @@ export default function ContractRenewalClient() {
     setOpenTerms((prev) => ({ ...prev, [i]: !prev[i] }));
   }
 
-  function scrollToSec(id: string) {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
   const resultAddress = result?.extractedInfo?.propertyAddress || fileName || "직접 입력 계약서";
-
-  // Scroll spy
-  useEffect(() => {
-    if (activeView !== "result") return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const idx = SEC_IDS.indexOf(entry.target.id);
-            if (idx !== -1) setActiveSec(idx);
-          }
-        });
-      },
-      { rootMargin: "-100px 0px -60% 0px", threshold: 0 }
-    );
-    SEC_IDS.forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) obs.observe(el);
-    });
-    return () => obs.disconnect();
-  }, [activeView, result]);
 
   return (
     <>
@@ -300,8 +271,6 @@ export default function ContractRenewalClient() {
             toggleClause={toggleClause}
             openTerms={openTerms}
             toggleTerm={toggleTerm}
-            activeSec={activeSec}
-            scrollToSec={scrollToSec}
             onReanalyze={handleAnalyze}
           />
         )}

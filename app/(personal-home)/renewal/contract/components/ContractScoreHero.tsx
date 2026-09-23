@@ -2,7 +2,7 @@
 
 import { AlertTriangle } from "lucide-react";
 import type { AnalysisResult } from "@/app/(app)/contract/types";
-import { GAUGE_CIRC, formatAmount, scoreMeta, severityMeta, sumCardKey, sumSevKey, type Styles } from "./resultHelpers";
+import { GAUGE_CIRC, formatAmount, scoreMeta, parseOpinion, type Styles } from "./resultHelpers";
 
 interface Props {
   s: Styles;
@@ -13,7 +13,6 @@ interface Props {
 
 export default function ContractScoreHero({ s, result, address, onReanalyze }: Props) {
   const info = result.extractedInfo;
-  const issues = result.reviewIssues ?? [];
   const clauses = result.clauses ?? [];
   const missing = result.missingClauses ?? [];
 
@@ -28,7 +27,7 @@ export default function ContractScoreHero({ s, result, address, onReanalyze }: P
   const warningPct = (warningCount / total) * 100;
   const safePct = (safeCount / total) * 100;
 
-  const topIssues = issues.slice(0, 3);
+  const opinionBlocks = result.aiOpinion ? parseOpinion(result.aiOpinion) : [];
 
   return (
     <>
@@ -44,9 +43,9 @@ export default function ContractScoreHero({ s, result, address, onReanalyze }: P
         </div>
       </div>
 
-      {/* Score Hero 2-col */}
+      {/* Score Hero — 게이지 + 조항분포(상단 2열) → AI 종합의견(하단 전폭) */}
       <div className={s.scoreHeroV2}>
-        {/* Left: gauge + grade + AI opinion */}
+        {/* Left: gauge + grade */}
         <div className={s.shLeft}>
           <div className={s.shGaugeRow}>
             <div className={s.gaugeWrap}>
@@ -80,15 +79,9 @@ export default function ContractScoreHero({ s, result, address, onReanalyze }: P
               )}
             </div>
           </div>
-          {result.aiOpinion && (
-            <div className={s.shAiBox}>
-              <div className={s.shAiLabel}>AI 종합 의견</div>
-              <div className={s.shAiText}>{result.aiOpinion}</div>
-            </div>
-          )}
         </div>
 
-        {/* Right: stacked bar + summary */}
+        {/* Right: 조항 분포 */}
         <div className={s.shRight}>
           <div className={s.shBarSection}>
             <div className={s.shBarLabelRow}>
@@ -123,23 +116,29 @@ export default function ContractScoreHero({ s, result, address, onReanalyze }: P
               </div>
             </div>
           </div>
-
-          {topIssues.length > 0 && (
-            <div>
-              <div className={s.shSummaryTitle}>즉시 확인 필요</div>
-              <div className={s.shSummaryCards}>
-                {topIssues.map((issue) => (
-                  <div key={issue.id} className={`${s.shSumCard} ${s[sumCardKey[issue.severity]] ?? s.scWarning}`}>
-                    <span className={`${s.shSumSev} ${s[sumSevKey[issue.severity]] ?? s.sscWarning}`}>
-                      {severityMeta[issue.severity]?.label ?? "확인"}
-                    </span>
-                    <span className={s.shSumText}>{issue.title}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* Full-width: AI 종합 의견 (넘버링 항목별 줄바꿈) */}
+        {opinionBlocks.length > 0 && (
+          <div className={s.shOpinionFull}>
+            <div className={s.shAiLabel}>AI 종합 의견</div>
+            <div className={s.aiOpinion}>
+              {opinionBlocks.map((blk, i) => (
+                <div className={s.aiBlock} key={i}>
+                  {blk.label && <div className={s.aiBlockLabel}>{blk.label}</div>}
+                  {blk.lead && <p className={s.aiBlockLead}>{blk.lead}</p>}
+                  {blk.items.length > 0 && (
+                    <ul className={s.aiItemList}>
+                      {blk.items.map((it, j) => (
+                        <li className={s.aiItem} key={j}>{it}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

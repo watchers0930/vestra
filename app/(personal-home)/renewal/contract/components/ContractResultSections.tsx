@@ -15,15 +15,13 @@ interface Props {
   toggleClause: (i: number) => void;
   openTerms: Record<number, boolean>;
   toggleTerm: (i: number) => void;
-  activeSec: number;
-  scrollToSec: (id: string) => void;
   onReanalyze: () => void;
 }
 
 export default function ContractResultSections({
   s, result, address,
   openClauses, toggleClause, openTerms, toggleTerm,
-  activeSec, scrollToSec, onReanalyze,
+  onReanalyze,
 }: Props) {
   return (
     <div className={s.pageWrap}>
@@ -35,8 +33,6 @@ export default function ContractResultSections({
         toggleClause={toggleClause}
         openTerms={openTerms}
         toggleTerm={toggleTerm}
-        activeSec={activeSec}
-        scrollToSec={scrollToSec}
       />
     </div>
   );
