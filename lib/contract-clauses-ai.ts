@@ -149,7 +149,7 @@ export async function analyzeContractDeepAI(
       ],
       // 대용량 구조화 출력이라 medium은 지연이 커 504 유발 → low로 속도 확보(품질 유지)
       reasoning_effort: "low",
-      max_completion_tokens: 7000,
+      max_completion_tokens: 5000,
       response_format: { type: "json_object" },
     });
     const content = completion.choices[0]?.message?.content?.trim();
