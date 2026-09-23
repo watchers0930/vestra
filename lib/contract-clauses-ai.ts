@@ -11,7 +11,7 @@
  * @module lib/contract-clauses-ai
  */
 
-import { getOpenAIClient, OPENAI_MODEL, REASONING_ANALYTICAL } from "@/lib/openai";
+import { getOpenAIClient, OPENAI_MODEL } from "@/lib/openai";
 import { CONTRACT_DEEP_ANALYSIS_PROMPT } from "@/lib/prompts";
 import type { AnalyzedClause, MissingClause } from "@/lib/contract-analyzer";
 import type { RecommendedTermsResult, RecommendedTerm } from "@/lib/special-terms-recommender";
@@ -147,8 +147,9 @@ export async function analyzeContractDeepAI(
         { role: "system", content: CONTRACT_DEEP_ANALYSIS_PROMPT },
         { role: "user", content: userContent },
       ],
-      reasoning_effort: REASONING_ANALYTICAL,
-      max_completion_tokens: 9000,
+      // 대용량 구조화 출력이라 medium은 지연이 커 504 유발 → low로 속도 확보(품질 유지)
+      reasoning_effort: "low",
+      max_completion_tokens: 7000,
       response_format: { type: "json_object" },
     });
     const content = completion.choices[0]?.message?.content?.trim();
