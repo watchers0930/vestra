@@ -118,7 +118,10 @@ export async function extractContractInfoAI(
         { role: "user", content: text.slice(0, MAX_INPUT_CHARS) },
       ],
       reasoning_effort: REASONING_ANALYTICAL,
-      max_completion_tokens: 2000,
+      // propertyDetails(부동산 표시 표) 추가로 출력이 커졌다. medium reasoning 토큰이
+      // 예산을 함께 소모하므로 2000이면 잘려 JSON 파싱 실패→정규식 폴백이 간헐 발생.
+      // 여유 확보해 안정적으로 완결된 JSON을 받는다.
+      max_completion_tokens: 4000,
       response_format: { type: "json_object" },
     });
     const content = completion.choices[0]?.message?.content?.trim();
