@@ -52,6 +52,28 @@ describe("coerceExtractedAI", () => {
       expect(r.paymentSchedule).toEqual([]);
     }
   });
+
+  it("propertyDetails: label-value 표 항목을 정규화한다", () => {
+    const r = coerceExtractedAI({
+      propertyDetails: [
+        { label: "소재지", value: "서울특별시 금천구 가산동 219-5 813호" },
+        { label: "지목", value: "공장용지" },
+        { label: "건물 면적", value: "40.8㎡" },
+        { label: "", value: "라벨없음(제외)" },
+        { label: "값없음(제외)", value: "" },
+        { label: "숫자값(제외)", value: 123 },
+        "문자열(제외)",
+      ],
+    });
+    expect(r.propertyDetails).toHaveLength(3);
+    expect(r.propertyDetails![0]).toEqual({ label: "소재지", value: "서울특별시 금천구 가산동 219-5 813호" });
+    expect(r.propertyDetails![1].label).toBe("지목");
+  });
+
+  it("propertyDetails: 배열 아니면 빈 배열", () => {
+    expect(coerceExtractedAI({ propertyDetails: "x" }).propertyDetails).toEqual([]);
+    expect(coerceExtractedAI({}).propertyDetails).toEqual([]);
+  });
 });
 
 describe("mergeExtractedInfo", () => {

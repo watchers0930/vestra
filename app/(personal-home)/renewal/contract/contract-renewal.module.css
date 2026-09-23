@@ -214,6 +214,16 @@
 .kinfoVal{font-size:14px;font-weight:700;color:#1a1d2e;line-height:1.4}
 .kinfoSub{font-size:11.5px;color:#888;margin-top:3px}
 
+/* 부동산의 표시 (label-value 표) */
+.propSection{margin-bottom:18px}
+.propTitle{font-size:12.5px;font-weight:800;color:#1a1d2e;margin-bottom:8px}
+.propTable{border:1px solid #eef0f8;border-radius:12px;overflow:hidden}
+.propRow{display:grid;grid-template-columns:120px 1fr;border-top:1px solid #f1f2f8}
+.propRow:first-child{border-top:none}
+.propRowLabel{background:#f7f8fc;padding:10px 14px;font-size:12px;font-weight:600;color:#666;border-right:1px solid #f1f2f8}
+.propRowVal{padding:10px 14px;font-size:13px;font-weight:600;color:#1a1d2e;line-height:1.4;word-break:break-all}
+@media(max-width:768px){.propRow{grid-template-columns:96px 1fr}}
+
 /* Issue list */
 .issueCountBadge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;margin-top:8px;margin-bottom:16px}
 .icbRed{background:#fee2e2;color:#b91c1c}

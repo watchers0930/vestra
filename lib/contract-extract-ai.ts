@@ -10,7 +10,11 @@
 
 import { getOpenAIClient, OPENAI_MODEL, REASONING_ANALYTICAL } from "@/lib/openai";
 import { CONTRACT_EXTRACT_PROMPT } from "@/lib/prompts";
-import type { ContractExtractedInfo, ContractPaymentItem } from "@/lib/contract-analyzer";
+import type {
+  ContractExtractedInfo,
+  ContractPaymentItem,
+  ContractPropertyDetail,
+} from "@/lib/contract-analyzer";
 
 const MAX_INPUT_CHARS = 12000;
 
@@ -68,11 +72,27 @@ function coercePayments(v: unknown): ContractPaymentItem[] {
   return out;
 }
 
+/** "부동산의 표시" 표 항목 검증 (label·value 문자열, 상한·길이 제한) */
+function coercePropertyDetails(v: unknown): ContractPropertyDetail[] {
+  if (!Array.isArray(v)) return [];
+  const out: ContractPropertyDetail[] = [];
+  for (const raw of v.slice(0, 20)) {
+    if (!raw || typeof raw !== "object") continue;
+    const r = raw as Record<string, unknown>;
+    const label = toStr(r.label, 40);
+    const value = toStr(r.value, 300);
+    if (!label || !value) continue;
+    out.push({ label, value });
+  }
+  return out;
+}
+
 /** 모델 raw JSON → 검증된 부분 추출 결과 */
 export function coerceExtractedAI(raw: unknown): Partial<ContractExtractedInfo> {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   return {
     propertyAddress: toStr(r.propertyAddress),
+    propertyDetails: coercePropertyDetails(r.propertyDetails),
     landlordName: toName(r.landlordName),
     tenantName: toName(r.tenantName),
     depositAmount: toPosInt(r.depositAmount),

@@ -19,8 +19,14 @@ export interface ContractPaymentItem {
   rawText: string;
 }
 
+export interface ContractPropertyDetail {
+  label: string;
+  value: string;
+}
+
 export interface ContractExtractedInfo {
   propertyAddress?: string;
+  propertyDetails?: ContractPropertyDetail[];
   landlordName?: string;
   tenantName?: string;
   depositAmount?: number;

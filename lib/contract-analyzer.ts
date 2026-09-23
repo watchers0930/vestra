@@ -36,8 +36,15 @@ export interface ContractPaymentItem {
   rawText: string;
 }
 
+/** "부동산의 표시" 표의 항목 (계약서마다 항목이 달라 유연한 label-value 구조) */
+export interface ContractPropertyDetail {
+  label: string;
+  value: string;
+}
+
 export interface ContractExtractedInfo {
   propertyAddress?: string;
+  propertyDetails?: ContractPropertyDetail[];
   landlordName?: string;
   tenantName?: string;
   depositAmount?: number;
@@ -453,6 +460,10 @@ export function mergeExtractedInfo(
 
   const merged: ContractExtractedInfo = {
     propertyAddress: pick(override.propertyAddress, base.propertyAddress),
+    propertyDetails:
+      override.propertyDetails && override.propertyDetails.length > 0
+        ? override.propertyDetails
+        : base.propertyDetails,
     landlordName: pick(override.landlordName, base.landlordName),
     tenantName: pick(override.tenantName, base.tenantName),
     depositAmount: pick(override.depositAmount, base.depositAmount),

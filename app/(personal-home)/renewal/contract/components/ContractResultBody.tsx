@@ -48,6 +48,20 @@ export default function ContractResultBody({
     tabs.push({
       key: "info", tab: "핵심 정보", title: "핵심 계약 정보", eyebrow: "Key Information", dot: "rsdGray",
       body: (
+        <>
+        {info.propertyDetails && info.propertyDetails.length > 0 && (
+          <div className={s.propSection}>
+            <div className={s.propTitle}>부동산의 표시</div>
+            <div className={s.propTable}>
+              {info.propertyDetails.map((d, i) => (
+                <div className={s.propRow} key={i}>
+                  <div className={s.propRowLabel}>{d.label}</div>
+                  <div className={s.propRowVal}>{d.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div className={s.kinfoGrid}>
           {info.landlordName && (
             <div className={s.kinfoTile}>
@@ -91,6 +105,7 @@ export default function ContractResultBody({
             </div>
           )}
         </div>
+        </>
       ),
     });
   }

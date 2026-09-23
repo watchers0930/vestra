@@ -71,6 +71,26 @@ export function ContractExecutiveSummary({ extractedInfo, reviewIssues = [] }: P
             value={`임대인 ${extractedInfo?.landlordName || "미확인"} / 임차인 ${extractedInfo?.tenantName || "미확인"}`}
           />
         </div>
+        {!!extractedInfo?.propertyDetails?.length && (
+          <div style={{ marginTop: "14px", borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: "14px" }}>
+            <p style={{ fontSize: "12px", fontWeight: 800, color: "#6e6e73", marginBottom: "8px" }}>부동산의 표시</p>
+            <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: "12px", overflow: "hidden" }}>
+              {extractedInfo.propertyDetails.map((d, idx) => (
+                <div
+                  key={`${d.label}-${idx}`}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "120px 1fr",
+                    borderTop: idx === 0 ? "none" : "1px solid rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <div style={{ background: "#f7f7f9", padding: "10px 14px", fontSize: "12px", fontWeight: 600, color: "#6e6e73", borderRight: "1px solid rgba(0,0,0,0.06)" }}>{d.label}</div>
+                  <div style={{ padding: "10px 14px", fontSize: "13px", color: "#1d1d1f", lineHeight: 1.45, wordBreak: "break-all" }}>{d.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {!!extractedInfo?.paymentSchedule?.length && (
           <div style={{ marginTop: "14px", borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: "14px" }}>
             <p style={{ fontSize: "12px", fontWeight: 800, color: "#6e6e73", marginBottom: "8px" }}>지급 일정</p>
