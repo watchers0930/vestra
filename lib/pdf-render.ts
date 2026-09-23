@@ -16,7 +16,7 @@
  *
  * @module lib/pdf-render
  */
-import { getDocumentProxy, renderPageAsImage } from "unpdf";
+import { getDocumentProxy, renderPageAsImage, createIsomorphicCanvasFactory } from "unpdf";
 
 export interface RenderedImage {
   buffer: Buffer;
@@ -38,18 +38,21 @@ export async function renderPdfToImages(
 ): Promise<RenderedImage[]> {
   const scale = options?.scale ?? DEFAULT_SCALE;
   const maxPages = options?.maxPages ?? DEFAULT_MAX_PAGES;
+  const canvasImport = () => import("@napi-rs/canvas");
 
+  // ⚠️ CanvasFactory를 문서에 바인딩해야 스캔 이미지(image XObject)를 그릴 때 쓰는
+  // pdfjs 내부 보조 canvas가 동작한다. proxy를 CanvasFactory 없이 만들어 넘기면
+  // renderPageAsImage가 그 proxy를 그대로 써서, 이미지 페인팅 시 stub NodeCanvasFactory가
+  // "@napi-rs/canvas is not available"로 throw 한다(실제 스캔 계약서가 이 경로).
+  const CanvasFactory = await createIsomorphicCanvasFactory(canvasImport);
   // pdfjs가 입력 TypedArray의 buffer를 detach 하므로 복사본을 넘긴다.
   const data = new Uint8Array(buffer);
-  const pdf = await getDocumentProxy(data);
+  const pdf = await getDocumentProxy(data, { CanvasFactory });
   const pageCount = Math.min(pdf.numPages, maxPages);
 
   const images: RenderedImage[] = [];
   for (let i = 1; i <= pageCount; i++) {
-    const png = await renderPageAsImage(pdf, i, {
-      scale,
-      canvasImport: () => import("@napi-rs/canvas"),
-    });
+    const png = await renderPageAsImage(pdf, i, { scale, canvasImport });
     images.push({ buffer: Buffer.from(png), mimeType: "image/png" });
   }
 
