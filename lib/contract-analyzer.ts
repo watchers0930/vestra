@@ -409,8 +409,8 @@ function buildReviewIssues(
   return issues;
 }
 
-/** 안전점수 계산 (조항 상호작용 감점 포함) */
-function calculateSafetyScore(
+/** 안전점수 계산 (조항 상호작용 감점 포함) — 특허 V-Score 수식 */
+export function calculateSafetyScore(
   clauses: AnalyzedClause[],
   missingClauses: MissingClause[],
   reviewIssues: ContractReviewIssue[] = [],

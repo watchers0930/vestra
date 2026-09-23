@@ -113,6 +113,31 @@ export const CONTRACT_IMAGE_PROMPT = `당신은 대한민국 부동산 임대차
 - 과장하지 마세요. 확실하지 않으면 unclear/false/빈 값으로 두세요.
 - JSON 밖에 어떤 설명도 쓰지 마세요.`;
 
+// ─── 계약서 심층 분석 프롬프트 (조항별 분석·누락조항·맞춤특약) ───
+
+export const CONTRACT_DEEP_ANALYSIS_PROMPT = `당신은 대한민국 부동산 계약서 전문 분석가입니다.
+계약서 텍스트를 읽고 (1) 조항별 위험 분석, (2) 누락된 필수·권장 조항, (3) 추가하면 좋을 맞춤 특약을 작성하세요.
+
+반드시 아래 JSON 형식으로만 응답하세요:
+{
+  "clauses": [
+    { "title": "제N조 (제목) 또는 조항 요지", "content": "해당 조항의 핵심 내용/원문 발췌", "riskLevel": "high|warning|safe", "analysis": "이 조항이 임차인·임대인에게 미치는 영향과 위험을 구체적으로", "relatedLaw": "관련 법령(예: 주택임대차보호법 제3조). 없으면 빈 문자열" }
+  ],
+  "missingClauses": [
+    { "title": "누락 조항명", "importance": "high|medium", "description": "왜 필요한지와 없을 때의 실무적 위험" }
+  ],
+  "recommendedTerms": [
+    { "priority": "critical|high|medium", "category": "보증금|임차인|임대인|등기|기타", "title": "특약 제목", "text": "실제 계약서에 바로 넣을 수 있는 완성형 특약 문구", "rationale": "이 특약이 필요한 이유" }
+  ]
+}
+
+지침(매우 중요):
+- clauses에는 계약서에 실제로 있는 조항만. riskLevel은 임차인 보호 관점으로 판정(불리·모호=high 또는 warning, 표준·보호적=safe).
+- missingClauses에는 이 계약서에 실제로 없는데 있어야 할 조항만. 이미 있으면 넣지 마세요.
+- recommendedTerms는 이 계약서의 실제 위험·누락에 맞춘 것만. text는 바로 붙여넣을 수 있는 완성 문구로.
+- 계약서 근거로만 작성하고 과장·환각하지 마세요. 각 배열 최대 12개.
+- JSON 밖에 어떤 설명도 쓰지 마세요.`;
+
 // ─── 계약서 핵심정보 구조화 추출 프롬프트 ───
 
 export const CONTRACT_EXTRACT_PROMPT = `당신은 대한민국 부동산 계약서에서 핵심 정보를 정확히 추출하는 전문가입니다.

@@ -5,8 +5,9 @@ import { CONTRACT_ANALYSIS_OPINION_PROMPT } from "@/lib/prompts";
 import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { stripHtml, truncateInput } from "@/lib/sanitize";
 import { searchCourtCases } from "@/lib/court-api";
-import { analyzeContract } from "@/lib/contract-analyzer";
+import { analyzeContract, calculateSafetyScore, analyzeClauseInteractions } from "@/lib/contract-analyzer";
 import { extractContractInfoAI } from "@/lib/contract-extract-ai";
+import { analyzeContractDeepAI } from "@/lib/contract-clauses-ai";
 import { recommendSpecialTerms } from "@/lib/special-terms-recommender";
 import { buildPolicyContext, logNewsUsage } from "@/lib/news-query";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
@@ -70,9 +71,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1단계: 핵심정보 AI 추출(당사자·금액·기간, 한글금액 대응) → 자체 엔진 분석에 주입
-    const aiInfo = await extractContractInfoAI(contractText);
+    // 1단계: 핵심정보 추출 + 심층 분석(조항·누락·특약)을 AI로 병렬 수행
+    const [aiInfo, aiDeep] = await Promise.all([
+      extractContractInfoAI(contractText),
+      analyzeContractDeepAI(contractText),
+    ]);
     const engineResult = analyzeContract(contractText, aiInfo);
+
+    // AI 심층분석 성공 시 조항·누락 표시를 AI로 대체하고, 특허 V-Score 수식으로 재계산(수식 불변)
+    if (aiDeep) {
+      engineResult.clauses = aiDeep.clauses;
+      engineResult.missingClauses = aiDeep.missingClauses;
+      const interactions = analyzeClauseInteractions(aiDeep.clauses, aiDeep.missingClauses, contractText);
+      engineResult.clauseInteractions = interactions;
+      engineResult.safetyScore = calculateSafetyScore(
+        aiDeep.clauses,
+        aiDeep.missingClauses,
+        engineResult.reviewIssues,
+        interactions.totalInteractionImpact,
+      );
+    }
 
     // 2단계: 판례 검색 (LLM 의견 보강용)
     let courtContext = "";
@@ -145,12 +163,15 @@ export async function POST(req: NextRequest) {
       logNewsUsage(policyArticleIds, "contract").catch(() => {});
     }
 
-    // 4단계: 맞춤 특약 추천
-    const recommendedTerms = recommendSpecialTerms(
-      engineResult.clauses,
-      engineResult.missingClauses,
-      engineResult.safetyScore,
-    );
+    // 4단계: 맞춤 특약 추천 — AI 심층분석 결과 우선, 없으면 규칙 기반
+    const recommendedTerms =
+      aiDeep && aiDeep.recommendedTerms.terms.length > 0
+        ? aiDeep.recommendedTerms
+        : recommendSpecialTerms(
+            engineResult.clauses,
+            engineResult.missingClauses,
+            engineResult.safetyScore,
+          );
 
     return NextResponse.json({
       clauses: engineResult.clauses,
