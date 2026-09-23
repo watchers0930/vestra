@@ -13,6 +13,9 @@ import { buildPolicyContext, logNewsUsage } from "@/lib/news-query";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
 import { validateOrigin } from "@/lib/csrf";
 
+// 핵심정보 추출 + 심층분석 + 의견 AI 호출로 시간이 걸려 타임아웃 상향
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const csrfError = validateOrigin(req);
