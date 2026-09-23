@@ -440,9 +440,43 @@ function calculateSafetyScore(
   return Math.max(0, Math.min(100, score));
 }
 
+// ─── 핵심정보 병합 (AI 추출 우선, 정규식 폴백) ───
+
+/** AI 추출 결과(override)를 정규식 baseline 위에 필드별로 덮어쓴다. null/undefined는 폴백. */
+export function mergeExtractedInfo(
+  base: ContractExtractedInfo,
+  override?: Partial<ContractExtractedInfo> | null,
+): ContractExtractedInfo {
+  if (!override) return base;
+  const pick = <T>(o: T | undefined | null, b: T | undefined): T | undefined =>
+    o !== undefined && o !== null ? o : b;
+
+  const merged: ContractExtractedInfo = {
+    propertyAddress: pick(override.propertyAddress, base.propertyAddress),
+    landlordName: pick(override.landlordName, base.landlordName),
+    tenantName: pick(override.tenantName, base.tenantName),
+    depositAmount: pick(override.depositAmount, base.depositAmount),
+    monthlyRentAmount: pick(override.monthlyRentAmount, base.monthlyRentAmount),
+    contractStartDate: pick(override.contractStartDate, base.contractStartDate),
+    contractEndDate: pick(override.contractEndDate, base.contractEndDate),
+    durationMonths: pick(override.durationMonths, base.durationMonths),
+    paymentSchedule:
+      override.paymentSchedule && override.paymentSchedule.length > 0
+        ? override.paymentSchedule
+        : base.paymentSchedule,
+  };
+  if (merged.durationMonths === undefined) {
+    merged.durationMonths = monthDiff(merged.contractStartDate, merged.contractEndDate);
+  }
+  return merged;
+}
+
 // ─── 메인 분석 함수 ───
 
-export function analyzeContract(contractText: string): ContractAnalysisResult {
+export function analyzeContract(
+  contractText: string,
+  infoOverride?: Partial<ContractExtractedInfo> | null,
+): ContractAnalysisResult {
   // 조항 파싱
   const sections = parseContractSections(contractText);
 
@@ -475,7 +509,8 @@ export function analyzeContract(contractText: string): ContractAnalysisResult {
 
   // 누락 조항 검사
   const missingClauses = checkMissingClauses(contractText);
-  const extractedInfo = extractContractInfo(contractText);
+  // 정규식 baseline + AI 추출 override 병합 (AI 우선)
+  const extractedInfo = mergeExtractedInfo(extractContractInfo(contractText), infoOverride);
   const reviewIssues = buildReviewIssues(contractText, extractedInfo, missingClauses);
 
   // 조항 상호작용 분석 (특허: 교차 위험 탐지)

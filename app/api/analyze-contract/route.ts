@@ -6,6 +6,7 @@ import { rateLimit, rateLimitHeaders, checkDailyUsage } from "@/lib/rate-limit";
 import { stripHtml, truncateInput } from "@/lib/sanitize";
 import { searchCourtCases } from "@/lib/court-api";
 import { analyzeContract } from "@/lib/contract-analyzer";
+import { extractContractInfoAI } from "@/lib/contract-extract-ai";
 import { recommendSpecialTerms } from "@/lib/special-terms-recommender";
 import { buildPolicyContext, logNewsUsage } from "@/lib/news-query";
 import { auth, ROLE_LIMITS } from "@/lib/auth";
@@ -69,8 +70,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1단계: 자체 엔진으로 계약서 분석
-    const engineResult = analyzeContract(contractText);
+    // 1단계: 핵심정보 AI 추출(당사자·금액·기간, 한글금액 대응) → 자체 엔진 분석에 주입
+    const aiInfo = await extractContractInfoAI(contractText);
+    const engineResult = analyzeContract(contractText, aiInfo);
 
     // 2단계: 판례 검색 (LLM 의견 보강용)
     let courtContext = "";
