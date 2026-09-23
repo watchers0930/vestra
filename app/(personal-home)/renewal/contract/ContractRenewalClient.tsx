@@ -153,9 +153,8 @@ export default function ContractRenewalClient() {
             {inputTab === "file" && (
               <div>
                 <div className={s.inputBody}>
-                  <div
+                  <label
                     className={s.fileDrop}
-                    onClick={() => { if (!isExtracting) fileInputRef.current?.click(); }}
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
@@ -172,6 +171,7 @@ export default function ContractRenewalClient() {
                       ref={fileInputRef}
                       onChange={handleFileChange}
                       accept=".pdf,.txt,.jpg,.jpeg,.png,image/jpeg,image/png"
+                      disabled={isExtracting}
                       style={{ display: "none" }}
                     />
                     <div className={s.fileDropIco}>
@@ -191,7 +191,7 @@ export default function ContractRenewalClient() {
                           ? "아래 [계약서 AI 분석하기] 버튼을 눌러 분석을 시작하세요."
                           : "지원 형식: PDF, TXT, 이미지(JPG·PNG) · 계약서 사진·스캔본 인식 · 최대 10MB"}
                     </div>
-                  </div>
+                  </label>
                 </div>
               </div>
             )}

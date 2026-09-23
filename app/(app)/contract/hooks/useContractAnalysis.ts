@@ -99,7 +99,7 @@ export function useContractAnalysis() {
   }, []);
 
   const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
+    (e: React.DragEvent<HTMLElement>) => {
       e.preventDefault();
       setIsDragging(false);
       const file = e.dataTransfer.files[0];
@@ -108,7 +108,7 @@ export function useContractAnalysis() {
     [readFile]
   );
 
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     setIsDragging(true);
   }, []);

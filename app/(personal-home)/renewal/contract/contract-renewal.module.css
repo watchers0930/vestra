@@ -62,7 +62,7 @@
 .sampleBtn{height:38px;padding:0 16px;background:#f0f2fd;color:#2e4bd8;border:1px solid #c4cdf0;border-radius:8px;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s}
 .sampleBtn:hover{background:#e0e5fb}
 
-.fileDrop{border:2px dashed #d0d4e8;border-radius:12px;padding:48px 24px;text-align:center;cursor:pointer;transition:border-color .15s}
+.fileDrop{display:block;border:2px dashed #d0d4e8;border-radius:12px;padding:48px 24px;text-align:center;cursor:pointer;transition:border-color .15s}
 .fileDrop:hover{border-color:#2e4bd8}
 .fileDropIco{font-size:36px;margin-bottom:12px;opacity:.5}
 .fileDropT{font-size:14px;font-weight:600;color:#555;margin-bottom:6px}

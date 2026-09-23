@@ -21,8 +21,8 @@ interface Props {
   setShowSampleMenu: (v: boolean) => void;
   sampleMenuRef: React.RefObject<HTMLDivElement | null>;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
-  handleDrop: (e: React.DragEvent<HTMLDivElement>) => void;
-  handleDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+  handleDrop: (e: React.DragEvent<HTMLElement>) => void;
+  handleDragOver: (e: React.DragEvent<HTMLElement>) => void;
   handleDragLeave: () => void;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleAnalyze: () => void;
@@ -197,12 +197,11 @@ export function ContractInputCard({
           {/* 파일 업로드 */}
           {inputMode === "file" && (
             <>
-              <div
+              <label
+                htmlFor="contract-file-input"
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
-                onClick={() => fileInputRef.current?.click()}
-                role="button"
                 aria-label={fileName ? `업로드된 파일: ${fileName}. 클릭하여 변경` : "계약서 파일 업로드"}
                 style={{
                   border: `2px dashed ${isDragging ? "var(--brand-primary)" : fileName ? "var(--accent-positive)" : "rgba(0,0,0,0.12)"}`,
@@ -243,12 +242,14 @@ export function ContractInputCard({
                     </div>
                   </>
                 )}
-              </div>
+              </label>
               <input
+                id="contract-file-input"
                 ref={fileInputRef}
                 type="file"
                 accept=".txt,.pdf,.jpg,.jpeg,.png,image/jpeg,image/png"
                 onChange={handleFileChange}
+                disabled={isExtracting}
                 aria-label="계약서 파일 선택"
                 className="hidden"
               />
