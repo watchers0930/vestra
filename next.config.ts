@@ -50,6 +50,9 @@ const mapCSP = baseCSP.includes("'unsafe-eval'")
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: process.cwd(),
+  // 네이티브 모듈(@napi-rs/canvas)은 번들링하지 않고 런타임에 node_modules에서
+  // 로드해야 서버리스에서 .node 바이너리가 정상 동작한다. (PDF→이미지 렌더용)
+  serverExternalPackages: ["@napi-rs/canvas"],
   images: {
     remotePatterns: [
       {

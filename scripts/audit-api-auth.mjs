@@ -37,6 +37,7 @@ const ALLOWLIST = {
   "extract-pdf/route.ts": "공개 PDF 추출 — rate limit",
   "landlord/report/route.ts": "비회원 임대인 제보 — IP rate limit(일 3건) + CSRF",
   "e-contracts/sign/[token]/route.ts": "공개 서명 링크 — URL 토큰(signToken) 자체가 인증 + 만료·상태 검증",
+  "poc-pdf-render/route.ts": "[임시 PoC] 서버리스 PDF 렌더 실증 — URL 토큰(k) 검증, 검증 후 제거 예정",
 };
 
 const MUTATION_RE = /export\s+(?:async\s+function|const)\s+(POST|PUT|PATCH|DELETE)\b/g;
