@@ -14,6 +14,7 @@ import {
   detectRegistryConfidence,
   type PDFExtractResult,
 } from "@/lib/pdf-parser";
+import { renderPdfToImages } from "@/lib/pdf-render";
 
 // ---------------------------------------------------------------------------
 // 상수
@@ -60,9 +61,14 @@ export function assertLegibleOcr(text: string): void {
 // ---------------------------------------------------------------------------
 
 async function extractWithVision(
-  images: { buffer: Buffer; mimeType: string }[]
+  images: { buffer: Buffer; mimeType: string }[],
+  options?: { systemPrompt?: string; userPrompt?: string }
 ): Promise<string> {
   const openai = getOpenAIClient();
+
+  const systemPrompt = options?.systemPrompt ?? IMAGE_OCR_PROMPT;
+  const userText =
+    options?.userPrompt ?? "이 등기부등본 이미지에서 모든 텍스트를 추출해주세요.";
 
   const imageContents = images.map((img) => ({
     type: "image_url" as const,
@@ -77,11 +83,11 @@ async function extractWithVision(
       const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
         messages: [
-          { role: "system", content: IMAGE_OCR_PROMPT },
+          { role: "system", content: systemPrompt },
           {
             role: "user",
             content: [
-              { type: "text", text: "이 등기부등본 이미지에서 모든 텍스트를 추출해주세요." },
+              { type: "text", text: userText },
               ...imageContents,
             ],
           },
@@ -121,10 +127,33 @@ export async function extractTextFromScannedPDF(
     userPrompt?: string;
   }
 ): Promise<PDFExtractResult> {
+  // 1) 서버 렌더 → 이미지 OCR (회전 플래그 반영 → 눕힌 스캔의 상단 표 누락 방지).
+  //    렌더 성공 후의 OCR 판독불가 에러는 그대로 전파한다(같은 원본이라 폴백해도 무의미).
+  //    렌더 자체 실패(네이티브 canvas 미로드 등)만 아래 Responses API 경로로 폴백한다.
+  let renderedImages: { buffer: Buffer; mimeType: string }[] | null = null;
+  try {
+    renderedImages = await renderPdfToImages(buffer);
+  } catch (renderErr) {
+    console.warn(`[PDF OCR] 서버 렌더 실패 → Responses API 폴백: ${fileName}`, renderErr);
+  }
+  if (renderedImages) {
+    console.info(`[PDF OCR] 서버 렌더 후 이미지 OCR: ${fileName} (${renderedImages.length}p)`);
+    return extractTextFromImages(renderedImages, `${fileName} (스캔 PDF → 렌더 OCR)`, {
+      systemPrompt: options?.systemPrompt,
+      userPrompt:
+        options?.userPrompt ??
+        (options?.skipRegistryNormalization
+          ? "이 PDF 문서의 모든 텍스트를 표·숫자·항목 빠짐없이 추출해주세요."
+          : undefined),
+      skipRegistryNormalization: options?.skipRegistryNormalization,
+    });
+  }
+
+  // 2) 폴백: 기존 Responses API input_file 경로
   const openai = getOpenAIClient();
   const base64 = buffer.toString("base64");
 
-  console.info(`[PDF OCR] Responses API input_file로 스캔 PDF 처리: ${fileName}`);
+  console.info(`[PDF OCR] Responses API input_file로 스캔 PDF 처리(폴백): ${fileName}`);
 
   let extractedText = "";
   const systemPrompt = options?.systemPrompt ?? IMAGE_OCR_PROMPT;
@@ -206,15 +235,35 @@ export async function extractTextFromScannedPDF(
 
 export async function extractTextFromImages(
   images: { buffer: Buffer; mimeType: string }[],
-  fileName: string = "image.jpg"
+  fileName: string = "image.jpg",
+  options?: {
+    systemPrompt?: string;
+    userPrompt?: string;
+    skipRegistryNormalization?: boolean;
+  }
 ): Promise<PDFExtractResult> {
-  const extractedText = await extractWithVision(images);
+  const extractedText = await extractWithVision(images, {
+    systemPrompt: options?.systemPrompt,
+    userPrompt: options?.userPrompt,
+  });
 
   assertLegibleOcr(extractedText);
   if (!extractedText || extractedText.length < 20) {
     throw new Error(
-      "이미지에서 텍스트를 추출할 수 없습니다. 선명한 등기부등본 이미지를 업로드해주세요."
+      "이미지에서 텍스트를 추출할 수 없습니다. 선명한 문서 이미지를 업로드해주세요."
     );
+  }
+
+  // 등기부가 아닌 일반 문서(계약서 등)는 등기부 정규화 스킵
+  if (options?.skipRegistryNormalization) {
+    return {
+      text: extractedText,
+      pageCount: images.length,
+      fileName: `${fileName} (AI OCR)`,
+      charCount: extractedText.length,
+      isRegistry: false,
+      confidence: 0,
+    };
   }
 
   const normalizedText = normalizeRegistryText(extractedText);
