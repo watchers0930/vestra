@@ -77,9 +77,11 @@ export function parseOpinion(text: string): OpinionBlock[] {
       label = m[1].trim();
       rest = m[2].trim();
     }
-    // 넘버링 마커 "(1)" 또는 "1)" 앞에서 분리
+    // 넘버링 마커 앞에서 분리.
+    //  - 괄호형 "(1)": 여는 괄호 뒤 숫자만 (본문 괄호 "(안전점수 57)"은 여는 괄호 뒤가 숫자가 아니라 제외)
+    //  - 맨숫자형 "1)": 1~29만, 앞이 여는괄호·숫자·소수점·쉼표가 아닐 때 (금액·본문 괄호 안 숫자 오인 방지)
     const parts = rest
-      .split(/(?=\(\d+\)|(?<!\()\d+\))/g)
+      .split(/(?=\(\d+\))|(?<![(\d.,])(?=(?:[1-9]|1\d|2\d)\))/g)
       .map((p) => p.trim())
       .filter(Boolean);
 
