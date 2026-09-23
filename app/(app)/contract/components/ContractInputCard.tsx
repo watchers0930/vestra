@@ -14,6 +14,7 @@ interface Props {
   setError: (err: string | null) => void;
   fileName: string | null;
   isExtracting: boolean;
+  extractProgress: number;
   isLoading: boolean;
   error: string | null;
   isDragging: boolean;
@@ -37,7 +38,7 @@ const MODES = [
 export function ContractInputCard({
   inputMode, setInputMode,
   contractText, setContractText, setError,
-  fileName, isExtracting, isLoading, error,
+  fileName, isExtracting, extractProgress, isLoading, error,
   isDragging, showSampleMenu, setShowSampleMenu,
   sampleMenuRef, fileInputRef,
   handleDrop, handleDragOver, handleDragLeave,
@@ -218,13 +219,16 @@ export function ContractInputCard({
                 }}
               >
                 {isExtracting ? (
-                  <>
-                    <div style={{ fontSize: "36px" }} className="animate-spin">⏳</div>
-                    <div style={{ textAlign: "center" }}>
-                      <p style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--brand-primary)" }}>계약서를 인식하고 있습니다…</p>
-                      <p style={{ fontSize: "11.5px", color: "#8e8e93", marginTop: "4px" }}>이미지·PDF는 AI가 글자를 읽는 중입니다. 잠시만 기다려 주세요.</p>
+                  <div style={{ width: "100%", maxWidth: "420px", textAlign: "center" }}>
+                    <p style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--brand-primary)", marginBottom: "10px" }}>계약서를 인식하고 있습니다…</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <div style={{ flex: 1, height: "8px", background: "rgba(0,0,0,0.08)", borderRadius: "99px", overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${extractProgress}%`, background: "var(--brand-primary)", borderRadius: "99px", transition: "width 0.3s ease" }} />
+                      </div>
+                      <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--brand-primary)", minWidth: "38px", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{extractProgress}%</span>
                     </div>
-                  </>
+                    <p style={{ fontSize: "11.5px", color: "#8e8e93", marginTop: "10px" }}>이미지·PDF는 AI가 글자를 읽는 중입니다. 잠시만 기다려 주세요.</p>
+                  </div>
                 ) : fileName ? (
                   <>
                     <div style={{ fontSize: "36px" }}>📋</div>

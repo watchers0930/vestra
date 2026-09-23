@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AlertTriangle, FileText, Loader2 } from "lucide-react";
+import { AlertTriangle, FileText } from "lucide-react";
 import s from "./contract-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import SiteFooter from "@/components/layout/SiteFooter";
@@ -19,7 +19,7 @@ const SAMPLES: Record<string, string> = {
 export default function ContractRenewalClient() {
   const {
     contractText, setContractText,
-    fileName, contractIntegrity, isExtracting, isLoading, result,
+    fileName, contractIntegrity, isExtracting, extractProgress, isLoading, result,
     error, setError,
     isDragging,
     fileInputRef,
@@ -174,23 +174,30 @@ export default function ContractRenewalClient() {
                       disabled={isExtracting}
                       style={{ display: "none" }}
                     />
-                    <div className={s.fileDropIco}>
-                      {isExtracting ? <Loader2 size={36} className={s.spin} /> : <FileText size={36} />}
-                    </div>
-                    <div className={s.fileDropT}>
-                      {isExtracting
-                        ? "계약서를 인식하고 있습니다…"
-                        : fileName
-                          ? `${fileName} — 인식 완료`
-                          : "계약서 파일을 여기에 끌어다 놓거나 클릭하세요"}
-                    </div>
-                    <div className={s.fileDropS}>
-                      {isExtracting
-                        ? "이미지·PDF는 AI가 글자를 읽는 중입니다. 잠시만 기다려 주세요."
-                        : fileName
-                          ? "아래 [계약서 AI 분석하기] 버튼을 눌러 분석을 시작하세요."
-                          : "지원 형식: PDF, TXT, 이미지(JPG·PNG) · 계약서 사진·스캔본 인식 · 최대 10MB"}
-                    </div>
+                    {isExtracting ? (
+                      <>
+                        <div className={s.fileDropT}>계약서를 인식하고 있습니다…</div>
+                        <div className={s.progressWrap}>
+                          <div className={s.progressBar}>
+                            <div className={s.progressFill} style={{ width: `${extractProgress}%` }} />
+                          </div>
+                          <span className={s.progressPct}>{extractProgress}%</span>
+                        </div>
+                        <div className={s.fileDropS}>이미지·PDF는 AI가 글자를 읽는 중입니다. 잠시만 기다려 주세요.</div>
+                      </>
+                    ) : (
+                      <>
+                        <div className={s.fileDropIco}><FileText size={36} /></div>
+                        <div className={s.fileDropT}>
+                          {fileName ? `${fileName} — 인식 완료` : "계약서 파일을 여기에 끌어다 놓거나 클릭하세요"}
+                        </div>
+                        <div className={s.fileDropS}>
+                          {fileName
+                            ? "아래 [계약서 AI 분석하기] 버튼을 눌러 분석을 시작하세요."
+                            : "지원 형식: PDF, TXT, 이미지(JPG·PNG) · 계약서 사진·스캔본 인식 · 최대 10MB"}
+                        </div>
+                      </>
+                    )}
                   </label>
                 </div>
               </div>

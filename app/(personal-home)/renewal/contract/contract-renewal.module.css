@@ -33,8 +33,11 @@
 
 /* PAGE WRAP */
 .pageWrap{max-width:1200px;margin:0 auto;padding:40px 32px 80px}
-.spin{animation:cr-spin 1s linear infinite;color:#2e4bd8}
-@keyframes cr-spin{to{transform:rotate(360deg)}}
+/* 업로드/OCR 진행률 바 */
+.progressWrap{display:flex;align-items:center;gap:12px;max-width:420px;margin:4px auto 10px;width:100%}
+.progressBar{flex:1;height:8px;background:#e8ebf5;border-radius:99px;overflow:hidden}
+.progressFill{height:100%;background:linear-gradient(90deg,#2e4bd8,#5b7cfa);border-radius:99px;transition:width .3s ease}
+.progressPct{font-size:13px;font-weight:700;color:#2e4bd8;min-width:38px;text-align:right;font-variant-numeric:tabular-nums}
 
 /* INPUT VIEW */
 .inputNotice{background:#fffbeb;border:1px solid #fbbf24;border-radius:12px;padding:14px 18px;display:flex;align-items:flex-start;gap:12px;margin-bottom:28px}

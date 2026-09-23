@@ -12,6 +12,7 @@ export function useContractAnalysis() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [contractIntegrity, setContractIntegrity] = useState<ContractImageIntegrity | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [extractProgress, setExtractProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +60,14 @@ export function useContractAnalysis() {
       setContractIntegrity(null);
       setContractText("");
       setIsExtracting(true);
+      setExtractProgress(0);
+      // OCR은 서버 단일 처리라 실제 진행률이 없어, 예상 소요시간 기반으로
+      // 95%까지 완만히 증가시키고 완료 시 100%로 채운다.
+      let prog = 0;
+      const timer = setInterval(() => {
+        prog = prog + (95 - prog) * 0.06;
+        setExtractProgress(Math.min(95, Math.round(prog)));
+      }, 200);
       try {
         const formData = new FormData();
         formData.append("file", file);
@@ -69,6 +78,7 @@ export function useContractAnalysis() {
         setContractText(data.text);
         // 이미지 기반 무결성 신호(서명·날인·수기정정·공란 등) — 이미지 업로드에서만 제공
         setContractIntegrity(data.contractIntegrity ?? null);
+        setExtractProgress(100);
         setError(null);
       } catch (e) {
         setError(
@@ -81,6 +91,7 @@ export function useContractAnalysis() {
         setFileName(null);
         setContractIntegrity(null);
       } finally {
+        clearInterval(timer);
         setIsExtracting(false);
       }
       return;
@@ -190,6 +201,7 @@ export function useContractAnalysis() {
     fileName,
     contractIntegrity,
     isExtracting,
+    extractProgress,
     isLoading,
     result,
     error, setError,
