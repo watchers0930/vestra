@@ -42,12 +42,16 @@ export function assertLegibleOcr(text: string): void {
   const t = (text || "").trim();
   const compact = t.replace(/\s/g, "");
   if (compact.length < 15 || /^판독\s*불가/.test(t) || compact === "판독불가") {
-    throw new Error("스캔·사진이 흐려 문서를 읽을 수 없습니다. 더 선명한 파일로 다시 올려주세요.");
+    throw new Error(
+      "스캔·사진이 흐리거나 옆으로 눕혀져 있어 읽지 못했습니다. 문서를 똑바로 세우고 선명하게 다시 올려주세요."
+    );
   }
   const qMarks = (t.match(/\[\?\]/g) || []).length;
   const meaningful = compact.length || 1;
   if (qMarks >= 10 && qMarks / meaningful > 0.06) {
-    throw new Error("스캔·사진이 흐려 일부만 인식됐습니다. 더 선명한 파일로 다시 올려주세요.");
+    throw new Error(
+      "스캔·사진이 흐려 일부만 인식됐습니다. 문서를 똑바로 세우고 더 선명하게 다시 올려주세요."
+    );
   }
 }
 
