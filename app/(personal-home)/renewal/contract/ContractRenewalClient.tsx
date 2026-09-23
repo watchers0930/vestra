@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AlertTriangle, FileText } from "lucide-react";
 import s from "./contract-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
@@ -62,6 +62,17 @@ export default function ContractRenewalClient() {
 
   const resultAddress = result?.extractedInfo?.propertyAddress || fileName || "직접 입력 계약서";
 
+  // OCR 완료 시 인식 결과를 검토·수정하도록 텍스트 탭으로 전환
+  const wasExtracting = useRef(false);
+  useEffect(() => {
+    if (wasExtracting.current && !isExtracting && fileName && contractText.trim()) {
+      // 비동기 OCR 완료 시점에 인식 결과 검토 탭으로 전환 (외부 이벤트 반응)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setInputTab("text");
+    }
+    wasExtracting.current = isExtracting;
+  }, [isExtracting, fileName, contractText]);
+
   return (
     <>
       {/* NAV */}
@@ -121,6 +132,12 @@ export default function ContractRenewalClient() {
               <div>
                 <div className={s.inputBody}>
                   <div>
+                    {fileName && (
+                      <div style={{ display: "flex", gap: "8px", alignItems: "flex-start", padding: "10px 12px", marginBottom: "10px", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: "10px", fontSize: "12.5px", color: "#9a3412", lineHeight: 1.5 }}>
+                        <span aria-hidden>📄</span>
+                        <span><b>{fileName}</b>에서 인식한 내용입니다. 스캔·사진은 글자가 잘못 인식될 수 있으니, 아래 내용이 실제 계약서와 맞는지 확인하고 다르면 수정한 뒤 분석하세요.</span>
+                      </div>
+                    )}
                     <div className={s.inputLabelRow}>
                       <span className={s.inputLabel}>계약서 내용</span>
                       <span className={s.inputCharCnt}>{contractText.length.toLocaleString()} / 20,000자</span>

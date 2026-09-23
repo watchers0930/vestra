@@ -179,6 +179,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error: unknown) {
+    // 판독불가(흐린 스캔) 에러는 조작 대신 사용자에게 재업로드를 안내
+    const msg = error instanceof Error ? error.message : "";
+    if (msg.includes("선명한 파일")) {
+      return NextResponse.json({ error: msg }, { status: 422 });
+    }
     return handleApiError(error, "PDF 추출");
   }
 }
