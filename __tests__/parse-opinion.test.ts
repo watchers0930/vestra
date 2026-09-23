@@ -11,8 +11,17 @@ describe("parseOpinion", () => {
     const blocks = parseOpinion(text);
     expect(blocks).toHaveLength(2);
     expect(blocks[0].label).toBe("계약서 전반 안전성 평가");
-    expect(blocks[0].lead).toBe("기본 골격은 존재합니다.");
+    expect(blocks[0].lines).toEqual(["기본 골격은 존재합니다."]);
     expect(blocks[1].label).toBe("판례");
+  });
+
+  it("넘버링 없는 산문을 문장 단위로 줄바꿈한다", () => {
+    const text = "보증금 반환 조건이 불명확합니다. 등기부 근저당이 존재합니다. 확정일자 취득이 필요합니다.";
+    const [blk] = parseOpinion(text);
+    expect(blk.items).toEqual([]);
+    expect(blk.lines).toHaveLength(3);
+    expect(blk.lines[0]).toBe("보증금 반환 조건이 불명확합니다.");
+    expect(blk.lines[2]).toBe("확정일자 취득이 필요합니다.");
   });
 
   it("괄호형 (1) 넘버링 항목을 줄바꿈 항목으로 분리한다", () => {
@@ -22,7 +31,7 @@ describe("parseOpinion", () => {
     expect(blk.items[0].startsWith("(1)")).toBe(true);
     expect(blk.items[2].startsWith("(3)")).toBe(true);
     // '(' 가 앞 항목에 떨어져 나가지 않아야 한다
-    expect(blk.lead).toBe("임차인 관점에서는");
+    expect(blk.lines).toEqual(["임차인 관점에서는"]);
   });
 
   it("N) 형식 넘버링도 분리한다", () => {
@@ -33,11 +42,11 @@ describe("parseOpinion", () => {
     expect(blk.items[0].startsWith("1)")).toBe(true);
   });
 
-  it("넘버링이 없으면 items는 비고 lead에 전체가 담긴다", () => {
+  it("넘버링이 없으면 items는 비고 lines에 문장이 담긴다", () => {
     const text = "보증금 반환 조건이 명확하지 않습니다.";
     const [blk] = parseOpinion(text);
     expect(blk.items).toEqual([]);
-    expect(blk.lead).toContain("보증금 반환");
+    expect(blk.lines[0]).toContain("보증금 반환");
   });
 
   it("숫자로 시작하는 문단을 라벨로 오인하지 않는다", () => {

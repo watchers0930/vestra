@@ -126,7 +126,9 @@ export default function ContractScoreHero({ s, result, address, onReanalyze }: P
               {opinionBlocks.map((blk, i) => (
                 <div className={s.aiBlock} key={i}>
                   {blk.label && <div className={s.aiBlockLabel}>{blk.label}</div>}
-                  {blk.lead && <p className={s.aiBlockLead}>{blk.lead}</p>}
+                  {blk.lines.map((ln, k) => (
+                    <p className={s.aiBlockLead} key={k}>{ln}</p>
+                  ))}
                   {blk.items.length > 0 && (
                     <ul className={s.aiItemList}>
                       {blk.items.map((it, j) => (

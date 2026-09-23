@@ -54,11 +54,19 @@ export const termPriorityMeta: Record<string, { label: string; classKey: string 
 
 export type Styles = Record<string, string>;
 
-// AI 종합 의견 파싱 — 문단(라벨: 본문) + 넘버링 항목별 줄바꿈용 구조화
+// AI 종합 의견 파싱 — 문단(라벨: 본문) + 문장/넘버링 항목별 줄바꿈용 구조화
 export interface OpinionBlock {
   label?: string;
-  lead: string;
-  items: string[];
+  lines: string[]; // 서술 문장들(넘버링 항목 앞)
+  items: string[]; // 넘버링 항목
+}
+
+// 문장 단위 분리 (마침표·물음표·느낌표·… 뒤 공백)
+function splitSentences(text: string): string[] {
+  return text
+    .split(/(?<=[.!?…])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 export function parseOpinion(text: string): OpinionBlock[] {
@@ -92,6 +100,7 @@ export function parseOpinion(text: string): OpinionBlock[] {
       else if (!lead) lead = p;
       else items.push(p);
     });
-    return { label, lead, items };
+    // 넘버링이 없으면 서술을 문장 단위로 줄바꿈해 가독성 확보
+    return { label, lines: splitSentences(lead), items };
   });
 }

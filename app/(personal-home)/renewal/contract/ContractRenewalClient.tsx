@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AlertTriangle, FileText } from "lucide-react";
+import { AlertTriangle, FileText, Loader2 } from "lucide-react";
 import s from "./contract-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import SiteFooter from "@/components/layout/SiteFooter";
@@ -19,7 +19,7 @@ const SAMPLES: Record<string, string> = {
 export default function ContractRenewalClient() {
   const {
     contractText, setContractText,
-    fileName, contractIntegrity, isLoading, result,
+    fileName, contractIntegrity, isExtracting, isLoading, result,
     error, setError,
     isDragging,
     fileInputRef,
@@ -155,11 +155,17 @@ export default function ContractRenewalClient() {
                 <div className={s.inputBody}>
                   <div
                     className={s.fileDrop}
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => { if (!isExtracting) fileInputRef.current?.click(); }}
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
-                    style={isDragging ? { borderColor: "#2e4bd8" } : undefined}
+                    style={
+                      isExtracting
+                        ? { borderColor: "#2e4bd8", background: "#f8f9ff", cursor: "default" }
+                        : isDragging
+                          ? { borderColor: "#2e4bd8" }
+                          : undefined
+                    }
                   >
                     <input
                       type="file"
@@ -168,11 +174,23 @@ export default function ContractRenewalClient() {
                       accept=".pdf,.txt,.jpg,.jpeg,.png,image/jpeg,image/png"
                       style={{ display: "none" }}
                     />
-                    <div className={s.fileDropIco}><FileText size={36} /></div>
-                    <div className={s.fileDropT}>
-                      {fileName ? `${fileName} — 업로드 완료` : "계약서 파일을 여기에 끌어다 놓거나 클릭하세요"}
+                    <div className={s.fileDropIco}>
+                      {isExtracting ? <Loader2 size={36} className={s.spin} /> : <FileText size={36} />}
                     </div>
-                    <div className={s.fileDropS}>지원 형식: PDF, TXT, 이미지(JPG·PNG) · 계약서 사진·스캔본 인식 · 최대 10MB</div>
+                    <div className={s.fileDropT}>
+                      {isExtracting
+                        ? "계약서를 인식하고 있습니다…"
+                        : fileName
+                          ? `${fileName} — 인식 완료`
+                          : "계약서 파일을 여기에 끌어다 놓거나 클릭하세요"}
+                    </div>
+                    <div className={s.fileDropS}>
+                      {isExtracting
+                        ? "이미지·PDF는 AI가 글자를 읽는 중입니다. 잠시만 기다려 주세요."
+                        : fileName
+                          ? "아래 [계약서 AI 분석하기] 버튼을 눌러 분석을 시작하세요."
+                          : "지원 형식: PDF, TXT, 이미지(JPG·PNG) · 계약서 사진·스캔본 인식 · 최대 10MB"}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -182,7 +200,7 @@ export default function ContractRenewalClient() {
               <div className={s.inputHint}>
                 분석 결과는 참고용이며 법적 효력이 없습니다.<br />중요한 계약 전 반드시 법률 전문가의 검토를 받으세요.
               </div>
-              <button className={s.analyzeBtn} onClick={handleAnalyze} disabled={isLoading}>
+              <button className={s.analyzeBtn} onClick={handleAnalyze} disabled={isLoading || isExtracting}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8" />
                   <path d="m21 21-4.3-4.3" />

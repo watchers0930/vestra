@@ -11,6 +11,7 @@ export function useContractAnalysis() {
   const [contractText, setContractText] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
   const [contractIntegrity, setContractIntegrity] = useState<ContractImageIntegrity | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +57,8 @@ export function useContractAnalysis() {
       setFileName(file.name);
       setError(null);
       setContractIntegrity(null);
+      setContractText("");
+      setIsExtracting(true);
       try {
         const formData = new FormData();
         formData.append("file", file);
@@ -77,6 +80,8 @@ export function useContractAnalysis() {
         );
         setFileName(null);
         setContractIntegrity(null);
+      } finally {
+        setIsExtracting(false);
       }
       return;
     }
@@ -184,6 +189,7 @@ export function useContractAnalysis() {
     contractText, setContractText,
     fileName,
     contractIntegrity,
+    isExtracting,
     isLoading,
     result,
     error, setError,

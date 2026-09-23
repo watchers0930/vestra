@@ -26,7 +26,7 @@ export default function ContractReviewPage() {
   const {
     inputMode, setInputMode,
     contractText, setContractText,
-    fileName, contractIntegrity, isLoading, result,
+    fileName, contractIntegrity, isExtracting, isLoading, result,
     error, setError,
     isDragging, showSampleMenu, setShowSampleMenu,
     analysisId, copied, setCopied,
@@ -54,6 +54,7 @@ export default function ContractReviewPage() {
         setContractText={setContractText}
         setError={setError}
         fileName={fileName}
+        isExtracting={isExtracting}
         isLoading={isLoading}
         error={error}
         isDragging={isDragging}

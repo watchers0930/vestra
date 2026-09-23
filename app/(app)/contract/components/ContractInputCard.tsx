@@ -13,6 +13,7 @@ interface Props {
   setContractText: (text: string) => void;
   setError: (err: string | null) => void;
   fileName: string | null;
+  isExtracting: boolean;
   isLoading: boolean;
   error: string | null;
   isDragging: boolean;
@@ -36,7 +37,7 @@ const MODES = [
 export function ContractInputCard({
   inputMode, setInputMode,
   contractText, setContractText, setError,
-  fileName, isLoading, error,
+  fileName, isExtracting, isLoading, error,
   isDragging, showSampleMenu, setShowSampleMenu,
   sampleMenuRef, fileInputRef,
   handleDrop, handleDragOver, handleDragLeave,
@@ -217,12 +218,20 @@ export function ContractInputCard({
                   transition: "all 0.15s",
                 }}
               >
-                {fileName ? (
+                {isExtracting ? (
+                  <>
+                    <div style={{ fontSize: "36px" }} className="animate-spin">⏳</div>
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--brand-primary)" }}>계약서를 인식하고 있습니다…</p>
+                      <p style={{ fontSize: "11.5px", color: "#8e8e93", marginTop: "4px" }}>이미지·PDF는 AI가 글자를 읽는 중입니다. 잠시만 기다려 주세요.</p>
+                    </div>
+                  </>
+                ) : fileName ? (
                   <>
                     <div style={{ fontSize: "36px" }}>📋</div>
                     <div style={{ textAlign: "center" }}>
                       <p style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--accent-positive)" }}>{fileName}</p>
-                      <p style={{ fontSize: "11.5px", color: "var(--accent-positive)", marginTop: "4px" }}>파일이 선택됐습니다 — 클릭하여 변경</p>
+                      <p style={{ fontSize: "11.5px", color: "var(--accent-positive)", marginTop: "4px" }}>인식 완료 — 아래 버튼으로 분석을 시작하세요</p>
                     </div>
                   </>
                 ) : (

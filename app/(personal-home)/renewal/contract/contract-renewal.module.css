@@ -33,6 +33,8 @@
 
 /* PAGE WRAP */
 .pageWrap{max-width:1200px;margin:0 auto;padding:40px 32px 80px}
+.spin{animation:cr-spin 1s linear infinite;color:#2e4bd8}
+@keyframes cr-spin{to{transform:rotate(360deg)}}
 
 /* INPUT VIEW */
 .inputNotice{background:#fffbeb;border:1px solid #fbbf24;border-radius:12px;padding:14px 18px;display:flex;align-items:flex-start;gap:12px;margin-bottom:28px}
