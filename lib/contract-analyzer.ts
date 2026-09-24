@@ -258,17 +258,43 @@ function extractLabeledLineValue(text: string, labels: string[]): string | undef
   return undefined;
 }
 
+/** 정규식 baseline이 이름 자리에서 잡는 라벨·일반어·조사어 (오값 노출 방지) */
+const PARTY_NAME_STOPWORDS = new Set([
+  "성명", "이름", "성함", "임대", "임차", "매도", "매수", "쌍방", "당사자", "본인",
+  "대리인", "소유자", "귀하", "주소", "동의", "전화", "연락처", "번호", "대표", "법인",
+  "회사", "생년", "월일", "서명", "날인", "기명", "확인", "목적물", "부동산", "기타",
+]);
+
+/**
+ * 정규식으로 캡처한 당사자 이름 후보를 정제한다.
+ * 끝에 붙은 조사 제거 후, 라벨·일반어(stopword)면 undefined(→ 미확인).
+ * "임대인 동의 없이"→"동의"(배제), "임차인 쌍방은"→"쌍방"(배제),
+ * "임대인 김철수와"→"김철수", "임차인 이영희는"→"이영희".
+ */
+export function cleanPartyName(raw?: string): string | undefined {
+  if (!raw) return undefined;
+  let s = raw.replace(/\s+/g, "");
+  if (PARTY_NAME_STOPWORDS.has(s)) return undefined;
+  s = s.replace(/(으로서|으로|로서|에게|께서|과|와|은|는|이|가|을|를|의|도|만|에|께|로)$/, "");
+  if (s.length < 2 || s.length > 5) return undefined;
+  if (PARTY_NAME_STOPWORDS.has(s)) return undefined;
+  if (/^(임대인|임차인|매도인|매수인)/.test(s)) return undefined;
+  return s;
+}
+
 function extractContractInfo(text: string): ContractExtractedInfo {
   const address =
     extractLabeledLineValue(text, ["소재지", "주소", "목적물의 표시", "목적물"]) ||
     text.match(/([가-힣]+(?:특별시|광역시|특별자치시|도)\s+[^\n,]+(?:동|리|로|길)[^\n]*)/)?.[1]?.trim();
 
-  const landlordName =
-    text.match(/임대인[\s:：]*([가-힣A-Za-z]{2,20})/)?.[1]?.trim() ||
-    text.match(/매도인[\s:：]*([가-힣A-Za-z]{2,20})/)?.[1]?.trim();
-  const tenantName =
-    text.match(/임차인[\s:：]*([가-힣A-Za-z]{2,20})/)?.[1]?.trim() ||
-    text.match(/매수인[\s:：]*([가-힣A-Za-z]{2,20})/)?.[1]?.trim();
+  // "임대인 성명: 홍길동", "임대인(갑): 홍길동", "임대인 홍길동" 등에서 이름만.
+  // 그리디 캡처 후 cleanPartyName이 조사 제거·불용어 배제로 오값을 걸러낸다.
+  const landlordName = cleanPartyName(
+    text.match(/(?:임대인|매도인)\s*(?:\([^)]{0,12}\))?\s*(?:성\s*명)?\s*[:：]?\s*([가-힣]{2,5})/)?.[1],
+  );
+  const tenantName = cleanPartyName(
+    text.match(/(?:임차인|매수인)\s*(?:\([^)]{0,12}\))?\s*(?:성\s*명)?\s*[:：]?\s*([가-힣]{2,5})/)?.[1],
+  );
 
   const depositAmount = extractFirstMoneyAfter(
     new RegExp(String.raw`보증금(?:은|:|：)?\s*(?:금)?\s*${MONEY_TEXT_PATTERN}`),

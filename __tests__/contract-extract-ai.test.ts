@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { coerceExtractedAI } from "@/lib/contract-extract-ai";
-import { mergeExtractedInfo, type ContractExtractedInfo } from "@/lib/contract-analyzer";
+import { mergeExtractedInfo, cleanPartyName, type ContractExtractedInfo } from "@/lib/contract-analyzer";
 
 describe("coerceExtractedAI", () => {
   it("정상 값을 정규화한다(문자열 금액·다양한 날짜형식)", () => {
@@ -73,6 +73,33 @@ describe("coerceExtractedAI", () => {
   it("propertyDetails: 배열 아니면 빈 배열", () => {
     expect(coerceExtractedAI({ propertyDetails: "x" }).propertyDetails).toEqual([]);
     expect(coerceExtractedAI({}).propertyDetails).toEqual([]);
+  });
+});
+
+describe("cleanPartyName (정규식 baseline 이름 정제)", () => {
+  it("라벨·일반어를 배제한다(동의·쌍방은 등)", () => {
+    expect(cleanPartyName("동의")).toBeUndefined();
+    expect(cleanPartyName("쌍방은")).toBeUndefined(); // 조사 제거→'쌍방'→stopword
+    expect(cleanPartyName("성명")).toBeUndefined();
+    expect(cleanPartyName("임대인")).toBeUndefined();
+    expect(cleanPartyName("주소")).toBeUndefined();
+  });
+
+  it("끝 조사를 제거하고 이름만 남긴다", () => {
+    expect(cleanPartyName("김철수와")).toBe("김철수");
+    expect(cleanPartyName("이영희는")).toBe("이영희");
+    expect(cleanPartyName("박민준을")).toBe("박민준");
+  });
+
+  it("정상 이름은 그대로 통과(복성 포함)", () => {
+    expect(cleanPartyName("홍길동")).toBe("홍길동");
+    expect(cleanPartyName("남궁민수")).toBe("남궁민수");
+  });
+
+  it("빈 값·과도한 길이는 undefined", () => {
+    expect(cleanPartyName(undefined)).toBeUndefined();
+    expect(cleanPartyName("가")).toBeUndefined();
+    expect(cleanPartyName("일이삼사오육칠")).toBeUndefined();
   });
 });
 
