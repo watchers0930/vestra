@@ -297,11 +297,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 시뮬레이션 모드 파라미터 파싱
+    // 파라미터 파싱
     const url = new URL(req.url);
     const simulate = url.searchParams.get("simulate") === "true";
-    // 실행 시작 heartbeat (가장 이른 시점 — 이후 done이 없으면 "실행됐으나 중간 사망")
-    if (!simulate) await recordCronHeartbeat("start");
     const changeType = url.searchParams.get("changeType") || "mortgage_added";
     const propertyIdFilter = url.searchParams.get("propertyId");
     // 프리체크(등기신청사건)를 건너뛰고 등기부등본 발급 확정 조회를 강제
@@ -311,23 +309,60 @@ export async function GET(req: NextRequest) {
       console.log(`[CRON:MONITOR] 시뮬레이션 모드 — changeType=${changeType}, propertyId=${propertyIdFilter || "전체"}`);
     }
 
+    // ── 재시도 회차 판정 ──
+    // cron은 각 감시 시간대(KST 12·17시)에 :00,:10,…,:50 으로 10분 간격 실행된다.
+    // :00 = 정규 회차(전체 감시). :10~:50 = 재시도 회차로, "이번 시간대에 이미
+    // 실패(fetch_failed)한 물건만" 다시 시도한다(틸코가 그 순간만 느렸던 경우 회복).
+    // 성공하면 마지막 로그가 성공으로 바뀌어 다음 회차에서 자동 제외된다.
+    const now = new Date();
+    const isRetrySlot = !simulate && !propertyIdFilter && now.getMinutes() >= 5;
+    let retryTargetIds: string[] | null = null;
+    if (isRetrySlot) {
+      const windowStart = new Date(now);
+      windowStart.setMinutes(0, 0, 0); // 이번 시간대 시작(:00)
+      const recent = await prisma.monitoringCheckLog.findMany({
+        where: { checkedAt: { gte: windowStart } },
+        orderBy: { checkedAt: "desc" },
+        select: { monitoredPropertyId: true, result: true },
+      });
+      const latest = new Map<string, string>();
+      for (const r of recent) {
+        if (!latest.has(r.monitoredPropertyId)) latest.set(r.monitoredPropertyId, r.result);
+      }
+      retryTargetIds = [...latest.entries()]
+        .filter(([, res]) => res === "fetch_failed")
+        .map(([id]) => id);
+      if (retryTargetIds.length === 0) {
+        // 이번 시간대에 재시도할 실패 물건 없음 → 틸코 호출 없이 조용히 종료
+        return NextResponse.json({ message: "재시도 대상 없음", retrySlot: true, processed: 0 });
+      }
+    }
+
+    // 실행 시작 heartbeat (재시도 판정 후 — 정규 회차 또는 재시도 대상 있을 때만)
+    if (!simulate) {
+      await recordCronHeartbeat("start", isRetrySlot ? { retrySlot: true, retryTargets: retryTargetIds?.length } : undefined);
+    }
+
     // 전입일 지난 계약감시 → 일반 모드로 자동 전환
     await autoTransitionExpiredGaps();
 
-    // 감시 실행 로그 보관정책: 90일 초과분 정리 (무한 증가 차단)
-    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-    await prisma.monitoringCheckLog
-      .deleteMany({ where: { checkedAt: { lt: ninetyDaysAgo } } })
-      .catch(() => {});
-    // heartbeat(AuditLog)도 90일 초과분 정리
-    await prisma.auditLog
-      .deleteMany({ where: { action: CRON_HEARTBEAT_ACTION, createdAt: { lt: ninetyDaysAgo } } })
-      .catch(() => {});
+    // 감시 실행 로그 보관정책: 90일 초과분 정리 (정규 회차에서만 — 재시도마다 반복 불필요)
+    if (!isRetrySlot) {
+      const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+      await prisma.monitoringCheckLog
+        .deleteMany({ where: { checkedAt: { lt: ninetyDaysAgo } } })
+        .catch(() => {});
+      // heartbeat(AuditLog)도 90일 초과분 정리
+      await prisma.auditLog
+        .deleteMany({ where: { action: CRON_HEARTBEAT_ACTION, createdAt: { lt: ninetyDaysAgo } } })
+        .catch(() => {});
+    }
 
-    // 시뮬레이션에서 propertyId 지정 시 해당 물건만 조회
+    // 물건 조회 필터 (시뮬레이션 propertyId 지정 시 해당 물건만 / 재시도 회차면 실패 물건만)
     const propertyFilter = {
       status: "active" as const,
       ...(propertyIdFilter ? { id: propertyIdFilter } : {}),
+      ...(retryTargetIds ? { id: { in: retryTargetIds } } : {}),
     };
 
     // contract_gap 모드 우선 처리
@@ -775,6 +810,7 @@ export async function GET(req: NextRequest) {
 
     if (!simulate) {
       await recordCronHeartbeat("done", {
+        retrySlot: isRetrySlot,
         processed: allProperties.length,
         docFetches,
         docFetchFailures,
@@ -791,6 +827,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       message: "모니터링 완료",
       ...(simulate ? { simulation: true, changeType } : {}),
+      retrySlot: isRetrySlot,
       processed: allProperties.length,
       gapMode: gapProperties.length,
       standardMode: standardProperties.length,
