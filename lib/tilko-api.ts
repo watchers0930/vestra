@@ -19,12 +19,14 @@ const DEFAULT_REGISTRY_DOC_PATH = "/api/v2.0/Iros/RISURetrieve";
 const CASE_STATUS_CACHE_TTL = 20 * 60 * 1000;
 const REGISTRY_DOC_CACHE_TTL = 60 * 60 * 1000;
 
-// 틸코 외부 API 호출별 타임아웃. 한 호출이 콜드스타트/지연으로 함수 전체 예산을
-// 잡아먹지 않도록 상한을 둔다(초과 시 AbortError → 호출측 catch에서 fetch_failed 처리).
-// cron(registry-monitor)의 maxDuration(180s) 안에서 여러 물건을 처리할 수 있게 한다.
-const TILKO_CASE_STATUS_TIMEOUT_MS = 25_000;
-const TILKO_ADDRESS_SEARCH_TIMEOUT_MS = 20_000;
-const TILKO_DOC_TIMEOUT_MS = 45_000;
+// 틸코 외부 API 호출별 타임아웃. 한 호출이 무한 hang으로 함수 전체 예산(maxDuration)을
+// 잡아먹어 로그도 못 남기는 것을 막는 "안전 상한"이다(초과 시 AbortError → 호출측에서
+// 처리). ⚠️정상 응답을 끊으면 안 된다: 틸코 프리체크는 콜드스타트 시 25초를 넘겨
+// 실제로 완료되므로(2026-09-24 실측: 25초 캡이 정상 프리체크를 abort시켜 매 회차 실패),
+// 넉넉히 설정한다. maxDuration(180s)보다 충분히 작게 두어 초과 시 로그는 남게 한다.
+const TILKO_CASE_STATUS_TIMEOUT_MS = 120_000;
+const TILKO_ADDRESS_SEARCH_TIMEOUT_MS = 60_000;
+const TILKO_DOC_TIMEOUT_MS = 120_000;
 
 export type TilkoCasePhase =
   | "none"
