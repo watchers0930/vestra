@@ -365,6 +365,7 @@ export async function GET(req: NextRequest) {
     // 감시 보완: 등기부 발급(확정조회) 실패를 조용히 넘기지 않고 계측한다.
     let docFetchFailures = 0; // 확정조회 실패 총건 (그 주기 변동감지 스킵된 물건 수)
     let upstreamErrors = 0;   // 그중 상류(틸코/인터넷등기소) 장애로 보이는 건
+    let precheckFailures = 0; // 프리체크 일시 실패(확정조회 폴백 없이 다음 주기 재시도)
 
     for (const prop of allProperties) {
       try {
@@ -590,10 +591,24 @@ export async function GET(req: NextRequest) {
             }
             continue;
           } catch (tilkoError) {
-            console.error(
-              `[CRON:MONITOR] Tilko 프리체크 실패 (등기부 발급 확정조회로 폴백): ${prop.address}`,
+            // 프리체크 일시 실패. 확정조회(등기부 발급)는 현재 "이용자 직접발급" 정책으로
+            // 보류 상태라 폴백해도 반드시 실패한다 → 무의미한 발급 호출·틸코 포인트 낭비·
+            // 달력에 "발급 실패(fetch_failed)"로 오해되는 것을 막기 위해 폴백하지 않고,
+            // 프리체크 일시 오류로 기록한 뒤 다음 정규 주기에 자동 재시도한다.
+            // (commUniqueNo 보유 물건은 프리체크가 정본 감시수단이라 확정조회 불필요.)
+            console.warn(
+              `[CRON:MONITOR] Tilko 프리체크 일시 실패 → 다음 주기 재시도(확정조회 폴백 안 함): ${prop.address}`,
               tilkoError instanceof Error ? tilkoError.message : tilkoError
             );
+            precheckFailures++;
+            await recordCheck(
+              prop.id,
+              { lastCheckedAt: new Date() },
+              "precheck",
+              "fetch_failed",
+              "프리체크 일시 오류 — 다음 주기에 자동 재시도합니다"
+            );
+            continue;
           }
         }
 
@@ -763,6 +778,7 @@ export async function GET(req: NextRequest) {
         processed: allProperties.length,
         docFetches,
         docFetchFailures,
+        precheckFailures,
         upstreamErrors,
         tilkoPrechecks,
         tilkoSignals,
@@ -780,6 +796,7 @@ export async function GET(req: NextRequest) {
       standardMode: standardProperties.length,
       docFetches,
       docFetchFailures,
+      precheckFailures,
       upstreamErrors,
       tilkoPrechecks,
       tilkoSignals,
