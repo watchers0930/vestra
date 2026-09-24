@@ -19,6 +19,13 @@ const DEFAULT_REGISTRY_DOC_PATH = "/api/v2.0/Iros/RISURetrieve";
 const CASE_STATUS_CACHE_TTL = 20 * 60 * 1000;
 const REGISTRY_DOC_CACHE_TTL = 60 * 60 * 1000;
 
+// 틸코 외부 API 호출별 타임아웃. 한 호출이 콜드스타트/지연으로 함수 전체 예산을
+// 잡아먹지 않도록 상한을 둔다(초과 시 AbortError → 호출측 catch에서 fetch_failed 처리).
+// cron(registry-monitor)의 maxDuration(180s) 안에서 여러 물건을 처리할 수 있게 한다.
+const TILKO_CASE_STATUS_TIMEOUT_MS = 25_000;
+const TILKO_ADDRESS_SEARCH_TIMEOUT_MS = 20_000;
+const TILKO_DOC_TIMEOUT_MS = 45_000;
+
 export type TilkoCasePhase =
   | "none"
   | "received"
@@ -95,6 +102,7 @@ export async function fetchRegistryCaseStatus(params: {
   const encKey = encryptAesKey(config.publicKey, aesKey);
   const res = await fetch(`${config.baseUrl}${config.caseStatusPath}`, {
     method: "POST",
+    signal: AbortSignal.timeout(TILKO_CASE_STATUS_TIMEOUT_MS),
     headers: {
       "Content-Type": "application/json",
       "API-KEY": config.apiKey,
@@ -313,6 +321,7 @@ export async function searchUniqueNoByAddress(address: string): Promise<string |
 
   const res = await fetch(`${config.baseUrl}${config.addressSearchPath}`, {
     method: "POST",
+    signal: AbortSignal.timeout(TILKO_ADDRESS_SEARCH_TIMEOUT_MS),
     headers: { "Content-Type": "application/json", "API-KEY": config.apiKey, "ENC-KEY": encKey },
     body: JSON.stringify({ Address: address, Sangtae: "", KindClsFlag: "", Region: "", Page: "" }),
   });
@@ -382,6 +391,7 @@ export async function fetchRegistryDocumentByAddress(params: {
 
   const res = await fetch(`${config.baseUrl}${config.docPath}`, {
     method: "POST",
+    signal: AbortSignal.timeout(TILKO_DOC_TIMEOUT_MS),
     headers: { "Content-Type": "application/json", "API-KEY": config.apiKey, "ENC-KEY": encKey },
     body: JSON.stringify(body),
   });

@@ -32,10 +32,11 @@ import {
 
 const BATCH_SIZE = 50;
 
-// 틸코 외부 API(콜드스타트 시 지연) 호출이 있어 기본 타임아웃이면 recordCheck 도달 전
-// 함수가 강제 종료돼 "체크는 됐는데 로그 없음"이 발생한다. 여유 있게 60초로 명시.
+// 틸코 외부 API(콜드스타트 시 지연) 호출이 있어 기본/짧은 타임아웃이면 recordCheck 도달 전
+// 함수가 강제 종료돼 "체크는 됐는데 로그 없음"이 발생한다(2026-09-23 17시 누락 원인 추정).
+// 콜드스타트+틸코 지연에도 첫 기록까지 도달하도록 180초로 상향(틸코 호출별 타임아웃과 병행).
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 180;
 
 function generateContentHash(content: string): string {
   return createHash("sha256").update(content).digest("hex");
@@ -47,6 +48,29 @@ function generateContentHash(content: string): string {
 // 계속되도록 조용히 무시한다(비치명적).
 type CheckMethod = "precheck" | "full_doc" | "skipped";
 type CheckResult = "no_change" | "signal_detected" | "changed" | "needs_registration" | "fetch_failed";
+
+// ── cron 실행 heartbeat (AuditLog 재사용, 스키마 변경 없음) ──
+// 매 실행 시작(start)·종료(done)·오류(error)를 1행씩 남긴다. 이후 감시 누락이
+// "아예 실행 안 됨(플랫폼 스킵)=start 없음" vs "실행됐으나 중간 사망(함수 실패/타임아웃)
+// =start만 있고 done 없음"을 즉시 구분할 수 있게 한다(2026-09-23 17시 누락은 로그가
+// per-property뿐이라 이 구분이 불가능했음). 기록 실패해도 감시 본체는 계속(비치명적).
+const CRON_HEARTBEAT_ACTION = "CRON_REGISTRY_MONITOR";
+async function recordCronHeartbeat(
+  phase: "start" | "done" | "error",
+  detail?: Record<string, unknown>
+): Promise<void> {
+  await prisma.auditLog
+    .create({
+      data: {
+        action: CRON_HEARTBEAT_ACTION,
+        target: phase,
+        detail: detail ? JSON.stringify(detail) : null,
+        ipAddress: "system",
+        userAgent: "cron/registry-monitor",
+      },
+    })
+    .catch((e) => console.warn("[CRON:MONITOR] heartbeat 기록 실패:", e instanceof Error ? e.message : e));
+}
 
 async function recordCheck(
   propertyId: string,
@@ -276,6 +300,8 @@ export async function GET(req: NextRequest) {
     // 시뮬레이션 모드 파라미터 파싱
     const url = new URL(req.url);
     const simulate = url.searchParams.get("simulate") === "true";
+    // 실행 시작 heartbeat (가장 이른 시점 — 이후 done이 없으면 "실행됐으나 중간 사망")
+    if (!simulate) await recordCronHeartbeat("start");
     const changeType = url.searchParams.get("changeType") || "mortgage_added";
     const propertyIdFilter = url.searchParams.get("propertyId");
     // 프리체크(등기신청사건)를 건너뛰고 등기부등본 발급 확정 조회를 강제
@@ -289,10 +315,13 @@ export async function GET(req: NextRequest) {
     await autoTransitionExpiredGaps();
 
     // 감시 실행 로그 보관정책: 90일 초과분 정리 (무한 증가 차단)
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     await prisma.monitoringCheckLog
-      .deleteMany({
-        where: { checkedAt: { lt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) } },
-      })
+      .deleteMany({ where: { checkedAt: { lt: ninetyDaysAgo } } })
+      .catch(() => {});
+    // heartbeat(AuditLog)도 90일 초과분 정리
+    await prisma.auditLog
+      .deleteMany({ where: { action: CRON_HEARTBEAT_ACTION, createdAt: { lt: ninetyDaysAgo } } })
       .catch(() => {});
 
     // 시뮬레이션에서 propertyId 지정 시 해당 물건만 조회
@@ -323,6 +352,7 @@ export async function GET(req: NextRequest) {
     const allProperties = [...gapProperties, ...standardProperties];
 
     if (allProperties.length === 0) {
+      if (!simulate) await recordCronHeartbeat("done", { processed: 0, reason: "no_target" });
       return NextResponse.json({ message: "모니터링 대상 없음", processed: 0 });
     }
 
@@ -728,6 +758,20 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    if (!simulate) {
+      await recordCronHeartbeat("done", {
+        processed: allProperties.length,
+        docFetches,
+        docFetchFailures,
+        upstreamErrors,
+        tilkoPrechecks,
+        tilkoSignals,
+        skipped,
+        alertsCreated,
+        notificationsSent,
+      });
+    }
+
     return NextResponse.json({
       message: "모니터링 완료",
       ...(simulate ? { simulation: true, changeType } : {}),
@@ -746,6 +790,9 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("[CRON:MONITOR] 전체 오류:", error instanceof Error ? error.message : error);
+    await recordCronHeartbeat("error", {
+      message: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({ error: "모니터링 처리 중 오류가 발생했습니다." }, { status: 500 });
   }
 }
