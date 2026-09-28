@@ -115,7 +115,7 @@ export default function LegalPage() {
             <p><strong>상호:</strong> BMI C&S</p>
             <p><strong>대표이사:</strong> 김동의</p>
             <p><strong>사업자등록번호:</strong> 263-87-03481</p>
-            <p><strong>주소:</strong> 서울시 강남구 강남대로 354(역삼동, 혜천빌딩) 1126-5호</p>
+            <p><strong>주소:</strong> 서울시 금천구 디지털로10길 78. 813호</p>
             <p><strong>전화:</strong> 010-8490-9271</p>
             <p><strong>이메일:</strong> vestra@vestra.co.kr</p>
           </div>
