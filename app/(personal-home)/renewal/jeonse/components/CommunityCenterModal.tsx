@@ -200,7 +200,7 @@ export function CommunityCenterModal({ open, onClose }: Props) {
 
           {/* 우: 지도 */}
           <div style={{ flex: 1, position: "relative", background: "#e8ecef", minWidth: 0 }}>
-            <div ref={mapRef} style={{ position: "absolute", inset: 0 }} />
+            <div ref={mapRef} style={{ position: "absolute", inset: 0, touchAction: "none" }} />
             {!centers && (
               <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px", color: "#aeb2c0", pointerEvents: "none" }}>
                 <MapPin size={30} strokeWidth={1.4} />

@@ -380,7 +380,7 @@ export function JeonseEnvAnalysis({ active = true }: { active?: boolean }) {
 
       {/* ─ 우측 지도 ─ */}
       <div className={s.envMapArea}>
-        <div ref={mapRef} style={{ position: "absolute", inset: 0 }} />
+        <div ref={mapRef} style={{ position: "absolute", inset: 0, touchAction: "none" }} />
       </div>
     </div>
   );

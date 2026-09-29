@@ -47,7 +47,7 @@ export default function PriceMapPage() {
 
         <div className="relative flex-1" style={{ minHeight: 0 }}>
           <MapOverlay loading={loading} total={data?.total || 0} propertyType={propertyType} />
-          <div ref={mapRef} className="absolute inset-0" />
+          <div ref={mapRef} className="absolute inset-0" style={{ touchAction: "none" }} />
           {mapStatus === "loading" ? (
             <div className="absolute left-1/2 top-12 z-20 -translate-x-1/2 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 text-center shadow-sm backdrop-blur-sm">
               <p className="text-sm font-semibold text-slate-900">카카오 지도를 불러오는 중입니다.</p>

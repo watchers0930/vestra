@@ -84,7 +84,7 @@ export default function PriceMapRenewalClient() {
 
         {/* MAP CENTER */}
         <div className={s.mapCenter}>
-          <div ref={mapRef} style={{ position: "absolute", inset: 0 }} />
+          <div ref={mapRef} style={{ position: "absolute", inset: 0, touchAction: "none" }} />
           {mapStatus !== "ready" && (
             <div className={s.mapPlaceholder} style={{ position: "absolute", inset: 0 }}>
               <div className={s.mapPlaceholderInner}>

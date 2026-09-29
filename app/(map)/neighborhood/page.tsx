@@ -31,7 +31,7 @@ export default function NeighborhoodMapPage() {
 
         {/* 카카오맵 */}
         <div className="relative flex-1">
-          <div ref={mapRef} className="absolute inset-0" />
+          <div ref={mapRef} className="absolute inset-0" style={{ touchAction: "none" }} />
 
           {/* 지도 위 범례 */}
           {result && result.facilities && (
