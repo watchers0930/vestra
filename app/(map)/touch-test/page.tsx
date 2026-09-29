@@ -14,13 +14,13 @@ export default function TouchTestPage() {
   const mapB = useRef<HTMLDivElement>(null); // 커스텀 포인터 핸들러
 
   useEffect(() => {
-    setCaps({
+    const raf = requestAnimationFrame(() => setCaps({
       maxTouchPoints: String(navigator.maxTouchPoints),
       ontouchstart: String("ontouchstart" in window),
       pointerEvents: String("onpointerdown" in window),
       pointerCoarse: String(window.matchMedia?.("(pointer: coarse)")?.matches),
       ua: navigator.userAgent,
-    });
+    }));
 
     const c = { touch: 0, pointer: 0, mouse: 0 };
     const box = document.getElementById("evbox");
@@ -70,7 +70,7 @@ export default function TouchTestPage() {
       el.addEventListener("pointerup", up);
       el.addEventListener("pointercancel", up);
 
-      setMapReady(true);
+      requestAnimationFrame(() => setMapReady(true));
       return true;
     };
 
@@ -78,6 +78,7 @@ export default function TouchTestPage() {
       const iv = setInterval(() => { if (init()) clearInterval(iv); }, 300);
       setTimeout(() => clearInterval(iv), 15000);
     }
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   const cell: React.CSSProperties = { padding: "6px 10px", borderBottom: "1px solid #eee", fontSize: 13, wordBreak: "break-all" };
