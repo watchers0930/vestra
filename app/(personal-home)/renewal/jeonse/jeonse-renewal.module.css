@@ -288,7 +288,7 @@
 .envHdChip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:500;color:rgba(255,255,255,.75);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);padding:4px 10px;border-radius:20px}
 .envPanelSearch{padding:14px;background:#fff;border-bottom:1px solid rgba(0,0,0,.07);flex-shrink:0}
 .envSearchRow{display:flex;gap:8px;position:relative}
-.envSi{flex:1;height:38px;padding:0 12px;border:1px solid rgba(0,0,0,.12);border-radius:10px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;color:#1a1d2e}
+.envSi{flex:1;min-width:0;height:38px;padding:0 12px;border:1px solid rgba(0,0,0,.12);border-radius:10px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;color:#1a1d2e}
 .envSi:focus{border-color:#0071e3}
 .envSi::placeholder{color:#aeaeb2}
 .envDrop{position:absolute;top:calc(100% + 4px);left:0;right:52px;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;overflow:hidden;display:none}
@@ -299,7 +299,7 @@
 .envDropItem b{color:#0071e3;font-weight:600}
 .envDropItem small{display:block;font-size:11px;color:#8e8e93;margin-top:2px}
 .envDropEmpty{padding:14px;font-size:12px;color:#aeaeb2;text-align:center}
-.envAb{height:38px;padding:0 16px;background:#0071e3;color:#fff;border:none;border-radius:10px;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;transition:background .15s}
+.envAb{flex-shrink:0;height:38px;padding:0 16px;background:#0071e3;color:#fff;border:none;border-radius:10px;font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;transition:background .15s}
 .envAb:hover{background:#0062c4}
 .envAb:disabled{background:rgba(0,113,227,.35);cursor:not-allowed}
 .envPanelBody{flex:1;overflow-y:auto;padding:12px}
