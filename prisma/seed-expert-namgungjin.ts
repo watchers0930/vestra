@@ -20,8 +20,8 @@ const PARTNER = {
   firmName: "청우세무회계",
   phone: "010-8511-2138",
   officePhone: "02-485-0100",
-  headline: "진짜 내편 — 성공을 돕는 포괄 세무 상담",
-  bio: "고객 편에서 함께 고민하고 친절한 상담으로 만족을 드리는 기장 전문 세무사입니다. 창업 컨설팅부터 세무 기장·절세 상담까지 개인·법인의 세무 전반을 포괄적으로 상담합니다. 공인회계사회장상을 수상한 성적우수자입니다.",
+  headline: "진짜 내편 — 성공을 돕는 세무 상담",
+  bio: "고객 편에서 함께 고민하고 친절한 상담으로 만족을 드리는 기장 전문 세무사입니다. 창업 컨설팅부터 세무 기장·절세 상담까지 개인·법인의 세무 전반을 상담합니다. 공인회계사회장상을 수상한 성적우수자입니다.",
   careers: [
     "청우세무회계 대표 세무사",
     "공인회계사 · 세무사",
@@ -29,12 +29,12 @@ const PARTNER = {
   ],
   schools: [] as string[],
   etcInfo:
-    "경기 하남시 덕풍동로 111 풍산캐슬빌딩 306호\n홈페이지 chungwootax.com · 네이버블로그 blog.naver.com/tax2138 · 유튜브 '세금요정 지니' · 카카오톡 상담",
+    "경기 하남시 덕풍동로 111 풍산캐슬빌딩 306호\n홈페이지 chungwootax.com\n네이버블로그 blog.naver.com/tax2138\n유튜브 '세금요정 지니'\n카카오톡 상담",
   kycStatus: "verified",
   membershipStatus: "active",
   homepageActive: false,
   active: true,
-  photoUrl: null as string | null,
+  photoUrl: "https://images.unsplash.com/photo-1581065178047-8ee15951ede6?w=400&h=400&fit=crop&crop=faces&q=80" as string | null,
   hourlyFee: null as number | null,
 };
 

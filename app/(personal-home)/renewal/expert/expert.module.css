@@ -247,7 +247,7 @@
 .pmSideFee span { font-size: 11px; color: #aab; }
 .pmSideFee b { font-size: 16px; font-weight: 800; color: #2e4bd8; }
 .pmSideSpecs { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 20px; width: 100%; }
-.pmSideSpecs .pmSpec { white-space: nowrap; }
+.pmSideSpecs .pmSpec { white-space: normal; word-break: keep-all; line-height: 1.45; text-align: left; max-width: 100%; }
 /* 오른쪽 */
 .pmMain { padding: 30px 28px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .pmHeadline { font-size: 14.5px; color: #3a3f55; line-height: 1.6; margin: 0; padding: 14px 16px; background: #f7f8fd; border-radius: 12px; font-weight: 500; }
