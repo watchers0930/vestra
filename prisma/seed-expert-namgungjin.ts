@@ -29,7 +29,6 @@ const PARTNER = {
   careers: [
     "청우세무회계 대표 세무사",
     "공인회계사 · 세무사",
-    "유튜브 '세금요정 지니' 운영 — 알기 쉬운 세금 정보 전달",
   ],
   schools: [] as string[],
   etcInfo:
@@ -40,7 +39,14 @@ const PARTNER = {
   active: true,
   photoUrl: AVATAR_DATA_URL as string | null,
   hourlyFee: null as number | null,
+  avgRating: 4.7,
+  ratingCount: 12,
 };
+
+// 항목별 후기 평점(적당히 좋게) — 12건. i<fives[key]면 5점, 아니면 4점.
+// 평균: 전문성4.83·응답4.58·소통4.92·결과4.67·비용4.50 → 전체 4.7.
+const REVIEW_COUNT = 12;
+const FIVES = { expertise: 10, response: 7, communication: 11, result: 8, value: 6 };
 
 async function main() {
   const user = await prisma.user.upsert({
@@ -55,8 +61,27 @@ async function main() {
     create: { userId: user.id, homepageSlug: SLUG, ...PARTNER },
   });
 
+  // 항목별 평점 후기 생성(멱등: 기존 삭제 후 재생성)
+  await prisma.lawyerRating.deleteMany({ where: { lawyerId: partner.id } });
+  const ratings = Array.from({ length: REVIEW_COUNT }, (_, i) => {
+    const e = i < FIVES.expertise ? 5 : 4;
+    const r = i < FIVES.response ? 5 : 4;
+    const c = i < FIVES.communication ? 5 : 4;
+    const rs = i < FIVES.result ? 5 : 4;
+    const v = i < FIVES.value ? 5 : 4;
+    return {
+      lawyerId: partner.id,
+      userId: `seed-review-user-${i}`,
+      caseId: `seed-nggj-case-${i}`,
+      scoreExpertise: e, scoreResponse: r, scoreCommunication: c, scoreResult: rs, scoreValue: v,
+      avgScore: (e + r + c + rs + v) / 5,
+    };
+  });
+  await prisma.lawyerRating.createMany({ data: ratings });
+
   console.log("✅ upsert 완료");
   console.log("  userId:", user.id, "role:", user.role);
+  console.log("  후기:", REVIEW_COUNT, "건, avgRating:", partner.avgRating);
   console.log("  partnerId:", partner.id, "category:", partner.category, "kycStatus:", partner.kycStatus, "active:", partner.active);
   console.log("  name:", partner.name, "/ firm:", partner.firmName);
 
