@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { enableKakaoTouchPan } from "@/lib/kakao-touch-pan";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -125,6 +126,7 @@ export function useNeighborhoodData() {
 
   // 카카오맵 초기화 (빈 지도)
   useEffect(() => {
+    let detachTouch: (() => void) | undefined;
     const initMap = () => {
       if (!mapRef.current) return;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -132,6 +134,7 @@ export function useNeighborhoodData() {
       const center = new maps.LatLng(37.5665, 126.978);
       const map = new maps.Map(mapRef.current, { center, level: 8 });
       kakaoMapRef.current = map;
+      detachTouch = enableKakaoTouchPan(map, mapRef.current);
     };
 
     const tryInit = () => {
@@ -165,6 +168,7 @@ export function useNeighborhoodData() {
     return () => {
       clearInterval(pollId);
       clearTimeout(tid);
+      detachTouch?.();
     };
   }, []);
 

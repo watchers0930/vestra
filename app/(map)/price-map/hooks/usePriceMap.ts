@@ -7,6 +7,7 @@ import { formatMapPrice } from "../lib/formatMapPrice";
 import { findSidoForGu, getFirstSelectableGu, isGuSelectable } from "../constants";
 import type { AptData, MapResponse, PriceMapTradeType, PropertyType } from "../types";
 import type { OfficialPriceResult } from "@/lib/official-price-api";
+import { enableKakaoTouchPan } from "@/lib/kakao-touch-pan";
 
 const LOCAL_TTL = 30 * 60 * 1000; // 30분 fresh cache
 const LOCAL_MAX_AGE = 24 * 60 * 60 * 1000; // 24시간 stale cache fallback
@@ -213,6 +214,7 @@ export function usePriceMap() {
     let cancelled = false;
     let initialized = false;
     let resizeObserver: ResizeObserver | null = null;
+    let detachTouch: (() => void) | undefined;
 
     const initMap = () => {
       if (cancelled || !mapRef.current) return;
@@ -225,6 +227,7 @@ export function usePriceMap() {
       map.setMinLevel(1);
       map.setMaxLevel(10);
       kakaoMapRef.current = map;
+      detachTouch = enableKakaoTouchPan(map, mapRef.current);
       resizeObserver = new ResizeObserver(() => {
         const currentMap = kakaoMapRef.current;
         const container = mapRef.current;
@@ -280,6 +283,7 @@ export function usePriceMap() {
       clearInterval(pollId);
       clearTimeout(timeoutId);
       resizeObserver?.disconnect();
+      detachTouch?.();
       if (clustererRef.current) { clustererRef.current.clear(); clustererRef.current = null; }
       circlesRef.current.forEach((c) => c.setMap(null));
       circlesRef.current = [];

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { enableKakaoTouchPan } from "@/lib/kakao-touch-pan";
 
 export interface MapMarker {
   id: string;
@@ -27,6 +28,7 @@ export function KakaoMarkersMap({ markers, activeId, onMarkerClick, panTo, onReg
 
   useEffect(() => {
     let cancelled = false;
+    let detachTouch: (() => void) | undefined;
 
     function initMap() {
       if (cancelled || !mapRef.current || mapInstanceRef.current) return;
@@ -35,6 +37,7 @@ export function KakaoMarkersMap({ markers, activeId, onMarkerClick, panTo, onReg
         level: 7,
       });
       mapInstanceRef.current = map;
+      detachTouch = enableKakaoTouchPan(map, mapRef.current);
       if (!cancelled) {
         setMapReady(true);
         if (onRegionChange && window.kakao?.maps?.services?.Geocoder) {
@@ -81,7 +84,7 @@ export function KakaoMarkersMap({ markers, activeId, onMarkerClick, panTo, onReg
     }
 
     const cleanup = tryInit();
-    return () => { cancelled = true; cleanup?.(); };
+    return () => { cancelled = true; cleanup?.(); detachTouch?.(); };
   }, []);
 
   // idle 이벤트 — 지도 이동 시 시/구/동 업데이트
