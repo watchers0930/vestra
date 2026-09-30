@@ -21,7 +21,7 @@ const AVATAR_DATA_URL = `data:image/jpeg;base64,${readFileSync("prisma/seed-asse
 
 const PARTNER = {
   category: "judicial",
-  name: "고종희",
+  name: "고종희 사무장",
   firmName: "등기온",
   phone: null as string | null,
   officePhone: "1833-5482",
