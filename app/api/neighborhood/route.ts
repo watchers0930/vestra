@@ -61,41 +61,66 @@ async function kakaoKeywordSearch(
   }
 }
 
+// 공용 Overpass 서버는 과부하로 간헐 실패(빈 결과·5xx·타임아웃)가 잦다.
+// 미러 여러 곳을 순차 폴백해 버스정류장이 랜덤하게 "없음"으로 빠지는 것을 방지.
+const OVERPASS_MIRRORS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
+];
+
 async function fetchNearbyBusStops(
   center: { lat: number; lng: number },
   radius: number = 1000
 ): Promise<KakaoPlace[]> {
-  try {
-    const query = `[out:json][timeout:10];(node["highway"="bus_stop"](around:${radius},${center.lat},${center.lng});node["public_transport"="platform"]["bus"="yes"](around:${radius},${center.lat},${center.lng}););out body;`;
-    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
-    const res = await fetch(url, { headers: { Accept: "application/json", "User-Agent": "Vestra/1.0" } });
-    if (!res.ok) return [];
-    const json = await res.json();
-    const elements = json.elements || [];
-    return elements
-      .map((el: { lat: number; lon: number; tags?: Record<string, string> }) => {
-        const lat = el.lat;
-        const lng = el.lon;
-        const R = 6371000;
-        const dLat = ((lat - center.lat) * Math.PI) / 180;
-        const dLng = ((lng - center.lng) * Math.PI) / 180;
-        const a = Math.sin(dLat / 2) ** 2 + Math.cos((center.lat * Math.PI) / 180) * Math.cos((lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-        const dist = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-        return {
-          place_name: el.tags?.name || el.tags?.["name:ko"] || "버스정류장",
-          category_group_name: "버스정류장",
-          distance: String(dist),
-          x: String(lng),
-          y: String(lat),
-          road_address_name: "",
-        } as KakaoPlace;
-      })
-      .filter((p: KakaoPlace) => parseInt(p.distance) <= radius)
-      .sort((a: KakaoPlace, b: KakaoPlace) => parseInt(a.distance) - parseInt(b.distance))
-      .slice(0, 15);
-  } catch {
-    return [];
+  const query = `[out:json][timeout:10];(node["highway"="bus_stop"](around:${radius},${center.lat},${center.lng});node["public_transport"="platform"]["bus"="yes"](around:${radius},${center.lat},${center.lng}););out body;`;
+  const body = `data=${encodeURIComponent(query)}`;
+
+  for (const endpoint of OVERPASS_MIRRORS) {
+    try {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 12000);
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+          "User-Agent": "Vestra/1.0",
+        },
+        body,
+        signal: ctrl.signal,
+      });
+      clearTimeout(to);
+      if (!res.ok) continue; // 5xx/429 등 → 다음 미러
+      const json = await res.json();
+      const elements = json.elements || [];
+      if (elements.length === 0) continue; // 과부하 빈 결과 가능성 → 다음 미러 재확인
+      return elements
+        .map((el: { lat: number; lon: number; tags?: Record<string, string> }) => {
+          const lat = el.lat;
+          const lng = el.lon;
+          const R = 6371000;
+          const dLat = ((lat - center.lat) * Math.PI) / 180;
+          const dLng = ((lng - center.lng) * Math.PI) / 180;
+          const a = Math.sin(dLat / 2) ** 2 + Math.cos((center.lat * Math.PI) / 180) * Math.cos((lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+          const dist = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+          return {
+            place_name: el.tags?.name || el.tags?.["name:ko"] || "버스정류장",
+            category_group_name: "버스정류장",
+            distance: String(dist),
+            x: String(lng),
+            y: String(lat),
+            road_address_name: "",
+          } as KakaoPlace;
+        })
+        .filter((p: KakaoPlace) => parseInt(p.distance) <= radius)
+        .sort((a: KakaoPlace, b: KakaoPlace) => parseInt(a.distance) - parseInt(b.distance))
+        .slice(0, 15);
+    } catch {
+      continue; // 타임아웃/네트워크 오류 → 다음 미러
+    }
   }
+  return []; // 모든 미러 실패 또는 실제로 주변에 버스정류장 없음
 }
 
 // ── 점수 계산 ──────────────────────────────────
