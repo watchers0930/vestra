@@ -67,11 +67,14 @@ const OVERPASS_MIRRORS = [
   "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  "https://overpass.openstreetmap.fr/api/interpreter",
 ];
 
 async function fetchNearbyBusStops(
   center: { lat: number; lng: number },
-  radius: number = 1000
+  radius: number = 1000,
+  kakaoKey?: string
 ): Promise<KakaoPlace[]> {
   const query = `[out:json][timeout:10];(node["highway"="bus_stop"](around:${radius},${center.lat},${center.lng});node["public_transport"="platform"]["bus"="yes"](around:${radius},${center.lat},${center.lng}););out body;`;
   const body = `data=${encodeURIComponent(query)}`;
@@ -120,7 +123,13 @@ async function fetchNearbyBusStops(
       continue; // 타임아웃/네트워크 오류 → 다음 미러
     }
   }
-  return []; // 모든 미러 실패 또는 실제로 주변에 버스정류장 없음
+
+  // 모든 Overpass 미러 실패 시 카카오 키워드 폴백(정확도는 낮지만 0은 면함)
+  if (kakaoKey) {
+    const fb = await kakaoKeywordSearch(kakaoKey, "버스정류장", center, "", radius);
+    if (fb.length > 0) return fb.slice(0, 15);
+  }
+  return []; // 모든 소스 실패 또는 실제로 주변에 버스정류장 없음
 }
 
 // ── 점수 계산 ──────────────────────────────────
@@ -203,7 +212,7 @@ export async function POST(req: NextRequest) {
     // 카테고리 검색 대신 키워드+카테고리 병행으로 좌표 정확도 향상
     const [subway, bus, school, academy, kindergarten, mart, pharmacy, hospital, convenience, park, bank, kaptInfo] = await Promise.all([
       kakaoKeywordSearch(kakaoKey, "지하철역", coord, "SW8"),
-      fetchNearbyBusStops(coord),
+      fetchNearbyBusStops(coord, 1000, kakaoKey),
       kakaoKeywordSearch(kakaoKey, "학교", coord, "SC4"),
       kakaoKeywordSearch(kakaoKey, "학원", coord, "AC5"),
       kakaoKeywordSearch(kakaoKey, "유치원 어린이집", coord, ""),
