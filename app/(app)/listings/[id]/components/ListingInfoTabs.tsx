@@ -7,6 +7,7 @@ import {
 import { MapPin, GraduationCap } from "lucide-react";
 import { MarketTab } from "./MarketTab";
 import { useKakaoMap } from "./useKakaoMap";
+import { enableKakaoTouchPan } from "@/lib/kakao-touch-pan";
 
 type TabKey = "location" | "infra" | "school" | "market";
 const TABS: { key: TabKey; label: string }[] = [
@@ -31,6 +32,7 @@ export function LocationMap({ lat, lng, address }: { lat: number; lng: number; a
   useKakaoMap(containerRef, (kakao, el) => {
     const pos = new kakao.maps.LatLng(lat, lng);
     const map = new kakao.maps.Map(el, { center: pos, level: 3 });
+    const detachTouch = enableKakaoTouchPan(map, el);
     const pin = document.createElement("div");
     const shape = document.createElement("div");
     Object.assign(shape.style, { width: "22px", height: "22px", borderRadius: "50% 50% 50% 0", background: "#0F2547", transform: "rotate(-45deg)", boxShadow: "0 3px 10px rgba(15,37,71,.55)", border: "2.5px solid #fff", position: "relative" });
@@ -39,7 +41,7 @@ export function LocationMap({ lat, lng, address }: { lat: number; lng: number; a
     shape.appendChild(dot);
     pin.appendChild(shape);
     new kakao.maps.CustomOverlay({ map, position: pos, content: pin, yAnchor: 1.15, zIndex: 10 });
-    return { map };
+    return { map, cleanup: detachTouch };
   }, [lat, lng]);
 
   return (
@@ -128,6 +130,7 @@ export function InfraMap({ lat, lng }: { lat: number; lng: number }) {
       const pos = new kakao.maps.LatLng(lat, lng);
       const map = new kakao.maps.Map(el, { center: pos, level: 4 });
       mapRef.current = map;
+      const detachTouch = enableKakaoTouchPan(map, el);
       // 건물 핀 (prominent pin)
       const buildPin = document.createElement("div");
       const bShape = document.createElement("div");
@@ -166,6 +169,7 @@ export function InfraMap({ lat, lng }: { lat: number; lng: number }) {
       return {
         map,
         cleanup: () => {
+          detachTouch();
           dots.forEach((entries) => entries.forEach(({ ov }) => ov.setMap(null)));
           dots.clear(); places.clear(); mapRef.current = null;
         },
@@ -294,6 +298,7 @@ export function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
       const pos = new kakao.maps.LatLng(lat, lng);
       const map = new kakao.maps.Map(el, { center: pos, level: 5 });
       mapRef.current = map;
+      const detachTouch = enableKakaoTouchPan(map, el);
       // 건물 핀
       const sBuildPin = document.createElement("div");
       const sBShape = document.createElement("div");
@@ -332,6 +337,7 @@ export function SchoolMap({ lat, lng }: { lat: number; lng: number }) {
       return {
         map,
         cleanup: () => {
+          detachTouch();
           dots.forEach((entries) => entries.forEach(({ ov }) => ov.setMap(null)));
           dots.clear(); mapRef.current = null;
         },

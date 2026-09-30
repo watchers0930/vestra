@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { enableKakaoTouchPan } from "@/lib/kakao-touch-pan";
 
 export interface ClusterItem {
   id: string;
@@ -48,6 +49,7 @@ export function ClusterMarkerMap({ items, selected, onMarkerClick, panTo }: Prop
   // 지도 초기화
   useEffect(() => {
     let cancelled = false;
+    let detachTouch: (() => void) | undefined;
     function init() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const kakao = (window as any).kakao;
@@ -56,6 +58,7 @@ export function ClusterMarkerMap({ items, selected, onMarkerClick, panTo }: Prop
         center: new kakao.maps.LatLng(37.5172, 127.0473),
         level: 7,
       });
+      detachTouch = enableKakaoTouchPan(mapInst.current, mapRef.current);
       if (!cancelled) setReady(true);
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -72,9 +75,9 @@ export function ClusterMarkerMap({ items, selected, onMarkerClick, panTo }: Prop
         else if (k?.maps?.load) { clearInterval(timer); k.maps.load(() => { if (!cancelled) init(); }); }
         else if (Date.now() - t0 > 15000) clearInterval(timer);
       }, 300);
-      return () => { cancelled = true; clearInterval(timer); };
+      return () => { cancelled = true; clearInterval(timer); detachTouch?.(); };
     }
-    return () => { cancelled = true; };
+    return () => { cancelled = true; detachTouch?.(); };
   }, []);
 
   // 마커/클러스터 렌더 (선택 여부에 따라 분기)

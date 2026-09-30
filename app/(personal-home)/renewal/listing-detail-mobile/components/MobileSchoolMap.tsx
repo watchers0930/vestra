@@ -9,6 +9,7 @@
 import { useRef, useReducer, useCallback, useMemo, useState } from "react";
 import { GraduationCap, ChevronLeft, List } from "lucide-react";
 import { useKakaoMap } from "@/app/(app)/listings/[id]/components/useKakaoMap";
+import { enableKakaoTouchPan } from "@/lib/kakao-touch-pan";
 import { panToVisibleCenter } from "./mapPan";
 import ms from "./mobile-infra.module.css";
 
@@ -83,6 +84,7 @@ export default function MobileSchoolMap({ lat, lng }: { lat: number; lng: number
       const pos = new kakao.maps.LatLng(lat, lng);
       const map = new kakao.maps.Map(el, { center: pos, level: 5 });
       mapRef.current = map;
+      const detachTouch = enableKakaoTouchPan(map, el);
       // 건물 핀
       const sBuildPin = document.createElement("div");
       const sBShape = document.createElement("div");
@@ -120,6 +122,7 @@ export default function MobileSchoolMap({ lat, lng }: { lat: number; lng: number
       return {
         map,
         cleanup: () => {
+          detachTouch();
           dots.forEach((entries) => entries.forEach(({ ov }) => ov.setMap(null)));
           dots.clear(); mapRef.current = null;
         },

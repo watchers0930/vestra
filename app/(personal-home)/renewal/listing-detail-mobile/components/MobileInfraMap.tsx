@@ -10,6 +10,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { MapPin, ChevronLeft, List } from "lucide-react";
 import { useKakaoMap } from "@/app/(app)/listings/[id]/components/useKakaoMap";
+import { enableKakaoTouchPan } from "@/lib/kakao-touch-pan";
 import { panToVisibleCenter } from "./mapPan";
 import ms from "./mobile-infra.module.css";
 
@@ -90,6 +91,7 @@ export default function MobileInfraMap({ lat, lng }: { lat: number; lng: number 
       const pos = new kakao.maps.LatLng(lat, lng);
       const map = new kakao.maps.Map(el, { center: pos, level: 4 });
       mapRef.current = map;
+      const detachTouch = enableKakaoTouchPan(map, el);
       // 건물 핀
       const buildPin = document.createElement("div");
       const bShape = document.createElement("div");
@@ -127,6 +129,7 @@ export default function MobileInfraMap({ lat, lng }: { lat: number; lng: number 
       return {
         map,
         cleanup: () => {
+          detachTouch();
           dots.forEach((entries) => entries.forEach(({ ov }) => ov.setMap(null)));
           dots.clear(); places.clear(); mapRef.current = null;
         },

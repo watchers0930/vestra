@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { enableKakaoTouchPan } from "@/lib/kakao-touch-pan";
 
 interface Transaction {
   dealAmount: number;
@@ -85,6 +86,7 @@ export default function TransactionMap({ transactions, address, center }: Transa
     const mapElement = mapRef.current;
     if (!mapElement || transactions.length === 0) return;
     let cancelled = false;
+    let detachTouch: (() => void) | undefined;
 
     const init = async () => {
       if (!window.kakao?.maps) return;
@@ -98,6 +100,7 @@ export default function TransactionMap({ transactions, address, center }: Transa
         level: 5,
       });
       mapInstanceRef.current = map;
+      detachTouch = enableKakaoTouchPan(map, mapElement);
 
       const prices = transactions.map((t) => t.dealAmount);
       const minPrice = Math.min(...prices);
@@ -212,11 +215,13 @@ export default function TransactionMap({ transactions, address, center }: Transa
       return () => {
         clearInterval(timer);
         clearTimeout(timeoutId);
+        detachTouch?.();
       };
     }
 
     return () => {
       cancelled = true;
+      detachTouch?.();
       mapElement.innerHTML = "";
       mapInstanceRef.current = null;
     };

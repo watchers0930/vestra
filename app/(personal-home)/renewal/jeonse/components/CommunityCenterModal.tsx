@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X, MapPin, Phone, Search, Loader2, Navigation } from "lucide-react";
+import { enableKakaoTouchPan } from "@/lib/kakao-touch-pan";
 
 interface Center {
   name: string;
@@ -44,11 +45,13 @@ export function CommunityCenterModal({ open, onClose }: Props) {
   useEffect(() => {
     if (!open) { mapInst.current = null; markersRef.current = []; return; }
     let cancelled = false;
+    let detachTouch: (() => void) | undefined;
     const init = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const kakao = (window as any).kakao;
       if (cancelled || !mapRef.current || mapInst.current || !kakao?.maps?.Map) return;
       mapInst.current = new kakao.maps.Map(mapRef.current, { center: new kakao.maps.LatLng(37.5665, 126.978), level: 6 });
+      detachTouch = enableKakaoTouchPan(mapInst.current, mapRef.current);
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const kakao = (window as any).kakao;
@@ -62,7 +65,7 @@ export function CommunityCenterModal({ open, onClose }: Props) {
       else if (k?.maps?.load) { k.maps.load(() => { if (!cancelled) init(); }); }
     }, 300);
     const to = setTimeout(() => clearInterval(poll), 12000);
-    return () => { cancelled = true; clearInterval(poll); clearTimeout(to); };
+    return () => { cancelled = true; clearInterval(poll); clearTimeout(to); detachTouch?.(); };
   }, [open]);
 
   // 결과 → 지도 마커

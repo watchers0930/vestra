@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
 import { Card } from "@/components/common";
+import { enableKakaoTouchPan } from "@/lib/kakao-touch-pan";
 
 // Leaflet은 SSR에서 window 접근 문제가 있으므로 dynamic import
 const LeafletMap = dynamic(
@@ -52,6 +53,7 @@ export function KakaoMap({ address }: KakaoMapProps) {
 
   useEffect(() => {
     if (!hasKakaoKey) return;
+    let detachTouch: (() => void) | undefined;
 
     const initMap = () => {
       if (!window.kakao?.maps || !mapRef.current) return;
@@ -65,6 +67,8 @@ export function KakaoMap({ address }: KakaoMapProps) {
 
         const createMap = (coords: unknown, level: number) => {
           const map = new window.kakao.maps.Map(mapRef.current!, { center: coords, level });
+          detachTouch?.();
+          detachTouch = enableKakaoTouchPan(map, mapRef.current);
           new window.kakao.maps.Marker({ map, position: coords });
           setStatus("ready");
 
@@ -116,6 +120,7 @@ export function KakaoMap({ address }: KakaoMapProps) {
 
     if (window.kakao?.maps) {
       initMap();
+      return () => detachTouch?.();
     } else {
       const timeout = setTimeout(() => {
         if (window.kakao?.maps) {
@@ -124,7 +129,7 @@ export function KakaoMap({ address }: KakaoMapProps) {
           setStatus("error");
         }
       }, 3000);
-      return () => clearTimeout(timeout);
+      return () => { clearTimeout(timeout); detachTouch?.(); };
     }
   }, [address, hasKakaoKey]);
 
