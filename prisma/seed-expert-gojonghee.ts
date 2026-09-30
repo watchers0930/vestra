@@ -34,7 +34,7 @@ const PARTNER = {
   ],
   schools: [] as string[],
   etcInfo:
-    "서울 서초구 법원로3길 6-9 법조빌딩 301호\n대표전화 1833-5482\n홈페이지 dgon.co.kr\n카카오톡 상담",
+    "서울 서초구 법원로3길 6-9 법조빌딩 301호\n대표전화 1833-5482\n홈페이지 dgon.co.kr",
   kycStatus: "verified",
   membershipStatus: "active",
   homepageActive: false,
