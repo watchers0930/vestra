@@ -18,6 +18,9 @@
  * @param el  지도 컨테이너 엘리먼트
  * @returns cleanup 함수 (리스너 해제)
  */
+/** 팬 추종 계수. 1.0 = 손가락과 1:1, 낮출수록 덜 민감(지도가 덜 따라옴). */
+const PAN_GAIN = 0.85;
+
 export function enableKakaoTouchPan(map: any, el: HTMLElement | null): () => void {
   if (!map || !el) return () => {};
 
@@ -57,7 +60,7 @@ export function enableKakaoTouchPan(map: any, el: HTMLElement | null): () => voi
       const dy = e.clientY - prev.y;
       // panBy 는 애니메이션 이동이라 매 프레임 작은 델타로 연속 호출하면
       // 애니메이션이 서로 취소돼 느린 드래그가 죽음 → setCenter 로 즉시 이동.
-      panByPixels(map, -dx, -dy);
+      panByPixels(map, -dx * PAN_GAIN, -dy * PAN_GAIN);
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       return;
     }
