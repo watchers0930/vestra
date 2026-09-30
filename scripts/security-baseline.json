@@ -1,7 +1,7 @@
 {
   "_note": "보안 회귀 게이트 베이스라인(P0-5). 기존 취약점은 유예, 신규만 차단. 의존성 정리 후 이 파일을 재생성해 부채를 줄인다.",
-  "_generatedAt": "2026-09-11",
-  "_history": "npm audit fix로 호환 취약점 패치 후 재생성(18→10 high/critical). 잔여=메이저(next/prisma/serwist). xlsx는 v5.167.5에서 SheetJS 공식 0.20.3(CDN)으로 교체해 취약점 2건(1108110·1108111) 해소·baseline에서 제거.",
+  "_generatedAt": "2026-10-01",
+  "_history": "npm audit fix로 호환 취약점 패치 후 재생성(18→10 high/critical). 잔여=메이저(next/prisma/serwist). xlsx는 v5.167.5에서 SheetJS 공식 0.20.3(CDN)으로 교체해 취약점 2건(1108110·1108111) 해소·baseline에서 제거. 2026-10-01 advisory DB 갱신으로 신규 감지분 중 브레이스확장·dompurify는 audit fix로 해소, next critical 1240609(RCE in next/og ImageResponse)는 next/og 미사용으로 실질 노출면 없어 유예 등록 — next@16.3.8 업그레이드는 별도 보안작업 예정.",
   "scaSummaryAtBaseline": {
     "info": 0,
     "low": 0,
@@ -53,7 +53,8 @@
     1153172,
     1193676,
     1193725,
-    1193732
+    1193732,
+    1240609
   ],
   "dangerousHtmlMax": 4
 }
