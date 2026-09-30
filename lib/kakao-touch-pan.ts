@@ -55,7 +55,9 @@ export function enableKakaoTouchPan(map: any, el: HTMLElement | null): () => voi
     if (pts.size === 1) {
       const dx = e.clientX - prev.x;
       const dy = e.clientY - prev.y;
-      map.panBy(-dx, -dy);
+      // panBy 는 애니메이션 이동이라 매 프레임 작은 델타로 연속 호출하면
+      // 애니메이션이 서로 취소돼 느린 드래그가 죽음 → setCenter 로 즉시 이동.
+      panByPixels(map, -dx, -dy);
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       return;
     }
@@ -95,6 +97,28 @@ export function enableKakaoTouchPan(map: any, el: HTMLElement | null): () => voi
     el.removeEventListener("pointerup", onUp);
     el.removeEventListener("pointercancel", onUp);
   };
+}
+
+/** 지도 중심을 컨테이너 픽셀 기준 (dx,dy)만큼 즉시 이동. panBy 애니메이션 대신 setCenter 사용. */
+function panByPixels(map: any, dx: number, dy: number) {
+  try {
+    const kakao = (window as any).kakao;
+    const proj = map.getProjection?.();
+    if (proj?.containerPointFromCoords && proj?.coordsFromContainerPoint && kakao?.maps?.Point) {
+      const center = map.getCenter();
+      const pt = proj.containerPointFromCoords(center);
+      const next = new kakao.maps.Point(pt.x + dx, pt.y + dy);
+      map.setCenter(proj.coordsFromContainerPoint(next));
+      return;
+    }
+  } catch {
+    /* projection 미준비 시 아래 폴백 */
+  }
+  try {
+    map.panBy(dx, dy);
+  } catch {
+    /* 무시 */
+  }
 }
 
 /** 핀치 중심점(컨테이너 좌표)을 지도 좌표로 환산해 그 지점을 기준으로 줌. 실패 시 중심 기준. */
