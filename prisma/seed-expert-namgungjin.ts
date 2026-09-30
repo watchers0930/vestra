@@ -8,11 +8,15 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { readFileSync } from "fs";
 
 const prisma = new PrismaClient();
 
 const EMAIL = "namgungjin@chungwootax.com";
 const SLUG = "tax-namgungjin";
+
+// 프로필 아바타(흑백 플랫 일러스트). repo 자산을 dataURL로 임베드 → 배포 불필요, CSP data: 허용.
+const AVATAR_DATA_URL = `data:image/jpeg;base64,${readFileSync("prisma/seed-assets/namgungjin.jpg").toString("base64")}`;
 
 const PARTNER = {
   category: "tax",
@@ -34,7 +38,7 @@ const PARTNER = {
   membershipStatus: "active",
   homepageActive: false,
   active: true,
-  photoUrl: "https://images.unsplash.com/photo-1581065178047-8ee15951ede6?w=400&h=400&fit=crop&crop=faces&q=80" as string | null,
+  photoUrl: AVATAR_DATA_URL as string | null,
   hourlyFee: null as number | null,
 };
 
