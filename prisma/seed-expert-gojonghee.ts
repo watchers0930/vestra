@@ -33,8 +33,8 @@ const PARTNER = {
     "온라인 비대면 등기 처리 누적 5,000건+",
   ],
   schools: [] as string[],
-  etcInfo:
-    "서울 서초구 법원로3길 6-9 법조빌딩 301호\n대표전화 1833-5482\n홈페이지 dgon.co.kr",
+  // 추가정보(주소·연락처·채널)는 노출 시 외부 이탈 우려로 비움 → 모달에서 섹션 미표시
+  etcInfo: "",
   kycStatus: "verified",
   membershipStatus: "active",
   homepageActive: false,

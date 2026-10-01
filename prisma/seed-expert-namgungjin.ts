@@ -31,8 +31,8 @@ const PARTNER = {
     "공인회계사 · 세무사",
   ],
   schools: [] as string[],
-  etcInfo:
-    "경기 하남시 덕풍동로 111 풍산캐슬빌딩 306호\n홈페이지 chungwootax.com\n네이버블로그 blog.naver.com/tax2138\n유튜브 '세금요정 지니'",
+  // 추가정보(주소·연락처·채널)는 노출 시 외부 이탈 우려로 비움 → 모달에서 섹션 미표시
+  etcInfo: "",
   kycStatus: "verified",
   membershipStatus: "active",
   homepageActive: false,

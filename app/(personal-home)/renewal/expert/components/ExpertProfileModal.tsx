@@ -140,7 +140,7 @@ export default function ExpertProfileModal({ expert, onSelect, onClose }: Props)
                 {d && d.schools.length > 0 && (
                   <section><h4 className={s.pmSecT}>학력</h4><ul className={s.pmList}>{d.schools.map((c, i) => <li key={i}>{c}</li>)}</ul></section>
                 )}
-                {d?.etcInfo && <section><h4 className={s.pmSecT}>추가 정보</h4><p className={s.pmText}>{d.etcInfo}</p></section>}
+                {/* 추가 정보(주소·연락처·채널)는 외부 이탈 유도 우려로 모달에 표시하지 않음 */}
                 {noDetail && !d?.headline && <p className={s.pmEmpty}>등록된 상세 프로필이 아직 없습니다.</p>}
               </>
             )}
