@@ -20,7 +20,7 @@ const AVATAR_DATA_URL = `data:image/jpeg;base64,${readFileSync("prisma/seed-asse
 
 const PARTNER = {
   category: "tax",
-  name: "남궁진",
+  name: "남궁진 대표세무사",
   firmName: "청우세무회계",
   phone: "010-8511-2138",
   officePhone: "02-485-0100",
