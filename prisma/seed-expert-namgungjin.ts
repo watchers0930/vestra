@@ -32,7 +32,7 @@ const PARTNER = {
   ],
   schools: [] as string[],
   etcInfo:
-    "경기 하남시 덕풍동로 111 풍산캐슬빌딩 306호\n홈페이지 chungwootax.com\n네이버블로그 blog.naver.com/tax2138\n유튜브 '세금요정 지니'\n카카오톡 상담",
+    "경기 하남시 덕풍동로 111 풍산캐슬빌딩 306호\n홈페이지 chungwootax.com\n네이버블로그 blog.naver.com/tax2138\n유튜브 '세금요정 지니'",
   kycStatus: "verified",
   membershipStatus: "active",
   homepageActive: false,
