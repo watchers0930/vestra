@@ -20,7 +20,7 @@ const AVATAR_DATA_URL = `data:image/jpeg;base64,${readFileSync("prisma/seed-asse
 
 const PARTNER = {
   category: "공인중개사",
-  name: "한규리 대표",
+  name: "한규리 공인중개사 대표",
   firmName: "가산열린부동산",
   phone: null as string | null,
   officePhone: null as string | null,

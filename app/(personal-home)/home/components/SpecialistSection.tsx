@@ -57,7 +57,7 @@ export default function SpecialistSection() {
                 )}
               </div>
               <span className={s.specRole}>{e.headline || e.category}</span>
-              <span className={s.specName}>{e.category} {e.name}</span>
+              <span className={s.specName}>{e.name}</span>
               <button type="button" onClick={() => setSelected(e)} className={s.specBtn}>문의하기</button>
             </div>
           ))}

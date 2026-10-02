@@ -79,7 +79,7 @@ export default function ExpertProfileModal({ expert, onSelect, onClose }: Props)
                 : <span className={s.pmPhotoInit}>{expert.name.charAt(0)}</span>}
             </div>
             <div className={s.pmSideName}>{expert.name}</div>
-            <div className={s.pmSideCat}>{expert.category}</div>
+            {/* 분야 라벨은 이름에 직함으로 포함되어 중복 표시를 피하기 위해 숨김 */}
             {d?.firmName && <div className={s.pmSideFirm}>{d.firmName}</div>}
             <div className={s.pmSideStats}>
               <div className={s.pmStat}><b>★ {expert.rating.toFixed(1)}</b><span>후기 {expert.reviewCount}</span></div>
