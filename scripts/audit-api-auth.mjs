@@ -37,6 +37,7 @@ const ALLOWLIST = {
   "extract-pdf/route.ts": "공개 PDF 추출 — rate limit",
   "landlord/report/route.ts": "비회원 임대인 제보 — IP rate limit(일 3건) + CSRF",
   "e-contracts/sign/[token]/route.ts": "공개 서명 링크 — URL 토큰(signToken) 자체가 인증 + 만료·상태 검증",
+  "embed/rights/route.ts": "공개 임베드 권리분석 — IP rate limit(10/min) + 매직바이트·10MB 검증 + 텍스트PDF만(OpenAI 미사용), 응답은 위험도 집계만(PII 미포함)",
 };
 
 const MUTATION_RE = /export\s+(?:async\s+function|const)\s+(POST|PUT|PATCH|DELETE)\b/g;
