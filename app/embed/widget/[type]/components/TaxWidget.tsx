@@ -5,6 +5,12 @@ import { WidgetShell } from "./WidgetShell";
 import { formatKRW } from "../lib/format";
 import styles from "../embed.module.css";
 
+export const taxMeta = {
+  type: "tax",
+  title: "취득세 계산기",
+  source: "지방세법 세율 기준 · 참고용",
+};
+
 interface TaxData {
   price: number;
   houseCount: number;
@@ -17,7 +23,8 @@ interface TaxData {
   details?: string;
 }
 
-export function TaxWidget({ theme, accent }: { theme: "light" | "dark"; accent: string }) {
+/** 취득세 계산 본문(폼+결과) */
+export function TaxBody() {
   const [price, setPrice] = useState("");
   const [houseCount, setHouseCount] = useState("1");
   const [adjusted, setAdjusted] = useState(false);
@@ -55,13 +62,7 @@ export function TaxWidget({ theme, accent }: { theme: "light" | "dark"; accent: 
   }
 
   return (
-    <WidgetShell
-      type="tax"
-      title="취득세 계산기"
-      theme={theme}
-      accent={accent}
-      source="지방세법 세율 기준 · 참고용"
-    >
+    <>
       <form className={styles.form} onSubmit={run}>
         <div className={styles.row2}>
           <div className={styles.field}>
@@ -131,6 +132,14 @@ export function TaxWidget({ theme, accent }: { theme: "light" | "dark"; accent: 
           {data.details && <div className={styles.note}>{data.details}</div>}
         </div>
       )}
+    </>
+  );
+}
+
+export function TaxWidget({ theme, accent }: { theme: "light" | "dark"; accent: string }) {
+  return (
+    <WidgetShell {...taxMeta} theme={theme} accent={accent}>
+      <TaxBody />
     </WidgetShell>
   );
 }

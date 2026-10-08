@@ -67,6 +67,35 @@
   background: var(--accent);
 }
 
+/* 묶음 위젯 탭바 */
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+}
+.tab {
+  flex: none;
+  padding: 7px 12px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+}
+.tab:hover {
+  color: var(--fg);
+}
+.tabOn {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
 /* 입력 */
 .form {
   display: flex;

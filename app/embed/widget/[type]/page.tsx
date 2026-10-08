@@ -4,8 +4,9 @@ import { PriceWidget } from "./components/PriceWidget";
 import { JeonseWidget } from "./components/JeonseWidget";
 import { TaxWidget } from "./components/TaxWidget";
 import { RightsWidget } from "./components/RightsWidget";
+import { BundleWidget } from "./components/BundleWidget";
 
-const TYPES = ["price", "jeonse-safety", "tax", "rights"] as const;
+const TYPES = ["price", "jeonse-safety", "tax", "rights", "bundle"] as const;
 type WType = (typeof TYPES)[number];
 
 function first(v: string | string[] | undefined): string {
@@ -36,5 +37,12 @@ export default async function EmbedWidgetPage({
       return <TaxWidget theme={theme} accent={accent} />;
     case "rights":
       return <RightsWidget theme={theme} accent={accent} />;
+    case "bundle": {
+      const widgets = first(sp.widgets)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      return <BundleWidget theme={theme} accent={accent} address={address} widgets={widgets} />;
+    }
   }
 }

@@ -4,6 +4,12 @@ import { useRef, useState } from "react";
 import { WidgetShell } from "./WidgetShell";
 import styles from "../embed.module.css";
 
+export const rightsMeta = {
+  type: "rights",
+  title: "등기부 권리분석",
+  source: "인터넷등기소 텍스트 PDF 기준",
+};
+
 interface Factor {
   category: string;
   description: string;
@@ -32,7 +38,8 @@ function sevLevel(sev: Factor["severity"]): "lo" | "md" | "hi" {
   return "lo";
 }
 
-export function RightsWidget({ theme, accent }: { theme: "light" | "dark"; accent: string }) {
+/** 등기부 권리분석 본문(업로드+결과) */
+export function RightsBody() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -65,13 +72,7 @@ export function RightsWidget({ theme, accent }: { theme: "light" | "dark"; accen
   }
 
   return (
-    <WidgetShell
-      type="rights"
-      title="등기부 권리분석"
-      theme={theme}
-      accent={accent}
-      source="인터넷등기소 텍스트 PDF 기준"
-    >
+    <>
       <label className={styles.drop}>
         <input
           ref={inputRef}
@@ -135,6 +136,14 @@ export function RightsWidget({ theme, accent }: { theme: "light" | "dark"; accen
           )}
         </div>
       )}
+    </>
+  );
+}
+
+export function RightsWidget({ theme, accent }: { theme: "light" | "dark"; accent: string }) {
+  return (
+    <WidgetShell {...rightsMeta} theme={theme} accent={accent}>
+      <RightsBody />
     </WidgetShell>
   );
 }

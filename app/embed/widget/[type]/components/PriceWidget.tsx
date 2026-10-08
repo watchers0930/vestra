@@ -5,6 +5,12 @@ import { WidgetShell } from "./WidgetShell";
 import { formatKRW, formatManShort, formatDate } from "../lib/format";
 import styles from "../embed.module.css";
 
+export const priceMeta = {
+  type: "price",
+  title: "실거래가 시세 조회",
+  source: "국토교통부 실거래가 기반",
+};
+
 interface PriceData {
   address: string;
   period: string;
@@ -26,15 +32,8 @@ const TYPES = [
   { v: "단독주택", l: "단독·다가구" },
 ];
 
-export function PriceWidget({
-  theme,
-  accent,
-  address: initial,
-}: {
-  theme: "light" | "dark";
-  accent: string;
-  address: string;
-}) {
+/** 시세 조회 본문(폼+결과) — 셸 없이 BundleWidget 탭에도 끼울 수 있다 */
+export function PriceBody({ address: initial = "" }: { address?: string }) {
   const [address, setAddress] = useState(initial);
   const [type, setType] = useState("아파트");
   const [loading, setLoading] = useState(false);
@@ -64,13 +63,7 @@ export function PriceWidget({
   }
 
   return (
-    <WidgetShell
-      type="price"
-      title="실거래가 시세 조회"
-      theme={theme}
-      accent={accent}
-      source="국토교통부 실거래가 기반"
-    >
+    <>
       <form className={styles.form} onSubmit={run}>
         <div className={styles.field}>
           <label className={styles.label}>주소</label>
@@ -140,6 +133,22 @@ export function PriceWidget({
           <div className={styles.source}>기준일 {formatDate(data.lastUpdated)}</div>
         </div>
       )}
+    </>
+  );
+}
+
+export function PriceWidget({
+  theme,
+  accent,
+  address,
+}: {
+  theme: "light" | "dark";
+  accent: string;
+  address: string;
+}) {
+  return (
+    <WidgetShell {...priceMeta} theme={theme} accent={accent}>
+      <PriceBody address={address} />
     </WidgetShell>
   );
 }

@@ -12,30 +12,47 @@ const WIDGETS: { key: WType; label: string; desc: string; address: boolean; titl
   { key: "tax", label: "취득세 계산기", desc: "매매가+조건 → 취득세", address: false, title: "VESTRA 취득세 계산 위젯" },
   { key: "rights", label: "권리분석", desc: "등기부 PDF → 위험도", address: false, title: "VESTRA 권리분석 위젯" },
 ];
+const ORDER: WType[] = ["price", "jeonse-safety", "tax", "rights"];
 
 export function EmbedWidgetTab() {
-  const [type, setType] = useState<WType>("price");
+  const [selected, setSelected] = useState<WType[]>(["price"]);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [accent, setAccent] = useState("#0071e3");
   const [width, setWidth] = useState("420");
-  const [height, setHeight] = useState("480");
+  const [height, setHeight] = useState("520");
   const [address, setAddress] = useState("");
   const [copied, setCopied] = useState(false);
 
-  const current = WIDGETS.find((w) => w.key === type)!;
+  // 지정 순서대로 정규화
+  const picked = ORDER.filter((k) => selected.includes(k));
+  const isBundle = picked.length >= 2;
+  const addressable = picked.some((k) => WIDGETS.find((w) => w.key === k)?.address);
+  const title = isBundle ? "VESTRA 통합 위젯" : WIDGETS.find((w) => w.key === picked[0])!.title;
+
+  function toggle(key: WType) {
+    setSelected((prev) =>
+      prev.includes(key)
+        ? prev.length > 1
+          ? prev.filter((k) => k !== key)
+          : prev // 최소 1개 유지
+        : [...prev, key]
+    );
+  }
 
   const query = useMemo(() => {
     const qs = new URLSearchParams();
+    if (isBundle) qs.set("widgets", picked.join(","));
     if (theme === "dark") qs.set("theme", "dark");
     const acc = accent.replace(/^#/, "");
     if (acc.toLowerCase() !== "0071e3") qs.set("accent", acc);
-    if (current.address && address.trim()) qs.set("address", address.trim());
+    if (addressable && address.trim()) qs.set("address", address.trim());
     const s = qs.toString();
     return s ? `?${s}` : "";
-  }, [theme, accent, address, current]);
+  }, [isBundle, picked, theme, accent, address, addressable]);
 
-  const previewSrc = `/embed/widget/${type}${query}`;
-  const embedSrc = `${SITE_URL}/embed/widget/${type}${query}`;
+  const path = isBundle ? "bundle" : picked[0];
+  const previewSrc = `/embed/widget/${path}${query}`;
+  const embedSrc = `${SITE_URL}/embed/widget/${path}${query}`;
 
   const code = useMemo(() => {
     const w = /^\d+$/.test(width) ? `${width}px` : "100%";
@@ -43,12 +60,12 @@ export function EmbedWidgetTab() {
     return `<iframe
   src="${embedSrc}"
   width="${w}"
-  height="${height || "480"}"
+  height="${height || "520"}"
   style="border:1px solid #e5e7eb;border-radius:12px;${maxW}width:100%"
   loading="lazy"
-  title="${current.title}">
+  title="${title}">
 </iframe>`;
-  }, [embedSrc, width, height, current]);
+  }, [embedSrc, width, height, title]);
 
   async function copy() {
     try {
@@ -68,22 +85,36 @@ export function EmbedWidgetTab() {
       {/* 설정 + 코드 */}
       <div className="space-y-5">
         <div className="rounded-xl border border-gray-100 bg-white p-5">
-          <h3 className="mb-3 text-sm font-bold text-gray-800">위젯 종류</h3>
+          <div className="mb-1 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-gray-800">위젯 종류</h3>
+            <span className="text-xs text-gray-400">
+              {isBundle ? `${picked.length}개 묶음(탭)` : "단일"}
+            </span>
+          </div>
+          <p className="mb-3 text-xs text-gray-500">여러 개를 고르면 탭으로 묶인 하나의 코드가 생성됩니다.</p>
           <div className="grid grid-cols-2 gap-2">
-            {WIDGETS.map((w) => (
-              <button
-                key={w.key}
-                onClick={() => setType(w.key)}
-                className={`rounded-lg border p-3 text-left transition ${
-                  type === w.key
-                    ? "border-primary bg-primary/5 ring-1 ring-primary"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <div className="text-sm font-semibold text-gray-800">{w.label}</div>
-                <div className="mt-0.5 text-xs text-gray-500">{w.desc}</div>
-              </button>
-            ))}
+            {WIDGETS.map((w) => {
+              const on = selected.includes(w.key);
+              return (
+                <button
+                  key={w.key}
+                  onClick={() => toggle(w.key)}
+                  className={`relative rounded-lg border p-3 text-left transition ${
+                    on
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  {on && (
+                    <span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white">
+                      <Check size={11} />
+                    </span>
+                  )}
+                  <div className="text-sm font-semibold text-gray-800">{w.label}</div>
+                  <div className="mt-0.5 text-xs text-gray-500">{w.desc}</div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -130,10 +161,10 @@ export function EmbedWidgetTab() {
                 value={height}
                 onChange={(e) => setHeight(e.target.value)}
                 inputMode="numeric"
-                placeholder="480"
+                placeholder="520"
               />
             </div>
-            {current.address && (
+            {addressable && (
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs font-semibold text-gray-500">
                   기본 주소 (선택 — 비우면 방문자가 직접 입력)
@@ -180,7 +211,7 @@ export function EmbedWidgetTab() {
               key={previewSrc}
               src={previewSrc}
               width={/^\d+$/.test(width) ? Number(width) : "100%"}
-              height={/^\d+$/.test(height) ? Number(height) : 480}
+              height={/^\d+$/.test(height) ? Number(height) : 520}
               style={{
                 border: "1px solid #e5e7eb",
                 borderRadius: 12,

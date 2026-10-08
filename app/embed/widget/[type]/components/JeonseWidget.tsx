@@ -5,6 +5,12 @@ import { WidgetShell } from "./WidgetShell";
 import { formatKRW, formatDate } from "../lib/format";
 import styles from "../embed.module.css";
 
+export const jeonseMeta = {
+  type: "jeonse-safety",
+  title: "전세 안전진단 (깡통전세)",
+  source: "국토교통부 실거래가 기반",
+};
+
 interface JeonseData {
   address: string;
   estimatedPrice: number;
@@ -23,15 +29,8 @@ const TYPES = [
   { v: "단독주택", l: "단독·다가구" },
 ];
 
-export function JeonseWidget({
-  theme,
-  accent,
-  address: initial,
-}: {
-  theme: "light" | "dark";
-  accent: string;
-  address: string;
-}) {
+/** 전세 안전진단 본문(폼+결과) */
+export function JeonseBody({ address: initial = "" }: { address?: string }) {
   const [address, setAddress] = useState(initial);
   const [deposit, setDeposit] = useState("");
   const [type, setType] = useState("아파트");
@@ -67,13 +66,7 @@ export function JeonseWidget({
   }
 
   return (
-    <WidgetShell
-      type="jeonse-safety"
-      title="전세 안전진단 (깡통전세)"
-      theme={theme}
-      accent={accent}
-      source="국토교통부 실거래가 기반"
-    >
+    <>
       <form className={styles.form} onSubmit={run}>
         <div className={styles.field}>
           <label className={styles.label}>주소</label>
@@ -141,6 +134,22 @@ export function JeonseWidget({
           <div className={styles.source}>기준일 {formatDate(data.lastUpdated)}</div>
         </div>
       )}
+    </>
+  );
+}
+
+export function JeonseWidget({
+  theme,
+  accent,
+  address,
+}: {
+  theme: "light" | "dark";
+  accent: string;
+  address: string;
+}) {
+  return (
+    <WidgetShell {...jeonseMeta} theme={theme} accent={accent}>
+      <JeonseBody address={address} />
     </WidgetShell>
   );
 }
