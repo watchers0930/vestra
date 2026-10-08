@@ -43,7 +43,7 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^0.575.0",
     "mammoth": "^1.12.0",
-    "next": "16.3.4",
+    "next": "^16.3.8",
     "next-auth": "^5.0.0-beta.30",
     "openai": "^6.23.0",
     "pdfjs-dist": "^4.10.38",
