@@ -108,10 +108,11 @@ export default async function proxy(req: NextRequest) {
     }
   }
 
-  if (pathname.startsWith("/admin")) {
+  // 관리자 전용 로그인 페이지는 비로그인 접근을 허용(무한 리다이렉트 방지)
+  if (pathname !== "/admin-login" && pathname.startsWith("/admin")) {
     const token = await getToken(req);
     if (!token || token.role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/login", req.url));
+      return NextResponse.redirect(new URL("/admin-login", req.url));
     }
   }
 

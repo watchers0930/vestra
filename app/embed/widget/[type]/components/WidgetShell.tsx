@@ -11,18 +11,38 @@ const MORE_PATH: Record<string, string> = {
   rights: "/rights",
 };
 
+export interface ShellTab {
+  key: string;
+  label: string;
+}
+
 interface Props {
+  /** 현재 활성 위젯 종류(유입 링크 결정) */
   type: string;
   title: string;
   theme: "light" | "dark";
   accent: string;
   /** 하단 데이터 출처 문구 */
   source: string;
+  /** 묶음 위젯일 때 상단 탭(미지정 시 단일 위젯) */
+  tabs?: ShellTab[];
+  activeTab?: string;
+  onTab?: (key: string) => void;
   children: React.ReactNode;
 }
 
-/** 모든 임베드 위젯의 공통 외곽(헤더·브랜드·푸터·테마/accent 적용) */
-export function WidgetShell({ type, title, theme, accent, source, children }: Props) {
+/** 모든 임베드 위젯의 공통 외곽(헤더·브랜드·탭·푸터·테마/accent 적용) */
+export function WidgetShell({
+  type,
+  title,
+  theme,
+  accent,
+  source,
+  tabs,
+  activeTab,
+  onTab,
+  children,
+}: Props) {
   const moreUrl = `${SITE_URL}${MORE_PATH[type] ?? ""}`;
   return (
     <div
@@ -37,6 +57,23 @@ export function WidgetShell({ type, title, theme, accent, source, children }: Pr
           VESTRA
         </a>
       </div>
+
+      {tabs && tabs.length > 1 && (
+        <div className={styles.tabs} role="tablist">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              role="tab"
+              aria-selected={t.key === activeTab}
+              className={`${styles.tab} ${t.key === activeTab ? styles.tabOn : ""}`}
+              onClick={() => onTab?.(t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {children}
 

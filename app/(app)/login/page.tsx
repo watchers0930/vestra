@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useEffect, Suspense } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -13,7 +13,6 @@ function LoginContent() {
   const searchParams = useSearchParams();
   // 미가입 소셜 계정 로그인 시도 → 서버가 /login?error=not_registered 로 돌려보냄
   const notRegistered = searchParams.get("error") === "not_registered";
-  const [showAdmin, setShowAdmin] = useState(false);
 
   // 이미 로그인된 상태: localStorage 초기화 후 역할별 리다이렉트
   useEffect(() => {
@@ -29,10 +28,6 @@ function LoginContent() {
       }
     }
   }, [session, status, router]);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const handleSocialLogin = (provider: "google" | "naver") => {
     try { sessionStorage.setItem("vestra_alive", "1"); } catch {}
@@ -40,24 +35,6 @@ function LoginContent() {
     const cb = searchParams.get("callbackUrl");
     const dest = cb ? `/dashboard?next=${encodeURIComponent(cb)}` : "/dashboard";
     signIn(provider, { callbackUrl: dest });
-  };
-
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-    setLoading(false);
-    if (res?.error) {
-      setError("이메일 또는 비밀번호가 올바르지 않습니다");
-    } else {
-      try { sessionStorage.setItem("vestra_alive", "1"); } catch {}
-      router.push("/admin");
-    }
   };
 
   return (
@@ -157,47 +134,6 @@ function LoginContent() {
                 권리분석 체험하기 (일 2회 무료)
               </button>
             </div>
-          </div>
-
-          {/* 관리자 로그인 */}
-          <div className="mt-6">
-            <button
-              onClick={() => setShowAdmin(!showAdmin)}
-              className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              {showAdmin ? "관리자 로그인 닫기" : "관리자 로그인"}
-            </button>
-
-            {showAdmin && (
-              <form onSubmit={handleAdminLogin} className="mt-3 space-y-3">
-                <input
-                  type="email"
-                  placeholder="관리자 이메일"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-[#e5e5e7] text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
-                  required
-                />
-                <input
-                  type="password"
-                  placeholder="비밀번호"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-[#e5e5e7] text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
-                  required
-                />
-                {error && (
-                  <p className="text-xs text-red-500">{error}</p>
-                )}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
-                >
-                  {loading ? "로그인 중..." : "관리자 로그인"}
-                </button>
-              </form>
-            )}
           </div>
         </div>
 
