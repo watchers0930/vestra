@@ -108,7 +108,7 @@ export function TaxWidget({ theme, accent }: { theme: "light" | "dark"; accent: 
       {data && (
         <div className={styles.result}>
           <div className={styles.addr}>
-            {formatKRW(data.price)} · {data.label} · 세율 {data.rate}%
+            {formatKRW(data.price)} · {data.label}
           </div>
           <div className={styles.bigRow}>
             <span className={styles.bigLabel}>총 취득세</span>
