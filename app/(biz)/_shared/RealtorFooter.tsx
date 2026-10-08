@@ -28,6 +28,7 @@ export default function RealtorFooter() {
           <ul className={s.footerLinks}>
             <li><Link href="/privacy">개인정보처리방침</Link></li>
             <li><Link href="/terms">이용약관</Link></li>
+            <li><Link href="/refund">취소·환불정책</Link></li>
           </ul>
         </div>
         <div>

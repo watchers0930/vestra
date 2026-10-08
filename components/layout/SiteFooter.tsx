@@ -86,6 +86,9 @@ export default function SiteFooter() {
               <Link href="/terms">이용약관</Link>
             </li>
             <li>
+              <Link href="/refund">취소·환불정책</Link>
+            </li>
+            <li>
               <a href="#">채용</a>
             </li>
           </ul>
