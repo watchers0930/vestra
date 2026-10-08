@@ -40,6 +40,12 @@ const baseCSP = [
   "form-action 'self'",
 ].join("; ");
 
+// 임베드 위젯 CSP — 외부 사이트 iframe 삽입이 목적이므로
+// X-Frame-Options(DENY)를 제외하고 frame-ancestors로 전체 허용한다.
+// 위젯은 공개 통계/계산만 노출(로그인·민감작업 없음)이라 clickjacking 위험이 낮다.
+const embedSecurityHeaders = securityHeaders.filter((h) => h.key !== "X-Frame-Options");
+const embedCSP = `${baseCSP}; frame-ancestors *`;
+
 // 지도 페이지 CSP (카카오맵 SDK 및 개발 런타임 허용)
 const mapCSP = baseCSP.includes("'unsafe-eval'")
   ? baseCSP
@@ -68,9 +74,14 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
-      // 나머지 페이지 — unsafe-eval 없음
+      // 임베드 위젯 — 외부 iframe 허용(X-Frame-Options 제외 + frame-ancestors *)
       {
-        source: "/(.*)",
+        source: "/embed/:path*",
+        headers: [...embedSecurityHeaders, { key: "Content-Security-Policy", value: embedCSP }],
+      },
+      // 나머지 페이지 — unsafe-eval 없음 (embed 제외)
+      {
+        source: "/((?!embed/).*)",
         headers: [...securityHeaders, { key: "Content-Security-Policy", value: baseCSP }],
       },
       // 지도 페이지 — unsafe-eval 허용
