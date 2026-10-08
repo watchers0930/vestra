@@ -10,6 +10,7 @@ import { IntegrityAuditTab } from "@/components/admin/IntegrityAuditTab";
 import { ApiKeyTab } from "@/components/admin/ApiKeyTab";
 import { GuaranteeRulesTab } from "@/components/admin/GuaranteeRulesTab";
 import { LoanRatesTab } from "@/components/admin/LoanRatesTab";
+import { EmbedWidgetTab } from "@/components/admin/EmbedWidgetTab";
 import dynamic from "next/dynamic";
 import { useAdminData } from "./hooks/useAdminData";
 import { OverviewTab } from "./components/OverviewTab";
@@ -171,6 +172,7 @@ function AdminContent() {
           {tab === "guarantee-rules" && <GuaranteeRulesTab />}
           {tab === "loan-rates" && <LoanRatesTab />}
           {tab === "research-journal" && <ResearchJournalTab />}
+          {tab === "embed-widget" && <EmbedWidgetTab />}
 
           {tab === "account" && (
             <AccountTab

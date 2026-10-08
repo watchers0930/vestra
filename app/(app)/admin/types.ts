@@ -14,7 +14,8 @@ export type Tab =
   | "news"
   | "guarantee-rules"
   | "loan-rates"
-  | "research-journal";
+  | "research-journal"
+  | "embed-widget";
 
 export interface Stats {
   totalUsers: number;

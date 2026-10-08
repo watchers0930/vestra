@@ -5,7 +5,7 @@ import {
   KeyRound, ClipboardCheck, Brain, SlidersHorizontal,
   ShieldAlert, Key, Newspaper, MapPin, Landmark, Eye,
   Handshake, BookOpenText, Building2, ClipboardList, FileSignature,
-  Scale, CalendarCheck, UserCog, Banknote, LineChart,
+  Scale, CalendarCheck, UserCog, Banknote, LineChart, Code2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -147,6 +147,7 @@ export const adminMenuItems: MenuItem[] = [
   { href: "/admin?tab=guarantee-rules",     icon: ShieldCheck,      label: "보증보험 규칙", description: "보증보험 가입조건 규칙을 관리합니다" },
   { href: "/admin?tab=loan-rates",          icon: Banknote,         label: "대출 금리",     description: "FSS 연동 전세대출 금리를 관리합니다" },
   { href: "/admin?tab=research-journal",    icon: BookOpenText,     label: "연구일지",      description: "Git 변경이력 기반 연구개발 일지를 저장하고 출력합니다" },
+  { href: "/admin?tab=embed-widget",        icon: Code2,            label: "임베드 위젯",   description: "외부 사이트에 삽입할 위젯 임베드 코드를 생성합니다" },
   { href: "/admin?tab=account",             icon: KeyRound,         label: "계정 설정",     description: "관리자 비밀번호 변경 및 계정 설정을 관리합니다" },
 ];
 
