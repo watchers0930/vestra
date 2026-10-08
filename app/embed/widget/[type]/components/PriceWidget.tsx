@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { WidgetShell } from "./WidgetShell";
+import { DaumPostcodeModal } from "@/components/keepzip/DaumPostcodeModal";
 import { formatKRW, formatManShort, formatDate } from "../lib/format";
 import styles from "../embed.module.css";
 
@@ -39,6 +40,7 @@ export function PriceBody({ address: initial = "" }: { address?: string }) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [data, setData] = useState<PriceData | null>(null);
+  const [postcodeOpen, setPostcodeOpen] = useState(false);
 
   async function run(e: React.FormEvent) {
     e.preventDefault();
@@ -70,8 +72,10 @@ export function PriceBody({ address: initial = "" }: { address?: string }) {
           <input
             className={styles.input}
             value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="예: 서울시 강남구 역삼동"
+            readOnly
+            onClick={() => setPostcodeOpen(true)}
+            placeholder="주소 검색 (클릭)"
+            style={{ cursor: "pointer" }}
           />
         </div>
         <div className={styles.field}>
@@ -132,6 +136,13 @@ export function PriceBody({ address: initial = "" }: { address?: string }) {
           </div>
           <div className={styles.source}>기준일 {formatDate(data.lastUpdated)}</div>
         </div>
+      )}
+
+      {postcodeOpen && (
+        <DaumPostcodeModal
+          onComplete={(r) => setAddress(r.jibunAddress)}
+          onClose={() => setPostcodeOpen(false)}
+        />
       )}
     </>
   );
