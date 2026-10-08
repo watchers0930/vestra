@@ -13,7 +13,7 @@ interface Notice {
 
 /**
  * 공통 사이트 푸터 — 여러 페이지에 복제돼 있던 다크 푸터를 하나로 통합.
- * 링크는 개인정보처리방침·이용약관·회사소개·채용 4개를 그룹 헤딩 없이 나열하고,
+ * 링크는 개인정보처리방침·이용약관·취소·환불정책·법적고지·채용을 그룹 헤딩 없이 나열하고,
  * 오른쪽에 최신 공지사항 3건을 표시한다(공개 API에서 로드, 실패/없음 시 안내).
  */
 export default function SiteFooter() {
@@ -77,7 +77,7 @@ export default function SiteFooter() {
         <div>
           <ul className={s.links}>
             <li>
-              <Link href="/legal">회사소개</Link>
+              <Link href="/legal">법적고지</Link>
             </li>
             <li>
               <Link href="/privacy">개인정보처리방침</Link>
