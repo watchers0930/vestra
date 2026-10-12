@@ -8,9 +8,10 @@
   --soft: #f6f7f9;
   box-sizing: border-box;
   width: 100%;
+  max-width: 960px;
   min-height: 100vh;
-  margin: 0;
-  padding: 16px;
+  margin: 0 auto;
+  padding: 18px;
   background: var(--bg);
   color: var(--fg);
   font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard",
@@ -94,6 +95,46 @@
 .tabOn {
   color: var(--accent);
   border-bottom-color: var(--accent);
+}
+
+/* 본문 — 좁으면 1단, 넓으면 입력(좌)+결과(우) 2단 */
+.body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+.resultCol {
+  min-width: 0;
+}
+/* 결과 대기 자리(넓은 화면에서만 노출) */
+.placeholder {
+  display: none;
+}
+@media (min-width: 560px) {
+  .body {
+    grid-template-columns: minmax(250px, 320px) 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+  /* 2단에서는 결과의 상단 구분선 제거(세로 구분이 아니므로) */
+  .resultCol .result {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+  .placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    padding: 20px;
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+    text-align: center;
+  }
 }
 
 /* 입력 */

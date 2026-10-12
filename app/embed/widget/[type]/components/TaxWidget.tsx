@@ -23,7 +23,7 @@ interface TaxData {
   details?: string;
 }
 
-/** 취득세 계산 본문(폼+결과) */
+/** 취득세 계산 본문(입력+결과 2단) */
 export function TaxBody() {
   const [price, setPrice] = useState("");
   const [houseCount, setHouseCount] = useState("1");
@@ -62,32 +62,30 @@ export function TaxBody() {
   }
 
   return (
-    <>
+    <div className={styles.body}>
       <form className={styles.form} onSubmit={run}>
-        <div className={styles.row2}>
-          <div className={styles.field}>
-            <label className={styles.label}>매매가 (만원)</label>
-            <input
-              className={styles.input}
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              inputMode="numeric"
-              placeholder="예: 80000"
-            />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>보유 주택 수</label>
-            <select
-              className={styles.select}
-              value={houseCount}
-              onChange={(e) => setHouseCount(e.target.value)}
-            >
-              <option value="1">1주택</option>
-              <option value="2">2주택</option>
-              <option value="3">3주택</option>
-              <option value="4">4주택 이상</option>
-            </select>
-          </div>
+        <div className={styles.field}>
+          <label className={styles.label}>매매가 (만원)</label>
+          <input
+            className={styles.input}
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            inputMode="numeric"
+            placeholder="예: 80000"
+          />
+        </div>
+        <div className={styles.field}>
+          <label className={styles.label}>보유 주택 수</label>
+          <select
+            className={styles.select}
+            value={houseCount}
+            onChange={(e) => setHouseCount(e.target.value)}
+          >
+            <option value="1">1주택</option>
+            <option value="2">2주택</option>
+            <option value="3">3주택</option>
+            <option value="4">4주택 이상</option>
+          </select>
         </div>
         <div className={styles.checks}>
           <label className={styles.check}>
@@ -104,35 +102,38 @@ export function TaxBody() {
         </button>
       </form>
 
-      {err && <div className={styles.err}>{err}</div>}
-
-      {data && (
-        <div className={styles.result}>
-          <div className={styles.addr}>
-            {formatKRW(data.price)} · {data.label}
-          </div>
-          <div className={styles.bigRow}>
-            <span className={styles.bigLabel}>총 취득세</span>
-            <span className={styles.big}>{formatKRW(data.totalTax)}</span>
-          </div>
-          <div className={styles.stats}>
-            <div className={styles.stat}>
-              <span className={styles.statLabel}>취득세</span>
-              <span className={styles.statVal}>{formatKRW(data.tax)}</span>
+      <div className={styles.resultCol}>
+        {err && <div className={styles.err}>{err}</div>}
+        {data ? (
+          <div className={styles.result}>
+            <div className={styles.addr}>
+              {formatKRW(data.price)} · {data.label}
             </div>
-            <div className={styles.stat}>
-              <span className={styles.statLabel}>지방교육세</span>
-              <span className={styles.statVal}>{formatKRW(data.localEduTax)}</span>
+            <div className={styles.bigRow}>
+              <span className={styles.bigLabel}>총 취득세</span>
+              <span className={styles.big}>{formatKRW(data.totalTax)}</span>
             </div>
-            <div className={styles.stat}>
-              <span className={styles.statLabel}>농특세</span>
-              <span className={styles.statVal}>{formatKRW(data.specialTax)}</span>
+            <div className={styles.stats}>
+              <div className={styles.stat}>
+                <span className={styles.statLabel}>취득세</span>
+                <span className={styles.statVal}>{formatKRW(data.tax)}</span>
+              </div>
+              <div className={styles.stat}>
+                <span className={styles.statLabel}>지방교육세</span>
+                <span className={styles.statVal}>{formatKRW(data.localEduTax)}</span>
+              </div>
+              <div className={styles.stat}>
+                <span className={styles.statLabel}>농특세</span>
+                <span className={styles.statVal}>{formatKRW(data.specialTax)}</span>
+              </div>
             </div>
+            {data.details && <div className={styles.note}>{data.details}</div>}
           </div>
-          {data.details && <div className={styles.note}>{data.details}</div>}
-        </div>
-      )}
-    </>
+        ) : (
+          !err && <div className={styles.placeholder}>매매가·조건을 입력하면 취득세가 여기에 표시됩니다</div>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -30,7 +30,7 @@ const TYPES = [
   { v: "단독주택", l: "단독·다가구" },
 ];
 
-/** 전세 안전진단 본문(폼+결과) */
+/** 전세 안전진단 본문(입력+결과 2단) */
 export function JeonseBody({ address: initial = "" }: { address?: string }) {
   const [address, setAddress] = useState(initial);
   const [deposit, setDeposit] = useState("");
@@ -68,7 +68,7 @@ export function JeonseBody({ address: initial = "" }: { address?: string }) {
   }
 
   return (
-    <>
+    <div className={styles.body}>
       <form className={styles.form} onSubmit={run}>
         <div className={styles.field}>
           <label className={styles.label}>주소</label>
@@ -81,63 +81,64 @@ export function JeonseBody({ address: initial = "" }: { address?: string }) {
             style={{ cursor: "pointer" }}
           />
         </div>
-        <div className={styles.row2}>
-          <div className={styles.field}>
-            <label className={styles.label}>전세보증금 (만원)</label>
-            <input
-              className={styles.input}
-              value={deposit}
-              onChange={(e) => setDeposit(e.target.value)}
-              inputMode="numeric"
-              placeholder="예: 30000"
-            />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>주거 유형</label>
-            <select className={styles.select} value={type} onChange={(e) => setType(e.target.value)}>
-              {TYPES.map((t) => (
-                <option key={t.v} value={t.v}>
-                  {t.l}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className={styles.field}>
+          <label className={styles.label}>전세보증금 (만원)</label>
+          <input
+            className={styles.input}
+            value={deposit}
+            onChange={(e) => setDeposit(e.target.value)}
+            inputMode="numeric"
+            placeholder="예: 30000"
+          />
+        </div>
+        <div className={styles.field}>
+          <label className={styles.label}>주거 유형</label>
+          <select className={styles.select} value={type} onChange={(e) => setType(e.target.value)}>
+            {TYPES.map((t) => (
+              <option key={t.v} value={t.v}>
+                {t.l}
+              </option>
+            ))}
+          </select>
         </div>
         <button className={styles.btn} type="submit" disabled={loading}>
           {loading ? "진단 중…" : "안전진단"}
         </button>
       </form>
 
-      {err && <div className={styles.err}>{err}</div>}
-
-      {data && (
-        <div className={styles.result}>
-          <div className={styles.addr}>{data.address}</div>
-          <span className={`${styles.badge} ${styles[data.risk.level]}`}>{data.risk.label}</span>
-          <div className={styles.bigRow}>
-            <span className={styles.bigLabel}>전세가율</span>
-            <span className={styles.big}>{data.jeonseRatio}%</span>
-          </div>
-          <div className={styles.stats}>
-            <div className={styles.stat}>
-              <span className={styles.statLabel}>추정 시세</span>
-              <span className={styles.statVal}>{formatKRW(data.estimatedPrice)}</span>
+      <div className={styles.resultCol}>
+        {err && <div className={styles.err}>{err}</div>}
+        {data ? (
+          <div className={styles.result}>
+            <div className={styles.addr}>{data.address}</div>
+            <span className={`${styles.badge} ${styles[data.risk.level]}`}>{data.risk.label}</span>
+            <div className={styles.bigRow}>
+              <span className={styles.bigLabel}>전세가율</span>
+              <span className={styles.big}>{data.jeonseRatio}%</span>
             </div>
-            <div className={styles.stat}>
-              <span className={styles.statLabel}>보증금</span>
-              <span className={styles.statVal}>{formatKRW(data.deposit)}</span>
-            </div>
-            {data.marketJeonseRatio != null && (
+            <div className={styles.stats}>
               <div className={styles.stat}>
-                <span className={styles.statLabel}>지역 평균</span>
-                <span className={styles.statVal}>{data.marketJeonseRatio}%</span>
+                <span className={styles.statLabel}>추정 시세</span>
+                <span className={styles.statVal}>{formatKRW(data.estimatedPrice)}</span>
               </div>
-            )}
+              <div className={styles.stat}>
+                <span className={styles.statLabel}>보증금</span>
+                <span className={styles.statVal}>{formatKRW(data.deposit)}</span>
+              </div>
+              {data.marketJeonseRatio != null && (
+                <div className={styles.stat}>
+                  <span className={styles.statLabel}>지역 평균</span>
+                  <span className={styles.statVal}>{data.marketJeonseRatio}%</span>
+                </div>
+              )}
+            </div>
+            {data.note && <div className={styles.note}>{data.note}</div>}
+            <div className={styles.source}>기준일 {formatDate(data.lastUpdated)}</div>
           </div>
-          {data.note && <div className={styles.note}>{data.note}</div>}
-          <div className={styles.source}>기준일 {formatDate(data.lastUpdated)}</div>
-        </div>
-      )}
+        ) : (
+          !err && <div className={styles.placeholder}>주소·보증금을 입력해 진단하면 깡통전세 위험이 여기에 표시됩니다</div>
+        )}
+      </div>
 
       {postcodeOpen && (
         <DaumPostcodeModal
@@ -145,7 +146,7 @@ export function JeonseBody({ address: initial = "" }: { address?: string }) {
           onClose={() => setPostcodeOpen(false)}
         />
       )}
-    </>
+    </div>
   );
 }
 

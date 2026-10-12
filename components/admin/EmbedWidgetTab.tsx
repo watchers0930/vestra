@@ -18,8 +18,8 @@ export function EmbedWidgetTab() {
   const [selected, setSelected] = useState<WType[]>(["price"]);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [accent, setAccent] = useState("#0071e3");
-  const [width, setWidth] = useState("420");
-  const [height, setHeight] = useState("520");
+  const [width, setWidth] = useState("720");
+  const [height, setHeight] = useState("420");
   const [address, setAddress] = useState("");
   const [copied, setCopied] = useState(false);
 

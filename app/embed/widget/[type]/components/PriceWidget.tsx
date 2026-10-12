@@ -33,7 +33,7 @@ const TYPES = [
   { v: "단독주택", l: "단독·다가구" },
 ];
 
-/** 시세 조회 본문(폼+결과) — 셸 없이 BundleWidget 탭에도 끼울 수 있다 */
+/** 시세 조회 본문(입력+결과 2단) — 셸 없이 BundleWidget 탭에도 끼울 수 있다 */
 export function PriceBody({ address: initial = "" }: { address?: string }) {
   const [address, setAddress] = useState(initial);
   const [type, setType] = useState("아파트");
@@ -65,7 +65,7 @@ export function PriceBody({ address: initial = "" }: { address?: string }) {
   }
 
   return (
-    <>
+    <div className={styles.body}>
       <form className={styles.form} onSubmit={run}>
         <div className={styles.field}>
           <label className={styles.label}>주소</label>
@@ -93,50 +93,53 @@ export function PriceBody({ address: initial = "" }: { address?: string }) {
         </button>
       </form>
 
-      {err && <div className={styles.err}>{err}</div>}
-
-      {data && (
-        <div className={styles.result}>
-          <div className={styles.addr}>
-            {data.address} · {data.period} · 거래 {data.transactionCount}건
-          </div>
-          <div className={styles.bigRow}>
-            <span className={styles.bigLabel}>추정 시세</span>
-            <span className={styles.big}>{formatKRW(data.estimatedPrice)}</span>
-          </div>
-          <div className={styles.stats}>
-            <div className={styles.stat}>
-              <span className={styles.statLabel}>평균</span>
-              <span className={styles.statVal}>{formatKRW(data.avgPrice)}</span>
+      <div className={styles.resultCol}>
+        {err && <div className={styles.err}>{err}</div>}
+        {data ? (
+          <div className={styles.result}>
+            <div className={styles.addr}>
+              {data.address} · {data.period} · 거래 {data.transactionCount}건
             </div>
-            <div className={styles.stat}>
-              <span className={styles.statLabel}>최저~최고</span>
-              <span className={styles.statVal}>
-                {formatKRW(data.minPrice)}~{formatKRW(data.maxPrice)}
-              </span>
+            <div className={styles.bigRow}>
+              <span className={styles.bigLabel}>추정 시세</span>
+              <span className={styles.big}>{formatKRW(data.estimatedPrice)}</span>
             </div>
-            <div className={styles.stat}>
-              <span className={styles.statLabel}>추이</span>
-              <span className={styles.statVal}>
-                {data.trend ? `${data.trend.up ? "▲" : "▼"} ${data.trend.pct}%` : "-"}
-              </span>
-            </div>
-            {data.perArea != null && (
+            <div className={styles.stats}>
               <div className={styles.stat}>
-                <span className={styles.statLabel}>㎡당</span>
-                <span className={styles.statVal}>{formatManShort(data.perArea)}</span>
+                <span className={styles.statLabel}>평균</span>
+                <span className={styles.statVal}>{formatKRW(data.avgPrice)}</span>
               </div>
-            )}
-            {data.jeonseRatio != null && (
               <div className={styles.stat}>
-                <span className={styles.statLabel}>전세가율</span>
-                <span className={styles.statVal}>{data.jeonseRatio}%</span>
+                <span className={styles.statLabel}>최저~최고</span>
+                <span className={styles.statVal}>
+                  {formatKRW(data.minPrice)}~{formatKRW(data.maxPrice)}
+                </span>
               </div>
-            )}
+              <div className={styles.stat}>
+                <span className={styles.statLabel}>추이</span>
+                <span className={styles.statVal}>
+                  {data.trend ? `${data.trend.up ? "▲" : "▼"} ${data.trend.pct}%` : "-"}
+                </span>
+              </div>
+              {data.perArea != null && (
+                <div className={styles.stat}>
+                  <span className={styles.statLabel}>㎡당</span>
+                  <span className={styles.statVal}>{formatManShort(data.perArea)}</span>
+                </div>
+              )}
+              {data.jeonseRatio != null && (
+                <div className={styles.stat}>
+                  <span className={styles.statLabel}>전세가율</span>
+                  <span className={styles.statVal}>{data.jeonseRatio}%</span>
+                </div>
+              )}
+            </div>
+            <div className={styles.source}>기준일 {formatDate(data.lastUpdated)}</div>
           </div>
-          <div className={styles.source}>기준일 {formatDate(data.lastUpdated)}</div>
-        </div>
-      )}
+        ) : (
+          !err && <div className={styles.placeholder}>주소를 조회하면 실거래가 시세가 여기에 표시됩니다</div>
+        )}
+      </div>
 
       {postcodeOpen && (
         <DaumPostcodeModal
@@ -144,7 +147,7 @@ export function PriceBody({ address: initial = "" }: { address?: string }) {
           onClose={() => setPostcodeOpen(false)}
         />
       )}
-    </>
+    </div>
   );
 }
 

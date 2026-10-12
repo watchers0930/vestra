@@ -38,7 +38,7 @@ function sevLevel(sev: Factor["severity"]): "lo" | "md" | "hi" {
   return "lo";
 }
 
-/** 등기부 권리분석 본문(업로드+결과) */
+/** 등기부 권리분석 본문(업로드+결과 2단) */
 export function RightsBody() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState("");
@@ -72,7 +72,7 @@ export function RightsBody() {
   }
 
   return (
-    <>
+    <div className={styles.body}>
       <label className={styles.drop}>
         <input
           ref={inputRef}
@@ -92,51 +92,54 @@ export function RightsBody() {
         )}
       </label>
 
-      {err && <div className={styles.err}>{err}</div>}
-
-      {data && (
-        <div className={styles.result}>
-          <span className={`${styles.badge} ${styles[scoreLevel(data.totalScore)]}`}>
-            {data.gradeLabel} · {data.grade}등급
-          </span>
-          <div className={styles.bigRow}>
-            <span className={styles.bigLabel}>안전점수</span>
-            <span className={styles.big}>{data.totalScore}점</span>
-          </div>
-          {data.mortgageRatio > 0 && (
-            <div className={styles.stats}>
-              <div className={styles.stat}>
-                <span className={styles.statLabel}>근저당 비율</span>
-                <span className={styles.statVal}>{data.mortgageRatio}%</span>
-              </div>
+      <div className={styles.resultCol}>
+        {err && <div className={styles.err}>{err}</div>}
+        {data ? (
+          <div className={styles.result}>
+            <span className={`${styles.badge} ${styles[scoreLevel(data.totalScore)]}`}>
+              {data.gradeLabel} · {data.grade}등급
+            </span>
+            <div className={styles.bigRow}>
+              <span className={styles.bigLabel}>안전점수</span>
+              <span className={styles.big}>{data.totalScore}점</span>
             </div>
-          )}
-          {data.summary && <div className={styles.note}>{data.summary}</div>}
-          {data.factors.length > 0 && (
-            <ul className={styles.factors}>
-              {data.factors.map((f, i) => (
-                <li key={i} className={styles.factor}>
-                  <span
-                    className={styles.sev}
-                    style={{
-                      background:
-                        sevLevel(f.severity) === "hi"
-                          ? "#dc2626"
-                          : sevLevel(f.severity) === "md"
-                            ? "#d97706"
-                            : "#0f9d6b",
-                    }}
-                  />
-                  <span>
-                    <strong>{f.category}</strong> · {f.description}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-    </>
+            {data.mortgageRatio > 0 && (
+              <div className={styles.stats}>
+                <div className={styles.stat}>
+                  <span className={styles.statLabel}>근저당 비율</span>
+                  <span className={styles.statVal}>{data.mortgageRatio}%</span>
+                </div>
+              </div>
+            )}
+            {data.summary && <div className={styles.note}>{data.summary}</div>}
+            {data.factors.length > 0 && (
+              <ul className={styles.factors}>
+                {data.factors.map((f, i) => (
+                  <li key={i} className={styles.factor}>
+                    <span
+                      className={styles.sev}
+                      style={{
+                        background:
+                          sevLevel(f.severity) === "hi"
+                            ? "#dc2626"
+                            : sevLevel(f.severity) === "md"
+                              ? "#d97706"
+                              : "#0f9d6b",
+                      }}
+                    />
+                    <span>
+                      <strong>{f.category}</strong> · {f.description}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          !err && <div className={styles.placeholder}>등기부 PDF를 올리면 권리 위험도가 여기에 표시됩니다</div>
+        )}
+      </div>
+    </div>
   );
 }
 
