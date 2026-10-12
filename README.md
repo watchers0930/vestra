@@ -39,3 +39,4 @@ npm run deploy:promote
 
 - preview alias도 CSRF 허용 origin에 포함됩니다.
 - `/api/health`는 배포 smoke 검증용 공개 헬스체크 엔드포인트입니다.
+- 네이버 OAuth는 필수 `state` 생성·콜백 검증과 PKCE를 함께 사용합니다. Auth.js 기본 PKCE 설정만으로는 네이버 필수 요청 항목을 충족하지 못합니다.

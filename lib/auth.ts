@@ -245,7 +245,7 @@ function normalizeOAuthValue(value?: string) {
   return value?.replace(/\\n/g, "").trim();
 }
 
-function buildProviders(settings: Record<string, string>) {
+export function buildProviders(settings: Record<string, string>) {
   const providers: NextAuthConfig["providers"] = [];
 
   const googleId = normalizeOAuthValue(settings.AUTH_GOOGLE_ID || process.env.AUTH_GOOGLE_ID);
@@ -264,6 +264,8 @@ function buildProviders(settings: Record<string, string>) {
       Naver({
         clientId: naverId,
         clientSecret: naverSecret,
+        // Naver requires state; Auth.js defaults to PKCE alone. Keep both checks.
+        checks: ["pkce", "state"],
         profile(profile) {
           const r = profile.response;
           return {
