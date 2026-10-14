@@ -12,6 +12,8 @@ vi.mock("@/lib/prisma", () => ({
     listing: { findMany: vi.fn() },
     auditLog: { deleteMany: vi.fn() },
     notification: { deleteMany: vi.fn() },
+    rateLimit: { deleteMany: vi.fn() },
+    dailyUsage: { deleteMany: vi.fn() },
   },
 }));
 
@@ -103,6 +105,8 @@ describe("cleanupOldRecords — retention", () => {
   it("AuditLog 365일·Notification 180일 초과분을 삭제한다", async () => {
     vi.mocked(prisma.auditLog.deleteMany).mockResolvedValue({ count: 3 } as never);
     vi.mocked(prisma.notification.deleteMany).mockResolvedValue({ count: 5 } as never);
+    vi.mocked(prisma.rateLimit.deleteMany).mockResolvedValue({ count: 0 } as never);
+    vi.mocked(prisma.dailyUsage.deleteMany).mockResolvedValue({ count: 0 } as never);
 
     const res = await cleanupOldRecords(NOW);
 
@@ -113,5 +117,25 @@ describe("cleanupOldRecords — retention", () => {
     const notifArgs = vi.mocked(prisma.notification.deleteMany).mock.calls[0][0] as { where: { createdAt: { lt: Date } } };
     expect(NOW - auditArgs.where.createdAt.lt.getTime()).toBe(365 * 24 * 60 * 60 * 1000);
     expect(NOW - notifArgs.where.createdAt.lt.getTime()).toBe(180 * 24 * 60 * 60 * 1000);
+  });
+
+  it("RateLimit(만료 윈도우 24h 경과)·DailyUsage(7일 경과) 누적 row를 정리한다", async () => {
+    vi.mocked(prisma.auditLog.deleteMany).mockResolvedValue({ count: 0 } as never);
+    vi.mocked(prisma.notification.deleteMany).mockResolvedValue({ count: 0 } as never);
+    vi.mocked(prisma.rateLimit.deleteMany).mockResolvedValue({ count: 42 } as never);
+    vi.mocked(prisma.dailyUsage.deleteMany).mockResolvedValue({ count: 7 } as never);
+
+    const res = await cleanupOldRecords(NOW);
+
+    expect(res.rateLimitDeleted).toBe(42);
+    expect(res.dailyUsageDeleted).toBe(7);
+
+    // RateLimit: resetTime 기준 24h 전 cutoff
+    const rlArgs = vi.mocked(prisma.rateLimit.deleteMany).mock.calls[0][0] as { where: { resetTime: { lt: Date } } };
+    expect(NOW - rlArgs.where.resetTime.lt.getTime()).toBe(24 * 60 * 60 * 1000);
+
+    // DailyUsage: date는 "YYYY-MM-DD" 문자열, 7일 전 cutoff
+    const duArgs = vi.mocked(prisma.dailyUsage.deleteMany).mock.calls[0][0] as { where: { date: { lt: string } } };
+    expect(duArgs.where.date.lt).toBe(new Date(NOW - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
   });
 });

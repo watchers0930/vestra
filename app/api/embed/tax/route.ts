@@ -4,6 +4,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { calculateAcquisitionTax } from "@/lib/tax-calculator";
 
 export const runtime = "nodejs";
@@ -26,7 +27,7 @@ function truthy(v: string | null): boolean {
 
 export async function GET(req: NextRequest) {
   try {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous";
+    const ip = getClientIp(req);
     const rl = await rateLimit(`embed-tax:${ip}`, 40, 60 * 1000);
     if (!rl.success) {
       return NextResponse.json(
@@ -43,6 +44,10 @@ export async function GET(req: NextRequest) {
 
     if (!Number.isFinite(priceMan) || priceMan <= 0) {
       return NextResponse.json({ error: "매매가(만원)를 입력해주세요." }, { status: 400, headers: CORS });
+    }
+    // 현실 상한: 1,000억원(=1,000만 만원). 거대 입력으로 비현실 결과·포맷 오류 방지.
+    if (priceMan > 10_000_000) {
+      return NextResponse.json({ error: "매매가가 너무 큽니다. (최대 1,000억원)" }, { status: 400, headers: CORS });
     }
 
     const price = priceMan * 10000;
@@ -65,7 +70,8 @@ export async function GET(req: NextRequest) {
       },
       { headers: { ...CORS, ...rateLimitHeaders(rl) } }
     );
-  } catch {
+  } catch (e) {
+    console.error("[embed/tax]", e);
     return NextResponse.json({ error: "세금 계산 중 오류가 발생했습니다." }, { status: 500, headers: CORS });
   }
 }

@@ -6,6 +6,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { extractTextFromPDF } from "@/lib/pdf-parser";
 import { parseRegistry } from "@/lib/registry-parser";
 import { calculateRiskScore } from "@/lib/risk-scoring";
@@ -26,7 +27,7 @@ export async function OPTIONS() {
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous";
+    const ip = getClientIp(req);
     const rl = await rateLimit(`embed-rights:${ip}`, 10, 60 * 1000);
     if (!rl.success) {
       return NextResponse.json(
@@ -81,7 +82,8 @@ export async function POST(req: NextRequest) {
       },
       { headers: { ...CORS, ...rateLimitHeaders(rl) } }
     );
-  } catch {
+  } catch (e) {
+    console.error("[embed/rights]", e);
     return NextResponse.json({ error: "권리분석 중 오류가 발생했습니다." }, { status: 500, headers: CORS });
   }
 }

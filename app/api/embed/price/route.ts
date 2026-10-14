@@ -8,6 +8,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { sanitizeField } from "@/lib/sanitize";
 import { fetchComprehensivePrices } from "@/lib/molit/comprehensive";
 import { estimatePrice } from "@/lib/price-estimation";
@@ -58,9 +59,9 @@ function calcPerArea(txs: RealTransaction[]): number | null {
 
 export async function GET(req: NextRequest) {
   try {
-    const ip =
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous";
-    const rl = await rateLimit(`embed-price:${ip}`, 20, 60 * 1000);
+    const ip = getClientIp(req);
+    // 요청 1건이 내부적으로 MOLIT를 수십 회 호출(매매+전월세 월별)하므로 한도를 낮게 유지.
+    const rl = await rateLimit(`embed-price:${ip}`, 10, 60 * 1000);
     if (!rl.success) {
       return NextResponse.json(
         { error: "요청이 많습니다. 잠시 후 다시 시도해주세요." },
@@ -109,7 +110,8 @@ export async function GET(req: NextRequest) {
       },
       { headers: { ...CORS, ...rateLimitHeaders(rl) } }
     );
-  } catch {
+  } catch (e) {
+    console.error("[embed/price]", e);
     return NextResponse.json(
       { error: "시세 조회 중 오류가 발생했습니다." },
       { status: 500, headers: CORS }

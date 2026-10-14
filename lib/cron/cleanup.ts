@@ -91,15 +91,27 @@ const NOTIFICATION_RETENTION_DAYS = 180; // 알림 6개월
  * 무한 누적 테이블 retention 정리.
  * - AuditLog: 365일 초과분 삭제
  * - Notification: 180일 초과분 삭제 (User 삭제 시엔 cascade로 이미 정리됨)
+ * - RateLimit: 만료 윈도우(resetTime 하루 경과) 삭제. 공개 임베드 API라 IP마다 row가
+ *   생겨 무한 누적됨. 삭제해도 다음 요청 시 upsert로 재생성되므로 기능 영향 없음.
+ * - DailyUsage: 7일 지난 일별 집계 삭제. date는 "YYYY-MM-DD" 문자열(사전식=시간순).
  */
 export async function cleanupOldRecords(now: number) {
   const auditCutoff = new Date(now - AUDIT_LOG_RETENTION_DAYS * DAY);
   const notifCutoff = new Date(now - NOTIFICATION_RETENTION_DAYS * DAY);
+  const rateLimitCutoff = new Date(now - DAY);
+  const dailyUsageCutoff = new Date(now - 7 * DAY).toISOString().slice(0, 10);
 
-  const [audit, notif] = await Promise.all([
+  const [audit, notif, rl, daily] = await Promise.all([
     prisma.auditLog.deleteMany({ where: { createdAt: { lt: auditCutoff } } }),
     prisma.notification.deleteMany({ where: { createdAt: { lt: notifCutoff } } }),
+    prisma.rateLimit.deleteMany({ where: { resetTime: { lt: rateLimitCutoff } } }),
+    prisma.dailyUsage.deleteMany({ where: { date: { lt: dailyUsageCutoff } } }),
   ]);
 
-  return { auditDeleted: audit.count, notifDeleted: notif.count };
+  return {
+    auditDeleted: audit.count,
+    notifDeleted: notif.count,
+    rateLimitDeleted: rl.count,
+    dailyUsageDeleted: daily.count,
+  };
 }

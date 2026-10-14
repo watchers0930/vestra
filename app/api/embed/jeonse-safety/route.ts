@@ -4,6 +4,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { sanitizeField } from "@/lib/sanitize";
 import { fetchComprehensivePrices } from "@/lib/molit/comprehensive";
 import { estimatePrice } from "@/lib/price-estimation";
@@ -25,8 +26,9 @@ export async function OPTIONS() {
 
 export async function GET(req: NextRequest) {
   try {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous";
-    const rl = await rateLimit(`embed-jeonse:${ip}`, 20, 60 * 1000);
+    const ip = getClientIp(req);
+    // 요청 1건이 내부적으로 MOLIT를 수십 회 호출(매매+전월세 월별)하므로 한도를 낮게 유지.
+    const rl = await rateLimit(`embed-jeonse:${ip}`, 10, 60 * 1000);
     if (!rl.success) {
       return NextResponse.json(
         { error: "요청이 많습니다. 잠시 후 다시 시도해주세요." },
@@ -62,7 +64,7 @@ export async function GET(req: NextRequest) {
 
     let level: "lo" | "md" | "hi", label: string;
     if (jeonseRatio >= 90) { level = "hi"; label = "위험 — 깡통전세 가능"; }
-    else if (jeonseRatio >= 80) { level = "hi"; label = "주의 — 전세가율 높음"; }
+    else if (jeonseRatio >= 80) { level = "md"; label = "주의 — 전세가율 높음"; }
     else if (jeonseRatio >= 70) { level = "md"; label = "경계 — 전세가율 다소 높음"; }
     else { level = "lo"; label = "양호"; }
 
@@ -88,7 +90,8 @@ export async function GET(req: NextRequest) {
       },
       { headers: { ...CORS, ...rateLimitHeaders(rl) } }
     );
-  } catch {
+  } catch (e) {
+    console.error("[embed/jeonse-safety]", e);
     return NextResponse.json({ error: "전세 진단 중 오류가 발생했습니다." }, { status: 500, headers: CORS });
   }
 }

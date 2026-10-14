@@ -51,11 +51,14 @@ export function BundleWidget({
   const [active, setActive] = useState(valid[0]);
   const current = valid.includes(active) ? active : valid[0];
   const { meta } = BUNDLE_META[current];
+  // 묶음 위젯은 헤더 제목을 고정한다(탭 전환마다 "취득세 계산기" 등으로 바뀌지 않도록).
+  // 단일 위젯(valid 1개)일 때는 해당 위젯 제목을 그대로 쓴다. source·유입링크는 활성 탭 기준 유지.
+  const shellTitle = valid.length > 1 ? "VESTRA 통합 위젯" : meta.title;
 
   return (
     <WidgetShell
       type={meta.type}
-      title={meta.title}
+      title={shellTitle}
       theme={theme}
       accent={accent}
       source={meta.source}
