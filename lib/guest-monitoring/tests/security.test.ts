@@ -11,7 +11,8 @@ import { SAMPLE_REGISTRY_TEXT, parseRegistry } from "@/lib/registry-parser";
 import { createDraft } from "../draft";
 beforeEach(() => {
   vi.stubEnv("NODE_ENV", "test");
-  vi.stubEnv("DATABASE_URL", "postgresql://test:test@127.0.0.1:55439/vestra_guest_isolated");
+  // 자격증명 없는 루프백 URL(가드는 hostname/pathname만 검사 — lib/danal/index.ts isolatedDatabase)
+  vi.stubEnv("DATABASE_URL", "postgresql://127.0.0.1:55439/vestra_guest_isolated");
   vi.stubEnv("GUEST_MONITORING_ENABLED", "true");
   vi.stubEnv("PII_ENCRYPTION_KEY", "test-encryption-key-for-isolated-tests-only");
   vi.stubEnv("PII_SALT", "test-isolated-salt");
@@ -31,7 +32,7 @@ describe("guest boundaries", () => {
   });
   it("blocks production mock and unconfigured real provider", () => {
     expect(getDanalProvider().mode).toBe("mock");
-    vi.stubEnv("DATABASE_URL", "postgresql://test:test@db.example.com/production");
+    vi.stubEnv("DATABASE_URL", "postgresql://db.example.com/production");
     expect(() => getDanalProvider()).toThrow();
     vi.stubEnv("NODE_ENV", "production");
     expect(() => getDanalProvider()).toThrow();
