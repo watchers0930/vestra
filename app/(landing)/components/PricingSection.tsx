@@ -1,23 +1,18 @@
 import Link from "next/link";
 import { ScrollReveal } from "./ScrollReveal";
+import { PRICING_PLANS } from "@/lib/pricing-plans";
 
-const PLANS = [
-  {
-    name: "Lite", price: "₩29,000", unit: "/mo",
-    desc: "개인 투자자를 위한 시작 플랜", hot: false, cta: "시작하기",
-    features: ["월 5회 정밀 권리 분석", "실시간 시세 모니터링", "기본 시장 트렌드 리포트"],
-  },
-  {
-    name: "Professional", price: "₩89,000", unit: "/mo",
-    desc: "활발한 투자자를 위한 전문 플랜", hot: true, cta: "지금 시작하기",
-    features: ["월 무제한 권리 분석", "24개월 가치 예측 AI 모델", "심층 법률 리스크 검토", "우선 고객 지원"],
-  },
-  {
-    name: "Enterprise", price: "별도 문의", unit: "",
-    desc: "기업 및 기관 투자자를 위한 플랜", hot: false, cta: "상담 신청하기",
-    features: ["맞춤형 API 통합", "전담 분석 매니저 배정", "법인용 화이트 라벨링"],
-  },
-];
+// 요금제는 공유 상수(lib/pricing-plans) 단일 소스에서 파생한다.
+const CTA_LABEL: Record<string, string> = { free: "시작하기", pro: "지금 시작하기", business: "문의하기" };
+const PLANS = PRICING_PLANS.map((p) => ({
+  name: p.name,
+  price: p.monthlyLabel,
+  unit: p.period,
+  desc: p.description,
+  hot: p.highlight,
+  cta: CTA_LABEL[p.key],
+  features: p.features,
+}));
 
 export function PricingSection() {
   return (

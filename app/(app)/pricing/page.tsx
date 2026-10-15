@@ -5,6 +5,7 @@ import { Check, X, Crown, Zap, Building2 } from "lucide-react";
 import { Card } from "@/components/common/Card";
 import { Button } from "@/components/common/Button";
 import { PageHeader } from "@/components/common/PageHeader";
+import { PRICING_PLANS, PRICING_PLANS_BY_KEY } from "@/lib/pricing-plans";
 
 type TierKey = "free" | "pro" | "business";
 
@@ -20,53 +21,20 @@ interface Tier {
   highlighted?: boolean;
 }
 
-const tiers: Tier[] = [
-  {
-    key: "free",
-    name: "무료",
-    price: "0원",
-    period: "",
-    description: "부동산 분석을 처음 시작하는 분께",
-    icon: Zap,
-    features: ["일 3회 AI 분석", "기본 시세 조회", "전세 안전성 간이 체크", "커뮤니티 접근"],
-    cta: "시작하기",
-  },
-  {
-    key: "pro",
-    name: "프로",
-    price: "29,900원",
-    period: "/월",
-    description: "적극적으로 자산을 관리하는 투자자를 위해",
-    icon: Crown,
-    highlighted: true,
-    features: [
-      "무제한 AI 분석",
-      "실시간 시세 알림",
-      "PDF 리포트 다운로드",
-      "전문가 상담 월 1회",
-      "권리분석 상세 리포트",
-      "세금 시뮬레이션",
-    ],
-    cta: "구독하기",
-  },
-  {
-    key: "business",
-    name: "비즈니스",
-    price: "99,000원",
-    period: "/월",
-    description: "팀과 함께 사용하는 부동산 전문가를 위해",
-    icon: Building2,
-    features: [
-      "프로 플랜 전체 포함",
-      "REST API 접근",
-      "다중 사용자 (최대 10명)",
-      "전담 매니저 배정",
-      "맞춤형 리포트 제작",
-      "SLA 99.9% 보장",
-    ],
-    cta: "문의하기",
-  },
-];
+// 요금 데이터는 공유 상수(lib/pricing-plans) 단일 소스. 아이콘·CTA 라벨만 이 화면 로컬.
+const TIER_ICON: Record<TierKey, typeof Crown> = { free: Zap, pro: Crown, business: Building2 };
+const TIER_CTA: Record<TierKey, string> = { free: "시작하기", pro: "구독하기", business: "문의하기" };
+const tiers: Tier[] = PRICING_PLANS.map((p) => ({
+  key: p.key,
+  name: p.name,
+  price: p.monthlyLabel,
+  period: p.period,
+  description: p.description,
+  icon: TIER_ICON[p.key],
+  features: p.features,
+  cta: TIER_CTA[p.key],
+  highlighted: p.highlight,
+}));
 
 interface ComparisonRow {
   feature: string;
@@ -170,9 +138,7 @@ export default function PricingPage() {
                   {tier.key === "free"
                     ? "0원"
                     : annual
-                      ? tier.key === "pro"
-                        ? "299,000원"
-                        : "990,000원"
+                      ? PRICING_PLANS_BY_KEY[tier.key].annualLabel
                       : tier.price}
                 </span>
                 {tier.key !== "free" && (
@@ -182,7 +148,7 @@ export default function PricingPage() {
                 )}
                 {annual && tier.key !== "free" && (
                   <p className="mt-1 text-xs text-green-600 font-medium">
-                    월 {tier.key === "pro" ? "약 24,917원" : "약 82,500원"} (2개월 무료)
+                    월 {PRICING_PLANS_BY_KEY[tier.key].annualMonthlyEquivLabel} (2개월 무료)
                   </p>
                 )}
               </div>

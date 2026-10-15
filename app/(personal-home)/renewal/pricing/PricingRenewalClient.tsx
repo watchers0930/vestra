@@ -4,51 +4,20 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import RenewalGnb from "../_shared/RenewalGnb";
 import s from "../monitoring/monitoring-renewal.module.css";
+import { PRICING_PLANS, PRICING_COMPARISON } from "@/lib/pricing-plans";
 
-// 개인회원(renewal) 공개 구독 안내 페이지. 요금 데이터는 (app)/pricing과 동일.
-const TIERS = [
-  {
-    key: "free",
-    name: "무료",
-    price: "0원",
-    period: "",
-    desc: "부동산 분석을 처음 시작하는 분께",
-    features: ["일 3회 AI 분석", "기본 시세 조회", "전세 안전성 간이 체크"],
-    highlight: false,
-  },
-  {
-    key: "pro",
-    name: "프로",
-    price: "29,900원",
-    period: "/월",
-    desc: "적극적으로 자산을 관리하는 투자자를 위해",
-    features: ["등기감시 (최대 5건)", "무제한 AI 분석", "실시간 시세 알림", "PDF 리포트 다운로드", "전문가 상담 월 1회", "권리분석 상세 리포트"],
-    highlight: true,
-  },
-  {
-    key: "business",
-    name: "비즈니스",
-    price: "99,000원",
-    period: "/월",
-    desc: "팀과 함께 사용하는 부동산 전문가를 위해",
-    features: ["등기감시 (최대 20건)", "프로 플랜 전체 포함", "REST API 접근", "다중 사용자 (최대 10명)", "전담 매니저 배정"],
-    highlight: false,
-  },
-];
+// 개인회원(renewal) 공개 구독 안내 페이지. 요금 데이터는 공유 상수(lib/pricing-plans) 단일 소스.
+const TIERS = PRICING_PLANS.map((p) => ({
+  key: p.key,
+  name: p.name,
+  price: p.monthlyLabel,
+  period: p.period,
+  desc: p.description,
+  features: p.features,
+  highlight: p.highlight,
+}));
 
-const COMPARISON: { feature: string; free: string | boolean; pro: string | boolean; business: string | boolean }[] = [
-  { feature: "등기감시", free: false, pro: "5건", business: "20건" },
-  { feature: "AI 분석 횟수", free: "일 3회", pro: "무제한", business: "무제한" },
-  { feature: "시세 조회", free: true, pro: true, business: true },
-  { feature: "실시간 시세 알림", free: false, pro: true, business: true },
-  { feature: "PDF 리포트", free: false, pro: true, business: true },
-  { feature: "전문가 상담", free: false, pro: "월 1회", business: "무제한" },
-  { feature: "권리분석 상세", free: false, pro: true, business: true },
-  { feature: "세금 시뮬레이션", free: false, pro: true, business: true },
-  { feature: "API 접근", free: false, pro: false, business: true },
-  { feature: "다중 사용자", free: false, pro: false, business: "최대 10명" },
-  { feature: "전담 매니저", free: false, pro: false, business: true },
-];
+const COMPARISON = PRICING_COMPARISON;
 
 export default function PricingRenewalClient() {
   const { data: session } = useSession();
