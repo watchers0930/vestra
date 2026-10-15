@@ -34,10 +34,21 @@ interface Props {
   formData: JeonseFormData;
   parsedOwner: string;
   parsedPropUid?: string;
+  registryParse: { mortgageActiveCount: number; mortgageCancelledCount: number; totalMortgage: number; ocrUsed: boolean } | null;
   docLoading: boolean;
   onGenerateDoc: (type: "jeonse" | "lease") => void;
   onCopy: (text: string) => void;
 }
+
+const toKoreanMoney = (won: number): string => {
+  if (!won) return "";
+  const eok = Math.floor(won / 100000000);
+  const man = Math.floor((won % 100000000) / 10000);
+  const parts: string[] = [];
+  if (eok) parts.push(`${eok}억`);
+  if (man) parts.push(`${man.toLocaleString("ko-KR")}만`);
+  return parts.length ? parts.join(" ") + "원" : "";
+};
 
 const NEEDS_STYLE: Record<string, { color: string; bg: string; border: string }> = {
   required:    { color: "#ff3b30", bg: "rgba(255,59,48,0.10)",   border: "rgba(255,59,48,0.22)"  },
@@ -58,7 +69,7 @@ export function JeonseResultPanel({
   guaranteeResult,
   kaptInfo,
   checklist, setChecklist,
-  resultRef, formData, parsedOwner, parsedPropUid,
+  resultRef, formData, parsedOwner, parsedPropUid, registryParse,
   docLoading, onGenerateDoc, onCopy,
 }: Props) {
   const router = useRouter();
@@ -109,6 +120,34 @@ export function JeonseResultPanel({
             <AiDisclaimer compact />
             <PdfDownloadButton targetRef={resultRef} filename="vestra-jeonse-analysis.pdf" title="VESTRA 전세분석 리포트" />
           </div>
+
+          {/* 임대인 담보(근저당) 요약 — 등기부 업로드 시 결과 최상단에 단건/다건·총 채권최고액 강조 */}
+          {registryParse && (
+            <div style={{ background: registryParse.mortgageActiveCount > 0 ? "rgba(255,159,10,0.06)" : "rgba(48,209,88,0.06)", border: `1px solid ${registryParse.mortgageActiveCount > 0 ? "rgba(180,83,9,0.28)" : "rgba(26,158,69,0.28)"}`, borderRadius: "16px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "13px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "22px", flexShrink: 0 }} aria-hidden>🏦</span>
+              <div style={{ flex: 1, minWidth: "180px" }}>
+                <div style={{ fontSize: "11.5px", color: "#8a90a6", fontWeight: 600, marginBottom: "3px" }}>등기부 기준 임대인 담보(근저당)</div>
+                {registryParse.mortgageActiveCount > 0 ? (
+                  <div style={{ fontSize: "15.5px", fontWeight: 800, color: "#1a1d2e", lineHeight: 1.4 }}>
+                    <span style={{ color: "#b45309" }}>{registryParse.mortgageActiveCount}건</span>
+                    <span style={{ color: "#8a90a6", fontWeight: 600 }}> · 채권최고액 총 </span>
+                    <span style={{ color: "#b45309" }}>{toKoreanMoney(registryParse.totalMortgage)}</span>
+                    {registryParse.mortgageCancelledCount > 0 && (
+                      <span style={{ fontSize: "11.5px", color: "#8a90a6", fontWeight: 500 }}>  (말소 {registryParse.mortgageCancelledCount}건 제외)</span>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: "15.5px", fontWeight: 800, color: "#15803d", lineHeight: 1.4 }}>
+                    활성 근저당 없음
+                    {registryParse.mortgageCancelledCount > 0 && (
+                      <span style={{ fontSize: "11.5px", color: "#8a90a6", fontWeight: 500 }}>  (말소 {registryParse.mortgageCancelledCount}건)</span>
+                    )}
+                  </div>
+                )}
+                <div style={{ fontSize: "10.5px", color: "#aab0c0", marginTop: "3px" }}>채권최고액은 보통 실제 대출원금의 약 120%로 설정됩니다</div>
+              </div>
+            </div>
+          )}
 
           {/* K-apt 단지정보 */}
           {kaptInfo && <KaptInfoCard kaptInfo={kaptInfo} />}

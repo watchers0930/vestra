@@ -60,6 +60,7 @@ export default function JeonsePage() {
             formData={formData}
             parsedOwner={parsedOwner}
             parsedPropUid={parsedPropUid}
+            registryParse={registryParse}
             docLoading={docLoading}
             onGenerateDoc={handleGenerateDoc}
             onCopy={copyToClipboard}
