@@ -77,13 +77,16 @@ export function useDashboardData() {
 
   const totalAssets = assets.length;
   const totalValue = useMemo(() => assets.reduce((sum, a) => sum + a.estimatedPrice, 0), [assets]);
+  // 미분석 자산(주소만 등록 → safetyScore·riskScore 모두 0)은 평균에서 제외한다.
+  // 0점이 단순평균을 끌어내려 안전도는 과소(위험하게)·위험도는 과소(안전하게) 평가되던 문제 보정.
+  const analyzedAssets = useMemo(() => assets.filter((a) => a.safetyScore > 0), [assets]);
   const avgSafety = useMemo(
-    () => assets.length > 0 ? Math.round(assets.reduce((sum, a) => sum + a.safetyScore, 0) / assets.length) : 0,
-    [assets],
+    () => analyzedAssets.length > 0 ? Math.round(analyzedAssets.reduce((sum, a) => sum + a.safetyScore, 0) / analyzedAssets.length) : 0,
+    [analyzedAssets],
   );
   const avgRisk = useMemo(
-    () => assets.length > 0 ? Math.round(assets.reduce((sum, a) => sum + a.riskScore, 0) / assets.length) : 0,
-    [assets],
+    () => analyzedAssets.length > 0 ? Math.round(analyzedAssets.reduce((sum, a) => sum + a.riskScore, 0) / analyzedAssets.length) : 0,
+    [analyzedAssets],
   );
 
   const riskDistribution = useMemo(() => {
