@@ -8,9 +8,17 @@ import {
   identityStart,
   createOrder,
   getOrderState,
+  paymentCallback,
   deleteSession,
 } from "../guest/guestApi";
-import { launchProvider, applyResume, classifyOrderState, orderTarget } from "../guest/guestProvider";
+import {
+  launchProvider,
+  applyResume,
+  classifyOrderState,
+  orderTarget,
+  GUEST_STATUS_PATH,
+} from "../guest/guestProvider";
+import { runPayment, resendOrderCallback } from "../guest/guestPayment";
 import { useGuestOtp } from "./useGuestOtp";
 
 /** 현재 월(KST, YYYY-MM). 서버는 month 파라미터를 KST 기준으로 해석한다(설계 §3.4). */
@@ -53,6 +61,8 @@ export function useGuestStatus() {
   // 재요청(§5.4) 시 재사용할 입력. 훅 메모리로만 보관하고 성공·취소 시 비운다(§5.3).
   const lastNameRef = useRef("");
   const lastPhoneRef = useRef("");
+  // 연장 결제창(SDK) 재진입 잠금: 이중 클릭으로 결제창이 두 번 실행되지 않게 한다(중복 청구 방지).
+  const renewingRef = useRef(false);
 
   /** 세션 만료(401) 공통 처리: 조회 데이터 비우고 재인증 화면으로(§5). */
   const handleSessionExpired = useCallback(() => {
@@ -158,9 +168,29 @@ export function useGuestStatus() {
       const pending = applyResume.listPendingOrders();
       let appliedAny = false;
       for (const { target, orderId } of pending) {
-        const res = await getOrderState(orderId);
-        if (!res.ok) continue; // 세션/권한 불일치 등 — 무조건 삭제하지 않고 유지(§7)
-        const kind = classifyOrderState(res.data);
+        // 연장 주문: 모바일 리다이렉트 복귀 시 메모리 콜백 문맥이 사라졌으므로, 동일 멱등키로 문맥을
+        // 재발급받아 SDK 재실행 없이 콜백을 재전송한 뒤 상태로 확정한다(버그② 연장판). 그 외(초안 등)는
+        // 재조회만 한다. 어느 쪽도 새 주문을 만들거나 결제창을 다시 띄우지 않는다.
+        const sep = target.indexOf(":");
+        const purpose = sep >= 0 ? target.slice(0, sep) : "";
+        const id = sep >= 0 ? target.slice(sep + 1) : "";
+        let data = null;
+        if (purpose === "renewal" && id) {
+          const idempotencyKey = applyResume.ensureIdempotencyKey(target);
+          const result = await resendOrderCallback({
+            purpose: "renewal",
+            guestMonitoringId: id,
+            idempotencyKey,
+            orderId,
+          });
+          if (result.kind === "state") data = result.data;
+          else continue; // reauth(세션 만료)·api_error — 무조건 삭제하지 않고 유지(§7)
+        } else {
+          const res = await getOrderState(orderId);
+          if (!res.ok) continue; // 세션/권한 불일치 등 — 무조건 삭제하지 않고 유지(§7)
+          data = res.data;
+        }
+        const kind = classifyOrderState(data);
         if (kind === "applied") {
           appliedAny = true;
           applyResume.clearOrder(target);
@@ -255,61 +285,130 @@ export function useGuestStatus() {
     setError("");
   }, [otp]);
 
-  /** 연장 주문(renewal) → 결제창 리다이렉트 */
-  const startRenew = useCallback(async () => {
-    if (!selectedId) return;
-    // 표시 대상과 연장 대상이 일치할 때만 연장(§3).
-    if (calendar && calendar.property.id !== selectedId) {
-      setError("선택한 물건 정보를 다시 불러온 후 연장해 주세요.");
-      return;
-    }
-    setError("");
-    setBusy(true);
-    const target = orderTarget("renewal", selectedId);
-    const idempotencyKey = applyResume.ensureIdempotencyKey(target);
-    const res = await createOrder({
-      purpose: "renewal",
-      guestMonitoringId: selectedId,
-      idempotencyKey,
-    });
-    if (!res.ok) {
-      setBusy(false);
-      if (res.status === 401) {
-        handleSessionExpired();
-        return;
-      }
-      // 주문 미생성 — 같은 멱등키로 재시도 가능하므로 키 유지.
-      setError(res.error);
-      return;
-    }
-    applyResume.setOrderId(target, res.data.orderId);
-    const launched = launchProvider(res.data.payment);
-    if (!launched) {
-      // 목: 결제창 없음 → 상태 확인 후 분류별 처리(§8).
-      const st = await getOrderState(res.data.orderId);
-      setBusy(false);
-      if (!st.ok) {
-        if (st.status === 401) {
+  /**
+   * 연장 주문 상태 확정. `resend`면 SDK 재실행 없이 동일 문맥 콜백을 재전송해 pending을 전진시키고
+   * (PortOne 인라인/복귀), 아니면 상태 조회만 한다(mock 기존 동작 보존). done 판정은 서버 상태가 유일 근거.
+   */
+  const finalizeRenew = useCallback(
+    async (target: string, orderId: string, id: string, resend: boolean) => {
+      let data = null;
+      if (resend) {
+        const idempotencyKey = applyResume.ensureIdempotencyKey(target);
+        const result = await resendOrderCallback({
+          purpose: "renewal",
+          guestMonitoringId: id,
+          idempotencyKey,
+          orderId,
+        });
+        if (result.kind === "reauth") {
           handleSessionExpired();
           return;
         }
-        setError(st.error || "연장 결제 상태를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.");
-        return;
+        if (result.kind === "api_error") {
+          setBusy(false);
+          setError("연장 결제 상태를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+          return;
+        }
+        data = result.data;
+      } else {
+        const st = await getOrderState(orderId);
+        if (!st.ok) {
+          setBusy(false);
+          if (st.status === 401) {
+            handleSessionExpired();
+            return;
+          }
+          setError(st.error || "연장 결제 상태를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+          return;
+        }
+        data = st.data;
       }
-      const kind = classifyOrderState(st.data);
+      setBusy(false);
+      const kind = classifyOrderState(data);
       if (kind === "applied") {
         setNotice("연장 결제가 완료되었습니다.");
         applyResume.clearOrder(target);
         await refreshProperties();
-        void loadCalendar(selectedId, month);
+        void loadCalendar(id, month);
       } else if (kind === "settling") {
         setNotice("결제 승인을 확인하고 있습니다. 잠시 후 새로고침해 주세요.");
       } else {
         applyResume.clearOrder(target);
         setError("연장 결제가 완료되지 않았습니다. 다시 시도해 주세요.");
       }
+    },
+    [refreshProperties, loadCalendar, month, handleSessionExpired]
+  );
+
+  /**
+   * 연장 주문(renewal) → 결제 실행(공용 runPayment). PortOne은 SDK 실행 후 콜백·상태 확정, 다날은
+   * 리다이렉트, mock은 상태 조회로 복구한다(버그④: 공급자 전환 후 연장 동작). 복귀 경로는 현황 화면.
+   */
+  const startRenew = useCallback(async () => {
+    if (!selectedId) return;
+    if (renewingRef.current) return; // 이중 클릭 시 결제창 중복 실행 방지(중복 청구)
+    // 표시 대상과 연장 대상이 일치할 때만 연장(§3).
+    if (calendar && calendar.property.id !== selectedId) {
+      setError("선택한 물건 정보를 다시 불러온 후 연장해 주세요.");
+      return;
     }
-  }, [selectedId, calendar, month, refreshProperties, loadCalendar, handleSessionExpired]);
+    renewingRef.current = true;
+    const id = selectedId;
+    try {
+      setError("");
+      setBusy(true);
+      const target = orderTarget("renewal", id);
+      const idempotencyKey = applyResume.ensureIdempotencyKey(target);
+      const res = await createOrder({ purpose: "renewal", guestMonitoringId: id, idempotencyKey });
+      if (!res.ok) {
+        setBusy(false);
+        if (res.status === 401) {
+          handleSessionExpired();
+          return;
+        }
+        // 주문 미생성 — 같은 멱등키로 재시도 가능하므로 키 유지.
+        setError(res.error);
+        return;
+      }
+      applyResume.setOrderId(target, res.data.orderId);
+      const orderId = res.data.orderId;
+      const outcome = await runPayment(res.data.payment, GUEST_STATUS_PATH);
+      switch (outcome.kind) {
+        case "redirected":
+          return; // 다날/모바일 이탈 → 복귀 시 마운트 effect가 재개
+        case "confirm": {
+          // PortOne 인라인 성공 → 콜백 POST. 성공·일시 실패 모두 서버 상태로 판정(새 결제 금지).
+          const cb = await paymentCallback(outcome.callback);
+          if (!cb.ok && cb.status === 401) {
+            setBusy(false);
+            handleSessionExpired();
+            return;
+          }
+          await finalizeRenew(target, orderId, id, true);
+          return;
+        }
+        case "unavailable":
+          // 결제창 미실행(모듈/실행정보/금액) — 출금 전. 오류 유지(연장 버튼으로 같은 주문 재시도 가능).
+          setBusy(false);
+          setError(outcome.message);
+          return;
+        case "error":
+          setError(outcome.message);
+          await finalizeRenew(target, orderId, id, true); // 승인 불명확 → 서버 상태가 판정
+          return;
+        case "recover":
+          // mock: 결제창 없음 → 상태 조회만(기존 동작 보존, 콜백 재전송 없음).
+          await finalizeRenew(target, orderId, id, false);
+          return;
+        case "canceled":
+        default:
+          await finalizeRenew(target, orderId, id, true);
+          return;
+      }
+    } finally {
+      renewingRef.current = false;
+    }
+  }, [selectedId, calendar, finalizeRenew, handleSessionExpired]);
 
   const logout = useCallback(async () => {
     setBusy(true);

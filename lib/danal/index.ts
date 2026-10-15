@@ -1,7 +1,9 @@
 import { unavailable } from "@/lib/guest-monitoring/errors";
 import { mockProvider } from "./mock";
+import { getPortoneConfig, resolvePaymentMode } from "./portone-config";
+import { portoneProvider } from "./portone";
 import type { DanalProvider } from "./types";
-/** Real protocol/keys are not approved yet. Fail closed even when placeholder keys exist.
+/** PortOne requires reviewed no-withdrawal channel evidence; other real providers stay disabled.
  * Local fixtures require: DANAL_PROVIDER=mock, GUEST_MONITORING_MOCK_ISOLATED=true,
  * DANAL_MOCK_SECRET (32+ chars), and a loopback DATABASE_URL containing guest/test.
  */
@@ -12,7 +14,9 @@ function isolatedDatabase() {
   } catch { return false; }
 }
 export function getDanalProvider(): DanalProvider {
-  if (process.env.NODE_ENV !== "production" && process.env.DANAL_PROVIDER === "mock" &&
+  const mode = resolvePaymentMode();
+  if (mode === "portone") { getPortoneConfig(); return portoneProvider; }
+  if (process.env.NODE_ENV !== "production" && mode === "mock" &&
       process.env.GUEST_MONITORING_MOCK_ISOLATED === "true" && isolatedDatabase() &&
       (process.env.DANAL_MOCK_SECRET?.length ?? 0) >= 32) return mockProvider;
   unavailable();

@@ -21,6 +21,7 @@ export const messages: Record<string, string> = {
   duplicate_active: "이미 감시 중인 물건입니다. 현황 조회에서 연장해주세요.",
   provider_unavailable: "현재 인증 또는 결제를 이용할 수 없습니다. 잠시 후 다시 시도해주세요.",
   forbidden: "요청을 확인할 수 없습니다.",
+  payment_pending: "결제 승인을 확인하고 있습니다. 주문 상태를 다시 확인해주세요.",
   payment_failed: "결제를 확인할 수 없습니다. 주문 상태를 확인해주세요.",
   payment_needs_review: "결제는 확인되었으나 서비스 적용 확인이 필요합니다. 고객센터에 문의해주세요.",
 };

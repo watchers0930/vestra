@@ -2,39 +2,26 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { GuestDraftResponse, GuestOrderStateResponse } from "@/types/guest-monitoring";
-import {
-  parsePdf,
-  identityStart,
-  createOrder,
-  getOrderState,
-} from "../guest/guestApi";
-import { launchProvider, applyResume, classifyOrderState, orderTarget } from "../guest/guestProvider";
+import { parsePdf, identityStart } from "../guest/guestApi";
+import { launchProvider, applyResume, orderTarget } from "../guest/guestProvider";
+import type { FailureAction } from "../guest/applyFailure";
 import { useGuestOtp } from "./useGuestOtp";
+import { useGuestOrderFlow, type ApplyPhase } from "./useGuestOrderFlow";
+
+export type { ApplyPhase };
 
 /**
- * 비회원 신청 흐름 상태머신 (설계 §4.1 / 구현순서 step 4).
+ * 비회원 신청 흐름 상태머신 (설계 §5.2 / §6).
+ *   input → ready → otp → (verify) → ordering → paying → runPayment → (callback) → recovering → done
  *
- *   input → (parse-pdf) → ready → (identity/start → 리다이렉트) → [프로바이더]
- *     → 복귀 → ordering → (orders → 리다이렉트) → [결제] → 복귀 → recovering → done
+ * 견고성(§6): 401은 결제 실패가 아니라 재인증(reauth)으로 분리(새 결제·startOrder 금지, 주문/키 유지).
+ * OTP 성공 후에도 이름·전화 유지(폼 복원). 실패는 FailureAction으로 분류(applyFailure.ts)해 retry가 해당
+ * 동작만 수행. done은 서버 주문 상태(paid && applied)가 유일 근거(SDK 반환만으로 전환 금지). reset·초안
+ * 교체·재인증 이후 이전 비동기 응답이 덮어쓰지 못하도록 요청 세대(generation)로 가드한다.
  *
- * 본인인증·결제는 전체 페이지 리다이렉트이므로, 복귀 시 window.location + sessionStorage로
- * 흐름을 재개한다. draftId/orderId/멱등키만 보관하고 이름·전화·토큰은 저장하지 않는다.
- *
- * 인증 완료 신호는 (a)서버가 복귀 URL에 심은 verified/ok/orderId 쿼리, 또는 (b)인증창으로
- * 떠나기 직전 심어둔 pendingIdentity 마커로만 판단한다. 실행 URL 부재(목)를 인증 완료로
- * 취급하지 않는다(교차검수 §1). 미인증 주문은 서버가 거부한다.
+ * 주문 생성·결제 실행·복구 상태머신은 파일 500줄 제한(절대규칙 §1)과 단일 책임을 위해
+ * `useGuestOrderFlow`로 분리했다(설계 §1.2). 이 훅은 입력·파싱·OTP·복귀 effect·retry를 담당한다.
  */
-export type ApplyPhase =
-  | "input" // 폼 입력/파싱 전
-  | "ready" // 파싱 완료(결제 진입 가능)
-  | "verifying" // 본인인증 시작(리다이렉트/OTP 발송 직전)
-  | "otp" // SMS OTP 대기(코드 입력) — "인증·결제" 단계에 속함(§5.2)
-  | "ordering" // 주문 생성 중
-  | "paying" // 결제창 진입(리다이렉트 직전)
-  | "recovering" // 복귀 후 주문 상태 확인 중
-  | "done" // 활성화 완료
-  | "failed"; // 실패/취소(재시도 안내)
-
 export interface ApplyInput {
   guestName: string;
   guestPhone: string;
@@ -48,15 +35,45 @@ export function useGuestApply() {
   const [orderState, setOrderState] = useState<GuestOrderStateResponse | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  // 확정 실패(failed/canceled/refunded) 주문이라 "다시 시도" 시 새 결제(새 멱등키)가 필요한지
-  const [needsFreshPayment, setNeedsFreshPayment] = useState(false);
+  // 현재 실패의 권장 동작(§6.3). retry는 이 분류에 따라 "해당 동작만" 수행한다.
+  const [recovery, setRecovery] = useState<FailureAction | null>(null);
   const resumedRef = useRef(false);
-  // SMS OTP 대기·검증 공통 훅(§5.2). 다날 모드에서는 쓰이지 않는다.
+  // SMS OTP 대기·검증 공통 훅(§5.2).
   const otp = useGuestOtp();
-  // 재요청(§5.4)용 입력과 "현재 인증에 결합된 초안"(§5.2). 훅 메모리로만 보관, 정리 시 비운다.
+  // 재요청(§6.2)용 입력과 "현재 인증에 결합된 초안". 훅 메모리로만 보관(저장소/URL 금지).
   const otpNameRef = useRef("");
   const otpPhoneRef = useRef("");
   const otpDraftIdRef = useRef("");
+  // 요청 세대: reset·초안 교체·재인증 시 증가. 이전 비동기 응답이 최신 상태를 덮어쓰지 못하게 한다(§6.1).
+  const genRef = useRef(0);
+  // 결제창(SDK) 실행 재진입 잠금: 같은 틱의 이중 클릭으로 startOrder가 두 번 들어와도 결제 실행은 1회만
+  // (중복 청구 방지, §6.1 경합). busy 비활성화는 다음 렌더 UI만 막으므로 동기 재진입은 ref로 막는다.
+  const payingRef = useRef(false);
+
+  // 주문 생성·결제·복구 상태머신(§5.2/§6). 상태 setter·ref를 주입해 단일 상태를 공유한다.
+  const { handleReauth, advanceOrder, startOrder } = useGuestOrderFlow({
+    genRef,
+    payingRef,
+    draft,
+    otp,
+    otpNameRef,
+    otpPhoneRef,
+    otpDraftIdRef,
+    setPhase,
+    setError,
+    setRecovery,
+    setOrderState,
+    setBusy,
+    setDraft,
+  });
+
+  // 언마운트 시 세대 무효화: 결제·복구 중 화면을 떠나도 지연 응답이 runPayment(SDK)/상태 전이를
+  // 트리거하지 못하게 한다(§6.1 비동기 세대 관리). in-flight 요청은 gen 불일치로 조기 반환된다.
+  useEffect(() => {
+    return () => {
+      genRef.current++;
+    };
+  }, []);
 
   /** 1단계: PDF 파싱 + 초안 생성 */
   const submitParse = useCallback(async (input: ApplyInput) => {
@@ -69,15 +86,16 @@ export function useGuestApply() {
       setError("이름·전화번호·주소를 모두 입력해 주세요.");
       return;
     }
-    // 새 초안을 만들기 전에 이전 흐름 참조를 비운다(입력 변경 → 이전 draft/주문으로 결제 방지, §2).
+    // 새 초안 → 이전 흐름 참조/세대 무효화(입력 변경 시 이전 draft/주문으로 결제 방지, §2).
+    genRef.current += 1;
+    const gen = genRef.current; // 이 파싱 요청의 세대 — 응답 뒤 최신 세대와 비교(경합 방지, §6.1)
     applyResume.clear();
-    // 이전 OTP 대기·결합 초안도 폐기(초안 변경 시 이전 인증으로 주문 금지, §5.2/§5.3).
     otp.resetOtp();
     otpNameRef.current = "";
     otpPhoneRef.current = "";
     otpDraftIdRef.current = "";
     setOrderState(null);
-    setNeedsFreshPayment(false);
+    setRecovery(null);
     setBusy(true);
     const res = await parsePdf({
       file: input.file,
@@ -85,6 +103,9 @@ export function useGuestApply() {
       guestPhone: input.guestPhone.trim(),
       address: input.address.trim(),
     });
+    // reset·새 초안·언마운트가 끼어들었으면 이 응답으로 draft/저장소/상태를 되살리지 않는다(§6.1).
+    // busy는 현재 세대의 흐름이 관리하므로 stale 응답은 건드리지 않는다.
+    if (gen !== genRef.current) return;
     setBusy(false);
     if (!res.ok) {
       setError(res.error);
@@ -102,84 +123,26 @@ export function useGuestApply() {
     setPhase("ready");
   }, [otp]);
 
-  /** 복귀/복구: 주문 상태 조회 → 분류에 따라 done / 재조회 대기 / 실패 */
-  const recoverOrder = useCallback(
-    async (orderId: string) => {
-      setPhase("recovering");
-      setBusy(true);
-      const res = await getOrderState(orderId);
-      setBusy(false);
-      if (!res.ok) {
-        // 401: 세션 만료 → 재인증 필요. 확정 실패와 구분해 안내.
-        if (res.status === 401) {
-          setError("인증이 만료되었습니다. 처음부터 다시 신청해 주세요.");
-        } else {
-          setError(res.error);
-        }
-        setPhase("failed");
-        setNeedsFreshPayment(res.status === 401);
-        return;
-      }
-      setOrderState(res.data);
-      const kind = classifyOrderState(res.data);
-      if (kind === "applied") {
-        setError("");
-        setNeedsFreshPayment(false);
-        setPhase("done");
-        applyResume.clear();
-      } else if (kind === "settling") {
-        // 승인/적용 대기 — 즉시 재결제 유도하지 않고 재조회를 안내(설계 §3.3·§4.1).
-        setNeedsFreshPayment(false);
-        setError(
-          res.data.status === "pending"
-            ? "결제 승인을 확인하고 있습니다. 잠시 후 다시 확인해 주세요."
-            : "결제가 확인되어 감시를 적용하고 있습니다. 잠시 후 다시 확인해 주세요."
-        );
-        setPhase("recovering");
-      } else {
-        // 확정 실패/취소/환불 — 같은 주문 재조회로는 복구 불가. 새 결제(새 멱등키)로 유도.
-        setNeedsFreshPayment(true);
-        setError("결제가 완료되지 않았습니다. 다시 결제를 진행해 주세요.");
-        setPhase("failed");
-      }
-    },
-    []
-  );
-
-  /** 3단계: 주문 생성(initial) → 결제창 리다이렉트 */
-  const startOrder = useCallback(
-    async (draftId: string) => {
-      setError("");
-      setBusy(true);
-      setPhase("ordering");
-      const target = orderTarget("initial", draftId);
-      const idempotencyKey = applyResume.ensureIdempotencyKey(target);
-      const res = await createOrder({ purpose: "initial", draftId, idempotencyKey });
-      if (!res.ok) {
-        setBusy(false);
-        setError(res.error);
-        setPhase("failed");
-        // 세션/권한 실패는 재인증 필요, 그 외는 같은 주문 재시도 가능.
-        setNeedsFreshPayment(res.status === 401 || res.status === 404);
-        return;
-      }
-      applyResume.setOrderId(target, res.data.orderId);
-      setPhase("paying");
-      const launched = launchProvider(res.data.payment);
-      if (!launched) {
-        // 결제 실행 정보가 없으면(목) 주문 상태 조회로 복구(주문은 실제 생성됨).
-        void recoverOrder(res.data.orderId);
-      }
-    },
-    [recoverOrder]
-  );
+  /** 흐름 완전 초기화(입력 단계로). reset·재파싱·막다름 해소 공용. */
+  const goInput = useCallback(() => {
+    genRef.current += 1;
+    applyResume.clear();
+    otp.resetOtp();
+    otpNameRef.current = "";
+    otpPhoneRef.current = "";
+    otpDraftIdRef.current = "";
+    setDraft(null);
+    setOrderState(null);
+    setRecovery(null);
+    setError("");
+    // 진행 중 흐름을 초기화할 때 busy가 남지 않도록 명시 해제(세대 가드로 stale 응답은 이미 무시, §6.1).
+    setBusy(false);
+    setPhase("input");
+  }, [otp]);
 
   /**
-   * 2단계: 본인인증 시작(결제 전).
-   * - 다날 모드: launch에 url/action → 리다이렉트, 복귀 마커로 주문 재개(기존 동작).
-   * - OTP 모드: launch.mode==="sms_otp" → OTP 대기(phase="otp"). 리다이렉트 복귀 마커를
-   *   남기지 않는다(인증 전 새로고침을 주문 재개로 오인 금지, §5.2). 성공(verifyApplyOtp)
-   *   이후에만 startOrder한다.
+   * 2단계: 본인인증 시작(결제 전). 다날 모드는 리다이렉트+복귀 마커로 주문 재개(기존 동작).
+   * OTP 모드(launch.mode==="sms_otp")는 복귀 마커 없이 OTP 대기 후 성공 시에만 startOrder(§5.2).
    */
   const startIdentity = useCallback(
     async (guestName: string, guestPhone: string) => {
@@ -187,12 +150,13 @@ export function useGuestApply() {
       setError("");
       const name = guestName.trim();
       const phone = guestPhone.trim();
-      // 빈 이름·전화로 인증 API를 호출하지 않는다(취소·재발송 복귀 시 입력 소실 방어, §5.3 P0).
       if (!name || !phone) {
         setError("이름과 전화번호를 입력해 주세요.");
         setPhase("ready");
         return;
       }
+      // 이 인증 시작 요청의 세대. reset·새 초안·재인증·언마운트가 끼어들면 응답을 버린다(§6.1 경합).
+      const gen = genRef.current;
       setBusy(true);
       setPhase("verifying");
       const res = await identityStart({
@@ -201,14 +165,20 @@ export function useGuestApply() {
         guestPhone: phone,
         draftId: draft.draftId,
       });
+      // 오래된 응답이 새 초안의 OTP 대기로 전환하거나 옛 마커를 심지 못하게 한다(§6.1).
+      if (gen !== genRef.current) return;
       if (!res.ok) {
         setBusy(false);
+        // 401 등 세션 실패도 재인증 분기로 일관 처리(§6.1).
+        if (res.status === 401) {
+          handleReauth();
+          return;
+        }
         setError(res.error);
         setPhase("ready");
         return;
       }
       if (res.data.launch.mode === "sms_otp") {
-        // OTP 대기. 복귀 마커는 남기지 않고, 혹시 남아있다면 즉시 정리(§5.2).
         applyResume.clearPendingIdentity();
         otpNameRef.current = name;
         otpPhoneRef.current = phone;
@@ -218,55 +188,56 @@ export function useGuestApply() {
         setPhase("otp");
         return;
       }
-      // 다날: 인증창으로 떠나기 직전 복귀 식별 마커를 심는다(복귀 시 주문 재개 트리거, §1).
+      // 다날: 인증창으로 떠나기 직전 복귀 식별 마커를 심는다(복귀 시 주문 재개 트리거).
       applyResume.setPendingIdentity(orderTarget("initial", draft.draftId));
       const launched = launchProvider(res.data.launch as Record<string, string>);
       if (!launched) {
-        // 실행 URL이 없으면 인증이 완료된 것이 아니다 — 주문을 생성하지 않는다(§1).
         applyResume.clearPendingIdentity();
         setBusy(false);
         setError("본인인증 창을 열 수 없습니다. 잠시 후 다시 시도해 주세요.");
         setPhase("ready");
       }
-      // launched=true 이면 페이지를 떠남(복귀 시 useEffect가 재개).
     },
-    [draft, otp]
+    [draft, otp, handleReauth]
   );
 
   /**
-   * OTP 코드 확인 → 성공 시 "현재 인증에 결합된 초안"으로만 startOrder(§5.2).
-   * 단순 launch 부재나 클라이언트 상태만으로 주문하지 않는다.
+   * OTP 확인 → 성공 시 "현재 인증 결합 초안"으로만 주문 진행(§5.2). §6.2: 성공 후에도 이름·전화는
+   * 비우지 않는다(전송 실패 시 폼 복원). OTP 코드·대기·otpDraftIdRef만 정리하되 draftId는 먼저 확보.
    */
   const verifyApplyOtp = useCallback(
     async (code: string) => {
       const result = await otp.submitOtp(code);
       if (!result) return; // 실패(otpError 반영) 또는 구형 응답 — 미인증 유지
-      const draftId = otpDraftIdRef.current;
+      const draftId = otpDraftIdRef.current; // 정리 전에 확보
       otp.resetOtp();
-      otpNameRef.current = "";
-      otpPhoneRef.current = "";
       otpDraftIdRef.current = "";
       if (!draftId) {
         setError("인증 정보가 만료되었습니다. 다시 시도해 주세요.");
         setPhase("ready");
         return;
       }
+      // 재인증(401) 후 OTP 성공처럼 "기존 주문이 이미 있는" 경우, SDK를 다시 띄우지 않는다(버그⑤).
+      // 기존 주문이 있으면 상태부터 확인·콜백 재전송(§6.1), 없을 때만 새 주문·결제창 실행.
+      const existingOrderId = applyResume.getOrderId(orderTarget("initial", draftId));
+      if (existingOrderId) {
+        void advanceOrder(existingOrderId, draftId);
+        return;
+      }
       void startOrder(draftId);
     },
-    [otp, startOrder]
+    [otp, startOrder, advanceOrder]
   );
 
-  /** 재요청(§5.4): 새 세션·코드. 기존 대기 폐기 후 동일 입력으로 재시작. */
+  /** 재요청(§6.2): 새 세션·코드. 기존 대기 폐기 후 동일 입력으로 재시작. */
   const resendApplyOtp = useCallback(() => {
     otp.resetOtp();
     void startIdentity(otpNameRef.current, otpPhoneRef.current);
   }, [otp, startIdentity]);
 
   /**
-   * 취소: 대기·코드 정리 후 입력(ready) 복귀(§5.3).
-   * 이름·전화(otpNameRef/otpPhoneRef)는 비우지 않는다 — 같은 초안으로 돌아온 신청 폼이 잠긴 채
-   * 빈 값이 되어 재인증을 막는 HIGH 결함을 방지한다(복귀 시 입력 유지, P0). 초안 결합(otpDraftIdRef)은
-   * 다음 startIdentity에서 다시 설정되므로 정리한다.
+   * 취소: 대기·코드 정리 후 입력(ready) 복귀(§6.2).
+   * 이름·전화(otpNameRef/otpPhoneRef)는 비우지 않는다 — 잠긴 빈 폼으로 재인증이 막히는 결함 방지.
    */
   const cancelApplyOtp = useCallback(() => {
     otp.resetOtp();
@@ -275,10 +246,8 @@ export function useGuestApply() {
     setPhase("ready");
   }, [otp]);
 
-  // 복귀(리다이렉트 반환) 처리 — 클라이언트에서만, 1회.
-  // 프로바이더가 어느 경로로 되돌아오든(랜딩/전용 라우트) 재개할 수 있도록, 경로가 아니라
-  // "복귀 신호"(쿼리 파라미터·저장된 주문·인증 복귀 마커)가 있을 때만 흐름을 이어간다.
-  // 신호가 없으면(신규 방문/단순 새로고침) 입력 폼을 그대로 보여준다.
+  // 복귀(리다이렉트 반환) 처리 — 클라이언트 1회. "복귀 신호"(쿼리·저장 주문·인증 마커)가 있을 때만
+  // 재개하고, 없으면 입력 폼 유지. 주문이 있으면 서버 상태(SSOT)가 성공/에러를 판정한다.
   useEffect(() => {
     if (resumedRef.current) return;
     resumedRef.current = true;
@@ -292,19 +261,28 @@ export function useGuestApply() {
     const target = orderTarget("initial", draftId);
     const storedOrderId = draftId ? applyResume.getOrderId(target) : null;
     const pendingIdentity = applyResume.getPendingIdentity();
+    const orderId = queryOrderId || storedOrderId;
 
-    if (hasError) {
+    if (orderId) {
+      // 주문이 있으면 에러 쿼리 여부와 무관하게 서버 상태로 판정한다(브라우저 신호 불신, §5.2).
       applyResume.clearPendingIdentity();
-      setError("본인인증 또는 결제가 완료되지 않았습니다. 다시 시도해 주세요.");
-      setNeedsFreshPayment(true);
-      setPhase("failed");
+      if (draftId) {
+        applyResume.setOrderId(target, orderId);
+        // 모바일 리다이렉트 복귀: 메모리 콜백 문맥이 사라졌으므로 동일 멱등키로 재발급해 콜백을
+        // 재전송한 뒤 상태로 확정한다(SDK 재실행·새 주문 없음, 버그②).
+        void advanceOrder(orderId, draftId);
+      } else {
+        // 초안 참조가 없어 문맥 재발급 불가 → 재조회만 수행(서버 상태가 판정).
+        void advanceOrder(orderId);
+      }
       return;
     }
-    const orderId = queryOrderId || storedOrderId;
-    if (orderId) {
-      if (draftId) applyResume.setOrderId(target, orderId);
+    if (hasError) {
+      // 주문 참조 없이 에러로만 복귀 — 자동 재결제 금지, 사용자 재시도 안내.
       applyResume.clearPendingIdentity();
-      void recoverOrder(orderId);
+      setRecovery({ kind: "blocked" });
+      setError("본인인증 또는 결제가 완료되지 않았습니다. 다시 시도해 주세요.");
+      setPhase("failed");
       return;
     }
     // 본인인증만 끝나고 주문 전 단계로 돌아온 경우: 명시 신호(verified) 또는 우리가 심은 마커가 있을 때만.
@@ -312,56 +290,97 @@ export function useGuestApply() {
       applyResume.clearPendingIdentity();
       void startOrder(draftId);
     }
-    // 그 외: 신호 없음 → 입력 폼 유지(단순 새로고침을 인증 완료로 오인하지 않음).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /** 재시도: recovery 분류에 따라 "해당 동작만" 수행(§6.3). 새 결제는 확정 실패(fresh_payment)만. */
   const retry = useCallback(() => {
     setError("");
     const draftId = draft?.draftId ?? applyResume.getDraftId();
     const target = orderTarget("initial", draftId);
-    // 확정 실패 주문: 같은 주문 재조회로는 복구 불가 → 키를 비우고 새 결제 시도(§8).
-    if (needsFreshPayment) {
-      applyResume.clearOrder(target);
-      setNeedsFreshPayment(false);
-      if (draftId && draft?.extractionOk) {
-        void startOrder(draftId);
-        return;
-      }
-      applyResume.clear();
-      setDraft(null);
-      setOrderState(null);
-      setPhase("input");
+    const orderId = draftId ? applyResume.getOrderId(target) : null;
+    const action = recovery;
+
+    const hasValidDraft = !!(draftId && draft?.extractionOk);
+    if (action?.kind === "reparse") {
+      goInput();
       return;
     }
-    // 미완료(승인/적용 대기) 주문: 같은 주문 상태 재조회.
-    const orderId = draftId ? applyResume.getOrderId(target) : null;
+    if (action?.kind === "reauth") {
+      // 유효 초안이면 ready(폼에서 재인증), 아니면 입력부터.
+      if (draft?.extractionOk) {
+        setRecovery(null);
+        setPhase("ready");
+      } else {
+        goInput();
+      }
+      return;
+    }
+    if (action?.kind === "fresh_payment") {
+      // 확정 실패 주문: 키를 비우고 새 결제(새 멱등키). 초안 만료면 재파싱.
+      if (hasValidDraft && draftId) {
+        applyResume.clearOrder(target);
+        setRecovery(null);
+        void startOrder(draftId);
+      } else {
+        goInput();
+      }
+      return;
+    }
+    if (action?.kind === "retry_payment") {
+      // 결제창 미실행 중단(모듈/실행정보/금액, 버그①): 같은 주문에 결제창 재실행(출금 전이라 안전).
+      if (hasValidDraft && draftId) {
+        setRecovery(null);
+        void startOrder(draftId);
+      } else {
+        goInput();
+      }
+      return;
+    }
+    if (action?.kind === "resend_callback") {
+      // 승인됐으나 콜백 유실로 pending(버그②③): SDK 재실행 없이 동일 문맥 콜백 재전송.
+      setRecovery(null);
+      if (orderId && draftId) {
+        void advanceOrder(orderId, draftId);
+      } else if (orderId) {
+        void advanceOrder(orderId);
+      } else if (draft?.extractionOk) {
+        setPhase("ready");
+      } else {
+        goInput();
+      }
+      return;
+    }
+    if (action?.kind === "retry_same") {
+      // network(status=0)·429·503. 주문이 이미 있으면(결제 실행 이후일 수 있음) 결제창을 다시 띄우지
+      // 않고 재조회/콜백 재전송만 한다(버그⑤). 주문 전송 자체가 실패해 주문이 없을 때만 재전송(SDK 실행).
+      setRecovery(null);
+      if (orderId && draftId) {
+        void advanceOrder(orderId, draftId);
+      } else if (orderId) {
+        void advanceOrder(orderId);
+      } else if (hasValidDraft && draftId) {
+        void startOrder(draftId);
+      } else {
+        goInput();
+      }
+      return;
+    }
+    // recheck·blocked·conflict·null: 주문 있으면 재조회만(새 결제·콜백 재전송 금지), 없으면 ready/input.
     if (orderId) {
-      void recoverOrder(orderId);
+      void advanceOrder(orderId);
       return;
     }
     if (draftId && draft?.extractionOk) {
       setPhase("ready");
       return;
     }
-    applyResume.clear();
-    setDraft(null);
-    setOrderState(null);
-    setPhase("input");
-  }, [draft, needsFreshPayment, recoverOrder, startOrder]);
+    goInput();
+  }, [draft, recovery, advanceOrder, startOrder, goInput]);
 
   const reset = useCallback(() => {
-    applyResume.clear();
-    otp.resetOtp();
-    otpNameRef.current = "";
-    otpPhoneRef.current = "";
-    otpDraftIdRef.current = "";
-    setDraft(null);
-    setOrderState(null);
-    setNeedsFreshPayment(false);
-    setError("");
-    setPhase("input");
-  }, [otp]);
+    goInput();
+  }, [goInput]);
 
   return {
     phase,
@@ -371,10 +390,9 @@ export function useGuestApply() {
     busy,
     submitParse,
     startIdentity,
-    recoverOrder,
     retry,
     reset,
-    // 취소·재발송 실패로 신청 폼이 다시 마운트될 때 복원할 이름·전화(§5.3 P0). OTP 진입 시점에
+    // OTP 취소·재발송·전송 실패로 신청 폼이 다시 마운트될 때 복원할 이름·전화(§6.2). OTP 진입 시점에
     // 저장해 둔 값으로, 폼 remount 시 입력 초기값으로 되돌린다. 신규 입력 단계에서는 빈 문자열.
     restoreName: otpNameRef.current,
     restorePhone: otpPhoneRef.current,

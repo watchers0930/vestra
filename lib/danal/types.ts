@@ -23,9 +23,9 @@ export interface IdentityAdapter {
   verifyResult(input: unknown): Promise<IdentityResult>;
 }
 export interface PaymentAdapter {
-  createPayment(input: { orderId: string; amount: number; currency: string; expiresAt: Date }): Promise<Record<string, string>>;
+  createPayment(input: { orderId: string; amount: number; currency: string; expiresAt: Date; providerReceipt?: string | null; createdAt?: Date }): Promise<Record<string, string>>;
   verifyPayment(input: unknown): Promise<PaymentResult>;
   getPayment(transactionId: string): Promise<PaymentResult>;
-  cancelPayment(transactionId: string): Promise<never>;
+  cancelPayment(reference: string): Promise<void>;
 }
-export interface DanalProvider { mode: "mock" | "danal"; merchantId: string; identity: IdentityAdapter; payment: PaymentAdapter }
+export interface DanalProvider { mode: "mock" | "danal" | "portone"; merchantId: string; identity: IdentityAdapter; payment: PaymentAdapter }

@@ -50,6 +50,7 @@ export async function createOrder(session: OrderPrincipal, input: GuestOrderRequ
     return { order, created: true };
   });
   const { order } = result;
+  if (order.providerMode !== provider.mode) throw new GuestError("provider_unavailable", 503);
   const payment = order.status === "pending" && order.expiresAt > new Date()
     ? await provider.payment.createPayment(order) : {};
   return { data: { orderId: order.orderId, amount: order.amount, currency: order.currency,

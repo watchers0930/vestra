@@ -32,6 +32,17 @@ export type GuestApiResult<T> =
 /** 공통 실패 메시지(서버가 상세 사유를 숨길 때의 사용자용 기본 안내) */
 const FALLBACK_ERROR = "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
+/**
+ * §3.3 POST /payment/callback 요청(PortOne 브라우저 경로, 설계 §2.4.1).
+ * 클라이언트 전용 타입 — 서버가 발급한 서명 문맥을 echo만 한다(브라우저가 서명/금액을 만들지 않음).
+ * 공유 타입(types/)을 건드리지 않도록 프론트 레이어에 둔다.
+ */
+export interface GuestPaymentCallbackRequest {
+  paymentId: string; // = orderId
+  callbackContext: string; // 서버 발급 base64url 문맥 (echo)
+  callbackSignature: string; // 서버 발급 hex 서명 (echo)
+}
+
 /** 네트워크/파싱 공통 처리. 성공 바디는 T, 실패는 {error, code} 계약을 따른다. */
 async function toResult<T>(res: Response): Promise<GuestApiResult<T>> {
   let body: unknown = null;
@@ -139,6 +150,17 @@ export function createOrder(req: GuestOrderRequest): Promise<GuestApiResult<Gues
 /** §3.3 GET /orders/[orderId] — 주문 상태 조회(결제 중 복구용, 최소 상태만) */
 export function getOrderState(orderId: string): Promise<GuestApiResult<GuestOrderStateResponse>> {
   return getJson<GuestOrderStateResponse>(`/orders/${encodeURIComponent(orderId)}`);
+}
+
+/**
+ * §3.3 POST /payment/callback — PortOne 브라우저 경로 결제 콜백.
+ * 서버 발급 문맥을 echo로 POST한다. 성공은 `{ ok: true }`, 실패는 비-2xx(`{error, code}`).
+ * 서버가 REST 재조회로 승인을 판정하므로, 클라이언트는 결과를 신뢰 판단에 쓰지 않고 주문 상태를 재조회한다.
+ */
+export function paymentCallback(
+  req: GuestPaymentCallbackRequest
+): Promise<GuestApiResult<{ ok: true }>> {
+  return postJson<{ ok: true }>("/payment/callback", req);
 }
 
 /** §3.4 GET /properties — 본인 신청 물건 목록(조회 세션 필요) */

@@ -83,3 +83,10 @@ export interface GuestCalendarResponse {
   month: string;
   logs: CheckLogItem[];
 }
+
+export interface GuestPaymentCallbackRequest {
+  paymentId: string;
+  callbackContext: string;
+  callbackSignature: string;
+}
+export interface GuestPaymentCallbackResponse { ok: true }
