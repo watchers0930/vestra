@@ -1,6 +1,6 @@
 {
   "name": "vestra",
-  "version": "5.200.0",
+  "version": "5.200.1",
   "private": true,
   "overrides": {
     "source-map-js": ">=1.2.2"
@@ -27,7 +27,6 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
-    "@portone/browser-sdk": "^0.1.13",
     "@prisma/client": "^6.19.2",
     "@react-pdf/renderer": "^4.5.1",
     "@serwist/next": "^9.5.7",

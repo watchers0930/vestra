@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getDanalProvider } from "@/lib/danal";
 import { callbackRequestSchema, paymentFailed } from "@/lib/danal/portone-callback";
-import { PortoneTerminalPayment } from "@/lib/danal/portone-payment";
+import { PortoneTerminalPayment } from "@/lib/danal/portone-v1-payment";
 import type { OrderPrincipal } from "./order";
 import { GuestError } from "./errors";
 import { guestLimit } from "./rate-limit-keys";
@@ -10,12 +10,12 @@ import { recordPayment } from "./record-payment";
 import { applyPaidOrder } from "./activation";
 export async function paymentCallback(input: unknown, session?: OrderPrincipal) {
   const provider = getDanalProvider();
-  if (provider.mode === "portone") {
-    if (!session || !["apply", "renewal"].includes(session.purpose)) throw new GuestError("session_required", 401);
+  if (provider.mode === "portone_v1") {
+    if (!session || !["apply", "status", "renewal"].includes(session.purpose)) throw new GuestError("session_required", 401);
     const body = callbackRequestSchema.safeParse(input);
     if (!body.success) return paymentFailed();
     const owned = await prisma.guestMonitoringOrder.findFirst({ where: {
-      orderId: body.data.paymentId, providerMode: "portone",
+      orderId: body.data.paymentId, providerMode: "portone_v1",
       guestMonitoring: { guestIdentityHash: session.verifiedIdentityHash },
     }, select: { orderId: true } });
     if (!owned) throw new GuestError("not_found", 404);
@@ -23,11 +23,11 @@ export async function paymentCallback(input: unknown, session?: OrderPrincipal) 
   let callback;
   try { callback = await provider.payment.verifyPayment(input); }
   catch (error) {
-    if (provider.mode !== "portone" || !(error instanceof PortoneTerminalPayment)) throw error;
+    if (provider.mode !== "portone_v1" || !(error instanceof PortoneTerminalPayment)) throw error;
     await guestLimit("callback:payment", error.orderId, 20);
     // Design §3.3/§4.4 requires a fresh second snapshot before recording.
     // Do not cache either read: a payment can transition after verification.
-    try { await provider.payment.getPayment(error.orderId); }
+    try { await provider.payment.getPayment(error.transactionId); }
     catch (confirmed) {
       if (confirmed instanceof PortoneTerminalPayment && confirmed.orderId === error.orderId &&
           confirmed.transactionId === error.transactionId && confirmed.paymentStatus === error.paymentStatus) {

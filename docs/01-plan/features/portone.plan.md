@@ -1,272 +1,257 @@
-# PortOne V2 다날 테스트 결제 및 비회원 신청 복구 개선 기획서
+# 비회원 등기감시 PortOne V1 다날 테스트 결제 전환 기획서
 
 - 작성일: 2026-10-15
-- 상태: 기획 완료, 구현 전
-- 대상: 비회원 등기감시 1개월 신청
-- 작업 범위: 이 단계에서는 이 문서만 작성한다. 코드·패키지·환경변수·DB는 변경하지 않는다.
+- 상태: 기획 완료 / 구현 전
+- 대상: 비회원 등기감시 최초 신청 및 현황 화면의 1개월 연장
+- 산출물 범위: 이 기획서만 작성한다. 기능 코드, 패키지, 환경변수, DB는 변경하지 않는다.
+- 문서 관계: 이 문서는 기존 동일 경로의 V2 다날 결제 기획을 대체한다. 기존 `docs/02-design/features/portone.design.md`와 분석·리뷰 문서는 과거 V2 구현의 참고자료이며, 후속 설계에서 본 기획과 일치하도록 갱신한다.
 
 ## 1. 기능 개요
 
-비회원이 기존 SMS OTP 인증을 마친 후 PortOne V2 브라우저 SDK로 **다날 테스트 결제**를 진행하고, 서버가 PortOne REST API로 결제를 재조회하여 신청을 확정하도록 한다. 실제 SDK·REST 통신이 동작하는 테스트 연동이며, **실결제·실제 금전 출금은 허용하지 않는다.** mock 성공 응답을 실제 연동 성공으로 간주하지 않는다.
+현재 비회원 결제의 PortOne V2 어댑터를 PortOne V1(구 아임포트) 다날 카드 결제로 교체한다. 사용자는 기존 SMS OTP 인증 후 10,000원짜리 등기감시 1개월 상품의 테스트 결제를 진행하며, 서버가 V1 REST API로 실제 결제 응답을 다시 조회한 뒤 신청 또는 연장을 확정한다. 이번 범위는 **무출금 테스트 연동**이며 실결제, 운영 결제 전환, 빌링키 발급, 정기결제는 포함하지 않는다.
 
-동시에 `useGuestApply.ts`의 세션 만료 재시도 무한루프와 OTP 성공 후 이름·전화 소실을 수정한다. 사용자는 인증 만료 시 재인증하고, 일시 장애 시 기존 주문 시도를 이어가며, 확정 결제 실패 시에만 새 결제를 시작할 수 있어야 한다.
+PortOne 공식 V2 지원 목록에서 다날은 본인인증에만 포함되고 결제에는 포함되지 않는다. 따라서 V2 다날 결제 경로를 사용할 수 없으며 V1으로 전환해야 한다. [공식 V2 지원 PG 안내](https://developers.portone.io/opi/ko/integration/start/v2/readme?v=v2)
 
-### 1.1 포함 범위
+전환과 함께 프론트 P1 두 건을 완료한다.
 
-- `lib/danal/portone.ts`에 PortOne V2 `PaymentAdapter` 신설 및 공급자 선택 연결.
-- 서버 주문 응답을 기반으로 SDK 실행, `/api/guest-monitoring/payment/callback` 호출, 서버 검증·감시 적용·상태 조회 연결.
-- 서버 가격 10,000원/KRW 검증, 상점·주문·거래 식별자 결합, HMAC 및 nonce 1회 소비.
-- 401 재인증, 404 초안 재파싱, 확정 실패와 일시 실패의 서로 다른 재시도 정책.
-- 어댑터·보안·클라이언트 복구 회귀 테스트와 테스트 환경 연동 확인.
+1. 결제창 실행 전 SDK 로드 실패는 오류로 유지하고 같은 주문의 결제 실행 재시도를 제공한다. 실행 후 승인 여부가 불명확한 실패와 구분한다.
+2. `status` 세션으로 생성한 연장 주문의 콜백을 허용한다. 주문 소유권은 `verifiedIdentityHash`로 확인하고, 콜백의 영구 거부 응답을 승인 대기로 숨기지 않는다.
 
-### 1.2 불변 조건 및 제외 범위
+### 1.1 성공 기준
 
-- **본인인증은 기존 SMS OTP를 유지한다.** PortOne 본인인증, 다날 본인인증 전환, OTP 정책 변경은 제외한다.
-- 실결제 채널 사용, 운영 결제 개방, 자동 환불, 정기결제·빌링키는 제외한다.
-- DB 신규 컬럼·마이그레이션을 추가하지 않는다.
-- 기존 `launchProvider`의 URL 이동·form POST 및 격리 mock 동작은 보존한다.
-- 페이지·컴포넌트·훅은 파일당 500줄 이하로 관리하고 결제 프로토콜을 페이지에 넣지 않는다.
+- `portone_v1` 설정에서 V1 CDN SDK와 V1 REST API만 사용하여 신규 신청·연장 테스트 결제가 완료된다.
+- 서버 가격 SSOT, V1 재조회, 소유권, 서명·nonce 검증을 모두 통과한 주문만 `paid`로 기록한다.
+- UI 완료 판정은 서버의 `status === "paid" && applied === true`에만 근거한다.
+- 테스트 채널 증빙·검증값 또는 필수 키가 없으면 결제 실행 정보를 발급하지 않고 503으로 차단한다.
+- P1 두 건의 신규 신청·연장·복구 경로 회귀 테스트가 통과한다.
+- 신규 DB 컬럼과 마이그레이션 없이 기존 필드를 사용하고 페이지 및 관련 책임 모듈을 파일당 500줄 이하로 유지한다.
 
 ## 2. 기존 코드 분석
 
-| 위치 | 확인한 현재 동작 | 변경 필요 사항 |
-| --- | --- | --- |
-| `lib/danal/types.ts` | `PaymentAdapter`의 create/verify/get/cancel 정의. 공급자 mode는 `mock \| danal`, cancel 반환은 `Promise<never>` | PortOne mode 및 실제 취소 성공을 표현할 타입 정합성 검토 |
-| `lib/danal/index.ts` | 비운영·격리 DB·격리 플래그·32자 이상 mock 비밀키를 만족하는 mock만 반환, 나머지는 503 | 명시적 PortOne 선택 추가, mock 가드 유지 |
-| `lib/danal/callback.ts` | `DANAL_MOCK_SECRET`로 mock envelope HMAC 검증 | 실 연동용 서버 발급 결제 토큰과 분리 필요 |
-| `lib/guest-monitoring/order.ts` | 인증 신원/초안 결합, 대상별 미완료 주문 재사용, 서버 가격 스냅샷 및 멱등키 저장 | SDK launch 정보와 서명된 콜백 문맥 발급 연결 |
-| `lib/pricing-plans.ts` | `GUEST_SINGLE_MONITORING`: 10,000원, KRW, 1개월 | 가격 SSOT 그대로 재사용 |
-| `lib/guest-monitoring/activation.ts` | verify → 공급자 get 재조회 → recordPayment → applyPaidOrder. 금액·통화·공급자·승인 시간 검증 | PortOne 조회 결과 매핑, nonce 소비와 결제 기록의 원자성 연결 |
-| `lib/guest-monitoring/recovery.ts` | 저장된 providerTransactionId로 paid 미적용 주문 재조회·복구 | PortOne paymentId와 transactionId 차이를 해소해야 함 |
-| `app/api/guest-monitoring/payment/callback/route.ts` | callback 전용 endpoint, 일반 Origin 검사를 우회 | 브라우저 POST 경로의 Origin·세션·주문 바인딩 보강 |
-| `guest/guestApi.ts` | 네트워크 예외를 status=0으로 반환, 결제 콜백 클라이언트 함수 없음 | 콜백 함수 및 표준 오류 계약 추가 |
-| `guest/guestProvider.ts` | 동기 `launchProvider`, draftId/대상별 orderId/멱등키만 sessionStorage 보관 | 비동기 SDK 결제 실행 책임 분리, 기존 실행 경로 유지 |
-| `hooks/useGuestApply.ts` | startOrder/recoverOrder의 401을 needsFreshPayment로 분류, retry가 다시 startOrder 호출 | 재인증 상태를 확정 결제 실패와 분리 |
-| 동일 훅 `verifyApplyOtp` | 성공 직후 otpNameRef/otpPhoneRef를 비움 | 취소 경로처럼 입력값 유지 |
-| `GuestApplyClient.tsx`, `GuestApplyForm.tsx` | 단계 전환으로 폼 재마운트, initialName/initialPhone으로 초기화. 분석된 초안이면 입력 잠금 | 훅 메모리 입력 복원이 빈 잠금 폼 방지의 핵심 |
-| `prisma/schema.prisma` | providerMode는 문자열, providerReceipt·providerTransactionId·expiresAt 등 기존 필드 존재 | 기존 필드만 활용, mock receipt와 버전/용도 구분 |
-| `package.json`, Vitest 설정 | `@portone/browser-sdk` 미설치. 루트 테스트는 `__tests__/**/*.test.ts`, 비회원 테스트는 별도 설정 | 후속 구현 시 SDK 설치와 훅 실행 테스트 환경 준비 필요 |
+아래 내용은 현재 저장소 원문을 기준으로 확인했다. 과거 리뷰의 지적을 현재 미해결 상태로 일괄 간주하지 않는다.
 
-위 경로의 `guest/`, `hooks/`, 컴포넌트는 `app/(personal-home)/renewal/monitoring/` 기준이다. 현재 결제 nonce의 1회 소비가 구현되어 있다고 전제하지 않는다. mock HMAC 검증 및 활성화 멱등성에 더해 PortOne 결제용 소비 규칙을 설계한다.
+| 영역 | 현재 구현과 확인 사항 | 이번 계획 |
+| --- | --- | --- |
+| `lib/danal/types.ts` | `PaymentAdapter` 네 메서드 존재. `DanalProvider.mode`는 `mock / danal / portone` | 인터페이스를 유지하고 모드에 `portone_v1` 반영 |
+| `lib/danal/index.ts`, `portone-config.ts` | 명시 모드 선택, 두 환경변수 충돌 차단, 격리 mock 제한 존재 | V1 선택·설정 검증으로 교체, V2 다날 차단 |
+| `portone.ts`, `portone-rest.ts`, `portone-payment.ts` | V2 `api.portone.io`, storeId/channelKey, 대문자 상태·ISO paidAt 사용 | V1 REST 봉투·imp_uid·소문자 상태·Unix 시각 매핑으로 교체 |
+| `portone-test-channels.ts` | `verifiedTestChannels`가 빈 목록. V2 테스트 채널 증빙 없으면 503 | V1 imp 코드·PG·MID·카드·테스트 검증값 조합으로 대체 |
+| `portone-callback.ts` | HMAC 문맥, nonce, 소모 여부를 기존 `providerReceipt`에 저장 | V1 결제에도 보존. 현재 `portone_v1:` 접두사는 기존 V2 경로에서도 쓰는 **문맥 포맷 버전**이므로 공급자 버전의 증거로 사용하지 않음 |
+| `guest/guestPayment.ts` | V2 동적 import 사용. `unavailable`과 실행 후 `error`를 이미 구분. 복구 함수는 콜백의 401 외 오류를 무시하고 재조회 | V1 script 로더·콜백 계약으로 교체하고 복구의 영구 오류 보존 |
+| `hooks/useGuestOrderFlow.ts` | 최초 신청은 SDK 실행 전 실패에 `retry_payment`를 제공하고 직접 콜백 영구 거부도 구분 | 기존 개선을 유지하며 V1 로더 실패·재시도로 회귀 검증 |
+| `hooks/useGuestStatus.ts` | 현황 인증 purpose는 `status`. 연장 직접 콜백은 401 이외 실패를 `finalizeRenew`로 넘김 | 영구 거부를 오류로 유지. 복구 경로에도 동일 정책 적용 |
+| `lib/guest-monitoring/order.ts` | 연장 주문은 `status / renewal` 세션으로 생성 가능 | 계약 유지 |
+| `payment/callback/route.ts`, `lib/guest-monitoring/payment-callback.ts` | 라우트 허용 purpose는 `apply / renewal`; 서비스도 동일 제한. 라우트 purpose 불일치는 `requireSession`에서 404 | **라우트·서비스 모두** `status` 포함, 소유권 검증 유지 |
+| `record-payment.ts`, `record-terminal-payment.ts`, `recovery.ts` | `mode === "portone"`에 묶인 nonce·거래 중복·기록 보호 분기, 거래 ID 기반 복구 존재 | V1에도 동일 보호가 적용되도록 관련 분기 전체 전환 |
+| Prisma `GuestMonitoringOrder` | `providerMode`는 String, `providerTransactionId`는 unique, `providerReceipt`는 Text | 기존 필드로 V1 모드·imp_uid·서명 문맥 처리 |
+| `package.json` | 현재 `@portone/browser-sdk` 의존성이 존재 | 저장소 전체 사용처 확인 후 제거하거나 다날 결제에서 비활성임을 명시 |
+| `lib/guest-monitoring/tests/portone*.test.ts` | V2 스키마·채널 fixture를 사용하는 서버 테스트 | V1 fixture로 전환하고 보안·P1 회귀 추가 |
+
+관련 프론트 파일 경로의 기준 디렉터리는 `app/(personal-home)/renewal/monitoring/`이다. 현재 `useGuestStatus.ts`는 476줄이므로 로더·오류 분류·복구 로직 추가 시 헬퍼 분리가 필요하다.
 
 ## 3. 사용자 스토리
 
-| 사용자 상황 | 기대 동작 | 성공 기준 |
-| --- | --- | --- |
-| 비회원이 PDF를 분석하고 SMS OTP 인증을 마침 | 다날 테스트 결제창에서 1개월 상품 결제 | 실제 출금 없이 서버 검증 후 감시 적용 완료 |
-| 주문 생성 또는 상태 조회 시 인증 세션 만료 | 이름·전화가 복원된 ready 화면에서 SMS 재인증 | 재인증 전 주문 API 재호출 0회 |
-| OTP 성공 후 주문 전송이 끊기거나 429/503 발생 | 이름·전화와 초안을 유지하고 동일 멱등키로 재시도 | 빈 입력이 잠기는 막다름 및 중복 주문 없음 |
-| 초안이 만료됨 | input에서 PDF 재등록·재분석 | 만료 초안으로 인증·결제 재시작 안 함 |
-| 결제가 서버 기준 실패·취소·환불로 확정됨 | 유효한 같은 초안에서 새 멱등키로 재결제 | 기존 실패 주문 반복 조회 루프 없음 |
-| SDK는 성공했지만 서버 확인이 지연됨 | 기존 주문 상태 확인 또는 같은 콜백 재시도 | pending/paid 미적용 상태에서 새 결제 유도 없음 |
+| ID | 사용자 스토리 | 인수 기준 | 우선순위 |
+| --- | --- | --- | --- |
+| US-01 | 비회원 신청자로서 OTP 인증 후 다날 카드 테스트 결제를 마치고 감시를 시작하고 싶다 | 같은 서버 주문으로 SDK 실행 → 서버 재조회 → 적용 완료, 적용 1회 | P0 |
+| US-02 | 현황 조회 사용자로서 다시 가입하지 않고 선택한 물건의 감시를 연장하고 싶다 | 소유자의 `status` 세션 콜백 성공, 기존 기간 정책에 따라 1개월 연장 1회 | P1 |
+| US-03 | 결제 모듈 로드가 실패하면 원인을 안내받고 재시도하고 싶다 | 승인 대기 미표시, 재시도 버튼, 로더 재시도 성공 시 동일 주문·멱등키로 실행 | P1 |
+| US-04 | 결제창 이후 통신이 끊겨도 중복 결제 없이 결과를 확인하고 싶다 | 재조회·콜백 복구에서 SDK 자동 재실행 및 신규 주문 생성 없음 | P0 |
+| US-05 | 결제 확인이 영구 거부되면 승인 대기 대신 오류 안내를 받고 싶다 | 400/403/404를 직접·복구 경로에서 보존, 401은 재인증 | P1 |
+| US-06 | 운영 담당자로서 실출금 위험 없이 테스트 연결 상태를 확인하고 싶다 | 증빙 없는 채널·키 누락·V2 선택은 503, mock 자동 대체 없음 | P0 |
 
 ## 4. 기술 요구사항
 
-### 4.1 테스트 연동 가능성 및 환경 설정
+### 4.1 공급자 선택 및 책임 분리
 
-**선행 확인 항목:** 공식 자료에서 다날 결제 가이드는 V1, 다날 V2 자료는 본인인증으로 확인된다. 현재 조사만으로 해당 상점의 **다날 V2 결제 테스트 채널 지원을 확정할 수 없다.** 구현 착수 시 콘솔의 채널 종류·V2 SDK 지원 결제수단·출금 없는 테스트 방식을 확인한다. 지원이 확인되지 않으면 이 사실을 제약으로 보고하고 어댑터/복구 설계 범위에서 진행한다. V1, 다른 PG, PortOne 본인인증으로 임의 대체하지 않는다.
+- `DANAL_PROVIDER=portone_v1` 또는 `GUEST_PAYMENT_MODE=portone_v1`이면 V1 어댑터를 반환한다. 둘 다 있으면 동일해야 하며 충돌·오타·빈 설정은 503으로 닫는다.
+- 구 `portone` V2 다날 결제 선택은 “다날 V2 미지원”으로 비활성화한다. 사용자 응답은 정제된 503, 내부 구분 코드는 민감정보 없는 설정 오류로 관리한다.
+- mock은 기존 조건(비운영, 명시적 격리 플래그, loopback 테스트 DB, 충분한 서명 키)을 모두 만족하는 격리 테스트에만 보존한다. V1 실패 시 mock 또는 V2로 자동 우회하지 않는다.
+- 권장 모듈: `lib/danal/portone-v1.ts`(어댑터), `iamport-rest.ts`(토큰·REST), `portone-v1-config.ts`(환경·안전게이트), `portone-v1-payment.ts`(응답 검증·매핑), V1 테스트 채널 증빙 모듈. 공통 서명 코드는 별도 책임으로 유지한다.
+- V1 결제 어댑터는 SMS OTP 등 기존 본인인증 경로를 교체하지 않는다. 지원하지 않는 직접 본인인증은 기존처럼 차단한다.
 
-| 환경변수 | 역할 | 취급 |
-| --- | --- | --- |
-| `DANAL_PROVIDER=portone` | PortOne 결제 선택 | 기존 선택자 호환 |
-| `GUEST_PAYMENT_MODE=portone` | 신규 비회원 결제 선택 | 인증 모드와 독립 |
-| `NEXT_PUBLIC_PORTONE_STORE_ID` | SDK 상점 ID 및 서버 검증 기대값 | 공개 가능, 필수 |
-| `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_DANAL` | 다날 테스트 채널 지정 | 공개 가능, 필수. 테스트 결제 채널인지 확인 |
-| `PORTONE_V2_API_SECRET` | V2 REST 인증 | 서버 전용, 필수 |
-| `DANAL_MID` | 다날 테스트 가맹점 설정 확인 | 서버/콘솔 설정용, storeId와 동일시하지 않음 |
-| `DANAL_CARD_ENC_KEY` | 다날 채널 설정에 필요한 키 | 서버/콘솔 전용, SDK 응답·번들에 노출 금지 |
+### 4.2 환경변수와 V1 테스트 안전게이트
 
-- 신규 결제 모드가 명시되면 이를 우선하고, 미설정이면 기존 `DANAL_PROVIDER`를 따른다. 따라서 둘 중 하나만 portone이면 선택 가능하다. 서로 충돌하는 명시값·알 수 없는 값은 조용히 fallback하지 않고 설정 오류로 차단한다.
-- PortOne 선택은 기존 SMS OTP 모드를 변경하지 않는다. `DanalProvider.identity`를 맞추기 위해 mock identity를 붙이지 않으며, PortOne 결제 공급자의 identity 메서드는 지원 불가로 차단한다. 실제 신청 인증은 기존 OTP 서비스가 담당한다.
-- mock은 기존 비운영·격리 DB·플래그·비밀키 조건을 그대로 만족해야만 선택된다.
-- `DANAL_MID`·암호화 키를 PortOne REST 인증에 사용하지 않는다. 채널 콘솔에 등록하는 정보와 앱 런타임에 필요한 설정을 구분하여 문서화한다.
-- 설정값 이름이나 `NODE_ENV`만으로 무출금을 보장한다고 간주하지 않는다. 테스트 전용 채널 확인을 SDK 실행 전 필수 조건으로 두고 실결제 채널은 허용하지 않는다. SDK에 임의의 `test: true` 필드를 만들어 전달하지 않는다.
-- 서버 조회 결과의 테스트 여부·채널 식별 필드가 제공되면 추가 검증한다. 이 사후 검증만으로 실결제 예방을 대체하지 않는다.
-- 기능 플래그, 암호화 키, 쿠키, 레이트리밋 등 기존 비회원 게이트는 유지한다.
-
-### 4.2 PortOne PaymentAdapter
-
-`lib/danal/portone.ts`는 서버 전용으로 작성한다. SDK UI와 결제 결과 검증을 분리한다.
-
-| 메서드 | 책임 |
+| 환경변수 | 용도·노출 정책 |
 | --- | --- |
-| `createPayment` | 서버 주문 스냅샷을 검증하고 SDK 실행 정보 및 서명된 콜백 문맥 반환. 서버 orderId를 paymentId로 사용하여 DB 컬럼 추가 방지 |
-| `verifyPayment` | 입력 형식·HMAC·만료·주문/nonce 결합 검증 후 paymentId로 REST 조회. 브라우저 전달 금액·승인 상태는 신뢰하지 않음 |
-| `getPayment` | paymentId를 해석하여 REST 단건 조회, 서버 주문과 대조한 `PaymentResult` 반환 |
-| `cancelPayment` | 검증된 테스트 거래에 한해 취소 REST 호출, 결과 재조회. 기존 공개 취소 UI나 자동 환불은 추가하지 않음 |
+| `NEXT_PUBLIC_PORTONE_V1_IMP_CODE` | 공개 식별코드. 요청 기준값 `imp88200033`, `IMP.init`에 사용 |
+| `PORTONE_V1_REST_API_KEY` | V1 토큰 발급용 서버 전용 키 |
+| `PORTONE_V1_REST_API_SECRET` | V1 토큰 발급용 서버 전용 시크릿 |
+| `DANAL_MID` | 요청 기준값 `9810030929`. SDK PG 선택 문자열 구성 및 채널 대조 |
+| `DANAL_CARD_ENC_KEY` | 서버 전용 다날 채널 설정 비밀. SDK·클라이언트 응답·로그에 포함 금지 |
+| `DANAL_PROVIDER` / `GUEST_PAYMENT_MODE` | `portone_v1` 명시 선택 |
+| 기존 `SEARCH_INDEX_KEY` 또는 `AUTH_SECRET` | 콜백 문맥 HMAC 서명. 기존 키 정책 유지 |
 
-취소 API가 정상 반환하려면 현재 `Promise<never>` 계약을 `Promise<void>` 또는 공통 취소 결과 타입으로 최소 변경해야 한다. 기존 mock은 예외를 던지는 구현을 유지할 수 있다. 타입 변경은 후속 구현에 포함하며 성공한 취소를 오류로 위장하지 않는다.
+V1 안전게이트는 서버가 검토한 `impCode + pgProvider=danal_tpay + MID + pay_method=card + test 검증값`을 정확히 대조한다. 테스트 검증값은 콘솔·PG 설정에서 확인한 **무출금 테스트 채널 증빙에 연결된 값**이며, 브라우저가 보내는 `test: true`나 환경변수 한 개만으로 통과시킬 수 없다. 기존 V2 `verifiedTestChannels`의 storeId/channelKey/TEST 규칙은 재사용하지 않는다.
 
-단건 조회는 `GET https://api.portone.io/payments/{encodeURIComponent(paymentId)}`로 수행한다. 인증은 `Authorization: PortOne ${PORTONE_V2_API_SECRET}`이며 캐시를 사용하지 않고 제한 시간과 응답 스키마 검증을 둔다. 이 호스트와 인증 방식은 [공식 REST 문서](https://developers.portone.io/api/rest-v2)를 기준으로 한다.
+- 공개 imp 코드와 MID는 사용자 제공 기준값이며 이 문서만으로 테스트 전용 채널임이 확인된 것은 아니다. V1 계정·MID·카드 테스트 설정 및 실출금 없음의 증빙 확보 전에는 게이트를 열지 않는다.
+- 필수 환경값·서명 키·등록 채널·테스트 검증값 누락 또는 조합 불일치 시 SDK 실행 정보 발급 전 503. REST 호출·SDK 실행도 차단한다.
+- `DANAL_CARD_ENC_KEY`를 V1 REST 요청의 임의 필드로 보내지 않는다. PortOne 콘솔의 다날 채널 등록과 앱 환경 확인 중 어느 단계에 사용되는지 후속 설계에서 확인하고 서버에만 보관한다.
+- V1 결제조회에 V2의 `channel.type` 또는 `isForTest`가 있다고 가정하지 않는다. 공식 응답에 없는 필드를 만들어 검증하지 않으며, 테스트성은 검토된 V1 채널 설정으로 증명한다. 조회가 제공하는 PG·MID 정보는 해당 증빙과 추가 대조한다.
 
-서버 결제 확정 조건:
+### 4.3 PaymentAdapter 네 메서드
 
-1. REST 결과의 결제 ID가 서버 주문에 결합된 paymentId와 일치한다.
-2. 조회 금액 `amount.total`이 DB 주문 amount 및 `GUEST_SINGLE_MONITORING.amount`와 모두 일치한다. 현재 값은 정수 10,000원이다.
-3. 통화가 DB 주문 currency 및 서버 상품 currency인 `KRW`와 일치한다.
-4. 조회 storeId가 `NEXT_PUBLIC_PORTONE_STORE_ID`와 일치한다. 조회 요청에 storeId를 넣는 것만으로 응답 대조를 대체하지 않는다.
-5. 테스트 다날 채널 결합을 확인하고 상태가 `PAID`여야 한다.
-6. transactionId가 존재하고 다른 주문에 결합되지 않으며, paidAt이 유효한 시간이다. 기존 주문 생성/만료 시각·미래 시각 검증을 유지한다.
-
-금액·통화·상점·주문·채널 불일치는 명시적으로 거부하며 paid 저장·감시 활성화를 하지 않는다. 원문 REST 응답이나 상세 결제정보를 오류에 포함하지 않는다.
-
-`PaymentResult` 매핑:
-
-| 내부 필드 | 기준 |
+| 메서드 | 요구 동작 |
 | --- | --- |
-| `orderId` | REST 결제 ID와 일치하는 서버 orderId |
-| `transactionId` | PortOne transactionId. paymentId 또는 PG 거래번호로 임의 치환하지 않음 |
-| `merchantId` | 검증된 storeId. 공급자 merchantId도 같은 storeId로 정의 |
-| `amount`, `currency` | 검증된 REST 금액/통화 |
-| `paidAt` | REST paidAt을 epoch milliseconds로 변환 |
-| `expiresAt` | 기존 DB 주문 expiresAt을 epoch milliseconds로 변환 |
-| `verificationReference` | 재조회용 paymentId. 브라우저 승인 증빙이 아님 |
+| `createPayment` | DB 주문을 읽고 SSOT 10,000 KRW·pending·만료·공급자 일치 확인. nonce를 기존 필드에 CAS 발급. `Record<string,string>` 실행 정보와 서명 문맥 반환. 서버 승인/청구 API 호출 없음 |
+| `verifyPayment` | 콜백 스키마·HMAC·주문/설정/만료/nonce 확인 후 `imp_uid`로 V1 조회. 소유권은 서비스에서 선검증. 브라우저 success는 확정 근거로 쓰지 않음 |
+| `getPayment(transactionId)` | `transactionId=imp_uid`로 V1 재조회하고 대응 DB 주문과 대조. 기록 전 두 번째 조회 및 승인 기록 후 복구에서 사용 |
+| `cancelPayment(reference)` | 기존 주문 ID 또는 기록된 imp_uid로 소유 거래를 찾고 재검증 후 `POST /payments/cancel`에 imp_uid 전달. 취소 후 재조회로 전체 취소 확인, 재호출 멱등 처리. 이번 범위는 테스트 거래 취소만 |
 
-- `PAID → paid`, `FAILED → failed`, `CANCELLED → canceled`로 매핑한다.
-- `PARTIAL_CANCELLED`는 전액 결제 완료로 취급하지 않고 활성화를 거부한다. 부분취소를 내부 refunded와 동일시하여 덮어쓰지 않는다.
-- `READY`·`PAY_PENDING`·가상계좌 발급 등 미확정 상태는 확정 실패로 저장하지 않는다. 현재 `PaymentResult.status`에 pending이 없으므로 별도 미확정 오류 코드로 반환하고 호출부는 기존 주문 재조회로 처리한다.
-- 비승인 상태에 없는 paidAt·transactionId를 가짜로 채우지 않는다. 실패 상태 검증 결과 타입을 분리하는 등 최소 타입 보완으로 표현한다.
-- 서버 REST 인증 실패·타임아웃·429·5xx·응답 손상은 결제 확정 실패와 분리하여 일시적인 공급자 조회 실패로 처리한다.
-- `getPayment(transactionId)`를 사용하는 cron 호환을 위해 기존 DB의 providerTransactionId로 orderId를 찾고 paymentId로 재조회한다. 직접 paymentId 조회도 해당 서버 주문과 결합하여 허용한다. 결제 ID와 거래 ID를 혼용하지 않는다.
-- providerMode 문자열은 `portone`을 사용하도록 타입을 확장한다. 기존 문자열 DB 컬럼을 사용하며 스키마 변경은 필요 없다.
-- 취소는 공식 `POST /payments/{paymentId}/cancel` 계약을 따르고 테스트 상점·채널·주문·취소 가능한 상태를 서버에서 검증한다. 기존 감시 복구 작업에서 자동 실행하지 않는다.
+V2의 `paymentId=orderId` 조회를 V1에 그대로 적용하지 않는다. 승인 기록 전 두 번째 조회에도 **검증된 imp_uid**를 전달하도록 콜백 서비스 계약을 바꾼다. `getPayment`는 기존 DB에서 imp_uid를 아직 저장하지 않았더라도 REST의 merchant_uid로 주문을 찾아 대조할 수 있어야 한다. imp_uid와 orderId를 혼용하거나 임의로 만들어서는 안 된다.
 
-### 4.3 SDK 실행 및 콜백 계약
+### 4.4 V1 토큰·결제조회 및 서버 검증
 
-후속 구현에서 **`@portone/browser-sdk`를 설치**하고 `package.json` 및 사용 중인 lockfile에 반영한다. 현재 기획 작업에서는 설치하지 않는다. 공식 V2 진입점인 `@portone/browser-sdk/v2` 사용을 기준으로 버전과 타입을 확인한다.
+1. `POST https://api.iamport.kr/users/getToken`에 JSON `{imp_key: PORTONE_V1_REST_API_KEY, imp_secret: PORTONE_V1_REST_API_SECRET}`를 전송한다.
+2. HTTP 성공뿐 아니라 V1 봉투의 `code === 0`, 유효한 `response.access_token`과 만료값을 검사한다.
+3. `GET https://api.iamport.kr/payments/{encodeURIComponent(imp_uid)}`에 `Authorization: access_token`을 설정한다. V2의 `PortOne` 접두사를 사용하지 않는다.
+4. HTTP·V1 `code`·`response` 스키마를 검사한 뒤 아래 대조를 수행한다. [공식 V1 인증 결제 흐름](https://developers.portone.io/opi/ko/integration/start/v1/auth), [공식 V1 REST 명세](https://developers.portone.io/api/schema/v1/openapi.json)
 
-orders의 기존 최상위 응답은 유지한다. payment에는 `provider: 'portone'`, storeId, channelKey, paymentId, orderName, totalAmount, currency, payMethod, 만료 및 서명된 콜백 문맥을 담는다. 기존 `Record<string, string>`을 유지할 경우 금액은 문자열로 직렬화하되 SDK 경계에서 정수 검증 후 변환한다. API secret·암호화 키는 포함하지 않는다.
+| 검증 대상 | 통과 조건 |
+| --- | --- |
+| `imp_uid` | 요청한 거래 ID와 일치하고 기존 주문 거래 ID와 충돌하지 않음 |
+| `merchant_uid` | 소유권 확인 및 서명된 서버 주문의 orderId와 정확히 일치 |
+| `amount` | 정수 10,000이며 DB 주문 금액·`GUEST_SINGLE_MONITORING.amount`와 모두 일치 |
+| 통화 | 주문과 공급자 응답이 KRW. 허용되지 않은 통화는 거부 |
+| `pg_provider` | V1 다날 카드 `danal_tpay`와 일치. 본인인증/휴대폰용 `danal`과 혼동 금지 |
+| `pay_method` | `card`와 일치 |
+| PG 가맹점 | 조회에서 제공되는 MID 필드와 검토된 테스트 MID 대조. 필드 이름·제공 여부는 공식 스키마/테스트 응답으로 확정 |
+| `status` | 감시 적용은 `paid`만 허용. 다른 상태는 아래 표대로 처리 |
+| `paid_at` | 유효한 Unix seconds를 milliseconds로 변환. 주문 생성~만료 범위 및 현재 시각 이내인지 검증 |
+| 취소 금액 | 취소·부분취소 내역이 있는 거래를 단순 `paid`로 활성화하지 않음 |
 
-SDK 호출 기준은 다음과 같다. 이는 기획 계약이며 실행 코드를 추가하는 것이 아니다.
+`PaymentResult`에는 `orderId=merchant_uid`, `transactionId=imp_uid`, `merchantId=검증된 다날 MID`, `amount`, `currency=KRW`, `paidAt=paid_at*1000`, 내부 status, `expiresAt=주문 만료 시각`을 매핑한다. `provider.merchantId`도 같은 MID를 사용한다. 공개 imp 코드를 MID와 혼용하지 않는다.
 
-```ts
-PortOne.requestPayment({
-  storeId,                          // NEXT_PUBLIC_PORTONE_STORE_ID와 일치
-  channelKey,                       // NEXT_PUBLIC_PORTONE_CHANNEL_KEY_DANAL의 테스트 채널
-  paymentId,                        // 서버 orders 응답의 ID
-  orderName: '등기감시 1개월',
-  totalAmount: 10000,                // 서버 응답 검증 후 전달
-  currency: 'KRW',
-  payMethod,                        // 해당 다날 V2 테스트 채널의 지원 수단
-});
-```
+| V1 상태 | 내부 처리 |
+| --- | --- |
+| `paid` + 모든 검증 통과 | `PaymentResult.status=paid`, 기록·적용 진행 |
+| `ready` | `payment_pending` 409, 결제 적용 금지 |
+| `failed` | 검증된 종료 실패로 기록. 승인 시각이 없으면 가짜 paidAt를 만들지 않고 종료 결과 경로 사용 |
+| `cancelled` | 내부 `canceled`로 매핑. 미승인 취소도 가짜 paidAt 생성 금지 |
+| 부분취소·알 수 없는 상태·상태/취소 내역 모순 | 자동 활성화 금지, 정제된 거부 또는 확인 필요 처리 |
 
-- 실제 SDK 타입에서 KRW enum 표기가 다르면 의미상 KRW로 경계 변환한다. 결제수단·PG별 추가 필드는 확인된 다날 V2 계약만 사용한다. V1의 `pg` 값이나 본인인증용 bypass를 추측하여 넣지 않는다.
-- 새 비동기 결제 실행 헬퍼가 `provider === 'portone'`을 먼저 처리하고, 기존 공급자는 기존 `launchProvider`로 실행한다. 알 수 없거나 불완전한 실행 정보는 성공으로 간주하지 않는다.
-- SDK 정상 반환의 paymentId가 요청 ID와 일치하는지 확인하고, 결제 콜백으로 `{paymentId, 서명된 문맥}`을 POST한다. 반환 code/예외/사용자 닫기를 구분한다.
-- SDK 반환만으로 완료 화면을 표시하지 않는다. 서버 콜백 처리 후 주문 상태를 조회하고 `paid && applied`일 때만 done으로 전환한다.
-- SDK 중단이나 콜백 전송 실패는 기존 주문으로 복구한다. 승인 여부가 불명확하면 먼저 재조회하며, 클라이언트 취소 신호만으로 새 결제를 만들지 않는다.
-- 모바일 리다이렉트가 필요한 채널이면 복귀 URL·주문 참조로 기존 주문 문맥을 재발급받아 동일 콜백을 수행한다. 서명·nonce·개인정보를 URL에 넣지 않는다. SDK와 기존 리다이렉트 복구가 이중 주문을 만들지 않게 한다.
-- 연장도 공용 orders/provider를 사용하므로 응답 호환을 확인한다. 신규 연장 UI는 범위 밖이다.
+- 토큰 캐시는 서버 메모리에서만 만료값 기준으로 관리하며 토큰 재발급 동시 요청을 합친다. 조회 401 시 캐시 폐기·재발급 후 최대 1회 재조회, 반복 실패는 503이다. 공급자 401을 사용자 세션 만료 401로 노출하지 않는다.
+- 타임아웃은 기존 8초 수준으로 제한하고 JSON 디코딩까지 적용한다. `no-store`, 리디렉션 차단, 응답 최소 필드 파싱을 유지한다.
+- 금액·주문·PG·서명 불일치는 `payment_failed` 400 등 영구 거부다. 공급자 통신 실패·전파 지연성 미조회는 정제된 503으로 구분한다. 원문 오류·REST 응답을 반환하거나 로깅하지 않는다.
 
-### 4.4 콜백 보안 및 DB 무변경 설계
+### 4.5 클라이언트 V1 SDK와 콜백 계약
 
-- 브라우저는 서명을 만들지 않는다. 서버가 주문 생성/재개 때 paymentId·orderId·storeId·금액·통화·만료·nonce·용도를 결합한 토큰을 HMAC 서명한다.
-- mock의 `DANAL_MOCK_SECRET`을 실제 연동 키로 재사용하지 않는다. 기존 서버 비밀키를 결제 전용 도메인으로 분리해 파생하고, 누락 시 차단한다. REST API secret과 브라우저 공개값은 서명키로 배포하지 않는다.
-- nonce는 암호학적 난수이며 기존 `providerReceipt`에 버전 구분된 결제 문맥/nonce digest/소비 상태를 저장하는 방안을 사용한다. 원문 결제정보·개인정보는 넣지 않는다. mock receipt 처리와 명확히 분기한다.
-- 기존 주문 재사용은 유효한 동일 결제 문맥을 재사용한다. 주문 API 재호출마다 nonce를 교체하여 다른 탭의 정상 콜백을 무효화하지 않는다.
-- HMAC·서명 만료·nonce 결합 확인 후 공급자 재조회를 수행한다. **유효한 PAID 결과의 기록과 nonce 소비를 동일 트랜잭션에서 조건부 갱신**하여 동시 콜백 중 한 건만 적용한다.
-- 조회/전송 일시 장애에서는 nonce를 소비하지 않아 동일 문맥 재시도가 가능해야 한다. 소비 후 응답 유실의 재전송은 기존 처리 결과를 멱등 반환하고 재활성화하지 않는다.
-- `verifyPayment → getPayment → recordPayment`의 공급자 재조회 방어를 유지하고, nonce 소비는 검증 메서드 단독이 아닌 결제 기록 경계에 연결한다. 감시 적용 실패는 paid 상태를 유지하여 기존 복구가 처리한다.
-- PortOne 브라우저 콜백 분기는 Origin·동일 브라우저 인증 세션·주문 신원 결합도 확인한다. 기존 외부 공급자 callback의 Origin 예외를 브라우저 경로에 무조건 적용하지 않는다.
-- PortOne 웹훅은 이번 필수 범위가 아니다. 브라우저용 HMAC 문맥을 PortOne이 보낸 웹훅 서명이라고 설명하거나 혼용하지 않는다.
-- 이름·전화·OTP·카드/결제정보·토큰·서명·secret·provider 원문 응답을 콘솔·서버 로그·분석 이벤트에 남기지 않는다. 오류 분류 코드만 기록한다.
-- 기존 CSRF·요청 크기 제한·콜백 레이트리밋·시간 검증·거래 ID 유일성·적용 멱등성·needs_review 방어를 유지한다.
+- `guestPayment.ts`의 `@portone/browser-sdk/v2` import를 제거하고 `https://cdn.iamport.kr/v1/iamport.js`를 동적 script 로드한다. npm 설치는 필요 없다.
+- SDK 로더는 별도 모듈에 둔다. `window.IMP.init`과 `window.IMP.request_pay` 존재를 확인하고 성공한 로드를 공유한다. 중복 클릭·동시 호출로 script나 결제창이 중복 생성되지 않게 한다.
+- script error·timeout·로드 후 IMP 미존재 시 실패 script와 핸들러·타이머를 정리하고 **캐시된 rejected Promise를 초기화**한다. 다음 명시 재시도는 새 로드를 시작한다.
+- 실행 정보는 `provider=portone_v1`, 공개 imp 코드, 서버 orderId, `pg=danal_tpay.9810030929`, `pay_method=card`, 상품명, 금액, 통화, 만료 및 서명 문맥을 포함한다. `PaymentAdapter`의 문자열 레코드 계약을 유지하고 amount는 정수 검증 후 숫자로 전달한다.
+- SDK 호출 계약: `IMP.init(NEXT_PUBLIC_PORTONE_V1_IMP_CODE)` → `IMP.request_pay({pg:"danal_tpay.9810030929", pay_method:"card", merchant_uid:orderId, name:"등기감시 1개월", amount:10000, buyer_tel, m_redirect_url}, cb)`.
+- `buyer_tel`은 OTP 흐름의 메모리 입력값을 사용한다. 새로고침·연장 경로에서 값이 없으면 주문 소유권을 확인한 서버가 기존 암호화 필드에서 필요한 전화만 실행 정보로 제공하는 방식을 사용한다. 저장소·URL에 전화번호를 보관하지 않고 권한 판단에도 사용하지 않는다.
+- `m_redirect_url`은 같은 출처의 신청/현황 복귀 경로로 고정한다. 외부 redirect URL 입력을 받지 않는다.
+- 콜백 `{success,imp_uid,merchant_uid,error_msg}`에서 success는 서버 확인을 시작하는 신호다. 성공이면 imp_uid 필수, merchant_uid와 요청 주문 일치 확인 후 `/api/guest-monitoring/payment/callback`에 전달한다. error_msg 원문은 로그·UI에 그대로 노출하지 않는다.
+- 앱 콜백 요청 DTO는 기존 `paymentId(=orderId)`, `callbackContext`, `callbackSignature`에 **`imp_uid`를 추가**하는 방향으로 변경한다. strict 서버 스키마와 프론트 타입을 함께 수정한다. success·금액·merchant_uid 클라이언트 값으로 승인하지 않는다.
+- 공식 다날 문서는 현재 `pg`를 deprecated로 표시하고 channelKey 사용을 권장한다. 이번 요구는 `pg.MID` 방식으로 고정하며 지정 CDN과의 실제 호환성을 테스트 채널에서 검증한다. 지원하지 않으면 임의 채널 선택으로 우회하지 않고 구현 제약으로 기록한다. [공식 V1 다날 파라미터](https://developers.portone.io/opi/ko/integration/pg/v1/danal)
 
-## 5. 신청 흐름 복구 요구사항
+### 4.6 모바일 복귀·새로고침 복구
 
-### 5.1 버그 ①: 401을 재인증으로 분리
+V1 조회의 기본 식별자는 imp_uid이므로 V2의 “orderId로 재조회” 복구를 그대로 옮길 수 없다.
 
-현재 startOrder/recoverOrder는 401을 needsFreshPayment로 설정한다. retry는 이를 새 결제 대상으로 보고 startOrder를 호출하므로, 만료 세션으로 401이 반복된다.
+- PC 인라인 콜백은 검증 전 imp_uid와 서명 문맥을 메모리로 유지하여 재전송한다.
+- 리다이렉트 복귀 시 공급자가 전달한 imp_uid·merchant_uid는 미신뢰 입력으로 읽고 서버 소유 주문·서명과 대조한 뒤 V1 재조회한다. 처리 후 식별자 쿼리를 제거한다. URL에 서명·nonce·PII를 추가하지 않는다.
+- 메모리 문맥이 사라지면 기존 주문·동일 멱등키로 서명 문맥만 재발급한다. 새 주문이나 결제창을 자동 생성하지 않는다.
+- imp_uid까지 유실된 pending 주문은 인증된 서버 복구 경로에서 V1 merchant_uid 조회를 사용해 후보 imp_uid를 찾고, 반드시 단건 재조회·전체 검증을 거친다. 동일 merchant_uid의 복수 거래나 모호한 후보는 임의 선택하지 않고 확인 필요로 처리한다. [V1 주문번호 조회 API](https://developers.portone.io/api/rest-v1/payment)
+- 일반 생성 API에서 서명 발급만으로 `imp_uid`를 추정하지 않는다. 복구용 후보 탐색과 SDK 실행 정보 발급의 책임을 분리한다.
+- 기존 cron은 `paid && appliedAt=null` 복구에 집중하므로 승인 미기록 pending을 자동 해결한다고 가정하지 않는다. 이번 사용자 복귀·재확인 경로에서 위 복구를 완결한다.
 
-- 401은 결제 실패가 아니라 `reauth_required`로 분류한다. needsFreshPayment를 설정하지 않고 busy·오래된 OTP 대기·pendingIdentity를 정리한다.
-- 유효한 draft가 있으면 **ready로 복귀하고 이름·전화를 복원**한다. 사용자가 기존 SMS OTP 인증을 완료하기 전에는 startOrder를 호출하지 않는다.
-- 이전 orderId·멱등키는 중복 결제 방지를 위해 유지한다. 재인증 후 기존 주문이 있으면 상태부터 확인하고, 주문이 없으면 기존 멱등키로 생성한다.
-- 페이지 전체 새로고침 등으로 draft 객체·이름·전화 메모리가 없으면 빈 잠금 ready를 만들지 않는다. 입력/재파싱 경로를 안내한다. 기존 draftId 보관만으로 개인정보 복원이 가능하다고 가정하지 않는다.
-- 이전 비동기 응답이 reset·초안 교체·재인증 이후의 상태를 덮어쓰지 않도록 요청 세대를 확인한다.
+### 4.7 P1-① SDK 실행 전 실패 분류 및 재시도
 
-### 5.2 버그 ②: OTP 성공 후 입력 보존
+| 실패 시점/유형 | UI 및 재시도 정책 |
+| --- | --- |
+| script 로드 실패·timeout·IMP 미존재·init 실패·실행 정보 오류 등 request_pay 호출 전 | 오류 유지, “결제 다시 시도”, 같은 주문·멱등키 재사용. 승인 대기로 전환하지 않음 |
+| request_pay 호출 이후 예외·응답 유실·SDK 취소/닫기 | 승인 불명확으로 서버 조회 우선. SDK 자동 재실행·새 결제 금지 |
+| 서버가 최종 실패·취소를 확정 | 기존 상태 정책에 따라 명시적으로 새 결제 가능 |
 
-- `verifyApplyOtp` 성공 시 `otpNameRef`·`otpPhoneRef`를 비우지 않는다. `cancelApplyOtp`와 같은 보존 정책을 적용한다.
-- OTP 코드·대기 상태는 성공 후 정리하되, 주문 생성에 사용할 draftId는 정리 전에 확보한다. 이후 주문은 서버 세션의 초안 결합으로 검증한다.
-- 이름·전화는 훅 메모리에서 `restoreName`·`restorePhone`을 통해 폼 초기값으로 전달한다. localStorage/sessionStorage/URL 저장은 금지한다.
-- 주문 전송 실패 후 폼 재마운트 시 분석 완료 초안과 이름·전화가 함께 복원되어야 한다. 동일 인증 세션이 유효하면 재시도 버튼으로 주문을 이어가며 불필요한 SMS 재발송을 요구하지 않는다.
-- 명시적 reset·초안 교체·흐름 종료에서는 이름·전화 참조를 정리한다. ready/failed 복귀만으로는 지우지 않는다.
+기존 `PaymentOutcome.unavailable` 및 최초 신청의 `retry_payment` 분기를 보존하고, 연장도 같은 정책으로 동작시킨다. 재시도 후에도 rejected Promise가 재사용돼 영구 실패하지 않아야 한다. 주문 만료 시 기존 주문 재실행을 막고 서버 정책에 따른 안내를 제공한다.
 
-### 5.3 실패 분기 및 멱등키 정책
+### 4.8 P1-② status 세션 허용 및 영구 거부 보존
 
-`needsFreshPayment` 하나로 모든 실패를 표현하지 않는다. 인증·초안·주문 전송·결제 확정·적용 대기 원인을 구분하고 retry가 해당 동작만 수행하게 한다.
+- `payment/callback/route.ts`의 `requireSession`과 서비스 레벨 purpose 검사를 모두 `["apply","status","renewal"]`로 맞춘다. 유효하지 않은 세션의 401 정책은 유지한다.
+- 소유권 조건은 `orderId + providerMode=portone_v1 + guestMonitoring.guestIdentityHash === session.verifiedIdentityHash`이다. purpose 허용만으로 타인 주문에 권한을 부여하지 않는다.
+- `status` 세션을 허용해도 주문 생성의 목적별 정책과 최초 신청 draft 결합은 유지한다. 브라우저가 보내는 identity hash는 받지 않는다.
+- 최초 신청 직접 콜백, 연장 직접 콜백, `resendOrderCallback`, 모바일 복귀·새로고침 후 호출부 모두 아래 분류를 공유한다.
 
-| 신호/상태 | 화면 및 다음 동작 | 키/주문 정책 |
+| 콜백 결과 | 처리 |
+| --- | --- |
+| 2xx | 주문 재조회, 서버가 적용 완료를 확정하면 완료 |
+| 앱 세션 401 | 재인증, 기존 주문·멱등키 보존 |
+| `payment_pending` 409, network status 0, 429, 503 | 일시 실패. 재조회·동일 콜백 재전송, SDK 재실행 금지 |
+| 400 `payment_failed`, 403, 404 | 영구 거부 오류를 보존, pending 조회 결과로 덮어쓰지 않음 |
+| `payment_needs_review` 409 또는 그 외 비재시도 오류 | 확인 필요 또는 오류 안내. 일반 승인 대기·무조건 콜백 반복으로 처리하지 않음 |
+
+영구 거부 이후 새 주문·새 결제를 자동 실행하지 않는다. 서버 상태 조회가 필요하더라도 기존 거부 안내를 지우지 않고, 명확한 적용 완료 상태가 확인될 때만 완료로 정정한다.
+
+### 4.9 보안·DB·구조 제약
+
+- 모든 승인 판단은 서버 SSOT와 V1 재조회 결과에 근거한다. 클라이언트 금액·success·시각·서명되지 않은 주문번호는 신뢰하지 않는다.
+- 브라우저 콜백은 명시적 same-origin Origin, HttpOnly 세션·브라우저 결합, 요청 스키마, 소유권, HMAC, 만료, nonce, 거래 ID 중복을 검증한다. 공급자 웹훅을 브라우저 콜백과 혼용하지 않는다.
+- nonce는 기존 `providerReceipt`에 저장하고 결제 기록과 함께 원자적으로 소모한다. 동일 거래의 재전송은 멱등 성공으로 복구하되 다른 거래·주문·nonce 재사용은 거부한다.
+- `providerMode=portone_v1`, `providerTransactionId=imp_uid`, `paidAt`, `providerReceipt`, `appliedAt` 등 기존 컬럼만 사용한다. 스키마·인덱스 추가 금지. 기존 unique 제약과 identity lock을 유지한다.
+- `mode === "portone"` 전용 보호가 V1에서 빠지지 않도록 callback·record·terminal·cancel·recovery 전체를 점검한다. `needs_review`가 콜백 재전송으로 해제되지 않아야 한다.
+- 기존 V2 주문을 V1 주문으로 재해석하거나 providerMode만 바꾸지 않는다. 공급자 불일치 기존 주문은 차단·별도 확인하고 기록은 보존한다.
+- 이름·전화·결제 원문·imp_uid·토큰·시크릿·서명·nonce는 콘솔/서버/분석/오류 수집 로그에 남기지 않는다. 감사 이벤트는 내부 주문 ID와 정제된 상태만 사용한다. URL·localStorage·sessionStorage에 PII·서명·nonce를 저장하지 않는다.
+- 페이지는 화면 구성, 훅은 상태 전이, SDK 로더는 script 수명주기, 어댑터는 공급자 프로토콜, REST 모듈은 외부 통신을 담당한다. 500줄 초과 우려 시 책임 단위로 분리한다.
+
+## 5. 우선순위와 후속 구현 순서
+
+| 순서 | 우선순위 | 작업 | 완료 조건 |
+| --- | --- | --- | --- |
+| 1 | P0 | V1 테스트 채널 증빙·환경·정확한 응답 필드 확인, V2 다날 비활성 | 증빙 전 503, 운영 결제·mock 우회 없음 |
+| 2 | P0 | V1 토큰·조회·취소 및 네 메서드 구현 | 금액/주문/PG/상태/시각 검증과 단위 테스트 통과 |
+| 3 | P0 | 모드·DB 기록·서명·nonce·콜백 DTO·두 번째 조회 전환 | V1 보호 누락 없음, imp_uid로 일관된 조회·기록 |
+| 4 | P0 | V1 CDN SDK 및 신규/연장·모바일 복구 통합 | 테스트 거래의 서버 검증·적용 1회 |
+| 5 | P1-① 필수 | SDK 로더 실패 초기화·오류 유지·같은 주문 재시도 | 실패 → 재시도 성공 회귀 통과 |
+| 6 | P1-② 필수 | 라우트/서비스 status 허용·소유권·영구 오류 분류 통합 | 소유자 status 연장 성공, 타인 주문 거부, 영구 오류 보존 |
+| 7 | P0/P1 검증 | 회귀·빌드·문서 및 V2 의존성 정리 | 아래 인수 기준 충족, 무출금 테스트 검증 증거 확보 |
+
+P1 두 건은 선택적 후속 개선이 아니라 이번 기능 완료에 필수다. 채널 증빙이 준비되지 않은 동안에는 fixture 기반 개발·검증을 진행하되 실제 연동 완료로 보고하지 않는다.
+
+## 6. 테스트 및 인수 기준
+
+### 6.1 서버 단위·통합 테스트
+
+- 토큰: 올바른 endpoint/body, `response.access_token` 파싱, 비정상 code·누락·만료·401 재발급 1회·timeout·동시 발급 합치기.
+- 조회: V1 Authorization·no-store·imp_uid 인코딩·봉투 파싱·paid_at 단위 변환, 정상 10,000 KRW 승인.
+- 위변조: 9,999/10,001/소수 금액, 주문번호·imp_uid·PG·카드수단·통화·MID 불일치, 다른 주문의 거래 ID, 미래/만료 밖 승인 시각 거부.
+- 상태: paid/ready/failed/cancelled/부분취소/알 수 없는 상태, 미승인 결과의 paidAt 미생성, 조회 사이 상태 변경 시 미확정 기록 방지.
+- 서명·nonce: 서명 훼손·문맥 교체·만료·타인 소유·nonce 재사용 거부, 동일 거래 재전송 및 동시 콜백의 적용 1회.
+- 모드·게이트: 두 selector의 V1 선택·충돌, 필수 키·채널·test 검증값 누락 503, 구 V2 다날 차단, mock 격리 조건 유지.
+- 취소: 검증된 테스트 거래만 전체 취소, imp_uid 재조회 확인, 이미 취소된 요청 멱등성, 부분취소/비동기 미확정 결과를 성공으로 보고하지 않음.
+- 복구: 승인 전 미저장 imp_uid의 두 번째 조회, 저장 imp_uid 기반 cron, 모바일 imp_uid 유실 시 주문번호 후보 탐색 후 단건 검증, 모호한 거래 자동 적용 금지.
+
+### 6.2 P1 회귀 테스트
+
+| ID | 시나리오 | 기대 결과 |
 | --- | --- | --- |
-| 주문 생성·조회·브라우저 콜백의 401 | 유효 초안이면 ready → SMS 재인증 | 유지. 재인증 전 startOrder 금지 |
-| 초안/주문 복구 API의 404 | input → PDF 재파싱 | 해당 초안·주문 재개 참조 폐기 |
-| `draft_expired` 오류 코드 | HTTP 상태와 무관하게 input → 재파싱 | 만료 초안 폐기. 현재 서버는 기본 400이므로 404만 검사하지 않음 |
-| 주문 전송 네트워크 오류(status=0)·429·503 | 입력 보존, 제한 안내 후 주문 재시도 | 같은 초안·동일 멱등키 유지 |
-| 콜백 전송/REST 조회 일시 장애 | 같은 콜백 재시도 또는 같은 주문 조회 | 기존 paymentId·문맥·멱등키 유지 |
-| 서버 기준 failed/canceled/refunded 확정, 비401 결제 실패 | 유효한 같은 초안에서 새 결제 | 해당 주문 시도 제거 후 새 멱등키. 초안 만료면 재파싱 |
-| pending / paid 미적용 / needs_review | 기존 주문 상태 확인·적용 대기·확인 안내 | 유지. 새 결제 금지 |
-| 상점·금액·서명 불일치, 403 등 보안 거부 | 결제 중단 및 일반화된 오류 안내 | 자동 재결제 금지 |
-| 중복 활성 409 등 업무 충돌 | 현황 조회 등 기존 업무 안내 | 무조건 새 키로 재시도하지 않음 |
+| P1-01 | CDN error/timeout/IMP 없음, 최초 신청 및 연장 | request_pay 0회, 오류 유지, 승인 대기 미표시, 재시도 제공 |
+| P1-02 | 최초 script 로드 reject 후 재시도 성공 | 실패 Promise·script 정리, 새 로드 성공, 동일 주문·멱등키, 결제창 1회 |
+| P1-03 | request_pay 이후 예외·응답 유실 | 조회/콜백 복구만 실행, SDK·신규 주문 자동 재실행 0회 |
+| P1-04 | 본인 status 세션으로 연장 생성 후 콜백 | 라우트·서비스 통과, verifiedIdentityHash 대조, 기간 1회 반영 |
+| P1-05 | 타인 status 세션 또는 미인증 콜백 | 각각 404/401, 조회·기록·적용 차단 |
+| P1-06 | 직접·복구 콜백 400/403/404 후 GET pending | 거부 오류 유지, 승인 대기 및 새 결제 자동 실행 없음 |
+| P1-07 | 콜백 401 / pending 409 / 429 / 503 / network | 각 재인증·일시 복구 정책, 동일 주문 유지 |
+| P1-08 | 모바일/새로고침·중복 클릭·중복 콜백 | SDK 자동 재실행 없음, 소유권 유지, 기간 반영 1회 |
 
-여기서 ‘비401 결제 실패’는 결제가 실패로 **확정된 경우**다. 비401이라는 이유만으로 429·503·전송 실패·미확정 결제를 새 결제로 분류하지 않는다. PortOne REST 내부의 결제 미존재 404는 초안 API 404와 구분하여 승인 여부를 다시 확인한다.
+### 6.3 검증 실행과 완료 판정
 
-## 6. 구현 대상과 우선순위
+- 기존 `lib/guest-monitoring/vitest.config.ts`는 Node 환경이며 해당 서버 테스트 경로만 포함한다. SDK script·React 훅 회귀는 DOM 또는 브라우저 테스트 환경을 별도로 구성하고 실제 실행 경로를 검증한다. 서버 fixture 통과로 프론트 회귀 통과를 대체하지 않는다.
+- 후속 구현에서 V1 테스트 파일을 추가하고 `portone.test.ts`, `portone-boundaries.test.ts`, callback/security 관련 기존 회귀를 갱신한다. 관련 Vitest, 타입 검사, lint 및 Next 빌드로 V2 import 잔존·브라우저 전용 API의 서버 실행 여부를 확인한다.
+- 무출금 증빙이 확인된 테스트 채널에서 PC·모바일 신규 신청/연장, SDK 실패 후 재시도, 콜백 유실·재인증 복구를 검증한다. 실제 결제수단의 청구 및 출금을 허용하지 않는다.
+- 검증 증거는 민감정보 없는 상태·횟수·결과만 기록한다. 테스트에 운영 DB나 실제 비밀키를 넣지 않는다.
+- 이 기획 단계에서는 기능 테스트·실제 PG 호출을 실행하지 않았다. 완료 여부는 후속 구현 및 위 검증 결과로 판단한다.
 
-| 우선순위 | 대상 | 산출물/책임 |
-| --- | --- | --- |
-| P0 선행 | PortOne 콘솔·공식 지원 계약 확인 | 다날 V2 결제 지원, 무출금 테스트 채널, 지원 payMethod 확인 |
-| P0 | `lib/danal/portone.ts`, `index.ts`, `types.ts` | REST 어댑터·mode 선택·타입/취소 계약 정합성 |
-| P0 | 결제용 callback 보안 모듈, `order.ts`, `activation.ts` | 서명 문맥 발급·nonce 원자 소비·SSOT 재검증 |
-| P0 | `recovery.ts`, callback 라우트 | paymentId/transactionId 변환, 기존 주문 복구, 브라우저 요청 보안 |
-| P0 | `package.json` 및 lockfile | `@portone/browser-sdk` 설치 내역 명시 |
-| P0 | 신규 결제 실행 헬퍼, `guestApi.ts`, 공용 응답 타입 | SDK 실행·콜백·기존 launchProvider 공존 |
-| P0 | `useGuestApply.ts` 및 필요 시 복구 분류 헬퍼 | 401 분리·입력 보존·실패별 재시도·중복 호출 방어 |
-| P0 | 어댑터·콜백·훅 테스트 | 아래 필수 인수 시나리오 검증 |
-| P0 | 테스트 환경 통합 확인 | 실제 SDK/REST 기반 무출금 흐름과 기존 SMS OTP 회귀 확인 |
-| P1 | README·환경변수 예시·오류 안내 | 테스트 채널 구분, 설정 누락 및 재인증/대기 안내 개선 |
+## 7. 구현 전 확인 사항 및 범위 제외
 
-복구 버그 수정은 채널 지원 확인과 독립적으로 진행할 수 있다. 결제 통합 완료 판정은 다날 V2 테스트 채널의 실제 동작 확인까지 필요하다. 페이지는 표시, 훅은 흐름 조정, 클라이언트 헬퍼는 SDK, 서버 어댑터는 공급자 통신, 활성화 서비스는 DB 결제 기록·감시 적용을 담당한다.
+| 확인 사항 | 처리 원칙 |
+| --- | --- |
+| imp 코드와 MID의 실제 계정 연결, 무출금 카드 테스트 설정, test 검증값 | 확인 전 503 유지. 숫자만 일치한다고 테스트로 승인하지 않음 |
+| V1 응답의 MID·통화·취소 필드 및 `pg.MID` 호환성 | 공식 스키마와 민감정보를 제거한 테스트 응답으로 확정, V2 필드 재사용 금지 |
+| DANAL_CARD_ENC_KEY 설정 위치 | 서버 환경/콘솔 역할을 확정하고 브라우저에 전달하지 않음 |
+| 기존 V2 pending/paid 주문 존재 여부 | 읽기 전용 확인 후 공급자 혼용 차단·기록 보존 정책 적용 |
+| V2 SDK의 다른 사용처 | 전체 검색 후 미사용이면 제거, 다른 용도가 있으면 유지하면서 다날 비활성 명시 |
 
-## 7. 테스트 및 인수 기준
-
-| 구분 | 필수 시나리오 | 기대 결과 |
-| --- | --- | --- |
-| 공급자 선택 | 두 선택 env 각각 portone, 미설정·충돌·오입력·키 누락 | 명시 설정만 연동, 잘못된 설정 503/설정 오류, mock 가드 보존 |
-| 금액·통화 | 정상 10000/KRW, 9999·10001·소수·누락·다른 통화 | 정상만 승인, 불일치 활성화 0회 |
-| 위변조 | 다른 storeId·paymentId·channelKey·transactionId, 잘못된 HMAC·nonce·만료 | 거부, 다른 주문 변경 없음 |
-| 상태 매핑 | PAID·FAILED·CANCELLED·PARTIAL_CANCELLED·대기·미지원 상태 | PAID만 활성화, 대기는 실패 확정 안 함 |
-| 시간·응답 | 유효 paidAt, 잘못된 날짜·미래·주문 범위 밖, 필수 필드 누락 | 엄격 검증, 승인 시각 임의 생성 없음 |
-| REST | Authorization 형식, URL 인코딩, 타임아웃·401/403·404·429·5xx | 고정 API 호스트, 오류 분류, 원문/secret 로그 없음 |
-| 재조회·복구 | 콜백 성공 후 적용 실패, cron transactionId 조회, 응답 유실 | 동일 주문 재조회·적용 1회, paymentId 혼용 없음 |
-| nonce 소비 | 중복/동시 콜백, 동일 키 주문 재시도, 조회 장애 후 재시도 | 소비·결제 기록 원자성, 한 번 적용, 장애 시 정상 재시도 가능 |
-| 취소 | 테스트 거래 정상 취소·다른 상점·실채널·반복 취소 | 검증된 테스트 건만 처리, 자동 환불 없음 |
-| SDK | 요청 필드·금액·채널·반환 ID, code/예외/취소/닫기·모바일 복귀 | 서버 확정 전 done 없음, 불명확하면 기존 주문 복구 |
-| 401 재인증 | createOrder·getOrderState·콜백 각각 401 후 retry 반복 | ready·입력 복원, OTP 성공 전 주문 생성 0회, 기존 키 유지 |
-| 전송 실패 입력 보존 | OTP 성공 직후 주문 네트워크 실패·429·503, 폼 재마운트 | 이름·전화 비어 있지 않음, 동일 키 재시도, 잠긴 빈 입력 없음 |
-| 초안 만료 | 404, 실제 `draft_expired` 400 | input·재파싱, 기존 초안 결제 재개 없음 |
-| 결제 확정 실패 | failed/canceled/refunded 후 재시도 | 유효 초안 유지, 새 멱등키, 기존 pending 재결제 없음 |
-| 초기화·경합 | reset·새 초안·지연 OTP 응답·이중 클릭 | 옛 응답 무시, 입력 참조 정리, 주문 중복 없음 |
-| 회귀·보안 | SMS OTP 시작·성공·취소·재전송, 기존 launchProvider, mock 격리 | 인증 공급자 변화 없음, 기존 동작 유지 |
-| 개인정보 | 로그·응답·브라우저 저장소 검사 | 이름·전화·OTP·결제 원문·secret의 금지 위치 노출 없음 |
-
-테스트 배치 제안:
-
-- 어댑터·콜백 테스트는 `lib/guest-monitoring/tests/portone.test.ts` 등 비회원 전용 suite에 추가하고 네트워크를 mock한다. fixture는 가짜 식별자만 사용한다.
-- `useGuestApply`는 실제 훅 실행과 폼 재마운트를 검증한다. 현재 node 환경만 있으므로 후속 구현에서 React 테스트 도구/DOM 환경과 `.test.tsx` 포함 설정을 최소 추가한다. 문자열 소스 검색만으로 401 호출 횟수나 입력 복원을 검증했다고 간주하지 않는다.
-- DB 통합 테스트는 기존 `GUEST_TEST_DATABASE_URL` 격리 가드를 유지한다. nonce 경쟁 및 결제 기록 원자성도 검증한다. 격리 DB가 없으면 미실행을 보고한다.
-- 후속 검증은 비회원 전용 Vitest, 추가 훅 테스트 suite, `npm test`, `npm run audit:api`, `npm run lint`, `npm run build`를 기준으로 한다. 새 파일이 실행 대상에 포함되는지 확인한다.
-- 실제 SDK/REST 확인은 무출금 다날 테스트 채널로만 진행한다. 운영 DB·실카드 청구로 검증하지 않는다. 테스트 모드 요청/응답 확인 자료에는 개인정보·결제 상세를 남기지 않는다.
-
-완료 조건은 P0 충족, 두 복구 버그 재현 테스트 통과, 서버 위변조 거부, nonce 1회 소비, SDK/REST 실제 테스트 연동 성공, SMS OTP 불변 및 파일당 500줄 제한 준수다. 채널 미지원/미확인 상태에서는 코드 테스트가 통과해도 ‘다날 V2 테스트 결제 실동작 완료’로 보고하지 않는다.
-
-## 8. 참고 자료 및 확인이 필요한 사항
-
-- [PortOne V2 REST 개요](https://developers.portone.io/api/rest-v2): API 호스트·인증 방식.
-- [PortOne V2 결제 API](https://developers.portone.io/api/rest-v2/payment): 조회·취소·상태·금액 타입.
-- [V2 requestPayment 요청 형식](https://developers.portone.io/sdk/ko/v2-sdk/payment-request): SDK 입력 계약.
-- [공식 V2 소개](https://developers.portone.io/opi/ko/integration/start/v2/readme?v=v2), [공식 다날 V1 결제 가이드](https://developers.portone.io/opi/ko/integration/pg/v1/danal): 다날 V2 결제 지원을 별도 확인해야 하는 근거.
-
-구현 전 확정할 항목은 해당 상점의 다날 V2 **결제** 지원 여부, 무출금 테스트 채널 및 결제수단, 실제 SDK 버전/통화 enum, 테스트 여부 검증 필드다. 이 문서의 필드 구성과 nonce 저장 방식은 기존 코드 분석에 따른 구현 설계 제안이며, 채널 지원을 확인했다는 의미는 아니다.
-
-이번 단계에서는 SDK 설치·기능 구현·테스트 실행·환경 설정·배포를 수행하지 않는다.
+범위 제외: 실결제 활성화, 운영 키 등록, 신규 PG 추가, 본인인증 공급자 교체, 신규 DB 컬럼, 자동결제·빌링키, 일반 환불 UI, 회원 결제 개편. 기존 등기감시 기간·가격·OTP 정책은 유지한다.

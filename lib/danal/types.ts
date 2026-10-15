@@ -28,4 +28,4 @@ export interface PaymentAdapter {
   getPayment(transactionId: string): Promise<PaymentResult>;
   cancelPayment(reference: string): Promise<void>;
 }
-export interface DanalProvider { mode: "mock" | "danal" | "portone"; merchantId: string; identity: IdentityAdapter; payment: PaymentAdapter }
+export interface DanalProvider { mode: "mock" | "portone_v1"; merchantId: string; identity: IdentityAdapter; payment: PaymentAdapter }

@@ -1,104 +1,91 @@
 # PortOne 프론트엔드 교차검수
 
 - 검토일: 2026-10-15
-- 기준: `git status --short`, 추적 파일의 `git diff`, 미추적 신규 파일 원문, `docs/02-design/features/portone.design.md`, 사용자 제공 Platform Development Standard.
-- 판정: **수정 필요 — HIGH 5건, MED 2건.** 코드 수정 없이 리뷰 문서만 작성했다.
-- 직접 변경 범위: `app/(personal-home)/renewal/monitoring/guest/{guestApi.ts,guestPayment.ts,applyFailure.ts}`, `hooks/useGuestApply.ts`, 공용 `types/guest-monitoring.ts`. 루트 `components/`, `hooks/`, `page.tsx`에는 미커밋 변경이 없었다. 미변경 UI·연장 훅과 서버는 호출 계약·회귀 확인 목적으로 읽었다.
-- 아래 파일 경로는 저장소 루트 기준이며, 라인은 검토 당시 워킹트리 기준이다. 서버 구현의 책임까지 프론트 작성자에게 귀속하는 것이 아니라, 현재 변경 묶음의 통합 결과를 검토했다.
+- 판정: **수정 필요 — HIGH 2건, MED 2건, LOW 1건.**
+- 기준: 검토 시점 `git status --short`, 추적 파일 `git diff`, 미추적 신규 파일 원문, `docs/02-design/features/portone.design.md` 및 Platform Development Standard.
+- 변경 프론트: `app/(personal-home)/renewal/monitoring/guest/{guestApi.ts,guestPayment.ts,portoneV1Loader.ts}`, 같은 라우트 `hooks/{useGuestApply.ts,useGuestOrderFlow.ts,useGuestStatus.ts,useGuestRenew.ts}`. 신규 미추적 2파일도 포함했다.
+- 루트 `components/`, `hooks/`, 페이지 엔트리에는 미커밋 변경이 없다. 미변경 신청/현황 UI와 서버 주문·콜백·복구 코드는 호출 계약 및 연관 기능 확인용으로 읽었다.
+- 기존 리뷰는 V2 구현 기준이어서 현재 V1 변경 기준으로 갱신했다. 아래 경로는 저장소 루트 기준, 라인은 현재 워킹트리 기준이다. 이번에 구현 코드는 수정하지 않았다.
 
 ## 지적 사항
 
-### 1. [심각도 HIGH] app/(personal-home)/renewal/monitoring/guest/guestPayment.ts:59 — SDK 의존성 누락으로 결제 실행 불가
+### 1. [심각도 HIGH] app/(personal-home)/renewal/monitoring/hooks/useGuestOrderFlow.ts:235 — 콜백 일시 실패 후 거래 ID를 버려 승인 기록 복구 불가
 
-**문제:** 동적 import 대상 `@portone/browser-sdk/v2`가 `package.json`·lockfile에 없고, 현재 설치 환경에서도 `MODULE_NOT_FOUND`다. `@ts-ignore`는 모듈을 설치하지 않는다. 로드 실패 시 `error`가 반환되고 훅은 주문 조회로 넘어가므로, SDK를 한 번도 실행하지 않은 주문도 `pending` 확인 화면에 남는다. 설계 §7 B11의 통합 선행 작업이 빠져 있다. 서버 담당 설치라는 주석만으로 실행 가능해지지 않는다.
+**문제:** 인라인 결제 성공의 `outcome.callback`은 최초 POST에만 사용한다. 네트워크 오류·503·429·`payment_pending` 이후에는 `advanceOrder(orderId)`로 조회만 하고, 다음 재시도도 `useGuestApply.ts:349`에서 `advanceOrder(orderId, draftId)`를 호출할 뿐 `imp_uid`나 콜백 문맥을 전달하지 않는다. `resendOrderCallback`은 메모리 문맥을 받도록 구현되어 있지만 실제 호출부가 `callback`을 전달하는 곳은 없다. V1에서는 서명 재발급만으로 거래 ID가 생기지 않아 `guestPayment.ts:249`의 콜백 구성 조건을 통과하지 못한다. 연장도 `useGuestRenew.ts:171` → `finalizeRenew`에서 같은 정보를 잃는다.
 
-**수정 제안:** 확인된 SDK 버전을 의존성·lockfile에 반영하고 공식 타입으로 요청/응답 경계를 검증한다. 모듈 로드 실패를 사용자에게 유지해서 표시하고, 같은 주문으로 실행을 재시도할 수 있도록 별도 복구 동작을 둔다. 실패를 곧바로 승인 대기 안내로 덮어쓰지 않는다.
+현재 `GET /orders/[orderId]`는 DB 조회뿐이다. 신규 `recoverPendingPayment()`는 존재하지만 테스트 외 실제 호출자가 없으며 공개 호출 계약도 없다. 따라서 PG 승인 후 서버 기록 전 콜백이 유실되면 GET·POST orders·GET을 반복해도 pending에서 진행되지 않는다. 모바일 복귀도 최초 시도가 실패한 뒤 쿼리를 제거하고 `impUid`를 보존하지 않으면 동일 문제가 생긴다. 설계 §4.6의 메모리 보존·거래 ID 유실 복구와 §4.8의 동일 콜백 재전송 계약 미충족이다.
 
-**검증/우선순위:** P0. `require.resolve()` 실패를 확인했다. 임시 디렉터리에서 해당 헬퍼를 TS 변환 후 Webpack으로 번들링한 결과도 `Can't resolve '@portone/browser-sdk/v2'` 경고다. 이 검사에서 빌드는 오류 없이 끝났으므로 **전체 Next 빌드 실패로 단정하지 않는다.** 현재 서버는 검증된 테스트 채널 목록이 비어 있어 주문 실행 정보를 발급하기 전 503으로 차단한다. 따라서 현재 실제 청구가 발생했다는 뜻이 아니라, 채널 확인 이후에도 남는 실행 차단 문제다.
+**수정 제안:** 주문별 ref에 `imp_uid` 포함 콜백 문맥을 메모리로 보존하고, pending 재시도에 `ResumeContext.callback`을 전달한다. 모바일에서 받은 ID도 성공 또는 확정 종료까지 메모리에 유지한다. 새로고침 등 ID까지 유실된 경우는 인증된 서버 복구 호출 계약을 설계에 명시하고 연결한다. 서명·거래 ID를 저장소에 기록하거나 SDK를 다시 실행하는 방식으로 해결하지 않는다.
 
-### 2. [심각도 HIGH] app/(personal-home)/renewal/monitoring/hooks/useGuestApply.ts:371 — 모바일 결제 복귀 시 서명 문맥 재발급·콜백 단계 누락
+**검증/우선순위:** **P0.** 현재 헬퍼를 TypeScript 변환 후 API를 대체한 격리 실행에서 `resendOrderCallback`에 ID/문맥 없이 pending을 전달하면 **GET 2회, POST orders 1회, callback 0회**였다. 이는 실제 PG 테스트가 아니다. 완료 기준은 최초 콜백 유실/503/승인 지연 및 모바일 복귀 후 재시도에서 동일 거래 콜백이 전송되고 적용 1회·SDK 추가 호출 0회를 확인하는 것이다.
 
-**문제:** `guestPayment.ts:105`의 모바일 복귀 URL로 돌아오면 메모리의 `callbackContext`·`callbackSignature`가 사라진다. 복귀 effect는 저장 주문을 찾아 `recoverOrder()`만 실행한다. 설계 §4.2의 기존 주문 문맥 재발급 및 동일 콜백 POST가 없다. 실제 GET 구현인 `lib/guest-monitoring/order.ts:59`는 DB 조회뿐이고, `recovery.ts:5`의 cron은 이미 `paid`인 주문만 처리한다. 따라서 PG에서 결제됐어도 콜백이 없으면 서버 주문은 `pending`에 남아 신청 완료로 이어지지 않는다. 웹훅도 이번 설계 범위 밖이다.
+### 2. [심각도 HIGH] app/(personal-home)/renewal/monitoring/hooks/useGuestRenew.ts:135 — 미확정 연장 주문에 대한 재클릭이 SDK를 다시 실행
 
-**수정 제안:** 저장된 초안·동일 멱등키로 기존 주문의 문맥을 재발급받아, SDK 재실행 없이 같은 paymentId의 콜백을 수행한 뒤 GET으로 확정한다. 새 주문을 만들지 않고, 서명·nonce를 URL이나 브라우저 저장소에 넣지 않는다. 복귀 문맥 재발급 계약이 부족한 경우 설계서를 먼저 보완하고 양측에 반영한다.
+**문제:** `startRenew()`는 저장된 주문·이전 결제 실행 여부를 확인하지 않고 항상 POST orders → `runPayment()`를 실행한다. 취소·오류·콜백 일시 실패 뒤 서버가 pending이면 `finalizeRenew():107`은 busy를 해제하고 `finally:193`은 잠금을 해제한다. UI의 연장 버튼(`components/guest/GuestCalendarPanel.tsx:90`)은 다시 활성화된다. 사용자가 누르면 같은 pending 주문의 실행 정보가 반환되어 결제창을 재실행한다. 영구 거부 뒤에도 동일 버튼이 같은 실행 경로로 들어간다. 주문 row 멱등성만으로 승인 불명확 상태에서의 결제창 재실행을 막지는 못한다. 설계 §4.7·§4.8의 상태 우선 확인 및 확정 실패 이후 새 결제 정책과 불일치한다. 이 동작은 기존 연장 구현에도 있었으며 이번 신규 훅으로 이동한 코드에 그대로 남아 있다.
 
-**검증/우선순위:** P0. 모바일 이탈 → PG 승인 → 복귀 시 콜백 1회 이상, SDK 재실행 0회, 같은 주문의 `paid && applied` 도달을 확인해야 한다. 현재는 정적 호출 경로 대조 결과이며 실제 모바일 SDK 검증은 미실행이다.
+**수정 제안:** 연장에도 `retry_payment`(SDK 호출 전 실패), 승인 확인/콜백 재전송, 영구 거부, 서버 확정 실패를 구분한 상태를 둔다. 기존 주문의 승인 여부가 불명확하면 상태 확인·보존 문맥 재전송만 수행한다. SDK 재실행은 호출 전 실패가 확인된 동일 주문에서만 허용하고, 새 주문 결제는 서버 확정 실패 후 명시 동작으로 제한한다.
 
-### 3. [심각도 HIGH] app/(personal-home)/renewal/monitoring/hooks/useGuestApply.ts:235 — 콜백 일시 실패 후 복구에 필요한 문맥을 버림
+**검증/우선순위:** **P0.** `useCallback`만 대체하고 현재 훅 함수를 실행한 모의 검증에서 SDK canceled → 서버 pending → 연장 재클릭 시 **SDK 호출 2회**였다. 실제 중복 출금 발생을 확인한 것은 아니다. 완료 기준은 pending·503·영구 거부 후 재클릭에서 SDK 추가 호출 0회, SDK 로드 실패 뒤 명시 재시도에서는 같은 주문으로 1회 실행되는 것이다.
 
-**문제:** 콜백의 비401 응답은 전부 무시하고 상태 조회로 넘어간다. 예를 들어 승인 후 콜백 POST가 네트워크 오류·503·429로 결제 기록 전에 실패하거나 `payment_pending` 후 나중에 승인되면, 주문은 여전히 `pending`이다. 콜백 문맥은 지역 변수에만 있어 다음 `retry()`에서는 사용할 수 없고, `retry():439`는 GET만 반복한다. GET·cron의 동작상 이 주문을 승인 기록으로 전환할 경로가 없다. 설계 §5.2의 '실패 후 상태 조회' 자체는 따르지만, §4.4·§6.3의 장애 이후 동일 문맥 재시도와 연결되지 않은 통합 결함이다. 400/403/404 같은 영구 거부도 같은 방식으로 숨겨진다.
+### 3. [심각도 MED] app/(personal-home)/renewal/monitoring/guest/guestPayment.ts:88 — SDK 로딩 중 화면을 떠나도 결제창 실행을 취소하지 못함
 
-**수정 제안:** 콜백 대기 문맥과 전송 단계를 훅 메모리에 보존하고, 상태를 먼저 확인한 뒤 미기록 주문에 대해 동일 콜백을 재전송한다. 새로고침 뒤에는 2번의 재발급 경로를 사용한다. 세션 만료·문맥 만료·보안 거부는 별도 분류하고, 승인 기록 후 적용만 대기하는 주문은 조회만 한다. SDK 취소·오류 후에도 DB가 `pending`이라는 이유만으로 무기한 조회에 갇히지 않도록 승인 확인 및 재개 계약을 정한다.
+**문제:** 새 CDN 로더는 최대 10초 동안 비동기로 대기한다. 이 사이 사용자가 Next 라우트를 이동하거나 흐름을 초기화해도 로드 완료 직후 `IMP.init` → `request_pay(:108)`가 실행된다. 신청 훅의 세대 검사는 `runPayment()` 반환 후(`useGuestOrderFlow.ts:220`)에만 있어 창을 여는 부작용을 막기에는 늦다. 신규 연장 훅에는 언마운트/요청 세대 검사도 없다. 현재 페이지와 무관한 결제창이 나중에 열릴 수 있다.
 
-**검증/우선순위:** P0. 최초 콜백 전송 유실/503 → 재시도에서 동일 paymentId·문맥으로 콜백 재전송 → 적용 1회. 실제 브라우저 테스트는 미실행이다.
+**수정 제안:** 실행별 취소 신호나 유효성 검사 함수를 `runPayment`에 전달하고 로더 await 이후, `request_pay` 직전에 확인한다. 훅 언마운트·reset·세션 변경 시 해당 실행을 무효화한다. 공유 SDK script 로드와 개별 결제 실행 취소의 수명은 분리한다.
 
-### 4. [심각도 HIGH] app/(personal-home)/renewal/monitoring/hooks/useGuestStatus.ts:286 — 전역 결제 공급자 변경이 연장 흐름에 반영되지 않음 [연관 기능 회귀]
+**검증/우선순위:** **P1.** 정적 await 경로 확인. CDN 응답을 지연시켜 신청/연장 화면 이탈 및 reset 후 로드를 완료했을 때 SDK 실행 0회인지 검증해야 한다. 실제 DOM/라우팅 재현은 미실행이다.
 
-**문제:** 이 파일 자체는 미변경이지만, 공용 주문 API는 신규·연장 모두 `getDanalProvider()`를 통해 PortOne 실행 정보를 내려준다. 연장 훅은 여전히 `launchProvider(res.data.payment)`만 호출한다. PortOne 응답에는 url/action이 없어 항상 false가 되고, SDK·콜백 없이 GET으로 넘어가 `pending` 안내만 보인다. 신청에만 연결된 새 `runPayment()` 때문에 공급자 전환 후 연장 기능이 작동하지 않는다.
+### 4. [심각도 MED] app/(personal-home)/renewal/monitoring/hooks/useGuestRenew.ts:223 — 모바일 복귀의 영구 거부·세션 만료를 사용자에게 알리지 않음
 
-**수정 제안:** 연장도 같은 결제 실행·콜백·상태 확정 경로를 재사용하고, 복귀 시 `renewal` 대상과 현황 경로를 유지한다. 신규 신청 전용 `GUEST_APPLY_PATH`를 그대로 재사용하지 않도록 복귀 목적지 계약도 함께 조정한다. 설계 §3.1·§3.3의 renewal 계약과 회귀 기준에 반영한다.
+**문제:** `reconcilePendingOrders()`는 `resendOrderCallback()`의 `reauth`와 모든 `api_error`를 `continue`로 버린다. 직접 연장에서는 400/403/404/409를 분류해 표시하지만, 복귀 경로에서는 동일 거부를 받아도 오류·재인증 안내가 없다. 복귀 쿼리는 이미 제거되어 사용자는 결제 결과가 반영되지 않은 이유를 확인할 수 없다. 초기 목록 조회 성공 후 콜백 단계에서 세션이 만료되는 경우에도 인증 화면으로 전환하지 않는다. 설계 §4.8은 모바일 복귀에도 같은 오류 분류와 영구 거부 보존을 요구한다.
 
-**검증/우선순위:** P0. 연장 주문의 SDK 호출 → 콜백 → 기간 연장과, 기존 mock·SMS 인증 회귀를 검증한다. 현재 정적 계약 대조로 확인했다.
+**수정 제안:** `reauth`는 기존 주문·멱등키를 보존하면서 재인증으로 전환하고, `api_error`는 분류한 오류를 화면에 유지한다. 대상별 복구 결과를 반환하거나 수집해 복수 주문 중 한 주문의 성공 안내가 다른 주문의 거부를 가리지 않게 한다. 현재 `handleSessionExpired()`가 `applyResume.clear()`를 호출하므로 재인증 연결 시 참조 보존 정책도 함께 조정한다.
 
-### 5. [심각도 HIGH] app/(personal-home)/renewal/monitoring/hooks/useGuestApply.ts:428 — 주문 조회 장애를 주문 생성 재시도로 처리해 SDK 재실행
+**검증/우선순위:** **P1.** 정적 분기 확인. 모바일 복귀 callback 400/403/404/409에서 오류가 보존되고 pending 안내로 대체되지 않아야 한다. 401이면 재인증 안내와 기존 주문 참조 보존을 확인한다.
 
-**문제:** `applyFailureOutcome()`은 주문 생성과 조회에 같은 실패 분류를 적용한다. SDK 실행 이후 GET이 네트워크 오류·429·503이면 `retry_same`이 되고, 재시도는 `startOrder()`를 호출한다. 기존 주문이 있는지 확인하지 않고 POST /orders → `runPayment()`가 다시 실행된다. 멱등키는 주문 row 중복만 막으며, 결제창 재실행을 막지 않는다. 같은 문제는 콜백 401 → 재인증 성공에서도 발생한다. `verifyApplyOtp():332`가 무조건 `startOrder()`를 호출해, 설계 §6.1의 '기존 주문이 있으면 상태부터 확인'을 지키지 않는다. 이전 결제가 서버에 기록되지 않은 상태일수록 결제창을 다시 띄울 수 있다. 중복 청구 발생 자체를 검증한 것은 아니다.
+### 5. [심각도 LOW] app/(personal-home)/renewal/monitoring/guest/guestPayment.ts:125 — merchant_uid 누락을 성공 확인 신호로 허용
 
-**수정 제안:** 생성 전송 실패, 상태 조회 실패, 콜백 실패를 단계별로 구분한다. 저장 주문이 있으면 재인증 후에도 GET부터 수행하며, 조회 실패 재시도는 GET만 재실행한다. 미기록 결제는 3번의 콜백 재확인 경로로 진행하고, SDK 실행은 필요한 경우에만 명시적으로 선택한다.
+**문제:** `res.merchant_uid && res.merchant_uid !== paymentId` 조건은 `merchant_uid`가 없거나 빈 문자열이면 통과시킨다. 설계 §5.1은 `success===true`일 때 `imp_uid` 필수와 함께 `merchant_uid===paymentId`를 요구한다. 현재는 잘못된 SDK 응답도 confirm으로 바꿔 서버 콜백을 호출한다. 서버 REST 검증은 별도로 유지되므로 이것만으로 승인 위조가 가능하다는 뜻은 아니다.
 
-**검증/우선순위:** P0. GET 503/429/네트워크 실패 후 재시도 및 콜백 401 후 OTP 성공에서, 불필요한 POST /orders·SDK 호출이 증가하지 않는지 호출 횟수로 검증한다. 단순 렌더 성능 문제가 아니라 실제 중복 네트워크·결제 실행 경로다.
+**수정 제안:** `res.merchant_uid !== paymentId`이면 error로 처리하여 누락·공백·불일치를 모두 거부한다. 주문 확정은 계속 서버 조회만 근거로 한다.
 
-### 6. [심각도 MED] app/(personal-home)/renewal/monitoring/hooks/useGuestApply.ts:88 — 새 세대 관리가 파싱·인증 발송·언마운트를 보호하지 않음
-
-**문제:** `submitParse()`는 세대를 증가시키지만 응답 뒤 세대 비교 없이 draft와 저장소를 갱신한다. `startIdentity():276`에도 응답 세대 검사가 없다. 오래된 응답이 reset·새 초안 이후 도착하면 예전 draft를 되살리거나 이전 초안의 OTP 대기로 전환할 수 있다. 또한 훅 언마운트 시 세대를 무효화하는 cleanup이 없어, 주문 생성 중 다른 화면으로 이동해도 응답 뒤 `runPayment()`가 실행될 수 있다. 자식 `useGuestOtp`의 cleanup은 OTP 검증만 보호한다. `goInput():112`에 `setBusy(false)`도 없어, 진행 중 reset을 호출하는 흐름에서는 후속 가드가 응답을 버린 뒤 busy가 남을 수 있다. 일반 UI의 busy 비활성화는 일부 재진입을 막지만 훅의 세대 보장을 대체하지 않는다.
-
-**수정 제안:** 파싱·인증 시작을 포함한 모든 비동기 진입점에서 세대를 캡처하고 await 뒤 검사한다. 언마운트 때도 무효화하며 필요하면 fetch를 취소한다. 초기화에서는 busy를 명시적으로 해제하고 같은 세대의 중복 제출도 차단한다.
-
-**검증/우선순위:** P1. 지연 parse/identity 응답 뒤 reset·새 초안·언마운트에서 이전 상태/저장소 갱신 및 SDK 호출이 없어야 한다. 설계 §6.1·§8의 경합 인수 기준 미충족이며, 실제 훅 경합 테스트는 미실행이다.
-
-### 7. [심각도 MED] app/(personal-home)/renewal/monitoring/hooks/useGuestApply.ts:155 — 404·draft_expired에서 만료된 재개 참조가 남음
-
-**문제:** `reparse` 분기는 pendingIdentity와 React draft만 지우고 `applyResume`의 draftId·주문·멱등키를 남긴다. 이미 `input`으로 전환되므로 이 시점에는 해당 recovery의 `retry()`에서 `goInput()`을 호출할 버튼도 없다. 재파싱 전에 새로고침하면 effect가 같은 저장 주문을 찾아 다시 GET·404로 돌아간다. 만료 초안 폐기 후에는 세대도 증가하지 않아 다른 진행 중 응답의 무효화도 빠진다. 설계 §6.3의 '해당 초안·주문 재개 참조 폐기'와 불일치한다.
-
-**수정 제안:** 만료된 초안과 그 대상 주문·멱등키를 즉시 제거하고, 요청 세대·OTP 결합·주문 표시 상태를 함께 초기화한다. 다른 대상의 연장 주문 참조를 보존할 필요가 있으므로 대상 단위 정리를 우선한다. 재파싱 안내 메시지는 유지한다.
-
-**검증/우선순위:** P1. 저장 주문 GET 404 및 생성 응답 `400 draft_expired` 뒤 새로고침에서, 폐기된 주문 재조회와 이전 초안 자동 재개가 0회인지 확인한다.
+**검증/우선순위:** **P2.** 격리 실행에서 `{success:true, imp_uid:...}`만 반환해도 현재 결과가 **confirm**임을 확인했다. 누락·빈 값·타 주문 ID는 error, 정확히 일치할 때만 confirm이 되는지 확인한다.
 
 ## 계약·구조·접근성·성능 확인
 
-| 관점 | 확인 결과 |
+| 관점 | 현재 확인 결과 |
 | --- | --- |
-| API 형식 | 신규 `paymentCallback()`의 POST 경로, JSON 3필드, same-origin 쿠키·no-store는 §3.3과 일치. GET 주문 ID는 URL 인코딩한다. |
-| 완료 판정 | `classifyOrderState()`의 `status === paid && applied`만 done으로 쓰며 SDK 결과만으로 완료 처리하지 않는다. |
-| 입력 보존 | OTP 성공 후 이름·전화 ref를 비우던 코드는 제거됐다. 다만 실제 폼 재마운트 검증은 미실행이다. |
-| 책임 분리 | SDK/HTTP/실패 분류/UI가 별도 파일이다. 페이지 변경 없음. 훅은 478줄로 500줄 이하지만 설계의 권장 목표 ≤470줄을 넘는다. 이미 결제·실패 헬퍼는 분리되어 있으므로 단순 줄 수만으로 별도 결함을 추가하지 않았다. |
-| 접근성 | 변경된 JSX가 없어 이번 diff로 새로 생긴 접근성 결함은 확정하지 않았다. 기존 `GuestApplyClient.tsx:118,139`의 비동기 결과 영역은 live region·포커스 이동이 없으므로 회귀 확인이 필요하다. 입력 폼 에러에는 role=alert가 있다. 실제 스크린리더·키보드·SDK 모달 포커스 검증은 미실행이며 통과로 간주하지 않는다. |
-| 렌더 성능 | 새 렌더 계산·무한 effect·매 렌더 fetch는 확인되지 않았다. `otp` 객체가 렌더마다 바뀌어 콜백 참조도 바뀌지만, 현재 소비 구조에서 유의미한 추가 렌더 병목을 입증하지 못해 지적으로 세지 않았다. 실제 중복 요청 문제는 5번에 기록했다. |
-| 보안 | 새 프론트 코드에서 비밀키·서명·이름·전화의 로그/URL/스토리지 저장은 발견하지 못했다. 이는 서버 보안 전체에 대한 승인 판정은 아니다. |
+| API DTO | callback POST의 `paymentId`, `imp_uid`, `callbackContext`, `callbackSignature` 4필드는 설계 §2.4.1·§3.3 및 서버 스키마와 일치. same-origin 쿠키, no-store, 주문 ID URL 인코딩 유지. |
+| 완료·권한 | 완료는 서버 `paid && applied`를 근거로 한다. callback 라우트는 apply/status/renewal 세션과 Origin을 검사한다. 실제 타인 주문·쿠키·브라우저 권한 검증은 미실행. |
+| SDK 실패 | 로더는 단일 Promise 공유, 실패 script·이벤트·타이머 정리, rejected 캐시 초기화를 구현했다. SDK 호출 전 실패는 unavailable이며 신청/연장 모두 오류를 표시한다. 실제 CDN 재로드는 미검증. |
+| 구조 | 페이지 변경 없음. UI·HTTP·SDK·script 로더·상태 훅 분리는 적절하다. useGuestApply 413줄, useGuestOrderFlow 270줄, useGuestStatus 319줄, useGuestRenew 246줄. 500줄 초과 없음. 설계의 400줄 초과 보고 트리거는 useGuestApply 413줄에 해당하며 추가 분리 검토가 필요하다. |
+| 접근성 | 변경 JSX는 없다. 연장 에러는 기존 GuestCalendarPanel의 role=alert 영역으로 연결된다. 신청 결제 진행/복구/실패 영역과 현황 notice에는 live region·명시적 포커스 이동이 없어 상태 변경 알림은 회귀 확인 대상으로 남는다. 기존 UI 사항이며 신규 결함 건수에 포함하지 않았다. SDK 모달 키보드·포커스 복귀/스크린리더 검증은 미실행. |
+| 렌더·요청 성능 | 새 렌더 계산이나 매 렌더 fetch/무한 effect는 확인하지 못했다. 로더 single-flight는 중복 script를 줄인다. 거래 ID 없는 복구의 불필요한 GET→POST orders→GET은 1번, 결제창 재실행은 2번에 기록했다. 실제 React Profiler 측정은 하지 않았다. |
+| 보안 | 변경 프론트에서 이름·전화·서명·nonce를 저장소·URL·로그에 추가하는 코드는 발견하지 못했다. 공급자 error_msg 원문은 일반 사용자 메시지로 치환한다. 서버 보안 전체 통과를 의미하지 않는다. |
 
 ## 검증 결과 — 누락·위험·우선순위
 
 ### 수행한 검증
 
-- git 상태·diff 및 신규 파일 확인, 설계서·서버 DTO·주문 조회·결제 기록·cron·기존 UI/연장 호출 경로 대조.
-- 변경 프론트 4파일 대상 ESLint: 통과.
-- `vitest run --config lib/guest-monitoring/vitest.config.ts lib/guest-monitoring/tests/portone.test.ts lib/guest-monitoring/tests/portone-boundaries.test.ts`: **2파일 78테스트 통과**. 서버 mock/경계 테스트 결과이며 프론트 훅·폼·실제 PG 성공을 보증하지 않는다.
-- `git diff --check`: 통과.
-- SDK 설치 해석 및 임시 TS 변환/최소 Webpack 번들 확인: 모듈 미설치 확인. Next 전체 빌드는 실행하지 않았다. 임시 산출물은 저장소 밖에 생성했다.
+- git 상태/diff와 신규 프론트 파일, 설계 §2.4·§3·§4.6~4.8·§5·§6.1 대조. 서버 GET·주문 재사용·콜백·복구 서비스 및 미변경 UI 호출 경로 확인.
+- 변경·신규 프론트 7파일 ESLint: **통과**.
+- `git diff --check`: **통과**.
+- `npx vitest run --config lib/guest-monitoring/vitest.config.ts lib/guest-monitoring/tests/portone.test.ts lib/guest-monitoring/tests/portone-boundaries.test.ts lib/guest-monitoring/tests/recover-pending-payment.test.ts`: **3파일 97테스트 통과**. 서버 경계·mock 테스트 결과다.
+- 저장소 파일을 추가하지 않고 현재 TypeScript를 메모리 변환하여 모의 API/SDK/React useCallback으로 격리 실행: 거래 ID 없는 복구의 callback 0회, pending 연장 재클릭 SDK 2회, merchant_uid 누락 시 confirm 확인. React 렌더·브라우저 통합 테스트를 대체하지 않는다.
 
 ### 누락
 
-- 설계 §7 F4·§8의 실제 React 훅/폼 재마운트 테스트가 이번 변경에 없다. 현재 `react-test-renderer`, `@testing-library/react`, `jsdom`도 설치되지 않았다.
-- 정상 inline 결제, 모바일 복귀, SDK 취소·닫기, 콜백 장애·재인증, 빈 payment, 저장 참조 없는 복귀, 동시 요청에 대한 브라우저 실행 검증은 미실행이다.
-- DB 기반 실제 저장·적용·연장 검증 및 스크린리더·렌더 프로파일링은 미실행이다. 테스트 추가나 패키지 설치 없이 리뷰만 수행했다.
+- 변경분에 프론트 DOM/React 훅 회귀 테스트가 없다. 설계 §6.1의 로더 실패 후 재시도, 모바일 복귀, 콜백 일시 실패·영구 거부, status 세션 연장 시나리오 실행 증거가 필요하다.
+- 빈 payment/mock, 저장 주문 없는 복귀, 세션 만료, 다중 물건 전환, 언마운트, 중복 클릭을 실제 브라우저에서 검증하지 않았다.
+- 전체 lint/test/build, 실제 DB 저장·기간 연장, 실 SDK/PG·CDN, 접근성·프로파일링은 실행하지 않았다. 서버 97테스트 통과만으로 프론트 완료를 판정할 수 없다.
 
 ### 위험
 
-- 현재 `lib/danal/portone-test-channels.ts`는 검증된 테스트 채널이 없는 상태이며 서버가 503으로 차단한다. 실결제·운영 DB·외부 PG는 호출하지 않았다. '다날 V2 테스트 결제 실동작 완료'로 판정할 수 없다.
-- 채널 확인 뒤에도 SDK 미설치와 승인 기록 복구 누락이 남는다. 승인 불명확 상태에서 복구 동작이 GET 반복 또는 SDK 재실행으로 갈리는 것이 가장 큰 통합 위험이다.
+- 승인 후 콜백 유실 시 사용자는 pending에 머물며 연장 재클릭으로 결제창을 다시 열 수 있다. 서버 복구 함수가 있어도 실제 사용자 호출 경로와 연결되지 않아 복구 완료를 보장하지 못한다.
+- 외부 PG·운영 DB·실결제는 호출하지 않았다. 테스트 채널과 배포 환경 실동작은 이번 리뷰의 검증 범위 밖이다.
 
 ### 우선순위
 
-1. **P0:** SDK 설치·타입 경계 확정, 모바일 문맥 재발급, 콜백 재전송, 연장 연결, 조회·재인증 후 SDK 재실행 방지(1~5번).
-2. **P1:** 전체 요청 세대/언마운트 처리, 만료 참조 폐기(6~7번), 실제 훅·폼/접근성 회귀 검증.
-3. 완료 기준은 서버 테스트 통과와 별개로, 위 시나리오별 요청 횟수·동일 주문 유지·적용 1회·실패 후 복구를 실제 프론트 실행으로 확인하는 것이다.
+1. **P0:** 거래 ID/콜백 메모리 보존과 ID 유실 서버 복구 연결, 미확정 연장 주문 SDK 재실행 방지(1~2번).
+2. **P1:** SDK 로드 이후 실행 취소, 복귀 오류·재인증 안내 및 참조 보존(3~4번). 해당 경합과 실패 흐름을 DOM/브라우저에서 확인.
+3. **P2:** SDK merchant_uid 엄격 대조(5번), 상태 알림 접근성 확인 및 파일 분리 검토.

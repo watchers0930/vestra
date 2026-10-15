@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import type { GuestDraftResponse, GuestOrderStateResponse } from "@/types/guest-monitoring";
 import { parsePdf, identityStart } from "../guest/guestApi";
 import { launchProvider, applyResume, orderTarget } from "../guest/guestProvider";
+import { readV1RedirectReturn } from "../guest/guestPayment";
 import type { FailureAction } from "../guest/applyFailure";
 import { useGuestOtp } from "./useGuestOtp";
 import { useGuestOrderFlow, type ApplyPhase } from "./useGuestOrderFlow";
@@ -253,6 +254,8 @@ export function useGuestApply() {
     resumedRef.current = true;
     if (typeof window === "undefined") return;
 
+    // V1 모바일 리다이렉트 복귀 쿼리(미신뢰). 읽은 뒤 URL에서 식별자를 제거한다(§4.6).
+    const { impUid, merchantUid } = readV1RedirectReturn();
     const q = new URLSearchParams(window.location.search);
     const hasError = !!q.get("error");
     const queryOrderId = q.get("orderId");
@@ -261,16 +264,18 @@ export function useGuestApply() {
     const target = orderTarget("initial", draftId);
     const storedOrderId = draftId ? applyResume.getOrderId(target) : null;
     const pendingIdentity = applyResume.getPendingIdentity();
-    const orderId = queryOrderId || storedOrderId;
+    const orderId = queryOrderId || merchantUid || storedOrderId;
+    // imp_uid는 복귀 merchant_uid가 대상 주문과 일치할 때만 결합(불일치/부재면 무시, 서버가 최종 검증 §4.6).
+    const impUidForOrder = impUid && (!merchantUid || merchantUid === orderId) ? impUid : undefined;
 
     if (orderId) {
       // 주문이 있으면 에러 쿼리 여부와 무관하게 서버 상태로 판정한다(브라우저 신호 불신, §5.2).
       applyResume.clearPendingIdentity();
       if (draftId) {
         applyResume.setOrderId(target, orderId);
-        // 모바일 리다이렉트 복귀: 메모리 콜백 문맥이 사라졌으므로 동일 멱등키로 재발급해 콜백을
-        // 재전송한 뒤 상태로 확정한다(SDK 재실행·새 주문 없음, 버그②).
-        void advanceOrder(orderId, draftId);
+        // 모바일 리다이렉트 복귀: 메모리 콜백 문맥이 사라졌으므로 동일 멱등키로 재발급해(+쿼리 imp_uid 결합)
+        // 콜백을 재전송한 뒤 상태로 확정한다(SDK 재실행·새 주문 없음, §4.6).
+        void advanceOrder(orderId, draftId, impUidForOrder);
       } else {
         // 초안 참조가 없어 문맥 재발급 불가 → 재조회만 수행(서버 상태가 판정).
         void advanceOrder(orderId);

@@ -2,7 +2,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { GuestError } from "@/lib/guest-monitoring/errors";
 import { resourceId } from "@/lib/guest-monitoring/schemas";
-import { paymentSigningKey } from "./portone-config";
+import { paymentSigningKey } from "./portone-v1-config";
 const nonce = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 const receiptSchema = z.object({ v: z.literal(1), nonce, consumed: z.boolean() }).strict();
 const contextSchema = z.object({
@@ -11,7 +11,7 @@ const contextSchema = z.object({
   expiresAt: z.number().int().positive(), nonce,
 }).strict();
 export const callbackRequestSchema = z.object({
-  paymentId: resourceId, callbackContext: z.string().min(1).max(4000).regex(/^[A-Za-z0-9_-]+$/),
+  paymentId: resourceId, imp_uid: z.string().regex(/^imp_[0-9a-zA-Z]{1,40}$/), callbackContext: z.string().min(1).max(4000).regex(/^[A-Za-z0-9_-]+$/),
   callbackSignature: z.string().regex(/^[a-f0-9]{64}$/),
 }).strict();
 export type CallbackContext = z.infer<typeof contextSchema>;

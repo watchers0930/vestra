@@ -39,6 +39,7 @@ const FALLBACK_ERROR = "요청을 처리하지 못했습니다. 잠시 후 다�
  */
 export interface GuestPaymentCallbackRequest {
   paymentId: string; // = orderId
+  imp_uid: string; // [V1 추가] PG 발급 거래 ID (미신뢰 입력 — 서버가 REST로 검증, 설계 §2.4.1)
   callbackContext: string; // 서버 발급 base64url 문맥 (echo)
   callbackSignature: string; // 서버 발급 hex 서명 (echo)
 }

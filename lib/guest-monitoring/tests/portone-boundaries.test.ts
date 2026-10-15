@@ -12,15 +12,15 @@ vi.mock("@/lib/guest-monitoring/transaction", () => ({ locked: (_identity: strin
   const result = f.queue.then(async () => run((await import("@/lib/prisma")).prisma));
   f.queue = result.then(() => undefined, () => undefined); return result;
 } }));
-vi.mock("@/lib/danal", () => ({ getDanalProvider: () => ({ mode: "portone", merchantId: "store-test",
+vi.mock("@/lib/danal", () => ({ getDanalProvider: () => ({ mode: "portone_v1", merchantId: "store-test",
   payment: { verifyPayment: f.verify, getPayment: f.get } }) }));
 vi.mock("@/lib/guest-monitoring/session", () => ({ requireSession: f.session }));
 vi.mock("@/lib/guest-monitoring/rate-limit-keys", () => ({ ipLimit: f.ip, guestLimit: f.limit }));
 import { POST } from "@/app/api/guest-monitoring/payment/callback/route";
 import { recordPayment } from "../record-payment";
 import { paymentCallback } from "../payment-callback";
-import { PortoneTerminalPayment } from "@/lib/danal/portone-payment";
-import { PortonePaymentNotFound } from "@/lib/danal/portone-rest";
+import { PortoneTerminalPayment } from "@/lib/danal/portone-v1-payment";
+import { PortonePaymentNotFound } from "@/lib/danal/iamport-rest";
 import { recordTerminalPayment } from "../record-terminal-payment";
 import { encodeReceipt, newReceipt, parseReceipt } from "@/lib/danal/portone-callback";
 import { GuestError } from "../errors";
@@ -28,13 +28,13 @@ import type { PaymentResult } from "@/lib/danal/types";
 let row: ReturnType<typeof makeRow>;
 let result: PaymentResult;
 function makeRow() {
-  return { id: "row", orderId: "ord_test", amount: 10000, currency: "KRW", providerMode: "portone",
+  return { id: "row", orderId: "ord_test", amount: 10000, currency: "KRW", providerMode: "portone_v1",
     providerReceipt: newReceipt(), status: "pending", providerTransactionId: null as string | null,
     paidAt: null as Date | null, appliedAt: null as Date | null,
     createdAt: new Date(Date.now() - 60_000), expiresAt: new Date(Date.now() + 60_000),
     guestMonitoring: { guestIdentityHash: "identity-test" } };
 }
-const body = { paymentId: "ord_test", callbackContext: "fixture", callbackSignature: "a".repeat(64) };
+const body = { paymentId: "ord_test", imp_uid: "imp_test", callbackContext: "fixture", callbackSignature: "a".repeat(64) };
 const principal = { verifiedIdentityHash: "identity-test", purpose: "apply", draftId: "draft" };
 function request(origin?: string, referer?: string, payload: unknown = body) {
   return new NextRequest("http://localhost:3000/api/guest-monitoring/payment/callback", {
@@ -45,12 +45,12 @@ function request(origin?: string, referer?: string, payload: unknown = body) {
 }
 beforeEach(() => {
   vi.resetAllMocks(); f.queue = Promise.resolve();
-  vi.stubEnv("GUEST_PAYMENT_MODE", "portone"); vi.stubEnv("DANAL_PROVIDER", "");
+  vi.stubEnv("GUEST_PAYMENT_MODE", "portone_v1"); vi.stubEnv("DANAL_PROVIDER", "");
   vi.stubEnv("GUEST_MONITORING_ENABLED", "true"); vi.stubEnv("PII_ENCRYPTION_KEY", "fixture-key");
   vi.stubEnv("PII_SALT", "fixture-salt"); vi.stubEnv("SEARCH_INDEX_KEY", "fixture-signing-key");
   row = makeRow();
-  result = { orderId: row.orderId, transactionId: "tx_test", merchantId: "store-test", amount: 10000,
-    currency: "KRW", paidAt: Date.now() - 1000, status: "paid", expiresAt: row.expiresAt.getTime(), verificationReference: row.orderId };
+  result = { orderId: row.orderId, transactionId: "imp_test", merchantId: "store-test", amount: 10000,
+    currency: "KRW", paidAt: Date.now() - 1000, status: "paid", expiresAt: row.expiresAt.getTime(), verificationReference: "imp_test" };
   f.findUnique.mockImplementation(async ({ where }) => where.orderId === row.orderId || where.id === row.id ? { ...row } : null);
   f.findUniqueOrThrow.mockImplementation(async () => ({ ...row }));
   f.findFirst.mockResolvedValue({ orderId: row.orderId });
@@ -78,7 +78,7 @@ it("checks identity ownership before REST verification", async () => {
   const response = await POST(request("http://localhost:3000"));
   expect(response.status).toBe(404); expect(f.verify).not.toHaveBeenCalled();
   expect(f.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: {
-    orderId: body.paymentId, providerMode: "portone", guestMonitoring: { guestIdentityHash: principal.verifiedIdentityHash },
+    orderId: body.paymentId, providerMode: "portone_v1", guestMonitoring: { guestIdentityHash: principal.verifiedIdentityHash },
   } }));
 });
 it("returns the fixed pending message without persisting failure or consuming nonce", async () => {
@@ -118,7 +118,7 @@ it("records approval and consumes nonce once under repeated concurrent callbacks
   expect(recorded.every(r => r?.status === "paid")).toBe(true);
   expect(f.updateMany).toHaveBeenCalledOnce(); expect(f.audit).toHaveBeenCalledOnce();
   expect(parseReceipt(row.providerReceipt).consumed).toBe(true);
-  expect(row.providerTransactionId).toBe("tx_test");
+  expect(row.providerTransactionId).toBe("imp_test");
 });
 it("does not release needs_review or accept a different transaction on replay", async () => {
   await recordPayment(result); row.status = "needs_review";
@@ -163,13 +163,13 @@ it("does not accept a preconsumed nonce on an unpaid order", async () => {
   expect(f.updateMany).not.toHaveBeenCalled();
 });
 it.each(["failed", "canceled"] as const)("persists confirmed %s without approval timestamp or nonce consumption", async status => {
-  f.verify.mockRejectedValue(new PortoneTerminalPayment(row.orderId, "tx_test", status));
-  f.get.mockRejectedValue(new PortoneTerminalPayment(row.orderId, "tx_test", status));
+  f.verify.mockRejectedValue(new PortoneTerminalPayment(row.orderId, "imp_test", status));
+  f.get.mockRejectedValue(new PortoneTerminalPayment(row.orderId, "imp_test", status));
   await expect(paymentCallback(body, principal)).resolves.toEqual({ ok: true });
   expect(row.status).toBe(status); expect(row.paidAt).toBeNull(); expect(parseReceipt(row.providerReceipt).consumed).toBe(false);
 });
 it("does not persist a terminal failure if requery disagrees", async () => {
-  f.verify.mockRejectedValue(new PortoneTerminalPayment(row.orderId, "tx_test", "failed"));
+  f.verify.mockRejectedValue(new PortoneTerminalPayment(row.orderId, "imp_test", "failed"));
   f.get.mockResolvedValue(result);
   await expect(paymentCallback(body, principal)).rejects.toMatchObject({ code: "payment_failed" });
   expect(f.update).not.toHaveBeenCalled();
@@ -186,7 +186,7 @@ it("recovers an apply failure through cron using the stored transaction ID exact
     await expect(paymentCallback(body, principal)).rejects.toThrow("apply interrupted");
     expect(row.status).toBe("paid"); expect(parseReceipt(row.providerReceipt).consumed).toBe(true);
     expect(await recoverPayments()).toBe(1); expect(await recoverPayments()).toBe(0);
-    expect(f.get).toHaveBeenLastCalledWith("tx_test");
+    expect(f.get).toHaveBeenLastCalledWith("imp_test");
     expect(f.updateMany).toHaveBeenCalledOnce(); expect(apply).toHaveBeenCalledTimes(2);
   } finally { apply.mockRestore(); }
 });
@@ -215,4 +215,31 @@ it("maps malformed PortOne callback JSON to the contract error", async () => {
   }));
   expect(response.status).toBe(400); expect(await response.json()).toMatchObject({ code: "payment_failed" });
   expect(f.verify).not.toHaveBeenCalled();
+});
+
+it.each(["apply", "status", "renewal"])("accepts the owning %s session at both route and service", async purpose => {
+  f.session.mockResolvedValue({ ...principal, purpose });
+  const response = await POST(request("http://localhost:3000"));
+  expect(response.status).toBe(409); // Provider pending, not a session rejection.
+  expect(f.session).toHaveBeenCalledWith(expect.anything(), ["apply", "status", "renewal"]);
+  expect(f.verify).toHaveBeenCalledWith(body);
+});
+it("still refuses another identity for a status session", async () => {
+  f.session.mockResolvedValue({ ...principal, purpose: "status", verifiedIdentityHash: "other-identity" });
+  f.findFirst.mockResolvedValue(null);
+  expect((await POST(request("http://localhost:3000"))).status).toBe(404);
+  expect(f.verify).not.toHaveBeenCalled();
+});
+it("uses imp_uid for both terminal snapshots even before it is stored", async () => {
+  f.verify.mockRejectedValue(new PortoneTerminalPayment(row.orderId, "imp_test", "failed"));
+  f.get.mockRejectedValue(new PortoneTerminalPayment(row.orderId, "imp_test", "failed"));
+  expect((await POST(request("http://localhost:3000"))).status).toBe(200);
+  expect(f.get).toHaveBeenCalledWith("imp_test");
+  expect(row.paidAt).toBeNull(); expect(row.providerTransactionId).toBeNull();
+  expect(parseReceipt(row.providerReceipt).consumed).toBe(false);
+});
+it("preserves legacy paid V2 rows during V1 cron recovery", async () => {
+  const { recoverPayments } = await import("../recovery");
+  f.findMany.mockResolvedValue([{ ...row, status: "paid", providerMode: "portone", providerTransactionId: "legacy-v2" }]);
+  expect(await recoverPayments()).toBe(0); expect(f.get).not.toHaveBeenCalled();
 });

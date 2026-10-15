@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { parseReceipt, paymentFailed } from "@/lib/danal/portone-callback";
-import type { PortoneTerminalPayment } from "@/lib/danal/portone-payment";
+import type { PortoneTerminalPayment } from "@/lib/danal/portone-v1-payment";
 import { locked } from "./transaction";
 /** Never synthesize paidAt or consume an approval nonce for an unapproved outcome. */
 export async function recordTerminalPayment(result: PortoneTerminalPayment) {
@@ -9,7 +9,7 @@ export async function recordTerminalPayment(result: PortoneTerminalPayment) {
   if (!ref) return paymentFailed();
   return locked(ref.guestMonitoring.guestIdentityHash, async tx => {
     const current = await tx.guestMonitoringOrder.findUniqueOrThrow({ where: { orderId: result.orderId } });
-    if (current.providerMode !== "portone" || current.appliedAt ||
+    if (current.providerMode !== "portone_v1" || current.appliedAt ||
         ["paid", "needs_review", "refunded"].includes(current.status) || parseReceipt(current.providerReceipt).consumed) return paymentFailed();
     if (current.providerTransactionId && current.providerTransactionId !== result.transactionId) return paymentFailed();
     const other = await tx.guestMonitoringOrder.findUnique({ where: { providerTransactionId: result.transactionId }, select: { orderId: true } });

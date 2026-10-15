@@ -3,8 +3,15 @@
 import { useCallback, type Dispatch, type SetStateAction, type MutableRefObject } from "react";
 import type { GuestDraftResponse, GuestOrderStateResponse } from "@/types/guest-monitoring";
 import { createOrder, getOrderState, paymentCallback } from "../guest/guestApi";
-import { applyResume, classifyOrderState, orderTarget } from "../guest/guestProvider";
-import { runPayment, resendOrderCallback, type ResumeResult } from "../guest/guestPayment";
+import { applyResume, classifyOrderState, orderTarget, GUEST_APPLY_PATH } from "../guest/guestProvider";
+import {
+  runPayment,
+  resendOrderCallback,
+  rememberCallback,
+  recallCallback,
+  forgetCallback,
+  type ResumeResult,
+} from "../guest/guestPayment";
 import { classifyApiFailure, failureMessage, type FailureAction } from "../guest/applyFailure";
 import type { useGuestOtp } from "./useGuestOtp";
 
@@ -157,7 +164,7 @@ export function useGuestOrderFlow(p: OrderFlowParams) {
    * 한다. 어느 쪽도 새 주문을 만들지 않고 결제창을 다시 띄우지 않는다(멱등키 유지).
    */
   const advanceOrder = useCallback(
-    async (orderId: string, draftId?: string) => {
+    async (orderId: string, draftId?: string, impUid?: string) => {
       const gen = genRef.current;
       setPhase("recovering");
       setBusy(true);
@@ -166,7 +173,11 @@ export function useGuestOrderFlow(p: OrderFlowParams) {
       if (draftId) {
         const target = orderTarget("initial", draftId);
         const idempotencyKey = applyResume.ensureIdempotencyKey(target);
-        result = await resendOrderCallback({ purpose: "initial", draftId, idempotencyKey, orderId });
+        // 승인 후 콜백 유실 복구(버그①/§4.6): 메모리에 보존된 콜백 문맥(imp_uid + 서명)이 있으면 그대로
+        // 재전송한다. 없을 때만 동일 멱등키로 문맥을 재발급하며, impUid(모바일 복귀 쿼리의 미신뢰 거래 ID)가
+        // 있으면 재발급 문맥과 결합한다. 어느 쪽도 SDK를 다시 실행하거나 새 주문을 만들지 않는다.
+        const callback = recallCallback(orderId);
+        result = await resendOrderCallback({ purpose: "initial", draftId, idempotencyKey, orderId, callback, impUid });
       } else {
         const res = await getOrderState(orderId);
         result = res.ok
@@ -186,6 +197,8 @@ export function useGuestOrderFlow(p: OrderFlowParams) {
         return;
       }
       applyFinalState(result.data);
+      // 메모리 콜백 수명주기(§4.6): pending을 벗어나면(승인확정/완료/실패) 재전송이 불필요하므로 제거한다.
+      if (result.data.status !== "pending") forgetCallback(orderId);
     },
     [genRef, setPhase, setBusy, setError, handleReauth, applyFailureOutcome, applyFinalState]
   );
@@ -214,28 +227,42 @@ export function useGuestOrderFlow(p: OrderFlowParams) {
         applyResume.setOrderId(target, res.data.orderId);
         const orderId = res.data.orderId;
         setPhase("paying");
-        const outcome = await runPayment(res.data.payment);
+        // buyer_tel 폴백으로 OTP 흐름의 메모리 전화를 전달(저장소·URL 저장 금지, §5.1).
+        // shouldCancel: 로더 await 중 reset·초안 교체·재인증·언마운트로 세대가 바뀌면 결제창을 열지 않는다(§4.7).
+        const outcome = await runPayment(
+          res.data.payment,
+          GUEST_APPLY_PATH,
+          otpPhoneRef.current || undefined,
+          () => gen !== genRef.current
+        );
         if (gen !== genRef.current) return;
         switch (outcome.kind) {
           case "redirected":
             return; // 페이지 이탈 → 복귀 시 useEffect가 재개
+          case "aborted":
+            return; // 로더 대기 중 이탈/reset — 결제창 미실행, 상태 전이 없음(§4.7)
           case "confirm": {
+            // 콜백 유실 복구용으로 imp_uid 포함 문맥을 메모리에 보존한다(저장소 금지, §4.6). 최초 POST가 일시
+            // 실패해도 재시도에서 동일 문맥을 다시 보낼 수 있다(버그①/③). 완료·실패 확정 시 advanceOrder가 제거.
+            rememberCallback(orderId, outcome.callback);
             const cb = await paymentCallback(outcome.callback);
             if (gen !== genRef.current) return;
             if (cb.ok) {
-              void advanceOrder(orderId); // 서버 상태로 done 판정
+              void advanceOrder(orderId); // 서버 상태로 done 판정(여전히 pending이면 메모리 문맥 보존)
               return;
             }
             if (cb.status === 401) {
               handleReauth();
               return;
             }
-            // 콜백 일시 실패(payment_pending/503/429/네트워크) → 재조회 후 재시도에서 동일 문맥 재전송(버그③).
+            // 콜백 일시 실패(payment_pending/503/429/네트워크) → 보존된 문맥으로 재전송 후 상태 확정(버그①/③).
+            // draftId를 넘겨 resend 경로(동일 문맥 콜백 재전송)를 타게 한다 — 단순 재조회는 pending에서 못 벗어난다.
             if (cb.code === "payment_pending" || cb.status === 0 || cb.status === 429 || cb.status === 503) {
-              void advanceOrder(orderId);
+              void advanceOrder(orderId, draftId);
               return;
             }
             // 영구 거부(payment_failed 400 / 403 / 404) → 분류 차단. 재조회로 "승인 대기"처럼 숨기지 않는다(버그③).
+            forgetCallback(orderId);
             applyFailureOutcome(cb.status, cb.code);
             return;
           }
@@ -261,7 +288,7 @@ export function useGuestOrderFlow(p: OrderFlowParams) {
         payingRef.current = false;
       }
     },
-    [payingRef, genRef, setError, setRecovery, setBusy, setPhase, applyFailureOutcome, handleReauth, advanceOrder]
+    [payingRef, genRef, otpPhoneRef, setError, setRecovery, setBusy, setPhase, applyFailureOutcome, handleReauth, advanceOrder]
   );
 
   return { handleReauth, advanceOrder, startOrder };

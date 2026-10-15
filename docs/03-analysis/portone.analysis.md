@@ -1,58 +1,74 @@
-# PortOne V2 다날 테스트 결제 · 신청 복구 — 설계 대비 구현 갭 분석
+# PortOne V1(다날 카드) 테스트 결제 — 설계 ↔ 구현 갭 분석
 
 > 프로젝트: VESTRA
-> 작성일: 2026-10-15
-> 작성자: Claude (크로미)
-> 기준 설계: [`docs/02-design/features/portone.design.md`](../02-design/features/portone.design.md) (753줄, 공용 계약서)
+> 작성일: 2026-10-15 · 작성: 크로미(Claude)
+> 기준 설계: [`docs/02-design/features/portone.design.md`](../02-design/features/portone.design.md) (773줄, 공용 계약서)
 > 교차검수: [`portone.review-backend.md`](./portone.review-backend.md) · [`portone.review-frontend.md`](./portone.review-frontend.md)
-> 대상: 커밋 전 워킹트리(백엔드 Codex + 프론트 Claude, **교차수정 반영 후**)
-> 방법: 설계서 전문 ↔ 실제 구현 코드 1:1 대조 + 교차검수 지적 해소 여부 재검증. 테스트·린트 실제 실행.
-> 범위 밖: 다날 V2 테스트 채널 실연동(§0.1 P0 미확인으로 503 차단 중), 실브라우저/실PG 검증.
+> 대상: 교차수정 반영 후 현재 워킹트리(미커밋) — `lib/danal/*`, `lib/guest-monitoring/*`, `app/api/guest-monitoring/payment/*`, `app/(personal-home)/renewal/monitoring/*`
+> 방법: 설계서 전문 ↔ 실제 구현 코드 1:1 대조 + 교차검수 지적 해소 여부 재검증(현재 라인 재확인). 테스트·린트 실제 실행.
+> 검증 실행: `npx tsc --noEmit` ✅ · `vitest(guest-monitoring)` ✅ 264 passed / 28 skipped / 13파일 · 변경 FE 7파일 ESLint ✅
+> 범위 밖: §0.1 P0 증빙 미확정으로 실 REST/SDK는 503 차단 중 — 실브라우저/실PG 검증 미수행
+>
+> ⚠️ **본 파일은 과거 PortOne V2 분석을 대체한다.** 설계가 V2→V1으로 전면 갱신됨에 따라 V2 기준(npm SDK 설치·V2 채널·미분리 `useGuestStatus`) 서술은 모두 폐기했다.
 
 ---
 
-## 1. Match Rate (일치율)
+## 1. Match Rate (일치율): **약 93%**
 
-| 영역 | 일치율 | 근거 요약 |
+설계서는 경로·DTO·상태매핑·에러코드·보안모델·파일분리를 고정한 **계약서**다. 현재 구현은 이 계약의 핵심 — 승인=서버 V1 재조회 SSOT, HMAC+nonce 1회 소비, Origin+세션+IDOR, imp_uid↔merchant_uid 결합, V2→V1 전수 전환, 파일 책임 분리 — 을 **충실히 이행**했고, 교차검수 HIGH 2건·MED 2건 중 1건이 모두 해소됐다.
+
+| 영역 | 일치 | 근거 |
 | --- | --- | --- |
-| **백엔드 (lib/danal, lib/guest-monitoring, app/api)** | **96%** | §2~§4 서버 재검증·nonce 원자소비·Origin/세션/IDOR·fail-closed 전부 스펙대로. 잔여는 문서성 LOW(audit 사유·prisma 주석·상태코드 일관성) |
-| **프론트엔드 (guest/, hooks/, types/)** | **90%** | §5·§6 복구 계약(401 분리·입력 보존·실패 분류·세대관리·모바일 복귀·콜백 재전송·연장) 전부 구현. 유일한 실행 차단은 **SDK 미설치(B11)** |
-| **종합** | **≈ 92%** | 보안·로직 계약은 사실상 완전 일치. 미달은 전부 "설계가 별도 변경으로 분리한 선행작업(SDK 설치)"과 "문서성 미갱신"이며 핵심 로직 결함 아님 |
+| §3.1 모드 resolver·안전게이트 | ✅ 100% | 충돌/미설정/V2 → 503, mock 격리 가드 유지 (`portone-v1-config.ts`, `index.ts`) |
+| §3.2 주문 생성·결제문맥 발급 | ✅ 100% | 응답 `payment` V1화, CAS nonce 유지 (`order.ts`) |
+| §3.3 콜백 처리순서(Origin→세션→소유권→verify→2차조회→record) | ✅ 100% | `route.ts`+`payment-callback.ts` |
+| §3.4 재조회 대조·상태매핑 | ✅ 95% | `cancelled+paid_at` 분기가 설계 표 미반영(Gap-6) |
+| §3.7 토큰/조회/취소 REST | ✅ 100% | 취소 어댑터 미연결=설계상 의도 |
+| §4.4 nonce 원자 소비 | ✅ 100% | `updateMany` 조건부 1회 CAS + P2002 |
+| §4.5 V2→V1 전수 전환 | ✅ 100% | callback/record/terminal/recovery 전건 |
+| §4.6 imp_uid 유실 복구(인증 서버 진입점) | ✅ 100% | **교차수정으로 라우트 연결 완료** |
+| §4.7 SDK 실행 전 실패·로더 재시도 초기화 | ✅ 100% | rejected Promise 리셋 (`portoneV1Loader.ts`) |
+| §4.8 status 세션·영구 거부 보존 | ✅ 100% | 신청·연장·모바일 복귀 전 경로 분류 공유 |
+| §5.1 `runPayment` V1 분기 | ✅ 100% | merchant_uid 엄격 대조로 수정됨 |
+| §5.2 신청/연장 상태머신 | ✅ 100% | imp_uid 메모리 보존·재전송 |
+| §1.2 파일 분리/감사 사유 갱신 | ⚠️ 85% | audit 사유 미갱신, `useGuestApply` 413줄(Gap-1·2) |
+| §0.1 P0 선행(테스트 채널 증빙) | ⛔ 미이행 | 설계상 의도된 미결(게이트 닫힘) — **완료 아님** |
 
-**해석:** 구현은 설계 계약을 **매우 충실히** 따랐다. 교차검수에서 지적된 백엔드 MED 3건 중 2건 해소·1건 설계 근거 명시, 프론트 HIGH 5건 중 4건 완전 해소·1건(SDK 설치)만 범위 밖 보류, MED 2건 모두 해소. 92%를 깎는 8%는 대부분 **"로컬에서 됐다 ≠ 실제로 됐다"(규칙 0-1)** 영역 — SDK 미설치·채널 미확인으로 **실동작은 설계 의도대로 503 차단된 상태**이며, 이는 결함이 아니라 미완 선행작업이다.
+**차감 요인(≈7%)**: ① audit 사유 미갱신(MED, 문서/감사 정합성) ② §0.1 증빙 미확정으로 실동작 미검증(규칙 0-1) ③ LOW 4건(게이트 닫힘으로 현재 무해) ④ `useGuestApply.ts` 413줄(400줄 분리 트리거 초과, 500줄 한도 내). 깎인 부분은 대부분 **"로컬에서 됐다 ≠ 실제로 됐다"** 영역이며 핵심 로직 결함이 아니다.
 
 ---
 
 ## 2. Gap 목록 (설계 대비 누락/불일치)
 
-### 2.1 실행 차단 — 선행작업 미완 (설계가 "별도 변경"으로 분리한 항목)
+### Gap-1 [MED·미해소] 콜백 ALLOWLIST 사유가 변경된 인증 모델 미반영
+- **파일**: `scripts/audit-api-auth.mjs:47`
+- 설계 §1.2·§7.2가 "payment/callback ALLOWLIST 사유 갱신(status 세션 포함)"을 명시 요구했으나 사유 문자열은 여전히 `"비회원 결제 콜백(외부 PG) — HMAC + provider 재조회 금액검증 + nonce 1회소비 + IP rate limit"`에 머물러 있다. 이번 변경으로 추가된 **Origin 강제 + OTP 세션(apply/status/renewal) + 주문-세션 신원결합(IDOR 차단)** 이 빠졌다.
+- 영향: `audit:api`는 allowlist 엔트리 존재로 통과(게이트 안 깨짐). 코드 동작엔 영향 없으나 **감사 근거 문서가 실제 방어와 불일치**. 교차검수 백엔드 MED 2건 중 유일한 미해소 항목.
+- 조치: 사유에 `Origin 강제 + OTP세션(apply/status/renewal) + 주문-세션 신원결합(IDOR)` 추가(문구만, 동작 변경 없음).
 
-| # | 설계 근거 | 구현 상태 | 영향 |
-| --- | --- | --- | --- |
-| G1 | §1.2 B11 — `@portone/browser-sdk` 설치(package.json+lockfile) | **미설치.** `package.json`·lockfile·node_modules 모두 없음. `guestPayment.ts:69`의 동적 import는 `loadSdk()`에서 실패→`null` | PortOne 인라인 결제 실행 불가. 단, `loadSdk` 실패 시 `{kind:"unavailable"}`로 degrade하여 "승인 대기"로 숨기지 않고 오류 유지+재시도 유도(프론트 HIGH#1 지적 해소). 서버는 `verifiedTestChannels=[]`로 실행정보 발급 전 503 차단 |
-| G2 | §0.1 P0 — 다날 V2 테스트 채널·payMethod 콘솔 증빙 확인 | **미확인.** `portone-test-channels.ts:14` 빈 배열. README에 "콘솔 증빙 없어 미확인, V1/타PG 대체 금지" 명시 | 설계 의도대로 **fail-closed**. 결함 아님. 채널 확인 전까지 "실동작 완료" 보고 불가(설계 §8 완료조건·규칙 0-1) |
+### Gap-2 [LOW·구조] `useGuestApply.ts` 413줄 — 설계 400줄 분리 트리거 초과
+- **파일**: `app/(personal-home)/renewal/monitoring/hooks/useGuestApply.ts` (413줄)
+- 설계 §1.2·강제 트리거는 "작성 직후 400줄 초과 시 분리 보고"를 요구. 가장 무거운 서브머신(`useGuestOrderFlow.ts` 295줄)은 이미 분리됐으나 부모 훅이 400줄을 넘었다. **500줄 하드리밋 내여서 배포 차단 사유는 아니나 설계 자체 트리거 위반**이므로 보고 대상.
+- 조치: 복귀 effect/세대관리 일부 헬퍼 분리 검토(선택).
 
-> G1·G2는 설계가 **채널 확인과 독립**(§0.1, §7)으로 분리한 선행작업이며, 구현/README가 이를 명시적으로 범위 밖 처리했다. "코드 통과 = 완료"로 오인하지 않은 점은 규칙 0-1/0-4 준수.
+### Gap-3 [LOW·무해] `sandbox` 필드 부재 시 비테스트 거래 미차단
+- **파일**: `lib/danal/portone-v1-payment.ts:33` (`payment.sandbox === false`)
+- `sandbox` optional → **명시적 false일 때만 거부**, undefined는 통과. 무출금 1차 방어선은 `verifiedV1TestChannels`(현재 빈 배열→닫힘)이라 지금은 무해하나, §0.1 증빙으로 게이트를 여는 순간 `sandbox` 없는 응답이면 defense-in-depth 공백(절대규칙 §0.3 "`test:true` 등 단일 필드로 무출금 간주 금지" 취지).
+- 조치: §0.1에서 다날 V1 테스트 플래그 제공 여부·필드명 확정 후 "필드 부재=거부" 또는 "채널 증빙으로 무출금 보장"을 명문화.
 
-### 2.2 문서성 미갱신 (기능 영향 없음)
+### Gap-4 [LOW·무해] V1 응답 스키마 가정값 미확정
+- **파일**: `lib/danal/iamport-schemas.ts` (`pg_id`=MID, findAll `{total,next,list}` 가정)
+- §0.1·§8의 P0 선행(MID 필드명·취소 필드·주문번호 조회 응답 형태 공식 스키마 확정)이 미완. 가정이 틀리면 `mapPayment`/`findImpUidByMerchantUid`가 전건 오분류 가능. **증빙 전 게이트 닫힘으로 현재 영향 없음**(주석에도 명시). `portone.plan.md` 잔여 체크리스트로 "`pg_id`·findAll 응답형태 실응답 대조" 승격 권장.
 
-| # | 설계 근거 | 구현 상태 | 비고 |
-| --- | --- | --- | --- |
-| G3 | §1.2 B12 / §9 — `audit-api-auth.mjs` payment/callback ALLOWLIST 사유 갱신(Origin+세션+IDOR+nonce 명시) | **미갱신.** `scripts/audit-api-auth.mjs:47` 사유 = 기존 "HMAC + provider 재조회 금액검증 + nonce 1회소비 + IP rate limit" 그대로. Origin·세션·IDOR 미언급 | `audit:api`는 ALLOWLIST 존재로 통과하므로 게이트는 안 깨짐. **문서 계약 미이행**(백엔드 LOW 미해소) |
-| G4 | §2.1 / 백엔드 LOW#8 — prisma 주석 `providerMode`/`providerReceipt`에 portone 반영 | **미갱신.** `schema.prisma`: `providerMode // mock \| danal`, `providerReceipt // 격리 목의 서명된 서버 재조회 증빙` 그대로 | 컬럼은 문자열이라 **DB 변경 없음(§2.1 준수)**. 주석만 미반영 |
+### Gap-5 [LOW·성능] cron 복구 루프 내 `getDanalProvider()` 반복
+- **파일**: `lib/guest-monitoring/recovery.ts:8-11`
+- `for` 루프 안에서 주문마다 `getDanalProvider()`(env 파싱 + 채널 `find`) 재호출. 최대 50회라 실영향 미미하나 루프 불변식 → 루프 밖 1회 해석 후 재사용 권장. (N+1 쿼리 아님 — 주문당 1 REST 재조회는 설계상 의도된 재검증)
 
-### 2.3 설계 파일목록과의 구조 차이 (정당한 확장 — 결함 아님)
+### Gap-6 [LOW·문서] `cancelled+paid_at` 분기가 설계 §3.4 표에 미반영
+- **파일**: `lib/danal/portone-v1-payment.ts:45-62`
+- 설계 §3.4/§2.4 표는 `cancelled → PortoneTerminalPayment`로 기술하나, 구현은 `paid_at` 있는 전액취소는 `PaymentResult{status:"canceled"}`로 **반환**하고 `paid_at` 없는 미승인 취소만 터미널로 던진다. 다운스트림(`recordPayment` 비-paid 분기)이 올바르게 처리하므로 기능 결함 아님(구현이 실무적으로 더 정확 — 승인취소/미승인취소 구분). **절대규칙(스펙 불일치는 문서를 먼저 수정)에 따라 설계 §3.4 표를 코드에 맞춰 보강** 권장.
 
-| 항목 | 설계 §1.2 | 실제 | 판정 |
-| --- | --- | --- | --- |
-| 서버 어댑터 분할 | config/callback/rest/portone 4파일 | + `portone-payment.ts`(findPaymentOrder/mapPayment/PortoneTerminalPayment), `portone-test-channels.ts` 추가 분할 | ✅ 단일책임 강화. 각 파일 ≤76줄 |
-| 서비스 분할 | activation.ts 변경 | + `payment-callback.ts`, `record-payment.ts`, `record-terminal-payment.ts` 분리 | ✅ activation.ts 52줄 유지. §4.4 기록경계 명확화 |
-| 프론트 훅 | `useGuestApply` ≤470줄, 초과 시 `applyFailure.ts` 분리 | `useGuestApply` 408줄 + **신규 `useGuestOrderFlow.ts`(268줄)**로 주문/결제/복구 상태머신 분리 + `applyFailure.ts`(64줄) | ✅ 설계 "분리 트리거"(§1.2) 정신에 부합. 500줄·단일책임 준수 |
-| 연장 흐름 | §11 "공용 orders/provider 호환만 확인, 신규 UI 범위 밖" | `useGuestStatus.ts`를 `runPayment`/`resendOrderCallback`로 수정(프론트 HIGH#4 대응) | ⚠️ 설계 파일목록엔 없으나 **교차검수가 회귀로 요구** → 올바른 확장 |
-
-### 2.4 미세 중복 (정리 권장, LOW)
-
-- **G5. `GuestPaymentCallbackRequest` 타입 2중 정의.** 설계 §2.4.1은 `types/guest-monitoring.ts`에 추가하라 했고 실제로 추가됨(`types/guest-monitoring.ts:87-91`). 그런데 `guestApi.ts:40-44`가 동일 타입을 프론트 레이어에 **다시 선언**("공유 타입 안 건드린다" 주석). 소비처(`guestPayment.ts`)는 `guestApi`쪽을 import → `types/`의 정의는 **사실상 미사용 중복**. 기능 영향 없으나 SSOT 원칙상 한쪽으로 정리 권장.
+> **의도된 미연결(결함 아님)**: `cancelPayment`/`cancelPaymentByImpUid`는 호출부 없음 → 설계 §3.7 "cron 자동 실행·공개 취소 UI 금지, 테스트 거래 취소만"에 부합. 운영 코드 미사용 확인.
 
 ---
 
@@ -60,107 +76,100 @@
 
 ```
 ─────────────────────────────────────────────────
-📋 플랫폼 개발 원칙 점검
+📋 플랫폼 개발 원칙 점검 (설계↔구현 갭 분석)
 ─────────────────────────────────────────────────
-1. 페이지 500줄 제한   : ✅ 준수
-2. 단일 책임           : ✅ 준수
-3. 서버 검증·보안      : ✅ 준수 (상태코드 일관성 LOW 1건)
-4. 성능 (중복·N+1)     : ✅ 준수 (의도된 2회 REST 재조회 — 설계 §3.3 명시)
-5. 폴더 구조           : ✅ 준수
+1. 페이지 500줄 제한   : ⚠️ 하드리밋(500) 전 파일 준수.
+                         useGuestApply.ts 413줄 = 설계 400줄 분리 트리거 초과(Gap-2)
+                         서버 어댑터 전부 ≤100줄(최대 record-payment.ts 78줄)
+2. 단일 책임           : ✅ 로더=script, 어댑터=프로토콜, REST=통신, 콜백=서명/nonce,
+                         훅=상태전이, HTTP=guestApi, applyFailure=순수분류. 혼재 없음
+3. 서버 검증·보안      : ✅ 승인=서버 V1 재조회 SSOT. callback route Origin 강제(403)+
+                         requireSession(apply/status/renewal)(401)+주문-세션 신원결합(IDOR 404)+
+                         HMAC timingSafeEqual+nonce 조건부 1회 CAS+거래ID unique.
+                         raw SQL 없음(Prisma 바인딩/advisory-lock 파라미터만). 입력 zod .strict()+정규식.
+                         시크릿/토큰/imp_uid/원문 REST 로그·응답 미노출
+4. 성능 (중복·N+1)     : ⚠️ 토큰 메모리캐시+single-flight+401 1회 재발급, cron take:50 양호.
+                         recovery 루프 내 getDanalProvider 반복(Gap-5, LOW). N+1 없음
+5. 폴더 구조           : ✅ 어댑터·REST·config·게이트=lib/danal, 서비스=lib/guest-monitoring,
+                         라우트=app/api, 로더·실행·HTTP=route 하위 guest/, 훅=hooks/
 ─────────────────────────────────────────────────
-위반 항목: 없음 (LOW 개선권고 3건은 아래)
+위반 항목: 치명 0건 / 구조 트리거 1건(useGuestApply 413줄) / 성능 LOW 1건(recovery 루프)
+          → 배포 차단 사유 아님. Gap-2·5 후속 정리 대상
 ─────────────────────────────────────────────────
 ```
 
-**1. 500줄 제한** — 전 파일 500줄 이하. 최대 `useGuestStatus.ts` 476, `useGuestApply.ts` 408, `useGuestOrderFlow.ts` 268, `guestPayment.ts` 240. 서버 어댑터 전부 ≤76줄. ✅
+**1. 500줄 제한** — 전 파일 500줄 이하. FE 최대 `useGuestApply.ts` 413, `useGuestRenew.ts` 370, `useGuestStatus.ts` 323, `guestPayment.ts` 313. 서버 어댑터 전부 ≤100줄. 단 `useGuestApply` 413줄은 설계 400줄 분리 트리거 초과(Gap-2).
 
-**2. 단일 책임** — UI(components, 미변경)/상태·로직(hooks)/결제 프로토콜(`guestPayment.ts`)/HTTP(`guestApi.ts`)/실패 분류(`applyFailure.ts` 순수함수) 분리. 서버는 config/서명/REST/어댑터/기록경계 분할. 페이지에 결제 프로토콜 없음. ✅
+**2. 단일 책임** — `portoneV1Loader.ts`=script 수명주기, `guestPayment.ts`=결제 프로토콜(UI·상태전이 없음), `guestApi.ts`=HTTP, 훅=상태전이, `applyFailure.ts`=순수 분류(React/DOM/네트워크 없음). 서버는 config/게이트·REST·응답매핑·어댑터·서명nonce 분할. 페이지에 결제 프로토콜 없음. ✅
 
 **3. 서버 검증·보안** — 매우 견고:
-- 브라우저 금액·상태 **불신** → REST 재조회로 금액·통화·상점·채널(TEST)·`isForTest`·`pgProvider`·시각 **전수 재검증**(`portone-payment.ts:29-49`).
-- HMAC `timingSafeEqual`(`portone-callback.ts:43`), canonical 키순서 서명, 전용 파생키(`SEARCH_INDEX_KEY||AUTH_SECRET` 기반, secret 미노출).
-- nonce **조건부 1회 소비** CAS `updateMany count===1` + `P2002` 경합 처리(`record-payment.ts:56-66, 75`).
-- 브라우저 경로 **Origin 재검증(Referer 폴백 차단)** + OTP 세션 + 주문-신원 결합 IDOR 차단(`route.ts:11-16`, `payment-callback.ts:14-21`).
-- 오류에 원문 REST·secret·PII 미포함. SSRF 방지(`redirect:"error"`, 고정 호스트).
-- ⚠️ LOW: `route.ts:16` `requireSession(req,["apply","renewal"])`가 purpose=status 세션에 **404**를 먼저 던져, 서비스층 401(`payment-callback.ts:14`)에 도달 못 함 → 설계 §3.3 표(세션=401, IDOR=404)와 상태코드 의미 불일치. 기능 차단은 정상.
+- 승인 판단 전부 **서버 V1 재조회 SSOT**. 브라우저 금액/success/시각/주문번호 불신. `mapPayment`가 imp_uid·merchant_uid·amount(정수 10000)·currency·pg_provider(`danal_tpay`)·MID(pg_id)·pay_method(`card`)·상태·취소내역·paid_at 범위(`createdAt≤paidAt≤expiresAt`,`≤now`) 전수 대조.
+- callback route: Origin 헤더 필수+allowlist 강제(`route.ts:13-18`, `!origin || validateOrigin(originOnly)` → 403, 극성 정확) + `requireSession(["apply","status","renewal"])`(401) + 주문-세션 신원결합(`payment-callback.ts`·`recover-pending-payment.ts`에서 `guestIdentityHash===session.verifiedIdentityHash` → IDOR 404).
+- HMAC `timingSafeEqual` 상수시간 비교, nonce `updateMany` 조건부 1회 CAS + `P2002` 경합 처리, `needs_review`는 재전송으로 미해제.
+- raw SQL 없음(Prisma 쿼리빌더 + advisory-lock 파라미터 바인딩만). 입력 zod `.strict()`+정규식(imp_uid·base64url·hex) 화이트리스트.
+- 시크릿/토큰/imp_uid/원문 REST 로그·응답 미노출. `DANAL_CARD_ENC_KEY` REST 미사용. 삭제된 V2 모듈 잔존 import 0건.
 
-**4. 성능** — 중복 호출 점검:
-- 콜백 1건당 PortOne REST GET **2회**(`verifyPayment`→`getPaymentById`, 이어 `getPayment`→`getPaymentById`). 설계 §3.3/§4.4 "재조회 방어"에 따른 **의도된** 설계이며 `payment-callback.ts:28,42-43`에 근거 주석 추가됨(교차검수 MED#2 대응).
-- `mapPayment`의 중복 transactionId 소유권 조회는 **제거**, 기록경계(`recordPayment`/`recordTerminalPayment`)로 일원화(`portone-payment.ts:50-52` 주석, 교차검수 MED#3 해소).
-- 복구 `take:50` 상한, 기존 rate limiter 재사용. N+1 없음. ✅
+**4. 성능** — 토큰 메모리캐시+single-flight+401 1회 재발급, cron `take:50`, 두 번째 조회는 §3.3/§4.4의 의도된 재검증(중복 아님), `recordPayment`는 REST 없이 DB 상태만. N+1 없음. ⚠️ Gap-5(recovery 루프 getDanalProvider 반복, LOW).
 
-**5. 폴더 구조** — 공급자=`lib/danal`, 서비스=`lib/guest-monitoring`, 라우트=`app/api/...`, 타입=`types/`, 클라=route 아래 `guest`/`hooks`. ✅
+**5. 폴더 구조** — 공급자·REST·config·게이트=`lib/danal`, 서비스=`lib/guest-monitoring`, 라우트=`app/api`, 로더·실행·HTTP=route 하위 `guest/`, 훅=`hooks/`. ✅
 
 **API 보안 체크리스트(CLAUDE.md):**
-- 인증 없는 변이 핸들러: `payment/callback`은 공개 콜백이나 portone 경로에 Origin+세션+IDOR+nonce 추가. 신규 미인증 변이 없음.
-- dead code endpoint: `payment/callback`은 `guestApi.paymentCallback`→`startOrder`/`resendOrderCallback`에서 실제 호출. 미사용 아님.
-- ⚠️ 단, **audit ALLOWLIST 사유 미갱신(G3)** — 게이트는 통과하나 문서 계약 미이행.
+- 인증 없는 변이 핸들러: `app/api/` 전체 신규 미인증 변이 없음. `payment/callback`은 공개 콜백이나 V1 경로에 Origin+세션+IDOR+nonce 적용.
+- dead code endpoint: 교차검수에서 "호출부 없음(MED)"으로 지적된 `recover-pending-payment.ts`가 **body-free `POST .../payment/callback?recoverOrderId=` 경로로 연결 완료**(`route.ts:22-28`, 세션 principal만 사용·JSON 금지). dead code 해소.
+- ⚠️ audit ALLOWLIST 사유 미갱신(Gap-1) — 게이트는 통과하나 문서 계약 미이행.
 
 ---
 
 ## 4. 교차검수 지적사항 해소 여부
 
-### 4.1 백엔드 (review-backend.md)
-
-| # | 심각도 | 지적 | 해소 여부 | 근거 |
+### 4.1 백엔드 (`review-backend.md` — HIGH 0 / MED 2 / LOW 5 / INFO 1)
+| # | 심각도 | 지적 | 해소 | 근거(현재 라인) |
 | --- | --- | --- | --- | --- |
-| B-1 | MED | REST 404를 일시장애와 구분 않고 `payment_failed`(400)로 축약 | ✅ **해소** | `portone-rest.ts:6-7` `PortonePaymentNotFound`가 이제 `provider_unavailable`(503) 상속 + `:28`에서 404시 throw → 호출부 재시도 가능한 503으로 전파. 중복결제 오분류 위험 제거 |
-| B-2 | MED | 콜백당 REST GET 2~3회 중복 | ✅ **해소(설계 근거 명시)** | 2회는 §3.3/§4.4 의도된 재조회 방어임을 `payment-callback.ts:28,42-43` 주석으로 명시. 터미널 3회째도 "검증 후 상태 전이 가능"이라 유지. 교차검수 수정제안 1안(주석 명시) 채택 |
-| B-3 | MED | `mapPayment` 중복 transactionId 조회 2~3회 | ✅ **해소** | 소유권 조회를 기록경계로 이동, `mapPayment`는 read-only(`portone-payment.ts:50-52` 주석). 중복 DB 왕복 제거 |
-| B-4 | LOW | audit ALLOWLIST 사유 미갱신 | ❌ **미해소** | `audit-api-auth.mjs:47` 사유 미변경(G3). README에 "이번 작업 수정 허용 경로 밖" 명시 |
-| B-5 | LOW | portone 결제 ↔ sms_otp 본인인증 모드 암묵 결합 | ⚠️ **부분** | `lib/danal/README.md` 신규 작성, "SMS OTP는 기존 경로 유지"(:4) 언급. 다만 "portone 결제=sms_otp 전제" **명시적 경고 문구는 없음**. 코드 변경 불필요건 |
-| B-6 | LOW | 세션 purpose 불일치 시 401 아닌 404 | ❌ **미해소** | `route.ts:16` 그대로 → status 세션에 404 선반환(§3.3 표와 불일치, §3.3 본문의 LOW) |
-| B-7 | LOW | `let session;` 암묵 any + `new Request` 우회 | ❌ **미해소** | `route.ts:9,14` 그대로. 로직은 정확(Origin 전용·Referer 폴백 배제) |
-| B-8 | LOW | prisma 주석 미갱신 | ❌ **미해소** | G4 |
+| B1 | MED | §4.6 복구 경로 호출부 없음(미연결 dead code) | ✅ **해소** | `route.ts:8,22-28` 인증 서버 진입점(`?recoverOrderId=`) 추가, `recover-pending-payment.ts:14-15` 세션 principal 재확인·JSON 금지 |
+| B2 | MED | audit ALLOWLIST 사유 미갱신 | ❌ **미해소** | `audit-api-auth.mjs:47` 문자열 그대로(Gap-1) |
+| B3 | LOW | `sandbox===false`(undefined 통과) | ❌ 미해소(게이트 닫힘→무해) | `portone-v1-payment.ts:33`(Gap-3) |
+| B4 | LOW | `pg_id`/findAll 응답 가정값 | ❌ 미해소(의도·무해) | `iamport-schemas.ts`(Gap-4) |
+| B5 | LOW | recovery 루프 내 getDanalProvider | ❌ **미해소** | `recovery.ts:8-11`(Gap-5) |
+| B6 | LOW | `cancelled+paid_at` 표현 불일치 | ❌ 미해소(문서 정정 권장) | `portone-v1-payment.ts:45-62`(Gap-6) |
+| B7 | INFO | cancelPayment 미사용(의도) | — | 운영 코드 미호출 확인 |
 
-**백엔드 핵심(MED) 3건 전부 해소.** LOW 5건 중 1건 부분(README), 4건 미해소(전부 문서·타입·상태코드 수준, 기능 무영향).
+→ **MED 2건 중 1건(B1) 해소, 1건(B2) 미해소. LOW 4건 미해소이나 전부 문서·가정·미세성능 수준이며 게이트 닫힘으로 현재 무해.**
 
-### 4.2 프론트엔드 (review-frontend.md)
-
-| # | 심각도 | 지적 | 해소 여부 | 근거 |
+### 4.2 프론트엔드 (`review-frontend.md` — HIGH 2 / MED 2 / LOW 1)
+| # | 심각도 | 지적 | 해소 | 근거(현재 라인) |
 | --- | --- | --- | --- | --- |
-| F-1 | HIGH | SDK 의존성 누락으로 결제 실행 불가 | ⚠️ **부분(설치 보류, degrade 해소)** | `@portone/browser-sdk` **여전히 미설치**(G1). 단 지적의 핵심인 "실패를 승인 대기로 덮어쓰기"는 해소: `loadSdk` 실패→`{kind:"unavailable"}`(`guestPayment.ts:102-106`)→`retry_payment`로 오류 유지·같은 주문 재실행 유도(`useGuestOrderFlow.ts:242-249`). 설치 자체는 범위 밖 보류 |
-| F-2 | HIGH | 모바일 복귀 시 서명 문맥 재발급·콜백 누락 | ✅ **해소** | 복귀 effect가 `advanceOrder(orderId, draftId)`→`resendOrderCallback`로 **동일 멱등키 문맥 재발급 후 콜백 재전송**(SDK 재실행·새 주문 없음). `useGuestApply.ts:266-277`, `guestPayment.ts:189-240`. 연장은 `useGuestStatus.ts:170-203` 마운트 effect |
-| F-3 | HIGH | 콜백 일시 실패 후 복구 문맥 폐기 | ✅ **해소** | `resend_callback` 분류 신설(`applyFailure.ts:15`), pending→동일 문맥 재전송(`useGuestOrderFlow.ts:135-144`). 401/영구거부(400/403/404)는 `applyFailureOutcome`로 **별도 분류**(승인 대기로 숨기지 않음, `:238-239`) |
-| F-4 | HIGH | 연장 흐름에 공급자 전환 미반영(회귀) | ✅ **해소** | `useGuestStatus.startRenew`가 `runPayment(payment, GUEST_STATUS_PATH)`→confirm시 콜백→`finalizeRenew`로 확정(`:347-411`). mock/다날 경로 보존 |
-| F-5 | HIGH | 조회 장애를 주문 생성 재시도로 처리해 SDK 재실행 | ✅ **해소** | ①`classifyApiFailure`가 생성/조회/콜백 실패 분리(`applyFailure.ts:30-40`) ②주문 존재 시 `advanceOrder`(GET만), 없을 때만 `startOrder`(`useGuestApply.ts:354-368`) ③`verifyApplyOtp`가 `existingOrderId` 확인 후 분기(`:222-227`) ④`payingRef` 동기 재진입 잠금(`:197-198`) |
-| F-6 | MED | 세대 관리가 parse·인증발송·언마운트 미보호 | ✅ **해소** | `submitParse` 세대 캡처·비교(`:90-91,108`), `startIdentity`(`:159,169`), **언마운트 세대 무효화 effect**(`:72-76`), `goInput`의 `setBusy(false)`(`:139`) |
-| F-7 | MED | 404·draft_expired 만료 재개 참조 잔존 | ✅ **해소** | `applyFailureOutcome` reparse 분기가 **해당 대상 주문·멱등키 폐기 + 세대++ + draft/orderState 정리**(`useGuestOrderFlow.ts:94-107`). 대상 단위 정리(전체 clear 아님) |
+| F1 | HIGH | 콜백 일시실패 후 imp_uid/문맥 유실 → 승인 기록 복구 불가 | ✅ **해소** | `useGuestOrderFlow.ts:247` `rememberCallback`, `:179-180` `recallCallback`→`resendOrderCallback(impUid)`, `:201/:265` `forgetCallback`, + 서버 복구(B1) 연결 |
+| F2 | HIGH | 미확정 연장 주문 재클릭이 SDK 재실행(이중출금 위험) | ✅ **해소** | `useGuestRenew.ts:262-268` 저장 주문·`sdkSafeRef` 확인 후 SDK 없이 `finalizeRenew`(재전송)만. SDK 재실행은 무출금 확정(cancel/unavailable/mock) 대상만 |
+| F3 | MED | SDK 로딩 중 이탈해도 결제창 실행 취소 불가 | ✅ **해소** | `guestPayment.ts:96,110-121` `shouldCancel` 세대가드, 로더 await·init 후 `request_pay` 직전 확인→`aborted`. 언마운트 시 세대 증가 |
+| F4 | MED | 모바일 복귀 영구거부·세션만료 미통지 | ✅ **해소** | `useGuestRenew.ts:306-324` reauth/api_error 분류, `:351-363` 재인증(`preserveOrders`)·오류 notice 표시 |
+| F5 | LOW | merchant_uid 누락을 성공으로 허용 | ✅ **해소** | `guestPayment.ts:150-159` `imp_uid` 필수 + `merchant_uid !== paymentId` 엄격 거부 |
 
-**프론트 HIGH 5건 중 4건 완전 해소, 1건(SDK 설치)만 범위 밖 보류(degrade 처리는 해소). MED 2건 전부 해소.** 린트 통과, 서버 mock/경계 테스트 **92건 전부 통과**(`npx vitest run`, 실행 확인).
+→ **프론트 HIGH 2 / MED 2 / LOW 1 전건 해소.** 로더 실패정리·rejected Promise 초기화(§4.7), DTO 4필드(`{paymentId,imp_uid,callbackContext,callbackSignature}`), localStorage 미사용·sessionStorage는 `{idempotencyKey,orderId}`만(imp_uid/서명/PII 없음), V2 SDK import 제거(CDN 로더로 대체), done=서버 `paid&&applied` 모두 확인.
 
 ---
 
 ## 5. 종합 의견 및 남은 수정 우선순위
 
 ### 5.1 종합
+교차수정이 **프론트 HIGH 2건(승인 복구·이중출금)·MED 2건을 전건 해소**했고, 백엔드의 핵심 end-to-end 공백(§4.6 복구 미연결, B1)도 인증 라우트로 연결됐다. 보안 치명결함(인증 우회·IDOR·SQLi/XSS·시크릿 노출)은 없다. 승인 판단은 전부 서버 V1 재조회 SSOT에 근거하며 브라우저 전달 값(금액/success/시각/주문번호)을 신뢰하지 않는다. `tsc`·guest-monitoring vitest(264)·FE ESLint 전부 통과. 구현 품질은 **대표급(규칙 0)** 기준에 부합한다.
 
-구현 품질은 **대표급(규칙 0)** 기준에 부합한다. 특히:
-- **보안 계약 완전 이행** — 브라우저 불신·REST 전수 재검증·nonce 원자소비·Origin/세션/IDOR·fail-closed가 설계 그대로. 치명적 결함 없음.
-- **교차검수 핵심 지적 대부분 해소** — 백엔드 MED 3/3, 프론트 HIGH 4/5(+degrade)·MED 2/2.
-- **규칙 0-1 준수** — SDK 미설치·채널 미확인을 숨기지 않고 503 차단 + README 명문화. "코드 통과 = 완료"로 오인하지 않음.
-
-**단, 현재 상태로는 "다날 V2 테스트 결제 실동작 완료"를 선언할 수 없다** — G1(SDK)·G2(채널)가 남아 실결제 경로가 의도적으로 차단돼 있다. 이는 설계가 예고한 미완 선행작업이다.
+**단, "V1 다날 테스트 결제 실동작 완료"는 선언할 수 없다(절대규칙 0-1·§0.1).** `verifiedV1TestChannels`가 **빈 배열**이라 안전게이트가 닫혀 있어 실제 REST/SDK는 503으로 차단된다. 지금까지는 **fixture 기반 정적/단위 검증**일 뿐이다. 이는 설계가 예고한 미완 선행작업이며, 코드가 이를 숨기지 않고 fail-closed + 주석으로 명문화한 점은 규칙 0-1/0-4 준수다.
 
 ### 5.2 남은 수정 우선순위
-
 | 순위 | 항목 | 분류 | 조치 |
 | --- | --- | --- | --- |
-| **P0** | G2 — 다날 V2 테스트 채널·payMethod **콘솔 증빙 확인** 후 `portone-test-channels.ts` 등록 | 선행 차단 | §0.1. 확인 전 아래 모든 것이 무의미(503 차단). **값은 노출 없이** |
-| **P0** | G1 — `@portone/browser-sdk` 설치(package.json+lockfile, **별도 변경**) + 설치 후 타입으로 `guestPayment.ts`의 `@ts-ignore`/`any` 경계 교체 | 선행 차단 | §1.2 B11. lockfile 변경은 영향범위 먼저 확인 |
-| **P1** | G3 — audit ALLOWLIST 사유 갱신(Origin+세션+IDOR+nonce 명시) | 문서 계약 | `audit-api-auth.mjs:47`. CLAUDE.md API 보안 체크리스트 이행 |
-| **P1** | B-6 — 콜백 라우트 세션 purpose 불일치를 **401로 통일**(route/서비스 일원화) | 상태코드 일관성 | §3.3 표 준수 |
-| **P2** | G4 — prisma 주석 `\| portone`·nonce 상태머신 반영 (DB 변경 없음) | 문서 | `schema.prisma` |
-| **P2** | B-5 — README에 "portone 결제 활성화는 sms_otp 본인인증 전제" 경고 추가 | 문서 | 설정 조합 오류 방지 |
-| **P2** | G5 — `GuestPaymentCallbackRequest` 2중 정의 한쪽으로 통일(SSOT) | 정리 | `types/` vs `guestApi.ts` |
-| **P3** | B-7 — `route.ts` `session` 타입 명시 + Origin 전용 검사 헬퍼 추출 | 가독성 | 로직 정확, 선택적 |
+| **P0** | §0.1 P0 증빙 확정 — imp 코드/MID/REST 키·시크릿이 실제 **무출금 V1 테스트 채널**에 연결됐는지 PortOne 콘솔·공식문서로 확인 후 `verifiedV1TestChannels` 등록. MID 필드명(`pg_id`)·취소 필드·주문번호 조회 응답형태(Gap-4) **실대조** | 선행 차단 | 확인 전 아래 모두 무의미(503). **값은 노출 없이** |
+| **P1** | Gap-3 `sandbox` defense-in-depth — §0.1 결과로 테스트 플래그 기대값을 채널 증빙에 포함하거나 "필드 부재=거부" 명문화 | 보안(게이트 오픈 전 필수) | 실결제 차단 2차 방어선 |
+| **P1** | Gap-1 audit ALLOWLIST 사유 갱신(Origin+OTP세션+IDOR) | 문서/감사 | `audit-api-auth.mjs:47` 문구만. **배포 전 반영 권장** |
+| **P2** | Gap-6 설계 §3.4 표 보강(cancelled+paid_at 분기 명문화) | 문서 | 스펙 불일치는 문서 우선 수정 |
+| **P2** | Gap-5 recovery 루프 getDanalProvider 호이스팅 | 성능 | `recovery.ts` |
+| **P2** | Gap-2 `useGuestApply.ts` 413줄 추가 분리 검토 | 구조 | 400줄 트리거 |
+| **P1** | 실환경 검증 — 게이트 오픈 후 t-vestra 무출금 테스트 결제 1회: 최초 콜백 유실/503/모바일 복귀 재시도에서 **동일 거래 콜백 전송·적용 1회·SDK 추가 호출 0회**, 미확정 연장 재클릭 SDK 0회 실브라우저 확인. 프론트 DOM/React 훅 회귀(§6.1 P1-01~08) 추가 | 실동작 | 완료 선언의 유일 근거 |
 
 ### 5.3 완료 판정 (규칙 0-1/0-5)
-
-설계 §8 완료조건 기준 현재 상태:
-- ✅ 서버 위변조 거부·nonce 1회 소비·미확정 분리 — 테스트 92건 통과로 확인
+- ✅ 서버 위변조 거부·nonce 1회 소비·미확정 분리·V2 차단 — vitest 264건 통과로 확인
 - ✅ SMS OTP 불변·파일당 500줄·운영 DB 미접촉
-- ✅ 두 복구 버그(401 재인증·입력 보존) + 추가 통합결함(모바일복귀·콜백재전송·연장·세대관리) 해소
-- ❌ **SDK/REST 실제 테스트 연동 성공** — G1·G2로 미달. **실환경(t-vestra) 무출금 다날 테스트 채널 검증 전까지 "실동작 완료" 보고 금지**
+- ✅ 교차검수 프론트 HIGH 2/MED 2/LOW 1 + 백엔드 §4.6 복구 연결(B1) 해소
+- ❌ **SDK/REST 실제 테스트 연동 성공** — §0.1 증빙 미확정으로 미달. **실환경(t-vestra) 무출금 다날 V1 테스트 채널 검증 전까지 "실동작 완료" 보고 금지**
 
-> 본 분석은 정적 대조 + 단위테스트/린트 실행까지다. 실브라우저·실PG·운영 DB 검증은 미수행이며, 완료는 규칙 0-1에 따라 **대장 확인이 가능한 실환경 결과**로만 선언한다.
+> 본 분석은 정적 대조 + 단위테스트/린트 실행까지다. 실브라우저·실PG·운영 DB 검증은 미수행이며, 완료는 규칙 0-1에 따라 **대장 확인이 가능한 실환경 결과**로만 선언한다. 배포 전 최소 Gap-1(감사 사유) 반영을 권장하고, 나머지 LOW는 게이트 오픈과 함께 일괄 처리 가능하다.
