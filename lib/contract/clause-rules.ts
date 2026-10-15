@@ -4,7 +4,7 @@
  * @module lib/contract/clause-rules
  */
 
-import type { AnalyzedClause, MissingClause } from "../contract-analyzer";
+import type { AnalyzedClause, MissingClause } from "./types";
 import type { ClauseInteractionRule, ClauseInteractionResult } from "../patent-types";
 
 // ─── 리스크 규칙 DB ───

@@ -9,14 +9,16 @@
  *
  * Tilko API로 등기신청사건 처리현황(프리체크) + 등기부등본 발급을 수행하고
  * SHA-256 해시 비교로 변동을 감지한다. 데모/테스트 시 시뮬레이션 모드 사용.
+ *
+ * 순수 함수/헬퍼는 lib/registry-monitor/ 로 분리됨:
+ *  - change-detection: 해시·변동 감지·위험도
+ *  - simulation: 시뮬레이션/확정조회 등기부 획득
+ *  - check-log: 감시 실행 로그 & cron heartbeat
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { createHash } from "crypto";
-import { sendNotification } from "@/lib/notification-sender";
-import { getNotificationRecipients } from "@/lib/monitoring-recipients";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { recordRegistrySnapshot } from "@/lib/registry-snapshot-recorder";
 import { getSectionLabel } from "@/lib/registry-blockchain";
@@ -24,11 +26,20 @@ import {
   fetchRegistryCaseStatus,
   isTilkoAvailable,
   shouldConfirmWithFullDoc,
-  fetchRegistryDocumentByAddress,
-  isTilkoRegistryDocAvailable,
-  extractCommUniqueNoFromText,
-  type TilkoCaseStatusResult,
 } from "@/lib/tilko-api";
+import {
+  generateContentHash,
+  mapSignalStatus,
+  detectChanges,
+  topRiskLevel,
+} from "@/lib/registry-monitor/change-detection";
+import { fetchRegistryContent } from "@/lib/registry-monitor/simulation";
+import {
+  recordCheck,
+  recordCronHeartbeat,
+  CRON_HEARTBEAT_ACTION,
+} from "@/lib/registry-monitor/check-log";
+import { createAlertAndNotify } from "@/lib/registry-monitor/notify";
 
 const BATCH_SIZE = 50;
 
@@ -37,245 +48,6 @@ const BATCH_SIZE = 50;
 // 콜드스타트+틸코 지연에도 첫 기록까지 도달하도록 180초로 상향(틸코 호출별 타임아웃과 병행).
 export const dynamic = "force-dynamic";
 export const maxDuration = 180;
-
-function generateContentHash(content: string): string {
-  return createHash("sha256").update(content).digest("hex");
-}
-
-// ── 감시 실행 로그 ──
-// 변동 유무와 무관하게 매 프리체크 실행마다 1행 기록 → 이용자 마이페이지에서
-// "하루 2회 성실히 감시 중"을 증명. 테이블 미생성/기록 실패 시에도 감시 본체는
-// 계속되도록 조용히 무시한다(비치명적).
-type CheckMethod = "precheck" | "full_doc" | "skipped";
-type CheckResult = "no_change" | "signal_detected" | "changed" | "needs_registration" | "fetch_failed";
-
-// ── cron 실행 heartbeat (AuditLog 재사용, 스키마 변경 없음) ──
-// 매 실행 시작(start)·종료(done)·오류(error)를 1행씩 남긴다. 이후 감시 누락이
-// "아예 실행 안 됨(플랫폼 스킵)=start 없음" vs "실행됐으나 중간 사망(함수 실패/타임아웃)
-// =start만 있고 done 없음"을 즉시 구분할 수 있게 한다(2026-09-23 17시 누락은 로그가
-// per-property뿐이라 이 구분이 불가능했음). 기록 실패해도 감시 본체는 계속(비치명적).
-const CRON_HEARTBEAT_ACTION = "CRON_REGISTRY_MONITOR";
-async function recordCronHeartbeat(
-  phase: "start" | "done" | "error",
-  detail?: Record<string, unknown>
-): Promise<void> {
-  await prisma.auditLog
-    .create({
-      data: {
-        action: CRON_HEARTBEAT_ACTION,
-        target: phase,
-        detail: detail ? JSON.stringify(detail) : null,
-        ipAddress: "system",
-        userAgent: "cron/registry-monitor",
-      },
-    })
-    .catch((e) => console.warn("[CRON:MONITOR] heartbeat 기록 실패:", e instanceof Error ? e.message : e));
-}
-
-async function recordCheck(
-  propertyId: string,
-  updateData: Prisma.MonitoredPropertyUpdateInput | null,
-  method: CheckMethod,
-  result: CheckResult,
-  summary?: string,
-  riskLevel?: "low" | "medium" | "high" | "critical"
-): Promise<void> {
-  // 감시 실행 로그는 "체크했으면 반드시 달력에 남는다"가 핵심이다.
-  // 체크시각(lastCheckedAt 등) 갱신과 로그 기록을 **하나의 트랜잭션**으로 묶어,
-  // 로그 기록이 실패하면 체크시각 갱신도 롤백되게 한다 → 다음 cron이 "미처리"로 보고
-  // 재시도한다("정규 cron이 lastCheckedAt만 갱신하고 로그는 유실"되던 불일치를 원천 차단).
-  // 일시적 DB 실패(서버리스 콜드스타트 커넥션 등)에는 재시도로 대응하고,
-  // 최종 실패 시에는 조용히 삼키지 않고 원인을 로그로 남긴다(은폐 금지).
-  const data = {
-    monitoredPropertyId: propertyId,
-    method,
-    result,
-    ...(summary ? { summary: summary.slice(0, 500) } : {}),
-    ...(riskLevel ? { riskLevel } : {}),
-  };
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      if (updateData) {
-        await prisma.$transaction([
-          prisma.monitoredProperty.update({ where: { id: propertyId }, data: updateData }),
-          prisma.monitoringCheckLog.create({ data }),
-        ]);
-      } else {
-        await prisma.monitoringCheckLog.create({ data });
-      }
-      return;
-    } catch (e) {
-      if (attempt < 3) {
-        await new Promise((r) => setTimeout(r, 200 * attempt));
-        continue;
-      }
-      // 3회 모두 실패 → cron 전체는 계속 진행하되(감시 자체를 막지 않음) 원인을 남긴다.
-      console.error(
-        `[CRON:MONITOR] recordCheck 실패 (property=${propertyId}, method=${method}, result=${result}):`,
-        e instanceof Error ? e.message : e
-      );
-    }
-  }
-}
-
-const RISK_ORDER: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 };
-function topRiskLevel(changes: ChangeDetection[]): "low" | "medium" | "high" | "critical" {
-  return changes.reduce<"low" | "medium" | "high" | "critical">(
-    (max, c) => (RISK_ORDER[c.riskLevel] > RISK_ORDER[max] ? c.riskLevel : max),
-    "low"
-  );
-}
-
-function mapSignalStatus(phase: TilkoCaseStatusResult["phase"]): string {
-  if (phase === "completed") return "pending_confirm";
-  if (phase === "dismissed") return "dismissed";
-  return "case_detected";
-}
-
-// ── 변동 유형 감지 (상세 분석) ──
-interface ChangeDetection {
-  changeType: string;
-  summary: string;
-  detail: string;
-  riskLevel: "low" | "medium" | "high" | "critical";
-}
-
-function detectChanges(oldContent: string | null, newContent: string): ChangeDetection[] {
-  const changes: ChangeDetection[] = [];
-  const contentLower = newContent.toLowerCase();
-  const oldLower = (oldContent || "").toLowerCase();
-
-  // 근저당 신규 추가 감지
-  const newMortgageCount = (contentLower.match(/근저당|저당권설정/g) || []).length;
-  const oldMortgageCount = (oldLower.match(/근저당|저당권설정/g) || []).length;
-  if (newMortgageCount > oldMortgageCount) {
-    changes.push({
-      changeType: "mortgage_added",
-      summary: "근저당권 신규 설정 감지",
-      detail: `등기부 을구에 근저당권이 새로 설정되었습니다. (기존 ${oldMortgageCount}건 → ${newMortgageCount}건)`,
-      riskLevel: "high",
-    });
-  }
-
-  // 압류/가압류 감지
-  const newSeizure = (contentLower.match(/압류|가압류/g) || []).length;
-  const oldSeizure = (oldLower.match(/압류|가압류/g) || []).length;
-  if (newSeizure > oldSeizure) {
-    changes.push({
-      changeType: "seizure_added",
-      summary: "압류/가압류 신규 감지",
-      detail: "등기부에 압류 또는 가압류가 새로 등기되었습니다. 즉시 확인이 필요합니다.",
-      riskLevel: "critical",
-    });
-  }
-
-  // 소유권 이전 감지
-  const newOwnership = (contentLower.match(/소유권이전/g) || []).length;
-  const oldOwnership = (oldLower.match(/소유권이전/g) || []).length;
-  if (newOwnership > oldOwnership) {
-    changes.push({
-      changeType: "ownership_changed",
-      summary: "소유권 이전 감지",
-      detail: "해당 부동산의 소유권이 이전되었습니다. 계약 상대방 확인이 필요합니다.",
-      riskLevel: "high",
-    });
-  }
-
-  // 경매 개시 감지
-  if (contentLower.includes("경매개시") && !oldLower.includes("경매개시")) {
-    changes.push({
-      changeType: "auction_started",
-      summary: "경매 개시결정 감지",
-      detail: "해당 부동산에 경매 개시결정이 등기되었습니다. 긴급 대응이 필요합니다.",
-      riskLevel: "critical",
-    });
-  }
-
-  // 전세권 변동 감지
-  const newLease = (contentLower.match(/전세권/g) || []).length;
-  const oldLease = (oldLower.match(/전세권/g) || []).length;
-  if (newLease !== oldLease) {
-    changes.push({
-      changeType: "lease_right_changed",
-      summary: "전세권 변동 감지",
-      detail: `전세권 설정 또는 말소 관련 변동이 감지되었습니다. (기존 ${oldLease}건 → ${newLease}건)`,
-      riskLevel: "medium",
-    });
-  }
-
-  // 변동은 있지만 특정 유형 미분류
-  if (changes.length === 0) {
-    changes.push({
-      changeType: "general_change",
-      summary: "등기부 변동 감지",
-      detail: "등기부 내용에 변동이 감지되었습니다. 상세 내용을 확인해 주세요.",
-      riskLevel: "medium",
-    });
-  }
-
-  return changes;
-}
-
-// ── 시뮬레이션용 등기부 생성 ──
-const SIMULATED_CHANGE_TEXT: Record<string, string> = {
-  mortgage_added: "을구 제3호 근저당권설정 채권최고액 금4억8,000만원 (시뮬레이션)",
-  seizure_added: "을구 제4호 가압류 서울중앙지방법원 (시뮬레이션)",
-  ownership_changed: "갑구 제5호 소유권이전 (시뮬레이션)",
-  auction_started: "갑구 제6호 경매개시결정 (시뮬레이션)",
-};
-
-function generateSimulatedRegistry(
-  baselineData: string | null,
-  changeType: string
-): string {
-  const injectedText = SIMULATED_CHANGE_TEXT[changeType] || SIMULATED_CHANGE_TEXT.mortgage_added;
-
-  if (baselineData) {
-    return `${baselineData}\n${injectedText}`;
-  }
-
-  // 최소 더미 등기부
-  return [
-    "[표제부] 서울특별시 강남구 테헤란로 123 아파트 101동 1001호",
-    "[갑구] 제1호 소유권보존 홍길동",
-    "[을구] 제1호 근저당권설정 채권최고액 금2억원",
-    injectedText,
-  ].join("\n");
-}
-
-// ── Tilko 등기부등본 발급 조회 (확정 조회) ──
-// 틸코/인터넷등기소 상류 장애로 보이는 오류인지 판별 (일시적 장애 vs 코드/권한 오류 구분)
-function isUpstreamError(e: unknown): boolean {
-  const msg = e instanceof Error ? e.message : String(e);
-  return /\((5\d\d)\)|An error has occurred|timeout|ETIMEDOUT|ECONNRESET|fetch failed|network/i.test(msg);
-}
-
-async function fetchRegistryContent(
-  address: string,
-  options?: { simulate?: boolean; changeType?: string; baselineData?: string | null }
-): Promise<{ text: string; raw?: Record<string, unknown> } | null> {
-  // 시뮬레이션 모드: 외부 호출 없이 가짜 등기부 반환
-  if (options?.simulate) {
-    const text = generateSimulatedRegistry(
-      options.baselineData ?? null,
-      options.changeType || "mortgage_added"
-    );
-    return { text };
-  }
-
-  // Tilko 등기부등본 발급 (주소 기반)
-  if (isTilkoRegistryDocAvailable()) {
-    try {
-      const result = await fetchRegistryDocumentByAddress({ address });
-      return { text: result.text, raw: result.rawData };
-    } catch (e) {
-      console.error(`[CRON:MONITOR] Tilko 등기부 발급 실패: ${address}`, e instanceof Error ? e.message : e);
-    }
-  }
-
-  // 폴백: 발급 불가 시 null 반환 → 변동 감지 skip
-  return null;
-}
 
 // ── 계약~전입 기간 체크 ──
 // ── 전입 예정일 지난 물건 자동 모드 전환 ──
@@ -399,7 +171,7 @@ export async function GET(req: NextRequest) {
     let skipped = 0;
     // 감시 보완: 등기부 발급(확정조회) 실패를 조용히 넘기지 않고 계측한다.
     let docFetchFailures = 0; // 확정조회 실패 총건 (그 주기 변동감지 스킵된 물건 수)
-    let upstreamErrors = 0;   // 그중 상류(틸코/인터넷등기소) 장애로 보이는 건
+    const upstreamErrors = 0; // 상류(틸코/인터넷등기소) 장애로 보이는 건 (구 직접발급 경로 제거로 현재 미사용·관측 호환 유지)
     let precheckFailures = 0; // 프리체크 일시 실패(확정조회 폴백 없이 다음 주기 재시도)
 
     for (const prop of allProperties) {
@@ -416,124 +188,6 @@ export async function GET(req: NextRequest) {
             "등기 고유번호 미등록 — 등기부 PDF 등록이 필요합니다"
           );
           skipped++;
-          continue;
-        }
-
-        // (dead) 구 직접발급 경로 — 위 가드로 commUniqueNo 없는 물건은 도달하지 않음. 후속 제거 예정.
-        if (!simulate && !prop.commUniqueNo && isTilkoRegistryDocAvailable()) {
-          const now = new Date();
-          try {
-            const registry = await fetchRegistryDocumentByAddress({ address: prop.address });
-            const newHash = generateContentHash(registry.text);
-            const extractedNo = extractCommUniqueNoFromText(registry.text) ?? undefined;
-
-            // 최초 조회: baseline 저장 후 다음 회차부터 비교
-            if (!prop.lastHash) {
-              await prisma.monitoredProperty.update({
-                where: { id: prop.id },
-                data: {
-                  lastHash: newHash,
-                  baselineData: registry.text,
-                  lastCheckedAt: now,
-                  registrySignalStatus: "confirmed_no_change",
-                  ...(extractedNo ? { commUniqueNo: extractedNo } : {}),
-                },
-              });
-              await recordRegistrySnapshot({ propertyId: prop.id, fullText: registry.text }).catch(() => {});
-              tilkoPrechecks++;
-              continue;
-            }
-
-            // 변동 없음
-            if (prop.lastHash === newHash) {
-              await prisma.monitoredProperty.update({
-                where: { id: prop.id },
-                data: {
-                  lastCheckedAt: now,
-                  registrySignalStatus: "confirmed_no_change",
-                  ...(extractedNo && !prop.commUniqueNo ? { commUniqueNo: extractedNo } : {}),
-                },
-              });
-              tilkoPrechecks++;
-              continue;
-            }
-
-            // 변동 감지!
-            let snapshotResult: { changedSections: string[]; isFirstSnapshot: boolean } | null = null;
-            try {
-              snapshotResult = await recordRegistrySnapshot({ propertyId: prop.id, fullText: registry.text });
-            } catch { /* 스냅샷 실패해도 알림은 발송 */ }
-
-            const oldContent = prop.baselineData || "";
-            const changes = detectChanges(oldContent, registry.text);
-            const sectionInfo = snapshotResult?.changedSections?.length
-              ? `\n[변동 섹션: ${snapshotResult.changedSections.map(getSectionLabel).join(", ")}]`
-              : "";
-
-            for (const change of changes) {
-              await prisma.monitoringAlert.create({
-                data: {
-                  monitoredPropertyId: prop.id,
-                  changeType: change.changeType,
-                  summary: change.summary,
-                  detail: change.detail + sectionInfo,
-                  riskLevel: change.riskLevel,
-                },
-              });
-              alertsCreated++;
-
-              const isGap = prop.monitorMode === "contract_gap";
-              const isUrgent = change.riskLevel === "high" || change.riskLevel === "critical";
-              if (isUrgent || isGap) {
-                const prefix = isGap ? "[긴급:계약감시]" : "[VESTRA]";
-                const suffix = isGap && isUrgent
-                  ? "\n\n⚠️ 계약~전입 기간 중 등기 변동입니다. 즉시 확인하세요."
-                  : "";
-                const recipients = await getNotificationRecipients(prop.id, prop.userId);
-                for (const recipientId of recipients) {
-                  await sendNotification({
-                    userId: recipientId,
-                    type: "registry_change",
-                    title: `${prefix} ${change.summary}`,
-                    body: `${prop.address}\n${change.detail}${sectionInfo}${suffix}`,
-                    data: {
-                      propertyId: prop.id,
-                      changeType: change.changeType,
-                      riskLevel: change.riskLevel,
-                      monitorMode: prop.monitorMode,
-                      source: "tilko-doc",
-                    },
-                  });
-                  notificationsSent++;
-                }
-              }
-            }
-
-            await prisma.monitoredProperty.update({
-              where: { id: prop.id },
-              data: {
-                lastCheckedAt: now,
-                lastHash: newHash,
-                registrySignalStatus: "confirmed_changed",
-                ...(extractedNo && !prop.commUniqueNo ? { commUniqueNo: extractedNo } : {}),
-                ...(!prop.baselineData ? { baselineData: registry.text } : {}),
-              },
-            });
-            tilkoPrechecks++;
-          } catch (e) {
-            const upstream = isUpstreamError(e);
-            docFetchFailures++;
-            if (upstream) upstreamErrors++;
-            console.error(
-              `[CRON:MONITOR] 확정조회(등기부 발급) 실패 → 이 주기 변동감지 스킵 [${upstream ? "상류장애" : "코드/권한오류"}]: ${prop.address}`,
-              e instanceof Error ? e.message : e
-            );
-            skipped++;
-            await prisma.monitoredProperty.update({
-              where: { id: prop.id },
-              data: { lastCheckedAt: now },
-            }).catch(() => {});
-          }
           continue;
         }
 
@@ -585,25 +239,18 @@ export async function GET(req: NextRequest) {
             );
 
             if (shouldCreateSignalAlert) {
-              await prisma.monitoringAlert.create({
-                data: {
-                  monitoredPropertyId: prop.id,
-                  changeType: signalStatus === "dismissed" ? "case_dismissed" : "case_detected",
-                  summary: caseStatus.summary,
-                  detail:
-                    signalStatus === "pending_confirm"
-                      ? "등기신청 사건 처리가 완료된 것으로 감지되었습니다. 최신 등기부 확정조회로 실제 반영 내용을 확인합니다."
-                      : "등기 변경으로 이어질 수 있는 신청 사건이 감지되었습니다. 아직 등기부등본 반영 여부는 확정 전입니다.",
-                  riskLevel: signalStatus === "dismissed" ? "low" : "medium",
-                },
-              });
-              alertsCreated++;
-
-              const recipients = await getNotificationRecipients(prop.id, prop.userId);
-              for (const recipientId of recipients) {
-                await sendNotification({
-                  userId: recipientId,
-                  type: "registry_change",
+              const r = await createAlertAndNotify({
+                propertyId: prop.id,
+                userId: prop.userId,
+                changeType: signalStatus === "dismissed" ? "case_dismissed" : "case_detected",
+                summary: caseStatus.summary,
+                alertDetail:
+                  signalStatus === "pending_confirm"
+                    ? "등기신청 사건 처리가 완료된 것으로 감지되었습니다. 최신 등기부 확정조회로 실제 반영 내용을 확인합니다."
+                    : "등기 변경으로 이어질 수 있는 신청 사건이 감지되었습니다. 아직 등기부등본 반영 여부는 확정 전입니다.",
+                riskLevel: signalStatus === "dismissed" ? "low" : "medium",
+                notify: true,
+                notification: {
                   title:
                     signalStatus === "pending_confirm"
                       ? "[VESTRA] 등기신청 처리완료 감지"
@@ -616,9 +263,10 @@ export async function GET(req: NextRequest) {
                     monitorMode: prop.monitorMode,
                     source: "tilko",
                   },
-                });
-                notificationsSent++;
-              }
+                },
+              });
+              alertsCreated += r.alertsCreated;
+              notificationsSent += r.notificationsSent;
             }
 
             if (shouldConfirmWithFullDoc(caseStatus)) {
@@ -726,50 +374,43 @@ export async function GET(req: NextRequest) {
 
         // 알림 생성 + 발송
         for (const change of changes) {
-          await prisma.monitoringAlert.create({
-            data: {
-              monitoredPropertyId: prop.id,
-              changeType: change.changeType,
-              summary: change.summary,
-              detail: change.detail + sectionInfo,
-              riskLevel: change.riskLevel,
-            },
-          });
-          alertsCreated++;
-
           // 알림 발송 조건: 긴급(high/critical) / 계약갭 모드 / 전세권·임차권 변동(세입자 핵심 신호)
           // general_change(medium)는 노이즈라 DB 기록만 남기고 푸시는 생략
           const isGap = prop.monitorMode === "contract_gap";
           const isUrgent = change.riskLevel === "high" || change.riskLevel === "critical";
           const isLeaseRight = change.changeType === "lease_right_changed";
+          const shouldNotify = isUrgent || isGap || isLeaseRight;
 
-          if (isUrgent || isGap || isLeaseRight) {
-            const prefix = isGap ? "[긴급:계약감시]" : "[VESTRA]";
-            const suffix = isGap && isUrgent
-              ? "\n\n⚠️ 계약~전입 기간 중 등기 변동입니다. 즉시 확인하세요.\n💡 dgon에서 긴급 전세권 설정 등기를 진행할 수 있습니다."
-              : "";
+          const prefix = isGap ? "[긴급:계약감시]" : "[VESTRA]";
+          const suffix = isGap && isUrgent
+            ? "\n\n⚠️ 계약~전입 기간 중 등기 변동입니다. 즉시 확인하세요.\n💡 dgon에서 긴급 전세권 설정 등기를 진행할 수 있습니다."
+            : "";
 
-            const recipients = await getNotificationRecipients(prop.id, prop.userId);
-            for (const recipientId of recipients) {
-              await sendNotification({
-                userId: recipientId,
-                type: "registry_change",
-                title: `${prefix} ${change.summary}`,
-                body: `${prop.address}\n${change.detail}${sectionInfo}${suffix}`,
-                data: {
-                  propertyId: prop.id,
-                  changeType: change.changeType,
-                  riskLevel: change.riskLevel,
-                  monitorMode: prop.monitorMode,
-                  ...(snapshotResult?.changedSections?.length
-                    ? { changedSections: snapshotResult.changedSections.join(",") }
-                    : {}),
-                  ...(isGap && isUrgent ? { dgonAction: "emergency_lease_registration" } : {}),
-                },
-              });
-              notificationsSent++;
-            }
-          }
+          const r = await createAlertAndNotify({
+            propertyId: prop.id,
+            userId: prop.userId,
+            changeType: change.changeType,
+            summary: change.summary,
+            alertDetail: change.detail + sectionInfo,
+            riskLevel: change.riskLevel,
+            notify: shouldNotify,
+            notification: {
+              title: `${prefix} ${change.summary}`,
+              body: `${prop.address}\n${change.detail}${sectionInfo}${suffix}`,
+              data: {
+                propertyId: prop.id,
+                changeType: change.changeType,
+                riskLevel: change.riskLevel,
+                monitorMode: prop.monitorMode,
+                ...(snapshotResult?.changedSections?.length
+                  ? { changedSections: snapshotResult.changedSections.join(",") }
+                  : {}),
+                ...(isGap && isUrgent ? { dgonAction: "emergency_lease_registration" } : {}),
+              },
+            },
+          });
+          alertsCreated += r.alertsCreated;
+          notificationsSent += r.notificationsSent;
         }
 
         // 해시 및 baseline 업데이트
