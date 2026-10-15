@@ -11,6 +11,7 @@ import {
   deleteSession,
 } from "../guest/guestApi";
 import { launchProvider, applyResume, classifyOrderState, orderTarget } from "../guest/guestProvider";
+import { useGuestOtp } from "./useGuestOtp";
 
 /** 현재 월(KST, YYYY-MM). 서버는 month 파라미터를 KST 기준으로 해석한다(설계 §3.4). */
 export function currentKstMonth(): string {
@@ -47,6 +48,11 @@ export function useGuestStatus() {
   const probedRef = useRef(false);
   // 달력 요청 세대 번호 — 역순 완료 시 최신 요청만 반영(경합 방지, §3).
   const calSeqRef = useRef(0);
+  // SMS OTP 대기·검증 공통 훅(설계 §5.2). 다날 모드에서는 쓰이지 않는다.
+  const otp = useGuestOtp();
+  // 재요청(§5.4) 시 재사용할 입력. 훅 메모리로만 보관하고 성공·취소 시 비운다(§5.3).
+  const lastNameRef = useRef("");
+  const lastPhoneRef = useRef("");
 
   /** 세션 만료(401) 공통 처리: 조회 데이터 비우고 재인증 화면으로(§5). */
   const handleSessionExpired = useCallback(() => {
@@ -180,7 +186,12 @@ export function useGuestStatus() {
     if (list.length === 1) selectProperty(list[0].id);
   }, [refreshProperties, selectProperty]);
 
-  /** 본인인증 시작(purpose=status) → 프로바이더 리다이렉트 */
+  /**
+   * 본인인증 시작(purpose=status).
+   * - 다날 모드: launch에 url/action 존재 → launchProvider가 리다이렉트(기존 동작, true 반환).
+   * - OTP 모드: launch.mode==="sms_otp"(이동 필드 없음) → OTP 대기 진입. 목록 갱신·인증완료
+   *   표시를 하지 않는다(§5.2).
+   */
   const startAuth = useCallback(
     async (guestName: string, guestPhone: string) => {
       setError("");
@@ -189,25 +200,60 @@ export function useGuestStatus() {
         return;
       }
       setBusy(true);
-      const res = await identityStart({
-        purpose: "status",
-        guestName: guestName.trim(),
-        guestPhone: guestPhone.trim(),
-      });
+      const name = guestName.trim();
+      const phone = guestPhone.trim();
+      const res = await identityStart({ purpose: "status", guestName: name, guestPhone: phone });
       if (!res.ok) {
         setBusy(false);
         setError(res.error);
         return;
       }
-      const launched = launchProvider(res.data.launch);
-      if (!launched) {
-        // 실행 URL이 없으면(목) 세션이 발급됐는지 재탐지한다. 발급 안 됐으면 401→미인증 유지.
+      // 런타임 launch는 Record<string,string>(설계 §2.4). 다날은 여기서 리다이렉트된다.
+      const launched = launchProvider(res.data.launch as Record<string, string>);
+      if (launched) return; // 다날 리다이렉트 — 페이지 이탈
+      if (res.data.launch.mode === "sms_otp") {
+        // OTP 대기. 재요청용 입력을 훅 메모리에 보관(§5.3).
+        lastNameRef.current = name;
+        lastPhoneRef.current = phone;
         setBusy(false);
-        await refreshProperties();
+        otp.beginOtp(res.data.verificationId, res.data.expiresAt);
+        return;
       }
+      // 이동 필드도 OTP 모드도 아님(다날 목 즉시완료 등) — 세션 발급 재탐지(기존 동작).
+      setBusy(false);
+      await refreshProperties();
     },
-    [refreshProperties]
+    [refreshProperties, otp]
   );
+
+  /** OTP 코드 확인 → 성공 시 목록 갱신 + 단건 자동 선택(§5.2). */
+  const verifyStatusOtp = useCallback(
+    async (code: string) => {
+      const result = await otp.submitOtp(code);
+      if (!result) return; // 실패(otpError 반영) 또는 구형 응답 — 미인증 유지
+      // 서버가 조회 세션 쿠키를 발급했다 → 목록 갱신으로 인증 전환.
+      const list = await refreshProperties();
+      otp.resetOtp();
+      lastNameRef.current = "";
+      lastPhoneRef.current = "";
+      if (list.length === 1) selectProperty(list[0].id);
+    },
+    [otp, refreshProperties, selectProperty]
+  );
+
+  /** 재요청(§5.4): 새 세션·코드. 기존 대기 폐기 후 동일 입력으로 재시작. */
+  const resendStatusOtp = useCallback(() => {
+    otp.resetOtp();
+    void startAuth(lastNameRef.current, lastPhoneRef.current);
+  }, [otp, startAuth]);
+
+  /** 취소: 대기·코드·입력 정리 후 입력 단계 복귀(§5.3). */
+  const cancelStatusOtp = useCallback(() => {
+    otp.resetOtp();
+    lastNameRef.current = "";
+    lastPhoneRef.current = "";
+    setError("");
+  }, [otp]);
 
   /** 연장 주문(renewal) → 결제창 리다이렉트 */
   const startRenew = useCallback(async () => {
@@ -312,6 +358,15 @@ export function useGuestStatus() {
     probeError,
     logoutFailed,
     startAuth,
+    // SMS OTP 대기·검증(§5.2). otpStatus==="pending"이면 조회 폼 대신 코드 입력 폼을 보인다.
+    otpStatus: otp.otpStatus,
+    otpVerificationId: otp.verificationId,
+    otpExpiresAt: otp.expiresAt,
+    otpBusy: otp.otpBusy,
+    otpError: otp.otpError,
+    verifyStatusOtp,
+    resendStatusOtp,
+    cancelStatusOtp,
     selectProperty,
     changeMonth,
     startRenew,

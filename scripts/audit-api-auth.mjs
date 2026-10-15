@@ -40,6 +40,7 @@ const ALLOWLIST = {
   "embed/rights/route.ts": "공개 임베드 권리분석 — IP rate limit(10/min) + 매직바이트·10MB 검증 + 텍스트PDF만(OpenAI 미사용), 응답은 위험도 집계만(PII 미포함)",
   // ── 비회원 등기감시(로그인 없는 단건 서비스) — endpoint() 래퍼가 CSRF(validateOrigin)+IP rate limit+플래그/키 게이트 공통 적용 ──
   "guest-monitoring/identity/start/route.ts": "비회원 본인인증 시작 — endpoint(): CSRF + IP rate limit + 플래그/키 게이트",
+  "guest-monitoring/identity/verify-otp/route.ts": "비회원 OTP 확인 — endpoint(): CSRF + IP·verificationId·nonce rate limit + 브라우저 바인딩 + 조건부 1회 소비",
   "guest-monitoring/identity/callback/route.ts": "비회원 본인인증 콜백(외부 PG) — HMAC 서명 + nonce 1회소비 + IP rate limit(120/min)",
   "guest-monitoring/orders/route.ts": "비회원 주문 생성 — CSRF + IP rate limit + 금액 SSOT(서버 산정)",
   "guest-monitoring/parse-pdf/route.ts": "비회원 등기부 PDF 파싱 — CSRF + IP rate limit + 11MB·매직바이트 검증",

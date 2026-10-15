@@ -25,10 +25,31 @@ export interface GuestIdentityStartRequest {
   guestPhone: string;
   draftId?: string;
 }
+/**
+ * identity/start 응답의 launch — OTP 식별을 위해 `mode`를 추가한 상위호환 타입.
+ * 런타임 계약은 기존 Record<string,string> 그대로이며, OTP launch는 이동 필드(url/action) 없이
+ * `mode: "sms_otp"`와 `verificationId`만 담는다. 다날은 기존 URL/form 필드(mode 없음).
+ */
+export interface GuestIdentityLaunch {
+  /** "sms_otp"면 OTP 흐름. 다날은 mode 없음 또는 "danal". */
+  mode?: string;
+  verificationId?: string;
+  [key: string]: string | undefined; // 다날 url/action/returnUrl 등 기존 필드 호환
+}
 export interface GuestIdentityStartResponse {
   verificationId: string;
-  launch: Record<string, string>;
+  launch: GuestIdentityLaunch;
   expiresAt: string;
+}
+/** §3.3 POST /identity/verify-otp 요청 — 숫자 6자리 "문자열"(앞자리 0 보존) */
+export interface GuestOtpVerifyRequest {
+  verificationId: string;
+  code: string;
+}
+/** §3.3 verify-otp 성공 응답(비-2xx 실패는 기존 GuestApiError) */
+export interface GuestOtpVerifyResponse {
+  ok: true;
+  purpose: "status" | "apply";
 }
 export interface GuestOrderRequest {
   purpose: GuestOrderPurpose;

@@ -3,6 +3,7 @@
 import g from "../guest.module.css";
 import { useGuestStatus } from "../../hooks/useGuestStatus";
 import GuestStatusAuthForm from "../../components/guest/GuestStatusAuthForm";
+import GuestOtpForm from "../../components/guest/GuestOtpForm";
 import GuestPropertyPicker from "../../components/guest/GuestPropertyPicker";
 import GuestCalendarPanel from "../../components/guest/GuestCalendarPanel";
 
@@ -25,6 +26,14 @@ export default function GuestStatusClient() {
     probeError,
     logoutFailed,
     startAuth,
+    otpStatus,
+    otpVerificationId,
+    otpExpiresAt,
+    otpBusy,
+    otpError,
+    verifyStatusOtp,
+    resendStatusOtp,
+    cancelStatusOtp,
     selectProperty,
     changeMonth,
     startRenew,
@@ -83,6 +92,21 @@ export default function GuestStatusClient() {
   }
 
   if (authState === "unauthenticated") {
+    // OTP 대기 중에는 조회 폼 대신 코드 입력 폼을 보인다. 신청 존재·주소·건수·기간은
+    // 노출하지 않는다(§5.2). launch.mode!=="sms_otp"(다날)면 otpStatus는 idle로 유지된다.
+    if (otpStatus === "pending" && otpVerificationId && otpExpiresAt) {
+      return (
+        <GuestOtpForm
+          verificationId={otpVerificationId}
+          expiresAt={otpExpiresAt}
+          busy={otpBusy}
+          error={otpError}
+          onSubmit={verifyStatusOtp}
+          onResend={resendStatusOtp}
+          onCancel={cancelStatusOtp}
+        />
+      );
+    }
     return <GuestStatusAuthForm busy={busy} error={error} onStart={startAuth} />;
   }
 

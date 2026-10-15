@@ -1,4 +1,3 @@
-import { createHash, randomBytes } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getDanalProvider } from "@/lib/danal";
@@ -6,21 +5,24 @@ import { guestIdentityHash } from "./identity-hash";
 import { GuestError, notFound } from "./errors";
 import { SESSION_TTL } from "./config";
 import { guestLimit } from "./rate-limit-keys";
+import { BROWSER_COOKIE, digest, token, binding } from "./session-binding";
+import { resolveIdentityMode } from "./identity-mode";
+import { startOtp } from "./sms-otp";
+import { limitIdentityCost } from "./identity-cost";
 import type { VerificationPurpose } from "@/types/guest-monitoring";
 export const SESSION_COOKIE = "guest_monitoring_session";
-export const BROWSER_COOKIE = "guest_monitoring_browser";
-export const digest = (value: string) => createHash("sha256").update(value).digest("hex");
-const token = () => randomBytes(32).toString("base64url");
+export { BROWSER_COOKIE, digest } from "./session-binding";
 // Both cookies support cross-site provider POST returns. Mutations still require Origin.
 const cookieOptions = () => ({ httpOnly: true, secure: process.env.NODE_ENV === "production",
   sameSite: process.env.NODE_ENV === "production" ? "none" as const : "lax" as const, path: "/api/guest-monitoring" });
-function binding(req: NextRequest, browser: string) { return digest(JSON.stringify([browser, req.headers.get("user-agent") || ""])); }
 export async function startIdentity(req: NextRequest, input: {
   purpose: VerificationPurpose; guestName: string; guestPhone: string; draftId?: string;
 }) {
+  if (resolveIdentityMode() === "sms_otp") return startOtp(req, input);
   const provider = getDanalProvider();
   const identity = guestIdentityHash(input.guestName, input.guestPhone);
   if (input.purpose === "apply") {
+    if (!input.draftId) notFound();
     const draft = await prisma.guestMonitoring.findFirst({ where: {
       id: input.draftId!, guestIdentityHash: identity, status: "pending_payment", draftExpiresAt: { gt: new Date() },
     }, select: { id: true } });
@@ -29,6 +31,7 @@ export async function startIdentity(req: NextRequest, input: {
   const browser = req.cookies.get(BROWSER_COOKIE)?.value || token();
   const nonce = token();
   const expiresAt = new Date(Date.now() + SESSION_TTL);
+  await limitIdentityCost();
   const launch = await provider.identity.startVerification({ nonce, expiresAt });
   const session = await prisma.guestVerificationSession.create({ data: {
     tokenHash: digest(token()), requestNonce: nonce, purpose: input.purpose,

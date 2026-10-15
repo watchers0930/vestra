@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { normalizeGuestName, normalizeGuestPhone } from "./identity-hash";
 export const resourceId = z.string().min(1).max(128).regex(/^[a-zA-Z0-9_-]+$/);
+export const otpVerifySchema = z.object({
+  verificationId: resourceId,
+  code: z.string().regex(/^[0-9]{6}$/),
+}).strict();
 const name = z.string().max(100).transform(normalizeGuestName)
   .pipe(z.string().min(2).max(80).regex(/^[\p{L}\p{M} .'-]+$/u));
 const phone = z.string().max(30).transform(normalizeGuestPhone)

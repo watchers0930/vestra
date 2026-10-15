@@ -93,7 +93,7 @@ export async function sendAlimtalk(
 export async function sendSms(
   phone: string,
   text: string,
-  options?: { correlationId: string }
+  options?: { correlationId?: string; requireReal?: boolean }
 ): Promise<AlimtalkResult> {
   return (await prepareSms(phone, text, options))();
 }
@@ -102,13 +102,15 @@ export async function sendSms(
 export async function prepareSms(
   phone: string,
   text: string,
-  options?: { correlationId: string }
+  options?: { correlationId?: string; requireReal?: boolean }
 ): Promise<() => Promise<AlimtalkResult>> {
   const solapi = await getClient();
   const from = await getNotificationSettingOrEnv("SOLAPI_SENDER_PHONE");
 
   return async () => {
     if (!solapi || !from) {
+      // Authentication must fail closed without logging even a partial recipient.
+      if (options?.requireReal) return { channel: "sms_mock", success: false };
       // PII 보호: 전화번호는 뒤 4자리만(하이픈 제거 후 마스킹), 본문은 로깅하지 않음
       console.info(
         `[SOLAPI:SMS:MOCK] phone=${phone.replace(/-/g, "").replace(/\d(?=\d{4})/g, "*")} textLen=${text.length}`
@@ -122,9 +124,9 @@ export async function prepareSms(
           to: phone.replace(/-/g, ""),
           from,
           text,
-          ...(options ? { customFields: { guestOutboxId: options.correlationId } } : {}),
+          ...(options?.correlationId ? { customFields: { guestOutboxId: options.correlationId } } : {}),
         },
-      ], options ? { showMessageList: true } : undefined);
+      ], options?.correlationId ? { showMessageList: true } : undefined);
       return { channel: "sms", success: true, providerMessageId: receipt.messageList?.[0]?.messageId };
     } catch (error) {
       console.error("[SOLAPI:SMS:ERROR] send_failed");

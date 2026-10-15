@@ -1,4 +1,4 @@
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const fixtures = vi.hoisted(() => ({ send: vi.fn(), getMessages: vi.fn(), setting: vi.fn() }));
 vi.mock("solapi", () => ({
   SolapiMessageService: class { send = fixtures.send; getMessages = fixtures.getMessages; },
@@ -10,6 +10,18 @@ import { MessageNotReceivedError } from "solapi";
 beforeEach(() => {
   vi.clearAllMocks();
   fixtures.setting.mockImplementation(async (key: string) => ({ SOLAPI_API_KEY: "test-key", SOLAPI_API_SECRET: "test-secret", SOLAPI_SENDER_PHONE: "0200000000" })[key as "SOLAPI_API_KEY"]);
+});
+afterEach(() => vi.restoreAllMocks());
+it.each(["SOLAPI_API_KEY", "SOLAPI_API_SECRET", "SOLAPI_SENDER_PHONE"])("fails closed without recipient logs when OTP setting %s is absent", async missing => {
+  fixtures.setting.mockImplementation(async (key: string) => key === missing ? undefined : ({
+    SOLAPI_API_KEY: "test-key", SOLAPI_API_SECRET: "test-secret", SOLAPI_SENDER_PHONE: "0200000000",
+  })[key as "SOLAPI_API_KEY"]);
+  const info = vi.spyOn(console, "info").mockImplementation(() => {});
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  expect(await sendSms("01012345678", "OTP 000042", { requireReal: true })).toEqual({ channel: "sms_mock", success: false });
+  expect(fixtures.send).not.toHaveBeenCalled();
+  expect(info).not.toHaveBeenCalled();
+  expect(error).not.toHaveBeenCalled();
 });
 it("preserves normal SMS callers and captures an opt-in outbox receipt", async () => {
   fixtures.send.mockResolvedValue({ messageList: [{ messageId: "provider-message" }] });

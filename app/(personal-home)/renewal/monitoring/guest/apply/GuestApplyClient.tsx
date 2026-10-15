@@ -3,12 +3,14 @@
 import g from "../guest.module.css";
 import { useGuestApply } from "../../hooks/useGuestApply";
 import GuestApplyForm from "../../components/guest/GuestApplyForm";
+import GuestOtpForm from "../../components/guest/GuestOtpForm";
 import GuestApplyResult from "../../components/guest/GuestApplyResult";
 
 const PHASE_STEP: Record<string, number> = {
   input: 1,
   ready: 1,
   verifying: 2,
+  otp: 2,
   ordering: 2,
   paying: 2,
   recovering: 2,
@@ -48,8 +50,26 @@ function Steps({ current }: { current: number }) {
  * 리다이렉트 복귀 재개는 useGuestApply 내부(window.location 기반)에서 처리한다.
  */
 export default function GuestApplyClient({ initialAddress = "" }: { initialAddress?: string }) {
-  const { phase, draft, orderState, error, busy, submitParse, startIdentity, retry, reset } =
-    useGuestApply();
+  const {
+    phase,
+    draft,
+    orderState,
+    error,
+    busy,
+    submitParse,
+    startIdentity,
+    retry,
+    reset,
+    restoreName,
+    restorePhone,
+    otpVerificationId,
+    otpExpiresAt,
+    otpBusy,
+    otpError,
+    verifyApplyOtp,
+    resendApplyOtp,
+    cancelApplyOtp,
+  } = useGuestApply();
 
   const step = PHASE_STEP[phase] ?? 1;
 
@@ -58,6 +78,24 @@ export default function GuestApplyClient({ initialAddress = "" }: { initialAddre
       <div className={`${g.wrap} ${g.narrow}`}>
         <Steps current={3} />
         <GuestApplyResult order={orderState} />
+      </div>
+    );
+  }
+
+  // SMS OTP 대기 — 코드 입력(인증·결제 단계). 성공 시 훅이 startOrder로 전이한다(§5.2).
+  if (phase === "otp" && otpVerificationId && otpExpiresAt) {
+    return (
+      <div className={`${g.wrap} ${g.narrow}`}>
+        <Steps current={2} />
+        <GuestOtpForm
+          verificationId={otpVerificationId}
+          expiresAt={otpExpiresAt}
+          busy={otpBusy}
+          error={otpError}
+          onSubmit={verifyApplyOtp}
+          onResend={resendApplyOtp}
+          onCancel={cancelApplyOtp}
+        />
       </div>
     );
   }
@@ -128,6 +166,8 @@ export default function GuestApplyClient({ initialAddress = "" }: { initialAddre
         busy={busy}
         error={error}
         initialAddress={initialAddress}
+        initialName={restoreName}
+        initialPhone={restorePhone}
         onParse={submitParse}
         onProceed={startIdentity}
         onEdit={reset}

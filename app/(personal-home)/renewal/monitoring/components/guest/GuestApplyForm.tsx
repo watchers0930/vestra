@@ -12,6 +12,9 @@ interface Props {
   busy: boolean;
   error: string;
   initialAddress?: string;
+  /** OTP 취소·재발송 실패로 폼이 다시 마운트될 때 복원할 이름·전화(§5.3 P0) */
+  initialName?: string;
+  initialPhone?: string;
   onParse: (input: ApplyInput) => void;
   onProceed: (guestName: string, guestPhone: string) => void;
   /** 분석 완료 후 입력을 다시 열어 초안을 무효화(§2) */
@@ -32,13 +35,18 @@ export default function GuestApplyForm({
   busy,
   error,
   initialAddress = "",
+  initialName = "",
+  initialPhone = "",
   onParse,
   onProceed,
   onEdit,
 }: Props) {
-  const [guestName, setGuestName] = useState("");
-  const [guestPhone, setGuestPhone] = useState("");
-  const [address, setAddress] = useState(initialAddress);
+  // OTP 취소·재발송 실패로 이 폼이 다시 마운트될 때, 분석에 사용했던 이름·전화·주소를 초기값으로
+  // 복원한다. 초안이 잠긴 채 빈 값이 되어 onProceed("","")로 인증 API를 호출하는 것을 막는다(P0).
+  // 신규 입력 단계에서는 모두 빈 문자열/initialAddress이므로 기존 동작과 동일하다.
+  const [guestName, setGuestName] = useState(initialName);
+  const [guestPhone, setGuestPhone] = useState(initialPhone);
+  const [address, setAddress] = useState(draft?.address ?? initialAddress);
   const [file, setFile] = useState<File | null>(null);
   const [agree, setAgree] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);

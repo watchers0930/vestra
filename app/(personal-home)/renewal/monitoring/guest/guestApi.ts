@@ -13,6 +13,8 @@ import type {
   GuestDraftResponse,
   GuestIdentityStartRequest,
   GuestIdentityStartResponse,
+  GuestOtpVerifyRequest,
+  GuestOtpVerifyResponse,
   GuestOrderRequest,
   GuestOrderResponse,
   GuestOrderStateResponse,
@@ -116,6 +118,17 @@ export function identityStart(
   req: GuestIdentityStartRequest
 ): Promise<GuestApiResult<GuestIdentityStartResponse>> {
   return postJson<GuestIdentityStartResponse>("/identity/start", req);
+}
+
+/**
+ * §3.3 POST /identity/verify-otp — SMS OTP 인증번호 확인.
+ * 성공(200) 시 서버가 HttpOnly 조회 세션 쿠키를 설정한다(응답 바디엔 토큰 없음).
+ * 실패는 비-2xx(`{error, code}`)로 반환 — 성공 오인 방지(ok 분기 후 접근).
+ */
+export function verifyOtp(
+  req: GuestOtpVerifyRequest
+): Promise<GuestApiResult<GuestOtpVerifyResponse>> {
+  return postJson<GuestOtpVerifyResponse>("/identity/verify-otp", req);
 }
 
 /** §3.3 POST /orders — 신규/연장 주문 생성(멱등키) */
