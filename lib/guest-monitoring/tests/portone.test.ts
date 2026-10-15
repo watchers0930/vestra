@@ -62,7 +62,7 @@ describe("mode/config guards", () => {
   });
   it("keeps mock isolated and independent of legacy selector when new mode alone is set", () => {
     vi.stubEnv("GUEST_PAYMENT_MODE", "mock"); vi.stubEnv("NODE_ENV", "test");
-    vi.stubEnv("DATABASE_URL", "postgresql://fixture:fixture@localhost/guest_test");
+    vi.stubEnv("DATABASE_URL", "postgresql://localhost/guest_test");
     vi.stubEnv("GUEST_MONITORING_MOCK_ISOLATED", "true"); vi.stubEnv("DANAL_MOCK_SECRET", "x".repeat(32));
     expect(getDanalProvider().mode).toBe("mock");
     vi.stubEnv("NODE_ENV", "production"); expect(getDanalProvider).toThrow();
