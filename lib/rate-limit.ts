@@ -40,7 +40,9 @@ export async function rateLimit(
     // 만료된 윈도우는 먼저 리셋 (atomic upsert)
     await prisma.rateLimit.upsert({
       where: { id: identifier },
-      update: {},  // 존재하면 아무것도 안 함 (아래에서 처리)
+      // A nonempty no-op update enables PostgreSQL ON CONFLICT. An empty update
+      // uses Prisma's read/create path and races with simultaneous callbacks (P2002).
+      update: { id: identifier },
       create: { id: identifier, count: 0, resetTime },
     });
 

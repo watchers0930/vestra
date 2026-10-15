@@ -24,6 +24,7 @@ import { encryptPII, decryptPII } from "./crypto";
 //    앱레벨 복호화 필터로 처리한다. 예) AgentClient.clientEmail=clientEmailHash, 통합검색=앱레벨(S5).
 // nested create/include는 아래 MODEL_RELATIONS 재귀로 커버된다.
 export const PII_FIELDS: Record<string, string[]> = {
+  GuestMonitoring: ["guestName", "guestPhone", "address", "ownerName"],
   User: ["businessNumber"],
   Analysis: ["address"],
   Asset: ["address"],
@@ -48,6 +49,10 @@ export const PII_FIELDS: Record<string, string[]> = {
 // PII를 가진 모델에 도달하는 경로만 등록한다. 여기 없는 관계는 재귀하지 않는다(정밀 처리).
 // 예) EContract.signatures(1:N) ↔ EContractSignature.contract(N:1)
 export const MODEL_RELATIONS: Record<string, Record<string, string>> = {
+  GuestMonitoring: { orders: "GuestMonitoringOrder", checkLogs: "GuestMonitoringCheckLog", messages: "GuestMonitoringMessage" },
+  GuestMonitoringOrder: { guestMonitoring: "GuestMonitoring" },
+  GuestMonitoringCheckLog: { guestMonitoring: "GuestMonitoring" },
+  GuestMonitoringMessage: { guestMonitoring: "GuestMonitoring" },
   EContract: { signatures: "EContractSignature" },
   EContractSignature: { contract: "EContract" },
 };

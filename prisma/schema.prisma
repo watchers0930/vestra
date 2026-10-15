@@ -1154,3 +1154,116 @@ model ExpertVisit {
 
   @@index([lawyerId])
 }
+
+
+model GuestMonitoring {
+  id                 String   @id @default(cuid())
+  guestName          String                      // PII 암호화
+  guestPhone         String                      // PII 암호화
+  guestIdentityHash  String                      // blind index (이름+전화 정규화 HMAC)
+  address            String                      // PII 암호화(소유자명과 함께)
+  commUniqueNo       String?                     // active 시 필수
+  ownerName          String?                     // PII 암호화, active 시 필수
+  status             String   @default("pending_payment") // pending_payment|active|expired|abandoned
+  startedAt          DateTime?                   // active 시 필수(초안에선 null)
+  paidUntil          DateTime?                   // active 시 필수. 감시 유효 = now < paidUntil
+  lastCheckedAt      DateTime?
+  // 프리체크 상태(회원 MonitoredProperty와 의미 대응)
+  registrySignalStatus     String  @default("idle")  // idle|signal_detected|error
+  registrySignalDetectedAt DateTime?
+  registrySignalSummary    String? @db.Text          // PII 제거된 요약만
+  draftExpiresAt     DateTime?                   // pending_payment TTL
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  orders   GuestMonitoringOrder[]
+  checkLogs GuestMonitoringCheckLog[]
+  messages GuestMonitoringMessage[]
+
+  @@index([guestIdentityHash])
+  @@index([status, paidUntil])
+  @@index([guestIdentityHash, commUniqueNo])   // 중복 활성 탐지
+  @@index([draftExpiresAt])                     // 초안 TTL 정리
+}
+
+model GuestMonitoringOrder {
+  providerReceipt       String? @db.Text // 격리 목의 서명된 서버 재조회 증빙 (PII 없음)
+  id                    String   @id @default(cuid())
+  orderId               String   @unique          // 서버 생성 주문번호(다날 전달)
+  guestMonitoringId     String
+  purpose               String                    // initial | renewal
+  amount                Int                        // 서버 스냅샷(KRW 정수)
+  currency              String   @default("KRW")
+  productVersion        String                     // SSOT 가격 버전 스냅샷
+  status                String   @default("pending") // pending|paid|needs_review|failed|canceled|refunded
+  providerMode          String                     // mock | danal
+  providerTransactionId String?  @unique           // 승인 후 거래 ID
+  idempotencyKey        String   @unique           // 요청 멱등키
+  appliedPeriodStart    DateTime?                  // 이 주문이 적용한 기간 시작
+  appliedPeriodEnd      DateTime?                  // 이 주문이 적용한 기간 끝
+  appliedAt             DateTime?                  // 적용 완료 시각(멱등 재적용 방지)
+  paidAt                DateTime?
+  expiresAt             DateTime                    // 결제 대기 주문 TTL
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  guestMonitoring GuestMonitoring @relation(fields: [guestMonitoringId], references: [id], onDelete: Cascade)
+
+  @@index([guestMonitoringId, status])
+  @@index([status, expiresAt])                     // 대기 주문 정리/복구
+}
+
+model GuestMonitoringCheckLog {
+  id                String   @id @default(cuid())
+  guestMonitoringId String
+  checkedAt         DateTime @default(now())
+  method            String                    // precheck | full_doc | skipped
+  result            String                    // no_change|signal_detected|changed|needs_registration|fetch_failed
+  riskLevel         String?                    // low|medium|high|critical
+  summary           String?  @db.Text          // PII 제거·정제된 요약만
+
+  guestMonitoring GuestMonitoring @relation(fields: [guestMonitoringId], references: [id], onDelete: Cascade)
+
+  @@index([guestMonitoringId, checkedAt(sort: Desc)])
+  @@index([checkedAt])                          // 90일 정리
+}
+
+model GuestVerificationSession {
+  draftId           String? // 신청 인증을 특정 초안에 결합 (내부 전용)
+  id                String   @id @default(cuid())
+  tokenHash         String   @unique           // 세션 토큰 원문은 저장 안 함(해시만)
+  purpose           String                     // apply | status | renewal
+  requestNonce      String   @unique           // 콜백 결합 nonce(state)
+  providerTxId      String?                     // 다날 거래 ID
+  inputIdentityHash String                     // 사용자가 입력한 이름+전화 해시
+  verifiedIdentityHash String?                  // 다날이 검증한 이름+전화 해시
+  browserBindingHash String?                    // UA/쿠키 바인딩(세션 바꿔치기 방지)
+  verifiedAt        DateTime?
+  expiresAt         DateTime                     // 조회 세션 15분
+  consumedAt        DateTime?                    // 인증 콜백 1회 소비
+  revokedAt         DateTime?
+  createdAt         DateTime @default(now())
+
+  @@index([inputIdentityHash])
+  @@index([expiresAt])
+}
+
+model GuestMonitoringMessage {
+  id                String   @id @default(cuid())
+  guestMonitoringId String
+  targetPaidUntil   DateTime                    // 어느 만료 기간에 대한 안내인지
+  type              String                      // expiry_notice (| pre_expiry MVP 외)
+  status            String   @default("pending") // pending|preparing|sent|failed|dead (dead+nextAttemptAt: reconcile only)
+  channel           String?                      // sms | sms_mock
+  attempts          Int      @default(0)
+  nextAttemptAt     DateTime?
+  providerMessageId String?
+  sentAt            DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  guestMonitoring GuestMonitoring @relation(fields: [guestMonitoringId], references: [id], onDelete: Cascade)
+
+  @@unique([guestMonitoringId, type, targetPaidUntil])  // 만료 기간당 1건 예약(중복 방지)
+  @@index([status, nextAttemptAt])
+}

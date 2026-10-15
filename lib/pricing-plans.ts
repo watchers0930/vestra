@@ -116,3 +116,13 @@ export const PRICING_COMPARISON: {
   { feature: "다중 사용자", free: false, pro: false, business: "최대 10명" },
   { feature: "전담 매니저", free: false, pro: false, business: true },
 ];
+
+/** 비회원 단건 상품: 구독 요금제와 별도인 서버 가격 계약. */
+export const GUEST_SINGLE_MONITORING = {
+  productId: "guest_monitoring_single",
+  priceVersion: "2026-10-15",
+  amount: 10000,
+  currency: "KRW",
+  propertyCount: 1,
+  months: 1,
+} as const;

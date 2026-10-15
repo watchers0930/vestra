@@ -5,7 +5,7 @@
  * DB 설정 우선, 미설정 시 환경변수 폴백. 둘 다 없으면 mock 모드.
  */
 
-import { SolapiMessageService } from "solapi";
+import { SolapiMessageService, MessageNotReceivedError } from "solapi";
 import { getNotificationSettingOrEnv } from "./system-settings";
 
 // ─── Lazy Init (DB 설정 변경 시 재생성) ───
@@ -39,6 +39,8 @@ interface AlimtalkResult {
   channel: string;
   success: boolean;
   error?: string;
+  providerMessageId?: string;
+  retryable?: boolean;
 }
 
 /**
@@ -90,32 +92,60 @@ export async function sendAlimtalk(
  */
 export async function sendSms(
   phone: string,
-  text: string
+  text: string,
+  options?: { correlationId: string }
 ): Promise<AlimtalkResult> {
+  return (await prepareSms(phone, text, options))();
+}
+
+/** Resolve settings before the outbox records a potentially accepted external send. */
+export async function prepareSms(
+  phone: string,
+  text: string,
+  options?: { correlationId: string }
+): Promise<() => Promise<AlimtalkResult>> {
   const solapi = await getClient();
   const from = await getNotificationSettingOrEnv("SOLAPI_SENDER_PHONE");
 
-  if (!solapi || !from) {
-    // PII 보호: 전화번호는 뒤 4자리만(하이픈 제거 후 마스킹), 본문은 로깅하지 않음
-    console.info(
-      `[SOLAPI:SMS:MOCK] phone=${phone.replace(/-/g, "").replace(/\d(?=\d{4})/g, "*")} textLen=${text.length}`
-    );
-    return { channel: "sms_mock", success: true };
-  }
+  return async () => {
+    if (!solapi || !from) {
+      // PII 보호: 전화번호는 뒤 4자리만(하이픈 제거 후 마스킹), 본문은 로깅하지 않음
+      console.info(
+        `[SOLAPI:SMS:MOCK] phone=${phone.replace(/-/g, "").replace(/\d(?=\d{4})/g, "*")} textLen=${text.length}`
+      );
+      return { channel: "sms_mock", success: true };
+    }
 
-  try {
-    await solapi.send([
-      {
-        to: phone.replace(/-/g, ""),
-        from,
-        text,
-      },
-    ]);
-    return { channel: "sms", success: true };
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "알 수 없는 오류";
-    console.error(`[SOLAPI:SMS:ERROR] ${message}`);
-    return { channel: "sms", success: false, error: message };
+    try {
+      const receipt = await solapi.send([
+        {
+          to: phone.replace(/-/g, ""),
+          from,
+          text,
+          ...(options ? { customFields: { guestOutboxId: options.correlationId } } : {}),
+        },
+      ], options ? { showMessageList: true } : undefined);
+      return { channel: "sms", success: true, providerMessageId: receipt.messageList?.[0]?.messageId };
+    } catch (error) {
+      console.error("[SOLAPI:SMS:ERROR] send_failed");
+      return { channel: "sms", success: false, error: "sms_send_failed", retryable: error instanceof MessageNotReceivedError };
+    }
+  };
+}
+
+/** Receipt reconciliation for outbox crash/response-loss recovery. No blind re-send on absence. */
+export async function findSmsReceipt(phone: string, correlationId: string, createdAt: Date): Promise<string | null> {
+  const solapi = await getClient();
+  if (!solapi) return null;
+  let startKey: string | undefined;
+  for (let page = 0; page < 5; page++) {
+    const response = await solapi.getMessages({ to: phone.replace(/-/g, ""),
+      startDate: createdAt, dateType: "CREATED", limit: 100, ...(startKey ? { startKey } : {}) });
+    for (const [id, message] of Object.entries(response.messageList)) {
+      if (message.customFields?.guestOutboxId === correlationId) return message.messageId || id;
+    }
+    if (!response.nextKey) return null;
+    startKey = response.nextKey;
   }
+  return null;
 }

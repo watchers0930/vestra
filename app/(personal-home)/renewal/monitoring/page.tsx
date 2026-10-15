@@ -1,4 +1,5 @@
 import MonitoringRenewalClient from "./MonitoringRenewalClient";
+import { guestMonitoringEnabled } from "@/lib/guest-monitoring/config";
 
 export const metadata = {
   title: "등기감시 - VESTRA",
@@ -11,5 +12,13 @@ export default async function MonitoringRenewalPage({
   searchParams: Promise<{ address?: string; listingId?: string }>;
 }) {
   const { address, listingId } = await searchParams;
-  return <MonitoringRenewalClient initialAddress={address ?? ""} initialListingId={listingId ?? ""} />;
+  // 비회원 신청 섹션은 서버 기능 플래그로만 노출 제어(클라이언트 판정으로 대체 금지, 설계 §0·§3.0).
+  const guestEnabled = guestMonitoringEnabled();
+  return (
+    <MonitoringRenewalClient
+      initialAddress={address ?? ""}
+      initialListingId={listingId ?? ""}
+      guestEnabled={guestEnabled}
+    />
+  );
 }

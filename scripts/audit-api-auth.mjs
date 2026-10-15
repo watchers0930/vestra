@@ -38,6 +38,13 @@ const ALLOWLIST = {
   "landlord/report/route.ts": "비회원 임대인 제보 — IP rate limit(일 3건) + CSRF",
   "e-contracts/sign/[token]/route.ts": "공개 서명 링크 — URL 토큰(signToken) 자체가 인증 + 만료·상태 검증",
   "embed/rights/route.ts": "공개 임베드 권리분석 — IP rate limit(10/min) + 매직바이트·10MB 검증 + 텍스트PDF만(OpenAI 미사용), 응답은 위험도 집계만(PII 미포함)",
+  // ── 비회원 등기감시(로그인 없는 단건 서비스) — endpoint() 래퍼가 CSRF(validateOrigin)+IP rate limit+플래그/키 게이트 공통 적용 ──
+  "guest-monitoring/identity/start/route.ts": "비회원 본인인증 시작 — endpoint(): CSRF + IP rate limit + 플래그/키 게이트",
+  "guest-monitoring/identity/callback/route.ts": "비회원 본인인증 콜백(외부 PG) — HMAC 서명 + nonce 1회소비 + IP rate limit(120/min)",
+  "guest-monitoring/orders/route.ts": "비회원 주문 생성 — CSRF + IP rate limit + 금액 SSOT(서버 산정)",
+  "guest-monitoring/parse-pdf/route.ts": "비회원 등기부 PDF 파싱 — CSRF + IP rate limit + 11MB·매직바이트 검증",
+  "guest-monitoring/payment/callback/route.ts": "비회원 결제 콜백(외부 PG) — HMAC + provider 재조회 금액검증 + nonce 1회소비 + IP rate limit",
+  "guest-monitoring/session/route.ts": "비회원 조회 세션 — DELETE는 본인 세션 토큰(쿠키) 소유자만 로그아웃, CSRF + rate limit",
 };
 
 const MUTATION_RE = /export\s+(?:async\s+function|const)\s+(POST|PUT|PATCH|DELETE)\b/g;

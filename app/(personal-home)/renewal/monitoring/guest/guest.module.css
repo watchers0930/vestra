@@ -1,0 +1,544 @@
+/* 비회원 등기감시 — 신청/조회 전용 스타일. 기존 monitoring-renewal 토큰(블루 #2e4bd8)과 일치. */
+
+.wrap {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 8px 0 8px;
+}
+.narrow {
+  max-width: 640px;
+}
+
+/* 유료 공지 */
+.notice {
+  background: #f0f2fd;
+  border: 1px solid #d8def8;
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+}
+.noticeTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1d2e;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.noticeList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+.noticeList li {
+  font-size: 13px;
+  color: #42465c;
+  line-height: 1.6;
+  padding-left: 18px;
+  position: relative;
+}
+.noticeList li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2e4bd8;
+}
+.noticeSub {
+  font-size: 12px;
+  color: #8a8fa3;
+  line-height: 1.6;
+  margin: 12px 0 0;
+}
+
+/* 섹션 공통 */
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1d2e;
+  text-align: center;
+  margin: 36px 0 6px;
+}
+.sectionSub {
+  font-size: 13px;
+  color: #6e6e73;
+  text-align: center;
+  margin: 0 0 22px;
+  line-height: 1.6;
+}
+
+/* 단건 상품 카드 */
+.productCard {
+  background: linear-gradient(135deg, #2e4bd8 0%, #3a3fb8 100%);
+  border-radius: 18px;
+  padding: 26px 28px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  box-shadow: 0 10px 30px rgba(46, 75, 216, 0.22);
+}
+.productInfo {
+  flex: 1;
+  min-width: 220px;
+}
+.productBadge {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 11px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+}
+.productName {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+.productMeta {
+  font-size: 13px;
+  opacity: 0.9;
+  line-height: 1.6;
+  margin: 0;
+}
+.productPriceBox {
+  text-align: right;
+  flex-shrink: 0;
+}
+.productPrice {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.productPriceUnit {
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0.9;
+  margin-left: 2px;
+}
+.productPriceSub {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
+/* 회원 요금제 미니 카드 */
+.planGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.planCard {
+  background: #fff;
+  border: 1px solid #e8eaf2;
+  border-radius: 14px;
+  padding: 18px 18px 20px;
+  position: relative;
+}
+.planCardHi {
+  border-color: #2e4bd8;
+  box-shadow: 0 6px 18px rgba(46, 75, 216, 0.12);
+}
+.planHiTag {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2e4bd8;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 20px;
+}
+.planName {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1d2e;
+  margin: 0 0 4px;
+}
+.planPrice {
+  font-size: 20px;
+  font-weight: 800;
+  color: #2e4bd8;
+  margin: 0 0 2px;
+}
+.planPeriod {
+  font-size: 12px;
+  font-weight: 500;
+  color: #8a8fa3;
+}
+.planDesc {
+  font-size: 12px;
+  color: #8a8fa3;
+  line-height: 1.5;
+  margin: 8px 0 12px;
+  min-height: 34px;
+}
+.planFeat {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+.planFeat li {
+  font-size: 12px;
+  color: #42465c;
+  line-height: 1.5;
+  padding-left: 16px;
+  position: relative;
+}
+.planFeat li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #2e4bd8;
+  font-weight: 700;
+}
+.planLoginNote {
+  font-size: 12.5px;
+  color: #8a8fa3;
+  text-align: center;
+  margin: 14px 0 0;
+  line-height: 1.6;
+}
+.planLoginNote a {
+  color: #2e4bd8;
+  font-weight: 600;
+}
+
+/* 폼 카드 */
+.card {
+  background: #fff;
+  border: 1px solid #e0e3ef;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+.cardTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1d2e;
+  margin: 0 0 4px;
+}
+.cardSub {
+  font-size: 12.5px;
+  color: #8a8fa3;
+  margin: 0 0 18px;
+  line-height: 1.6;
+}
+.field {
+  margin-bottom: 14px;
+}
+.errorText {
+  color: #ef4444;
+  font-size: 12px;
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+.dropState {
+  border-color: #2e4bd8;
+  background: #f5f7ff;
+}
+
+/* 단계 진행 표시 */
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.stepDot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #a7abbd;
+  font-weight: 600;
+}
+.stepDotOn {
+  color: #2e4bd8;
+}
+.stepNum {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #eef0f6;
+  color: #a7abbd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.stepNumOn {
+  background: #2e4bd8;
+  color: #fff;
+}
+.stepNumDone {
+  background: #d7defa;
+  color: #2e4bd8;
+}
+.stepBar {
+  width: 20px;
+  height: 2px;
+  background: #e8eaf2;
+}
+
+/* 요약/확인 박스 */
+.confirmBox {
+  border: 1px solid #e0e3ef;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+.confirmRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
+  padding: 7px 0;
+  border-bottom: 1px solid #f4f5f9;
+}
+.confirmRow:last-child {
+  border-bottom: none;
+}
+.confirmKey {
+  color: #8a8fa3;
+}
+.confirmVal {
+  color: #1a1d2e;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* 결과(완료) 화면 */
+.resultWrap {
+  text-align: center;
+  padding: 10px 0 6px;
+}
+.resultIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #eef1fb;
+  color: #2e4bd8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+.resultTitle {
+  font-size: 19px;
+  font-weight: 700;
+  color: #1a1d2e;
+  margin: 0 0 8px;
+}
+.resultDesc {
+  font-size: 13.5px;
+  color: #6e6e73;
+  line-height: 1.7;
+  margin: 0 0 20px;
+}
+.periodBox {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  padding: 18px;
+  background: #f8f9fc;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.periodItem {
+  text-align: center;
+}
+.periodLabel {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #8a8fa3;
+  letter-spacing: 0.04em;
+  margin-bottom: 5px;
+}
+.periodVal {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1d2e;
+}
+
+/* 버튼 */
+.btnPrimary {
+  width: 100%;
+  height: 50px;
+  background: #2e4bd8;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btnPrimary:hover {
+  background: #2540c0;
+}
+.btnPrimary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.btnGhost {
+  height: 44px;
+  padding: 0 18px;
+  border: 1px solid #dde0ec;
+  background: #fff;
+  color: #2e4bd8;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btnGhost:hover {
+  border-color: #2e4bd8;
+  background: #f5f7ff;
+}
+.btnRow {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* 물건 선택 목록 */
+.propList {
+  display: grid;
+  gap: 10px;
+}
+.propItem {
+  width: 100%;
+  text-align: left;
+  background: #fff;
+  border: 1.5px solid #e0e3ef;
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.propItem:hover {
+  border-color: #2e4bd8;
+  background: #f8f9ff;
+}
+.propItemSel {
+  border-color: #2e4bd8;
+  background: #f0f2fd;
+}
+.propItemAddr {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1d2e;
+}
+.propItemMeta {
+  font-size: 12px;
+  color: #8a8fa3;
+  margin-top: 3px;
+}
+.badgeActive {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 11px;
+  border-radius: 20px;
+  background: #eef1fb;
+  color: #3452c5;
+  flex-shrink: 0;
+}
+.badgeExpired {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 11px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+/* 상태(조회) 헤더 */
+.statusHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.statusAddr {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1d2e;
+}
+.statusMeta {
+  font-size: 12.5px;
+  color: #8a8fa3;
+  margin-top: 4px;
+}
+.linkBtn {
+  background: none;
+  border: none;
+  color: #8a8fa3;
+  font-size: 12.5px;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+.linkBtn:hover {
+  color: #2e4bd8;
+}
+
+/* 로딩/빈 상태 */
+.centerBox {
+  text-align: center;
+  padding: 40px 20px;
+  color: #8a8fa3;
+  font-size: 14px;
+}
+.spinner {
+  width: 26px;
+  height: 26px;
+  border: 3px solid #e0e3ef;
+  border-top-color: #2e4bd8;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 0 auto 12px;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

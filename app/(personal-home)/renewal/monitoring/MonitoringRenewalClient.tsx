@@ -6,9 +6,9 @@ import { useSession } from "next-auth/react";
 import s from "./monitoring-renewal.module.css";
 import RenewalGnb from "../_shared/RenewalGnb";
 import SiteFooter from "@/components/layout/SiteFooter";
-import RenewalLoginModal from "../_shared/RenewalLoginModal";
 import RegistryIssueBar from "../_shared/RegistryIssueBar";
 import AddPropertyModalRenewal from "./components/AddPropertyModalRenewal";
+import GuestEntrySection from "./components/guest/GuestEntrySection";
 import { isPaidPlan } from "@/lib/subscription-plan";
 
 // 등기감시 페이지 = 프로세스 설명 + 물건 추가(등록) 전용.
@@ -20,25 +20,33 @@ const STEPS = [
   { n: "4", title: "직접 확인", desc: "알림을 받으면 등기부를 발급해 실제 반영 내용을 확인하실 수 있습니다." },
 ];
 
-export default function MonitoringRenewalClient({ initialAddress = "", initialListingId = "" }: { initialAddress?: string; initialListingId?: string }) {
+export default function MonitoringRenewalClient({ initialAddress = "", initialListingId = "", guestEnabled = false }: { initialAddress?: string; initialListingId?: string; guestEnabled?: boolean }) {
   const { data: session } = useSession();
   const isLoggedIn = !!session?.user;
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [addOpened, setAddOpened] = useState(false);
+  const [addClosed, setAddClosed] = useState(false);
   const [showPaidModal, setShowPaidModal] = useState(false);
-  const [isPaid, setIsPaid] = useState<boolean | null>(null);
+  const [fetchedPaid, setFetchedPaid] = useState<boolean | null>(null);
 
-  // 유료 회원(PRO/BUSINESS 구독 또는 ADMIN) 여부 조회 — 등기감시는 유료 전용
+  // 유료 회원(PRO/BUSINESS 구독 또는 ADMIN) 여부 — 비로그인/ADMIN은 동기 파생, 그 외는 조회.
+  const isPaid: boolean | null =
+    !isLoggedIn ? null : session?.user?.role === "ADMIN" ? true : fetchedPaid;
+
+  // 등기감시는 유료 전용 — 로그인·비ADMIN만 구독 상태 조회(effect 내 동기 setState 없음).
   useEffect(() => {
-    if (!isLoggedIn) { setIsPaid(null); return; }
-    if (session?.user?.role === "ADMIN") { setIsPaid(true); return; }
+    if (!isLoggedIn || session?.user?.role === "ADMIN") return;
     let alive = true;
     fetch("/api/subscription")
       .then((r) => r.json())
-      .then((s) => { if (alive) setIsPaid(isPaidPlan(s?.plan, s?.status)); })
-      .catch(() => { if (alive) setIsPaid(false); });
+      .then((s) => { if (alive) setFetchedPaid(isPaidPlan(s?.plan, s?.status)); })
+      .catch(() => { if (alive) setFetchedPaid(false); });
     return () => { alive = false; };
   }, [isLoggedIn, session?.user?.role]);
+
+  // 매물 상세 등에서 ?address= 로 진입 시: 회원은 등록 모달 자동 오픈(닫기 전까지),
+  // 비회원은 아래 비회원 신청 섹션으로 유도(주소 프리필). 파생값이라 effect setState 불필요.
+  const showAddModal = addOpened || (!!initialAddress && isLoggedIn && !addClosed);
+  const closeAddModal = useCallback(() => { setAddOpened(false); setAddClosed(true); }, []);
 
   const handleAdd = useCallback(() => {
     // 비회원이거나 무료회원이면 처음부터 유료 전용 안내 모달 → 구독 안내로 유도
@@ -46,16 +54,8 @@ export default function MonitoringRenewalClient({ initialAddress = "", initialLi
       setShowPaidModal(true);
       return;
     }
-    setShowAddModal(true);
+    setAddOpened(true);
   }, [isLoggedIn, isPaid]);
-
-  // 매물 상세 등에서 ?address= 로 진입 시 감시 등록 모달 자동 오픈(주소 프리필)
-  useEffect(() => {
-    if (!initialAddress) return;
-    if (isLoggedIn) setShowAddModal(true);
-    else setShowLoginModal(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialAddress, isLoggedIn]);
 
   return (
     <>
@@ -89,38 +89,37 @@ export default function MonitoringRenewalClient({ initialAddress = "", initialLi
             ))}
           </div>
 
-          <div style={{ textAlign: "center", display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <button className={s.addBtn} onClick={handleAdd}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              등기부 물건 추가
-            </button>
-            <Link href="/profile?tab=monitoring" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 18px", borderRadius: 10, border: "1px solid #dde0ec", background: "#fff", color: "#2e4bd8", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
-              내 감시 현황 보기
-            </Link>
-          </div>
-          <p style={{ textAlign: "center", fontSize: 12.5, color: "#8e8e93", marginTop: 14, lineHeight: 1.6 }}>
-            등록한 물건의 감시 현황·알림은 <strong style={{ color: "#2e4bd8" }}>마이페이지 &gt; 등기감시</strong>에서 확인하실 수 있습니다.
-          </p>
+          {isLoggedIn && (
+            <>
+              <div style={{ textAlign: "center", display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+                <button className={s.addBtn} onClick={handleAdd}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  등기부 물건 추가
+                </button>
+                <Link href="/profile?tab=monitoring" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 18px", borderRadius: 10, border: "1px solid #dde0ec", background: "#fff", color: "#2e4bd8", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
+                  내 감시 현황 보기
+                </Link>
+              </div>
+              <p style={{ textAlign: "center", fontSize: 12.5, color: "#8e8e93", marginTop: 14, lineHeight: 1.6 }}>
+                등록한 물건의 감시 현황·알림은 <strong style={{ color: "#2e4bd8" }}>마이페이지 &gt; 등기감시</strong>에서 확인하실 수 있습니다.
+              </p>
+            </>
+          )}
         </div>
+
+        {/* 비회원(비로그인): 서버 기능 플래그 ON일 때만 신청 섹션 노출(설계 §0·§3.0) */}
+        {!isLoggedIn && guestEnabled && <GuestEntrySection initialAddress={initialAddress} />}
       </div>
 
       {showAddModal && (
         <AddPropertyModalRenewal
           initialAddress={initialAddress}
           initialListingId={initialListingId}
-          onClose={() => setShowAddModal(false)}
-          onSuccess={() => setShowAddModal(false)}
-        />
-      )}
-
-      {showLoginModal && (
-        <RenewalLoginModal
-          featureName="등기감시"
-          description="로그인하면 물건을 등록하고 등기 변동을 실시간 감시할 수 있습니다."
-          onClose={() => setShowLoginModal(false)}
+          onClose={closeAddModal}
+          onSuccess={closeAddModal}
         />
       )}
 

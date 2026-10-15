@@ -41,6 +41,9 @@ import {
 } from "@/lib/registry-monitor/check-log";
 import { createAlertAndNotify } from "@/lib/registry-monitor/notify";
 
+import { memberRetryTargetIds } from "@/lib/registry-monitor/retry-targets";
+import { autoTransitionExpiredGaps } from "@/lib/registry-monitor/transition";
+import { runGuestPrechecks, GUEST_BATCH_SIZE } from "@/lib/guest-monitoring/precheck-adapter";
 const BATCH_SIZE = 50;
 
 // 틸코 외부 API(콜드스타트 시 지연) 호출이 있어 기본/짧은 타임아웃이면 recordCheck 도달 전
@@ -48,20 +51,6 @@ const BATCH_SIZE = 50;
 // 콜드스타트+틸코 지연에도 첫 기록까지 도달하도록 180초로 상향(틸코 호출별 타임아웃과 병행).
 export const dynamic = "force-dynamic";
 export const maxDuration = 180;
-
-// ── 계약~전입 기간 체크 ──
-// ── 전입 예정일 지난 물건 자동 모드 전환 ──
-async function autoTransitionExpiredGaps() {
-  const now = new Date();
-  await prisma.monitoredProperty.updateMany({
-    where: {
-      monitorMode: "contract_gap",
-      moveInDate: { lt: now },
-      status: "active",
-    },
-    data: { monitorMode: "standard" },
-  });
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -84,29 +73,22 @@ export async function GET(req: NextRequest) {
     // ── 재시도 회차 판정 ──
     // cron은 각 감시 시간대(KST 12·17시)에 :00,:10,…,:50 으로 10분 간격 실행된다.
     // :00 = 정규 회차(전체 감시). :10~:50 = 재시도 회차로, "이번 시간대에 이미
-    // 실패(fetch_failed)한 물건만" 다시 시도한다(틸코가 그 순간만 느렸던 경우 회복).
+    // 실패(fetch_failed)한 물건만 다시 조회한다.
     // 성공하면 마지막 로그가 성공으로 바뀌어 다음 회차에서 자동 제외된다.
     const now = new Date();
     const isRetrySlot = !simulate && !propertyIdFilter && now.getMinutes() >= 5;
+    const guest = !simulate && !propertyIdFilter ? await runGuestPrechecks(now).catch(() => {
+      console.error("[CRON:MONITOR] guest_precheck_failed");
+      // Partial work may already have consumed the entire guest quota.
+      return { processed: GUEST_BATCH_SIZE, failed: 1 };
+    }) : { processed: 0, failed: 0 };
+    const memberBatchSize = BATCH_SIZE - guest.processed;
     let retryTargetIds: string[] | null = null;
     if (isRetrySlot) {
-      const windowStart = new Date(now);
-      windowStart.setMinutes(0, 0, 0); // 이번 시간대 시작(:00)
-      const recent = await prisma.monitoringCheckLog.findMany({
-        where: { checkedAt: { gte: windowStart } },
-        orderBy: { checkedAt: "desc" },
-        select: { monitoredPropertyId: true, result: true },
-      });
-      const latest = new Map<string, string>();
-      for (const r of recent) {
-        if (!latest.has(r.monitoredPropertyId)) latest.set(r.monitoredPropertyId, r.result);
-      }
-      retryTargetIds = [...latest.entries()]
-        .filter(([, res]) => res === "fetch_failed")
-        .map(([id]) => id);
+      retryTargetIds = await memberRetryTargetIds(now);
       if (retryTargetIds.length === 0) {
         // 이번 시간대에 재시도할 실패 물건 없음 → 틸코 호출 없이 조용히 종료
-        return NextResponse.json({ message: "재시도 대상 없음", retrySlot: true, processed: 0 });
+        return NextResponse.json({ message: "재시도 대상 없음", retrySlot: true, processed: 0, guest });
       }
     }
 
@@ -142,7 +124,7 @@ export async function GET(req: NextRequest) {
       ? []
       : await prisma.monitoredProperty.findMany({
           where: { ...propertyFilter, monitorMode: "contract_gap" },
-          take: Math.floor(BATCH_SIZE / 2),
+          take: Math.floor(memberBatchSize / 2),
           orderBy: { lastCheckedAt: "asc" },
           include: { user: { select: { id: true, email: true } } },
         });
@@ -151,7 +133,7 @@ export async function GET(req: NextRequest) {
       where: propertyIdFilter
         ? propertyFilter
         : { ...propertyFilter, monitorMode: "standard" },
-      take: BATCH_SIZE - gapProperties.length,
+      take: memberBatchSize - gapProperties.length,
       orderBy: { lastCheckedAt: "asc" },
       include: { user: { select: { id: true, email: true } } },
     });
@@ -160,7 +142,7 @@ export async function GET(req: NextRequest) {
 
     if (allProperties.length === 0) {
       if (!simulate) await recordCronHeartbeat("done", { processed: 0, reason: "no_target" });
-      return NextResponse.json({ message: "모니터링 대상 없음", processed: 0 });
+      return NextResponse.json({ message: "모니터링 대상 없음", processed: 0, guest });
     }
 
     let alertsCreated = 0;
@@ -467,6 +449,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       message: "모니터링 완료",
+      guest,
       ...(simulate ? { simulation: true, changeType } : {}),
       retrySlot: isRetrySlot,
       processed: allProperties.length,
