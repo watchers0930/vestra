@@ -176,11 +176,11 @@ export function calculateRiskScore(
   if (temporalDeduction > 0) {
     allFactors.push({
       id: "temporal_pattern",
-      category: "시계열",
-      description: "시계열 이상 패턴",
+      category: "변동이력",
+      description: "단기간 권리 변동 패턴",
       deduction: temporalDeduction,
       severity: "medium",
-      detail: `${temporalPatterns.patterns.length}건의 시계열 이상 패턴이 탐지되어 추가 감점됩니다.`,
+      detail: `소유권 이전·근저당 설정 등 권리관계가 단기간에 반복해서 바뀐 패턴이 ${temporalPatterns.patterns.length}건 발견되어 주의가 필요합니다.`,
     });
   }
   totalDeduction += temporalDeduction;

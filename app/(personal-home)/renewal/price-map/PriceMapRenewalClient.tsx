@@ -17,6 +17,7 @@ export default function PriceMapRenewalClient() {
     mapRef, selectedGu, setSelectedGu, selectedSido, setSelectedSido,
     selectedApt, setSelectedApt, tradeType, setTradeType,
     propertyType, setPropertyType, topChanges, listSort, setListSort, loading, mapStatus,
+    selectedDong, setSelectedDong, dongList,
     officialPriceLabel, riskPopup, setRiskPopup, selectAndMoveToApt, analyzeRisk,
   } = pm;
 
@@ -77,6 +78,9 @@ export default function PriceMapRenewalClient() {
           topChanges={topChanges}
           listSort={listSort}
           setListSort={setListSort}
+          selectedDong={selectedDong}
+          setSelectedDong={setSelectedDong}
+          dongList={dongList}
           loading={loading}
           selectedApt={selectedApt}
           onSelectApt={handleSelectApt}

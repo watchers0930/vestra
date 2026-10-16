@@ -19,6 +19,9 @@ interface Props {
   topChanges: AptData[];
   listSort: ListSortKey;
   setListSort: (k: ListSortKey) => void;
+  selectedDong: string;
+  setSelectedDong: (d: string) => void;
+  dongList: string[];
   loading: boolean;
   selectedApt: AptData | null;
   onSelectApt: (apt: AptData) => void;
@@ -33,7 +36,7 @@ const PROPERTY_TYPES: PropertyType[] = ["아파트", "연립/빌라/다세대", 
 export default function PriceMapLeftPanel({
   selectedGu, setSelectedGu, selectedSido, setSelectedSido,
   tradeType, setTradeType, propertyType, setPropertyType,
-  topChanges, listSort, setListSort, loading, selectedApt, onSelectApt,
+  topChanges, listSort, setListSort, selectedDong, setSelectedDong, dongList, loading, selectedApt, onSelectApt,
   sheetExpanded, onToggleSheet,
 }: Props) {
   const sidoMap = getSelectableSidoMap(propertyType);
@@ -88,6 +91,20 @@ export default function PriceMapLeftPanel({
             ))}
           </select>
         </div>
+        {dongList.length > 0 && (
+          <select
+            className={s.lpSelect}
+            value={selectedDong}
+            onChange={(e) => setSelectedDong(e.target.value)}
+            aria-label="읍면동 선택"
+            style={{ marginTop: "6px", width: "100%" }}
+          >
+            <option value="">읍·면·동 전체</option>
+            {dongList.map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
+        )}
       </div>
       <div className={s.lpFilters}>
         {PROPERTY_TYPES.map((t) => (

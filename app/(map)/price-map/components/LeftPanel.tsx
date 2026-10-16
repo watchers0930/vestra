@@ -21,6 +21,9 @@ interface Props {
   topChanges: AptData[];
   listSort: ListSortKey;
   setListSort: (k: ListSortKey) => void;
+  selectedDong: string;
+  setSelectedDong: (d: string) => void;
+  dongList: string[];
   selectAndMoveToApt: (apt: AptData) => void;
 }
 
@@ -31,7 +34,8 @@ const TRADE_TYPES: PriceMapTradeType[] = ["매매", "전세"];
 export function LeftPanel({
   selectedGu, setSelectedGu, loading,
   showGuDropdown, setShowGuDropdown, selectedSido, setSelectedSido,
-  tradeType, setTradeType, propertyType, setPropertyType, topChanges, listSort, setListSort, selectAndMoveToApt,
+  tradeType, setTradeType, propertyType, setPropertyType, topChanges, listSort, setListSort,
+  selectedDong, setSelectedDong, dongList, selectAndMoveToApt,
 }: Props) {
   const selectableSidoMap = getSelectableSidoMap(propertyType);
 
@@ -134,6 +138,17 @@ export function LeftPanel({
             ))}
           </div>
         </div>
+        {dongList.length > 0 && (
+          <select
+            value={selectedDong}
+            onChange={(e) => setSelectedDong(e.target.value)}
+            aria-label="읍면동 선택"
+            style={{ marginTop: "8px", width: "100%", borderRadius: "10px", border: "1px solid rgba(0,0,0,0.12)", background: "#f5f5f7", padding: "8px 12px", fontSize: "12.5px", fontWeight: 600, color: "#1d1d1f", cursor: "pointer" }}
+          >
+            <option value="">읍·면·동 전체</option>
+            {dongList.map((d) => (<option key={d} value={d}>{d}</option>))}
+          </select>
+        )}
       </div>
 
       {/* ── 스크롤 컨텐츠 ── */}

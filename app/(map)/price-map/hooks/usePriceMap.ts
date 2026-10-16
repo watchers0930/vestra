@@ -71,6 +71,7 @@ export function usePriceMap() {
   const [selectedApt, setSelectedApt] = useState<AptData | null>(null);
   const [loading, setLoading] = useState(true);
   const [mapStatus, setMapStatus] = useState<"loading" | "ready" | "error">(hasKakaoKey ? "loading" : "error");
+  const [selectedDong, setSelectedDong] = useState<string>("");
   const [showGuDropdown, setShowGuDropdown] = useState(false);
   const [selectedSido, setSelectedSido] = useState("서울");
   const [tradeType, setTradeType] = useState<PriceMapTradeType>(readInitialTradeType);
@@ -315,8 +316,11 @@ export function usePriceMap() {
       const center = new maps.LatLng(data.center.lat, data.center.lng);
       map.setCenter(center);
       if (data.apartments.length > 0) {
+        // 동 선택 시 해당 동 매물 범위로 지도를 맞춰 생활권에 집중(해당 동 매물이 없으면 전체 범위)
+        const inDong = selectedDong ? data.apartments.filter((a) => a.dong === selectedDong) : data.apartments;
+        const forBounds = inDong.length > 0 ? inDong : data.apartments;
         const bounds = new maps.LatLngBounds();
-        data.apartments.forEach((apt) => bounds.extend(new maps.LatLng(apt.lat, apt.lng)));
+        forBounds.forEach((apt) => bounds.extend(new maps.LatLng(apt.lat, apt.lng)));
         map.setBounds(bounds, 50);
       }
 
@@ -471,12 +475,18 @@ export function usePriceMap() {
         if (allOverlayEntries[idx]?.overlay) allOverlayEntries[idx].overlay.setMap(null);
       });
     };
-  }, [data, mapStatus, selectAndMoveToApt, tradeType, propertyType]);
+  }, [data, mapStatus, selectAndMoveToApt, tradeType, propertyType, selectedDong]);
 
   const [listSort, setListSort] = useState<ListSortKey>("change");
+  // 읍·면·동 필터 — 조회된 실매물의 동 목록으로 생활권을 좁힌다(전국 동 데이터셋 불필요, 실제 있는 동만).
+  const dongList = useMemo<string[]>(
+    () => [...new Set((data?.apartments ?? []).map((a) => a.dong).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ko")),
+    [data],
+  );
   // 목록 정렬 기준(기본=변동률). 가격 낮은순 등 선택 시 해당 기준으로 상위 목록 산출.
   const topChanges = useMemo<AptData[]>(() => {
-    const list = data?.apartments ? [...data.apartments] : [];
+    const all = data?.apartments ? [...data.apartments] : [];
+    const list = selectedDong ? all.filter((a) => a.dong === selectedDong) : all;
     if (list.length === 0) return [];
     switch (listSort) {
       case "priceAsc":  return list.filter((a) => a.price > 0).sort((a, b) => a.price - b.price).slice(0, 8);
@@ -486,7 +496,12 @@ export function usePriceMap() {
       case "change":
       default:          return list.filter((a) => a.change !== null).sort((a, b) => (b.change as number) - (a.change as number)).slice(0, 5);
     }
-  }, [data, listSort]);
+  }, [data, listSort, selectedDong]);
+
+  // 시군구가 바뀌면 동 필터 초기화(새 지역엔 다른 동이 있으므로)
+  useEffect(() => {
+    setSelectedDong("");
+  }, [selectedGu]);
 
   return {
     mapRef, data, selectedGu, setSelectedGu,
@@ -497,5 +512,6 @@ export function usePriceMap() {
     selectAndMoveToApt, topChanges, analyzeRisk, mapStatus,
     officialPriceLabel,
     listSort, setListSort,
+    selectedDong, setSelectedDong, dongList,
   };
 }

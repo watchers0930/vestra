@@ -15,6 +15,7 @@ export default function PriceMapPage() {
     propertyType, setPropertyType,
     riskPopup, setRiskPopup,
     selectAndMoveToApt, topChanges, listSort, setListSort, mapStatus,
+    selectedDong, setSelectedDong, dongList,
     officialPriceLabel,
   } = usePriceMap();
 
@@ -36,6 +37,9 @@ export default function PriceMapPage() {
           topChanges={topChanges}
           listSort={listSort}
           setListSort={setListSort}
+          selectedDong={selectedDong}
+          setSelectedDong={setSelectedDong}
+          dongList={dongList}
           selectAndMoveToApt={selectAndMoveToApt}
         />
 

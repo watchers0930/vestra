@@ -273,6 +273,10 @@ export function JeonseEnvAnalysis({ active = true }: { active?: boolean }) {
                     );
                   })}
                 </div>
+                <p style={{ fontSize: "11px", color: "#8a90a6", lineHeight: 1.6, marginTop: "10px" }}>
+                  각 영역 점수 = 반경 1km 내 시설 개수(최대 50점) + 가장 가까운 시설까지의 거리(최대 50점)를 합산합니다.
+                  종합 점수는 교통 25%·교육 20%·의료 20%·편의 15%·생활 20%의 가중평균으로 산정됩니다.
+                </p>
               </div>
 
               {/* K-apt 단지정보 */}
