@@ -276,7 +276,9 @@ export function usePriceMap() {
     if (tryInit()) { initialized = true; clearInterval(pollId); }
     const timeoutId = setTimeout(() => {
       clearInterval(pollId);
-      if (!initialized && !cancelled) {
+      // SDK가 로드돼 initialized로 표시됐더라도, 지도 객체가 실제로 생성되지 않았으면
+      // (maps.load 콜백 미완료·실패, 도메인 미등록 등) error로 전환해 '다시 시도' 버튼을 노출한다(무한 로딩 방지).
+      if (!kakaoMapRef.current && !cancelled) {
         setMapStatus("error");
       }
     }, 6000);

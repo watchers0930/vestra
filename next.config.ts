@@ -11,9 +11,11 @@ const securityHeaders = [
 ];
 
 // 카카오맵 관련 CSP 도메인
-const kakaoDomains = "https://t1.daumcdn.net https://dapi.kakao.com https://postcode.map.kakao.com";
-const kakaoConnect = "https://dapi.kakao.com https://*.daumcdn.net https://*.kakao.com";
-const kakaoImg = "https://*.daumcdn.net https://*.kakao.com https://*.kakao.io";
+// ⚠️ 카카오맵 SDK(dapi.kakao.com)는 실제 지도 엔진 스크립트를 t1.kakaocdn.net 에서 로드한다.
+//    이 호스트가 script-src에 없으면 지도 엔진이 CSP에 막혀 '지도를 불러오는 중…'에서 영구 정지한다.
+const kakaoDomains = "https://t1.daumcdn.net https://t1.kakaocdn.net https://dapi.kakao.com https://postcode.map.kakao.com";
+const kakaoConnect = "https://dapi.kakao.com https://*.daumcdn.net https://*.kakaocdn.net https://*.kakao.com";
+const kakaoImg = "https://*.daumcdn.net https://*.kakaocdn.net https://*.kakao.com https://*.kakao.io";
 const googleTagDomains = "https://www.googletagmanager.com";
 const googleAnalyticsConnect = "https://www.google-analytics.com https://region1.google-analytics.com";
 // 토스페이먼츠 CSP 도메인
