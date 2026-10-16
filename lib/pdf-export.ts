@@ -55,16 +55,30 @@ export async function exportToPdf({
         if (el.classList?.contains("kakao") || el.id?.includes("kakao")) return true;
         return false;
       },
-      onclone: (_doc, cloned) => {
-        // Tailwind v4 oklch 색상을 html2canvas가 파싱 못하므로 fallback 제거
-        cloned.querySelectorAll<HTMLElement>("*").forEach((el) => {
-          const s = el.style;
-          for (const prop of Array.from(s)) {
-            const val = s.getPropertyValue(prop);
-            if (val.includes("oklch")) {
-              s.setProperty(prop, "");
-            }
-          }
+      onclone: (clonedDoc) => {
+        // Tailwind v4는 색상을 oklch()로 '클래스/스타일시트' 레벨에 적용한다.
+        // html2canvas는 oklch를 파싱하지 못해 throw → PDF 생성이 통째로 실패한다.
+        // (기존 구현은 인라인 style의 oklch만 지워 클래스 기반 oklch를 놓쳤다 → 근본 미해결)
+        // 해결: 클론 문서의 모든 요소 색상을 '브라우저가 이미 계산한 rgb 값'으로 인라인 고정해
+        //       html2canvas가 oklch를 만나지 않게 한다(getComputedStyle은 oklch를 rgb로 해석해 반환).
+        const win = clonedDoc.defaultView;
+        if (!win) return;
+        clonedDoc.querySelectorAll<HTMLElement>("*").forEach((el) => {
+          const cs = win.getComputedStyle(el);
+          el.style.color = cs.color;
+          el.style.backgroundColor = cs.backgroundColor;
+          el.style.borderTopColor = cs.borderTopColor;
+          el.style.borderRightColor = cs.borderRightColor;
+          el.style.borderBottomColor = cs.borderBottomColor;
+          el.style.borderLeftColor = cs.borderLeftColor;
+          el.style.outlineColor = cs.outlineColor;
+          if (cs.boxShadow && cs.boxShadow !== "none") el.style.boxShadow = cs.boxShadow;
+          const fill = cs.fill;
+          if (fill && fill !== "none") el.style.fill = fill;
+          const stroke = cs.stroke;
+          if (stroke && stroke !== "none") el.style.stroke = stroke;
+          // 그라데이션 등 background-image에 oklch가 남아 파싱 실패하는 것을 방지(배경색으로 대체)
+          if (cs.backgroundImage.includes("oklch")) el.style.backgroundImage = "none";
         });
       },
     });

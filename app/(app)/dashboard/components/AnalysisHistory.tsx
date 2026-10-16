@@ -54,7 +54,7 @@ function formatAddress(address: string): string {
   return address;
 }
 
-function extractKeyMetrics(type: string, data: Record<string, unknown>): { label: string; value: string }[] {
+export function extractKeyMetrics(type: string, data: Record<string, unknown>): { label: string; value: string }[] {
   const metrics: { label: string; value: string }[] = [];
   try {
     if (type === "rights" || type === "jeonse") {

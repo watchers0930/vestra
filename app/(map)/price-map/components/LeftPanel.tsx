@@ -4,6 +4,7 @@ import { MapPin, TrendingUp, ChevronDown, BarChart3, Building2 } from "lucide-re
 import { formatMapPrice } from "../lib/formatMapPrice";
 import { getSelectableSidoMap } from "../constants";
 import type { AptData, PriceMapTradeType, PropertyType } from "../types";
+import type { ListSortKey } from "../hooks/usePriceMap";
 
 interface Props {
   selectedGu: string;
@@ -18,6 +19,8 @@ interface Props {
   propertyType: PropertyType;
   setPropertyType: (t: PropertyType) => void;
   topChanges: AptData[];
+  listSort: ListSortKey;
+  setListSort: (k: ListSortKey) => void;
   selectAndMoveToApt: (apt: AptData) => void;
 }
 
@@ -28,7 +31,7 @@ const TRADE_TYPES: PriceMapTradeType[] = ["매매", "전세"];
 export function LeftPanel({
   selectedGu, setSelectedGu, loading,
   showGuDropdown, setShowGuDropdown, selectedSido, setSelectedSido,
-  tradeType, setTradeType, propertyType, setPropertyType, topChanges, selectAndMoveToApt,
+  tradeType, setTradeType, propertyType, setPropertyType, topChanges, listSort, setListSort, selectAndMoveToApt,
 }: Props) {
   const selectableSidoMap = getSelectableSidoMap(propertyType);
 
@@ -138,9 +141,23 @@ export function LeftPanel({
 
         {/* 시세 변동 TOP */}
         <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: "16px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", padding: "14px", marginBottom: "10px" }}>
-          <h3 style={{ fontSize: "12.5px", fontWeight: 700, color: "#1d1d1f", marginBottom: "4px" }}>
-            {selectedGu} 시세 변동 TOP
-          </h3>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "4px" }}>
+            <h3 style={{ fontSize: "12.5px", fontWeight: 700, color: "#1d1d1f", margin: 0 }}>
+              {selectedGu} {listSort === "change" ? "시세 변동 TOP" : "매물"}
+            </h3>
+            <select
+              value={listSort}
+              onChange={(e) => setListSort(e.target.value as ListSortKey)}
+              aria-label="목록 정렬 기준"
+              style={{ fontSize: "10.5px", color: "#3d3d3f", background: "#f5f5f7", border: "1px solid rgba(0,0,0,0.1)", borderRadius: "6px", padding: "3px 6px", cursor: "pointer", flexShrink: 0 }}
+            >
+              <option value="change">변동률 순</option>
+              <option value="priceAsc">{tradeType === "전세" ? "보증금 낮은순" : "가격 낮은순"}</option>
+              <option value="priceDesc">{tradeType === "전세" ? "보증금 높은순" : "가격 높은순"}</option>
+              <option value="areaDesc">면적 넓은순</option>
+              <option value="yearDesc">최신 건축순</option>
+            </select>
+          </div>
           <p style={{ fontSize: "10.5px", color: "#b86f00", lineHeight: 1.55, marginBottom: "12px" }}>
             국토부 실거래 신고 기준 · 최근 1~2개월 지연 반영
           </p>

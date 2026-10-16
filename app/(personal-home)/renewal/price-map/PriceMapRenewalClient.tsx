@@ -16,7 +16,7 @@ export default function PriceMapRenewalClient() {
   const {
     mapRef, selectedGu, setSelectedGu, selectedSido, setSelectedSido,
     selectedApt, setSelectedApt, tradeType, setTradeType,
-    propertyType, setPropertyType, topChanges, loading, mapStatus,
+    propertyType, setPropertyType, topChanges, listSort, setListSort, loading, mapStatus,
     officialPriceLabel, riskPopup, setRiskPopup, selectAndMoveToApt, analyzeRisk,
   } = pm;
 
@@ -75,6 +75,8 @@ export default function PriceMapRenewalClient() {
           propertyType={propertyType}
           setPropertyType={setPropertyType}
           topChanges={topChanges}
+          listSort={listSort}
+          setListSort={setListSort}
           loading={loading}
           selectedApt={selectedApt}
           onSelectApt={handleSelectApt}
@@ -92,8 +94,17 @@ export default function PriceMapRenewalClient() {
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#2e4bd8" opacity="0.5" />
                 </svg>
                 <span style={{ color: "#888", fontSize: "14px", marginTop: "8px" }}>
-                  {mapStatus === "loading" ? "지도를 불러오는 중…" : "지도 연결 확인 중…"}
+                  {mapStatus === "loading" ? "지도를 불러오는 중…" : "지도를 불러오지 못했습니다"}
                 </span>
+                {mapStatus === "error" && (
+                  <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    style={{ marginTop: "12px", padding: "8px 18px", borderRadius: "10px", background: "#2e4bd8", color: "#fff", border: "none", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}
+                  >
+                    다시 시도
+                  </button>
+                )}
               </div>
             </div>
           )}

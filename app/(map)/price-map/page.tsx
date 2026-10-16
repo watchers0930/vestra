@@ -14,7 +14,7 @@ export default function PriceMapPage() {
     selectedSido, setSelectedSido, tradeType, setTradeType,
     propertyType, setPropertyType,
     riskPopup, setRiskPopup,
-    selectAndMoveToApt, topChanges, mapStatus,
+    selectAndMoveToApt, topChanges, listSort, setListSort, mapStatus,
     officialPriceLabel,
   } = usePriceMap();
 
@@ -34,6 +34,8 @@ export default function PriceMapPage() {
           propertyType={propertyType}
           setPropertyType={setPropertyType}
           topChanges={topChanges}
+          listSort={listSort}
+          setListSort={setListSort}
           selectAndMoveToApt={selectAndMoveToApt}
         />
 
@@ -57,8 +59,15 @@ export default function PriceMapPage() {
           {mapStatus === "error" ? (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 backdrop-blur-sm">
               <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-center shadow-sm">
-                <p className="text-sm font-semibold text-slate-900">카카오 지도 연결을 확인하는 중입니다.</p>
-                <p className="mt-1 text-xs text-slate-500">페이지를 새로고침하면 다시 시도합니다.</p>
+                <p className="text-sm font-semibold text-slate-900">지도를 불러오지 못했습니다.</p>
+                <p className="mt-1 text-xs text-slate-500">네트워크 상태를 확인한 뒤 다시 시도해 주세요.</p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="mt-3 rounded-lg bg-[#2e4bd8] px-4 py-2 text-xs font-semibold text-white"
+                >
+                  다시 시도
+                </button>
               </div>
             </div>
           ) : null}

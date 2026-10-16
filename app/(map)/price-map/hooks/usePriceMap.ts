@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { formatKRW } from "@/lib/format";
 import { analyzeRisk, getAreaColor } from "../lib/analyzeRisk";
 import { formatMapPrice } from "../lib/formatMapPrice";
@@ -8,6 +8,9 @@ import { findSidoForGu, getFirstSelectableGu, isGuSelectable } from "../constant
 import type { AptData, MapResponse, PriceMapTradeType, PropertyType } from "../types";
 import type { OfficialPriceResult } from "@/lib/official-price-api";
 import { enableKakaoTouchPan } from "@/lib/kakao-touch-pan";
+
+/** 목록 정렬 기준 — 변동률뿐 아니라 가격 낮은순 등 개인 사용자 니즈 반영(UX 개선) */
+export type ListSortKey = "change" | "priceAsc" | "priceDesc" | "areaDesc" | "yearDesc";
 
 const LOCAL_TTL = 30 * 60 * 1000; // 30분 fresh cache
 const LOCAL_MAX_AGE = 24 * 60 * 60 * 1000; // 24시간 stale cache fallback
@@ -275,7 +278,7 @@ export function usePriceMap() {
       if (!initialized && !cancelled) {
         setMapStatus("error");
       }
-    }, 8000);
+    }, 6000);
 
     return () => {
       cancelled = true;
@@ -470,9 +473,20 @@ export function usePriceMap() {
     };
   }, [data, mapStatus, selectAndMoveToApt, tradeType, propertyType]);
 
-  const topChanges = data?.apartments
-    ? [...data.apartments].filter((a) => a.change !== null).sort((a, b) => (b.change as number) - (a.change as number)).slice(0, 5)
-    : [];
+  const [listSort, setListSort] = useState<ListSortKey>("change");
+  // 목록 정렬 기준(기본=변동률). 가격 낮은순 등 선택 시 해당 기준으로 상위 목록 산출.
+  const topChanges = useMemo<AptData[]>(() => {
+    const list = data?.apartments ? [...data.apartments] : [];
+    if (list.length === 0) return [];
+    switch (listSort) {
+      case "priceAsc":  return list.filter((a) => a.price > 0).sort((a, b) => a.price - b.price).slice(0, 8);
+      case "priceDesc": return list.filter((a) => a.price > 0).sort((a, b) => b.price - a.price).slice(0, 8);
+      case "areaDesc":  return list.filter((a) => a.area > 0).sort((a, b) => b.area - a.area).slice(0, 8);
+      case "yearDesc":  return list.filter((a) => a.year > 0).sort((a, b) => b.year - a.year).slice(0, 8);
+      case "change":
+      default:          return list.filter((a) => a.change !== null).sort((a, b) => (b.change as number) - (a.change as number)).slice(0, 5);
+    }
+  }, [data, listSort]);
 
   return {
     mapRef, data, selectedGu, setSelectedGu,
@@ -482,5 +496,6 @@ export function usePriceMap() {
     riskPopup, setRiskPopup,
     selectAndMoveToApt, topChanges, analyzeRisk, mapStatus,
     officialPriceLabel,
+    listSort, setListSort,
   };
 }

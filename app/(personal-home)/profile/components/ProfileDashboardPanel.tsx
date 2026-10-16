@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { BarChart3, Wallet, Shield, FileText, ArrowRight, Trash2 } from "lucide-react";
+import { BarChart3, Wallet, Shield, FileText, ArrowRight, Trash2, X, MapPin, Calendar } from "lucide-react";
 import { useDashboardData } from "@/app/(app)/dashboard/hooks/useDashboardData";
+import { extractKeyMetrics } from "@/app/(app)/dashboard/components/AnalysisHistory";
+import type { AnalysisRecord } from "@/lib/store";
 import s from "../profile-renewal.module.css";
 
 interface Props {
@@ -18,12 +21,23 @@ function formatEok(won: number): string {
 }
 
 export default function ProfileDashboardPanel({ usage }: Props) {
-  const { assets, analyses, totalAssets, totalValue, avgSafety, mounted, handleDeleteAsset } = useDashboardData();
+  const { assets, analyses, totalAssets, totalValue, avgSafety, mounted, handleDeleteAsset, handleDeleteAnalysis } = useDashboardData();
+  const [selected, setSelected] = useState<AnalysisRecord | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function onDeleteAsset(id: string | undefined, name: string) {
     if (!id) return;
     if (!confirm(`"${name}" 자산을 삭제하시겠습니까?`)) return;
     await handleDeleteAsset(id);
+  }
+
+  async function onDeleteSelected() {
+    if (!selected) return;
+    if (!confirm("이 분석 이력을 삭제하시겠습니까?")) return;
+    setDeleting(true);
+    await handleDeleteAnalysis(selected.id);
+    setDeleting(false);
+    setSelected(null);
   }
 
   const metrics = [
@@ -88,10 +102,19 @@ export default function ProfileDashboardPanel({ usage }: Props) {
           <div className={s.skel} style={{ height: 80 }} />
         ) : analyses && analyses.length > 0 ? (
           <div className={s.list}>
-            {analyses.slice(0, 5).map((a: { id?: string; address?: string; createdAt?: string }, i: number) => (
-              <div key={a.id || i} className={s.listRow}>
-                <span className={s.listAddr}>{a.address || "분석 기록"}</span>
-                <span className={s.listMeta}>{a.createdAt ? new Date(a.createdAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric" }) : ""}</span>
+            {analyses.slice(0, 5).map((a: AnalysisRecord, i: number) => (
+              <div
+                key={a.id || i}
+                className={s.listRow}
+                onClick={() => setSelected(a)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(a); } }}
+                style={{ cursor: "pointer" }}
+                title="클릭하면 저장된 상세 결과를 다시 볼 수 있습니다"
+              >
+                <span className={s.listAddr}>{a.address || a.typeLabel || "분석 기록"}</span>
+                <span className={s.listMeta}>{a.date ? new Date(a.date).toLocaleDateString("ko-KR", { month: "short", day: "numeric" }) : ""}</span>
               </div>
             ))}
           </div>
@@ -130,6 +153,65 @@ export default function ProfileDashboardPanel({ usage }: Props) {
           </div>
         </div>
       )}
+
+      {/* 분석 이력 상세 재열람 모달 — 저장된 결과를 재분석 없이 다시 확인 */}
+      {selected && (() => {
+        const metrics = extractKeyMetrics(selected.type, selected.data);
+        return (
+          <div
+            onClick={() => setSelected(null)}
+            style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)", padding: 16 }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 440, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #f0f0f0" }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: "#1d1d1f" }}>{selected.typeLabel}</span>
+                <button onClick={() => setSelected(null)} aria-label="닫기" style={{ border: "none", background: "transparent", cursor: "pointer", color: "#86868b", display: "inline-flex", padding: 4 }}>
+                  <X size={16} />
+                </button>
+              </div>
+              <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: "#f5f5f7", borderRadius: 12, padding: "10px 14px" }}>
+                  <MapPin size={14} style={{ color: "#86868b", marginTop: 2, flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, color: "#1d1d1f" }}>{selected.address || "주소 정보 없음"}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#86868b" }}>
+                  <Calendar size={13} />
+                  {selected.date ? `${new Date(selected.date).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })} 분석` : "분석 일자 미상"}
+                </div>
+                {metrics.length > 0 && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    {metrics.map((m) => (
+                      <div key={m.label} style={{ background: "#f5f5f7", borderRadius: 12, padding: "10px 14px" }}>
+                        <div style={{ fontSize: 10.5, color: "#86868b", marginBottom: 2 }}>{m.label}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: "#1d1d1f" }}>{m.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.03em", color: "#86868b", marginBottom: 8 }}>분석 요약</p>
+                  <p style={{ fontSize: 13.5, lineHeight: 1.6, color: "#1d1d1f" }}>{selected.summary || "요약 정보가 없습니다."}</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderTop: "1px solid #f0f0f0" }}>
+                <Link href="/renewal/rights" style={{ fontSize: 13, fontWeight: 600, color: "#2e4bd8", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  새 분석 하기 <ArrowRight size={13} />
+                </Link>
+                <button
+                  onClick={onDeleteSelected}
+                  disabled={deleting}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, color: "#ff3b30", background: "transparent", border: "1px solid rgba(255,59,48,0.3)", borderRadius: 8, padding: "6px 12px", cursor: deleting ? "default" : "pointer", opacity: deleting ? 0.6 : 1 }}
+                >
+                  <Trash2 size={14} /> {deleting ? "삭제 중..." : "이력 삭제"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

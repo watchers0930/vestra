@@ -14,10 +14,14 @@ interface ChecklistState {
   [key: number]: boolean;
 }
 
+// 계약체크리스트 진행 상태 저장 키(브라우저 localStorage). 새로고침·재방문 시 이어서 진행.
+const CK_STORAGE_KEY = "vestra_jeonse_checklist_v1";
+
 export default function JeonseRenewalContent() {
   const [activeTab, setActiveTab] = useState("analysis");
   const [centerOpen, setCenterOpen] = useState(false);
   const [checklist, setChecklist] = useState<ChecklistState>({});
+  const [ckLastSaved, setCkLastSaved] = useState<string>("");
   const snavRef = useRef<HTMLDivElement>(null);
   const snavScrollRef = useRef<HTMLDivElement>(null);
   // 탭 바가 가로로 넘칠 때(스크롤 끝 아님) 오른쪽에 '더 있음' 화살표 노출
@@ -36,6 +40,20 @@ export default function JeonseRenewalContent() {
     };
   }, []);
 
+  // 계약체크리스트 상태 복원 — 새로고침·재방문 시 여러 날에 걸쳐 이어서 진행
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CK_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.state === "object" && parsed.state) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setChecklist(parsed.state);
+        if (typeof parsed.updatedAt === "string") setCkLastSaved(parsed.updatedAt);
+      }
+    } catch { /* 저장값 손상 시 무시(기본 빈 상태로 시작) */ }
+  }, []);
+
   const CK_TOTAL = 15;
   const checkedCount = Object.values(checklist).filter(Boolean).length;
 
@@ -48,7 +66,16 @@ export default function JeonseRenewalContent() {
   };
 
   const toggleCk = (idx: number) => {
-    setChecklist((prev) => ({ ...prev, [idx]: !prev[idx] }));
+    setChecklist((prev) => {
+      const next = { ...prev, [idx]: !prev[idx] };
+      // 변경 즉시 브라우저에 저장(자동 저장) + 마지막 수정 시각 기록
+      try {
+        const updatedAt = new Date().toISOString();
+        localStorage.setItem(CK_STORAGE_KEY, JSON.stringify({ state: next, updatedAt }));
+        setCkLastSaved(updatedAt);
+      } catch { /* 저장 실패(용량 등)해도 체크 UI는 정상 동작 */ }
+      return next;
+    });
   };
 
   const ckBarWidth = `${(checkedCount / CK_TOTAL) * 100}%`;
@@ -404,6 +431,10 @@ export default function JeonseRenewalContent() {
             <div className={s.ckBarWrap}><div className={s.ckBar} style={{ width: ckBarWidth }}></div></div>
             <span className={s.ckProgTxt}>{checkedCount} / {CK_TOTAL}</span>
           </div>
+          <p style={{ fontSize: "12px", color: "#8a90a6", marginTop: "8px" }}>
+            체크 상태는 이 브라우저에 자동 저장되어 새로고침하거나 다시 방문해도 이어집니다.
+            {ckLastSaved && ` · 마지막 저장: ${new Date(ckLastSaved).toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" })}`}
+          </p>
           <div className={s.ckGroupsGrid}>
             <div className={s.ckGroup}>
               <div className={s.ckGroupTitle}>계약 전 확인</div>

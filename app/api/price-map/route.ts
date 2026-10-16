@@ -241,6 +241,24 @@ async function geocodeAll(apartments: { gu: string; dong: string; name: string; 
     });
     await Promise.allSettled(promises);
   }
+
+  // 타임아웃·지오코딩 실패로 좌표를 얻지 못한 건은 버리지 않고,
+  // 구 중심 좌표 주변에 산포 배치해 지도·목록에 모두 노출한다(특히 데이터가 적은 비아파트 누락 방지).
+  if (centerOverride) {
+    let fi = 0;
+    for (const apt of apartments) {
+      const key = `${apt.name}@@${apt.dong}@@${apt.jibun || ""}`;
+      if (results.has(key)) continue;
+      const angle = (fi * 137.5) * Math.PI / 180; // 황금각 분산(핀 겹침 최소화)
+      const radius = 0.0018 + (fi % 6) * 0.0009;  // 중심에서 약 150~600m 반경
+      results.set(key, {
+        lat: centerOverride.lat + radius * Math.cos(angle),
+        lng: centerOverride.lng + radius * Math.sin(angle),
+      });
+      fi++;
+    }
+  }
+
   return results;
 }
 

@@ -4,6 +4,7 @@ import s from "../price-map-renewal.module.css";
 import { formatMapPrice } from "@/app/(map)/price-map/lib/formatMapPrice";
 import { getSelectableSidoMap } from "@/app/(map)/price-map/constants";
 import type { AptData, PriceMapTradeType, PropertyType } from "@/app/(map)/price-map/types";
+import type { ListSortKey } from "@/app/(map)/price-map/hooks/usePriceMap";
 import { SourceBadge } from "@/components/common/SourceBadge";
 
 interface Props {
@@ -16,6 +17,8 @@ interface Props {
   propertyType: PropertyType;
   setPropertyType: (t: PropertyType) => void;
   topChanges: AptData[];
+  listSort: ListSortKey;
+  setListSort: (k: ListSortKey) => void;
   loading: boolean;
   selectedApt: AptData | null;
   onSelectApt: (apt: AptData) => void;
@@ -30,7 +33,7 @@ const PROPERTY_TYPES: PropertyType[] = ["아파트", "연립/빌라/다세대", 
 export default function PriceMapLeftPanel({
   selectedGu, setSelectedGu, selectedSido, setSelectedSido,
   tradeType, setTradeType, propertyType, setPropertyType,
-  topChanges, loading, selectedApt, onSelectApt,
+  topChanges, listSort, setListSort, loading, selectedApt, onSelectApt,
   sheetExpanded, onToggleSheet,
 }: Props) {
   const sidoMap = getSelectableSidoMap(propertyType);
@@ -98,8 +101,19 @@ export default function PriceMapLeftPanel({
         ))}
       </div>
       <div className={s.lpListHead}>
-        <span className={s.lpListTitle}>{selectedGu} 변동 TOP</span>
-        <span style={{ fontSize: "11px", color: "rgba(255,255,255,.3)" }}>변동률 순</span>
+        <span className={s.lpListTitle}>{selectedGu} {listSort === "change" ? "변동 TOP" : "매물"}</span>
+        <select
+          value={listSort}
+          onChange={(e) => setListSort(e.target.value as ListSortKey)}
+          aria-label="목록 정렬 기준"
+          style={{ fontSize: "11px", color: "rgba(255,255,255,.85)", background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.18)", borderRadius: "6px", padding: "2px 6px", cursor: "pointer" }}
+        >
+          <option value="change" style={{ color: "#111" }}>변동률 순</option>
+          <option value="priceAsc" style={{ color: "#111" }}>{tradeType === "전세" ? "보증금 낮은순" : "가격 낮은순"}</option>
+          <option value="priceDesc" style={{ color: "#111" }}>{tradeType === "전세" ? "보증금 높은순" : "가격 높은순"}</option>
+          <option value="areaDesc" style={{ color: "#111" }}>면적 넓은순</option>
+          <option value="yearDesc" style={{ color: "#111" }}>최신 건축순</option>
+        </select>
       </div>
       <div className={s.lpList}>
         {loading ? (
@@ -119,7 +133,7 @@ export default function PriceMapLeftPanel({
               <div className={s.lpAptSub}>다른 지역/조건을 선택하세요</div>
             </div>
           </div>
-        ) : (
+        ) : listSort === "change" ? (
           <>
             {ups.map((apt, i) => (
               <AptRow key={`${apt.name}-${apt.area}-up`} apt={apt} rank={i + 1} tradeType={tradeType} active={isSame(selectedApt, apt)} onClick={() => onSelectApt(apt)} />
@@ -134,6 +148,10 @@ export default function PriceMapLeftPanel({
               </>
             )}
           </>
+        ) : (
+          topChanges.map((apt, i) => (
+            <AptRow key={`${apt.name}-${apt.area}-${i}`} apt={apt} rank={i + 1} tradeType={tradeType} active={isSame(selectedApt, apt)} onClick={() => onSelectApt(apt)} />
+          ))
         )}
       </div>
       <div style={{ padding: "10px 4px 2px" }}>
