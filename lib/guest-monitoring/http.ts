@@ -1,3 +1,4 @@
+import { parseStrictJson } from "./strict-json";
 import { NextRequest, NextResponse } from "next/server";
 import { validateOrigin } from "@/lib/csrf";
 import { verifyCronSecret } from "@/lib/cron-auth";
@@ -52,6 +53,6 @@ export async function boundedBody(req: Request, limit: number) {
   return Buffer.concat(chunks);
 }
 export async function readJson(req: Request): Promise<unknown> {
-  try { return JSON.parse((await boundedBody(req, 16384)).toString("utf8")); }
+  try { return parseStrictJson((await boundedBody(req, 16384)).toString("utf8")); }
   catch (e) { if (e instanceof GuestError) throw e; throw new GuestError("invalid_input"); }
 }

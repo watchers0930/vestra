@@ -1,3 +1,4 @@
+export type GuestMonitoringRole = "owner" | "tenant";
 export type GuestMonitoringStatus = "pending_payment" | "active" | "expired" | "abandoned";
 export type GuestOrderStatus = "pending" | "paid" | "failed" | "canceled" | "refunded" | "needs_review";
 export type GuestOrderPurpose = "initial" | "renewal";
@@ -14,6 +15,7 @@ export interface GuestApiError { error: string; code: string }
 export interface GuestDraftResponse {
   draftId: string;
   address: string;
+  unitNumber: { buildingDong: string; unitHo: string; isAggregate: boolean };
   commUniqueNoMasked: string;
   ownerNameMasked: string;
   extractionOk: boolean;
@@ -24,6 +26,7 @@ export interface GuestIdentityStartRequest {
   guestName: string;
   guestPhone: string;
   draftId?: string;
+  role?: GuestMonitoringRole;
 }
 /**
  * identity/start 응답의 launch — OTP 식별을 위해 `mode`를 추가한 상위호환 타입.

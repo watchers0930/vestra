@@ -61,7 +61,7 @@ integration("isolated PostgreSQL guest contract", () => {
   afterAll(async () => { await prisma?.$disconnect(); await raw?.$disconnect(); vi.unstubAllEnvs(); });
   async function draft(offset = 0) {
     return prisma.guestMonitoring.create({ data: {
-      guestName: name, guestPhone: phone, guestIdentityHash: identity, address: "서울 중구 테스트로 1",
+      role: "owner", guestName: name, guestPhone: phone, guestIdentityHash: identity, address: "서울 중구 테스트로 1",
       ownerName: name, commUniqueNo: `1234-1234-${String(offset).padStart(6, "0")}`,
       draftExpiresAt: new Date(Date.now() + 1800_000),
     } });
@@ -86,7 +86,7 @@ integration("isolated PostgreSQL guest contract", () => {
   });
   it("binds identity callback to browser and nonce, consumes once, revokes logout", async () => {
     const d = await draft(2);
-    const started = await session.startIdentity(request(), { purpose: "apply", guestName: name, guestPhone: phone, draftId: d.id });
+    const started = await session.startIdentity(request(), { purpose: "apply", guestName: name, guestPhone: phone, draftId: d.id, role: "owner" });
     const signed = sign("identity", { nonce: started.data.launch.state, transactionId: "identity-tx-2", guestName: name,
       guestPhone: phone, approved: true, expiresAt: Date.now() + 600_000 });
     await expect(session.consumeIdentity(request(), signed)).rejects.toThrow();

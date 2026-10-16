@@ -3,7 +3,7 @@ const f = vi.hoisted(() => ({ find: vi.fn(), update: vi.fn(), audit: vi.fn(), ge
   channels: [] as { impCode: string; mid: string; payMethod: "card"; pgProvider: "danal_tpay"; evidence: string }[] }));
 vi.mock("@/lib/prisma", () => ({ prisma: { guestMonitoringOrder: { findUnique: f.find, updateMany: f.update }, auditLog: { create: f.audit } } }));
 vi.mock("@/lib/danal/portone-v1-test-channels", () => ({ verifiedV1TestChannels: f.channels }));
-vi.mock("@/lib/danal/iamport-rest", () => ({ getPaymentByImpUid: f.get, cancelPaymentByImpUid: f.cancel }));
+vi.mock("@/lib/danal/iamport-rest", () => ({ getPaymentByImpUid: f.get, getPaymentByMerchantUid: f.get, cancelPaymentByImpUid: f.cancel }));
 import { getDanalProvider } from "@/lib/danal";
 import { getPortoneV1Config, resolvePaymentMode } from "@/lib/danal/portone-v1-config";
 import { portoneV1Provider as provider } from "@/lib/danal/portone-v1";
@@ -109,33 +109,36 @@ describe("V1 context", () => {
   });
 });
 describe("V1 payment mapping", () => {
-  it("resolves an unstored imp_uid through REST merchant_uid", async () => {
+  it("resolves a payment by orderId through REST merchant_uid", async () => {
     expect(order.providerTransactionId).toBeNull();
-    await expect(provider.payment.getPayment("imp_fixture")).resolves.toMatchObject({ verificationReference: "imp_fixture", transactionId: "imp_fixture", merchantId: config.mid });
-    expect(f.get).toHaveBeenCalledWith("imp_fixture");
-    await expect(provider.payment.getPayment(order.orderId)).rejects.toMatchObject({ code: "payment_failed" });
+    await expect(provider.payment.getPayment(order.orderId)).resolves.toMatchObject({ verificationReference: "imp_fixture", transactionId: "imp_fixture", merchantId: config.mid });
+    expect(f.get).toHaveBeenCalledWith(order.orderId);
+    // imp_uid를 reference로 주면 주문을 찾지 못해 실패(기록 전엔 providerTransactionId 미설정).
+    await expect(provider.payment.getPayment("imp_fixture")).rejects.toMatchObject({ code: "payment_failed" });
   });
+  // imp_uid 교차대조는 getPayment가 아니라 호출부(payment-callback)가 수행하므로 getPayment 자체의
+  // imp_uid 불일치 거부 케이스는 제외(verifyPayment 쪽에서 imp_uid 바인딩을 별도 검증).
   it.each([{ amount: 9999 }, { amount: 10001 }, { amount: 10000.5 }, { merchant_uid: "ord_other" },
-    { imp_uid: "imp_other" }, { pg_id: "other" }, { pg_provider: "danal" }, { pay_method: "vbank" }, { currency: "USD" },
+    { pg_id: "other" }, { pg_provider: "danal" }, { pay_method: "vbank" }, { currency: "USD" },
     { sandbox: false }, { paid_at: 0 }, { paid_at: 1 }, { paid_at: 9999999999 },
     { status: "unknown" }, { cancel_amount: 1 }, { cancelled_at: 1 },
     { cancel_history: [{ amount: 1, cancelled_at: 1 }] },
     { status: "cancelled", cancel_amount: 5000, cancelled_at: 1 },
     { status: "failed" }, { status: "ready" }])("rejects mismatches %j", async extra => {
     f.get.mockResolvedValue(payment(extra));
-    await expect(provider.payment.getPayment("imp_fixture")).rejects.toMatchObject({ code: "payment_failed" });
+    await expect(provider.payment.getPayment(order.orderId)).rejects.toMatchObject({ code: "payment_failed" });
   });
   it("converts Unix seconds to milliseconds", async () => {
     const value = payment(); f.get.mockResolvedValue(value);
-    expect((await provider.payment.getPayment("imp_fixture")).paidAt).toBe(value.paid_at * 1000);
+    expect((await provider.payment.getPayment(order.orderId)).paidAt).toBe(value.paid_at * 1000);
   });
   it("returns pending without inventing approval fields", async () => {
     f.get.mockResolvedValue(payment({ status: "ready", paid_at: 0 }));
-    await expect(provider.payment.getPayment("imp_fixture")).rejects.toMatchObject({ code: "payment_pending", status: 409 });
+    await expect(provider.payment.getPayment(order.orderId)).rejects.toMatchObject({ code: "payment_pending", status: 409 });
   });
   it.each(["failed", "cancelled"])("carries unapproved %s without paidAt", async status => {
     f.get.mockResolvedValue(payment({ status, paid_at: 0 }));
-    await expect(provider.payment.getPayment("imp_fixture")).rejects.toBeInstanceOf(PortoneTerminalPayment);
+    await expect(provider.payment.getPayment(order.orderId)).rejects.toBeInstanceOf(PortoneTerminalPayment);
   });
   it("preserves nonce after temporary failure", async () => {
     f.get.mockRejectedValueOnce(new Error("temporary")); const request = body(await launch());

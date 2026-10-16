@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { GuestPropertyDto, GuestCalendarResponse } from "@/types/guest-monitoring";
 import { assertDecrypted } from "./config";
 import { notFound } from "./errors";
+import { buildSignalSummary } from "./signal-message";
 import { monthBounds } from "./period";
 const propertySelect = { id: true, address: true, status: true, startedAt: true, paidUntil: true } as const;
 type Property = Pick<GuestMonitoring, keyof typeof propertySelect>;
@@ -21,18 +22,12 @@ export async function listProperties(identity: string) {
 }
 /** Only fixed server-owned summaries are emitted; upstream text is never returned. */
 export function safeSummary(result: string) {
-  const summaries: Record<string, string> = {
-    no_change: "등기신청 사건 없음 — 이상 없음",
-    signal_detected: "등기신청 사건이 감지되었습니다. 최신 등기부를 확인해주세요.",
-    fetch_failed: "감시 조회에 실패했습니다. 다음 주기에 재시도합니다.",
-    needs_registration: "등기부 PDF를 다시 등록해주세요.",
-  };
-  return summaries[result] || null;
+  return buildSignalSummary(null, result);
 }
 export async function getCalendar(identity: string, id: string, month: string): Promise<GuestCalendarResponse> {
   const property = await prisma.guestMonitoring.findFirst({ where: {
     id, guestIdentityHash: identity, status: { in: ["active", "expired"] },
-  }, select: propertySelect });
+  }, select: { ...propertySelect, role: true } });
   if (!property?.startedAt || !property.paidUntil) notFound();
   const { start, end } = monthBounds(month);
   // Query paid intervals to omit any gaps following expiry/reactivation.
@@ -49,5 +44,5 @@ export async function getCalendar(identity: string, id: string, month: string): 
   }, select: { id: true, checkedAt: true, method: true, result: true, riskLevel: true },
   orderBy: { checkedAt: "asc" } }) : [];
   return { property: propertyDto(property), month, logs: logs.map(log => ({ ...log,
-    checkedAt: log.checkedAt.toISOString(), summary: safeSummary(log.result) })) };
+    checkedAt: log.checkedAt.toISOString(), summary: buildSignalSummary(property.role, log.result) })) };
 }

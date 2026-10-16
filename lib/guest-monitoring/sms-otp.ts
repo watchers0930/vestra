@@ -6,9 +6,10 @@ import { sendSms } from "@/lib/solapi-client";
 import { guestIdentityHash, normalizeGuestPhone } from "./identity-hash";
 import { BROWSER_COOKIE, binding, digest, token } from "./session-binding";
 import { OTP_TTL, resolveIdentityMode } from "./identity-mode";
-import { SESSION_TTL } from "./config";
+import { GUEST_IDLE_TTL } from "./config";
 import { GuestError, notFound, unavailable } from "./errors";
 import { guestLimit } from "./rate-limit-keys";
+import { bindDraftRole } from "./draft-role";
 import { limitIdentityCost } from "./identity-cost";
 
 export function otpDigest(input: { nonce: string; inputIdentityHash: string; code: string }) {
@@ -26,7 +27,7 @@ export async function startOtp(req: NextRequest, input: GuestIdentityStartReques
   if (resolveIdentityMode() !== "sms_otp") notFound();
   const now = new Date();
   const identity = guestIdentityHash(input.guestName, input.guestPhone);
-  if (input.purpose === "apply" && !await validDraft(input.draftId, identity, now)) notFound();
+  await bindDraftRole(identity, input);
   const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
   const browser = req.cookies.get(BROWSER_COOKIE)?.value || token();
   const nonce = token();
@@ -84,7 +85,7 @@ export async function verifyOtp(req: NextRequest, input: { verificationId: strin
     expiresAt: { gt: now },
   }, data: {
     tokenHash: digest(rawToken), verifiedIdentityHash: session.inputIdentityHash,
-    verifiedAt: now, consumedAt: now, expiresAt: new Date(now.getTime() + SESSION_TTL),
+    verifiedAt: now, consumedAt: now, expiresAt: new Date(now.getTime() + GUEST_IDLE_TTL),
     providerTxId: `sms_otp_verified:${randomUUID()}`,
   } });
   if (consumed.count !== 1) throw failed();

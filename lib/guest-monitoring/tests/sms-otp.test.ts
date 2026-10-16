@@ -9,6 +9,9 @@ vi.mock("@/lib/prisma", () => ({ prisma: {
   guestVerificationSession: { create: f.create, findUnique: f.find, updateMany: f.updateMany, update: f.update },
   guestMonitoring: { findFirst: f.draft },
 } }));
+vi.mock("../transaction", () => ({ locked: async (_identity: string, run: (tx: unknown) => unknown) => run({
+  guestMonitoring: { findFirst: f.draft },
+}) }));
 vi.mock("@/lib/solapi-client", () => ({ sendSms: f.send }));
 vi.mock("@/lib/danal", () => ({ getDanalProvider: f.provider }));
 vi.mock("../rate-limit-keys", () => ({ guestLimit: f.limit, ipLimit: f.ip }));
@@ -120,7 +123,7 @@ describe("OTP creation and provider isolation", () => {
   });
   it("rejects unavailable apply drafts before session creation and SMS", async () => {
     f.draft.mockResolvedValue(null);
-    await expect(startOtp(request(), { ...input, purpose: "apply", draftId: "draft-1" })).rejects.toMatchObject({ status: 404 });
+    await expect(startOtp(request(), { ...input, purpose: "apply", draftId: "draft-1", role: "owner" })).rejects.toMatchObject({ status: 404 });
     expect(f.create).not.toHaveBeenCalled();
     expect(f.send).not.toHaveBeenCalled();
     expect(f.limit).not.toHaveBeenCalledWith("identity-cost", expect.anything(), expect.anything(), expect.anything());
@@ -138,14 +141,18 @@ describe("OTP verification and session contract", () => {
     expect(await response.json()).toEqual({ ok: true, purpose });
     expect(response.headers.get("cache-control")).toBe("no-store");
     const raw = response.cookies.get(SESSION_COOKIE)!.value;
-    for (const name of [SESSION_COOKIE, BROWSER_COOKIE]) expect(response.cookies.get(name)).toMatchObject({
-      httpOnly: true, secure: true, sameSite: "none", path: "/api/guest-monitoring", maxAge: 900 });
+    for (const name of [SESSION_COOKIE, BROWSER_COOKIE]) {
+      const cookie = response.cookies.get(name)!;
+      expect(cookie).toMatchObject({ httpOnly: true, secure: true, sameSite: "none", path: "/api/guest-monitoring" });
+      expect(cookie.maxAge).toBeUndefined(); // 세션 쿠키(로그아웃 정책)
+    }
     const mutation = f.updateMany.mock.calls[0][0];
     expect(mutation.where).toMatchObject({ id: row.id, providerTxId: row.providerTxId,
       inputIdentityHash: row.inputIdentityHash, browserBindingHash: row.browserBindingHash,
       verifiedAt: null, consumedAt: null, revokedAt: null, expiresAt: { gt: new Date() } });
+    // 본인인증 완료 시 만료 = 유휴 10분(이후 요청마다 슬라이딩, 절대 60분 상한).
     expect(mutation.data).toMatchObject({ tokenHash: digest(raw), verifiedIdentityHash: row.inputIdentityHash,
-      verifiedAt: new Date(), consumedAt: new Date(), expiresAt: new Date(Date.now() + 900_000) });
+      verifiedAt: new Date(), consumedAt: new Date(), expiresAt: new Date(Date.now() + 600_000) });
     expect(mutation.data.providerTxId).toMatch(/^sms_otp_verified:[0-9a-f-]{36}$/);
     f.find.mockResolvedValue({ ...row, ...mutation.data });
     expect(await requireSession(request({}, `${BROWSER_COOKIE}=browser; ${SESSION_COOKIE}=${raw}`))).toMatchObject({ purpose });
@@ -275,7 +282,7 @@ describe("request gates and distributed limit contract", () => {
     const providerStart = vi.fn();
     f.provider.mockReturnValue({ identity: { startVerification: providerStart } });
     f.draft.mockResolvedValue(null);
-    const response = await start(request({ ...input, purpose: "apply", draftId: "draft-1" }));
+    const response = await start(request({ ...input, purpose: "apply", draftId: "draft-1", role: "owner" }));
     expect(response.status).toBe(404);
     expect(f.limit.mock.calls.map(call => call[0])).toEqual(["identity", "identity-phone"]);
     expect(f.create).not.toHaveBeenCalled();
@@ -295,9 +302,10 @@ describe("request gates and distributed limit contract", () => {
   });
 
   it.each(["draft", "create"])("OTP %s persistence errors do not consume budget", async stage => {
+    f.draft.mockResolvedValue({ id: "draft-1", role: "owner" });
     if (stage === "draft") f.draft.mockRejectedValue(new Error("database unavailable"));
     else f.create.mockRejectedValue(new Error("database unavailable"));
-    const response = await start(request({ ...input, purpose: "apply", draftId: "draft-1" }));
+    const response = await start(request({ ...input, purpose: "apply", draftId: "draft-1", role: "owner" }));
     expect(response.status).toBe(500);
     expect(f.limit.mock.calls.map(call => call[0])).toEqual(["identity", "identity-phone"]);
     expect(f.send).not.toHaveBeenCalled();
@@ -332,15 +340,57 @@ describe("request gates and distributed limit contract", () => {
     vi.stubEnv("GUEST_IDENTITY_MODE", "danal");
     f.draft.mockImplementation(async () => {
       expect(f.limit.mock.calls.map(call => call[0])).toEqual(["identity", "identity-phone"]);
-      return { id: "draft-1" };
+      return { id: "draft-1", role: "owner" };
     });
     const providerStart = vi.fn(async () => {
       expect(f.limit.mock.calls.at(-1)?.[0]).toBe("identity-cost");
       return { url: "https://provider.test/identity" };
     });
     f.provider.mockReturnValue({ identity: { startVerification: providerStart } });
-    expect((await start(request({ ...input, purpose: "apply", draftId: "draft-1" }))).status).toBe(200);
+    expect((await start(request({ ...input, purpose: "apply", draftId: "draft-1", role: "owner" }))).status).toBe(200);
     expect(f.limit.mock.calls.filter(call => call[0] === "identity-cost")).toHaveLength(1);
     expect(providerStart).toHaveBeenCalledOnce();
+  });
+});
+
+describe("requireSession idle sliding and absolute cap (logout policy)", () => {
+  const RAW = "verified-session-raw";
+  const authReq = () => request({}, `${BROWSER_COOKIE}=browser; ${SESSION_COOKIE}=${RAW}`);
+  function verified(over: Record<string, unknown> = {}) {
+    const identity = guestIdentityHash(input.guestName, input.guestPhone);
+    const now = Date.now();
+    return { id: "sess-1", requestNonce: "nonce", purpose: "status", draftId: null,
+      inputIdentityHash: identity, browserBindingHash: binding(request(), "browser"),
+      providerTxId: "sms_otp_verified:x", tokenHash: digest(RAW),
+      verifiedIdentityHash: identity, verifiedAt: new Date(now - 60_000), consumedAt: new Date(now - 60_000),
+      revokedAt: null, expiresAt: new Date(now + 120_000), ...over };
+  }
+  it("slides expiresAt forward to now+10min on activity", async () => {
+    f.find.mockResolvedValue(verified());
+    const session = await requireSession(authReq());
+    expect(session).toMatchObject({ id: "sess-1", purpose: "status" });
+    expect(f.updateMany).toHaveBeenCalledTimes(1);
+    const call = f.updateMany.mock.calls[0][0];
+    expect(call.where).toMatchObject({ id: "sess-1", revokedAt: null });
+    expect(call.data.expiresAt).toEqual(new Date(Date.now() + 600_000));
+  });
+  it("clamps the slide to verifiedAt + 60min absolute cap", async () => {
+    const verifiedAt = new Date(Date.now() - 58 * 60_000);
+    f.find.mockResolvedValue(verified({ verifiedAt, consumedAt: verifiedAt, expiresAt: new Date(Date.now() + 60_000) }));
+    await requireSession(authReq());
+    const call = f.updateMany.mock.calls[0][0];
+    // now+10min(=now+600000)이 상한(verifiedAt+60min=now+120000)을 넘으므로 상한으로 clamp.
+    expect(call.data.expiresAt).toEqual(new Date(verifiedAt.getTime() + 3_600_000));
+  });
+  it("does not write when next would not advance the current expiry", async () => {
+    // 이미 유휴 최대치(now+10min)면 슬라이딩 불필요 → updateMany 미호출.
+    f.find.mockResolvedValue(verified({ expiresAt: new Date(Date.now() + 600_000) }));
+    await requireSession(authReq());
+    expect(f.updateMany).not.toHaveBeenCalled();
+  });
+  it("rejects with 401 once past the (clamped) expiry — absolute logout enforced", async () => {
+    f.find.mockResolvedValue(verified({ expiresAt: new Date(Date.now() - 1) }));
+    await expect(requireSession(authReq())).rejects.toMatchObject({ code: "session_required", status: 401 });
+    expect(f.updateMany).not.toHaveBeenCalled();
   });
 });

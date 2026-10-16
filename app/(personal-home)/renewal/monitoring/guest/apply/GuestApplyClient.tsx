@@ -47,9 +47,10 @@ function Steps({ current }: { current: number }) {
 
 /**
  * 비회원 신청 흐름 오케스트레이션. 랜딩 섹션과 /guest/apply 라우트에서 공용으로 쓴다.
+ * 물건 식별은 PDF 하나로 통합되어 주소 주입(initialAddress)이 없다(설계 §4.1).
  * 리다이렉트 복귀 재개는 useGuestApply 내부(window.location 기반)에서 처리한다.
  */
-export default function GuestApplyClient({ initialAddress = "" }: { initialAddress?: string }) {
+export default function GuestApplyClient() {
   const {
     phase,
     draft,
@@ -60,6 +61,9 @@ export default function GuestApplyClient({ initialAddress = "" }: { initialAddre
     startIdentity,
     retry,
     reset,
+    role,
+    setRole,
+    roleLocked,
     restoreName,
     restorePhone,
     otpVerificationId,
@@ -141,7 +145,7 @@ export default function GuestApplyClient({ initialAddress = "" }: { initialAddre
       <div className={`${g.wrap} ${g.narrow}`}>
         <Steps current={2} />
         <div className={g.card}>
-          <div className={g.centerBox} style={{ color: "#b91c1c" }}>
+          <div className={g.centerBox} style={{ color: "#b91c1c" }} role="alert" aria-live="assertive">
             {error || "신청을 완료하지 못했습니다."}
           </div>
           <div className={g.btnRow}>
@@ -165,9 +169,11 @@ export default function GuestApplyClient({ initialAddress = "" }: { initialAddre
         draft={draft}
         busy={busy}
         error={error}
-        initialAddress={initialAddress}
         initialName={restoreName}
         initialPhone={restorePhone}
+        role={role}
+        onRoleChange={setRole}
+        roleLocked={roleLocked}
         onParse={submitParse}
         onProceed={startIdentity}
         onEdit={reset}

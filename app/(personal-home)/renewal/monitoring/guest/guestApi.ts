@@ -10,8 +10,6 @@
  */
 
 import type {
-  GuestDraftResponse,
-  GuestIdentityStartRequest,
   GuestIdentityStartResponse,
   GuestOtpVerifyRequest,
   GuestOtpVerifyResponse,
@@ -21,6 +19,7 @@ import type {
   GuestPropertyDto,
   GuestCalendarResponse,
 } from "@/types/guest-monitoring";
+import type { GuestDraft, GuestIdentityStartRequestWithRole } from "./guestTypes";
 
 const BASE = "/api/guest-monitoring";
 
@@ -99,35 +98,37 @@ async function getJson<T>(path: string): Promise<GuestApiResult<T>> {
 
 /**
  * §3.1 POST /parse-pdf — PDF 파싱 + 초안 생성.
- * 멀티파트. 클라이언트는 commUniqueNo/ownerName을 보내지 않는다(서버 추출만 신뢰).
+ * 멀티파트. 물건 식별 입력은 PDF 하나로 통합되어 주소 키를 보내지 않는다(설계 §3.1).
+ * 허용 키는 `file / guestName / guestPhone` 세 개뿐이며, 서버가 추출한 주소·동/호·고유번호·소유자만 신뢰한다.
  */
 export async function parsePdf(input: {
   file: File;
   guestName: string;
   guestPhone: string;
-  address: string;
-}): Promise<GuestApiResult<GuestDraftResponse>> {
+}): Promise<GuestApiResult<GuestDraft>> {
   try {
     const fd = new FormData();
     fd.append("file", input.file);
     fd.append("guestName", input.guestName);
     fd.append("guestPhone", input.guestPhone);
-    fd.append("address", input.address);
     const res = await fetch(`${BASE}/parse-pdf`, {
       method: "POST",
       body: fd,
       credentials: "same-origin",
       cache: "no-store",
     });
-    return toResult<GuestDraftResponse>(res);
+    return toResult<GuestDraft>(res);
   } catch {
     return networkFail();
   }
 }
 
-/** §3.2 POST /identity/start — 본인인증 시작 */
+/**
+ * §3.2 POST /identity/start — 본인인증 시작.
+ * apply 경로는 `role`(owner|tenant)을 함께 보낸다(서버가 OTP 발송 전 초안에 저장). status/renewal은 role 없음.
+ */
 export function identityStart(
-  req: GuestIdentityStartRequest
+  req: GuestIdentityStartRequestWithRole
 ): Promise<GuestApiResult<GuestIdentityStartResponse>> {
   return postJson<GuestIdentityStartResponse>("/identity/start", req);
 }

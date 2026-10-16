@@ -20,6 +20,11 @@ const googleAnalyticsConnect = "https://www.google-analytics.com https://region1
 const tossDomains = "https://js.tosspayments.com";
 const tossConnect = "https://*.tosspayments.com https://*.toss.im";
 const tossFrame = "https://*.tosspayments.com https://*.toss.im";
+// 포트원 V1(아임포트) + 다날 결제 CSP 도메인 (비회원 등기감시 결제)
+// iamport SDK는 *.iamport.kr 뿐 아니라 *.iamport.co(텔레메트리 coretelemetry.prod.iamport.co 등)도 사용.
+const portoneDomains = "https://cdn.iamport.kr https://service.iamport.kr https://*.iamport.co";
+const portoneConnect = "https://api.iamport.kr https://service.iamport.kr https://*.iamport.kr https://*.iamport.co";
+const portoneFrame = "https://*.iamport.kr https://*.iamport.co https://*.danalpay.com https://*.teledit.com https://*.danal.co.kr https://pg.danal.co.kr";
 const isDev = process.env.NODE_ENV !== "production";
 // Vercel 프리뷰 환경에서 Live Feedback 스크립트 허용
 const isVercelPreview = process.env.VERCEL_ENV === "preview";
@@ -28,12 +33,12 @@ const vercelLive = isVercelPreview ? " https://vercel.live" : "";
 // 기본 CSP (unsafe-eval 없음)
 const baseCSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}${vercelLive} ${kakaoDomains} ${googleTagDomains} ${tossDomains}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}${vercelLive} ${kakaoDomains} ${googleTagDomains} ${tossDomains} ${portoneDomains}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   `img-src 'self' data: blob: ${kakaoImg} https://lh3.googleusercontent.com https://images.unsplash.com`,
   "font-src 'self' data: https://fastly.jsdelivr.net https://fonts.gstatic.com",
-  `connect-src 'self' https://api.openai.com https://*.neon.tech ${kakaoConnect} ${googleAnalyticsConnect} https://api.odcloud.kr https://apis.data.go.kr https://fcm.googleapis.com https://*.push.services.mozilla.com https://*.notify.windows.com ${tossConnect}`,
-  `frame-src https://postcode.map.kakao.com${isDev ? " http://postcode.map.kakao.com" : ""} ${googleTagDomains} ${tossFrame}${vercelLive}`,
+  `connect-src 'self' https://api.openai.com https://*.neon.tech ${kakaoConnect} ${googleAnalyticsConnect} https://api.odcloud.kr https://apis.data.go.kr https://fcm.googleapis.com https://*.push.services.mozilla.com https://*.notify.windows.com ${tossConnect} ${portoneConnect}`,
+  `frame-src https://postcode.map.kakao.com${isDev ? " http://postcode.map.kakao.com" : ""} ${googleTagDomains} ${tossFrame}${vercelLive} ${portoneFrame}`,
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",

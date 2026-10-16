@@ -116,11 +116,11 @@ export default function GuestOtpForm({
           </p>
         )}
 
-        <button className={g.btnPrimary} onClick={submit} disabled={!canSubmit} style={{ marginTop: 8 }}>
+        <button className={g.btnPrimary} onClick={submit} disabled={!canSubmit} style={{ marginTop: 12 }}>
           {busy ? "확인 중..." : "인증번호 확인"}
         </button>
 
-        <div className={g.btnRow}>
+        <div className={g.btnRow} style={{ marginTop: 10 }}>
           <button type="button" className={g.btnGhost} onClick={onResend} disabled={busy}>
             인증번호 재요청
           </button>
