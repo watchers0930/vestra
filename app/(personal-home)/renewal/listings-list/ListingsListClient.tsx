@@ -8,7 +8,6 @@ import SiteFooter from "@/components/layout/SiteFooter";
 import { useListings, type ListingType } from "@/app/(app)/listings/hooks/useListings";
 import { ListingCard } from "@/app/(app)/listings/components/ListingCard";
 import { GANGNAM_TEST_LISTINGS } from "./test-fixtures";
-import { isProdHost } from "@/lib/site";
 
 const REGIONS: Record<string, string[]> = {
   '서울특별시': ['강남구','강동구','강북구','강서구','관악구','광진구','구로구','금천구','노원구','도봉구','동대문구','동작구','마포구','서대문구','서초구','성동구','성북구','송파구','양천구','영등포구','용산구','은평구','종로구','중구','중랑구'],
@@ -73,13 +72,11 @@ export default function ListingsListClient() {
   // 베스트라 안심인증매물만 보기 토글 (isCertified === true 만 노출)
   const [certifiedOnly, setCertifiedOnly] = useState(false);
 
-  // 테스트 전용 샘플 매물: 운영 도메인에서는 절대 노출하지 않음.
-  // 실데이터가 비어있을 때만 테스트 화면 확인용으로 강남 샘플 3건(1건 안심)을 보여준다.
-  const [showFixtures, setShowFixtures] = useState(false);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setShowFixtures(!isProdHost(window.location.hostname));
-  }, []);
+  // [예외처리] 실매물 데이터 확보 전까지는 운영에서도 샘플 매물을 노출한다(대장 지시, 2026-10-16).
+  // 실데이터가 없어 매물검색이 빈 화면으로 보이는 것을 임시로 메우기 위함. 실매물이 있으면 실매물이 우선 노출된다.
+  // TODO(P1-1): 실매물 데이터가 들어오면 isProdHost 게이팅으로 복원
+  //   → const [showFixtures, setShowFixtures] = useState(false); useEffect(() => setShowFixtures(!isProdHost(window.location.hostname)), []);
+  const [showFixtures] = useState(true);
 
   const sigunguList = sido && REGIONS[sido] ? REGIONS[sido] : [];
 
