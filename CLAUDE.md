@@ -190,3 +190,13 @@ npm run lint         # ESLint
 - `MOLIT_API_KEY` - 국토교통부 실거래가 API 키 (data.go.kr 계정 A)
 - `KAPT_API_KEY` - K-apt 단지목록/기본정보/상세정보 + 건축물대장 API 키 (data.go.kr 계정 B)
 - `VWORLD_API_KEY` - VWorld NED 공시가격 API 키 (개별공시지가/공동주택/개별주택)
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

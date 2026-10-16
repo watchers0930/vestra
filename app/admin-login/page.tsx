@@ -97,7 +97,7 @@ export default function AdminLoginPage() {
         <div className="space-y-1 text-[11px] leading-relaxed text-[#86868b]">
           <p>BMI C&amp;S | 대표이사 김동의</p>
           <p>사업자등록번호 263-87-03481 | 통신판매신고번호 2025-경기광명-0189</p>
-          <p>서울시 금천구 디지털로10길 78. 813호 | 고객센터 010-8490-9271</p>
+          <p>서울시 강남구 강남대로 354. 혜천빌딩 11층 1126-5호 | 고객센터 010-8490-9271</p>
           <p className="pt-1">© 2026 BMI-C&amp;S All rights reserved.</p>
         </div>
       </footer>
