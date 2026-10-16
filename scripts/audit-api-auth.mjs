@@ -46,6 +46,7 @@ const ALLOWLIST = {
   "guest-monitoring/parse-pdf/route.ts": "비회원 등기부 PDF 파싱 — CSRF + IP rate limit + 11MB·매직바이트 검증",
   "guest-monitoring/payment/callback/route.ts": "비회원 결제 콜백(외부 PG) — HMAC + provider 재조회 금액검증 + nonce 1회소비 + IP rate limit",
   "guest-monitoring/session/route.ts": "비회원 조회 세션 — DELETE는 본인 세션 토큰(쿠키) 소유자만 로그아웃, CSRF + rate limit",
+  "csp-report/route.ts": "CSP 위반 리포트 수신 — 브라우저가 위반 시 자동 전송(무인증 규격), DB 변이 없이 로그만 + 인메모리 dedup + 10KB 페이로드 상한",
 };
 
 const MUTATION_RE = /export\s+(?:async\s+function|const)\s+(POST|PUT|PATCH|DELETE)\b/g;

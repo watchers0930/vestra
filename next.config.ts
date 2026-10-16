@@ -8,6 +8,9 @@ const securityHeaders = [
   { key: "X-XSS-Protection", value: "1; mode=block" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+  // CSP 위반 리포트 수신 엔드포인트. 외부 공급사(카카오맵 등)가 도메인/CDN을 바꿔
+  // 리소스가 CSP에 막히는 순간, 브라우저가 자동으로 /api/csp-report 로 신고한다(사용자보다 먼저 감지).
+  { key: "Reporting-Endpoints", value: 'csp-endpoint="/api/csp-report"' },
 ];
 
 // 카카오맵 관련 CSP 도메인
@@ -45,6 +48,9 @@ const baseCSP = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
+  // CSP 위반 자동 신고 — 신형(report-to) + 구형(report-uri) 병행으로 브라우저 호환성 확보
+  "report-uri /api/csp-report",
+  "report-to csp-endpoint",
 ].join("; ");
 
 // 임베드 위젯 CSP — 외부 사이트 iframe 삽입이 목적이므로
