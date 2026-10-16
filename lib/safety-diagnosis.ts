@@ -179,7 +179,7 @@ function diagnoseOwnerVerification(
       status: "unknown",
       severity: "medium",
       description: "등기부에서 현재 소유자를 확인할 수 없습니다.",
-      action: "등기부등본을 재확인하고, 매도인 신분증과 대조하세요.",
+      action: "등기부등본을 재확인하고, 임대인(소유자) 신분증과 대조하세요.",
     };
   }
 
@@ -188,8 +188,8 @@ function diagnoseOwnerVerification(
     label: "소유자명 대조",
     status: "warn",
     severity: "medium",
-    description: `현재 소유자: ${currentOwner}. 반드시 매도인 신분증과 대조해야 합니다.`,
-    action: "매도인 신분증의 이름·주민번호를 등기부 소유자와 직접 대조하세요. 대리인 계약 시 위임장·인감증명서를 확인하세요.",
+    description: `현재 소유자: ${currentOwner}. 계약 상대방(임대인)이 등기부상 소유자와 같은지 반드시 확인해야 합니다.`,
+    action: "임대인(소유자) 신분증의 이름·주민번호를 등기부 소유자와 직접 대조하세요. 대리인 계약 시 위임장·인감증명서를 확인하세요.",
     evidence: [`등기부 소유자: ${currentOwner}`],
   };
 }
@@ -343,8 +343,8 @@ function diagnoseTaxDelinquency(): DiagnosisItem {
     label: "세금 체납 확인",
     status: "info",
     severity: "low",
-    description: "매도인의 세금 체납 여부는 등기부만으로 확인할 수 없습니다.",
-    action: "정부24(gov.kr)에서 '지방세 납세증명서'와 '국세 납세증명서'를 요청하세요. 체납 시 매매 후에도 압류가 발생할 수 있습니다.",
+    description: "임대인(소유자)의 세금 체납 여부는 등기부만으로 확인할 수 없습니다.",
+    action: "임대인에게 '지방세·국세 납세증명서'(정부24 gov.kr 발급)를 요청해 확인하세요. 세금 체납분은 전세보증금보다 먼저 변제되어(당해세 등), 체납 시 전세 계약 후 압류·경매로 보증금을 돌려받지 못할 위험이 있습니다.",
   };
 }
 
@@ -400,7 +400,7 @@ function diagnoseNameChange(): DiagnosisItem {
     severity: "low",
     description:
       "등기명의인표시변경(주소·성명) 부기등기가 있습니다. 표시변경이므로 소유권 자체는 유지되나, 현재 소유자 동일성 확인이 필요합니다.",
-    action: "변경된 소유자 주소·성명을 매도인 신분증과 대조하세요.",
+    action: "변경된 소유자 주소·성명을 임대인(소유자) 신분증과 대조하세요.",
     evidence: ["등기부 부기등기: 등기명의인표시변경"],
   };
 }

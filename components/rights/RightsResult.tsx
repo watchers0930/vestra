@@ -25,8 +25,6 @@ import { SafetyChecklist } from "@/components/rights/SafetyChecklist";
 import { ScoreGauge, ScholarPapers } from "@/components/results";
 import { KaptInfoCard } from "@/components/common/KaptInfoCard";
 import SafetyDiagnosisCard from "@/components/results/SafetyDiagnosisCard";
-import TitleInsuranceCard from "@/components/results/TitleInsuranceCard";
-import ContractClauseCard from "@/components/results/ContractClauseCard";
 import dynamic from "next/dynamic";
 
 const RightsGraphView = dynamic(
@@ -65,6 +63,23 @@ export function RightsResult({ result, rawText }: RightsResultProps) {
         <PdfDownloadButton targetRef={resultRef} filename="vestra-rights-analysis.pdf" title="VESTRA 권리분석 리포트" />
       </div>
 
+      {/* 권리분석 가능 여부 — 데이터 미확보 시 점수 미산출(허위 안심 방지) */}
+      {result.riskAnalysis.analyzable === false ? (
+        <Card className="p-6" style={{ border: "1.5px solid #f59e0b", background: "rgba(245,158,11,0.05)" }}>
+          <div style={{ textAlign: "center", padding: "20px 12px" }}>
+            <ShieldAlert size={36} className="mx-auto mb-3 text-amber-500" />
+            <p className="text-lg font-bold text-gray-900 mb-2">안전점수를 산출할 수 없습니다</p>
+            <p className="text-sm text-gray-600 leading-relaxed max-w-xl mx-auto">
+              {result.riskAnalysis.unavailableReason
+                || "유효한 등기부 데이터가 없어 권리관계·안전점수를 분석할 수 없습니다. 등기부등본을 업로드해 주세요."}
+            </p>
+            <p className="text-xs text-amber-700 mt-4 font-medium">
+              데이터가 확인되지 않은 상태에서는 &lsquo;안전&rsquo;으로 판단하지 않습니다. 아래 시세·주변 정보는 참고용입니다.
+            </p>
+          </div>
+        </Card>
+      ) : (
+      <>
       {/* 안전도 점수 + 핵심 지표 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="p-6 flex flex-col items-center justify-center">
@@ -119,19 +134,30 @@ export function RightsResult({ result, rawText }: RightsResultProps) {
         <SafetyDiagnosisCard result={result.safetyDiagnosis} />
       )}
 
-      {/* 권원보험 안내 */}
-      {result.titleInsurance && (
-        <TitleInsuranceCard result={result.titleInsurance} />
-      )}
-
-      {/* 매매계약 특약 */}
-      {result.contractClauses && (
-        <ContractClauseCard result={result.contractClauses} />
-      )}
+      {/* 전세보증금 반환보증 안내 (전세 세입자용 — 매매 전용 권원보험/매매특약 대체) */}
+      <Card className="p-6">
+        <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <Shield size={18} strokeWidth={1.5} className="text-[#1d1d1f]" />
+          전세보증금 반환보증 안내
+        </h3>
+        <p className="text-sm text-gray-600 leading-relaxed mb-3">
+          전세 세입자는 <strong>전세보증금 반환보증</strong>에 가입하면, 임대인이 보증금을 돌려주지 못할 때
+          보증기관이 대신 반환해 전세사기·깡통전세 피해를 예방할 수 있습니다.
+        </p>
+        <ul className="text-sm text-gray-700 space-y-1.5 mb-3">
+          <li>• <strong>HUG 주택도시보증공사</strong> 전세보증금반환보증 — 보증료가 저렴한 공적 보증(보증금 한도·주택 요건 확인 필요)</li>
+          <li>• <strong>SGI 서울보증</strong> 전세금보장신용보험 — 가입 요건이 상대적으로 유연</li>
+        </ul>
+        <p className="text-xs text-gray-400">
+          ※ 전입신고 + 확정일자를 갖춘 뒤 보증기관·협약 은행·안심전세앱 등에서 신청하세요. 보증료·가입조건은 기관별로 다릅니다.
+        </p>
+      </Card>
 
       {/* 맞춤 준비 체크리스트 */}
       {result.checklistByCategory && Object.keys(result.checklistByCategory).length > 0 && (
         <ChecklistSection checklistByCategory={result.checklistByCategory} />
+      )}
+      </>
       )}
 
       {/* 부동산 기본정보 */}
@@ -189,7 +215,7 @@ export function RightsResult({ result, rawText }: RightsResultProps) {
 
       <IntegrityBadge />
 
-      {result.parsed && (
+      {result.parsed && result.riskAnalysis.analyzable !== false && (
         <Card className="p-6">
           <RightsGraphView parsed={result.parsed} graphAnalysis={result.graphAnalysis} />
         </Card>

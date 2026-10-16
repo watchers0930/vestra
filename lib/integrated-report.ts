@@ -229,7 +229,9 @@ export function aggregateReport(
         scenarioOptimistic: (prediction.optimistic as number) || 0,
         scenarioBase: (prediction.base as number) || 0,
         scenarioPessimistic: (prediction.pessimistic as number) || 0,
-        confidence: (prediction.confidence as number) || 0.5,
+        // predict-value confidence는 0~100(백분율) → 표시·V-Score가 기대하는 0~1로 정규화.
+        // (정규화 누락 시 표시단 ×100이 중복 적용돼 "신뢰도 3000%" 발생)
+        confidence: ((prediction.confidence as number) || 50) / 100,
       };
     }
   }

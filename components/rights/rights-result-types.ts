@@ -42,6 +42,14 @@ export interface UnifiedResult {
     safetyScore: number;
     riskScore: number;
     risks: RiskItem[];
+    /**
+     * 권리분석 가능 여부. 등기부 미제출·파싱 실패·소유자 미확인 등으로
+     * 유효한 권리 데이터가 없으면 false → 안전점수·등급을 산출/표시하지 않는다.
+     * (데이터 부재를 "안전"으로 오인시키는 허위 안심 방지)
+     */
+    analyzable?: boolean;
+    /** analyzable === false일 때 사용자에게 보여줄 사유·안내 문구 */
+    unavailableReason?: string;
   };
   parsed: ParsedRegistry;
   validation: ValidationResult;

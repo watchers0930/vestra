@@ -47,7 +47,13 @@ export function parseTitle(raw: string): TitleSection {
   for (const line of lines) {
     if (/소재지|소재지번/.test(line) || /[가-힣]+[시도]\s*[가-힣]+[시군구]/.test(line)) {
       const addrMatch = line.match(/([가-힣]+(?:시|도)\s+[가-힣]+(?:시|군|구)[\s가-힣\d\-호동층]*)/);
-      if (addrMatch) result.address = addrMatch[1].trim();
+      if (addrMatch) {
+        // 건물구조(철근콘크리트 등)·면적 문자열이 같은 줄에서 주소에 혼입되면 잘라낸다.
+        // (예: "경기도 남양주시 다산동 철근콘크리…" → "경기도 남양주시 다산동")
+        result.address = addrMatch[1]
+          .replace(/\s*(?:철근콘크리트|철골철근콘크리트|철골|벽돌|목조|경량철골|조적)[가-힣\s]{0,8}(?:구조|조).*$/, "")
+          .trim();
+      }
     }
 
     const area = extractArea(line);

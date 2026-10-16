@@ -182,17 +182,49 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
     ? userAddress
     : parsed.title.address || address;
 
+  // 최근 거래: 추정가 산정에 실제 사용한 비교매물(건물명/면적 매칭) 중 가장 최근 1건만 사용한다.
+  // 구/군 전체 평균(district_avg)·fallback은 대상 물건과 평형·건물이 달라 추정가와 모순되므로 표기하지 않는다.
+  const recentComparable = marketDataFiltered
+    ? [...priceEstimation.comparables].sort(
+        (a, b) =>
+          b.dealYear * 10000 + b.dealMonth * 100 + b.dealDay -
+          (a.dealYear * 10000 + a.dealMonth * 100 + a.dealDay)
+      )[0]
+    : undefined;
+
   const propertyInfo = {
     address: displayAddress,
-    type: parsed.title.purpose || "아파트",
+    type: parsed.title.purpose || (buildingResult?.mainPurpose || "용도 미확인"),
     area: parsed.title.area || "",
     buildYear: parsed.title.buildingDetail || "",
     estimatedPrice,
     jeonsePrice: marketData?.rent?.avgDeposit || parsed.summary.totalJeonseAmount || 0,
-    recentTransaction: marketData?.sale?.transactions?.[0]
-      ? `${marketData.sale.transactions[0].dealYear}.${String(marketData.sale.transactions[0].dealMonth).padStart(2, "0")} / ${(marketData.sale.transactions[0].dealAmount / 100000000).toFixed(1)}억`
+    recentTransaction: recentComparable
+      ? `${recentComparable.dealYear}.${String(recentComparable.dealMonth).padStart(2, "0")} / ${(recentComparable.dealAmount / 100000000).toFixed(1)}억`
       : "",
   };
+
+  // P0-1: 권리분석 가능 여부 — 유효한 등기 데이터·소유자가 없으면 안전점수를 산출/표시하지 않는다.
+  // (등기부 미제출·파싱 실패·소유자 미확인 상태를 "안전 100점"으로 오인시키는 허위 안심 방지)
+  const hasRegistryEntries =
+    parsed.summary.activeGapguEntries > 0 || parsed.summary.activeEulguEntries > 0;
+  const currentOwner =
+    [...parsed.gapgu]
+      .filter(
+        (e) =>
+          !e.isCancelled &&
+          /소유권(보존|이전)/.test(e.purpose) &&
+          // 소유권이전청구권가등기·가처분·예고등기 등은 현재 소유자가 아니므로 제외(본등기만 인정)
+          !/가등기|청구권|가처분|예고/.test(e.purpose) &&
+          e.holder,
+      )
+      .pop()?.holder || "";
+  const rightsAnalyzable = hasRegistryEntries && Boolean(currentOwner);
+  const rightsUnavailableReason = !hasRegistryEntries
+    ? "등기부등본이 제출되지 않았거나 인식되지 않아 권리관계·안전점수를 분석할 수 없습니다. 등기부등본을 업로드하면 소유자·권리관계·안전점수를 분석해 드립니다."
+    : !currentOwner
+      ? "등기부에서 현재 소유자 정보를 확인할 수 없어 안전점수를 산출하지 않았습니다. 등기부등본 원본이 올바른지(일부 누락·흐림 여부) 확인해 주세요."
+      : undefined;
 
   // 6단계: 전세가율 / RiskAnalysis
   const jeonseRatio = marketData?.jeonseRatio ?? (
@@ -206,6 +238,8 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
     mortgageRatio: riskScore.mortgageRatio,
     safetyScore: riskScore.totalScore,
     riskScore: 100 - riskScore.totalScore,
+    analyzable: rightsAnalyzable,
+    unavailableReason: rightsUnavailableReason,
     risks: riskScore.factors.map((f) => ({
       level: (f.severity === "critical" || f.severity === "high"
         ? "danger"
@@ -220,6 +254,11 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
   // 7단계: AI 종합 의견 + 품질게이트(LLM-as-judge)
   let aiOpinion = "";
   let qualityGate: QualityJudgment | null = null;
+  if (!rightsAnalyzable) {
+    // 유효한 등기 데이터가 없으면 AI 의견을 생성하지 않는다(허위 의견·"등기부 기반 자동생성" 오안내·불필요한 LLM 비용 방지).
+    aiOpinion = rightsUnavailableReason
+      || "유효한 등기부 데이터가 없어 AI 종합 의견을 생성하지 않았습니다. 등기부등본을 업로드해 주세요.";
+  } else {
   try {
     const costGuard = await checkOpenAICostGuard(ip);
     if (!costGuard.allowed) {
@@ -335,6 +374,7 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
   } catch {
     aiOpinion = "AI 의견을 생성할 수 없습니다. API 키를 확인해주세요.";
   }
+  }
 
   // 최종 검증
   const validation = validateParsedRegistry(parsed, estimatedPrice, riskScore, aiOpinion);
@@ -359,7 +399,8 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
   const vScore = calculateVScore({
     riskScore,
     jeonseRatio: jeonseRatio || undefined,
-    priceConfidence: priceEstimation.confidence,
+    // priceEstimation.confidence는 0~95(백분율) 스케일 → V-Score는 0~1을 기대하므로 정규화한다.
+    priceConfidence: priceEstimation.confidence / 100,
     compositeReliability: confidencePropagation.compositeReliability,
   });
 
@@ -410,9 +451,11 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
     buildYear: parsed.title.buildingDetail || undefined,
     estimatedPrice,
     priceMethod: priceEstimation.method,
-    priceConfidence: priceEstimation.confidence,
-    riskScore,
-    vScore,
+    // priceConfidence는 0~1 스케일을 기대(analysis-sources.ts) → 0~95 원값을 정규화(미정규화 시 분석근거에 "신뢰도 3000%" 노출)
+    priceConfidence: priceEstimation.confidence / 100,
+    // 분석 불가(데이터 미확보) 시 riskScore·vScore 근거를 노출하지 않는다(허위 '안전 100점·A등급' 방지)
+    riskScore: rightsAnalyzable ? riskScore : undefined,
+    vScore: rightsAnalyzable ? vScore : undefined,
   });
 
   return {
