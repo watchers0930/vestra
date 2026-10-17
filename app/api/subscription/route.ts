@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
+import { withLegacySubscriptionChange } from "@/lib/member-subscription/legacy-guards";
+import { memberEndpoint } from "@/lib/member-subscription/http";
 
 const PLAN_CONFIG = {
   FREE: { price: 0, dailyLimit: 5, role: "PERSONAL" },
@@ -58,33 +60,35 @@ export async function POST(req: NextRequest) {
 
   const config = PLAN_CONFIG[plan as keyof typeof PLAN_CONFIG];
 
-  // 구독 upsert
-  const subscription = await prisma.subscription.upsert({
-    where: { userId: session.user.id },
-    update: {
-      plan,
-      price: config.price,
-      status: "active",
-      startDate: new Date(),
-      endDate: null,
-      canceledAt: null,
-    },
-    create: {
-      userId: session.user.id,
-      plan,
-      price: config.price,
-      status: "active",
-    },
-  });
+  return memberEndpoint(() => withLegacySubscriptionChange(session.user.id, async tx => {
+    // 구독 upsert
+    const subscription = await tx.subscription.upsert({
+      where: { userId: session.user.id },
+      update: {
+        plan,
+        price: config.price,
+        status: "active",
+        startDate: new Date(),
+        endDate: null,
+        canceledAt: null,
+      },
+      create: {
+        userId: session.user.id,
+        plan,
+        price: config.price,
+        status: "active",
+      },
+    });
 
-  // 사용자 역할 + 일일한도 업데이트
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: {
-      role: config.role,
-      dailyLimit: config.dailyLimit,
-    },
-  });
+    // 사용자 역할 + 일일한도 업데이트
+    await tx.user.update({
+      where: { id: session.user.id },
+      data: {
+        role: config.role,
+        dailyLimit: config.dailyLimit,
+      },
+    });
 
-  return NextResponse.json(subscription);
+    return NextResponse.json(subscription);
+  }));
 }

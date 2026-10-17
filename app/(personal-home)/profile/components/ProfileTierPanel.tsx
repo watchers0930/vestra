@@ -1,5 +1,6 @@
 import { ArrowUpCircle, CreditCard } from "lucide-react";
 import s from "../profile-renewal.module.css";
+import MemberSubscriptionPanel from "./MemberSubscriptionPanel";
 
 interface Props {
   role: string;
@@ -28,11 +29,12 @@ export default function ProfileTierPanel({
 }: Props) {
   const planLabel = subscription?.plan === "FREE" || !subscription?.plan ? "무료"
     : subscription.plan === "PRO" ? "프로" : subscription.plan === "BUSINESS" ? "비즈니스" : subscription.plan;
-  // 현재 구독 중인 플랜(무료 기본) — 아래 플랜 카드에서 이 플랜을 선택 표시
-  const currentPlan = subscription?.plan && subscription.plan !== "FREE" ? subscription.plan : "FREE";
 
   return (
     <div>
+      {/* 회원 선불 구독 현황(신규 SSOT, GET /status) — 기존 구독 관리 카드와 독립 */}
+      <MemberSubscriptionPanel />
+
       {/* 업그레이드 (PERSONAL만) */}
       {role === "PERSONAL" && verifyStatus !== "pending" && (
         <div className={s.card}>
@@ -118,23 +120,8 @@ export default function ProfileTierPanel({
           </div>
         </div>
 
-        <div className={s.planGrid}>
-          {[
-            { label: "무료", price: "0원", plan: "FREE" },
-            { label: "프로", price: "29,900원", plan: "PRO" },
-            { label: "비즈니스", price: "99,000원", plan: "BUSINESS" },
-          ].map((p) => {
-            const on = currentPlan === p.plan;
-            return (
-              <div key={p.label} className={`${s.planCard} ${on ? s.onPlan : ""}`}>
-                <div className={s.planName}>{p.label}</div>
-                <div className={s.planPrice}>{p.price}/월</div>
-                {on && <div className={s.planCurrent}>이용 중</div>}
-              </div>
-            );
-          })}
-        </div>
-
+        {/* 레거시 월 기준 가격 카드(29,900/99,000)는 신규 선불 구독 가격(월 기준 9,900원 등)과 충돌하므로
+            제거한다. 요금제 안내·구매는 상단 회원 구독 패널과 /renewal/pricing(신규 계약)이 담당한다(#12). */}
       </div>
     </div>
   );

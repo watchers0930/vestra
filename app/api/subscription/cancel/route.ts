@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
+import { withLegacySubscriptionChange } from "@/lib/member-subscription/legacy-guards";
+import { memberEndpoint } from "@/lib/member-subscription/http";
 
 /** POST: 구독 해지 */
 export async function POST(req: NextRequest) {
@@ -13,31 +14,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "로그인 필요" }, { status: 401 });
   }
 
-  const subscription = await prisma.subscription.findUnique({
-    where: { userId: session.user.id },
-  });
+  return memberEndpoint(() => withLegacySubscriptionChange(session.user.id, async tx => {
+    const subscription = await tx.subscription.findUnique({
+      where: { userId: session.user.id },
+    });
 
-  if (!subscription || subscription.plan === "FREE") {
-    return NextResponse.json({ error: "해지할 구독이 없습니다" }, { status: 400 });
-  }
+    if (!subscription || subscription.plan === "FREE") {
+      return NextResponse.json({ error: "해지할 구독이 없습니다" }, { status: 400 });
+    }
 
-  // 구독 해지 처리
-  await prisma.subscription.update({
-    where: { userId: session.user.id },
-    data: {
-      status: "canceled",
-      canceledAt: new Date(),
-    },
-  });
+    // 구독 해지 처리
+    await tx.subscription.update({
+      where: { userId: session.user.id },
+      data: {
+        status: "canceled",
+        canceledAt: new Date(),
+      },
+    });
 
-  // 무료 플랜으로 다운그레이드
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: {
-      role: "PERSONAL",
-      dailyLimit: 5,
-    },
-  });
+    // 무료 플랜으로 다운그레이드
+    await tx.user.update({
+      where: { id: session.user.id },
+      data: {
+        role: "PERSONAL",
+        dailyLimit: 5,
+      },
+    });
 
-  return NextResponse.json({ message: "구독이 해지되었습니다" });
+    return NextResponse.json({ message: "구독이 해지되었습니다" });
+  }));
 }

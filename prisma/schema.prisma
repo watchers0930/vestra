@@ -86,6 +86,9 @@ model User {
   monitoredProperties  MonitoredProperty[]
   verificationRequests VerificationRequest[]
 
+  subscriptionOrders SubscriptionOrder[]
+  membershipPolicy MemberSubscriptionPolicy?
+
   // 구독 & 알림
   subscription        Subscription?
   registryIssueOrders RegistryIssueOrder[]
@@ -192,6 +195,12 @@ model Subscription {
   canceledAt DateTime?
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   payments   Payment[]
+  orders SubscriptionOrder[]
+  trialStartedAt DateTime?
+  trialEndsAt DateTime?
+  graceEndsAt DateTime?
+  lockedAt DateTime?
+  policyVersion String?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 }
@@ -204,6 +213,8 @@ model Payment {
   status         String       @default("pending") // pending | completed | failed | refunded
   orderId        String?      @unique
   receiptUrl     String?
+  subscriptionOrderId String? @unique
+  subscriptionOrder SubscriptionOrder? @relation(fields: [subscriptionOrderId], references: [id], onDelete: Restrict)
   subscription   Subscription @relation(fields: [subscriptionId], references: [id])
   createdAt      DateTime     @default(now())
 }
@@ -1267,3 +1278,59 @@ model GuestMonitoringMessage {
   @@unique([guestMonitoringId, type, targetPaidUntil])  // 만료 기간당 1건 예약(중복 방지)
   @@index([status, nextAttemptAt])
 }
+
+// Member prepaid subscriptions. Schema proposal only: do not push/migrate production.
+model SubscriptionOrder {
+  id String @id @default(cuid())
+  orderId String @unique
+  userId String
+  subscriptionId String?
+  purpose String
+  plan String
+  durationMonths Int
+  monthlyPrice Int
+  discountPercent Int
+  amount Int
+  currency String @default("KRW")
+  priceVersion String
+  policyVersion String
+  roleAtOrder String
+  productKind String
+  status String @default("pending")
+  providerMode String @default("portone_v1")
+  channelEnvironment String
+  merchantConfigVersion String
+  providerTransactionId String? @unique
+  idempotencyKey String
+  callbackNonceHash String
+  nonceConsumedAt DateTime?
+  verificationEvidence Json?
+  paidAt DateTime?
+  expiresAt DateTime
+  appliedPeriodStart DateTime?
+  appliedPeriodEnd DateTime?
+  appliedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  payment Payment?
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, status])
+  @@index([status, expiresAt])
+  @@index([status, appliedAt])
+}
+
+model MemberSubscriptionPolicy {
+  id String @id @default(cuid())
+  userId String @unique
+  policyVersion String
+  grandfatheredAt DateTime?
+  legacyEntitlementsSnapshot Json
+  trialUsedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+}
+

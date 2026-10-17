@@ -44,6 +44,8 @@ import { createAlertAndNotify } from "@/lib/registry-monitor/notify";
 import { memberRetryTargetIds } from "@/lib/registry-monitor/retry-targets";
 import { autoTransitionExpiredGaps } from "@/lib/registry-monitor/transition";
 import { runGuestPrechecks, GUEST_BATCH_SIZE } from "@/lib/guest-monitoring/precheck-adapter";
+import { filterMemberMonitoringTargets } from "@/lib/member-subscription/monitoring-targets";
+import { memberMonitoringFilter } from "@/lib/member-subscription/legacy-guards";
 const BATCH_SIZE = 50;
 
 // 틸코 외부 API(콜드스타트 시 지연) 호출이 있어 기본/짧은 타임아웃이면 recordCheck 도달 전
@@ -114,6 +116,7 @@ export async function GET(req: NextRequest) {
 
     // 물건 조회 필터 (시뮬레이션 propertyId 지정 시 해당 물건만 / 재시도 회차면 실패 물건만)
     const propertyFilter = {
+      ...memberMonitoringFilter(),
       status: "active" as const,
       ...(propertyIdFilter ? { id: propertyIdFilter } : {}),
       ...(retryTargetIds ? { id: { in: retryTargetIds } } : {}),
@@ -138,7 +141,7 @@ export async function GET(req: NextRequest) {
       include: { user: { select: { id: true, email: true } } },
     });
 
-    const allProperties = [...gapProperties, ...standardProperties];
+    const allProperties = await filterMemberMonitoringTargets([...gapProperties, ...standardProperties], now);
 
     if (allProperties.length === 0) {
       if (!simulate) await recordCronHeartbeat("done", { processed: 0, reason: "no_target" });

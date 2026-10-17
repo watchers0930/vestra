@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { isPaidMember, getMonitoringLimit } from "@/lib/subscription-guard";
+import { isPaidMember, getMonitoringLimit } from "@/lib/member-subscription/legacy-guards";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { validateOrigin } from "@/lib/csrf";
@@ -14,6 +14,9 @@ import { createAuditLog } from "@/lib/audit-log";
 import { recordRegistrySnapshot } from "@/lib/registry-snapshot-recorder";
 import { fetchRegistryDocumentByAddress, isTilkoRegistryDocAvailable, extractCommUniqueNoFromText } from "@/lib/tilko-api";
 import { createHash } from "crypto";
+import { withMonitoringCapacity } from "@/lib/member-subscription/monitoring-capacity";
+import { MemberError } from "@/lib/member-subscription/errors";
+import { memberJson } from "@/lib/member-subscription/http";
 
 export async function GET(req: NextRequest) {
   try {
@@ -66,6 +69,7 @@ export async function GET(req: NextRequest) {
       hasMore: offset + limit < total,
     });
   } catch (error) {
+    if (error instanceof MemberError) return memberJson({ error: error.message, code: error.code }, error.status);
     const message = error instanceof Error ? error.message : "알 수 없는 오류";
     console.error(`[monitoring] ${message}`);
     return NextResponse.json({ error: "처리 중 오류가 발생했습니다." }, { status: 500 });
@@ -135,8 +139,11 @@ export async function POST(req: NextRequest) {
           { status: 409 }
         );
       }
+      const activeCount = await prisma.monitoredProperty.count({ where: { userId: session.user.id, status: "active" } });
+      const activeLimit = await getMonitoringLimit(session.user.id, session.user.role);
+      if (activeCount >= activeLimit) return NextResponse.json({ error: "모니터링 등록 한도에 도달했습니다." }, { status: 429 });
       // 비활성 상태면 재활성화 (계약감시 모드 포함)
-      const reactivated = await prisma.monitoredProperty.update({
+      const reactivated = await withMonitoringCapacity(session.user.id, tx => tx.monitoredProperty.update({
         where: { id: existing.id },
         data: {
           status: "active",
@@ -148,7 +155,7 @@ export async function POST(req: NextRequest) {
           ...(ownerName ? { ownerName: String(ownerName).trim() } : {}),
           ...(validListingId ? { listingId: validListingId } : {}),
         },
-      });
+      }));
       if (pdfRawText && typeof pdfRawText === "string") {
         const pdfExtractedNo = (!reactivated.commUniqueNo && !commUniqueNo)
           ? extractCommUniqueNoFromText(pdfRawText) ?? undefined
@@ -199,7 +206,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const property = await prisma.monitoredProperty.create({
+    const property = await withMonitoringCapacity(session.user.id, tx => tx.monitoredProperty.create({
       data: {
         userId: session.user.id,
         address: address.trim(),
@@ -211,7 +218,7 @@ export async function POST(req: NextRequest) {
         ...(ownerName ? { ownerName: String(ownerName).trim() } : {}),
         ...(validListingId ? { listingId: validListingId } : {}),
       },
-    });
+    }));
 
     await createAuditLog({
       userId: session.user.id,
@@ -266,6 +273,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ property }, { status: 201 });
   } catch (error) {
+    if (error instanceof MemberError) return memberJson({ error: error.message, code: error.code }, error.status);
     const message = error instanceof Error ? error.message : "알 수 없는 오류";
     console.error(`[monitoring] ${message}`);
     return NextResponse.json({ error: "처리 중 오류가 발생했습니다." }, { status: 500 });
@@ -305,6 +313,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof MemberError) return memberJson({ error: error.message, code: error.code }, error.status);
     const message = error instanceof Error ? error.message : "알 수 없는 오류";
     console.error(`[monitoring] ${message}`);
     return NextResponse.json({ error: "처리 중 오류가 발생했습니다." }, { status: 500 });
