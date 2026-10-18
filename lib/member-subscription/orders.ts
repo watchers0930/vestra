@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 import type { SubscriptionOrder } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { findImpUidByMerchantUid } from "@/lib/danal/iamport-rest";
 import type { MemberOrderRequest, MemberOrderResponse, MemberOrderStatus } from "@/types/member-subscription";
-import { fail } from "./errors";
+import { fail, providerBoundary } from "./errors";
 import { memberReleaseConfig } from "./config";
 import { priceProduct } from "./pricing";
 import { assertPlanAllowed, ensurePolicy, resolveEffectiveRole } from "./policy";
@@ -14,8 +15,30 @@ function sameProduct(order: SubscriptionOrder, input: MemberOrderRequest) {
   return order.plan === input.plan && order.durationMonths === input.durationMonths && order.productKind === input.productKind &&
     order.purpose === input.purpose;
 }
+/**
+ * Release an abandoned, expired `pending` order that never reached payment — otherwise a
+ * TTL-expired pending order is reused forever and gives no payment info, permanently
+ * blocking repurchase. Only an order with NO settlement evidence (no consumed nonce, no
+ * provider tx) is eligible, and only after the PG confirms NO charge exists for it (a
+ * lost-callback charge must be recovered, never discarded). Runs outside the create tx
+ * because it makes a provider call; on any PG uncertainty it leaves the order intact.
+ */
+async function supersedeAbandonedPending(userId: string) {
+  const abandoned = await prisma.subscriptionOrder.findFirst({ where: {
+    userId, status: "pending", nonceConsumedAt: null, providerTransactionId: null, expiresAt: { lte: new Date() },
+  }, orderBy: { createdAt: "asc" } });
+  if (!abandoned) return;
+  let impUid: string | null;
+  try { impUid = await providerBoundary(() => findImpUidByMerchantUid(abandoned.orderId)); }
+  catch { return; } // ambiguous/unavailable → keep for recovery, never discard a possible charge
+  if (impUid) return; // a real charge exists → must be recovered, not superseded
+  await prisma.subscriptionOrder.updateMany({ where: {
+    id: abandoned.id, status: "pending", nonceConsumedAt: null, providerTransactionId: null,
+  }, data: { status: "expired" } });
+}
 export async function createMemberOrder(userId: string, input: MemberOrderRequest): Promise<MemberOrderResponse> {
   const release = memberReleaseConfig();
+  await supersedeAbandonedPending(userId);
   const result = await memberTransaction(userId, async tx => {
     const { user, role } = await resolveEffectiveRole(userId, tx);
     assertPlanAllowed(role, input.plan, user.verifyStatus);

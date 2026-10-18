@@ -10,7 +10,8 @@ export async function recoverMemberOrder(userId: string, orderId: string, impUid
   try {
     const candidate = impUid ?? order.providerTransactionId ?? await providerBoundary(() => findImpUidByMerchantUid(orderId));
     if (!candidate) return { status: order.status, applied: !!order.appliedAt };
-    const result = await settleMemberOrder(order, candidate);
+    // Delayed recovery: reverify so a refund landing after the paid record cannot grant a term.
+    const result = await settleMemberOrder(order, candidate, true);
     return { status: result.status, applied: !!result.appliedAt };
   } catch (error) {
     if (error instanceof MemberError && error.code === "payment_needs_review") {

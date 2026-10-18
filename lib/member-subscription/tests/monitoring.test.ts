@@ -27,17 +27,16 @@ beforeEach(() => {
   f.counts.mockResolvedValue([{ userId: "u1", _count: { _all: 2 } }]);
 });
 afterEach(() => vi.unstubAllEnvs());
-it.each(["", "invalid", "2999-01-01T00:00:00Z"])("preserves the batch when rollout date is %s", async date => {
-  vi.stubEnv("MEMBER_POLICY_EFFECTIVE_AT", date);
-  expect(memberMonitoringFilter()).toEqual({});
-  expect(await filterMemberMonitoringTargets(properties, now)).toBe(properties);
+it("keeps the empty path query-free", async () => {
+  expect(await filterMemberMonitoringTargets([], now)).toEqual([]);
   expect(f.users).not.toHaveBeenCalled(); expect(f.counts).not.toHaveBeenCalled();
 });
-it("keeps the disabled and empty paths query-free", async () => {
-  expect(await filterMemberMonitoringTargets([], now)).toEqual([]);
+it("enforces a lapsed classified member even when the ordering flag is off (fail-safe net)", async () => {
+  // The flag gates new ordering, never expiry: a classified, non-grandfathered expired term
+  // must still be excluded so the shared batch cannot keep monitoring a lapsed member.
   vi.stubEnv("MEMBER_SUBSCRIPTION_ENABLED", "false");
-  expect(await filterMemberMonitoringTargets(properties, now)).toBe(properties);
-  expect(f.users).not.toHaveBeenCalled();
+  f.users.mockResolvedValue([user({ subscription: { ...user().subscription, status: "expired", endDate: new Date(0) } })]);
+  expect(await filterMemberMonitoringTargets(properties, now)).toEqual([]);
 });
 it.each(["PERSONAL", "RENTAL_BIZ", "BUSINESS", "REALESTATE", "ADMIN"])("uses authoritative state boundaries for %s", async role => {
   for (const status of ["active", "trialing", "grace", "expired", "locked", "canceled"]) {
@@ -60,11 +59,13 @@ it.each([{}, null, { monitoringLimit: -1 }, { monitoringLimit: "5" }])("retains 
   expect(f.users).toHaveBeenCalledTimes(1); expect(f.counts).toHaveBeenCalledTimes(1);
   expect(f.users.mock.calls[0][0].where.id.in).toEqual(["u1"]);
 });
-it("preserves unclassified old users but rejects unclassified new and missing owners", async () => {
-  f.users.mockResolvedValue([user({ membershipPolicy: null, createdAt: new Date("2025-01-01"), subscription: null })]);
-  expect(await filterMemberMonitoringTargets(properties, now)).toEqual(properties);
-  f.users.mockResolvedValue([user({ membershipPolicy: null, createdAt: new Date("2026-01-01"), subscription: null })]);
-  expect(await filterMemberMonitoringTargets(properties, now)).toEqual([]);
+it("never restricts unclassified owners (registration gates them) but drops missing owners", async () => {
+  // Unclassified owners — legacy or not-yet-taken-over — are always preserved by the member
+  // filter regardless of createdAt; only classified lapsed members are the filter's concern.
+  for (const createdAt of [new Date("2025-01-01"), new Date("2026-01-01")]) {
+    f.users.mockResolvedValue([user({ membershipPolicy: null, createdAt, subscription: null })]);
+    expect(await filterMemberMonitoringTargets(properties, now)).toEqual(properties);
+  }
   f.users.mockResolvedValue([]);
   expect(await filterMemberMonitoringTargets(properties, now)).toEqual([]);
 });
@@ -75,10 +76,13 @@ it("rejects revoked verification and over-limit owners using global active count
   expect(await filterMemberMonitoringTargets(properties, now)).toEqual([]);
 });
 
-it.each(["policyVersion", "priceVersion"] as const)("preserves legacy batches when %s is missing", async field => {
+it.each(["policyVersion", "priceVersion"] as const)("enforces classified members independent of release config (%s missing)", async field => {
+  // The fail-safe net no longer depends on the release config: a lapsed classified member
+  // is excluded even if the rollout versions are unset (enforcement lives in entitlement state).
   f[field] = "";
-  expect(await filterMemberMonitoringTargets(properties, now)).toBe(properties);
-  expect(f.users).not.toHaveBeenCalled(); expect(f.counts).not.toHaveBeenCalled();
+  f.users.mockResolvedValue([user({ subscription: { ...user().subscription, status: "expired", endDate: new Date(0) } })]);
+  expect(await filterMemberMonitoringTargets(properties, now)).toEqual([]);
+  expect(f.users).toHaveBeenCalled();
 });
 it("does not silently bypass entitlement checks after a database failure", async () => {
   const failure = new Error("fixture database failure");

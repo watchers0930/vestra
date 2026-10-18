@@ -7,6 +7,15 @@ export async function markNeedsReview(order: SubscriptionOrder) {
     where: { id: order.id, appliedAt: null, status: { in: ["pending", "paid", "failed"] } }, data: { status: "needs_review" },
   }));
 }
+/** A paid-but-unapplied order found reversed at the PG on re-verification. Mark it so
+ * the recovery/cron paths stop trying to grant a term for a refunded/canceled charge.
+ * Only touches unapplied orders — an already-applied subscription reversal is out of scope. */
+export async function markReversed(order: SubscriptionOrder, status: "failed" | "canceled") {
+  await memberTransaction(order.userId, tx => tx.subscriptionOrder.updateMany({
+    where: { id: order.id, appliedAt: null, status: "paid" },
+    data: { status: status === "canceled" ? "refunded" : "failed" },
+  }));
+}
 export async function recordMemberPayment(order: SubscriptionOrder, verified: VerifiedPayment) {
   return memberTransaction(order.userId, async tx => {
     const current = await tx.subscriptionOrder.findUniqueOrThrow({ where: { id: order.id } });

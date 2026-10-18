@@ -52,6 +52,26 @@ export function forgetCallback(orderId: string): void {
   callbackMemory.delete(orderId);
 }
 
+/**
+ * 진행 중 주문의 **orderId(merchant_uid)만** 세션 스토리지에 보존한다. 401 재인증(화면 이탈로
+ * 모듈 메모리 소실) 후 돌아왔을 때 서버 멱등 복구(merchant_uid 조회·재검증, §4.9)를 이어가기 위함이다.
+ * ⚠️ imp_uid·서명·callbackContext는 저장하지 않는다(§5.1). orderId는 서버 식별자이며 모바일 복귀 URL에도
+ * 노출되는 비민감 값이다. 서버가 merchant_uid로 imp_uid를 재조회·재검증하므로 결제 자격증명은 불필요하다.
+ */
+const PENDING_ORDER_KEY = "vestra_member_pending_order";
+export function rememberPendingOrderId(orderId: string): void {
+  if (typeof window === "undefined" || !orderId) return;
+  try { window.sessionStorage.setItem(PENDING_ORDER_KEY, orderId); } catch { /* storage unavailable */ }
+}
+export function recallPendingOrderId(): string | null {
+  if (typeof window === "undefined") return null;
+  try { return window.sessionStorage.getItem(PENDING_ORDER_KEY) || null; } catch { return null; }
+}
+export function forgetPendingOrderId(): void {
+  if (typeof window === "undefined") return;
+  try { window.sessionStorage.removeItem(PENDING_ORDER_KEY); } catch { /* ignore */ }
+}
+
 /** 사용자 닫기/취소로 보이는 응답인지(취소 vs 에러 구분 — 둘 다 서버 재조회로 수렴). error_msg 원문은 UI/로그 비노출. */
 function looksCanceled(res: PortOneV1PayResponse): boolean {
   const s = `${res.error_code ?? ""} ${res.error_msg ?? ""}`.toUpperCase();

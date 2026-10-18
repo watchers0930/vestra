@@ -21,10 +21,13 @@ import type { MemberOrderRequest, MemberOrderStatus, MemberProductView } from "@
 import { createOrder, getOrderState, paymentCallback, recoverOrder } from "../member/memberApi";
 import {
   forgetCallback,
+  forgetPendingOrderId,
   peekV1RedirectReturn,
   readV1RedirectReturn,
   recallCallback,
+  recallPendingOrderId,
   rememberCallback,
+  rememberPendingOrderId,
   runPayment,
 } from "../member/memberPayment";
 import { classifyApiFailure, failureMessage, type FailureKind } from "../member/paymentFailure";
@@ -112,6 +115,8 @@ export function useMemberOrderFlow(callbacks: OrderFlowCallbacks = {}): UseMembe
   const activeRef = useRef<ActiveOrder | null>(null);
   // 모바일 복귀를 merchant_uid당 1회만 처리(effect 재실행·세션 전이로 중복 recover 방지).
   const mobileHandledRef = useRef<string | null>(null);
+  // 세션 스토리지 보존 orderId 복구를 orderId당 1회만 처리(재인증 복귀, 중복 recover 방지).
+  const storageHandledRef = useRef<string | null>(null);
   const { onApplied, onReauth } = callbacks;
 
   const alive = (gen: number) => genRef.current === gen;
@@ -133,6 +138,7 @@ export function useMemberOrderFlow(callbacks: OrderFlowCallbacks = {}): UseMembe
         const st = res.data.status;
         if (st === "paid" && res.data.applied) {
           forgetCallback(orderId);
+          forgetPendingOrderId();
           setFailure(null);
           setMessage(null);
           setPhase("done");
@@ -142,6 +148,7 @@ export function useMemberOrderFlow(callbacks: OrderFlowCallbacks = {}): UseMembe
         // needs_review: 수동 큐 대기 — 콜백·복구 재전송으로 해제되지 않으므로 메모리 정리 후 검토 안내(§4.4).
         if (st === "needs_review") {
           forgetCallback(orderId);
+          forgetPendingOrderId();
           setFailure("review");
           setMessage(failureMessage({ kind: "review" }));
           setPhase("failed");
@@ -150,6 +157,7 @@ export function useMemberOrderFlow(callbacks: OrderFlowCallbacks = {}): UseMembe
         // 확정 종료(failed/canceled/refunded): 재시도 대상 아님. 메모리 정리 후 상태별 안내, 재구매는 명시적 새 구매로(§4.9).
         if (st === "failed" || st === "canceled" || st === "refunded") {
           forgetCallback(orderId);
+          forgetPendingOrderId();
           setFailure("terminal");
           setMessage(terminalMessage(st));
           setPhase("failed");
@@ -255,6 +263,8 @@ export function useMemberOrderFlow(callbacks: OrderFlowCallbacks = {}): UseMembe
         return;
       }
       activeRef.current = { ...active, orderId: ordered.data.orderId };
+      // 401 재인증 등으로 모듈 메모리가 사라져도 복귀 후 서버 멱등 복구를 이어가도록 orderId만 보존(§5.1).
+      rememberPendingOrderId(ordered.data.orderId);
       const outcome = await runPayment(ordered.data.payment, () => !alive(gen));
       if (!alive(gen)) return;
 
@@ -356,6 +366,7 @@ export function useMemberOrderFlow(callbacks: OrderFlowCallbacks = {}): UseMembe
     genRef.current += 1;
     payingRef.current = false;
     if (activeRef.current?.orderId) forgetCallback(activeRef.current.orderId);
+    forgetPendingOrderId();
     activeRef.current = null;
     setFailure(null);
     setMessage(null);
@@ -401,6 +412,34 @@ export function useMemberOrderFlow(callbacks: OrderFlowCallbacks = {}): UseMembe
       }
       const action = classifyApiFailure(rec.status, rec.code);
       if (action.kind === "reauth") onReauth?.();
+      setFailure(action.kind);
+      setMessage(failureMessage(action, rec.error));
+      setPhase("failed");
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionStatus]);
+
+  // 비-모바일 재인증 복귀(§4.9): 401로 화면을 떠났다 돌아오면 모듈 메모리는 사라지지만, 보존된
+  // orderId(§5.1 비민감)로 서버 멱등 복구를 1회 이어간다. 모바일 복귀(URL 쿼리)는 위 effect가 처리하므로
+  // 쿼리가 없을 때만 동작해 중복을 피한다. recoverOrder는 서버가 merchant_uid로 imp_uid를 재조회·재검증하며
+  // settle은 멱등이라 이중 적용/이중 과금이 없다. 완료·종료 판정 시 orderId 보존은 checkOrder가 정리한다.
+  useEffect(() => {
+    if (sessionStatus !== "authenticated") return;
+    const peeked = peekV1RedirectReturn();
+    if (peeked.merchantUid || peeked.impUid) return; // 모바일 복귀는 위 effect 담당
+    const orderId = recallPendingOrderId();
+    if (!orderId || storageHandledRef.current === orderId) return;
+    storageHandledRef.current = orderId;
+    const gen = ++genRef.current;
+    activeRef.current = activeRef.current ?? { orderId, idempotencyKey: "", request: {} as MemberOrderRequest };
+    activeRef.current.orderId = orderId;
+    setPhase("checking");
+    void (async () => {
+      const rec = await recoverOrder(orderId);
+      if (!alive(gen)) return;
+      if (rec.ok) { await checkOrder(orderId, gen); return; }
+      const action = classifyApiFailure(rec.status, rec.code);
+      if (action.kind === "reauth") { onReauth?.(); return; } // 세션 여전히 무효 → 안내만, orderId 보존
       setFailure(action.kind);
       setMessage(failureMessage(action, rec.error));
       setPhase("failed");

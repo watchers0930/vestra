@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { memberTransaction } from "./transaction";
-import { activateMemberOrder } from "./activation";
+import { settleMemberOrder } from "./payment-callback";
 import { subscriptionState, DAY_MS } from "./lifecycle";
 import { effectiveEntitlement, BUSINESS_ROLES } from "./policy";
 import { memberReleaseConfig } from "./config";
@@ -14,7 +14,14 @@ export async function runMemberLifecycle() {
   const paid = await prisma.subscriptionOrder.findMany({ where: { status: "paid", appliedAt: null },
     orderBy: { updatedAt: "asc" }, take: BATCH_SIZE });
   for (const order of paid) {
-    try { await activateMemberOrder(order.userId, order.orderId); result.recovered++; }
+    try {
+      // Re-verify with the PG before granting a term: a paid order may have been
+      // refunded/canceled in the window between record and activation (settleMemberOrder
+      // with reverify marks it reversed and refuses activation instead of granting access).
+      if (!order.providerTransactionId) { await markNeedsReview(order); continue; }
+      await settleMemberOrder(order, order.providerTransactionId, true);
+      result.recovered++;
+    }
     catch (error) {
       if (error instanceof MemberError && ["payment_needs_review", "plan_change_not_allowed", "plan_not_allowed", "verification_required"].includes(error.code)) {
         await markNeedsReview(order);
@@ -38,7 +45,15 @@ export async function runMemberLifecycle() {
       await tx.subscription.update({ where: { id: sub.id }, data: { status: state.status,
         graceEndsAt: state.graceEndsAt, lockedAt: state.lockedAt, updatedAt: now } });
       const entitlement = effectiveEntitlement({ ...user, subscription: sub }, now);
-      if (entitlement.monitoringLimit > 0 && await tx.monitoredProperty.count({ where: { userId: item.userId, status: "active" } }) > entitlement.monitoringLimit) {
+      const activeCount = await tx.monitoredProperty.count({ where: { userId: item.userId, status: "active" } });
+      if (!entitlement.grandfathered && !entitlement.canUsePaidFeatures) {
+        // Expired/locked classified member (limit 0): pause ALL monitoring so the shared
+        // registry-monitor batch (status:active, take+lastCheckedAt order) naturally excludes
+        // them. Without this, post-filtered items keep their stale lastCheckedAt and re-occupy
+        // the batch front every run, starving legitimate paid members. Grandfathered/legacy
+        // owners are never paused (they keep their preserved rights).
+        if (activeCount > 0) await tx.monitoredProperty.updateMany({ where: { userId: item.userId, status: "active" }, data: { status: "paused" } });
+      } else if (entitlement.monitoringLimit > 0 && activeCount > entitlement.monitoringLimit) {
         await tx.monitoredProperty.updateMany({ where: { userId: item.userId, status: "active" }, data: { status: "paused" } });
       }
       const ended = sub.endDate <= now;

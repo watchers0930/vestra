@@ -4,7 +4,9 @@ import type { MemberOrderRequest } from "@/types/member-subscription";
 type Row = Record<string, unknown>;
 const f = vi.hoisted(() => ({ orders: [] as Row[], sub: null as Row | null, payments: [] as Row[],
   policy: { trialUsedAt: null, policyVersion: "fixture", grandfatheredAt: null } as Row,
-  role: "PERSONAL", verifyStatus: "none", guest: false, failPayment: false, queue: Promise.resolve() as Promise<unknown> }));
+  role: "PERSONAL", verifyStatus: "none", guest: false, failPayment: false, queue: Promise.resolve() as Promise<unknown>,
+  baseFindFirst: vi.fn(async () => null as Row | null), baseUpdateMany: vi.fn(async () => ({ count: 1 })),
+  findImp: vi.fn(async () => null as string | null) }));
 function matches(row: Row, where: Row): boolean {
   return Object.entries(where).every(([key, value]) => {
     if (key === "OR") return (value as Row[]).some(v => matches(row, v));
@@ -50,7 +52,8 @@ const tx = {
     f.payments.push(data); return data;
   }) },
 };
-vi.mock("@/lib/prisma", () => ({ prisma: {} }));
+vi.mock("@/lib/prisma", () => ({ prisma: { subscriptionOrder: { findFirst: f.baseFindFirst, updateMany: f.baseUpdateMany } } }));
+vi.mock("@/lib/danal/iamport-rest", () => ({ findImpUidByMerchantUid: f.findImp }));
 vi.mock("../transaction", () => ({ memberTransaction: async (_id: string, operation: (db: typeof tx) => Promise<unknown>) => {
   const run = f.queue.then(async () => {
     const snapshot = structuredClone({ orders: f.orders, sub: f.sub, payments: f.payments, policy: f.policy });
@@ -82,6 +85,7 @@ const verified = { status: "paid" as const, impUid: "imp_1", paidAt: new Date(),
 beforeEach(() => {
   vi.clearAllMocks(); f.orders = []; f.sub = null; f.payments = []; f.policy = { trialUsedAt: null, policyVersion: "fixture", grandfatheredAt: null };
   f.role = "PERSONAL"; f.verifyStatus = "none"; f.guest = false; f.failPayment = false; f.queue = Promise.resolve();
+  f.baseFindFirst.mockResolvedValue(null); f.baseUpdateMany.mockResolvedValue({ count: 1 }); f.findImp.mockResolvedValue(null);
   vi.stubEnv("AUTH_SECRET", "fixture-secret");
 });
 it("records concurrent callbacks once, then applies exactly one receipt and period", async () => {
@@ -163,4 +167,19 @@ it("loads the locked user only once when creating an order or trial", async () =
   vi.clearAllMocks();
   await startMemberTrial("u1", "PRO");
   expect(tx.user.findUnique).toHaveBeenCalledTimes(1);
+});
+it("supersedes an abandoned expired pending order with no PG charge so repurchase proceeds", async () => {
+  const abandoned = { ...fixture("pending"), id: "old", orderId: "msub_old",
+    expiresAt: new Date(Date.now() - 1), nonceConsumedAt: null, providerTransactionId: null };
+  f.baseFindFirst.mockResolvedValueOnce(abandoned); f.findImp.mockResolvedValue(null);
+  expect((await createMemberOrder("u1", request)).orderId).toMatch(/^msub_/); // a fresh order is issued
+  expect(f.findImp).toHaveBeenCalledWith("msub_old"); // confirmed no charge before discarding
+  expect(f.baseUpdateMany).toHaveBeenCalledTimes(1);  // marked expired → new order allowed
+});
+it("never discards an abandoned pending order the PG shows was charged", async () => {
+  const abandoned = { ...fixture("pending"), id: "old", orderId: "msub_old",
+    expiresAt: new Date(Date.now() - 1), nonceConsumedAt: null, providerTransactionId: null };
+  f.baseFindFirst.mockResolvedValueOnce(abandoned); f.findImp.mockResolvedValue("imp_charged");
+  await createMemberOrder("u1", request);
+  expect(f.baseUpdateMany).not.toHaveBeenCalled(); // a real charge must be recovered, not expired
 });

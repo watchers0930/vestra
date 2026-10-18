@@ -13,7 +13,7 @@ it("searches merchant candidates then settles the same owned order", async () =>
   f.find.mockResolvedValue("imp_1"); f.settle.mockResolvedValue({ ...order, status: "paid", appliedAt: new Date() });
   expect(await recoverMemberOrder("u1", "msub_1")).toEqual({ status: "paid", applied: true });
   expect(f.owned).toHaveBeenCalledWith("u1", "msub_1"); expect(f.find).toHaveBeenCalledWith("msub_1");
-  expect(f.settle).toHaveBeenCalledWith(order, "imp_1");
+  expect(f.settle).toHaveBeenCalledWith(order, "imp_1", true);
 });
 it("never invents payment when no transaction exists", async () => {
   f.find.mockResolvedValue(null);
@@ -38,7 +38,7 @@ it("keeps transient provider errors separate from definite failures", async () =
 it("revalidates an explicit transaction without candidate search", async () => {
   f.settle.mockRejectedValue(new MemberError("payment_pending"));
   expect(await recoverMemberOrder("u1", "msub_1", "imp_1")).toEqual({ status: "pending", applied: false });
-  expect(f.find).not.toHaveBeenCalled(); expect(f.settle).toHaveBeenCalledWith(order, "imp_1");
+  expect(f.find).not.toHaveBeenCalled(); expect(f.settle).toHaveBeenCalledWith(order, "imp_1", true);
 });
 it("retains ownership rejection before provider lookup", async () => {
   f.owned.mockRejectedValue(new MemberError("not_found"));
