@@ -8,10 +8,11 @@ export interface MemberProviderConfig {
 }
 export function memberProviderConfig(): MemberProviderConfig {
   memberReleaseConfig();
-  // The immutable shared plumbing currently supports verified test channels only.
-  // A member live channel needs the separately approved §9.3 plumbing contract.
-  if (process.env.NODE_ENV === "production" || process.env.MEMBER_PAYMENT_ENVIRONMENT !== "test" ||
-      process.env.MEMBER_SUBSCRIPTION_ISOLATED_TEST !== "true") fail("provider_unavailable");
+  // 결제 테스트를 배포환경(t-vestra 등 NODE_ENV=production)에서도 할 수 있도록 과한 환경 제약을 완화.
+  // 단 channelEnvironment는 "test"로 고정되고 validatePayment이 payment.sandbox===true를 강제하므로
+  // 실제 과금(live)은 불가하다. 실결제(live) 전환은 별도 승인된 §9.3 live 채널 plumbing이 선행돼야 한다.
+  // MEMBER_PAYMENT_ENVIRONMENT=test 명시 opt-in일 때만 결제창이 열린다.
+  if (process.env.MEMBER_PAYMENT_ENVIRONMENT !== "test") fail("provider_unavailable");
   try {
     const config = getPortoneV1Config();
     const merchantConfigVersion = process.env.MEMBER_MERCHANT_CONFIG_VERSION?.trim();

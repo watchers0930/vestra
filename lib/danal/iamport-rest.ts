@@ -80,6 +80,14 @@ export async function getPaymentByImpUid(impUid: string) {
   if (!parsed.success) return unavailable();
   return parsed.data;
 }
+/** merchant_uid(=서버 orderId)로 결제를 조회한다. 아임포트 테스트 환경에서 imp_uid 직접조회
+ * (/payments/{imp_uid})가 "존재하지 않는 결제"로 실패하는 경우가 있어, 서버가 제어하는
+ * merchant_uid 기준 조회를 쓴다(더 안전). 반환 결제의 imp_uid는 호출부에서 대조한다. */
+export async function getPaymentByMerchantUid(merchantUid: string) {
+  const parsed = iamportPaymentSchema.safeParse(await authorized(`/payments/find/${encodeURIComponent(merchantUid)}`));
+  if (!parsed.success) return unavailable();
+  return parsed.data;
+}
 /** Do not filter to paid: a second attempt makes a merchant UID ambiguous. */
 export async function findImpUidByMerchantUid(merchantUid: string): Promise<string | null> {
   const parsed = candidateSchema.safeParse(await authorized(`/payments/findAll/${encodeURIComponent(merchantUid)}?page=1&limit=2`));

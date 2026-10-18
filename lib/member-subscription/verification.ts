@@ -1,5 +1,5 @@
 import type { SubscriptionOrder } from "@prisma/client";
-import { getPaymentByImpUid, type IamportPayment } from "@/lib/danal/iamport-rest";
+import { getPaymentByMerchantUid, type IamportPayment } from "@/lib/danal/iamport-rest";
 import { fail, providerBoundary } from "./errors";
 import { computeAmount } from "./pricing";
 import { memberProviderConfig, type MemberProviderConfig } from "./provider";
@@ -35,9 +35,11 @@ export function validatePayment(order: SubscriptionOrder, impUid: string, paymen
 }
 export async function verifyMemberPayment(order: SubscriptionOrder, impUid: string): Promise<VerifiedPayment> {
   const config = memberProviderConfig();
-  const first = await providerBoundary(() => getPaymentByImpUid(impUid));
+  // imp_uid 직접조회는 아임포트 테스트모드에서 실패하므로 merchant_uid(=orderId)로 조회.
+  // validatePayment이 payment.imp_uid===impUid(클라 보고값) 및 merchant_uid===orderId를 대조해 바꿔치기 차단.
+  const first = await providerBoundary(() => getPaymentByMerchantUid(order.orderId));
   const a = validatePayment(order, impUid, first, config);
-  const second = await providerBoundary(() => getPaymentByImpUid(impUid));
+  const second = await providerBoundary(() => getPaymentByMerchantUid(order.orderId));
   let b: VerifiedPayment;
   try { b = validatePayment(order, impUid, second, config); }
   catch { return fail("payment_needs_review"); }

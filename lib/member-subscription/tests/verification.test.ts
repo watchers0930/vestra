@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import type { SubscriptionOrder } from "@prisma/client";
 import type { IamportPayment } from "@/lib/danal/iamport-rest";
 const mocks = vi.hoisted(() => ({ get: vi.fn(), config: { impCode: "code", mid: "fixture-mid", channelEnvironment: "test", merchantConfigVersion: "fixture" } }));
-vi.mock("@/lib/danal/iamport-rest", () => ({ getPaymentByImpUid: mocks.get }));
+vi.mock("@/lib/danal/iamport-rest", () => ({ getPaymentByMerchantUid: mocks.get }));
 vi.mock("../provider", () => ({ memberProviderConfig: () => mocks.config }));
 import { validatePayment, verifyMemberPayment } from "../verification";
 const order = { id: "o1", orderId: "msub_1", amount: 95040, monthlyPrice: 9900, durationMonths: 12, discountPercent: 20,
