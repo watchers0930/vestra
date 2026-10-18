@@ -1168,6 +1168,7 @@ model ExpertVisit {
 
 
 model GuestMonitoring {
+  role               String?                     // owner|tenant; legacy and unselected drafts remain null
   id                 String   @id @default(cuid())
   guestName          String                      // PII 암호화
   guestPhone         String                      // PII 암호화
