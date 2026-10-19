@@ -78,3 +78,17 @@ export interface MemberOrderStatus {
   plan: MemberPlan;
   durationMonths: DurationMonths;
 }
+
+/** Server-derived signup state; independent of payment and subscription DTOs. */
+export type OnboardingStage = "role" | "verify" | "plan" | "pay" | "complete";
+export interface OnboardingState {
+  stage: OnboardingStage;
+  complete: boolean;
+  requiresPaid: boolean;
+  role: MemberRole | "ADMIN" | "LAWYER";
+  verifyStatus: string;
+  premiumActive: boolean;
+  isNewSignup: boolean;
+  allowedPlans: MemberPlan[];
+  freeAllowed: boolean;
+}

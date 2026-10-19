@@ -23,6 +23,7 @@ import { prisma } from "./prisma";
 import { getOAuthSettings } from "./system-settings";
 import { logAudit } from "./audit-log";
 import { SIGNUP_INTENT_COOKIE } from "./signup-intent";
+import { resolveOnboardingState } from "./member-subscription/onboarding";
 
 // AUTH_SECRET 필수 검증 (런타임 요청 시 fail-fast)
 if (typeof window === "undefined" && !process.env.AUTH_SECRET && !process.env.NEXT_PHASE) {
@@ -80,6 +81,20 @@ function resolveNaverName(
   return r.name?.trim() || r.nickname?.trim() || (email ? email.split("@")[0] : null);
 }
 
+/**
+ * 미결제 온보딩 필요 여부(REALESTATE/BUSINESS 전용). JWT에 실려 미들웨어가 DB 없이 진입을 차단한다.
+ * resolveOnboardingState는 release 미설정(출시 전)이면 complete로 판정 → 가드 자동 비활성.
+ */
+async function resolveNeedsPaidOnboarding(role: string, userId: string, fallback: boolean): Promise<boolean> {
+  if (role !== "REALESTATE" && role !== "BUSINESS") return false;
+  try {
+    const ob = await resolveOnboardingState(userId);
+    return ob.requiresPaid && !ob.complete;
+  } catch {
+    return fallback;
+  }
+}
+
 const authCallbacks: NextAuthConfig["callbacks"] = {
   // 재가입 차단: 탈퇴 후 30일 이내면 로그인/가입 거부
   async signIn({ user, account, profile }) {
@@ -135,7 +150,7 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
 
     return true;
   },
-  async jwt({ token, user }) {
+  async jwt({ token, user, trigger }) {
     if (user) {
       token.id = user.id;
     }
@@ -143,10 +158,12 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
     // role/verifyStatus를 DB에서 동기화하되, 세션 확인마다 매번 조회하면 Neon 왕복이 누적돼
     // 로그인·인증 페이지가 느려진다. 첫 로그인(user) 또는 마지막 동기화 후 60초 경과 시에만 조회한다.
     // (어드민 승인 반영은 최대 60초 지연 — 로그인/전반 응답 속도와의 트레이드오프)
+    // trigger==="update": 클라이언트 session.update() 호출 시 즉시 재조회한다.
+    // (결제 완료 직후 needsPaidOnboarding 플래그를 갱신해 온보딩 가드 리다이렉트 루프를 끊는다)
     const SYNC_INTERVAL_MS = 60_000;
     const now = Date.now();
     const lastSync = (token.lastSync as number) ?? 0;
-    const needsSync = Boolean(user) || !token.role || now - lastSync > SYNC_INTERVAL_MS;
+    const needsSync = Boolean(user) || !token.role || now - lastSync > SYNC_INTERVAL_MS || trigger === "update";
 
     if (token.id && needsSync) {
       try {
@@ -164,6 +181,12 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
         );
         token.verifyStatus = dbUser?.verifyStatus || "none";
         token.userType = dbUser?.userType ?? null;
+        // 미결제 온보딩 가드 플래그: 미들웨어(proxy)가 DB 없이 진입을 차단하는 근거.
+        // requiresPaid 역할(REALESTATE/BUSINESS)만 계산하고, 그 외는 항상 false로 명시한다.
+        // 출시 전(release 미설정)에는 resolveOnboardingState가 complete로 판정 → 가드 자동 비활성.
+        token.needsPaidOnboarding = await resolveNeedsPaidOnboarding(
+          resolvedRole, token.id as string, (token.needsPaidOnboarding as boolean | undefined) ?? false,
+        );
         token.lastSync = now;
       } catch {
         // DB 일시 장애 시 기존 토큰 값 유지 (OAuth 콜백 Configuration 에러 방지)
@@ -176,6 +199,9 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
         );
         token.verifyStatus = token.verifyStatus ?? "none";
         token.userType = token.userType ?? null;
+        // DB 장애 시 기존 플래그 유지(없으면 false). 미들웨어는 false면 통과시키되
+        // 실제 유료 기능은 requireMemberEntitlement가 서버에서 차단한다(2중 방어).
+        token.needsPaidOnboarding = (token.needsPaidOnboarding as boolean | undefined) ?? false;
       }
     }
 
@@ -188,6 +214,7 @@ const authCallbacks: NextAuthConfig["callbacks"] = {
       session.user.dailyLimit = token.dailyLimit as number;
       session.user.verifyStatus = token.verifyStatus as string;
       session.user.userType = (token.userType as string | null) ?? null;
+      session.user.needsPaidOnboarding = (token.needsPaidOnboarding as boolean | undefined) ?? false;
     }
     return session;
   },
@@ -347,6 +374,7 @@ declare module "next-auth" {
       dailyLimit: number;
       verifyStatus: string;
       userType: string | null;
+      needsPaidOnboarding?: boolean;
       name?: string | null;
       email?: string | null;
       image?: string | null;
@@ -368,5 +396,7 @@ declare module "@auth/core/jwt" {
     dailyLimit?: number;
     verifyStatus?: string;
     userType?: string | null;
+    needsPaidOnboarding?: boolean;
+    lastSync?: number;
   }
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { CheckCircle, Loader2, AlertCircle } from "lucide-react";
+import { stepPath } from "@/app/(personal-home)/signup/business/wizardConfig";
 
 interface BusinessInfoFormProps {
   intendedRole: string;
@@ -102,8 +103,9 @@ export default function BusinessInfoForm({
       await update();
       setIsComplete(true);
 
+      // 신청 접수 ≠ 인증 완료. 사업자 인증(심사) 단계로 연결해 이어서 진행하게 한다(승인 후 플랜 선택).
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push(stepPath(2));
       }, 3000);
     } catch (err) {
       setSubmitError(
@@ -125,11 +127,11 @@ export default function BusinessInfoForm({
           등록이 완료되었습니다
         </h3>
         <p className="text-sm text-muted mb-1">
-          {intendedRole === "REALESTATE" ? "중개사" : intendedRole === "RENTAL_BIZ" ? "임대사업자" : "기업"} 회원으로
-          전환되었습니다.
+          {intendedRole === "REALESTATE" ? "중개사" : intendedRole === "RENTAL_BIZ" ? "임대사업자" : "기업"} 인증을
+          신청했습니다. 관리자 승인 후 플랜을 선택할 수 있습니다.
         </p>
         <p className="text-xs text-muted">
-          잠시 후 대시보드로 이동합니다...
+          잠시 후 사업자 인증 단계로 이동합니다...
         </p>
       </div>
     );

@@ -7,7 +7,10 @@ export const MEMBER_MONTHLY_BASE: Record<MemberPlan, number> = { PRO: 9900, PREM
 export const MEMBER_MONITORING_LIMIT: Record<MemberPlan, number> = { PRO: 5, PREMIUM: 20 };
 export const ROLE_ALLOWED_PLANS: Record<MemberRole, MemberPlan[]> = {
   PERSONAL: ["PRO"], RENTAL_BIZ: ["PRO", "PREMIUM"],
-  BUSINESS: ["PRO", "PREMIUM"], REALESTATE: ["PRO", "PREMIUM"],
+  BUSINESS: ["PREMIUM"], REALESTATE: ["PREMIUM"],
+};
+export const ROLE_FREE_ALLOWED: Record<MemberRole, boolean> = {
+  PERSONAL: true, RENTAL_BIZ: true, BUSINESS: false, REALESTATE: false,
 };
 export const DURATION_DISCOUNT: Record<DurationMonths, number> = { 1: 0, 3: 0, 6: 10, 9: 15, 12: 20, 24: 30 };
 export function computeAmount(monthly: number, months: number, discountPercent: number): number {

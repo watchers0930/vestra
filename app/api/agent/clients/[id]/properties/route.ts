@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { withAgentAuth } from "@/lib/with-agent-auth";
+import { isMonitoringBlockedByOnboarding } from "@/lib/member-subscription/onboarding";
 
 export const POST = withAgentAuth<{ id: string }>(
   async (req, { session, params }) => {
@@ -97,6 +98,14 @@ export const POST = withAgentAuth<{ id: string }>(
           // 케이스 2: 매칭 없음 → MonitoredProperty 자동 생성 (upsert로 중복 안전 처리)
           // 고객이 VESTRA 가입자이면 고객 소유로, 아니면 중개사 소유로 등록
           const ownerId = client.clientUserId ?? session.user.id;
+          // [2A] 중개사 본인 소유로 신규 감시를 생성/재개하는 경우, 미결제 중개사를 서버에서 차단한다
+          // (release 미설정이면 통과 — release-gated). 고객(clientUserId) 소유 생성은 고객 주체이므로 제외.
+          if (ownerId === session.user.id && await isMonitoringBlockedByOnboarding(session.user.id)) {
+            return NextResponse.json(
+              { error: "등기감시는 구독 완료 후 이용할 수 있습니다.", code: "onboarding_incomplete" },
+              { status: 403 }
+            );
+          }
           const newMonitor = await prisma.monitoredProperty.upsert({
             where: { userId_address: { userId: ownerId, address: address.trim() } },
             update: { status: "active" },

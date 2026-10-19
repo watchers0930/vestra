@@ -123,6 +123,10 @@ export async function GET(req: NextRequest) {
     };
 
     // contract_gap 모드 우선 처리
+    // ⚠️ 권한 필터(filterMemberMonitoringTargets)는 take 이후 적용된다. 출시 후 미결제·만료 active가
+    // lastCheckedAt asc 앞자리에 적체되면 정상 회원이 밀릴 수 있다(배치 기아). 이는 overfetch 같은
+    // 조회 땜빵이 아니라, lifecycle cron이 미결제·만료 계정의 active 물건을 paused로 정리해 애초에
+    // 후보에서 빠지게 하는 것이 근본 해결이다(출시 절차/런북의 lifecycle 항목 참조).
     const gapProperties = propertyIdFilter
       ? []
       : await prisma.monitoredProperty.findMany({

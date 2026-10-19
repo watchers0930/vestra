@@ -59,6 +59,7 @@ MEMBER_POLICY_EFFECTIVE_AT=<ISO, 과거/현재>
 ### F. 출시 후 관측
 - cron(`member-subscription-lifecycle`, 매시간) 실제 실행 로그 + 만료→grace→locked 전이·재적용·알림
 - `needs_review` 큐 수동 검토 절차 가동 (자동 해제 안 함)
+- **등기감시 배치 기아 방지(lifecycle 정리)**: `registry-monitor` cron은 권한 필터(`filterMemberMonitoringTargets`)를 take 이후 적용한다. 미결제(requiresPaid인데 활성 구독 없음)·만료 계정의 `active` 감시 물건이 `lastCheckedAt` 앞자리에 적체되면 정상 유료 회원이 밀릴 수 있다(처리량 공정성 이슈 — 실제 등기 조회는 필터가 이미 차단하므로 보안/비용 문제는 아님). **lifecycle이 이런 물건을 `paused`로 정리해 후보에서 빠지게 하는지 확인하고, 미비 시 보완**한다(overfetch 같은 조회 땜빵은 guest 쿼터 배분을 깨뜨리므로 쓰지 않는다).
 
 ## 3. 롤백
 - 긴급 시 **`MEMBER_SUBSCRIPTION_ENABLED` 제거**(env) → 전 기능 즉시 비활성(503), 코드/DB 그대로. 가장 빠른 안전장치.

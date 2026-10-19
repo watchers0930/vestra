@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateOrigin } from "@/lib/csrf";
 import { withAgentAuth } from "@/lib/with-agent-auth";
+import { resolveOnboardingState } from "@/lib/member-subscription/onboarding";
 
 export const POST = withAgentAuth<{ id: string }>(
   async (req, { session, params }) => {
@@ -44,6 +45,18 @@ export const POST = withAgentAuth<{ id: string }>(
       // 현재 상태 파악 → 하나라도 active면 "감시 중"으로 판단 → paused로 전환
       const isCurrentlyActive = properties.some((p) => p.monitoredProperty?.status === "active");
       const nextStatus = isCurrentlyActive ? "paused" : "active";
+
+      // [2A] 감시를 다시 켜는 경우(paused→active)만 미결제 중개사를 차단한다(끄기는 항상 허용).
+      // release 미설정(출시 전)이면 complete로 판정되어 기존 동작 무영향(release-gated).
+      if (nextStatus === "active") {
+        const ob = await resolveOnboardingState(session.user.id);
+        if (ob.requiresPaid && !ob.complete) {
+          return NextResponse.json(
+            { error: "등기감시는 구독 완료 후 이용할 수 있습니다.", code: "onboarding_incomplete" },
+            { status: 403 }
+          );
+        }
+      }
 
       await prisma.monitoredProperty.updateMany({
         where: { id: { in: monitoredIds } },

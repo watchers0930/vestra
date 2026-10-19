@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { isMonitoringBlockedByOnboarding } from "@/lib/member-subscription/onboarding";
 
 /**
  * 계약 완료 시 임차인에게 등기감시 자동 등록(갭2).
@@ -15,6 +16,9 @@ export async function autoRegisterMonitoring(params: {
 }): Promise<void> {
   const { tenantId, address, contractType, depositVal, moveIn, landlordName, listingId } = params;
   if (contractType !== "JEONSE" && contractType !== "MONTHLY") return;
+  // [2A] 임차인이 미결제 REALESTATE/BUSINESS면 유료 기능인 자동 등기감시를 생성하지 않는다(계약 자체는 완료).
+  // 개인(PERSONAL) 임차인은 requiresPaid가 아니므로 통과하고, release 미설정 시에도 통과한다(release-gated).
+  if (await isMonitoringBlockedByOnboarding(tenantId)) return;
 
   const now = new Date();
   // 1만원 미만 절사로 0이 되는 것 방지(M4-소액): 최소 1만원 보장

@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtDecrypt } from "jose";
 import { hkdf } from "@panva/hkdf";
+import { isOnboardingProtectedPath } from "@/lib/member-subscription/protected-paths";
 
 // 개인회원(PERSONAL)이 직접 접근 시 renewal 대응 페이지로 유도하는 구 개인기능 페이지 매핑.
 // 중개사(REALESTATE)·사업자는 이 구 페이지들을 그대로 공유하므로 PERSONAL만 redirect한다.
@@ -57,7 +58,7 @@ async function getToken(req: NextRequest) {
     const { payload } = await jwtDecrypt(token, encryptionKey, {
       clockTolerance: 15,
     });
-    return payload as { role?: string; id?: string };
+    return payload as { role?: string; id?: string; needsPaidOnboarding?: boolean; verifyStatus?: string };
   } catch (err) {
     console.warn(
       "[Proxy] JWT 복호화 실패:",
@@ -121,6 +122,21 @@ export default async function proxy(req: NextRequest) {
     if (!token) {
       // 개인 보호 경로 미인증 → 구 /login 대신 renewal 홈의 로그인 모달로 유도
       return NextResponse.redirect(new URL("/home?auth=login", req.url));
+    }
+  }
+
+  // 미결제 REALESTATE/BUSINESS 온보딩 가드 (optimistic — UX 유도 목적).
+  // 레이아웃은 soft navigation 시 재실행되지 않으므로(Next.js Partial Rendering), 진입 유도는
+  // 매 요청(soft-nav의 RSC 요청 포함) 실행되는 이 미들웨어에서 한다. DB는 건드리지 않고
+  // JWT의 needsPaidOnboarding 플래그만 읽는다(플래그는 jwt callback이 서버에서 설정 → 위조 불가,
+  // 단 로그인 시점 값이라 stale 가능). **실제 보안 경계는 미들웨어가 아니라 서버 데이터 계층**이다
+  // (유료 기능·데이터는 requireMemberEntitlement가 DB 실시간으로 차단 — Next.js 공식 권고 구조).
+  // signup/business·결제·API는 보호목록 밖이라 통과하므로 무한 리다이렉트가 없다.
+  if (isOnboardingProtectedPath(pathname)) {
+    const token = await getToken(req);
+    if (token && (token.role === "REALESTATE" || token.role === "BUSINESS") && token.needsPaidOnboarding) {
+      const step = token.verifyStatus !== "verified" ? 2 : 3;
+      return NextResponse.redirect(new URL(`/signup/business/step-${step}`, req.url));
     }
   }
 

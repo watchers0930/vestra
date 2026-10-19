@@ -43,7 +43,8 @@ it.each(["PERSONAL", "RENTAL_BIZ", "BUSINESS", "REALESTATE", "ADMIN"])("uses aut
     for (const days of [-8, -7, -1, 0, 1]) {
       const end = new Date(+now + days * 86_400_000);
       const u = user({ role, verifyStatus: "verified", subscription: {
-        ...user().subscription, status, endDate: end, trialEndsAt: end,
+        ...user().subscription, plan: role === "BUSINESS" || role === "REALESTATE" ? "PREMIUM" : "PRO",
+        status, endDate: end, trialEndsAt: end,
       } });
       f.users.mockResolvedValue([u]);
       expect(memberMonitoringFilter()).toEqual({});
@@ -52,6 +53,10 @@ it.each(["PERSONAL", "RENTAL_BIZ", "BUSINESS", "REALESTATE", "ADMIN"])("uses aut
     }
   }
 });
+it.each(["BUSINESS", "REALESTATE"])("rejects classified %s PRO without a legacy baseline", async role => {
+  f.users.mockResolvedValue([user({ role, verifyStatus: "verified" })]);
+  expect(await filterMemberMonitoringTargets(properties, now)).toEqual([]);
+});
 it.each([{}, null, { monitoringLimit: -1 }, { monitoringLimit: "5" }])("retains legacy rights with incomplete baseline %j", async snapshot => {
   f.users.mockResolvedValue([user({ membershipPolicy: { ...policy, grandfatheredAt: now, legacyEntitlementsSnapshot: snapshot },
     subscription: { ...user().subscription, policyVersion: null, endDate: new Date(0) } })]);
@@ -59,13 +64,17 @@ it.each([{}, null, { monitoringLimit: -1 }, { monitoringLimit: "5" }])("retains 
   expect(f.users).toHaveBeenCalledTimes(1); expect(f.counts).toHaveBeenCalledTimes(1);
   expect(f.users.mock.calls[0][0].where.id.in).toEqual(["u1"]);
 });
-it("never restricts unclassified owners (registration gates them) but drops missing owners", async () => {
-  // Unclassified owners — legacy or not-yet-taken-over — are always preserved by the member
-  // filter regardless of createdAt; only classified lapsed members are the filter's concern.
-  for (const createdAt of [new Date("2025-01-01"), new Date("2026-01-01")]) {
-    f.users.mockResolvedValue([user({ membershipPolicy: null, createdAt, subscription: null })]);
-    expect(await filterMemberMonitoringTargets(properties, now)).toEqual(properties);
-  }
+it("preserves legacy unclassified owners but enforces post-release unpaid signups and drops missing owners", async () => {
+  // Legacy unclassified owners (created before the effective date, or release off) keep access —
+  // they never acquire new restrictions. effectiveAt here is 2026-01-01 (beforeEach).
+  f.users.mockResolvedValue([user({ membershipPolicy: null, createdAt: new Date("2025-01-01"), subscription: null })]);
+  expect(await filterMemberMonitoringTargets(properties, now)).toEqual(properties);
+  // Post-release signup with no policy and no active subscription = unpaid new REALESTATE/BUSINESS.
+  // The cron filter is the single fail-safe that excludes them regardless of which creation path
+  // produced the property (agent routes, e-contract auto-monitoring, etc.) — 2A enforcement.
+  f.users.mockResolvedValue([user({ membershipPolicy: null, createdAt: new Date("2026-06-01"), subscription: null })]);
+  expect(await filterMemberMonitoringTargets(properties, now)).toEqual([]);
+  // Missing owners drop.
   f.users.mockResolvedValue([]);
   expect(await filterMemberMonitoringTargets(properties, now)).toEqual([]);
 });

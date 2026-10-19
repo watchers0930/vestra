@@ -26,7 +26,8 @@ describe("price contract", () => {
   });
   it("restricts role plans and one month products", () => {
     expect(ROLE_ALLOWED_PLANS.PERSONAL).toEqual(["PRO"]);
-    for (const role of ["RENTAL_BIZ", "BUSINESS", "REALESTATE"] as const) expect(ROLE_ALLOWED_PLANS[role]).toEqual(["PRO", "PREMIUM"]);
+    expect(ROLE_ALLOWED_PLANS.RENTAL_BIZ).toEqual(["PRO", "PREMIUM"]);
+    for (const role of ["BUSINESS", "REALESTATE"] as const) expect(ROLE_ALLOWED_PLANS[role]).toEqual(["PREMIUM"]);
     expect(() => priceProduct("PREMIUM", 1, "standard")).toThrow();
     expect(() => priceProduct("PRO", 1, "standard")).toThrow();
     expect(() => priceProduct("PRO", 3, "paid_trial")).toThrow();

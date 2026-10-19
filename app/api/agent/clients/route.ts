@@ -10,6 +10,7 @@ import { validateOrigin } from "@/lib/csrf";
 import { withAgentAuth } from "@/lib/with-agent-auth";
 import { hashForSearch } from "@/lib/crypto";
 import { recordPiiAccess } from "@/lib/audit-log";
+import { isMonitoringBlockedByOnboarding } from "@/lib/member-subscription/onboarding";
 
 // ---------------------------------------------------------------------------
 // GET — 고객 목록
@@ -154,6 +155,19 @@ export const POST = withAgentAuth(async (req, { session }) => {
           { status: 400 }
         );
       }
+    }
+
+    // [2A] 중개사 본인 소유로 신규 등기감시를 생성하는 경우, 미결제(온보딩 미완료) 중개사를 서버에서 차단한다.
+    // ownerId는 propertyAddress 처리 시 clientUserId ?? session.user.id로 결정되므로, clientUserId가 없거나
+    // 본인 ID로 지정된 경우(= 본인 소유 감시 생성/재개) 모두 가드 대상이다(clientUserId=본인 우회 차단).
+    // 타 고객(clientUserId≠본인) 소유 물건은 고객 주체이므로 막지 않는다. release 미설정이면 통과(release-gated).
+    const selfMonitorCreate = !!(propertyAddress && typeof propertyAddress === "string" && propertyAddress.trim())
+      && (!clientUserId || clientUserId === session.user.id);
+    if (selfMonitorCreate && await isMonitoringBlockedByOnboarding(session.user.id)) {
+      return NextResponse.json(
+        { error: "등기감시는 구독 완료 후 이용할 수 있습니다.", code: "onboarding_incomplete" },
+        { status: 403 }
+      );
     }
 
     // 이메일 blind index (정확일치·중복체크·unique 용도, SEARCH_INDEX_KEY 전용키)

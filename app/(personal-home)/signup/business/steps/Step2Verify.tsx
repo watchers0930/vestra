@@ -4,12 +4,16 @@
  * 사업자 위저드 2단계 — 사업자정보/인증(설계 §4.2). 실제 사업자정보 제출·관리자 인증은 기존 서버 흐름
  * (`/signup/complete` → /api/user/setup-role, admin/verify)을 그대로 재사용한다(인증 서버 코드 미변경).
  * 이 화면은 인증 상태 표시와 이어하기 안내만 담당한다. verified일 때만 다음 단계로 진입한다.
+ *
+ * 인증 상태의 권위는 **서버 온보딩 GET**(`onboarding.state.verifyStatus`, DB 실시간 반영)이다. 세션 JWT의
+ * verifyStatus는 60초 캐시라 신청 접수 직후에도 과거 값(none/verified)을 보여 셸(온보딩 권위)과 어긋났다
+ * (이전 버그: 재신청 화면/완료 버튼 오표시). 셸과 동일 입력을 써서 불일치를 없앤다(§5.2·§7.3).
  */
 
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { CheckCircle2, Clock, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/common/Button";
+import { useBusinessWizardContext } from "../BusinessWizardContext";
 import { stepPath } from "../wizardConfig";
 
 const BIZ_ROLES: Array<{ role: string; label: string }> = [
@@ -19,8 +23,9 @@ const BIZ_ROLES: Array<{ role: string; label: string }> = [
 ];
 
 export function Step2Verify() {
-  const { data: session } = useSession();
-  const verifyStatus = session?.user?.verifyStatus ?? "none";
+  const { onboarding } = useBusinessWizardContext();
+  // 셸이 ready(온보딩 확정) 후에만 이 자식을 렌더하므로 state는 존재한다. 방어적으로 "none" 폴백.
+  const verifyStatus = onboarding.state?.verifyStatus ?? "none";
 
   if (verifyStatus === "verified") {
     return (
