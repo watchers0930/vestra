@@ -9,7 +9,7 @@
  * 현황·온보딩 조회는 BusinessWizardProvider가 각 한 번만 수행하고 셸·단계 화면이 공유한다(중복 조회 방지).
  */
 
-import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/common/Button";
@@ -42,13 +42,9 @@ function WizardShellInner({ step, children }: BusinessWizardShellProps) {
   const router = useRouter();
   const { wiz, onboarding, ready } = useBusinessWizardContext();
 
-  // 한 번 확정(ready)되면 이후 세션 재갱신(결제 완료 후 update({}) → sessionStatus "loading")으로 ready가
-  // 잠시 false가 돼도 자식을 언마운트하지 않는다. 그렇지 않으면 결제 완료 화면(Step4 done)이 사라졌다가
-  // 재마운트되며 flow가 idle로 초기화돼 자동 /home 이동·리다이렉트 루프를 유발한다(High-B).
-  const readyOnceRef = useRef(false);
-  if (ready) readyOnceRef.current = true;
-  const stableReady = ready || readyOnceRef.current;
-
+  // 결제 완료 후 세션 재갱신(update({}) → sessionStatus "loading") 중에도 ready가 유지된다:
+  // useOnboardingStatus가 기존 onboarding을 보존(keepDuringRefresh)해 loading=false, useBusinessWizard가
+  // authenticated를 유지(resolved=true) → ready=true. 따라서 결제 완료 화면이 언마운트되지 않는다(High-B).
   // 해당 유형이 노출하는 단계인지(개인은 사업자 인증 단계 없음).
   const visible = useMemo(() => wiz.steps.some((s) => s.step === step), [wiz.steps, step]);
 
@@ -90,8 +86,7 @@ function WizardShellInner({ step, children }: BusinessWizardShellProps) {
   }
 
   // 완료 계정 이동(exitToHome)은 step 4를 제외하고 자식 렌더를 보류한다(step 4는 Step4가 완료화면/이동을 담당).
-  // stableReady: 최초 확정 이후 update({}) 중 일시 loading에도 자식 유지(결제 완료 화면 보존).
-  const blocked = !stableReady || (wiz.exitToHome && step !== 4) || !visible || step > wiz.maxStep;
+  const blocked = !ready || (wiz.exitToHome && step !== 4) || !visible || step > wiz.maxStep;
 
   return (
     <div className="mx-auto max-w-[720px] px-4 py-10">
