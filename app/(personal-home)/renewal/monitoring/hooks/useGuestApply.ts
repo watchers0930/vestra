@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { GuestDraftResponse, GuestOrderStateResponse } from "@/types/guest-monitoring";
-import { parsePdf, identityStart } from "../guest/guestApi";
+import type { GuestOrderStateResponse } from "@/types/guest-monitoring";
+import type { GuestDraft, GuestMonitoringRole } from "../guest/guestTypes";
+import { parsePdf, identityStart, deleteSession } from "../guest/guestApi";
 import { launchProvider, applyResume, orderTarget } from "../guest/guestProvider";
 import { readV1RedirectReturn } from "../guest/guestPayment";
 import type { FailureAction } from "../guest/applyFailure";
@@ -26,16 +27,23 @@ export type { ApplyPhase };
 export interface ApplyInput {
   guestName: string;
   guestPhone: string;
-  address: string;
   file: File | null;
 }
 
 export function useGuestApply() {
   const [phase, setPhase] = useState<ApplyPhase>("input");
-  const [draft, setDraft] = useState<GuestDraftResponse | null>(null);
+  const [draft, setDraft] = useState<GuestDraft | null>(null);
   const [orderState, setOrderState] = useState<GuestOrderStateResponse | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  // 선택 역할(owner|tenant) — 폼 로컬이 아니라 훅이 초안 수명주기에 결합해 단일 상태로 관리한다
+  // (설계 §4.2·§4.4, 리뷰 지적 1·2). 새 초안·만료·재파싱에서 null로 초기화하고, 같은 초안의 OTP
+  // 취소·재발송·복귀에서는 보존한다.
+  const [role, setRole] = useState<GuestMonitoringRole | null>(null);
+  // 인증 시작으로 서버 초안에 역할이 확정(bindDraftRole)된 뒤에는 같은 역할로만 재시도 가능하다.
+  // 서버는 같은 초안의 다른 역할을 not_found로 거부하므로(draft-role.ts), 역할 변경은 "다시 입력"
+  // (새 초안)으로만 안내한다. OTP 취소·재발송·발송 실패·소유자 불일치 복귀에서도 잠금을 유지한다.
+  const [roleLocked, setRoleLocked] = useState(false);
   // 현재 실패의 권장 동작(§6.3). retry는 이 분류에 따라 "해당 동작만" 수행한다.
   const [recovery, setRecovery] = useState<FailureAction | null>(null);
   const resumedRef = useRef(false);
@@ -45,11 +53,21 @@ export function useGuestApply() {
   const otpNameRef = useRef("");
   const otpPhoneRef = useRef("");
   const otpDraftIdRef = useRef("");
+  // 선택한 역할(owner|tenant) — OTP 취소·재발송·폼 재마운트 시 복원용(설계 §4.4). 서버가 초안에 저장·확정.
+  const otpRoleRef = useRef<GuestMonitoringRole | null>(null);
   // 요청 세대: reset·초안 교체·재인증 시 증가. 이전 비동기 응답이 최신 상태를 덮어쓰지 못하게 한다(§6.1).
   const genRef = useRef(0);
   // 결제창(SDK) 실행 재진입 잠금: 같은 틱의 이중 클릭으로 startOrder가 두 번 들어와도 결제 실행은 1회만
   // (중복 청구 방지, §6.1 경합). busy 비활성화는 다음 렌더 UI만 막으므로 동기 재진입은 ref로 막는다.
   const payingRef = useRef(false);
+
+  // 초안이 폐기되는 경로(만료·재파싱·입력 복귀)에서 역할 선택·잠금을 함께 초기화한다(리뷰 지적 2).
+  // 같은 초안을 유지하는 경로(OTP 취소·재발송, 재인증 후 ready)에서는 호출하지 않아 잠금을 보존한다.
+  const resetRole = useCallback(() => {
+    otpRoleRef.current = null;
+    setRole(null);
+    setRoleLocked(false);
+  }, []);
 
   // 주문 생성·결제·복구 상태머신(§5.2/§6). 상태 setter·ref를 주입해 단일 상태를 공유한다.
   const { handleReauth, advanceOrder, startOrder } = useGuestOrderFlow({
@@ -60,6 +78,7 @@ export function useGuestApply() {
     otpNameRef,
     otpPhoneRef,
     otpDraftIdRef,
+    resetRole,
     setPhase,
     setError,
     setRecovery,
@@ -76,6 +95,16 @@ export function useGuestApply() {
     };
   }, []);
 
+  // 신청 완료(done) 직후 apply 세션 즉시 폐기(로그아웃 정책): 결과(orderState)는 이미 메모리에 있어 완료
+  // 화면 표시에 영향 없고, done은 종단 상태라 이후 인증요청이 없다. 서버 revoke+세션 쿠키 삭제, 1회만.
+  const sessionRevokedRef = useRef(false);
+  useEffect(() => {
+    if (phase === "done" && !sessionRevokedRef.current) {
+      sessionRevokedRef.current = true;
+      void deleteSession();
+    }
+  }, [phase]);
+
   /** 1단계: PDF 파싱 + 초안 생성 */
   const submitParse = useCallback(async (input: ApplyInput) => {
     setError("");
@@ -83,8 +112,8 @@ export function useGuestApply() {
       setError("등기부등본 PDF를 업로드해 주세요.");
       return;
     }
-    if (!input.guestName.trim() || !input.guestPhone.trim() || !input.address.trim()) {
-      setError("이름·전화번호·주소를 모두 입력해 주세요.");
+    if (!input.guestName.trim() || !input.guestPhone.trim()) {
+      setError("이름과 전화번호를 입력해 주세요.");
       return;
     }
     // 새 초안 → 이전 흐름 참조/세대 무효화(입력 변경 시 이전 draft/주문으로 결제 방지, §2).
@@ -95,6 +124,7 @@ export function useGuestApply() {
     otpNameRef.current = "";
     otpPhoneRef.current = "";
     otpDraftIdRef.current = "";
+    resetRole(); // 새 초안 → 이전 역할 선택·잠금 폐기(설계 §4.2, 리뷰 지적 2)
     setOrderState(null);
     setRecovery(null);
     setBusy(true);
@@ -102,7 +132,6 @@ export function useGuestApply() {
       file: input.file,
       guestName: input.guestName.trim(),
       guestPhone: input.guestPhone.trim(),
-      address: input.address.trim(),
     });
     // reset·새 초안·언마운트가 끼어들었으면 이 응답으로 draft/저장소/상태를 되살리지 않는다(§6.1).
     // busy는 현재 세대의 흐름이 관리하므로 stale 응답은 건드리지 않는다.
@@ -122,7 +151,7 @@ export function useGuestApply() {
       return;
     }
     setPhase("ready");
-  }, [otp]);
+  }, [otp, resetRole]);
 
   /** 흐름 완전 초기화(입력 단계로). reset·재파싱·막다름 해소 공용. */
   const goInput = useCallback(() => {
@@ -132,6 +161,7 @@ export function useGuestApply() {
     otpNameRef.current = "";
     otpPhoneRef.current = "";
     otpDraftIdRef.current = "";
+    resetRole();
     setDraft(null);
     setOrderState(null);
     setRecovery(null);
@@ -139,14 +169,14 @@ export function useGuestApply() {
     // 진행 중 흐름을 초기화할 때 busy가 남지 않도록 명시 해제(세대 가드로 stale 응답은 이미 무시, §6.1).
     setBusy(false);
     setPhase("input");
-  }, [otp]);
+  }, [otp, resetRole]);
 
   /**
    * 2단계: 본인인증 시작(결제 전). 다날 모드는 리다이렉트+복귀 마커로 주문 재개(기존 동작).
    * OTP 모드(launch.mode==="sms_otp")는 복귀 마커 없이 OTP 대기 후 성공 시에만 startOrder(§5.2).
    */
   const startIdentity = useCallback(
-    async (guestName: string, guestPhone: string) => {
+    async (guestName: string, guestPhone: string, role: GuestMonitoringRole) => {
       if (!draft) return;
       setError("");
       const name = guestName.trim();
@@ -156,6 +186,18 @@ export function useGuestApply() {
         setPhase("ready");
         return;
       }
+      if (role !== "owner" && role !== "tenant") {
+        // 역할 미선택/비정상값은 진행 차단(서버도 §3.4-B에서 거부).
+        setError("신청 역할(소유자/임차인)을 선택해 주세요.");
+        setPhase("ready");
+        return;
+      }
+      otpRoleRef.current = role; // 복원·재발송용으로 보관(설계 §4.4)
+      // 인증 시작 = 서버가 이 역할로 초안을 확정(bindDraftRole). 발송/네트워크 실패로 ready로 돌아와도
+      // 서버에 이미 역할이 저장됐을 수 있으므로, 같은 초안에서는 역할을 잠가 같은 역할로만 재시도한다
+      // (리뷰 지적 1). 역할 변경은 "다시 입력"(새 초안)으로만.
+      setRole(role);
+      setRoleLocked(true);
       // 이 인증 시작 요청의 세대. reset·새 초안·재인증·언마운트가 끼어들면 응답을 버린다(§6.1 경합).
       const gen = genRef.current;
       setBusy(true);
@@ -165,6 +207,7 @@ export function useGuestApply() {
         guestName: name,
         guestPhone: phone,
         draftId: draft.draftId,
+        role,
       });
       // 오래된 응답이 새 초안의 OTP 대기로 전환하거나 옛 마커를 심지 못하게 한다(§6.1).
       if (gen !== genRef.current) return;
@@ -230,10 +273,17 @@ export function useGuestApply() {
     [otp, startOrder, advanceOrder]
   );
 
-  /** 재요청(§6.2): 새 세션·코드. 기존 대기 폐기 후 동일 입력으로 재시작. */
+  /** 재요청(§6.2): 새 세션·코드. 기존 대기 폐기 후 동일 입력·역할로 재시작. */
   const resendApplyOtp = useCallback(() => {
+    const role = otpRoleRef.current;
+    if (!role) {
+      // 역할 유실(비정상) — 폼으로 돌려보내 역할을 다시 선택하게 한다.
+      setError("신청 역할을 다시 선택해 주세요.");
+      setPhase("ready");
+      return;
+    }
     otp.resetOtp();
-    void startIdentity(otpNameRef.current, otpPhoneRef.current);
+    void startIdentity(otpNameRef.current, otpPhoneRef.current, role);
   }, [otp, startIdentity]);
 
   /**
@@ -397,6 +447,10 @@ export function useGuestApply() {
     startIdentity,
     retry,
     reset,
+    // 선택 역할·잠금 — 훅이 초안 수명주기에 결합해 단일 관리(리뷰 지적 1·2). 폼은 controlled로 쓴다.
+    role,
+    setRole,
+    roleLocked,
     // OTP 취소·재발송·전송 실패로 신청 폼이 다시 마운트될 때 복원할 이름·전화(§6.2). OTP 진입 시점에
     // 저장해 둔 값으로, 폼 remount 시 입력 초기값으로 되돌린다. 신규 입력 단계에서는 빈 문자열.
     restoreName: otpNameRef.current,

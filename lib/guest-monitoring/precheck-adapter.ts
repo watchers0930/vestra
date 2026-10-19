@@ -3,7 +3,7 @@ import { isTilkoAvailable, fetchRegistryCaseStatus } from "@/lib/tilko-api";
 import { rateLimit } from "@/lib/rate-limit";
 import { guestMonitoringEnabled, assertDecrypted } from "./config";
 import { locked } from "./transaction";
-import { safeSummary } from "./calendar-dto";
+import { buildSignalSummary } from "./signal-message";
 export const GUEST_BATCH_SIZE = 15;
 export async function runGuestPrechecks(now = new Date()) {
   if (!guestMonitoringEnabled()) return { processed: 0, failed: 0 };
@@ -25,7 +25,7 @@ export async function runGuestPrechecks(now = new Date()) {
     // Re-read immediately before upstream call, including expiration and decryption checks.
     const property = await prisma.guestMonitoring.findFirst({ where: {
       id: ref.id, status: "active", paidUntil: { gt: new Date() },
-    }, select: { commUniqueNo: true, ownerName: true, address: true } });
+    }, select: { commUniqueNo: true, ownerName: true, address: true, role: true } });
     if (!property) continue;
     let result = "fetch_failed";
     try {
@@ -41,12 +41,12 @@ export async function runGuestPrechecks(now = new Date()) {
         id: ref.id, status: "active", paidUntil: { gt: checkedAt },
       }, data: { lastCheckedAt: checkedAt,
         registrySignalStatus: result === "fetch_failed" ? "error" : result === "signal_detected" ? "signal_detected" : "idle",
-        registrySignalSummary: safeSummary(result),
+        registrySignalSummary: buildSignalSummary(property.role, result),
         ...(result === "signal_detected" ? { registrySignalDetectedAt: checkedAt } : {}),
       } });
       if (valid.count) await tx.guestMonitoringCheckLog.create({ data: {
         guestMonitoringId: ref.id, checkedAt, method: "precheck", result,
-        summary: safeSummary(result), riskLevel: result === "signal_detected" ? "medium" : null,
+        summary: buildSignalSummary(property.role, result), riskLevel: result === "signal_detected" ? "medium" : null,
       } });
     });
     processed++;

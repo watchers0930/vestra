@@ -230,11 +230,12 @@ it("still refuses another identity for a status session", async () => {
   expect((await POST(request("http://localhost:3000"))).status).toBe(404);
   expect(f.verify).not.toHaveBeenCalled();
 });
-it("uses imp_uid for both terminal snapshots even before it is stored", async () => {
+it("confirms the terminal snapshot by orderId before imp_uid is stored", async () => {
   f.verify.mockRejectedValue(new PortoneTerminalPayment(row.orderId, "imp_test", "failed"));
   f.get.mockRejectedValue(new PortoneTerminalPayment(row.orderId, "imp_test", "failed"));
   expect((await POST(request("http://localhost:3000"))).status).toBe(200);
-  expect(f.get).toHaveBeenCalledWith("imp_test");
+  // 2차 확인 읽기는 orderId(merchant_uid)로 재조회한다(imp_uid 직접조회 불가, 기록 전).
+  expect(f.get).toHaveBeenCalledWith(row.orderId);
   expect(row.paidAt).toBeNull(); expect(row.providerTransactionId).toBeNull();
   expect(parseReceipt(row.providerReceipt).consumed).toBe(false);
 });

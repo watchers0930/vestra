@@ -59,7 +59,10 @@ it.each(["production", "test"])("uses matching callback-compatible browser and s
   attachBrowser(response, "browser");
   attachSession(response, "session");
   for (const name of [BROWSER_COOKIE, SESSION_COOKIE]) {
-    expect(response.cookies.get(name)).toMatchObject({ httpOnly: true, secure: mode === "production",
-      sameSite: mode === "production" ? "none" : "lax", path: "/api/guest-monitoring", maxAge: 900 });
+    const cookie = response.cookies.get(name)!;
+    expect(cookie).toMatchObject({ httpOnly: true, secure: mode === "production",
+      sameSite: mode === "production" ? "none" : "lax", path: "/api/guest-monitoring" });
+    // 로그아웃 정책: 세션 쿠키(maxAge 없음) → 브라우저/탭 종료 시 삭제.
+    expect(cookie.maxAge).toBeUndefined();
   }
 });

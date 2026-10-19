@@ -110,8 +110,9 @@ export default function MonitoringRenewalClient({ initialAddress = "", initialLi
           )}
         </div>
 
-        {/* 비회원(비로그인): 서버 기능 플래그 ON일 때만 신청 섹션 노출(설계 §0·§3.0) */}
-        {!isLoggedIn && guestEnabled && <GuestEntrySection initialAddress={initialAddress} />}
+        {/* 비회원(비로그인): 서버 기능 플래그 ON일 때만 신청 섹션 노출(설계 §0·§3.0).
+            비회원 경로는 PDF-only로 주소 주입 없음(설계 §4.1). 회원 추가 모달은 initialAddress 유지. */}
+        {!isLoggedIn && guestEnabled && <GuestEntrySection />}
       </div>
 
       {showAddModal && (

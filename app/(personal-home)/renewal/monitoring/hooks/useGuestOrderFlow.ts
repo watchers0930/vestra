@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, type Dispatch, type SetStateAction, type MutableRefObject } from "react";
-import type { GuestDraftResponse, GuestOrderStateResponse } from "@/types/guest-monitoring";
+import type { GuestOrderStateResponse } from "@/types/guest-monitoring";
+import type { GuestDraft } from "../guest/guestTypes";
 import { createOrder, getOrderState, paymentCallback } from "../guest/guestApi";
 import { applyResume, classifyOrderState, orderTarget, GUEST_APPLY_PATH } from "../guest/guestProvider";
 import {
@@ -39,17 +40,19 @@ export type ApplyPhase =
 interface OrderFlowParams {
   genRef: MutableRefObject<number>;
   payingRef: MutableRefObject<boolean>;
-  draft: GuestDraftResponse | null;
+  draft: GuestDraft | null;
   otp: ReturnType<typeof useGuestOtp>;
   otpNameRef: MutableRefObject<string>;
   otpPhoneRef: MutableRefObject<string>;
   otpDraftIdRef: MutableRefObject<string>;
+  /** 초안 폐기(만료·재파싱·입력 복귀) 시 역할 선택·잠금 초기화(리뷰 지적 2). 부모 훅이 주입. */
+  resetRole: () => void;
   setPhase: Dispatch<SetStateAction<ApplyPhase>>;
   setError: Dispatch<SetStateAction<string>>;
   setRecovery: Dispatch<SetStateAction<FailureAction | null>>;
   setOrderState: Dispatch<SetStateAction<GuestOrderStateResponse | null>>;
   setBusy: Dispatch<SetStateAction<boolean>>;
-  setDraft: Dispatch<SetStateAction<GuestDraftResponse | null>>;
+  setDraft: Dispatch<SetStateAction<GuestDraft | null>>;
 }
 
 export function useGuestOrderFlow(p: OrderFlowParams) {
@@ -61,6 +64,7 @@ export function useGuestOrderFlow(p: OrderFlowParams) {
     otpNameRef,
     otpPhoneRef,
     otpDraftIdRef,
+    resetRole,
     setPhase,
     setError,
     setRecovery,
@@ -80,12 +84,15 @@ export function useGuestOrderFlow(p: OrderFlowParams) {
     setRecovery({ kind: "reauth" });
     setError(failureMessage({ kind: "reauth" }));
     if (draft?.extractionOk && otpNameRef.current && otpPhoneRef.current) {
+      // 같은 초안으로 재인증 — 역할 잠금 유지(서버에 이미 확정된 역할).
       setPhase("ready");
     } else {
+      // 초안 참조를 버리고 입력부터 → 역할도 초기화(리뷰 지적 2).
+      resetRole();
       setDraft(null);
       setPhase("input");
     }
-  }, [genRef, draft, otp, otpNameRef, otpPhoneRef, otpDraftIdRef, setBusy, setRecovery, setError, setPhase, setDraft]);
+  }, [genRef, draft, otp, otpNameRef, otpPhoneRef, otpDraftIdRef, resetRole, setBusy, setRecovery, setError, setPhase, setDraft]);
 
   /** API 실패 → 분류(§6.3)에 따라 phase/error/recovery 설정. 401은 handleReauth로 위임. */
   const applyFailureOutcome = useCallback(
@@ -109,6 +116,7 @@ export function useGuestOrderFlow(p: OrderFlowParams) {
         applyResume.clearPendingIdentity();
         otp.resetOtp();
         otpDraftIdRef.current = "";
+        resetRole(); // 만료 초안 폐기 → 이전 역할이 새 초안의 기본 선택으로 남지 않게(리뷰 지적 2)
         setDraft(null);
         setOrderState(null);
         setPhase("input");
@@ -118,7 +126,7 @@ export function useGuestOrderFlow(p: OrderFlowParams) {
         setPhase("failed");
       }
     },
-    [handleReauth, genRef, draft, otp, otpDraftIdRef, setBusy, setRecovery, setError, setDraft, setOrderState, setPhase]
+    [handleReauth, genRef, draft, otp, otpDraftIdRef, resetRole, setBusy, setRecovery, setError, setDraft, setOrderState, setPhase]
   );
 
   /**

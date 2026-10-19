@@ -254,6 +254,182 @@
   background: #f5f7ff;
 }
 
+/* 비회원 전용 PDF 업로드 영역 (설계 §4.3). 전역 .mDropZone 을 건드리지 않고 비회원 범위에서만
+   카드 가용 폭 기준 100%·box-sizing·긴 파일명 넘침 방지를 적용한다(회원 업로드 UI 영향 차단). */
+.dropZone {
+  width: 100%;
+  box-sizing: border-box;
+  display: block;
+  border: 2px dashed #d0d4e8;
+  border-radius: 12px;
+  padding: 30px 20px;
+  text-align: center;
+  cursor: pointer;
+  background: #fff;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.dropZone:hover:not(:disabled) {
+  border-color: #2e4bd8;
+  background: #f5f7ff;
+}
+.dropZone:focus-visible {
+  outline: 2px solid #2e4bd8;
+  outline-offset: 2px;
+}
+.dropZone:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.dropZoneActive {
+  border-color: #2e4bd8;
+  background: #f0f2fd;
+}
+.dropZoneSet {
+  border-color: #2e4bd8;
+  background: #f5f7ff;
+}
+.dropIco {
+  color: #2e4bd8;
+  margin-bottom: 8px;
+}
+.dropName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1d2e;
+  margin-bottom: 4px;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+.dropHint {
+  font-size: 12.5px;
+  color: #aaa;
+}
+
+/* 역할 선택 radio group (설계 §4.2·§4.5) — 기본 선택 없음, owner/tenant 동일 비중 */
+.roleGroup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.roleOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1.5px solid #e0e3ef;
+  border-radius: 12px;
+  padding: 14px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #fff;
+}
+.roleOption:hover {
+  border-color: #2e4bd8;
+  background: #f8f9ff;
+}
+.roleOptionSel {
+  border-color: #2e4bd8;
+  background: #f0f2fd;
+}
+.roleOption input {
+  margin-top: 2px;
+  accent-color: #2e4bd8;
+  flex-shrink: 0;
+}
+.roleText {
+  display: block;
+}
+.roleTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1d2e;
+  margin: 0 0 3px;
+}
+.roleDesc {
+  font-size: 12px;
+  /* 흰 배경·선택 배경(#f0f2fd) 모두에서 일반 텍스트 대비 4.5:1 이상 확보(리뷰 지적 3) */
+  color: #5e6377;
+  line-height: 1.5;
+}
+
+/* 인증 시작으로 역할이 확정된 뒤의 잠금 표시(리뷰 지적 1) */
+.roleOptionLocked {
+  cursor: default;
+}
+.roleOptionLocked:hover {
+  border-color: #e0e3ef;
+  background: #fff;
+}
+.roleOptionSel.roleOptionLocked:hover {
+  border-color: #2e4bd8;
+  background: #f0f2fd;
+}
+.roleOptionLocked:not(.roleOptionSel) {
+  opacity: 0.55;
+}
+.roleLockNote {
+  font-size: 12px;
+  color: #5e6377;
+  line-height: 1.6;
+  margin: 10px 0 0;
+}
+
+/* 필수 동의 */
+.agreeRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 12.5px;
+  color: #6e6e73;
+  margin: 12px 0;
+  line-height: 1.6;
+  cursor: pointer;
+}
+.agreeRow input {
+  margin-top: 2px;
+  accent-color: #2e4bd8;
+  flex-shrink: 0;
+}
+
+/* 추출 결과 패널 — 다시 입력(PDF 교체) 트리거 영역 */
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.panelTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1d2e;
+}
+.panelEdit {
+  background: none;
+  border: none;
+  color: #2e4bd8;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+.panelEdit:hover {
+  color: #2540c0;
+}
+.panelEdit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.panelNote {
+  font-size: 12px;
+  /* 잘못된 PDF 정정 안내 — 흰 배경에서 일반 텍스트 대비 4.5:1 이상 확보(리뷰 지적 3) */
+  color: #5e6377;
+  line-height: 1.6;
+  margin: 10px 0 0;
+}
+
 /* 단계 진행 표시 */
 .steps {
   display: flex;
@@ -331,6 +507,8 @@
 .resultWrap {
   text-align: center;
   padding: 10px 0 6px;
+  border: none;
+  box-shadow: none;
 }
 .resultIcon {
   width: 60px;
@@ -354,6 +532,11 @@
   color: #6e6e73;
   line-height: 1.7;
   margin: 0 0 20px;
+  white-space: nowrap;
+}
+/* 좁은 화면에서는 한 줄 강제를 풀어 가로 넘침을 방지 */
+@media (max-width: 640px) {
+  .resultDesc { white-space: normal; }
 }
 .periodBox {
   display: flex;

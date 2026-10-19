@@ -20,6 +20,8 @@ export type FailureKind =
 
 export interface FailureAction {
   kind: FailureKind;
+  /** 특정 거부 사유의 사용자용 문구 오버라이드(예: owner_name_mismatch). 없으면 kind 기본 문구 사용. */
+  message?: string;
 }
 
 /**
@@ -33,6 +35,8 @@ export function classifyApiFailure(status: number, code: string): FailureAction 
   if (code === "payment_pending") return { kind: "recheck" };
   if (status === 404) return { kind: "reparse" };
   if (status === 0 || status === 429 || status === 503) return { kind: "retry_same" };
+  // 소유자 대조 실패(role=owner인데 guestName≠ownerName, 설계 §3.4/§4.5): 결제 진입 차단 + 지정 문구.
+  if (code === "owner_name_mismatch") return { kind: "blocked", message: "본인 소유 물건이 아닙니다." };
   if (status === 403) return { kind: "blocked" };
   if (status === 409) return { kind: "conflict" };
   // 400 payment_failed(불일치/서명/nonce) 등 결제 확정 거부 → 중단(자동 재결제 금지)
@@ -41,6 +45,8 @@ export function classifyApiFailure(status: number, code: string): FailureAction 
 
 /** 사용자용 일반 안내 메시지(내부 사유·원문 결제정보·secret 비노출). */
 export function failureMessage(action: FailureAction): string {
+  // 특정 거부 사유(owner_name_mismatch 등)는 서버 계약 문구를 우선 노출한다.
+  if (action.message) return action.message;
   switch (action.kind) {
     case "reauth":
       return "인증이 만료되었습니다. 본인인증을 다시 진행해 주세요.";

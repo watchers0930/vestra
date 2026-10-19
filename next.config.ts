@@ -20,7 +20,7 @@ const googleAnalyticsConnect = "https://www.google-analytics.com https://region1
 const tossDomains = "https://js.tosspayments.com";
 const tossConnect = "https://*.tosspayments.com https://*.toss.im";
 const tossFrame = "https://*.tosspayments.com https://*.toss.im";
-// 포트원 V1(아임포트) + 다날 결제 CSP 도메인 (회원 구독 결제)
+// 포트원 V1(아임포트) + 다날 결제 CSP 도메인 (회원 구독 + 비회원 등기감시 결제)
 // iamport SDK는 *.iamport.kr 뿐 아니라 *.iamport.co(텔레메트리 coretelemetry.prod.iamport.co 등)도 사용.
 const portoneDomains = "https://cdn.iamport.kr https://service.iamport.kr https://*.iamport.co";
 const portoneConnect = "https://api.iamport.kr https://service.iamport.kr https://*.iamport.kr https://*.iamport.co";

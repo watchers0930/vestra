@@ -74,16 +74,17 @@ describe("guest boundaries", () => {
   it("bounds chunked JSON bodies", async () => {
     await expect(readJson(new Request("http://localhost", { method: "POST", body: "x".repeat(17000) }))).rejects.toMatchObject({ status: 413 });
   });
-  it("extracts a single registry and matches its address", () => {
+  it("extracts PDF truth without an address input", () => {
     const address = parseRegistry(SAMPLE_REGISTRY_TEXT).title.address;
-    const result = extractRegistryFields(SAMPLE_REGISTRY_TEXT, address);
+    const result = extractRegistryFields(SAMPLE_REGISTRY_TEXT);
     expect(result.commUniqueNo).toBe("1101-2024-012345");
     expect(result.ownerName.length).toBeGreaterThan(1);
-    expect(() => extractRegistryFields(SAMPLE_REGISTRY_TEXT, "부산 다른주소 1")).toThrow("address_mismatch");
+    expect(result.address).toContain(address);
+    expect(result.unitNumber).toBeDefined();
   });
   it("rejects empty, spoofed and oversized PDF files before storing a draft", async () => {
     const form = new FormData();
-    form.set("guestName", "홍길동"); form.set("guestPhone", "01012345678"); form.set("address", "서울 중구 테스트로 1");
+    form.set("guestName", "홍길동"); form.set("guestPhone", "01012345678");
     form.set("file", new File([], "empty.pdf", { type: "application/pdf" }));
     await expect(createDraft(form)).rejects.toMatchObject({ code: "invalid_pdf" });
     form.set("file", new File(["not a PDF"], "fake.pdf", { type: "application/pdf" }));
@@ -92,7 +93,7 @@ describe("guest boundaries", () => {
     await expect(createDraft(form)).rejects.toMatchObject({ status: 413, code: "file_too_large" });
   });
   it("rejects unrelated and ambiguous multiple-property documents", () => {
-    expect(() => extractRegistryFields("unrelated document", "서울 중구")).toThrow("not_registry");
-    expect(() => extractRegistryFields("표제부 갑구 을구 소유권 고유번호 1234-1234-123456 고유번호 5678-1234-123456", "서울 중구")).toThrow("multiple_properties");
+    expect(() => extractRegistryFields("unrelated document")).toThrow("not_registry");
+    expect(() => extractRegistryFields("표제부 갑구 을구 소유권 고유번호 1234-1234-123456 고유번호 5678-1234-123456")).toThrow("multiple_properties");
   });
 });

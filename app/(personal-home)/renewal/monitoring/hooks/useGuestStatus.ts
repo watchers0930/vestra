@@ -126,18 +126,17 @@ export function useGuestStatus() {
     async (): Promise<GuestPropertyDto[]> => {
       const res = await listProperties();
       if (!res.ok) {
-        if (res.status === 401) {
+        // 401(세션 없음)과 404(무권한·불일치·기능 OFF)는 서버가 IDOR·열거 방지를 위해 통일한 "권한 없음"
+        // 신호다(설계 §lib.design 334). 조회 페이지에서 권한이 없으면 해법은 항상 "조회용 본인인증"이므로
+        // 둘 다 미인증으로 보고 본인인증 폼을 띄운다. (apply 세션 잔존 시 /properties가 404로 오던 문제)
+        if (res.status === 401 || res.status === 404) {
           // 이미 인증 상태였다면 세션 만료(데이터 비우고 재인증 안내), 최초 탐지면 단순 미인증.
           if (authStateRef.current === "authenticated") handleSessionExpired();
           else setAuthState("unauthenticated");
           return [];
         }
-        // 네트워크/404/429/503/500 → 일시 오류 화면(재시도 가능), checking 종료(§4)
-        setProbeError(
-          res.status === 404
-            ? "현재 비회원 조회 서비스를 이용할 수 없습니다. 잠시 후 다시 시도해 주세요."
-            : "조회 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요."
-        );
+        // 네트워크/429/503/500 → 일시 오류 화면(재시도 가능), checking 종료(§4)
+        setProbeError("조회 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
         setAuthState("error");
         return [];
       }
@@ -288,6 +287,35 @@ export function useGuestStatus() {
     setCalendar(null);
     setError("");
   }, []);
+
+  // 유휴 자동 로그아웃(로그아웃 정책): 인증 상태에서 10분 무조작 시 서버 세션 폐기 + 민감 데이터 가림.
+  // 서버의 유휴 슬라이딩 만료(expiresAt)를 UX로 보강한다(사용자가 자리를 비운 사이 화면 노출 최소화).
+  useEffect(() => {
+    if (authState !== "authenticated") return;
+    const IDLE_MS = 10 * 60_000;
+    let timer: ReturnType<typeof setTimeout>;
+    let lastReset = 0;
+    const onIdle = () => {
+      void (async () => {
+        await logout();
+        setError("유휴 상태가 10분 이상 지속되어 자동 종료되었습니다. 다시 본인인증 후 조회해 주세요.");
+      })();
+    };
+    const arm = () => { clearTimeout(timer); timer = setTimeout(onIdle, IDLE_MS); };
+    const onActivity = () => {
+      const now = Date.now();
+      if (now - lastReset < 10_000) return; // 과도한 리셋 방지(10초 throttle)
+      lastReset = now;
+      arm();
+    };
+    arm();
+    const events = ["pointerdown", "keydown", "pointermove", "scroll", "touchstart"];
+    events.forEach((e) => window.addEventListener(e, onActivity, { passive: true }));
+    return () => {
+      clearTimeout(timer);
+      events.forEach((e) => window.removeEventListener(e, onActivity));
+    };
+  }, [authState, logout]);
 
   return {
     authState,

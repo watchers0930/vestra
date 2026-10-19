@@ -8,6 +8,7 @@ export function notFound(): never { throw new GuestError("not_found", 404); }
 export const messages: Record<string, string> = {
   not_found: "요청한 정보를 확인할 수 없습니다.",
   session_required: "본인인증 후 다시 이용해주세요.",
+  owner_name_mismatch: "본인 소유 물건이 아닙니다.",
   invalid_input: "입력 내용을 확인해주세요.",
   verification_failed: "인증번호를 확인해주세요. 번호가 올바르지 않거나 시간이 만료되었을 수 있습니다.",
   invalid_pdf: "유효한 등기부 PDF를 업로드해주세요.",

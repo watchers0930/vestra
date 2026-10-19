@@ -4,6 +4,7 @@ import { GUEST_SINGLE_MONITORING as product } from "@/lib/pricing-plans";
 import { getDanalProvider } from "@/lib/danal";
 import type { GuestOrderRequest, GuestOrderStatus } from "@/types/guest-monitoring";
 import { GuestError, notFound } from "./errors";
+import { assertApplicantRole } from "./applicant-gate";
 import { locked } from "./transaction";
 import { ORDER_TTL } from "./config";
 import { assertDecrypted } from "./config";
@@ -21,6 +22,7 @@ export async function createOrder(session: OrderPrincipal, input: GuestOrderRequ
       if (existing.guestMonitoringId !== id || existing.purpose !== input.purpose) notFound();
       return { order: existing, created: false };
     }
+    if (input.purpose === "initial") assertApplicantRole(property);
     const now = new Date();
     // One unfinished order per property, even across different request keys.
     const pending = await tx.guestMonitoringOrder.findFirst({ where: {

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { GuestError } from "./errors";
+import { assertApplicantRole } from "./applicant-gate";
 import { locked } from "./transaction";
 import { paidPeriod } from "./period";
 import { assertDecrypted } from "./config";
@@ -13,6 +14,19 @@ export async function applyPaidOrder(orderId: string) {
     if (order.status === "needs_review") return { applied: false };
     if (order.status !== "paid" || !order.providerTransactionId) throw new GuestError("payment_failed");
     const property = await tx.guestMonitoring.findUniqueOrThrow({ where: { id: order.guestMonitoringId } });
+    if (order.purpose === "initial") {
+      try { assertApplicantRole(property); }
+      catch (error) {
+        // Only permanent applicant conflicts belong in the manual queue.
+        // Crypto/provider failures must leave the paid order retryable.
+        if (!(error instanceof GuestError) ||
+            (error.code !== "owner_name_mismatch" && error.code !== "invalid_input")) throw error;
+        await tx.guestMonitoringOrder.update({ where: { id: order.id }, data: { status: "needs_review" } });
+        await tx.auditLog.create({ data: { action: "GUEST_PAYMENT_NEEDS_REVIEW", target: order.orderId,
+          detail: JSON.stringify({ reason: error.code }) } });
+        return { applied: false };
+      }
+    }
     assertDecrypted(property.ownerName, property.address);
     if (!property.commUniqueNo) throw new GuestError("extraction_incomplete");
     const now = new Date();
