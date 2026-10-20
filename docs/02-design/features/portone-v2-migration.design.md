@@ -183,13 +183,51 @@ V1의 `imp_uid/merchant_uid/amount/pg_id` 대조를 V2로:
 
 ---
 
-## 11. PortOne에 확인할 사항 (착수 전 선결)
+## 11. 선결 검증 — V2 SDK 결제 PoC (착수 첫 단계)
 
-1. **다날(danal_tpay) V2 채널키** 발급·테스트/실연동 채널 제공 여부(현재 콘솔은 V2 채널키 보유 — 결제는 되나 V1 REST 조회 불가가 전환 사유).
-2. **V2 결제 조회 API**(`GET /payments/{paymentId}`)로 **다날 테스트 결제가 조회되는지**(이번 V1 404의 V2 대응 확인 — 전환의 핵심 전제).
-3. **`V2_API_SECRET`·`storeId`·`channelKey`** 정확한 값(콘솔 "V2 API" 탭).
-4. **정기결제(빌링키)** 사용 여부 — 구독이 정기자동결제면 V2 빌링키 설계 추가.
-5. **m_redirect(모바일 리다이렉트)** V2 지원 방식·반환 파라미터.
-6. **MID(DANAL_MID)** V2에서 별도 필요 여부(채널키 포함 여부).
+### 11.0 테스트로 확정된 사실 (2026-10-20)
 
-> 위 1~2가 "YES"(V2 API로 다날 거래 조회 가능)여야 전환의 실효가 보장된다. 착수 전 **V2 API Secret으로 이번 거래(또는 신규 V2 테스트결제)를 `GET /payments/{id}` 조회해 성공 확인**이 선결 조건.
+t-vestra 실거래로 V2 자격증명을 실측·검증했다.
+
+| 항목 | 결과 |
+|---|---|
+| V2 자격증명 확보 | **Store ID `store-cd0c7ced-...d2e7`**, **Channel Key `channel-key-5b904392-...`**, **V2 API Secret**(유효, 만료 2026-11-14) |
+| V2 Secret 유효성 | ✅ 유효 — `GET /payments/{id}` 응답이 **401(인증실패)이 아니라 404(거래없음)** → 인증·storeId 정상 |
+| 이번 거래(V1 결제)의 V2 조회 | **V1 REST·V2 API 둘 다 404** — 당연. 이 결제는 **V1 SDK(imp_code)로 만든 V1 거래**라 V2 API 대상이 아님 |
+
+→ **결론:** V2 전환은 **클라 SDK + 서버 API를 함께 V2로** 바꿔야 한다. 저수준(서버)만 V2로 바꾸고 클라를 V1(imp_code)로 두면 **계속 V1 거래가 생성돼 V2 API로 조회되지 않는다.** (V1 거래를 V2로 "변환 조회"하는 길은 없음 — V2로 **새로** 결제해야 V2 거래가 생긴다.)
+
+### 11.1 PoC — "V2 SDK 결제 → V2 API 조회 성공" (전환 실효의 유일한 확정 방법)
+
+구현의 **맨 처음**에, 전체 리팩터링 전에 **최소 PoC**로 V2 왕복을 1회 성립시켜 전환 실효를 확정한다. 이게 성공해야 §3~6 전면 전환에 착수한다.
+
+**PoC 범위(최소):**
+1. 클라에서 `@portone/browser-sdk`로 **단건 카드 결제 1건** 요청:
+   `PortOne.requestPayment({ storeId, channelKey, paymentId:"poc_<uuid>", orderName:"PoC", totalAmount:1000, currency:"KRW", payMethod:"CARD" })` (다날 V2 채널, 테스트 모드 또는 소액 실연동)
+2. 결제 완료 응답(`{ paymentId, code, message }`) 수신.
+3. 서버에서 **`GET https://api.portone.io/payments/{paymentId}`** · `Authorization: PortOne {V2_SECRET}` 조회.
+
+**성공 기준:** 3번 조회가 **200 + `status:"PAID"` + `amount.total` 일치 + `channel`/pgProvider=danal** 반환. (= 이번에 V1에서 막힌 "결제→서버 검증" 지점이 V2에서 뚫림을 실증)
+
+**실패 시 분기:**
+- 조회 200인데 상태/필드 상이 → V2 스키마 매핑만 보정(§4.3·§4.4).
+- **여전히 404** → PortOne 지원에 "다날 V2 채널 결제가 V2 `GET /payments`로 조회되는 정확한 방법/식별자" 문의(식별자가 paymentId 아닌 txId일 가능성 등). **이 경우 전환 중단·재설계.**
+
+**무출금 보장:** 테스트 채널 사용, 또는 소액(1,000원) 실연동 후 **즉시 `POST /payments/{paymentId}/cancel`**로 취소. (0번 규칙: 실결제는 사전 취소 경로 확보 후)
+
+### 11.2 PoC 전 PortOne 확인 (남은 사항)
+
+1. **다날(danal_tpay) V2 채널**이 V2 SDK 결제·`GET /payments` 조회를 지원하는지(콘솔 V2 채널키 보유는 확인됨).
+2. **정기결제(빌링키)** 사용 여부 — 구독이 정기자동결제면 V2 빌링키(`/billing-keys`·예약결제) 별도 설계 추가.
+3. **m_redirect(모바일)** V2 방식·반환 파라미터(`paymentId`/`code`/`message`).
+4. **MID(DANAL_MID)** V2에서 별도 필요 여부(채널키에 포함되는지).
+
+### 11.3 확보된 자격증명 (env 매핑 대상)
+
+| env (신규) | 값/출처 | 민감도 |
+|---|---|---|
+| `NEXT_PUBLIC_PORTONE_V2_STORE_ID` | `store-cd0c7ced-c334-48fe-8cad-ee50e381d2e7` | 공개(public) |
+| `NEXT_PUBLIC_PORTONE_V2_CHANNEL_KEY` | `channel-key-5b904392-46c4-4390-a2e4-e4ab6a335c96` | 공개(채널키) |
+| `PORTONE_V2_API_SECRET` | 콘솔 "V2 API"에서 발급(값은 env로만) | 🔴 비밀 |
+
+> ⚠️ **보안:** 2026-10-20 검증 중 V2 API Secret이 채팅에 노출됨 → **반드시 콘솔에서 "새 API Secret 발급"으로 폐기·교체 후** 새 값을 env에 설정한다. 노출된 값은 폐기 전까지 유효하므로 즉시 로테이션.
