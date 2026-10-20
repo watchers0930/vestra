@@ -1,23 +1,24 @@
 import { beforeAll, afterAll, afterEach, describe, it, expect, vi } from "vitest";
 import { randomUUID } from "node:crypto";
 import type { PrismaClient } from "@prisma/client";
-import type { V2Payment } from "@/lib/danal/portone-v2-schemas";
+import type { IamportPayment } from "@/lib/danal/iamport-rest";
 import type { MemberOrderRequest } from "@/types/member-subscription";
 
 // Isolated-DB integration harness for member subscriptions. Mirrors the guest
 // integration pattern. Runs ONLY against a dedicated loopback database and is skipped
-// otherwise, so CI without the DB stays green. The PG layer (PortOne V2) is mocked so
+// otherwise, so CI without the DB stays green. The PG layer (iamport-rest) is mocked so
 // no real charge is ever made; everything else runs against the real schema.
 //
 // NOTE: unexecuted until MEMBER_TEST_DATABASE_URL is attached (no local postgres here).
 // Run with: MEMBER_TEST_DATABASE_URL=postgresql://<user>@127.0.0.1:55439/vestra_member_isolated \
 //   npx vitest run --config lib/member-subscription/vitest.config.ts lib/member-subscription/tests/integration.test.ts
 
-// Controllable fake PG (V2). Tests set `pg.payment` to the snapshot GET /payments/{id} should return.
-// V2는 식별자가 paymentId(=orderId) 단일이라 V1의 merchant→imp 역탐색이 없다. 미결제는 null로 표현한다.
-const pg = vi.hoisted(() => ({ payment: null as V2Payment | null }));
-vi.mock("@/lib/danal/portone-v2-rest", () => ({
-  getPaymentByIdV2: vi.fn(async () => pg.payment),
+// Controllable fake PG. Tests set `pg.payment` to the snapshot the provider should return.
+const pg = vi.hoisted(() => ({ payment: null as IamportPayment | null, impByMerchant: null as string | null }));
+vi.mock("@/lib/danal/iamport-rest", async importOriginal => ({
+  ...await importOriginal<typeof import("@/lib/danal/iamport-rest")>(),
+  getPaymentByImpUid: vi.fn(async () => { if (!pg.payment) throw new Error("no fake payment set"); return pg.payment; }),
+  findImpUidByMerchantUid: vi.fn(async () => pg.impByMerchant),
 }));
 
 const url = process.env.MEMBER_TEST_DATABASE_URL;
@@ -36,7 +37,7 @@ integration("isolated PostgreSQL member subscription contract", () => {
   let trial: typeof import("../trial");
   let cron: typeof import("../cron");
   let ctx: typeof import("../callback-context");
-  const CHANNEL_KEY = "channel-key-itest";
+  const MID = "9999";
 
   beforeAll(async () => {
     vi.stubEnv("NODE_ENV", "test");
@@ -49,9 +50,11 @@ integration("isolated PostgreSQL member subscription contract", () => {
     vi.stubEnv("MEMBER_PAYMENT_ENVIRONMENT", "test");
     vi.stubEnv("MEMBER_SUBSCRIPTION_ISOLATED_TEST", "true");
     vi.stubEnv("MEMBER_MERCHANT_CONFIG_VERSION", "itest-mcv");
-    vi.stubEnv("NEXT_PUBLIC_PORTONE_V2_STORE_ID", "store-itest");
-    vi.stubEnv("NEXT_PUBLIC_PORTONE_V2_CHANNEL_KEY", CHANNEL_KEY);
-    vi.stubEnv("PORTONE_V2_API_SECRET", "itest-v2-secret");
+    vi.stubEnv("GUEST_PAYMENT_MODE", "portone_v1");
+    vi.stubEnv("NEXT_PUBLIC_PORTONE_V1_IMP_CODE", "imp_itest");
+    vi.stubEnv("PORTONE_V1_REST_API_KEY", "itest-key");
+    vi.stubEnv("PORTONE_V1_REST_API_SECRET", "itest-secret");
+    vi.stubEnv("DANAL_MID", MID);
     vi.stubEnv("SEARCH_INDEX_KEY", "itest-search-index-key");
     vi.resetModules(); // module-level price/policy consts must read the stubbed env
     const { PrismaClient } = await import("@prisma/client");
@@ -69,7 +72,7 @@ integration("isolated PostgreSQL member subscription contract", () => {
   });
   afterAll(async () => { await raw?.$disconnect(); });
   afterEach(async () => {
-    pg.payment = null;
+    pg.payment = null; pg.impByMerchant = null;
     await prisma.payment.deleteMany();
     await prisma.subscriptionOrder.deleteMany();
     await prisma.subscription.deleteMany();
@@ -89,17 +92,17 @@ integration("isolated PostgreSQL member subscription contract", () => {
     return { purpose: "initial", plan: "PRO", durationMonths: 3, productKind: "standard",
       idempotencyKey: randomUUID(), ...over };
   }
-  function paidSnapshot(orderId: string, amount: number, over: Partial<V2Payment> = {}): V2Payment {
-    return { id: orderId, status: "PAID", amount: { total: amount, paid: amount, cancelled: 0 },
-      currency: "KRW", channel: { pgProvider: "DANAL", key: CHANNEL_KEY },
-      paidAt: new Date().toISOString(), ...over } as V2Payment;
+  function paidSnapshot(orderId: string, amount: number, over: Partial<IamportPayment> = {}): IamportPayment {
+    return { imp_uid: `imp_${orderId.slice(5, 20)}`, merchant_uid: orderId, amount, currency: "KRW",
+      status: "paid", pg_provider: "danal_tpay", pg_id: MID, pay_method: "card",
+      paid_at: Math.floor(Date.now() / 1000), cancel_amount: 0, sandbox: true, ...over } as IamportPayment;
   }
-  async function approve(userId: string, orderId: string, amount: number, snap?: Partial<V2Payment>) {
+  async function approve(userId: string, orderId: string, amount: number, snap?: Partial<IamportPayment>) {
     const order = await orders.ownedOrder(userId, orderId);
+    const impUid = `imp_${orderId.slice(5, 20)}`;
     pg.payment = paidSnapshot(orderId, amount, snap);
     const signed = ctx.issueCallbackContext(order);
-    // V2: imp_uid 필드는 paymentId(= orderId)를 운반한다.
-    return callback.memberPaymentCallback(userId, { paymentId: orderId, imp_uid: orderId,
+    return callback.memberPaymentCallback(userId, { paymentId: orderId, imp_uid: impUid,
       callbackContext: signed.callbackContext, callbackSignature: signed.callbackSignature });
   }
 
@@ -135,7 +138,7 @@ integration("isolated PostgreSQL member subscription contract", () => {
     const order = await orders.ownedOrder(u, created.orderId);
     pg.payment = paidSnapshot(created.orderId, created.amount - 1);
     const signed = ctx.issueCallbackContext(order);
-    await expect(callback.memberPaymentCallback(u, { paymentId: created.orderId, imp_uid: created.orderId,
+    await expect(callback.memberPaymentCallback(u, { paymentId: created.orderId, imp_uid: `imp_${created.orderId.slice(5, 20)}`,
       callbackContext: signed.callbackContext, callbackSignature: signed.callbackSignature })).rejects.toMatchObject({ code: "payment_failed" });
   });
 
@@ -170,8 +173,8 @@ integration("isolated PostgreSQL member subscription contract", () => {
     // Simulate the order recorded paid but not yet applied, then a refund lands.
     await prisma.subscriptionOrder.updateMany({ where: { orderId: created.orderId }, data: { appliedAt: null } });
     await prisma.subscription.deleteMany({ where: { userId: u } });
-    pg.payment = paidSnapshot(created.orderId, created.amount, { status: "CANCELLED",
-      amount: { total: created.amount, paid: 0, cancelled: created.amount }, paidAt: undefined });
+    pg.payment = paidSnapshot(created.orderId, created.amount, { status: "cancelled", cancel_amount: created.amount,
+      cancelled_at: Math.floor(Date.now() / 1000), paid_at: undefined });
     await cron.runMemberLifecycle();
     const sub = await prisma.subscription.findUnique({ where: { userId: u } });
     expect(sub?.status === "active").not.toBe(true); // refund did not grant a term
@@ -192,7 +195,7 @@ integration("isolated PostgreSQL member subscription contract", () => {
     const first = await orders.createMemberOrder(u, req({ plan: "PRO", durationMonths: 3 }));
     // Expire it with no PG charge; PG reports no transaction for the merchant.
     await prisma.subscriptionOrder.updateMany({ where: { orderId: first.orderId }, data: { expiresAt: new Date(Date.now() - 1000) } });
-    pg.payment = null; // no charge exists (GET /payments/{id} → null)
+    pg.impByMerchant = null; // no charge exists
     const second = await orders.createMemberOrder(u, req({ plan: "PREMIUM", durationMonths: 6, idempotencyKey: randomUUID() }));
     expect(second.orderId).not.toBe(first.orderId);
     const stale = await prisma.subscriptionOrder.findFirst({ where: { orderId: first.orderId } });

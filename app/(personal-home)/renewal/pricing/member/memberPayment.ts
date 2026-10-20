@@ -1,26 +1,24 @@
 /**
- * 회원 선불 구독 — PortOne V2 결제 실행(설계 §5.1, V1→V2 전환).
+ * 회원 선불 구독 — PortOne V1 결제 실행(설계 §5.1, 회원 전용 신규).
  *
  * 비회원 guestPayment.ts의 상태머신 패턴을 **차용**하되(재사용 아님), 회원 전용 DTO/경로로 독립 구현한다.
- * `PortOne.requestPayment({ storeId, channelKey, paymentId, orderName, totalAmount, currency, payMethod, redirectUrl })`.
- * V2는 식별자가 paymentId 단일(= 서버 orderId)이며 V1의 imp_uid/merchant_uid 분리가 없다.
+ * `IMP.init(impCode)` → `IMP.request_pay({ pg, pay_method:"card", merchant_uid, name, amount, m_redirect_url }, cb)`.
  *
- * 승인 판정의 유일 근거는 서버 REST 재조회(GET /payments/{paymentId})다. SDK가 반환하는 성공은
- * "서버 확인 시작" 신호일 뿐이며, paymentId·서명·문맥을 localStorage/sessionStorage에 저장하지 않고
- * 모듈 메모리로만 전달한다(§5.1). 콜백 DTO의 imp_uid 필드는 V2 paymentId 값을 운반한다(서버 호환).
+ * 승인 판정의 유일 근거는 서버 REST 재조회다. SDK의 `success`는 "서버 확인 시작" 신호일 뿐이며,
+ * imp_uid·서명·문맥을 URL/localStorage/sessionStorage에 저장하지 않고 모듈 메모리로만 전달한다(§5.1).
  *
  * PaymentOutcome(설계 §5.1):
  *  - redirected   : 모바일 리다이렉트 이탈 — 복귀 effect가 재개
- *  - confirm      : 인라인 성공 → 콜백 POST(paymentId 포함)
+ *  - confirm      : 인라인 성공 → 콜백 POST(imp_uid 포함)
  *  - recover      : 실행정보 없음/공급자 미지정 → 주문 상태 조회
  *  - canceled     : 사용자 닫기/취소 → 재조회(새 결제 금지)
- *  - unavailable  : requestPayment 호출 전 중단(모듈/실행정보/금액) → 같은 주문에 retry_payment(출금 없음)
- *  - error        : requestPayment 호출 이후 예외/실패 → 불명확 → 서버 재조회 먼저
+ *  - unavailable  : request_pay 호출 전 중단(모듈/실행정보/금액) → 같은 주문에 retry_payment(출금 없음)
+ *  - error        : request_pay 호출 이후 예외/실패 → 불명확 → 서버 재조회 먼저
  *  - aborted      : 로더 await 중 화면 이탈·세션 변경 감지로 결제창 미실행(무동작)
  */
 
 import type { MemberPaymentCallbackRequest, MemberPaymentInfo } from "@/types/member-subscription";
-import { loadPortOneV2, type PortOneV2Sdk, type PortOneV2PayResponse } from "./portoneV2Loader";
+import { loadPortOneV1, type PortOneV1Imp, type PortOneV1PayResponse } from "./portoneV1Loader";
 
 export type PaymentOutcome =
   | { kind: "redirected" }
@@ -74,14 +72,14 @@ export function forgetPendingOrderId(): void {
   try { window.sessionStorage.removeItem(PENDING_ORDER_KEY); } catch { /* ignore */ }
 }
 
-/** 사용자 닫기/취소로 보이는 응답인지(취소 vs 에러 구분 — 둘 다 서버 재조회로 수렴). code/message 원문은 UI/로그 비노출. */
-function looksCanceled(res: PortOneV2PayResponse): boolean {
-  const s = `${res.code ?? ""} ${res.message ?? ""}`.toUpperCase();
-  return /CANCEL|CLOSE|USER|ABORT|취소|닫|중단|중지/.test(s);
+/** 사용자 닫기/취소로 보이는 응답인지(취소 vs 에러 구분 — 둘 다 서버 재조회로 수렴). error_msg 원문은 UI/로그 비노출. */
+function looksCanceled(res: PortOneV1PayResponse): boolean {
+  const s = `${res.error_code ?? ""} ${res.error_msg ?? ""}`.toUpperCase();
+  return /CANCEL|CLOSE|USER|취소|닫|중단|중지/.test(s);
 }
 
 /**
- * PortOne V2 결제 실행(설계 §5.1). 서버 발급 `payment` 객체(전부 문자열)를 그대로 사용한다.
+ * PortOne V1 결제 실행(설계 §5.1). 서버 발급 `payment` 객체(전부 문자열)를 그대로 사용한다.
  * @param payment      POST /orders 응답의 payment 객체(MemberPaymentInfo).
  * @param shouldCancel 로더 await 직후 결제창을 열기 직전 호출하는 취소 판정(화면 이탈·세션 변경 시 true).
  */
@@ -94,10 +92,10 @@ export async function runPayment(
     return { kind: "recover" };
   }
   const p = payment as MemberPaymentInfo;
-  const { storeId, channelKey, payMethod, paymentId, orderName, amount, redirectPath, callbackContext, callbackSignature } = p;
+  const { impCode, pg, payMethod, paymentId, orderName, amount, redirectPath, callbackContext, callbackSignature } = p;
 
   // 실행 정보가 하나라도 비면 결제창을 띄우지 않는다(§5.1). 아직 실행 전이므로 unavailable.
-  if (!storeId || !channelKey || !payMethod || !paymentId || !callbackContext || !callbackSignature) {
+  if (!impCode || !pg || !payMethod || !paymentId || !callbackContext || !callbackSignature) {
     return { kind: "unavailable", message: MSG_INFO };
   }
   // 금액: Number() 변환 전 정수 검증(§5.1). 서버 금액 재결정이 원천이므로 고정 기대값은 두지 않는다.
@@ -105,80 +103,84 @@ export async function runPayment(
     return { kind: "unavailable", message: MSG_AMOUNT };
   }
 
-  // V2 SDK 모듈 확보(동적 import). 실패 → unavailable(로더가 캐시 초기화, §4.9).
-  let sdk: PortOneV2Sdk;
+  // CDN script 로드 + window.IMP 확보. 실패/timeout/IMP 미존재 → unavailable(로더가 캐시 초기화, §4.9).
+  let imp: PortOneV1Imp;
   try {
-    sdk = await loadPortOneV2();
+    imp = await loadPortOneV1();
+    imp.init(impCode);
   } catch {
     return { kind: "unavailable", message: MSG_MODULE };
   }
 
-  // 로더 await 동안 화면 이탈·세션 변경이 있었으면 결제창을 열지 않는다(§4.9 실행 취소).
+  // 로더 await(최대 10s)·init 동안 화면 이탈·세션 변경이 있었으면 결제창을 열지 않는다(§4.9 실행 취소).
   if (shouldCancel?.()) return { kind: "aborted" };
 
-  // redirectUrl: 서버가 내려준 same-origin 복귀 경로로 고정(외부 입력 금지, §5.1). 모바일 리다이렉트 필수.
-  const redirectUrl =
+  // m_redirect_url: 서버가 내려준 same-origin 복귀 경로로 고정(외부 입력 금지, §5.1).
+  const mRedirectUrl =
     typeof window !== "undefined" ? `${window.location.origin}${redirectPath}` : undefined;
 
-  // V2 requestPayment는 Promise 기반. 모바일은 redirectUrl로 이탈하며 이 Promise는 resolve되지 않을 수 있다
-  // (페이지 언로드) → 복귀 effect가 재개. 데스크톱은 iframe/popup 후 resolve된다.
-  let res: PortOneV2PayResponse | undefined;
-  try {
-    res = await sdk.requestPayment({
-      storeId,
-      channelKey,
-      paymentId,
-      orderName,
-      totalAmount: Number(amount), // 정수 검증 후 변환
-      currency: "CURRENCY_KRW",
-      payMethod: "CARD",
-      ...(redirectUrl ? { redirectUrl } : {}),
-    });
-  } catch {
-    // requestPayment 호출 이후 예외 — 실행이 시작됐을 수 있어 불명확 → error(서버 상태가 판정).
-    return { kind: "error", message: MSG_ERROR };
-  }
-
-  // 응답 없음(undefined) → 불명확 → error(서버 재조회로 수렴).
-  if (!res) return { kind: "error", message: MSG_FAILED };
-  // code 존재 = 실패/취소. 닫기/취소성은 canceled, 그 외는 error(둘 다 서버 재조회로 수렴).
-  if (res.code != null) {
-    return looksCanceled(res) ? { kind: "canceled" } : { kind: "error", message: MSG_FAILED };
-  }
-  // 성공: paymentId 필수 + 서버 주문과 정확 일치 확인(위변조/혼선 방어, §5.1).
-  if (!res.paymentId || res.paymentId !== paymentId) {
-    return { kind: "error", message: MSG_FAILED };
-  }
-  // 콜백 DTO의 imp_uid 필드는 V2 paymentId 값을 운반한다(서버 verifyMemberPayment 호환).
-  return {
-    kind: "confirm",
-    callback: { paymentId, imp_uid: res.paymentId, callbackContext, callbackSignature },
-  };
+  return new Promise<PaymentOutcome>((resolve) => {
+    let done = false;
+    const finish = (outcome: PaymentOutcome) => {
+      if (done) return;
+      done = true;
+      resolve(outcome);
+    };
+    try {
+      imp.request_pay(
+        {
+          pg,
+          pay_method: "card",
+          merchant_uid: paymentId,
+          name: orderName,
+          amount: Number(amount), // 정수 검증 후 변환
+          ...(mRedirectUrl ? { m_redirect_url: mRedirectUrl } : {}),
+        },
+        (res: PortOneV1PayResponse) => {
+          if (res?.success === true) {
+            // success는 서버 확인 시작 신호. imp_uid 필수 + merchant_uid 정확 일치 확인(위변조/혼선 방어, §5.1).
+            if (!res.imp_uid || res.merchant_uid !== paymentId) {
+              finish({ kind: "error", message: MSG_FAILED });
+              return;
+            }
+            finish({
+              kind: "confirm",
+              callback: { paymentId, imp_uid: res.imp_uid, callbackContext, callbackSignature },
+            });
+            return;
+          }
+          // success !== true: 닫기/취소성은 canceled, 그 외는 error(둘 다 서버 재조회로 수렴).
+          finish(looksCanceled(res ?? {}) ? { kind: "canceled" } : { kind: "error", message: MSG_FAILED });
+        }
+      );
+    } catch {
+      // request_pay 호출 자체 예외 — 실행이 시작됐을 수 있어 불명확 → error(서버 상태가 판정).
+      finish({ kind: "error", message: MSG_ERROR });
+    }
+  });
 }
 
 /**
  * 모바일 복귀 쿼리를 **제거하지 않고** 들여다본다(§4.9). 세션 미복구 상태에서 식별자를 지우면 재로그인 후
  * 복구 단서가 사라지므로, authenticated 확정 전에는 peek만 하고 제거는 readV1RedirectReturn로 미룬다.
- * V2는 식별자가 paymentId 단일(= orderId)이라 impUid·merchantUid 모두 paymentId를 담아 반환한다
- * (호출 훅 인터페이스 유지: merchantUid=orderId, impUid=recover 후보=orderId).
  */
 export function peekV1RedirectReturn(): { impUid: string | null; merchantUid: string | null } {
   if (typeof window === "undefined") return { impUid: null, merchantUid: null };
   const q = new URLSearchParams(window.location.search);
-  const paymentId = q.get("paymentId") || null;
-  return { impUid: paymentId, merchantUid: paymentId };
+  return { impUid: q.get("imp_uid") || null, merchantUid: q.get("merchant_uid") || null };
 }
 
 /**
- * 모바일 리다이렉트 복귀 쿼리에서 V2 식별자(paymentId)를 읽고, 읽은 뒤 URL에서 제거한다(§4.9).
+ * 모바일 리다이렉트 복귀 쿼리에서 V1 식별자(imp_uid/merchant_uid)를 읽고, 읽은 뒤 URL에서 제거한다(§4.9).
  * 공급자가 준 값은 미신뢰 입력이며 서버가 REST로 검증한다. URL에 서명·nonce·PII를 추가·보존하지 않는다.
  */
 export function readV1RedirectReturn(): { impUid: string | null; merchantUid: string | null } {
   if (typeof window === "undefined") return { impUid: null, merchantUid: null };
   const q = new URLSearchParams(window.location.search);
-  const paymentId = q.get("paymentId");
-  if (paymentId || q.get("code") || q.get("txId") || q.get("transactionType")) {
-    for (const k of ["paymentId", "code", "message", "txId", "transactionType", "pgCode", "pgMessage"]) {
+  const impUid = q.get("imp_uid");
+  const merchantUid = q.get("merchant_uid");
+  if (impUid || merchantUid || q.get("imp_success") || q.get("success")) {
+    for (const k of ["imp_uid", "merchant_uid", "imp_success", "success", "error_code", "error_msg"]) {
       q.delete(k);
     }
     const qs = q.toString();
@@ -189,5 +191,5 @@ export function readV1RedirectReturn(): { impUid: string | null; merchantUid: st
       /* replaceState 불가 환경 — 식별자 제거 실패해도 서버가 최종 검증 */
     }
   }
-  return { impUid: paymentId || null, merchantUid: paymentId || null };
+  return { impUid: impUid || null, merchantUid: merchantUid || null };
 }

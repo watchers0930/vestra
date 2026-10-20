@@ -47,10 +47,10 @@ export interface MemberPaymentCallbackRequest {
   callbackSignature: string;
 }
 export interface MemberPaymentInfo {
-  provider: "portone_v2";
-  storeId: string;
-  channelKey: string;
-  payMethod: "CARD";
+  provider: "portone_v1";
+  impCode: string;
+  pg: string;
+  payMethod: "card";
   paymentId: string;
   orderName: string;
   amount: string;

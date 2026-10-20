@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { SubscriptionOrder } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getPaymentByIdV2 } from "@/lib/danal/portone-v2-rest";
+import { findImpUidByMerchantUid } from "@/lib/danal/iamport-rest";
 import type { MemberOrderRequest, MemberOrderResponse, MemberOrderStatus } from "@/types/member-subscription";
 import { fail, providerBoundary } from "./errors";
 import { memberReleaseConfig } from "./config";
@@ -28,10 +28,10 @@ async function supersedeAbandonedPending(userId: string) {
     userId, status: "pending", nonceConsumedAt: null, providerTransactionId: null, expiresAt: { lte: new Date() },
   }, orderBy: { createdAt: "asc" } });
   if (!abandoned) return;
-  let paid: Awaited<ReturnType<typeof getPaymentByIdV2>>;
-  try { paid = await providerBoundary(() => getPaymentByIdV2(abandoned.orderId)); }
-  catch { return; } // unavailable → keep for recovery, never discard a possible charge
-  if (paid) return; // a transaction exists (any status) → must be recovered, not superseded
+  let impUid: string | null;
+  try { impUid = await providerBoundary(() => findImpUidByMerchantUid(abandoned.orderId)); }
+  catch { return; } // ambiguous/unavailable → keep for recovery, never discard a possible charge
+  if (impUid) return; // a real charge exists → must be recovered, not superseded
   await prisma.subscriptionOrder.updateMany({ where: {
     id: abandoned.id, status: "pending", nonceConsumedAt: null, providerTransactionId: null,
   }, data: { status: "expired" } });
@@ -70,7 +70,7 @@ export async function createMemberOrder(userId: string, input: MemberOrderReques
     const expiresAt = new Date(Date.now() + ORDER_TTL_MS);
     const { callbackNonceHash } = issueCallbackContext({ orderId, userId, expiresAt });
     return tx.subscriptionOrder.create({ data: {
-      ...input, ...price, userId, orderId, expiresAt, callbackNonceHash, providerMode: "portone_v2",
+      ...input, ...price, userId, orderId, expiresAt, callbackNonceHash,
       priceVersion: release.priceVersion, policyVersion: release.policyVersion, roleAtOrder: role,
       channelEnvironment: config.channelEnvironment, merchantConfigVersion: config.merchantConfigVersion,
     } });
@@ -85,7 +85,7 @@ export async function createMemberOrder(userId: string, input: MemberOrderReques
     durationMonths: result.durationMonths as MemberOrderResponse["durationMonths"], status: result.status as MemberOrderResponse["status"], payment };
 }
 export async function ownedOrder(userId: string, orderId: string) {
-  const order = await prisma.subscriptionOrder.findFirst({ where: { userId, orderId, providerMode: "portone_v2" } });
+  const order = await prisma.subscriptionOrder.findFirst({ where: { userId, orderId, providerMode: "portone_v1" } });
   if (!order) return fail("not_found");
   return order;
 }
