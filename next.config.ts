@@ -25,11 +25,13 @@ const googleAnalyticsConnect = "https://www.google-analytics.com https://region1
 const tossDomains = "https://js.tosspayments.com";
 const tossConnect = "https://*.tosspayments.com https://*.toss.im";
 const tossFrame = "https://*.tosspayments.com https://*.toss.im";
-// 포트원 V1(아임포트) + 다날 결제 CSP 도메인 (회원 구독 + 비회원 등기감시 결제)
+// 포트원 V1(아임포트) + V2(portone.io) + 다날 결제 CSP 도메인 (회원 구독 V2 + 비회원 등기감시 V1)
 // iamport SDK는 *.iamport.kr 뿐 아니라 *.iamport.co(텔레메트리 coretelemetry.prod.iamport.co 등)도 사용.
-const portoneDomains = "https://cdn.iamport.kr https://service.iamport.kr https://*.iamport.co";
-const portoneConnect = "https://api.iamport.kr https://service.iamport.kr https://*.iamport.kr https://*.iamport.co";
-const portoneFrame = "https://*.iamport.kr https://*.iamport.co https://*.danalpay.com https://*.teledit.com https://*.danal.co.kr https://pg.danal.co.kr";
+// V2 @portone/browser-sdk는 런타임에 https://cdn.portone.io 에서 컨트롤러를 로드하고 api.portone.io로 통신한다.
+// 이 호스트가 script-src에 없으면 window.PortOne이 undefined가 되어 결제창이 열리지 않는다(실환경 검증으로 확인).
+const portoneDomains = "https://cdn.iamport.kr https://service.iamport.kr https://*.iamport.co https://cdn.portone.io";
+const portoneConnect = "https://api.iamport.kr https://service.iamport.kr https://*.iamport.kr https://*.iamport.co https://api.portone.io https://*.portone.io";
+const portoneFrame = "https://*.iamport.kr https://*.iamport.co https://*.portone.io https://*.danalpay.com https://*.teledit.com https://*.danal.co.kr https://pg.danal.co.kr";
 const isDev = process.env.NODE_ENV !== "production";
 // Vercel 프리뷰 환경에서 Live Feedback 스크립트 허용
 const isVercelPreview = process.env.VERCEL_ENV === "preview";
