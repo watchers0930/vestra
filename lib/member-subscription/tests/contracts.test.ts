@@ -44,7 +44,10 @@ describe("strict DTOs", () => {
     }
   });
   it("validates callbacks, recovery and trial strictly", () => {
-    expect(callbackSchema.safeParse({ paymentId: "msub_1", imp_uid: "imp_123", callbackContext: "a", callbackSignature: "a".repeat(64) }).success).toBe(true);
+    // V2: imp_uid 값은 paymentId를 운반하며 둘이 일치해야 한다(단일 식별자).
+    expect(callbackSchema.safeParse({ paymentId: "msub_1", imp_uid: "msub_1", callbackContext: "a", callbackSignature: "a".repeat(64) }).success).toBe(true);
+    expect(callbackSchema.safeParse({ paymentId: "msub_1", imp_uid: "msub_2", callbackContext: "a", callbackSignature: "a".repeat(64) }).success).toBe(false);
+    expect(callbackSchema.safeParse({ paymentId: "msub_1", imp_uid: "imp_123", callbackContext: "a", callbackSignature: "a".repeat(64) }).success).toBe(false);
     expect(recoverSchema.safeParse({}).success).toBe(true);
     expect(recoverSchema.safeParse({ imp_uid: "../secret" }).success).toBe(false);
     expect(trialSchema.safeParse({ plan: "PREMIUM", amount: 0 }).success).toBe(false);
@@ -93,7 +96,7 @@ describe("callback domain and nonce", () => {
   });
   it("never exposes nonce hash in payment DTO", () => {
     vi.stubEnv("AUTH_SECRET", "fixture-secret");
-    const dto = paymentInfo(order, { impCode: "imp", mid: "mid", channelEnvironment: "test", merchantConfigVersion: "fixture" }, issueCallbackContext(order));
+    const dto = paymentInfo(order, { storeId: "store-x", channelKey: "channel-key-x", channelEnvironment: "test", merchantConfigVersion: "fixture" }, issueCallbackContext(order));
     expect(Object.keys(dto)).not.toContain("callbackNonceHash");
     expect(dto.paymentId).toBe(order.orderId);
   });

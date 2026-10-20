@@ -43,7 +43,7 @@ it("uses server session userId and exact success status/envelope for all routes"
   expect(f.create).toHaveBeenCalledWith("u1", input);
   f.owned.mockResolvedValue({ orderId: "msub_1", status: "paid", applied: true });
   expect((await order(request({}), params)).status).toBe(200); expect(f.owned).toHaveBeenCalledWith("u1", "msub_1");
-  const context = { paymentId: "msub_1", imp_uid: "imp_1", callbackContext: "abc", callbackSignature: "a".repeat(64) };
+  const context = { paymentId: "msub_1", imp_uid: "msub_1", callbackContext: "abc", callbackSignature: "a".repeat(64) };
   f.callback.mockResolvedValue({ ok: true });
   expect(await (await callback(request(context))).json()).toEqual({ ok: true });
   expect(f.callback).toHaveBeenCalledWith("u1", context);
