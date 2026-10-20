@@ -5,6 +5,15 @@ import { logAuditWithRequest } from "@/lib/audit-log";
 import { validateOrigin } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
+  try {
+    return await setupRole(req);
+  } catch {
+    // DB/인증 예외의 원문에는 개인정보가 포함될 수 있으므로 기록하거나 반환하지 않는다.
+    return NextResponse.json({ error: "요청을 처리할 수 없습니다. 잠시 후 다시 시도해주세요." }, { status: 503 });
+  }
+}
+
+async function setupRole(req: NextRequest) {
   const csrfError = validateOrigin(req);
   if (csrfError) return csrfError;
 
@@ -13,10 +22,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   }
 
-  const { role, businessNumber, companyName, representName, userType } = await req.json();
+  const body: unknown = await req.json().catch(() => null);
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "유효하지 않은 요청입니다" }, { status: 400 });
+  }
+  const { role, businessNumber, companyName, representName, userType } = body as Record<string, unknown>;
 
   // 유효한 역할만 허용 (RENTAL_BIZ=임대사업자는 BUSINESS/REALESTATE와 동일한 사업자 승인 흐름)
-  if (!["PERSONAL", "RENTAL_BIZ", "BUSINESS", "REALESTATE"].includes(role)) {
+  if (typeof role !== "string" || !["PERSONAL", "RENTAL_BIZ", "BUSINESS", "REALESTATE"].includes(role)) {
     return NextResponse.json({ error: "유효하지 않은 역할입니다" }, { status: 400 });
   }
 
@@ -41,7 +54,8 @@ export async function POST(req: NextRequest) {
   }
 
   // REALESTATE/BUSINESS: business info 필요 여부 확인
-  const hasBusinessInfo = !!businessNumber && !!companyName && !!representName;
+  // 저장 정보 재사용은 세 필드가 모두 생략된 요청에만 허용한다.
+  const hasBusinessInfo = ["businessNumber", "companyName", "representName"].some(key => Object.hasOwn(body, key));
 
   if (!hasBusinessInfo) {
     // business info가 요청에 없으면 DB에 이미 있는지 확인
@@ -73,8 +87,8 @@ export async function POST(req: NextRequest) {
   }
 
   // business info 검증
-  if (typeof businessNumber !== "string" || businessNumber.trim().length < 10) {
-    return NextResponse.json({ error: "사업자등록번호를 입력해주세요" }, { status: 400 });
+  if (typeof businessNumber !== "string" || !/^(?:\d{10}|\d{3}-\d{2}-\d{5})$/.test(businessNumber.trim())) {
+    return NextResponse.json({ error: "사업자등록번호 형식이 올바르지 않습니다" }, { status: 400 });
   }
   if (typeof companyName !== "string" || companyName.trim().length < 2 || companyName.trim().length > 50) {
     return NextResponse.json({ error: "회사명을 입력해주세요 (2~50자)" }, { status: 400 });
@@ -98,7 +112,7 @@ export async function POST(req: NextRequest) {
   await logAuditWithRequest({
     userId: session.user.id,
     action: "ROLE_CHANGE",
-    detail: { requestedRole: role, companyName: companyName.trim(), representName: representName.trim(), status: "pending" },
+    detail: { requestedRole: role, status: "pending" },
   });
 
   return NextResponse.json({ message: "등록이 완료되었습니다. 관리자 승인 후 전체 기능이 활성화됩니다." });

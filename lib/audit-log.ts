@@ -64,20 +64,31 @@ const SENSITIVE_KEYS = [
   "secretKey",
 ];
 
+const BUSINESS_PII_KEYS = ["companyname", "representname", "businessnumber"];
+
+function maskNestedValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(maskNestedValue);
+  if (typeof value === "object" && value !== null) {
+    return maskSensitiveFields(value as Record<string, unknown>);
+  }
+  return value;
+}
+
 function maskSensitiveFields(
   obj: Record<string, unknown>
 ): Record<string, unknown> {
   const masked: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
-    if (
+    if (BUSINESS_PII_KEYS.some(piiKey => key.replace(/_/g, "").toLowerCase().includes(piiKey))) {
+      // 짧은 성명도 원문 일부가 남지 않도록 완전히 가린다.
+      masked[key] = "****";
+    } else if (
       SENSITIVE_KEYS.some((sk) => key.toLowerCase().includes(sk.toLowerCase()))
     ) {
       masked[key] =
         typeof value === "string" ? maskValue(value) : "****";
-    } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-      masked[key] = maskSensitiveFields(value as Record<string, unknown>);
     } else {
-      masked[key] = value;
+      masked[key] = maskNestedValue(value);
     }
   }
   return masked;
@@ -133,9 +144,9 @@ export function logAudit(params: AuditParams): void {
         userAgent: userAgent ? userAgent.slice(0, 500) : null,
       },
     })
-    .catch((err) => {
+    .catch(() => {
       // 감사 로그 실패가 서비스에 영향을 주면 안 됨
-      console.error("[AuditLog] 기록 실패:", err);
+      console.error("[AuditLog] 기록 실패:", new Error("감사 로그를 저장할 수 없습니다"));
     });
 }
 

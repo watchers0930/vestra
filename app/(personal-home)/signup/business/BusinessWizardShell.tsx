@@ -13,7 +13,12 @@ import { useEffect, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/common/Button";
-import { WizardProgress } from "@/components/member-subscription/WizardProgress";
+import { RenewalBrand } from "@/app/(personal-home)/renewal/_shared/RenewalBrand";
+import { RenewalStageBar } from "@/app/(personal-home)/renewal/_shared/RenewalStageBar";
+import {
+  deriveSignupStageView,
+  wizardStepToSignupStage,
+} from "@/app/(personal-home)/renewal/_shared/signup-stage";
 import type { WizardStep } from "@/app/(personal-home)/renewal/pricing/hooks/useBusinessWizard";
 import { BusinessWizardProvider, useBusinessWizardContext } from "./BusinessWizardContext";
 import { stepPath } from "./wizardConfig";
@@ -47,6 +52,12 @@ function WizardShellInner({ step, children }: BusinessWizardShellProps) {
   // authenticated를 유지(resolved=true) → ready=true. 따라서 결제 완료 화면이 언마운트되지 않는다(High-B).
   // 해당 유형이 노출하는 단계인지(개인은 사업자 인증 단계 없음).
   const visible = useMemo(() => wiz.steps.some((s) => s.step === step), [wiz.steps, step]);
+
+  // 상위 5단계 표시: 완료 체크는 서버 사실 기준(deriveSignupStageView), 도달 상한은 가드와 동일한 wiz.maxStep.
+  // (early return 이전에 계산 — 훅 호출 순서 고정)
+  const stageView = useMemo(() => deriveSignupStageView(onboarding.state), [onboarding.state]);
+  const currentStage = wizardStepToSignupStage(step);
+  const reachableStage = wizardStepToSignupStage(wiz.maxStep);
 
   // 건너뛰기/유형 불일치 방어 + 완료 계정 재진입 라우팅. 확정(ready) 전에는 보류(§7.1·§7.3).
   useEffect(() => {
@@ -90,12 +101,20 @@ function WizardShellInner({ step, children }: BusinessWizardShellProps) {
 
   return (
     <div className="mx-auto max-w-[720px] px-4 py-10">
+      <RenewalBrand />
       <div className="mb-8">
-        <WizardProgress
-          steps={wiz.steps}
-          viewStep={step}
-          maxStep={wiz.maxStep}
-          onStepClick={(s) => router.push(stepPath(s as WizardStep))}
+        <RenewalStageBar
+          current={currentStage}
+          completed={stageView.completed}
+          reachable={reachableStage}
+          onStageClick={(s) => {
+            // 상위 단계 2~5 → 기존 위저드 라우트 1~4. 단계 1(회원 유형=모달)은 위저드 내 비이동.
+            // 유형에 없는 단계(개인의 사업자 인증=단계 3→step 2)는 라우팅하지 않는다 — 가드가 되돌려 불필요한
+            // 전환·컨텍스트 재조회를 유발하기 때문. 실제 노출 단계(wiz.steps)로만 이동한다(#8).
+            if (s < 2) return;
+            const target = (s - 1) as WizardStep;
+            if (wiz.steps.some((item) => item.step === target)) router.push(stepPath(target));
+          }}
         />
       </div>
       {/* 가드 확정 전/접근 불가 단계는 자식을 렌더하지 않는다(결제 등 부수효과 조기 실행 방지). */}

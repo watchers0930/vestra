@@ -3,6 +3,11 @@ import { ownedOrder } from "./orders";
 import { settleMemberOrder } from "./payment-callback";
 import { markNeedsReview } from "./record-payment";
 import { MemberError, providerBoundary, fail } from "./errors";
+/**
+ * HTTP 계약: 새로 발견한 pending/needs_review는 200 상태 DTO(applied:false)다.
+ * 이미 needs_review인 주문은 409 payment_needs_review 오류다.
+ * 호출자는 HTTP 성공만으로 결제 적용을 판단하지 않고 status/applied를 확인해야 한다.
+ */
 export async function recoverMemberOrder(userId: string, orderId: string, impUid?: string) {
   const order = await ownedOrder(userId, orderId);
   if (order.status === "needs_review") return fail("payment_needs_review");

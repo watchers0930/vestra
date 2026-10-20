@@ -17,6 +17,23 @@ import type { OnboardingState } from "@/types/member-subscription";
 
 const ENDPOINT = "/api/signup/onboarding-status";
 
+// 수동·자동(포커스 복귀) 백그라운드 갱신 공통 최소 간격. 이벤트 훅이 아니라 요청을 소유한 이 훅에서
+// 단일 기준으로 제한한다(중복 fetch·읽기 폭주 방지, §5.1).
+const BG_MIN_INTERVAL_MS = 10_000;
+// 백그라운드 갱신 실패(429/5xx/네트워크) 후 재시도를 늦추는 백오프.
+const BG_BACKOFF_MS = 30_000;
+
+/** refresh 결과. 호출부(수동 재확인 등)가 성공/실패/재인증을 구분해 안내할 수 있게 한다. */
+export interface RefreshResult {
+  ok: boolean;
+  /** HTTP 상태(성공=200, 네트워크 오류=0). */
+  status: number;
+  /** 실패 메시지(성공이면 null). */
+  error: string | null;
+  /** 서버 401(세션 만료) 여부. */
+  reauth: boolean;
+}
+
 export interface UseOnboardingStatus {
   state: OnboardingState | null;
   loading: boolean;
@@ -26,12 +43,22 @@ export interface UseOnboardingStatus {
   /** NextAuth는 authenticated인데 서버가 401 — 세션 만료. 재로그인 유도 분기에 사용. */
   reauthRequired: boolean;
   /**
-   * 상태를 재조회한다.
-   * - 기본(foreground): 로딩을 노출해 셸이 로딩/오류/재시도를 표시한다(최초 진입·수동 재시도).
-   * - `{ background: true }`: 공유 로딩을 켜지 않고 조용히 갱신한다. 유효한 기존 화면(결제 완료 등)을
-   *   언마운트/오류화면 전환 없이 유지하기 위한 결제 직후 갱신용(§7.1·§7.3).
+   * 상태를 재조회하고 결과를 반환한다.
+   * - 기본(foreground): 로딩을 노출해 셸이 로딩/오류/재시도를 표시한다(최초 진입·수동 전체 재시도).
+   * - `{ background: true }`: 공유 로딩을 켜지 않고 조용히 갱신한다. 유효한 기존 화면(결제 완료·대기 화면)을
+   *   언마운트/오류화면 전환 없이 유지한다(§7.1·§7.3). 진행 중 요청이 있으면 **공유**하고(중복 fetch 방지),
+   *   공통 최소 간격/백오프 내에는 요청을 생략한다. 실패/재인증은 **상태를 바꾸지 않고 반환값으로만** 알린다.
+   * - `{ background: true, force: true }`: 사용자가 누른 "상태 다시 확인" — 최소 간격 제한을 건너뛰되
+   *   진행 중 요청과는 여전히 합쳐, 실패/재인증을 반환값으로 패널 안에 표시할 수 있게 한다(§5.1).
    */
-  refresh: (opts?: { background?: boolean }) => Promise<void>;
+  refresh: (opts?: { background?: boolean; force?: boolean }) => Promise<RefreshResult>;
+}
+
+function toResult(
+  res: { ok: true; data: OnboardingState } | { ok: false; status: number; error: string }
+): RefreshResult {
+  if (res.ok) return { ok: true, status: 200, error: null, reauth: false };
+  return { ok: false, status: res.status, error: res.error, reauth: res.status === 401 };
 }
 
 async function fetchOnboarding(): Promise<
@@ -75,6 +102,10 @@ export function useOnboardingStatus(): UseOnboardingStatus {
   const mountedRef = useRef(true);
   const reqGenRef = useRef(0);
   const userIdRef = useRef<string | null>(userId);
+  // 백그라운드 갱신의 단일 조정기: 진행 중 요청(공유), 마지막 완료 시각(최소 간격), 백오프 해제 시각.
+  const inFlightRef = useRef<Promise<RefreshResult> | null>(null);
+  const lastBgAtRef = useRef(0);
+  const backoffUntilRef = useRef(0);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -83,18 +114,20 @@ export function useOnboardingStatus(): UseOnboardingStatus {
     };
   }, []);
 
-  const runFetch = useCallback(async (forUser: string | null, background: boolean) => {
+  const runFetch = useCallback(async (forUser: string | null, background: boolean): Promise<RefreshResult> => {
     const gen = ++reqGenRef.current;
     const res = await fetchOnboarding();
-    if (!mountedRef.current || gen !== reqGenRef.current) return;
+    // 늦은/무효 응답(언마운트·계정 전환·세대 역전): 상태를 덮지 않고 결과만 반환한다.
+    if (!mountedRef.current || gen !== reqGenRef.current) return toResult(res);
     if (res.ok) {
       setDataOwner(forUser);
       setState(res.data);
       setReauthRequired(false);
       setError(null);
     } else if (background) {
-      // 백그라운드 갱신 실패(결제 직후 등): 기존 상태를 유지하고 화면을 깨지 않는다. 오류/재인증을 노출하지
-      // 않아 결제 완료 화면이 오류 화면으로 바뀌거나 새 주문 UI로 되돌아가지 않게 한다(§7.1·§7.3).
+      // 백그라운드 갱신 실패(401 포함): 기존 상태를 유지하고 화면을 깨지 않는다. 오류/재인증을 상태로
+      // 노출하지 않아 유효 화면(결제 완료·승인 대기)이 오류/주문 화면으로 되돌아가지 않게 한다(§7.1·§7.3).
+      // 대신 실패/재인증은 반환값으로 알려, 수동 재확인 호출부가 패널 안에서 구분 표시한다(§5.1).
     } else if (res.status === 401) {
       setDataOwner(forUser);
       setState(null);
@@ -107,17 +140,44 @@ export function useOnboardingStatus(): UseOnboardingStatus {
     // 성공·실패 공통으로 요청 소유자를 기록해야 현재 계정의 결과(오류 포함)가 노출되고 로딩이 종료된다.
     setReqOwner(forUser);
     setFetchLoading(false);
+    return toResult(res);
   }, []);
 
   const refresh = useCallback(
-    async (opts?: { background?: boolean }) => {
+    async (opts?: { background?: boolean; force?: boolean }): Promise<RefreshResult> => {
       const background = opts?.background === true;
-      // 백그라운드 갱신은 공유 로딩을 켜지 않아 ready=false로 인한 자식(결제 컴포넌트) 언마운트를 막는다.
-      if (!background) {
-        setFetchLoading(true);
-        setError(null);
+      const force = opts?.force === true;
+
+      if (background) {
+        // 진행 중인 백그라운드 요청이 있으면 그대로 공유한다 — 수동 재확인과 포커스 복귀가 겹쳐도 같은 GET을
+        // 중복 실행하지 않는다(이벤트 훅이 상태를 따로 복제하지 않고 이 공유에 의존한다, §5.1).
+        if (inFlightRef.current) return inFlightRef.current;
+        if (!force) {
+          // 사용자가 직접 누른 것이 아니면(자동 포커스 갱신) 공통 최소 간격·백오프 내에는 요청을 생략한다.
+          const now = Date.now();
+          if (now < backoffUntilRef.current || now - lastBgAtRef.current < BG_MIN_INTERVAL_MS) {
+            return { ok: true, status: 0, error: null, reauth: false };
+          }
+        }
+        const p = (async () => {
+          const r = await runFetch(userIdRef.current, true);
+          lastBgAtRef.current = Date.now();
+          // 실패(429/5xx/네트워크)면 백오프 — 지속 장애 시 재조회 폭주를 막는다.
+          backoffUntilRef.current = r.ok ? 0 : Date.now() + BG_BACKOFF_MS;
+          return r;
+        })();
+        inFlightRef.current = p;
+        try {
+          return await p;
+        } finally {
+          inFlightRef.current = null;
+        }
       }
-      await runFetch(userIdRef.current, background);
+
+      // foreground(최초 진입·수동 전체 재시도): 공유 로딩을 켜 셸이 로딩/오류/재시도를 표시한다.
+      setFetchLoading(true);
+      setError(null);
+      return runFetch(userIdRef.current, false);
     },
     [runFetch]
   );

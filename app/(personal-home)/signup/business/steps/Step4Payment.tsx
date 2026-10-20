@@ -41,7 +41,9 @@ export function Step4Payment() {
   const flow = useMemberOrderFlow({
     onApplied: () => {
       void refresh();
-      void onboarding.refresh({ background: true });
+      // 결제 직후 상태 변화는 반드시 재조회해야 하므로 force로 공통 최소 간격을 건너뛴다(앞선 단계의
+      // 백그라운드 갱신이 10초 내에 있었더라도 결제 반영 재조회가 생략되지 않게).
+      void onboarding.refresh({ background: true, force: true });
       // 결제 완료 → JWT의 needsPaidOnboarding 플래그를 서버에서 즉시 재계산·갱신한다.
       // 인자 없는 update()는 GET이라 jwt callback의 trigger==="update"를 발동하지 못한다 →
       // 반드시 데이터를 전달하는 POST 형태 update({})로 호출해야 재조회가 강제된다(High-B).
