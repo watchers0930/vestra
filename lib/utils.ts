@@ -42,3 +42,15 @@ export function formatWonInText(text: string): string {
     return canonical(won);
   });
 }
+
+/**
+ * 시세전망 본론: 낙관/기본/비관 시나리오와 영향요인이 한 문단에 이어져 구분이 안 되는 문제를 해결.
+ * 기본(base)·비관(pessimistic)·영향 요인별로 앞에 빈 줄을 넣어 시나리오별로 줄을 내린다
+ * (낙관은 문단 첫머리라 그대로). 렌더 측 white-space: pre-line과 함께 쓴다.
+ */
+export function breakForecastScenarios(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(/\s*(기본\(base\)|비관\(pessimistic\)|영향\s*요인별로)/g, "\n\n$1")
+    .replace(/^\n+/, "");
+}

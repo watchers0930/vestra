@@ -1,7 +1,7 @@
 "use client";
 
 import s from "../price-map-renewal.module.css";
-import { formatWonInText } from "@/lib/utils";
+import { formatWonInText, breakForecastScenarios } from "@/lib/utils";
 import type { usePredictionData } from "@/app/(app)/prediction/hooks/usePredictionData";
 
 // 원 단위 금액 → "N.N억" (predict-value/실거래 dealAmount는 원 단위)
@@ -119,7 +119,9 @@ function DashboardTab({ prediction }: { prediction: Prediction }) {
             ] as const).filter((x) => x.v).map((x) => (
               <div key={x.t} className={s.fpAiPara}>
                 <span className={s.fpAiParaTag}>{x.t}</span>
-                <p className={s.fpAiParaText}>{formatWonInText(x.v ?? "")}</p>
+                <p className={s.fpAiParaText} style={{ whiteSpace: "pre-line" }}>
+                  {x.t === "본론" ? breakForecastScenarios(formatWonInText(x.v ?? "")) : formatWonInText(x.v ?? "")}
+                </p>
               </div>
             ))}
           </div>
