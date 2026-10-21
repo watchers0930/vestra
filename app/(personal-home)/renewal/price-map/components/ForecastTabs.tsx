@@ -321,7 +321,7 @@ function BacktestTab({ prediction }: { prediction: Prediction }) {
           <span className={s.fpAccuracyNum}>{accuracy}</span>
           <span className={s.fpAccuracyPct}>%</span>
         </div>
-        <div className={s.fpAccuracyLabel}>방향성 예측 정확도</div>
+        <div className={s.fpAccuracyLabel}>예측 적중도 (100−평균오차율)</div>
         <div className={s.fpAccuracyGrade}>{grade}</div>
       </div>
       <div className={s.fpBtMetrics}>
@@ -336,7 +336,7 @@ function BacktestTab({ prediction }: { prediction: Prediction }) {
       <div className={s.fpBtExplain}>
         <div className={s.fpBtExplainTitle}>백테스트 방법론</div>
         <div className={s.fpBtExplainText}>
-          과거 실거래 데이터를 기반으로 AI 모델의 예측값과 실제값을 비교하였습니다. 금리·거래량·공시가격 등 변수를 종합적으로 반영하였습니다.
+          과거 실거래가로 추세를 학습해 그 다음 기간의 실제 거래가와 대조한 walk-forward 방식입니다. &lsquo;예측 적중도&rsquo;는 100에서 평균 오차율(MAPE)을 뺀 값으로, 상승·하락 방향 적중률이 아니라 예측가가 실제가에 얼마나 근접했는지를 뜻합니다. 표본이 적을수록 참고치로만 보세요.
         </div>
       </div>
     </>
