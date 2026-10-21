@@ -1,6 +1,7 @@
 "use client";
 
 import s from "../price-map-renewal.module.css";
+import { formatWonInText } from "@/lib/utils";
 import type { usePredictionData } from "@/app/(app)/prediction/hooks/usePredictionData";
 
 // 원 단위 금액 → "N.N억" (predict-value/실거래 dealAmount는 원 단위)
@@ -106,7 +107,7 @@ function DashboardTab({ prediction }: { prediction: Prediction }) {
           {result.aiOpinionSections.summary && (
             <div className={s.fpAiSummary}>
               <div className={s.fpAiSummaryLabel}>핵심 요약</div>
-              <div className={s.fpAiSummaryText}>{result.aiOpinionSections.summary}</div>
+              <div className={s.fpAiSummaryText}>{formatWonInText(result.aiOpinionSections.summary)}</div>
             </div>
           )}
           <div className={s.fpAiBox}>
@@ -118,7 +119,7 @@ function DashboardTab({ prediction }: { prediction: Prediction }) {
             ] as const).filter((x) => x.v).map((x) => (
               <div key={x.t} className={s.fpAiPara}>
                 <span className={s.fpAiParaTag}>{x.t}</span>
-                <p className={s.fpAiParaText}>{x.v}</p>
+                <p className={s.fpAiParaText}>{formatWonInText(x.v ?? "")}</p>
               </div>
             ))}
           </div>
@@ -126,7 +127,7 @@ function DashboardTab({ prediction }: { prediction: Prediction }) {
       ) : (
         <div className={s.fpAiBox}>
           <div className={s.fpAiLabel}>AI 종합 의견</div>
-          <div className={s.fpAiText}>{result.aiOpinion}</div>
+          <div className={s.fpAiText}>{formatWonInText(result.aiOpinion ?? "")}</div>
         </div>
       )}
       {result.variables?.length > 0 && (

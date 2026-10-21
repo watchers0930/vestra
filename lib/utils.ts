@@ -21,3 +21,24 @@ export function formatKRW(amount: number, emptyLabel = "0원"): string {
 export function formatPercent(value: number): string {
   return `${value.toFixed(1)}%`;
 }
+
+/**
+ * 프로즈(AI 생성 텍스트) 안에 섞여 나오는 금액을 "1,234,567,890원 (12억 3,456만원)" 형태로 통일한다.
+ * 천단위 콤마 + 괄호 안 한글(억/만원) 병기. 연도(2026)·개월·퍼센트처럼 금액이 아닌 수는 건드리지 않는다.
+ * 대상: ①한글 금액(N억[ M만]원 / N만원) ②콤마 금액(N,NNN,NNN원) ③bare 큰 숫자(≥7자리, '원' 선택).
+ * 단일 pass라 변환 결과가 재변환되지 않는다. bare는 ≥7자리(1천만↑)만 금액으로 간주해 오탐을 피한다.
+ */
+export function formatWonInText(text: string): string {
+  if (!text) return text;
+  const canonical = (won: number) => `${won.toLocaleString("en-US")}원 (${formatKRW(won)})`;
+  const re = /(\d+)\s*억(?:\s*([\d,]+)\s*만)?\s*원|([\d,]+)\s*만\s*원|(\d{1,3}(?:,\d{3})+)\s*원|(\d{7,})\s*원?/g;
+  return text.replace(re, (m, eok, eokMan, manOnly, commaWon, bareWon) => {
+    let won: number;
+    if (eok !== undefined) won = parseInt(eok, 10) * 100000000 + (eokMan ? parseInt(eokMan.replace(/,/g, ""), 10) * 10000 : 0);
+    else if (manOnly !== undefined) won = parseInt(manOnly.replace(/,/g, ""), 10) * 10000;
+    else if (commaWon !== undefined) won = parseInt(commaWon.replace(/,/g, ""), 10);
+    else won = parseInt(bareWon, 10);
+    if (!Number.isFinite(won) || won <= 0) return m;
+    return canonical(won);
+  });
+}
