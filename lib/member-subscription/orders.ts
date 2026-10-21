@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { SubscriptionOrder } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { findImpUidByMerchantUid } from "@/lib/danal/iamport-rest";
+import { getPaymentByIdV2 } from "@/lib/danal/portone-v2-rest";
 import type { MemberOrderRequest, MemberOrderResponse, MemberOrderStatus } from "@/types/member-subscription";
 import { fail, providerBoundary } from "./errors";
 import { memberReleaseConfig } from "./config";
@@ -28,10 +28,10 @@ async function supersedeAbandonedPending(userId: string) {
     userId, status: "pending", nonceConsumedAt: null, providerTransactionId: null, expiresAt: { lte: new Date() },
   }, orderBy: { createdAt: "asc" } });
   if (!abandoned) return;
-  let impUid: string | null;
-  try { impUid = await providerBoundary(() => findImpUidByMerchantUid(abandoned.orderId)); }
-  catch { return; } // ambiguous/unavailable → keep for recovery, never discard a possible charge
-  if (impUid) return; // a real charge exists → must be recovered, not superseded
+  let paid: Awaited<ReturnType<typeof getPaymentByIdV2>>;
+  try { paid = await providerBoundary(() => getPaymentByIdV2(abandoned.orderId)); }
+  catch { return; } // unavailable → keep for recovery, never discard a possible charge
+  if (paid) return; // a transaction exists (any status) → must be recovered, not superseded
   await prisma.subscriptionOrder.updateMany({ where: {
     id: abandoned.id, status: "pending", nonceConsumedAt: null, providerTransactionId: null,
   }, data: { status: "expired" } });
@@ -66,7 +66,9 @@ export async function createMemberOrder(userId: string, input: MemberOrderReques
       return outstanding;
     }
     const config = memberProviderConfig();
-    const orderId = `msub_${randomUUID()}`;
+    // 다날 merchant_uid 40자 한도: `msub_`(5) + UUID 하이픈 제거(32) = 37자. 하이픈 포함(41자)이면 다날이 뒤 1자를 잘라
+    // V2 결제 id와 orderId가 불일치→검증 영구 404가 된다(2026-10-21 실환경 확인). orderIdSchema(/^msub_[a-zA-Z0-9_-]+$/) 충족.
+    const orderId = `msub_${randomUUID().replace(/-/g, "")}`;
     const expiresAt = new Date(Date.now() + ORDER_TTL_MS);
     const { callbackNonceHash } = issueCallbackContext({ orderId, userId, expiresAt });
     return tx.subscriptionOrder.create({ data: {

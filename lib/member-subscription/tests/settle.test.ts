@@ -8,7 +8,8 @@ vi.mock("../record-payment", () => ({ recordMemberPayment: f.record, markNeedsRe
 vi.mock("../activation", () => ({ activateMemberOrder: f.activate }));
 import { settleMemberOrder } from "../payment-callback";
 
-const paid = { id: "o1", orderId: "msub_1", userId: "u1", status: "paid", providerTransactionId: "imp_1",
+// 하이브리드: 정산 식별자 = orderId. providerTransactionId에도 orderId가 기록된다.
+const paid = { id: "o1", orderId: "msub_1", userId: "u1", status: "paid", providerTransactionId: "msub_1",
   nonceConsumedAt: new Date(), appliedAt: null } as unknown as SubscriptionOrder;
 
 beforeEach(() => { vi.clearAllMocks(); f.activate.mockResolvedValue({ ...paid, appliedAt: new Date() }); });
@@ -16,19 +17,19 @@ beforeEach(() => { vi.clearAllMocks(); f.activate.mockResolvedValue({ ...paid, a
 // HIGH3: a paid-but-unapplied order may be refunded between record and a delayed activation.
 it("reverify marks a refunded paid order reversed and refuses activation", async () => {
   f.verify.mockResolvedValue({ status: "canceled" });
-  await expect(settleMemberOrder(paid, "imp_1", true)).rejects.toMatchObject({ code: "payment_failed" });
+  await expect(settleMemberOrder(paid, true)).rejects.toMatchObject({ code: "payment_failed" });
   expect(f.reversed).toHaveBeenCalledWith(paid, "canceled");
   expect(f.activate).not.toHaveBeenCalled();
 });
 it("reverify activates when the PG still reports the charge as paid", async () => {
   f.verify.mockResolvedValue({ status: "paid" });
-  await settleMemberOrder(paid, "imp_1", true);
-  expect(f.verify).toHaveBeenCalledWith(paid, "imp_1");
+  await settleMemberOrder(paid, true);
+  expect(f.verify).toHaveBeenCalledWith(paid);
   expect(f.reversed).not.toHaveBeenCalled();
   expect(f.activate).toHaveBeenCalledWith("u1", "msub_1");
 });
 it("immediate callback replay (no reverify) activates idempotently without re-reading the PG", async () => {
-  await settleMemberOrder(paid, "imp_1");
+  await settleMemberOrder(paid);
   expect(f.verify).not.toHaveBeenCalled();
   expect(f.activate).toHaveBeenCalledWith("u1", "msub_1");
 });

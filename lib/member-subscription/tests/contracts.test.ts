@@ -93,7 +93,7 @@ describe("callback domain and nonce", () => {
   });
   it("never exposes nonce hash in payment DTO", () => {
     vi.stubEnv("AUTH_SECRET", "fixture-secret");
-    const dto = paymentInfo(order, { impCode: "imp", mid: "mid", channelEnvironment: "test", merchantConfigVersion: "fixture" }, issueCallbackContext(order));
+    const dto = paymentInfo(order, { impCode: "imp", mid: "mid", storeId: "store-x", channelEnvironment: "test", merchantConfigVersion: "fixture" }, issueCallbackContext(order));
     expect(Object.keys(dto)).not.toContain("callbackNonceHash");
     expect(dto.paymentId).toBe(order.orderId);
   });

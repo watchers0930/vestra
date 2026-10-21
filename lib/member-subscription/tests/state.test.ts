@@ -6,7 +6,7 @@ const f = vi.hoisted(() => ({ orders: [] as Row[], sub: null as Row | null, paym
   policy: { trialUsedAt: null, policyVersion: "fixture", grandfatheredAt: null } as Row,
   role: "PERSONAL", verifyStatus: "none", guest: false, failPayment: false, queue: Promise.resolve() as Promise<unknown>,
   baseFindFirst: vi.fn(async () => null as Row | null), baseUpdateMany: vi.fn(async () => ({ count: 1 })),
-  findImp: vi.fn(async () => null as string | null) }));
+  findImp: vi.fn(async () => null as Row | null) }));
 function matches(row: Row, where: Row): boolean {
   return Object.entries(where).every(([key, value]) => {
     if (key === "OR") return (value as Row[]).some(v => matches(row, v));
@@ -53,7 +53,7 @@ const tx = {
   }) },
 };
 vi.mock("@/lib/prisma", () => ({ prisma: { subscriptionOrder: { findFirst: f.baseFindFirst, updateMany: f.baseUpdateMany } } }));
-vi.mock("@/lib/danal/iamport-rest", () => ({ findImpUidByMerchantUid: f.findImp }));
+vi.mock("@/lib/danal/portone-v2-rest", () => ({ getPaymentByIdV2: f.findImp }));
 vi.mock("../transaction", () => ({ memberTransaction: async (_id: string, operation: (db: typeof tx) => Promise<unknown>) => {
   const run = f.queue.then(async () => {
     const snapshot = structuredClone({ orders: f.orders, sub: f.sub, payments: f.payments, policy: f.policy });
@@ -179,7 +179,7 @@ it("supersedes an abandoned expired pending order with no PG charge so repurchas
 it("never discards an abandoned pending order the PG shows was charged", async () => {
   const abandoned = { ...fixture("pending"), id: "old", orderId: "msub_old",
     expiresAt: new Date(Date.now() - 1), nonceConsumedAt: null, providerTransactionId: null };
-  f.baseFindFirst.mockResolvedValueOnce(abandoned); f.findImp.mockResolvedValue("imp_charged");
+  f.baseFindFirst.mockResolvedValueOnce(abandoned); f.findImp.mockResolvedValue({ id: "msub_old", status: "PAID" });
   await createMemberOrder("u1", request);
   expect(f.baseUpdateMany).not.toHaveBeenCalled(); // a real charge must be recovered, not expired
 });

@@ -19,7 +19,7 @@ export async function runMemberLifecycle() {
       // refunded/canceled in the window between record and activation (settleMemberOrder
       // with reverify marks it reversed and refuses activation instead of granting access).
       if (!order.providerTransactionId) { await markNeedsReview(order); continue; }
-      await settleMemberOrder(order, order.providerTransactionId, true);
+      await settleMemberOrder(order, true);
       result.recovered++;
     }
     catch (error) {

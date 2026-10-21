@@ -51,7 +51,7 @@ describe("recovery: paid-but-unapplied orders (HIGH3)", () => {
   it("re-verifies with the PG (reverify=true) before granting a term", async () => {
     f.orderFind.mockResolvedValue([paidOrder()]);
     const result = await runMemberLifecycle();
-    expect(f.settle).toHaveBeenCalledWith(expect.objectContaining({ orderId: "msub_1" }), "imp_1", true);
+    expect(f.settle).toHaveBeenCalledWith(expect.objectContaining({ orderId: "msub_1" }), true);
     expect(result.recovered).toBe(1);
     expect(f.mark).not.toHaveBeenCalled();
   });
