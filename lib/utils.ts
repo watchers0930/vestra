@@ -50,7 +50,9 @@ export function formatWonInText(text: string): string {
  */
 export function breakForecastScenarios(text: string): string {
   if (!text) return text;
+  // 다양한 LLM 출력형을 모두 잡는다: "기본:", "기본(base)", "기본 시나리오", "영향 요인(별로)".
+  // 선행 공백·줄바꿈을 함께 먹어(\s*) 이미 줄바꿈이 있어도 빈 줄이 중복되지 않게 한다. 낙관은 첫머리라 제외.
   return text
-    .replace(/\s*(기본\(base\)|비관\(pessimistic\)|영향\s*요인별로)/g, "\n\n$1")
+    .replace(/\s*((?:기본|비관)(?::|\((?:base|pessimistic)\)|\s*시나리오)|영향\s*요인)/g, "\n\n$1")
     .replace(/^\n+/, "");
 }
