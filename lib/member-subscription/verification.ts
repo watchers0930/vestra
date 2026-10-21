@@ -15,18 +15,15 @@ export function validatePayment(order: SubscriptionOrder, payment: V2Payment | n
   if (!payment) return fail("payment_pending");
   const total = payment.amount.total;
   const cancelledAmt = payment.amount.cancelled ?? 0;
-  const ch = payment.channel;
-  // 식별·금액·채널 일치(하나라도 어긋나면 결제실패로 간주).
+  // 항상 존재하는 필드(식별·금액·통화·스토어) 대조 — 하나라도 어긋나면 결제실패.
   if (!order.orderId.startsWith("msub_") || payment.id !== order.orderId ||
       !Number.isSafeInteger(total) || total !== order.amount ||
       order.amount !== computeAmount(order.monthlyPrice, order.durationMonths, order.discountPercent) ||
       order.currency !== "KRW" || payment.currency !== "KRW" ||
-      (payment.storeId !== undefined && payment.storeId !== config.storeId) ||
-      ch?.pgProvider !== "DANAL_TPAY" || ch?.pgMerchantId !== config.mid) fail("payment_failed");
-  // 환경 대조: 테스트 주문은 반드시 TEST 채널 결제여야 한다(실과금 차단).
-  if (ch?.type !== (order.channelEnvironment === "test" ? "TEST" : "LIVE")) fail("provider_unavailable");
+      (payment.storeId !== undefined && payment.storeId !== config.storeId)) fail("payment_failed");
   const hasCancellation = cancelledAmt > 0;
   const s = payment.status.toUpperCase();
+  // READY/FAILED 등은 channel이 생략될 수 있어(V2 계약) 채널 대조는 기간을 부여하는 PAID에서만 강제한다.
   if (s === "READY" || s === "PAY_PENDING" || s === "VIRTUAL_ACCOUNT_ISSUED") {
     if (payment.paidAt || hasCancellation) fail("payment_failed");
     return fail("payment_pending");
@@ -34,6 +31,10 @@ export function validatePayment(order: SubscriptionOrder, payment: V2Payment | n
   let status: VerifiedPayment["status"];
   let paidAt: Date | null = null;
   if (s === "PAID") {
+    const ch = payment.channel;
+    // PAID만: 다날·우리 MID·TEST 환경을 강제(타 PG/타 상점/실과금 차단). 기간 부여의 유일 관문.
+    if (ch?.pgProvider !== "DANAL_TPAY" || ch?.pgMerchantId !== config.mid ||
+        ch?.type !== (order.channelEnvironment === "test" ? "TEST" : "LIVE")) fail("payment_failed");
     if (hasCancellation || !payment.paidAt) fail("payment_failed");
     const t = Date.parse(payment.paidAt);
     if (Number.isNaN(t)) fail("payment_failed");

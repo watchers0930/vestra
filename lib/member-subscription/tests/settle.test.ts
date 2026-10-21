@@ -28,8 +28,17 @@ it("reverify activates when the PG still reports the charge as paid", async () =
   expect(f.reversed).not.toHaveBeenCalled();
   expect(f.activate).toHaveBeenCalledWith("u1", "msub_1");
 });
-it("immediate callback replay (no reverify) activates idempotently without re-reading the PG", async () => {
-  await settleMemberOrder(paid);
+it("already-applied replay activates idempotently without re-reading the PG", async () => {
+  const applied = { ...paid, appliedAt: new Date() } as unknown as SubscriptionOrder;
+  await settleMemberOrder(applied);
   expect(f.verify).not.toHaveBeenCalled();
   expect(f.activate).toHaveBeenCalledWith("u1", "msub_1");
+});
+it("paid-but-unapplied callback replay re-verifies before first activation (refund guard)", async () => {
+  // record 성공·활성화 실패로 paid/미적용인 주문에 환불이 끼어든 뒤 콜백 재전송 → 반드시 재검증해 거부.
+  f.verify.mockResolvedValue({ status: "canceled" });
+  await expect(settleMemberOrder(paid)).rejects.toMatchObject({ code: "payment_failed" });
+  expect(f.verify).toHaveBeenCalledWith(paid);
+  expect(f.reversed).toHaveBeenCalledWith(paid, "canceled");
+  expect(f.activate).not.toHaveBeenCalled();
 });

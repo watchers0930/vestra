@@ -33,8 +33,15 @@ it.each([
 ])("rejects channel mismatch %j", ch => {
   expect(() => validate({ ...payment, channel: { ...ch, key: "k" } } as V2Payment)).toThrow();
 });
-it("rejects missing channel / configuration changes / bad order snapshot", () => {
+it("requires channel only for PAID; allows channel-less READY/FAILED (V2 계약)", () => {
+  // PAID는 채널 확정 필수 → 채널 없으면 거부(기간 미부여).
   expect(() => validate({ ...payment, channel: undefined } as V2Payment)).toThrow();
+  // READY/FAILED는 채널 생략 가능 → 채널 없어도 상태 분기(pending/failed)에 도달해야 한다(결제실패로 오인 금지).
+  expect(() => validate({ ...payment, status: "READY", channel: undefined, paidAt: undefined } as V2Payment)).toThrow("결제 확인 중");
+  const failed = validate({ ...payment, status: "FAILED", channel: undefined, paidAt: undefined, amount: { total: 95040, cancelled: 0 } } as V2Payment);
+  expect(failed.status).toBe("failed");
+});
+it("rejects configuration changes / bad order snapshot", () => {
   expect(() => validate(payment, { ...order, merchantConfigVersion: "changed" })).toThrow();
   expect(() => validate(payment, { ...order, monthlyPrice: 10000 })).toThrow();
 });
