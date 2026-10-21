@@ -272,7 +272,7 @@ export default function ListingDbDetailContent() {
 
             <div className={s.ctaSection}>
               <button className={s.ctaPrimary} onClick={handleIntent}>의향서 보내기</button>
-              <button className={s.ctaSecondary} onClick={() => router.push("/renewal/rights")}>AI 권리분석 해보기</button>
+              <button className={s.ctaSecondary} onClick={() => router.push(`/renewal/rights?address=${encodeURIComponent(listing.address)}`)}>AI 권리분석 해보기</button>
               {isJeonse && (
                 <button className={s.ctaSecondary} onClick={() => router.push(`/renewal/loan-check?deposit=${priceNum}&propertyType=${encodeURIComponent(listing.roomType || "아파트")}&propertyAddress=${encodeURIComponent(listing.address)}`)}>이 매물 전세대출 가심사</button>
               )}
