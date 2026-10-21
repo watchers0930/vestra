@@ -1,164 +1,36 @@
 "use client";
 
-import { useMemo } from "react";
-import { AlertTriangle, CheckCircle, XCircle, GitBranch, Shield, Activity, Route, BarChart3 } from "lucide-react";
-import { cn, formatKRW } from "@/lib/utils";
-import { Card, Alert } from "@/components/common";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import type { ParsedRegistry } from "@/lib/registry-parser";
-
 /**
- * 권리관계 그래프 시각화 컴포넌트
- * rights-graph-engine의 분석 결과를 시각적으로 표현
+ * 권리관계 그래프 시각화 — 조합 컴포넌트 (설계 §4.8 ⑧)
+ *
+ * 서버 그래프 엔진(lib/rights-graph-engine) 결과를 표시 전용으로 조합한다.
+ * - 노드/범례/위험지수를 하위 컴포넌트로 분리(graph/*)
+ * - 노드 평균 지표는 "권리 구성 참고 지수"로 명명(사고확률·종합위험도 아님)
+ * - 종합 위험도는 ①의 공용 안전/위험점수에서만 파생하며 그래프 지수를 합산하지 않는다
  */
-
-interface GraphNode {
-  id: string;
-  label: string;
-  type: "property" | "ownership" | "mortgage" | "lease" | "seizure" | "trust" | "other";
-  amount: number;
-  riskWeight: number;
-  isCancelled?: boolean;
-}
-
-interface GraphEdge {
-  source: string;
-  target: string;
-  label: string;
-  weight: number;
-}
-
-interface RiskChain {
-  path: string[];
-  totalRisk: number;
-  level: "critical" | "high" | "medium" | "low";
-}
-
-interface GraphAnalysisProp {
-  graph: { nodeCount: number; edgeCount: number; maxDepth: number };
-  cycles: { hasCycle: boolean; cycles: Array<{ path: string[]; riskScore: number; description: string }> };
-  riskPropagation: {
-    nodeRisks: Record<string, number>;
-    propagationSteps: Array<{ from: string; to: string; riskDelta: number; iteration: number }>;
-    convergenceIterations: number;
-    totalSystemRisk: number;
-  };
-  chainAnalysis: { chains: Array<{ id: string; nodes: string[]; totalAmount: number; riskLevel: string; description: string }>; longestChain: number; maxChainAmount: number };
-  criticalPath: { path: string[]; totalRisk: number; maxLossAmount: number; description: string };
-  clusterAnalysis: { clusters: Array<{ id: number; nodes: string[]; internalRisk: number; connectedTo: number[] }>; isolatedNodes: string[] };
-}
+import { useMemo } from "react";
+import { AlertTriangle } from "lucide-react";
+import { Card } from "@/components/common";
+import type { ParsedRegistry } from "@/lib/registry-parser";
+import { buildGraph, type GraphAnalysisProp } from "./graph/graph-types";
+import { RightsGraphNode } from "./graph/RightsGraphNode";
+import { RightsGraphLegend } from "./graph/RightsGraphLegend";
+import { RightsRiskIndexPanel } from "./graph/RightsRiskIndexPanel";
 
 interface Props {
   parsed: ParsedRegistry;
   graphAnalysis?: GraphAnalysisProp;
 }
 
-// 노드 색상
-const NODE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  property: { bg: "bg-blue-100", border: "border-blue-400", text: "text-blue-800" },
-  ownership: { bg: "bg-emerald-100", border: "border-emerald-400", text: "text-emerald-800" },
-  mortgage: { bg: "bg-red-100", border: "border-red-400", text: "text-red-800" },
-  lease: { bg: "bg-amber-100", border: "border-amber-400", text: "text-amber-800" },
-  seizure: { bg: "bg-purple-100", border: "border-purple-400", text: "text-purple-800" },
-  trust: { bg: "bg-indigo-100", border: "border-indigo-400", text: "text-indigo-800" },
-  other: { bg: "bg-gray-100", border: "border-gray-400", text: "text-gray-800" },
-};
-
-function getNodeType(purpose: string): GraphNode["type"] {
-  if (/소유권/.test(purpose)) return "ownership";
-  if (/근저당|저당/.test(purpose)) return "mortgage";
-  if (/전세|임차/.test(purpose)) return "lease";
-  if (/가압류|압류|가처분|경매/.test(purpose)) return "seizure";
-  if (/신탁/.test(purpose)) return "trust";
-  return "other";
-}
-
-function getRiskWeight(type: GraphNode["type"]): number {
-  const weights: Record<string, number> = {
-    seizure: 0.95, mortgage: 0.7, trust: 0.6,
-    lease: 0.4, ownership: 0.1, property: 0, other: 0.3,
-  };
-  return weights[type] ?? 0.3;
-}
-
 export function RightsGraphView({ parsed, graphAnalysis }: Props) {
-  const { nodes, chains } = useMemo(() => {
-    const nodes: GraphNode[] = [];
-    const edges: GraphEdge[] = [];
+  const { nodes, chains } = useMemo(() => buildGraph(parsed), [parsed]);
 
-    // 부동산 루트 노드
-    const propertyLabel = parsed.title?.address || "대상 부동산";
-    nodes.push({
-      id: "property",
-      label: propertyLabel.length > 20 ? propertyLabel.slice(0, 20) + "…" : propertyLabel,
-      type: "property",
-      amount: 0,
-      riskWeight: 0,
-    });
-
-    // 갑구 노드
-    parsed.gapgu?.forEach((entry, i) => {
-      const type = getNodeType(entry.purpose);
-      nodes.push({
-        id: `gapgu_${i}`,
-        label: `${entry.purpose}\n${entry.holder}`,
-        type,
-        amount: 0,
-        riskWeight: getRiskWeight(type),
-        isCancelled: entry.isCancelled,
-      });
-      edges.push({
-        source: "property",
-        target: `gapgu_${i}`,
-        label: "갑구",
-        weight: getRiskWeight(type),
-      });
-    });
-
-    // 을구 노드
-    parsed.eulgu?.forEach((entry, i) => {
-      const type = getNodeType(entry.purpose);
-      nodes.push({
-        id: `eulgu_${i}`,
-        label: `${entry.purpose}\n${entry.holder}`,
-        type,
-        amount: entry.amount || 0,
-        riskWeight: getRiskWeight(type),
-        isCancelled: entry.isCancelled,
-      });
-      edges.push({
-        source: "property",
-        target: `eulgu_${i}`,
-        label: "을구",
-        weight: getRiskWeight(type),
-      });
-    });
-
-    // 위험 체인 분석 (간단한 휴리스틱)
-    const chains: RiskChain[] = [];
-    const activeNodes = nodes.filter(n => !n.isCancelled && n.id !== "property");
-    const highRiskNodes = activeNodes.filter(n => n.riskWeight >= 0.7);
-
-    if (highRiskNodes.length >= 2) {
-      chains.push({
-        path: ["property", ...highRiskNodes.map(n => n.id)],
-        totalRisk: highRiskNodes.reduce((s, n) => s + n.riskWeight, 0) / highRiskNodes.length,
-        level: "critical",
-      });
-    } else if (highRiskNodes.length === 1) {
-      chains.push({
-        path: ["property", highRiskNodes[0].id],
-        totalRisk: highRiskNodes[0].riskWeight,
-        level: "high",
-      });
-    }
-
-    return { nodes, chains };
-  }, [parsed]);
-
-  const activeNodes = nodes.filter(n => !n.isCancelled);
-  const cancelledNodes = nodes.filter(n => n.isCancelled);
-  const riskScore = activeNodes.reduce((s, n) => s + n.riskWeight, 0) / Math.max(activeNodes.length, 1);
+  const activeNodes = nodes.filter((n) => !n.isCancelled);
+  const cancelledNodes = nodes.filter((n) => n.isCancelled);
+  // 노드 위험가중치 평균 — "권리 구성 참고 지수"(종합 위험도·사고확률 아님)
+  const compositionIndex = activeNodes.reduce((s, n) => s + n.riskWeight, 0) / Math.max(activeNodes.length, 1);
+  const idxColor = compositionIndex > 0.5 ? "#dc2626" : compositionIndex > 0.3 ? "#d97706" : "#16a34a";
+  const idxBg = compositionIndex > 0.5 ? "#fef2f2" : compositionIndex > 0.3 ? "#fffbeb" : "#f0fdf4";
 
   return (
     <div className="space-y-4">
@@ -176,23 +48,26 @@ export function RightsGraphView({ parsed, graphAnalysis }: Props) {
           <p className="text-xs text-gray-600">말소</p>
           <p className="text-xl font-bold text-gray-800">{cancelledNodes.length}</p>
         </div>
-        <div className="p-3 rounded-lg text-center" style={{ backgroundColor: riskScore > 0.5 ? "#fef2f2" : riskScore > 0.3 ? "#fffbeb" : "#f0fdf4" }}>
-          <p className="text-xs" style={{ color: riskScore > 0.5 ? "#dc2626" : riskScore > 0.3 ? "#d97706" : "#16a34a" }}>위험도</p>
-          <p className="text-xl font-bold" style={{ color: riskScore > 0.5 ? "#dc2626" : riskScore > 0.3 ? "#d97706" : "#16a34a" }}>{(riskScore * 100).toFixed(0)}%</p>
+        <div className="p-3 rounded-lg text-center" style={{ backgroundColor: idxBg }}>
+          <p className="text-xs" style={{ color: idxColor }}>권리 구성 참고 지수</p>
+          <p className="text-xl font-bold" style={{ color: idxColor }}>{(compositionIndex * 100).toFixed(0)}</p>
         </div>
       </div>
+      <p className="text-[11px] text-gray-400 px-1 -mt-2">
+        &lsquo;권리 구성 참고 지수&rsquo;는 권리 종류 구성의 참고 수치이며 사고 확률·종합 위험도가 아닙니다. 종합 판단은 상단 안전점수를 기준으로 하세요.
+      </p>
 
-      {/* 위험 체인 */}
+      {/* 위험 전파 경로 */}
       {chains.length > 0 && (
         <Card className="p-4 border-red-200 bg-red-50/50">
           <h4 className="text-sm font-semibold text-red-800 flex items-center gap-2 mb-2">
-            <AlertTriangle size={14} />
+            <AlertTriangle size={14} aria-hidden />
             위험 전파 경로 감지
           </h4>
           {chains.map((chain, i) => (
             <div key={i} className="flex items-center gap-1.5 text-xs text-red-700 flex-wrap">
               {chain.path.map((nodeId, j) => {
-                const node = nodes.find(n => n.id === nodeId);
+                const node = nodes.find((n) => n.id === nodeId);
                 return (
                   <span key={nodeId} className="flex items-center gap-1">
                     {j > 0 && <span className="text-red-400">→</span>}
@@ -203,297 +78,19 @@ export function RightsGraphView({ parsed, graphAnalysis }: Props) {
                 );
               })}
               <span className="ml-2 px-2 py-0.5 bg-red-200 rounded-full text-[10px] font-semibold">
-                위험도 {(chain.totalRisk * 100).toFixed(0)}%
+                참고 지수 {(chain.totalRisk * 100).toFixed(0)}
               </span>
             </div>
           ))}
         </Card>
       )}
 
-      {/* 그래프 노드 시각화 */}
-      <Card className="p-4">
-        <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-4">
-          <GitBranch size={14} />
-          권리관계 그래프
-        </h4>
+      {/* 노드 시각화 + 범례 */}
+      <RightsGraphNode nodes={nodes} />
+      <RightsGraphLegend />
 
-        {/* 루트 노드 (부동산) */}
-        <div className="flex justify-center mb-4">
-          <div className="px-4 py-2 bg-blue-100 border-2 border-blue-400 rounded-lg text-center">
-            <p className="text-xs font-bold text-blue-800">{nodes[0]?.label}</p>
-            <p className="text-[10px] text-blue-600">대상 부동산</p>
-          </div>
-        </div>
-
-        {/* 연결선 표시 */}
-        <div className="flex justify-center mb-2">
-          <div className="w-0.5 h-6 bg-gray-300" />
-        </div>
-
-        {/* 하위 노드들 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {nodes.slice(1).map((node) => {
-            const colors = NODE_COLORS[node.type] || NODE_COLORS.other;
-            return (
-              <div
-                key={node.id}
-                className={cn(
-                  "p-3 rounded-lg border-2 transition-all",
-                  node.isCancelled ? "opacity-40 border-gray-300 bg-gray-50" : `${colors.bg} ${colors.border}`
-                )}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className={cn("text-xs font-semibold", node.isCancelled ? "text-gray-500 line-through" : colors.text)}>
-                    {node.label.split("\n")[0]}
-                  </span>
-                  {node.isCancelled ? (
-                    <span className="text-[9px] px-1.5 py-0.5 bg-gray-200 text-gray-500 rounded">말소</span>
-                  ) : node.riskWeight >= 0.7 ? (
-                    <XCircle size={12} className="text-red-500" />
-                  ) : node.riskWeight >= 0.4 ? (
-                    <AlertTriangle size={12} className="text-amber-500" />
-                  ) : (
-                    <CheckCircle size={12} className="text-emerald-500" />
-                  )}
-                </div>
-                <p className="text-[10px] text-gray-600">{node.label.split("\n")[1] || ""}</p>
-                {node.amount > 0 && (
-                  <p className="text-[10px] font-medium text-gray-700 mt-1">
-                    {(node.amount / 100000000).toFixed(1)}억원
-                  </p>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {nodes.length <= 1 && (
-          <div className="flex items-center justify-center py-8 text-sm text-gray-400">
-            <Shield size={16} className="mr-2" />
-            등기부 데이터에서 권리관계를 추출할 수 없습니다
-          </div>
-        )}
-      </Card>
-
-      {/* 범례 */}
-      <div className="flex flex-wrap gap-2 px-1">
-        {Object.entries(NODE_COLORS).map(([type, colors]) => (
-          <div key={type} className="flex items-center gap-1">
-            <div className={cn("w-3 h-3 rounded border", colors.bg, colors.border)} />
-            <span className="text-[10px] text-gray-500">
-              {{ property: "부동산", ownership: "소유권", mortgage: "근저당", lease: "전세/임차", seizure: "압류/가처분", trust: "신탁", other: "기타" }[type]}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* ─── 그래프 엔진 분석 결과 (graphAnalysis 제공 시) ─── */}
-      {graphAnalysis && (
-        <>
-          {/* 시스템 위험도 */}
-          <Card className="p-4">
-            <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-3">
-              <Activity size={14} />
-              종합 위험도
-            </h4>
-            <div className="flex items-center gap-4">
-              <div
-                className={cn(
-                  "w-20 h-20 rounded-full flex items-center justify-center border-4",
-                  graphAnalysis.riskPropagation.totalSystemRisk >= 70
-                    ? "border-red-400 bg-red-50"
-                    : graphAnalysis.riskPropagation.totalSystemRisk >= 40
-                    ? "border-amber-400 bg-amber-50"
-                    : "border-emerald-400 bg-emerald-50"
-                )}
-              >
-                <span
-                  className={cn(
-                    "text-2xl font-bold",
-                    graphAnalysis.riskPropagation.totalSystemRisk >= 70
-                      ? "text-red-600"
-                      : graphAnalysis.riskPropagation.totalSystemRisk >= 40
-                      ? "text-amber-600"
-                      : "text-emerald-600"
-                  )}
-                >
-                  {graphAnalysis.riskPropagation.totalSystemRisk}
-                </span>
-              </div>
-              <div className="flex-1 space-y-1.5">
-                <p className="text-xs text-gray-500">
-                  등기부 권리관계 종합 위험 점수 (0-100)
-                </p>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={cn(
-                      "h-2 rounded-full transition-all",
-                      graphAnalysis.riskPropagation.totalSystemRisk >= 70
-                        ? "bg-red-500"
-                        : graphAnalysis.riskPropagation.totalSystemRisk >= 40
-                        ? "bg-amber-500"
-                        : "bg-emerald-500"
-                    )}
-                    style={{ width: `${graphAnalysis.riskPropagation.totalSystemRisk}%` }}
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-xs text-gray-500 mt-2">
-                  <div>
-                    <span className="font-medium text-gray-700">{graphAnalysis.graph.nodeCount}</span> 항목
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">{graphAnalysis.graph.edgeCount}</span> 연결
-                  </div>
-                  <div>
-                    단계 <span className="font-medium text-gray-700">{graphAnalysis.graph.maxDepth}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* 순환 경고 */}
-          {graphAnalysis.cycles.hasCycle && (
-            <Alert variant="error">
-              <div className="flex items-start gap-2">
-                <AlertTriangle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-red-800 mb-1">
-                    권리 순환 관계가 감지되었습니다
-                  </p>
-                  <div className="space-y-1">
-                    {graphAnalysis.cycles.cycles.map((cycle, i) => (
-                      <p key={i} className="text-xs text-red-700">
-                        {cycle.description} (위험도: {cycle.riskScore.toFixed(0)})
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </Alert>
-          )}
-
-          {/* Critical Path */}
-          {graphAnalysis.criticalPath.path.length > 1 && (
-            <Card className="p-4">
-              <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-3">
-                <Route size={14} />
-                주요 권리 연결 경로
-              </h4>
-              <div className="flex items-center gap-1.5 flex-wrap mb-3">
-                {graphAnalysis.criticalPath.path.map((nodeId, i) => {
-                  const friendlyLabel = nodeId
-                    .replace(/^property[_ ]?root$/, "부동산")
-                    .replace(/^gapgu[_ ]?(\d+)$/, "갑구 $1번")
-                    .replace(/^eulgu[_ ]?(\d+)$/, "을구 $1번")
-                    .replace(/_/g, " ");
-                  return (
-                    <span key={nodeId} className="flex items-center gap-1">
-                      {i > 0 && <span className="text-gray-400 text-xs">→</span>}
-                      <span
-                        className={cn(
-                          "px-2 py-1 rounded text-xs font-medium",
-                          i === 0
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-gray-100 text-gray-700"
-                        )}
-                      >
-                        {friendlyLabel}
-                      </span>
-                    </span>
-                  );
-                })}
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {(() => {
-                  const sysRisk = graphAnalysis.riskPropagation.totalSystemRisk;
-                  const isHigh = sysRisk >= 70;
-                  const isMid = sysRisk >= 40;
-                  const bg = isHigh ? "bg-red-50" : isMid ? "bg-amber-50" : "bg-gray-50";
-                  const labelColor = isHigh ? "text-red-600" : isMid ? "text-amber-600" : "text-gray-500";
-                  const valueColor = isHigh ? "text-red-700" : isMid ? "text-amber-700" : "text-gray-700";
-                  return (
-                    <>
-                      <div className={`p-2 ${bg} rounded-lg text-center`}>
-                        <p className={`text-[10px] ${labelColor}`}>경로 위험도</p>
-                        <p className={`text-lg font-bold ${valueColor}`}>{graphAnalysis.criticalPath.totalRisk}</p>
-                      </div>
-                      <div className={`p-2 ${bg} rounded-lg text-center`}>
-                        <p className={`text-[10px] ${labelColor}`}>최대 관련 금액</p>
-                        <p className={`text-lg font-bold ${valueColor}`}>
-                          {graphAnalysis.criticalPath.maxLossAmount > 0
-                            ? formatKRW(graphAnalysis.criticalPath.maxLossAmount)
-                            : "-"}
-                        </p>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            </Card>
-          )}
-
-          {/* 위험 전파 점수 (BarChart) */}
-          {Object.keys(graphAnalysis.riskPropagation.nodeRisks).length > 0 && (
-            <Card className="p-4">
-              <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-3">
-                <BarChart3 size={14} />
-                항목별 위험도 점수
-              </h4>
-              <div className="h-[250px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={Object.entries(graphAnalysis.riskPropagation.nodeRisks)
-                      .map(([id, risk]) => ({
-                        name: id
-                          .replace(/^property[_ ]?root$/, "부동산")
-                          .replace(/^gapgu[_ ]?(\d+)$/, "갑구$1")
-                          .replace(/^eulgu[_ ]?(\d+)$/, "을구$1")
-                          .replace(/_/g, " "),
-                        risk: Math.round(Number(risk) * 100),
-                      }))
-                      .sort((a, b) => b.risk - a.risk)}
-                    margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 10, fill: "#6b7280" }}
-                      angle={-30}
-                      textAnchor="end"
-                      height={60}
-                    />
-                    <YAxis
-                      domain={[0, 100]}
-                      tick={{ fontSize: 10, fill: "#6b7280" }}
-                      tickFormatter={(v) => `${v}`}
-                    />
-                    <Tooltip
-                      formatter={(value) => [`${value}점`, "위험도"]}
-                      contentStyle={{ fontSize: 12, borderRadius: 8 }}
-                    />
-                    <Bar
-                      dataKey="risk"
-                      radius={[4, 4, 0, 0]}
-                      fill={
-                        graphAnalysis.riskPropagation.totalSystemRisk >= 70
-                          ? "#ef4444"
-                          : graphAnalysis.riskPropagation.totalSystemRisk >= 40
-                          ? "#f59e0b"
-                          : "#6b7280"
-                      }
-                      fillOpacity={0.8}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <p className="text-[10px] text-gray-400 mt-2 text-center">
-                등기 항목 간 위험도 연관 분석 결과
-              </p>
-            </Card>
-          )}
-        </>
-      )}
+      {/* 권리 그래프 위험지수 (엔진 결과 제공 시) */}
+      {graphAnalysis && <RightsRiskIndexPanel graphAnalysis={graphAnalysis} />}
     </div>
   );
 }

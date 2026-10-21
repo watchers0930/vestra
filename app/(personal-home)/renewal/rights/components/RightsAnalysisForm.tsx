@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type RefObject } from "react";
 import s from "../rights-renewal.module.css";
+import { formatKRW } from "@/lib/utils";
 import type { InputMode, AnalysisStep } from "@/app/(app)/rights/types";
 import { AddressSearchField, EMPTY_ADDRESS, type AddressValue } from "@/components/common/AddressSearchField";
 
@@ -17,6 +18,8 @@ interface Props {
   rawText: string;
   estimatedPrice: number;
   setEstimatedPrice: (v: number) => void;
+  userDeposit: number | null;
+  setUserDeposit: (v: number | null) => void;
   setInputMode: (m: InputMode) => void;
   setTilkoSource: (v: boolean) => void;
   fileInputRef: RefObject<HTMLInputElement | null>;
@@ -36,6 +39,8 @@ export default function RightsAnalysisForm({
   rawText,
   estimatedPrice,
   setEstimatedPrice,
+  userDeposit,
+  setUserDeposit,
   setInputMode,
   setTilkoSource,
   fileInputRef,
@@ -186,6 +191,36 @@ export default function RightsAnalysisForm({
               <span className={s.priceUnit}>억 원</span>
             </div>
             <div className={s.priceHint}>MOLIT 실거래 데이터가 있으면 자동으로 시세를 반영합니다</div>
+          </div>
+
+          {/* 실제 계약 전세보증금 (선택) — 주소 조회·파일 분석 두 경로 공통. 미입력 시 시장평균으로 대체하지 않음 */}
+          <div className={s.priceBox}>
+            <div className={s.priceLabel}>실제 계약 전세보증금 (선택사항)</div>
+            <div className={s.priceInputRow}>
+              <input
+                className={s.priceInput}
+                type="number"
+                inputMode="numeric"
+                min="0"
+                step="100"
+                placeholder="예: 39000"
+                aria-label="실제 계약 전세보증금 (만원 단위)"
+                value={userDeposit !== null ? Math.round(userDeposit / 10000) : ""}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  if (v === "") { setUserDeposit(null); return; }
+                  const man = Number(v);
+                  if (!Number.isFinite(man) || man < 0) return;
+                  setUserDeposit(Math.round(man) * 10000);
+                }}
+              />
+              <span className={s.priceUnit}>만원</span>
+            </div>
+            <div className={s.priceHint}>
+              {userDeposit !== null && userDeposit > 0
+                ? `입력값: ${formatKRW(userDeposit)} · 선순위 채권 대비 보증금 비율(C/D) 산정에 사용됩니다`
+                : "입력하면 선행 채권이 내 보증금 대비 얼마인지(C/D)까지 평가합니다. 미입력 시 시장 평균으로 대체하지 않습니다."}
+            </div>
           </div>
 
           {/* 분석 버튼 */}

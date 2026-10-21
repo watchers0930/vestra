@@ -28,6 +28,7 @@ export default function RightsRenewalClient({ initialAddress = "" }: { initialAd
     step, result, error,
     fileName, isExtracting, rawText,
     estimatedPrice, setEstimatedPrice,
+    userDeposit, setUserDeposit,
     tilkoAddress, setTilkoAddress, tilkoFetching, setTilkoSource,
     setInputMode, fileInputRef,
     handleFileChange, handleAddressAnalyze, handleAnalyze,
@@ -104,6 +105,8 @@ export default function RightsRenewalClient({ initialAddress = "" }: { initialAd
               rawText={rawText}
               estimatedPrice={estimatedPrice}
               setEstimatedPrice={setEstimatedPrice}
+              userDeposit={userDeposit}
+              setUserDeposit={setUserDeposit}
               setInputMode={setInputMode}
               setTilkoSource={setTilkoSource}
               fileInputRef={fileInputRef}

@@ -243,6 +243,12 @@ function diagnoseMortgageOverload(
   riskScore: RiskScore,
   estimatedPrice: number,
 ): DiagnosisItem {
+  if (riskScore.decisiveHighRisk) {
+    return { id: "mortgage_overload", label: "선순위 부담 확인", status: "fail", severity: "high",
+      description: riskScore.decisiveHighRisk.reason,
+      action: "확인된 채권최고액·실제 채무 잔액과 선순위 권리를 전문가에게 확인하세요.",
+      evidence: [riskScore.summary] };
+  }
   const { totalMortgageAmount, totalClaimsAmount } = parsed.summary;
 
   if (!estimatedPrice || estimatedPrice <= 0) {

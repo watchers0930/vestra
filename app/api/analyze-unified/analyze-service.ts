@@ -5,14 +5,15 @@ import {
   type QualityGroundTruth,
 } from "@/lib/ai-quality-gate";
 import { UNIFIED_ANALYSIS_PROMPT } from "@/lib/prompts";
-import { parseRegistry, compressFloorData } from "@/lib/registry-parser";
+import { parseRegistry } from "@/lib/registry-parser";
 import { calculateRiskScore } from "@/lib/risk-scoring";
 import { validateParsedRegistry } from "@/lib/validation-engine";
 import { fetchComprehensivePrices, type PriceResult, type RentPriceResult } from "@/lib/molit-api";
 import { fetchBuildingInfoByAddress } from "@/lib/building-api";
 import { estimatePrice } from "@/lib/price-estimation";
 import { buildAnalysisSources } from "@/lib/analysis-sources";
-import { stripHtml, truncateInput } from "@/lib/sanitize";
+import { parseAreaValue, resolvePropertyAddress } from "./property-normalize";
+export { sanitizeInput } from "./property-normalize";
 import { simulateRedemption } from "@/lib/redemption-simulator";
 import { propagateConfidence } from "@/lib/confidence-engine";
 import { selfVerify } from "@/lib/self-verification";
@@ -34,28 +35,6 @@ const formatKoreanPrice = (won: number) => formatKRW(won, "없음");
 
 /** OpenAI chat 메시지(사용 역할 한정) */
 type OpenAIMessage = { role: "system" | "user" | "assistant"; content: string };
-
-/** 면적 문자열에서 숫자 추출 */
-function parseAreaValue(areaStr: string): number {
-  const m = areaStr.match(/([\d.]+)\s*㎡/);
-  return m ? parseFloat(m[1]) : 0;
-}
-
-// ─── 입력 전처리 ───
-
-export function sanitizeInput(rawInput: string): string {
-  let sanitized = rawInput || "";
-
-  // HTML 취소선 태그 감지 → 【말소】 마커 삽입 (stripHtml 전에 처리)
-  sanitized = sanitized.replace(/<(?:del|s|strike)\b[^>]*>([\s\S]*?)<\/(?:del|s|strike)>/gi, "【말소】$1");
-  sanitized = sanitized.replace(/<[^>]*(?:text-decoration\s*:\s*line-through|class\s*=\s*["'][^"']*(?:cancel|deleted|strikethrough|malso)[^"']*["'])[^>]*>([\s\S]*?)<\/[^>]+>/gi, "【말소】$1");
-
-  sanitized = sanitized.replace(/<br\s*\/?>/gi, "\n");
-  sanitized = sanitized.replace(/<\/(?:p|div|tr|li|td|th)>/gi, "\n");
-  sanitized = stripHtml(sanitized);
-  sanitized = compressFloorData(sanitized);
-  return truncateInput(sanitized, 50000);
-}
 
 // ─── 시장 데이터 조회 ───
 
@@ -98,20 +77,22 @@ export async function fetchMarketData(address: string) {
 export interface AnalysisInput {
   rawText: string;
   userPrice?: number;
+  userDeposit?: number;
+  ownJeonseRight?: import("@/lib/risk/claims-policy").OwnJeonseRight;
   address: string;
   inputSource?: string;
   ip: string;
 }
 
 export async function runAnalysisPipeline(input: AnalysisInput) {
-  const { rawText, userPrice, address: userAddress, inputSource, ip } = input;
+  const { rawText, userPrice, userDeposit, address: userAddress, inputSource, ip } = input;
 
   // 1단계: 자체 파싱 엔진 (AI 미사용)
   const parsed = parseRegistry(rawText);
   // 보안: 을구 파싱 결과(채권자명 등 등기 원문)는 로그에 남기지 않는다.
 
   // 주소 결정
-  const address = parsed.title.address || userAddress || "";
+  const address = resolvePropertyAddress(parsed.title.address, userAddress, inputSource);
 
   // 2단계: 시장 데이터 조회
   let marketData: MarketDataResult | null = null;
@@ -162,7 +143,8 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
   validateParsedRegistry(parsed, estimatedPrice);
 
   // 4단계: 리스크 스코어링
-  const riskScore = calculateRiskScore(parsed, estimatedPrice);
+  const riskScore = calculateRiskScore(parsed, estimatedPrice, userDeposit, input.ownJeonseRight);
+  if (riskScore.claimRatios) riskScore.claimRatios.marketJeonseRatio = marketData?.jeonseRatio ?? null;
 
   // 4-1: 그래프 기반 권리관계 분석
   const graphAnalysis = analyzeRightsGraph(parsed, estimatedPrice);
@@ -178,9 +160,7 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
   const contractClauses = generateContractClauses(riskScore, parsed);
 
   // 5단계: PropertyInfo — 주소 기반 조회(틸코/주소검색)면 입력 주소를 우선 표기
-  const displayAddress = (inputSource === "tilko" || inputSource === "address") && userAddress
-    ? userAddress
-    : parsed.title.address || address;
+  const displayAddress = address;
 
   // 최근 거래: 추정가 산정에 실제 사용한 비교매물(건물명/면적 매칭) 중 가장 최근 1건만 사용한다.
   // 구/군 전체 평균(district_avg)·fallback은 대상 물건과 평형·건물이 달라 추정가와 모순되므로 표기하지 않는다.
@@ -194,6 +174,8 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
 
   const propertyInfo = {
     address: displayAddress,
+    unitNumber: parsed.title.unitNumber,
+    propUid: parsed.title.propUid,
     type: parsed.title.purpose || (buildingResult?.mainPurpose || "용도 미확인"),
     area: parsed.title.area || "",
     buildYear: parsed.title.buildingDetail || "",
@@ -294,6 +276,9 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
           grade: riskScore.grade,
           gradeLabel: riskScore.gradeLabel,
           factors: riskScore.factors,
+          claimRatios: riskScore.claimRatios,
+          decisiveHighRisk: riskScore.decisiveHighRisk,
+          scoreRuleVersion: riskScore.scoreRuleVersion,
           mortgageRatio: riskScore.mortgageRatio,
         },
         estimatedPrice,
@@ -374,6 +359,10 @@ export async function runAnalysisPipeline(input: AnalysisInput) {
   } catch {
     aiOpinion = "AI 의견을 생성할 수 없습니다. API 키를 확인해주세요.";
   }
+  }
+
+  if (riskScore.decisiveHighRisk) {
+    aiOpinion = `${riskScore.decisiveHighRisk.reason}: 안전점수 ${riskScore.totalScore}점 (${riskScore.gradeLabel}).\n${aiOpinion}`;
   }
 
   // 최종 검증

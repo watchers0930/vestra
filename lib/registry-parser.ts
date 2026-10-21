@@ -10,6 +10,8 @@
 // ─── 타입 정의 ───
 
 export interface TitleSection {
+  parsingWarnings?: string[];
+  lotAddress?: string;
   address: string;
   buildingDetail: string;
   area: string;

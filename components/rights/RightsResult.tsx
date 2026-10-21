@@ -22,7 +22,10 @@ import { SourceCitations } from "@/components/common/SourceCitations";
 import { NerHighlight } from "@/components/common/NerHighlight";
 import { StructuredRegistryView } from "@/components/rights/StructuredRegistryView";
 import { SafetyChecklist } from "@/components/rights/SafetyChecklist";
-import { ScoreGauge, ScholarPapers } from "@/components/results";
+import { ScholarPapers } from "@/components/results";
+import { RightsScoreCard } from "@/components/rights/RightsScoreCard";
+import { HighRiskSummary } from "@/components/rights/HighRiskSummary";
+import { VScoreExplainPanel } from "@/components/rights/VScoreExplainPanel";
 import { KaptInfoCard } from "@/components/common/KaptInfoCard";
 import SafetyDiagnosisCard from "@/components/results/SafetyDiagnosisCard";
 import dynamic from "next/dynamic";
@@ -33,7 +36,7 @@ const RightsGraphView = dynamic(
 );
 import { useAddressGeocode } from "./hooks/useAddressGeocode";
 import type { AddressTab, UnifiedResult } from "./rights-result-types";
-import { SEVERITY_STYLES, RISK_CONFIG, getScoreLabel } from "./rights-result-styles";
+import { SEVERITY_STYLES, RISK_CONFIG } from "./rights-result-styles";
 
 // UnifiedResult는 여러 화면이 이 경로에서 import하므로 재노출 유지
 export type { UnifiedResult } from "./rights-result-types";
@@ -80,54 +83,40 @@ export function RightsResult({ result, rawText }: RightsResultProps) {
         </Card>
       ) : (
       <>
-      {/* 안전도 점수 + 핵심 지표 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="p-6 flex flex-col items-center justify-center">
-          <h3 className="text-sm font-medium text-gray-500 mb-4">안전도 점수</h3>
-          <ScoreGauge score={result.riskAnalysis.safetyScore} size="lg" grade={getScoreLabel(result.riskAnalysis.safetyScore)} showLabel={false} />
-          <div className="mt-4 grid grid-cols-2 gap-4 w-full text-center">
-            <div>
-              <p className="text-xs text-gray-400">근저당비율</p>
-              <p className="text-lg font-bold text-gray-900">{result.riskAnalysis.mortgageRatio.toFixed(1)}%</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400">전세가율</p>
-              <p className="text-lg font-bold text-gray-900">{result.riskAnalysis.jeonseRatio}%</p>
-            </div>
-          </div>
-          <div className="mt-3 flex gap-1.5">
-            <span className="px-2 py-0.5 text-[9px] rounded-full bg-emerald-100 text-emerald-700">등기부등본 실제 데이터</span>
-            {result.dataSource?.molitAvailable && (
-              <span className="px-2 py-0.5 text-[9px] rounded-full bg-blue-100 text-blue-700">MOLIT 실거래</span>
-            )}
-          </div>
-        </Card>
+      {/* ⑤ 배치: 고위험 요약 → 독립 안전점수 카드 → 상세 위험 목록 (설계 §4.2) */}
+      {/* 1) 고위험 요약 — 화면 최초 영역(모바일 포함). 고위험 없으면 렌더 안 됨 */}
+      <HighRiskSummary result={result} />
 
-        {/* 위험 분석 항목 */}
-        <Card className="lg:col-span-2 p-6">
-          <h3 className="text-sm font-medium text-gray-500 mb-4">위험 분석 항목 ({result.riskAnalysis.risks.length}건)</h3>
-          <div className="space-y-2 max-h-[400px] overflow-y-auto">
-            {result.riskAnalysis.risks.length > 0 ? result.riskAnalysis.risks.map((risk, i) => {
-              const c = RISK_CONFIG[risk.level];
-              const Icon = c.icon;
-              return (
-                <div key={i} className={cn("flex items-start gap-3 rounded-lg border p-3", c.bg)}>
-                  <Icon size={16} className={cn("mt-0.5 flex-shrink-0", c.iconColor)} />
-                  <div>
-                    <p className={cn("text-sm font-medium", c.text)}>{risk.title}</p>
-                    <p className={cn("text-xs mt-0.5", c.descText)}>{risk.description}</p>
-                  </div>
+      {/* 2) 독립 안전점수 카드 — 점수·지표 표시 전용 */}
+      <RightsScoreCard result={result} />
+
+      {/* 3) 상세 위험 분석 항목 */}
+      <Card id="rights-risk-detail" className="p-6">
+        <h3 className="text-sm font-medium text-gray-500 mb-4">위험 분석 항목 ({result.riskAnalysis.risks.length}건)</h3>
+        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+          {result.riskAnalysis.risks.length > 0 ? result.riskAnalysis.risks.map((risk, i) => {
+            const c = RISK_CONFIG[risk.level];
+            const Icon = c.icon;
+            return (
+              <div key={i} className={cn("flex items-start gap-3 rounded-lg border p-3", c.bg)}>
+                <Icon size={16} className={cn("mt-0.5 flex-shrink-0", c.iconColor)} />
+                <div>
+                  <p className={cn("text-sm font-medium", c.text)}>{risk.title}</p>
+                  <p className={cn("text-xs mt-0.5", c.descText)}>{risk.description}</p>
                 </div>
-              );
-            }) : (
-              <div className="flex items-center gap-2 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-                <CheckCircle size={16} className="text-emerald-500" />
-                <p className="text-sm text-emerald-700">특별한 위험 요소가 발견되지 않았습니다</p>
               </div>
-            )}
-          </div>
-        </Card>
-      </div>
+            );
+          }) : (
+            <div className="flex items-center gap-2 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+              <CheckCircle size={16} className="text-emerald-500" />
+              <p className="text-sm text-emerald-700">특별한 위험 요소가 발견되지 않았습니다</p>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* ② V-Score 5축 세부 평가 설명 */}
+      {result.vScore && <VScoreExplainPanel vScore={result.vScore} />}
 
       {/* 8대 안전진단 */}
       {result.safetyDiagnosis && (
@@ -191,9 +180,15 @@ export function RightsResult({ result, rawText }: RightsResultProps) {
                 </div>
               )}
             </div>
-            <p className="text-sm font-medium text-gray-900">
+            {/* 긴 주소는 줄바꿈으로 완전표시 (말줄임 금지, ⑦) */}
+            <p className="text-sm font-medium text-gray-900 leading-relaxed break-words whitespace-normal">
               {addressInfo ? addressInfo[addressTab] : (result.propertyInfo.address || "-")}
             </p>
+            {result.propertyInfo.unitNumber && (
+              <p className="text-xs text-gray-500 mt-1 break-words">
+                동·호수: <span className="font-medium text-gray-700">{result.propertyInfo.unitNumber}</span>
+              </p>
+            )}
             {addressInfo?.zipCode && addressInfo.zipCode !== "-" && (
               <p className="text-[11px] text-gray-400 mt-1">우편번호: {addressInfo.zipCode}</p>
             )}

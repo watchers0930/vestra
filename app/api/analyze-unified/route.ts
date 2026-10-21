@@ -1,3 +1,5 @@
+import { analysisInputSchema } from "@/schemas/analyze-unified";
+import { JsonBodyError, readLimitedJson } from "@/lib/http/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
 import { fetchComprehensivePrices } from "@/lib/molit-api";
@@ -150,7 +152,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { rawText: rawInput, estimatedPrice: userPrice, address: userAddress, source: inputSource } = await req.json();
+    let body: unknown;
+    // 60,000자의 JSON 유니코드 이스케이프(문자당 최대 6바이트)도 허용한다.
+    try { body = await readLimitedJson(req, 384 * 1024); } catch (error) {
+      if (error instanceof JsonBodyError && error.status === 413) {
+        return NextResponse.json({ error: "입력 데이터가 너무 큽니다." }, { status: 413 });
+      }
+      return NextResponse.json({ error: "입력값을 확인해주세요." }, { status: 400 });
+    }
+    const validated = analysisInputSchema.safeParse(body);
+    if (!validated.success) return NextResponse.json({ error: "입력값을 확인해주세요." }, { status: 400 });
+    const { rawText: rawInput, estimatedPrice: userPrice, userDeposit, ownJeonseRight, address: userAddress, source: inputSource } = validated.data;
 
     const rawText = sanitizeInput(rawInput);
 
@@ -165,6 +177,8 @@ export async function POST(req: NextRequest) {
     const result = await runAnalysisPipeline({
       rawText,
       userPrice,
+      userDeposit,
+      ownJeonseRight,
       address: userAddress || "",
       inputSource,
       ip,
@@ -213,7 +227,7 @@ export async function POST(req: NextRequest) {
         estimatedPriceSource: userPrice ? "user" : result.marketData?.sale?.avgPrice ? "molit" : "none",
         inputSource: result.inputSource || "manual",
       },
-    });
+    }, { headers: { "Cache-Control": "no-store" } });
   } catch (error: unknown) {
     return handleApiError(error, "통합 분석");
   }

@@ -12,6 +12,7 @@ import type {
   FraudRiskResult,
   FraudFeatureContribution,
 } from "./patent-types";
+import { applyClaimFraudFloor } from "./risk/fraud-claims-policy";
 import type { RiskScore } from "./risk-scoring";
 import type { ContractAnalysisResult } from "./contract-analyzer";
 
@@ -416,7 +417,7 @@ export function predictFraudRisk(
     similarCases.length,
   );
 
-  return {
+  return applyClaimFraudFloor({
     fraudScore: adjustedScore,
     riskLevel: level,
     riskLabel: label,
@@ -429,7 +430,7 @@ export function predictFraudRisk(
       featureCount: FRAUD_FEATURES.length,
       calculatedAt: new Date().toISOString(),
     },
-  };
+  }, input.riskScore);
 }
 
 /**
@@ -487,6 +488,7 @@ export function extractFeaturesFromRiskScore(
   return {
     riskScore,
     mortgageRatio: riskScore.mortgageRatio,
+    priorityClaimRatio: riskScore.claimRatios?.ratioToMarket ?? undefined,
     seizureCount,
     provisionalSeizureCount,
   };

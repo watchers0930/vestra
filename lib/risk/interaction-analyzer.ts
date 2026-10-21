@@ -59,30 +59,18 @@ export const INTERACTION_RULES: RiskInteractionRule[] = [
 // ─── 상호작용 평가 ───
 
 export function evaluateInteractions(factors: RiskFactor[]): RiskInteractionResult {
-  const factorIds = new Set(factors.map((f) => f.id));
   const appliedRules: RiskInteractionResult["appliedRules"] = [];
   let totalPenalty = 0;
 
   for (const rule of INTERACTION_RULES) {
-    // mortgage_high 패턴: mortgage_로 시작하는 모든 팩터 매칭
-    const matched = rule.factors.every((ruleFactorId) => {
-      if (ruleFactorId.includes("*")) {
-        const prefix = ruleFactorId.replace("*", "");
-        return factors.some((f) => f.id.startsWith(prefix));
-      }
-      return factorIds.has(ruleFactorId);
-    });
-
-    if (!matched) continue;
-
-    // 매칭된 팩터들의 감점 합산
+    // high는 최소 심각도다. 상위 위험 단계로 바뀌어도 복합감점이 사라지지 않는다.
     const matchedFactors = rule.factors.map((rf) => {
-      if (rf.includes("*")) {
-        const prefix = rf.replace("*", "");
-        return factors.find((f) => f.id.startsWith(prefix));
-      }
-      return factors.find((f) => f.id === rf);
-    }).filter(Boolean) as RiskFactor[];
+      const candidates = factors.filter(f => rf === "mortgage_high"
+        ? f.category === "근저당" && (f.severity === "high" || f.severity === "critical")
+        : rf.includes("*") ? f.id.startsWith(rf.replace("*", "")) : f.id === rf);
+      return candidates.sort((a, b) => b.deduction - a.deduction)[0];
+    });
+    if (matchedFactors.some(f => !f)) continue;
 
     const baseDeduction = matchedFactors.reduce((sum, f) => sum + f.deduction, 0);
     const amplifiedDeduction = Math.round(baseDeduction * rule.amplifier);

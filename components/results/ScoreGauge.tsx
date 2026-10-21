@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { ScoreExplainer } from "@/components/common/ScoreExplainer";
+import { getGrade as getPolicyGrade } from "@/lib/risk/grade-policy";
 
 interface ScoreGaugeProps {
   score: number;
@@ -8,6 +9,11 @@ interface ScoreGaugeProps {
   grade?: string;
   showLabel?: boolean;
   scoreType?: "safety" | "risk" | "feasibility" | "contract";
+  /**
+   * 색상 정책. "grade"면 공용 등급 정책(lib/risk/grade-policy)의 색상을 사용한다.
+   * 권리분석 안전점수 전용 — 다른 모델(V-Score·사기위험 등) 고유 의미 게이지는 기본값 유지(설계 §5.1).
+   */
+  colorPolicy?: "default" | "grade";
 }
 
 const sizeConfig = {
@@ -16,7 +22,19 @@ const sizeConfig = {
   lg: { svgSize: 180, radius: 70, stroke: 10, fontSize: "text-3xl", gradeSize: "text-sm" },
 };
 
-function getColor(score: number): string {
+/** 공용 등급 정책 색상명 → hex (게이지 stroke/텍스트용) */
+const GRADE_HEX: Record<string, string> = {
+  emerald: "#10b981",
+  blue: "#3b82f6",
+  amber: "#f59e0b",
+  orange: "#f97316",
+  red: "#ef4444",
+};
+
+function getColor(score: number, colorPolicy: "default" | "grade"): string {
+  if (colorPolicy === "grade") {
+    return GRADE_HEX[getPolicyGrade(score).color] ?? "#6e6e73";
+  }
   if (score >= 80) return "#10b981";
   if (score >= 60) return "#3b82f6";
   if (score >= 40) return "#f59e0b";
@@ -40,11 +58,12 @@ export function ScoreGauge({
   grade,
   showLabel = true,
   scoreType,
+  colorPolicy = "default",
 }: ScoreGaugeProps) {
   const config = sizeConfig[size];
   const circumference = 2 * Math.PI * config.radius;
   const progress = (score / 100) * circumference;
-  const color = getColor(score);
+  const color = getColor(score, colorPolicy);
   const displayGrade = grade || getGrade(score);
 
   return (

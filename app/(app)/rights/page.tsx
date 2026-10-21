@@ -26,6 +26,7 @@ export default function RightsAnalysisPage() {
     inputMode, setInputMode,
     rawText, setRawText,
     estimatedPrice, setEstimatedPrice,
+    userDeposit, setUserDeposit,
     step, result, error, setError,
     fileName, fileType, isDragging, isExtracting,
     analysisId, previousAnalysis,
@@ -89,6 +90,8 @@ export default function RightsAnalysisPage() {
         setRawText={setRawText}
         estimatedPrice={estimatedPrice}
         setEstimatedPrice={setEstimatedPrice}
+        userDeposit={userDeposit}
+        setUserDeposit={setUserDeposit}
         step={step}
         fileName={fileName}
         isDragging={isDragging}

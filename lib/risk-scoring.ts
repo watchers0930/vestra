@@ -1,3 +1,5 @@
+import { getGrade } from "./risk/grade-policy";
+import { buildClaimRatios, evaluateClaimRatios, decisiveClaimRisk, SCORE_RULE_VERSION, type OwnJeonseRight, type ClaimRatioSet } from "./risk/claims-policy";
 /**
  * VESTRA 리스크 스코어링 알고리즘
  * ──────────────────────────────
@@ -21,7 +23,6 @@ import {
   evaluateProvisionalRegistration,
   evaluateTrust,
   evaluateOwnershipFrequency,
-  evaluateTotalClaims,
   evaluateMultipleMortgages,
   evaluateLeaseRegistration,
   evaluateWarningRegistration,
@@ -55,46 +56,32 @@ export interface RiskScore {
   mortgageRatio: number;
   totalDeduction: number;
   summary: string;
+  claimRatios?: ClaimRatioSet;
+  /** 레거시 입력에는 없을 수 있다. 신규 산출물은 VersionedRiskScore로 보장한다. */
+  scoreRuleVersion?: string;
+  decisiveHighRisk?: { reason: string; basis: "ratioToMarket" | "ratioToDeposit" | "combinedBurden"; ratio: number } | null;
   interactionPenalties?: import("./patent-types").RiskInteractionResult;
   temporalPatterns?: import("./patent-types").TemporalRiskResult;
 }
 
+export interface VersionedRiskScore extends RiskScore { scoreRuleVersion: string; }
+
 // ─── 등급 체계 ───
-
-interface GradeInfo {
-  label: string;
-  color: string;
-}
-
-const GRADE_MAP: Record<RiskGrade, GradeInfo> = {
-  A: { label: "안전", color: "emerald" },
-  B: { label: "양호", color: "blue" },
-  C: { label: "주의", color: "amber" },
-  D: { label: "위험", color: "orange" },
-  F: { label: "매우위험", color: "red" },
-};
-
-function getGrade(score: number): RiskGrade {
-  if (score >= 85) return "A";
-  if (score >= 70) return "B";
-  if (score >= 50) return "C";
-  if (score >= 30) return "D";
-  return "F";
-}
 
 // ─── 메인 스코어링 함수 ───
 
 export function calculateRiskScore(
   parsed: ParsedRegistry,
-  estimatedPrice?: number
-): RiskScore {
+  estimatedPrice?: number,
+  userDeposit?: number,
+  ownJeonseRight?: OwnJeonseRight
+): VersionedRiskScore {
   const allFactors: RiskFactor[] = [];
   let totalDeduction = 0;
 
   // 1. 근저당 비율 평가
   const mortgageEval = evaluateMortgageRatio(parsed, estimatedPrice || 0);
-  allFactors.push(...mortgageEval.factors);
-  totalDeduction += mortgageEval.deduction;
+  const claimRatios = buildClaimRatios(parsed, estimatedPrice, userDeposit, ownJeonseRight);
 
   // 2. 압류/가압류 평가
   const seizureFactors = evaluateSeizure(parsed);
@@ -132,9 +119,19 @@ export function calculateRiskScore(
   totalDeduction += multiMortgageFactors.reduce((s, f) => s + f.deduction, 0);
 
   // 9. 선순위채권 합산 분석 (근저당+전세 vs 시세)
-  const totalClaimsEval = evaluateTotalClaims(parsed, estimatedPrice || 0);
-  allFactors.push(...totalClaimsEval.factors);
-  totalDeduction += totalClaimsEval.deduction;
+  const totalClaimsEval = evaluateClaimRatios(claimRatios);
+  // 기본 감점은 max 한 번만 반영하되 양쪽 경고는 보존한다.
+  // 감점을 배정받지 않은 경고도 심각도·근거를 유지해 고위험 안내에서 누락되지 않게 한다.
+  const debtDeduction = Math.max(mortgageEval.deduction, totalClaimsEval.deduction);
+  const claimsPrimary = totalClaimsEval.deduction >= mortgageEval.deduction;
+  const warningOnly = (f: RiskFactor): RiskFactor => ({ ...f, deduction: 0,
+    detail: `${f.detail} 기본 감점은 근저당·합산채권 중 큰 값에 한 번만 반영했습니다.` });
+  const debtFactors = [
+    ...mortgageEval.factors.map(f => claimsPrimary ? warningOnly(f) : f),
+    ...totalClaimsEval.factors.map(f => !claimsPrimary && f.deduction > 0 ? warningOnly(f) : f),
+  ];
+  allFactors.push(...debtFactors);
+  totalDeduction += debtDeduction;
 
   // 10. 임차권등기명령 평가
   const leaseRegFactors = evaluateLeaseRegistration(parsed);
@@ -157,7 +154,7 @@ export function calculateRiskScore(
   totalDeduction += purposeFactors.reduce((s, f) => s + f.deduction, 0);
 
   // 14. 위험요소 상호작용 평가 (비선형 증폭)
-  const interactionPenalties = evaluateInteractions(allFactors);
+  const interactionPenalties = evaluateInteractions([...allFactors.filter(f => !mortgageEval.factors.some(m => m.id === f.id)), ...mortgageEval.factors]);
   if (interactionPenalties.totalInteractionPenalty > 0) {
     allFactors.push({
       id: "interaction_penalty",
@@ -187,12 +184,14 @@ export function calculateRiskScore(
 
   // 최종 점수 계산 (최소 0점)
   const totalScore = Math.max(0, 100 - totalDeduction);
-  const grade = getGrade(totalScore);
-  const { label: gradeLabel, color: gradeColor } = GRADE_MAP[grade];
+  const { grade, label: gradeLabel, color: gradeColor } = getGrade(totalScore);
 
   const summary = generateSummary(totalScore, grade, gradeLabel, allFactors, parsed);
 
   return {
+    claimRatios,
+    scoreRuleVersion: SCORE_RULE_VERSION,
+    decisiveHighRisk: decisiveClaimRisk(claimRatios),
     totalScore,
     grade,
     gradeLabel,

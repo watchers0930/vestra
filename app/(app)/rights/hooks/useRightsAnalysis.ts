@@ -27,7 +27,15 @@ export interface IssuedRegistryAnalysisPayload {
 export function useRightsAnalysis() {
   const [inputMode, setInputMode] = useState<InputMode>("file");
   const [rawText, setRawText] = useState("");
-  const [estimatedPrice, setEstimatedPrice] = useState(850000000);
+  const [estimatedPrice, setPriceState] = useState(850000000);
+  // 사용자가 '이 물건에 대해 명시 입력한 시세'만 ref에 보관해 서버로 보낸다(#1). 기본값(8.5억)·geo·결과 자동값을
+  // 확정 시세로 보내면 미확인 시세가 100점·A로 오인된다. ref라 조회 중 입력(지연 응답)도 최신값이 반영되고,
+  // 물건 변경 시 null로 리셋돼 stale 재전송이 없다. geo/결과는 표시용 state만 갱신한다.
+  const userPriceRef = useRef<number | null>(null);
+  const setEstimatedPrice = useCallback((v: number) => { setPriceState(v); userPriceRef.current = v; }, []);   // 사용자 입력
+  const setEstimatedPriceRaw = useCallback((v: number) => { setPriceState(v); }, []);                          // geo·결과(표시용)
+  // 실제 계약 전세보증금(원). 미입력(null)이면 서버에 전달하지 않아 시장평균으로 조용히 대체하지 않는다(설계 §4.1).
+  const [userDeposit, setUserDeposit] = useState<number | null>(null);
   const [step, setStep] = useState<AnalysisStep>("idle");
   const [result, setResult] = useState<UnifiedResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -126,8 +134,8 @@ export function useRightsAnalysis() {
         if (p?.sale?.avgPrice) autoPrice = p.sale.avgPrice;
         else if (p?.rent?.avgDeposit) autoPrice = p.rent.avgDeposit;
       }
-      if (autoPrice > 0) setEstimatedPrice(autoPrice);
-      const priceForAnalysis = autoPrice > 0 ? autoPrice : estimatedPrice;
+      // 사용자가 이 물건에 시세를 명시 설정하지 않았을 때만 geo 자동값을 표시에 반영(사용자값을 덮지 않음).
+      if (autoPrice > 0 && userPriceRef.current == null) setEstimatedPriceRaw(autoPrice);
 
       // 2. 틸코 성공 시 실 등기부 텍스트, 실패 시 간이 텍스트 폴백
       let registryText: string;
@@ -185,8 +193,11 @@ export function useRightsAnalysis() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           rawText: registryText,
-          estimatedPrice: priceForAnalysis,
+          // 사용자가 이 물건에 명시 설정한 경우만 전송. 아니면 서버가 실거래로 직접 추정(또는 미확인 감점)한다(#1).
+          // geo 자동값을 client가 재전송하지 않아 서버 추정·미확인 경로를 우회하지 않는다.
+          ...(userPriceRef.current != null ? { estimatedPrice: userPriceRef.current } : {}),
           source: registrySource === "tilko" ? "tilko" : "address",
+          ...(userDeposit !== null ? { userDeposit } : {}),
         }),
       });
       const data = await res.json();
@@ -290,7 +301,13 @@ export function useRightsAnalysis() {
       const res = await fetch("/api/analyze-unified", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rawText, estimatedPrice, source: tilkoSource ? "tilko" : "manual" }),
+        body: JSON.stringify({
+          rawText,
+          // 사용자가 명시 설정했을 때만 전송(기본 8.5억이 확정 시세로 오인되는 것 방지). 아니면 서버 실거래 추정/미확인 감점(#1).
+          ...(userPriceRef.current != null ? { estimatedPrice: userPriceRef.current } : {}),
+          source: tilkoSource ? "tilko" : "manual",
+          ...(userDeposit !== null ? { userDeposit } : {}),
+        }),
         signal: controller.signal,
       });
       const data = await res.json();
@@ -338,7 +355,7 @@ export function useRightsAnalysis() {
     setAnalysisId(payload.analysis.id || `rights_${Date.now()}`);
 
     if (data.propertyInfo?.estimatedPrice) {
-      setEstimatedPrice(data.propertyInfo.estimatedPrice);
+      setEstimatedPriceRaw(data.propertyInfo.estimatedPrice); // 결과 반영은 표시용(사용자 명시 설정 아님)
     }
 
     addAnalysis({
@@ -354,6 +371,9 @@ export function useRightsAnalysis() {
 
   // 새 분석 결과가 나오면 저장 상태 초기화
   useEffect(() => { setAssetSaved(false); }, [result]);
+  // 물건(주소·파일)이 바뀌면 이전 물건의 사용자 시세가 재전송되지 않게 리셋한다(#1 stale 방지).
+  // rawText는 제외한다 — 분석 완료가 등기 원문으로 rawText를 갱신하면서 사용자 시세를 지우던 회귀를 막는다(#3).
+  useEffect(() => { userPriceRef.current = null; }, [tilkoAddress, fileName]);
 
   // '내 자산으로 저장' — 분석 결과를 명시적으로 대시보드 자산에 등록
   const saveToAsset = useCallback(() => {
@@ -383,6 +403,7 @@ export function useRightsAnalysis() {
     inputMode, setInputMode,
     rawText, setRawText,
     estimatedPrice, setEstimatedPrice,
+    userDeposit, setUserDeposit,
     step, result, error, setError,
     fileName, fileType, isDragging, isExtracting,
     analysisId, previousAnalysis,

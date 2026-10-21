@@ -25,6 +25,8 @@ interface Props {
   setRawText: (t: string) => void;
   estimatedPrice: number;
   setEstimatedPrice: (v: number) => void;
+  userDeposit: number | null;
+  setUserDeposit: (v: number | null) => void;
   step: AnalysisStep;
   fileName: string | null;
   isDragging: boolean;
@@ -54,6 +56,7 @@ export function RightsInputCard({
   inputMode, setInputMode,
   rawText, setRawText,
   estimatedPrice, setEstimatedPrice,
+  userDeposit, setUserDeposit,
   step, fileName,
   isDragging, isExtracting,
   tilkoAddress, setTilkoAddress,
@@ -206,7 +209,7 @@ export function RightsInputCard({
                 onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.10)"; }}
               />
               <button
-                onClick={handleAddressAnalyze}
+                onClick={() => handleAddressAnalyze()}
                 disabled={tilkoFetching || tilkoAddress.trim().length < 4}
                 style={{
                   display: "inline-flex",
@@ -329,6 +332,62 @@ export function RightsInputCard({
             />
             <p style={{ fontSize: "13px", color: "#aeaeb2", marginTop: "4px" }}>
               MOLIT 실거래 데이터가 있으면 자동으로 시세를 반영합니다
+            </p>
+          </div>
+        )}
+
+        {/* 실제 계약 전세보증금 (선택) — 선순위/보증금 비율(C/D) 산정에 사용. 미입력 시 시장평균으로 대체하지 않음 */}
+        {rawText && (
+          <div
+            style={{
+              marginTop: "12px",
+              padding: "14px 16px",
+              background: "rgba(16,185,129,0.04)",
+              borderRadius: "12px",
+              border: "1px solid rgba(16,185,129,0.12)",
+            }}
+          >
+            <label
+              htmlFor="rights-user-deposit"
+              style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#1d1d1f", marginBottom: "8px" }}
+            >
+              실제 계약 전세보증금 <span style={{ fontWeight: 400, color: "#aeaeb2" }}>(선택)</span>
+            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <input
+                id="rights-user-deposit"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={100}
+                value={userDeposit !== null ? Math.round(userDeposit / 10000) : ""}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  if (v === "") { setUserDeposit(null); return; }
+                  const man = Number(v);
+                  if (!Number.isFinite(man) || man < 0) return;
+                  setUserDeposit(Math.round(man) * 10000);
+                }}
+                placeholder="예: 39000"
+                aria-label="실제 계약 전세보증금 (만원 단위)"
+                style={{
+                  flex: 1,
+                  padding: "10px 14px",
+                  borderRadius: "10px",
+                  border: "1.5px solid rgba(0,0,0,0.10)",
+                  fontSize: "13.5px",
+                  outline: "none",
+                  background: "#fff",
+                  color: "#1d1d1f",
+                  boxSizing: "border-box",
+                }}
+              />
+              <span style={{ fontSize: "13px", color: "#6e6e73", whiteSpace: "nowrap" }}>만원</span>
+            </div>
+            <p style={{ fontSize: "12.5px", color: "#86868b", marginTop: "6px", lineHeight: 1.5 }}>
+              {userDeposit !== null && userDeposit > 0
+                ? `입력값: ${formatKRW(userDeposit)} · 선순위 채권 대비 보증금 비율 산정에 사용됩니다`
+                : "입력하면 선행 채권이 내 보증금 대비 얼마인지(C/D)까지 함께 평가합니다. 미입력 시 시장 평균으로 대체하지 않습니다."}
             </p>
           </div>
         )}

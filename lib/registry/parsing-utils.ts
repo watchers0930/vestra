@@ -1,3 +1,4 @@
+import { areaValues } from "./title-area-parser";
 /**
  * 등기부등본 파싱 유틸리티
  *
@@ -139,8 +140,8 @@ export function compressFloorData(text: string): string {
 
 /** 면적 추출 */
 export function extractArea(text: string): string {
-  const m = text.match(/([\d.]+)\s*㎡/);
-  return m ? `${m[1]}㎡` : "";
+  const values = areaValues(text);
+  return values.length ? `${values[0]}㎡` : "";
 }
 
 // ─── 섹션 분리 ───

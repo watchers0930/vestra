@@ -10,6 +10,7 @@ import type { RiskScore } from "@/lib/risk-scoring";
 import type { ValidationResult } from "@/lib/validation-engine";
 import type { SourceCitation } from "@/lib/analysis-sources";
 import type { KaptInfoData } from "@/components/common/KaptInfoCard";
+import type { VScoreResult } from "@/lib/patent-types";
 
 export type AddressTab = "admin" | "jibun" | "road";
 
@@ -29,7 +30,12 @@ export interface RiskItem {
 export interface UnifiedResult {
   propertyInfo: {
     address: string;
+    /** 동·호수 (표제부에서 분리 추출, ⑦). address와 중복 없이 조합 표시 */
+    unitNumber?: string;
+    /** 고유 물건 식별자 (있으면 이력 비교 매칭에 우선 사용, ③) */
+    propUid?: string;
     type: string;
+    /** 전유부분 우선 면적 표시값 (⑥). 미확인이면 "" */
     area: string;
     buildYear: string;
     estimatedPrice: number;
@@ -59,6 +65,8 @@ export interface UnifiedResult {
     rent: { avgDeposit: number; jeonseCount: number } | null;
     jeonseRatio: number | null;
   } | null;
+  /** V-Score 5축 평가 결과 (② 설명 패널 표시용). 분석 불가·레거시 이력엔 없을 수 있음 */
+  vScore?: VScoreResult;
   aiOpinion: string;
   qualityGate?: {
     accuracy: number;

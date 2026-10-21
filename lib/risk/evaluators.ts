@@ -1,3 +1,4 @@
+import { buildClaimRatios, evaluateClaimRatios } from "./claims-policy";
 /**
  * 리스크 스코어링 — 개별 평가 함수 모음
  *
@@ -241,52 +242,7 @@ export function evaluateTotalClaims(
   parsed: ParsedRegistry,
   estimatedPrice: number
 ): { deduction: number; factors: RiskFactor[] } {
-  const factors: RiskFactor[] = [];
-  const { totalClaimsAmount } = parsed.summary;
-
-  if (!estimatedPrice || estimatedPrice <= 0 || totalClaimsAmount <= 0) {
-    return { deduction: 0, factors };
-  }
-
-  const ratio = (totalClaimsAmount / estimatedPrice) * 100;
-
-  if (ratio > 100) {
-    factors.push({
-      id: "total_claims_critical",
-      category: "선순위채권",
-      description: "선순위채권 합산 초과",
-      deduction: 25,
-      severity: "critical",
-      detail: `근저당+전세보증금 합산(${(totalClaimsAmount / 100000000).toFixed(1)}억)이 시세의 ${ratio.toFixed(1)}%로, 시세를 초과합니다. 보증금 전액 미회수 위험이 매우 높습니다.`,
-    });
-    return { deduction: 25, factors };
-  }
-
-  if (ratio > 80) {
-    factors.push({
-      id: "total_claims_high",
-      category: "선순위채권",
-      description: "선순위채권 합산 위험",
-      deduction: 15,
-      severity: "high",
-      detail: `근저당+전세보증금 합산(${(totalClaimsAmount / 100000000).toFixed(1)}억)이 시세의 ${ratio.toFixed(1)}%입니다. 경매 시 보증금 전액 회수가 어려울 수 있습니다.`,
-    });
-    return { deduction: 15, factors };
-  }
-
-  if (ratio > 60) {
-    factors.push({
-      id: "total_claims_moderate",
-      category: "선순위채권",
-      description: "선순위채권 합산 주의",
-      deduction: 8,
-      severity: "medium",
-      detail: `근저당+전세보증금 합산(${(totalClaimsAmount / 100000000).toFixed(1)}억)이 시세의 ${ratio.toFixed(1)}%입니다. 추가 채권 설정 시 위험 수준에 도달할 수 있습니다.`,
-    });
-    return { deduction: 8, factors };
-  }
-
-  return { deduction: 0, factors };
+  return evaluateClaimRatios(buildClaimRatios(parsed, estimatedPrice));
 }
 
 // ─── 임차권등기 ───

@@ -2,6 +2,7 @@
  * RightsResult 스타일 상수 + 표시 헬퍼
  */
 import { AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { getGrade } from "@/lib/risk/grade-policy";
 
 /** 위험요인 심각도별 배지 스타일 */
 export const SEVERITY_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -18,9 +19,11 @@ export const RISK_CONFIG = {
   safe: { bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-700", descText: "text-emerald-600", icon: CheckCircle, iconColor: "text-emerald-500" },
 };
 
-/** 안전도 점수 → 라벨 */
+/**
+ * 안전도 점수 → 등급 라벨
+ * 서버/PDF와 동일한 등급 정책(lib/risk/grade-policy)을 단일 소스로 사용한다.
+ * (기존 70/40 기준은 서버 85/70/50/30 기준과 불일치하여 제거 — 설계 §5.1)
+ */
 export function getScoreLabel(score: number) {
-  if (score >= 70) return "안전";
-  if (score >= 40) return "주의";
-  return "위험";
+  return getGrade(score).label;
 }
