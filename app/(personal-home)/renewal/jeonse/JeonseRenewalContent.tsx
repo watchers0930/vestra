@@ -9,19 +9,11 @@ import RegistryIssueBar from "../_shared/RegistryIssueBar";
 import { JeonseEnvAnalysis } from "./components/JeonseEnvAnalysis";
 import { JeonseSafetyAnalysis } from "./components/JeonseSafetyAnalysis";
 import { CommunityCenterModal } from "./components/CommunityCenterModal";
-
-interface ChecklistState {
-  [key: number]: boolean;
-}
-
-// 계약체크리스트 진행 상태 저장 키(브라우저 localStorage). 새로고침·재방문 시 이어서 진행.
-const CK_STORAGE_KEY = "vestra_jeonse_checklist_v1";
+import { ChecklistPanel } from "./components/ChecklistPanel";
 
 export default function JeonseRenewalContent() {
   const [activeTab, setActiveTab] = useState("analysis");
   const [centerOpen, setCenterOpen] = useState(false);
-  const [checklist, setChecklist] = useState<ChecklistState>({});
-  const [ckLastSaved, setCkLastSaved] = useState<string>("");
   const snavRef = useRef<HTMLDivElement>(null);
   const snavScrollRef = useRef<HTMLDivElement>(null);
   // 탭 바가 가로로 넘칠 때(스크롤 끝 아님) 오른쪽에 '더 있음' 화살표 노출
@@ -40,23 +32,6 @@ export default function JeonseRenewalContent() {
     };
   }, []);
 
-  // 계약체크리스트 상태 복원 — 새로고침·재방문 시 여러 날에 걸쳐 이어서 진행
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(CK_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed.state === "object" && parsed.state) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setChecklist(parsed.state);
-        if (typeof parsed.updatedAt === "string") setCkLastSaved(parsed.updatedAt);
-      }
-    } catch { /* 저장값 손상 시 무시(기본 빈 상태로 시작) */ }
-  }, []);
-
-  const CK_TOTAL = 15;
-  const checkedCount = Object.values(checklist).filter(Boolean).length;
-
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     if (snavRef.current) {
@@ -64,21 +39,6 @@ export default function JeonseRenewalContent() {
       window.scrollTo({ top, behavior: "smooth" });
     }
   };
-
-  const toggleCk = (idx: number) => {
-    setChecklist((prev) => {
-      const next = { ...prev, [idx]: !prev[idx] };
-      // 변경 즉시 브라우저에 저장(자동 저장) + 마지막 수정 시각 기록
-      try {
-        const updatedAt = new Date().toISOString();
-        localStorage.setItem(CK_STORAGE_KEY, JSON.stringify({ state: next, updatedAt }));
-        setCkLastSaved(updatedAt);
-      } catch { /* 저장 실패(용량 등)해도 체크 UI는 정상 동작 */ }
-      return next;
-    });
-  };
-
-  const ckBarWidth = `${(checkedCount / CK_TOTAL) * 100}%`;
 
   const tabs = [
     { id: "guide", label: "절차안내" },
@@ -422,85 +382,7 @@ export default function JeonseRenewalContent() {
 
       {/* ████ PANEL: 계약체크리스트 ████ */}
       <div className={`${s.tab}${activeTab === "checklist" ? " " + s.on : ""}`}>
-        <div className={s.panelWrap}>
-          <p className={s.secEyebrow}>Contract Checklist</p>
-          <h2 className={s.secTitle}>계약체크리스트</h2>
-          <p className={s.secDesc}>전세 계약 전·중·후 반드시 확인해야 할 항목들입니다.<br />체크가 완료되지 않은 항목이 있으면 계약을 진행하지 마세요.</p>
-          <div className={s.ckProgress}>
-            <span style={{ fontSize: "13px", color: "#666", whiteSpace: "nowrap" }}>완료율</span>
-            <div className={s.ckBarWrap}><div className={s.ckBar} style={{ width: ckBarWidth }}></div></div>
-            <span className={s.ckProgTxt}>{checkedCount} / {CK_TOTAL}</span>
-          </div>
-          <p style={{ fontSize: "12px", color: "#8a90a6", marginTop: "8px" }}>
-            체크 상태는 이 브라우저에 자동 저장되어 새로고침하거나 다시 방문해도 이어집니다.
-            {ckLastSaved && ` · 마지막 저장: ${new Date(ckLastSaved).toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" })}`}
-          </p>
-          <div className={s.ckGroupsGrid}>
-            <div className={s.ckGroup}>
-              <div className={s.ckGroupTitle}>계약 전 확인</div>
-              {[
-                { id: 0, label: "등기부등본 열람 및 AI 분석 완료", sub: "근저당·압류·가압류 이상 없음 확인" },
-                { id: 1, label: "전세가율 80% 이하 확인", sub: "매매가 대비 전세 보증금 비율 확인" },
-                { id: 2, label: "임대인 신원 및 소유권 확인", sub: "등기부상 소유자 = 임대인 일치 여부" },
-                { id: 3, label: "공인중개사 자격증 및 사무소 확인", sub: "국가공간정보포털에서 자격증 진위 확인" },
-                { id: 4, label: "건축물대장 위반건축물 여부 확인", sub: "불법 증개축·용도변경 이력 없음" },
-              ].map((item) => (
-                <div key={item.id} className={s.ckItem}>
-                  <input type="checkbox" className={s.ckCb} checked={!!checklist[item.id]} onChange={() => toggleCk(item.id)} />
-                  <label className={`${s.ckLabel}${checklist[item.id] ? " " + s.checked : ""}`} onClick={() => toggleCk(item.id)}>
-                    {item.label}<div className={s.ckSub}>{item.sub}</div>
-                  </label>
-                </div>
-              ))}
-            </div>
-            <div className={s.ckGroup}>
-              <div className={s.ckGroupTitle}>계약 시 확인</div>
-              {[
-                { id: 5, label: "계약서에 특약사항 명시", sub: '"선순위 근저당 ○○원 초과 시 계약 해지" 등' },
-                { id: 6, label: "보증금 지급 계좌 = 임대인 계좌 확인", sub: "제3자 계좌로 이체 요청 시 즉시 거절" },
-                { id: 7, label: "계약서 원본 수령 및 서명 확인", sub: "중개사 기명날인 포함 여부 확인" },
-                { id: 8, label: "잔금 당일 오전 등기부 재열람", sub: "새 근저당·압류 설정 여부 재확인" },
-              ].map((item) => (
-                <div key={item.id} className={s.ckItem}>
-                  <input type="checkbox" className={s.ckCb} checked={!!checklist[item.id]} onChange={() => toggleCk(item.id)} />
-                  <label className={`${s.ckLabel}${checklist[item.id] ? " " + s.checked : ""}`} onClick={() => toggleCk(item.id)}>
-                    {item.label}<div className={s.ckSub}>{item.sub}</div>
-                  </label>
-                </div>
-              ))}
-            </div>
-            <div className={s.ckGroup}>
-              <div className={s.ckGroupTitle}>입주 후 즉시</div>
-              {[
-                { id: 9, label: "전입신고 완료", sub: "입주 당일 또는 다음날 처리" },
-                { id: 10, label: "확정일자 취득", sub: "주민센터 또는 인터넷등기소" },
-                { id: 11, label: "주택임대차신고 완료 (해당 시)", sub: "보증금 6천만원 초과 또는 월세 30만원 초과" },
-              ].map((item) => (
-                <div key={item.id} className={s.ckItem}>
-                  <input type="checkbox" className={s.ckCb} checked={!!checklist[item.id]} onChange={() => toggleCk(item.id)} />
-                  <label className={`${s.ckLabel}${checklist[item.id] ? " " + s.checked : ""}`} onClick={() => toggleCk(item.id)}>
-                    {item.label}<div className={s.ckSub}>{item.sub}</div>
-                  </label>
-                </div>
-              ))}
-            </div>
-            <div className={s.ckGroup}>
-              <div className={s.ckGroupTitle}>보험 · 등기</div>
-              {[
-                { id: 12, label: "전세보증보험 가입 신청", sub: "HUG 또는 SGI — 전입신고 후 1개월 이내" },
-                { id: 13, label: "보증보험 가입증서 수령 및 보관", sub: "만기 시 필요하므로 안전한 곳에 보관" },
-                { id: 14, label: "등기부등본 변동 모니터링 설정", sub: "VESTRA 등기감시로 이상 발생 시 즉시 알림" },
-              ].map((item) => (
-                <div key={item.id} className={s.ckItem}>
-                  <input type="checkbox" className={s.ckCb} checked={!!checklist[item.id]} onChange={() => toggleCk(item.id)} />
-                  <label className={`${s.ckLabel}${checklist[item.id] ? " " + s.checked : ""}`} onClick={() => toggleCk(item.id)}>
-                    {item.label}<div className={s.ckSub}>{item.sub}</div>
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <ChecklistPanel />
       </div>
 
       {/* ████ PANEL: 주변환경분석 ████ */}

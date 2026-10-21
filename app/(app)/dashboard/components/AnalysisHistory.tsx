@@ -59,7 +59,9 @@ export function extractKeyMetrics(type: string, data: Record<string, unknown>): 
   try {
     if (type === "rights" || type === "jeonse") {
       const vScore = data.vScore as Record<string, unknown> | undefined;
-      if (vScore?.finalScore !== undefined) metrics.push({ label: "V-Score", value: `${vScore.finalScore}점` });
+      // V-Score 반환 필드는 `score`. 레거시 이력만 `finalScore` 폴백(설계 §0.2·§4.3)
+      const vScoreVal = vScore?.score ?? vScore?.finalScore;
+      if (vScoreVal !== undefined) metrics.push({ label: "V-Score", value: `${vScoreVal}점` });
       if (vScore?.grade) metrics.push({ label: "등급", value: String(vScore.grade) });
       const fr = data.fraudRisk as Record<string, unknown> | undefined;
       if (fr?.riskLevel) metrics.push({ label: "전세사기 위험", value: String(fr.riskLevel) });

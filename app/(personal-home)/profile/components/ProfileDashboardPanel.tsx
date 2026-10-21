@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { BarChart3, Wallet, Shield, FileText, ArrowRight, Trash2, X, MapPin, Calendar } from "lucide-react";
+import { BarChart3, Wallet, Shield, FileText, ArrowRight, Trash2 } from "lucide-react";
 import { useDashboardData } from "@/app/(app)/dashboard/hooks/useDashboardData";
-import { extractKeyMetrics } from "@/app/(app)/dashboard/components/AnalysisHistory";
 import type { AnalysisRecord } from "@/lib/store";
+import { useAnalysisDetail } from "../hooks/useAnalysisDetail";
+import { AnalysisDetailModal } from "./AnalysisDetailModal";
 import s from "../profile-renewal.module.css";
 
 interface Props {
@@ -21,9 +23,30 @@ function formatEok(won: number): string {
 }
 
 export default function ProfileDashboardPanel({ usage }: Props) {
+  const { data: session } = useSession();
+  const userId = session?.user?.id ?? null;
   const { assets, analyses, totalAssets, totalValue, avgSafety, mounted, handleDeleteAsset, handleDeleteAnalysis } = useDashboardData();
-  const [selected, setSelected] = useState<AnalysisRecord | null>(null);
+  const { openId, detail, loading, error, open, close } = useAnalysisDetail();
+  // 선택 상태를 '선택 당시 사용자'에 귀속시켜 계정 전환 시 이전 계정 메타(주소·날짜)가 잔류하지 않게 한다(설계 §4.3·F04).
+  const [selected, setSelected] = useState<{ record: AnalysisRecord; owner: string | null } | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // 경량 목록 행 클릭 시에만 서버 본인 상세·직전 비교를 조회(재분석 없음)
+  function openDetail(a: AnalysisRecord) { setSelected({ record: a, owner: userId }); open(a.id); }
+  function closeDetail() { close(); setSelected(null); }
+
+  // 계정 변경 시 열린 모달을 상세 훅과 함께 닫는다(이전 계정 데이터 표시 차단)
+  const prevUserRef = useRef(userId);
+  useEffect(() => {
+    if (prevUserRef.current === userId) return;
+    prevUserRef.current = userId;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelected(null);
+    close();
+  }, [userId, close]);
+
+  // 렌더 시점에도 선택 당시 사용자와 현재 사용자가 다르면 이전 record를 표시하지 않는다(세션 변경 레이스 방지)
+  const activeSelected = selected && selected.owner === userId ? selected.record : null;
 
   async function onDeleteAsset(id: string | undefined, name: string) {
     if (!id) return;
@@ -32,12 +55,12 @@ export default function ProfileDashboardPanel({ usage }: Props) {
   }
 
   async function onDeleteSelected() {
-    if (!selected) return;
+    if (!activeSelected) return;
     if (!confirm("이 분석 이력을 삭제하시겠습니까?")) return;
     setDeleting(true);
-    await handleDeleteAnalysis(selected.id);
+    await handleDeleteAnalysis(activeSelected.id);
     setDeleting(false);
-    setSelected(null);
+    closeDetail();
   }
 
   const metrics = [
@@ -106,10 +129,10 @@ export default function ProfileDashboardPanel({ usage }: Props) {
               <div
                 key={a.id || i}
                 className={s.listRow}
-                onClick={() => setSelected(a)}
+                onClick={() => openDetail(a)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(a); } }}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(a); } }}
                 style={{ cursor: "pointer" }}
                 title="클릭하면 저장된 상세 결과를 다시 볼 수 있습니다"
               >
@@ -154,64 +177,25 @@ export default function ProfileDashboardPanel({ usage }: Props) {
         </div>
       )}
 
-      {/* 분석 이력 상세 재열람 모달 — 저장된 결과를 재분석 없이 다시 확인 */}
-      {selected && (() => {
-        const metrics = extractKeyMetrics(selected.type, selected.data);
-        return (
-          <div
-            onClick={() => setSelected(null)}
-            style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)", padding: 16 }}
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 440, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #f0f0f0" }}>
-                <span style={{ fontSize: 15, fontWeight: 600, color: "#1d1d1f" }}>{selected.typeLabel}</span>
-                <button onClick={() => setSelected(null)} aria-label="닫기" style={{ border: "none", background: "transparent", cursor: "pointer", color: "#86868b", display: "inline-flex", padding: 4 }}>
-                  <X size={16} />
-                </button>
-              </div>
-              <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
-                <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: "#f5f5f7", borderRadius: 12, padding: "10px 14px" }}>
-                  <MapPin size={14} style={{ color: "#86868b", marginTop: 2, flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, color: "#1d1d1f" }}>{selected.address || "주소 정보 없음"}</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#86868b" }}>
-                  <Calendar size={13} />
-                  {selected.date ? `${new Date(selected.date).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })} 분석` : "분석 일자 미상"}
-                </div>
-                {metrics.length > 0 && (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                    {metrics.map((m) => (
-                      <div key={m.label} style={{ background: "#f5f5f7", borderRadius: 12, padding: "10px 14px" }}>
-                        <div style={{ fontSize: 10.5, color: "#86868b", marginBottom: 2 }}>{m.label}</div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: "#1d1d1f" }}>{m.value}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div>
-                  <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.03em", color: "#86868b", marginBottom: 8 }}>분석 요약</p>
-                  <p style={{ fontSize: 13.5, lineHeight: 1.6, color: "#1d1d1f" }}>{selected.summary || "요약 정보가 없습니다."}</p>
-                </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderTop: "1px solid #f0f0f0" }}>
-                <Link href="/renewal/rights" style={{ fontSize: 13, fontWeight: 600, color: "#2e4bd8", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  새 분석 하기 <ArrowRight size={13} />
-                </Link>
-                <button
-                  onClick={onDeleteSelected}
-                  disabled={deleting}
-                  style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, color: "#ff3b30", background: "transparent", border: "1px solid rgba(255,59,48,0.3)", borderRadius: 8, padding: "6px 12px", cursor: deleting ? "default" : "pointer", opacity: deleting ? 0.6 : 1 }}
-                >
-                  <Trash2 size={14} /> {deleting ? "삭제 중..." : "이력 삭제"}
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {/* 분석 이력 상세·비교 모달 — 저장된 스냅샷으로 본인 상세·직전 비교·PDF (재분석 없음) */}
+      {activeSelected && (
+        <AnalysisDetailModal
+          record={{
+            id: activeSelected.id,
+            type: activeSelected.type,
+            typeLabel: activeSelected.typeLabel || "분석 기록",
+            address: activeSelected.address || "",
+            summary: activeSelected.summary || "",
+            date: activeSelected.date,
+          }}
+          detail={openId === activeSelected.id ? detail : null}
+          loading={loading}
+          error={error}
+          onClose={closeDetail}
+          onDelete={onDeleteSelected}
+          deleting={deleting}
+        />
+      )}
     </div>
   );
 }

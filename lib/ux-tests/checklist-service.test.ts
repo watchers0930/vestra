@@ -1,0 +1,15 @@
+import { beforeEach, expect, it, vi } from "vitest";
+import { Prisma } from "@prisma/client";
+const f=vi.hoisted(()=>({findUnique:vi.fn(),create:vi.fn(),updateMany:vi.fn(),audit:vi.fn(),transaction:vi.fn()}));
+vi.mock("@/lib/prisma",()=>({prisma:{jeonseChecklist:{findUnique:f.findUnique},$transaction:f.transaction}}));
+vi.mock("@/lib/crypto",()=>({hashForSearch:(v:string)=>`hmac:${v}`}));
+import { getChecklist, saveChecklist, checklistDTO } from "@/lib/jeonse/checklist-service";
+const input={address:"서울 101동 101호",schemaVersion:1,expectedRevision:0,state:{"0":true}};
+const stored={address:input.address,schemaVersion:1,revision:1,state:input.state,updatedAt:new Date("2026-10-21")};
+beforeEach(()=>{vi.resetAllMocks();f.transaction.mockImplementation(async callback=>callback({jeonseChecklist:{create:f.create,findUnique:f.findUnique,updateMany:f.updateMany},auditLog:{create:f.audit}}));f.audit.mockResolvedValue({});});
+it("미생성 조회는 revision 0 및 본인 blind index",async()=>{f.findUnique.mockResolvedValue(null);expect(await getChecklist("owner",input.address)).toEqual({...input,expectedRevision:undefined,revision:0,state:{},updatedAt:null});expect(f.findUnique.mock.calls[0][0].where).toEqual({userId_addressKey:{userId:"owner",addressKey:`hmac:${input.address}`}});});
+it("신규 저장은 서버 revision 및 민감정보 없는 감사 로그",async()=>{f.create.mockResolvedValue(stored);const r=await saveChecklist("owner",input);expect(r.conflict).toBe(false);expect(r.dto.revision).toBe(1);expect(f.create.mock.calls[0][0].data).toMatchObject({userId:"owner",addressKey:`hmac:${input.address}`});expect(f.audit).toHaveBeenCalledWith({data:{userId:"owner",action:"JEONSE_CHECKLIST_SAVED"}});});
+it("갱신은 userId·주소·revision CAS",async()=>{f.updateMany.mockResolvedValue({count:1});f.findUnique.mockResolvedValue({...stored,revision:2});const r=await saveChecklist("owner",{...input,expectedRevision:1});expect(r.conflict).toBe(false);expect(f.updateMany.mock.calls[0][0]).toMatchObject({where:{userId:"owner",addressKey:`hmac:${input.address}`,revision:1},data:{revision:{increment:1}}});});
+it("오래된 revision은 덮어쓰기 없이 최신 상태",async()=>{f.updateMany.mockResolvedValue({count:0});f.findUnique.mockResolvedValue({...stored,revision:2});const r=await saveChecklist("owner",{...input,expectedRevision:1});expect(r.conflict).toBe(true);expect(r.dto.revision).toBe(2);expect(f.audit).not.toHaveBeenCalled();});
+it("생성 unique 경합은 롤백 후 본인 최신 상태",async()=>{f.create.mockRejectedValue(new Prisma.PrismaClientKnownRequestError("collision",{code:"P2002",clientVersion:"6"}));f.findUnique.mockResolvedValue(stored);const r=await saveChecklist("owner",input);expect(r.conflict).toBe(true);expect(r.dto.revision).toBe(1);expect(f.findUnique.mock.calls[0][0].where.userId_addressKey.userId).toBe("owner");});
+it("DB 실패 전파·복호화 실패 원문 미노출",async()=>{f.create.mockRejectedValue(new Error("database failure"));await expect(saveChecklist("owner",input)).rejects.toThrow("database failure");expect(()=>checklistDTO(input.address,{...stored,address:"v2:secret"})).toThrow("checklist_decryption_failed");});
