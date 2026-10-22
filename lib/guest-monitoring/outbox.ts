@@ -13,7 +13,7 @@ export async function deliverOutbox(now: Date) {
   const messages = await prisma.guestMonitoringMessage.findMany({ where: { OR: [
     { status: { in: ["pending", "failed"] }, OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: now } }] },
     { status: { in: ["preparing", "dead"] }, nextAttemptAt: { lte: now } },
-  ] }, select: { id: true, guestMonitoringId: true, targetPaidUntil: true, attempts: true, status: true, createdAt: true },
+  ] }, select: { id: true, guestMonitoringId: true, type: true, targetPaidUntil: true, attempts: true, status: true, createdAt: true },
   take: 50, orderBy: { createdAt: "asc" } });
   let sent = 0;
   for (const message of messages) {
@@ -35,7 +35,12 @@ export async function deliverOutbox(now: Date) {
           await alert(tx, message.id);
           return false;
         }
-        const property = await tx.guestMonitoring.findFirst({ where: {
+        // pre_expiry(만료 전 업셀)는 물건이 아직 active이고 해당 주기가 유지될 때만 발송.
+        // 연장되면 paidUntil이 바뀌어 targetPaidUntil 불일치 → 발송 안 함(올바름). expiry_notice는 만료 후.
+        const isPre = message.type === "pre_expiry";
+        const property = await tx.guestMonitoring.findFirst({ where: isPre ? {
+          id: message.guestMonitoringId, status: "active", paidUntil: message.targetPaidUntil,
+        } : {
           id: message.guestMonitoringId, status: "expired", paidUntil: message.targetPaidUntil,
           AND: { paidUntil: { lte: new Date() } },
         }, select: { guestPhone: true } });
@@ -53,7 +58,9 @@ export async function deliverOutbox(now: Date) {
           return !!receipt;
         }
         const send = await prepareSms(property.guestPhone,
-          "[VESTRA] 등기감시 이용기간이 만료되었습니다. 연장: 물건 1건 / 1개월 / 총 10,000원. 본인인증 후 조회·연장: https://vestra.ai.kr/renewal/monitoring/guest/status",
+          isPre
+            ? "[VESTRA] 등기감시가 곧 만료됩니다. 지금 연장하면 끊김 없이 등기 변동을 계속 감시합니다. 물건 1건 / 1개월 / 10,000원. 본인인증 후 연장: https://vestra.ai.kr/renewal/monitoring/guest/status"
+            : "[VESTRA] 등기감시 이용기간이 만료되었습니다. 연장: 물건 1건 / 1개월 / 총 10,000원. 본인인증 후 조회·연장: https://vestra.ai.kr/renewal/monitoring/guest/status",
           { correlationId: message.id });
         // Commit outside the transaction BEFORE external I/O, so a rollback cannot erase it.
         // A crash between this marker and send is inherently ambiguous: reconcile, never resend.
