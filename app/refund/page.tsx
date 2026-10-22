@@ -24,7 +24,7 @@ export default function RefundPage() {
           <p>회사가 제공하는 유료 서비스는 다음과 같습니다.</p>
           <ul className="list-decimal pl-5 mt-2 space-y-2">
             <li>
-              <strong>구독 서비스</strong>: 월간 또는 연간 단위로 결제하는 정기 이용권(프로, 비즈니스).
+              <strong>구독 서비스</strong>: 월간 또는 연간 단위로 결제하는 정기 이용권(프로, 프리미엄).
               결제 기간 동안 AI 분석, 리포트 다운로드, 등기 감시 등 플랜별 기능을 제공하는 디지털 콘텐츠 서비스입니다.
             </li>
             <li>
@@ -48,8 +48,8 @@ export default function RefundPage() {
               </thead>
               <tbody>
                 <tr className="border-b"><td className="px-3 py-2">무료 (FREE)</td><td className="px-3 py-2">0원</td><td className="px-3 py-2">-</td></tr>
-                <tr className="border-b"><td className="px-3 py-2">프로 (PRO)</td><td className="px-3 py-2">29,900원 / 월</td><td className="px-3 py-2">299,000원 / 년</td></tr>
-                <tr><td className="px-3 py-2">비즈니스 (BUSINESS)</td><td className="px-3 py-2">99,000원 / 월</td><td className="px-3 py-2">990,000원 / 년</td></tr>
+                <tr className="border-b"><td className="px-3 py-2">프로 (PRO)</td><td className="px-3 py-2">9,900원 / 월</td><td className="px-3 py-2">95,040원 / 년</td></tr>
+                <tr><td className="px-3 py-2">프리미엄 (PREMIUM)</td><td className="px-3 py-2">29,900원 / 월</td><td className="px-3 py-2">287,040원 / 년</td></tr>
               </tbody>
             </table>
           </div>

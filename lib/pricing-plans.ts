@@ -8,11 +8,11 @@
  * 순수 데이터만 둔다(React/아이콘 의존 없음) — 서버·클라 어디서나 import 가능.
  */
 
-export type PricingPlanKey = "free" | "pro" | "business";
+export type PricingPlanKey = "free" | "pro" | "premium";
 
 export interface PricingPlan {
   key: PricingPlanKey;
-  /** 플랜명 (무료 / 프로 / 비즈니스) */
+  /** 플랜명 (무료 / 프로 / 프리미엄) — 가격·한도는 member-subscription 정본(PRO 9,900·5건 / PREMIUM 29,900·20건)과 일치 */
   name: string;
   /** 월 요금 (원, 숫자) */
   monthlyPrice: number;
@@ -50,11 +50,11 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     key: "pro",
     name: "프로",
-    monthlyPrice: 29900,
-    monthlyLabel: "29,900원",
-    annualPrice: 299000,
-    annualLabel: "299,000원",
-    annualMonthlyEquivLabel: "약 24,917원",
+    monthlyPrice: 9900,
+    monthlyLabel: "9,900원",
+    annualPrice: 95040,
+    annualLabel: "95,040원",
+    annualMonthlyEquivLabel: "약 7,920원",
     period: "/월",
     description: "적극적으로 자산을 관리하는 투자자를 위해",
     features: [
@@ -69,23 +69,19 @@ export const PRICING_PLANS: PricingPlan[] = [
     highlight: true,
   },
   {
-    key: "business",
-    name: "비즈니스",
-    monthlyPrice: 99000,
-    monthlyLabel: "99,000원",
-    annualPrice: 990000,
-    annualLabel: "990,000원",
-    annualMonthlyEquivLabel: "약 82,500원",
+    key: "premium",
+    name: "프리미엄",
+    monthlyPrice: 29900,
+    monthlyLabel: "29,900원",
+    annualPrice: 287040,
+    annualLabel: "287,040원",
+    annualMonthlyEquivLabel: "약 23,920원",
     period: "/월",
-    description: "팀과 함께 사용하는 부동산 전문가를 위해",
+    description: "여러 집을 동시에 감시·관리하는 분께",
     features: [
       "등기감시 (최대 20건)",
-      "프로 플랜 전체 포함",
-      "REST API 접근",
-      "다중 사용자 (최대 10명)",
-      "전담 매니저 배정",
-      "맞춤형 리포트 제작",
-      "SLA 99.9% 보장",
+      "프로 플랜 전체 기능 포함",
+      "우선 고객 지원",
     ],
     highlight: false,
   },
@@ -94,27 +90,24 @@ export const PRICING_PLANS: PricingPlan[] = [
 export const PRICING_PLANS_BY_KEY: Record<PricingPlanKey, PricingPlan> = {
   free: PRICING_PLANS[0],
   pro: PRICING_PLANS[1],
-  business: PRICING_PLANS[2],
+  premium: PRICING_PLANS[2],
 };
 
-/** 요금제 비교표 (무료/프로/비즈니스) */
+/** 요금제 비교표 (무료/프로/프리미엄) */
 export const PRICING_COMPARISON: {
   feature: string;
   free: string | boolean;
   pro: string | boolean;
-  business: string | boolean;
+  premium: string | boolean;
 }[] = [
-  { feature: "등기감시", free: false, pro: "5건", business: "20건" },
-  { feature: "AI 분석 횟수", free: "일 3회", pro: "무제한", business: "무제한" },
-  { feature: "시세 조회", free: true, pro: true, business: true },
-  { feature: "실시간 시세 알림", free: false, pro: true, business: true },
-  { feature: "PDF 리포트", free: false, pro: true, business: true },
-  { feature: "전문가 상담", free: false, pro: "월 1회", business: "무제한" },
-  { feature: "권리분석 상세", free: false, pro: true, business: true },
-  { feature: "세금 시뮬레이션", free: false, pro: true, business: true },
-  { feature: "API 접근", free: false, pro: false, business: true },
-  { feature: "다중 사용자", free: false, pro: false, business: "최대 10명" },
-  { feature: "전담 매니저", free: false, pro: false, business: true },
+  { feature: "등기감시", free: false, pro: "5건", premium: "20건" },
+  { feature: "AI 분석 횟수", free: "일 3회", pro: "무제한", premium: "무제한" },
+  { feature: "시세 조회", free: true, pro: true, premium: true },
+  { feature: "실시간 시세 알림", free: false, pro: true, premium: true },
+  { feature: "PDF 리포트", free: false, pro: true, premium: true },
+  { feature: "전문가 상담", free: false, pro: "월 1회", premium: "월 1회" },
+  { feature: "권리분석 상세", free: false, pro: true, premium: true },
+  { feature: "세금 시뮬레이션", free: false, pro: true, premium: true },
 ];
 
 /** 비회원 단건 상품: 구독 요금제와 별도인 서버 가격 계약. */
