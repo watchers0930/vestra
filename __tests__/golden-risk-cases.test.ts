@@ -20,7 +20,9 @@ import {
   REGISTRY_UNDERWATER,
   REGISTRY_SEIZURE_AUCTION,
   REGISTRY_MULTI_TRANSFER,
+  REGISTRY_CANCELLED_SEIZURE,
 } from "./fixtures/golden-registries";
+// REGISTRY_OWN_JEONSE(G-008)는 파서의 전세권자 holder 추출 버그로 보류 — 수정 후 추가.
 
 // 안전 → 위험 순. rank가 클수록 위험.
 const GRADE_ORDER: RiskGrade[] = ["A", "B", "C", "D", "F"];
@@ -33,8 +35,9 @@ interface GoldenCase {
   realityBasis: string;
   input: { registryText: string; price?: number; deposit?: number };
   expect: {
-    reality: "safe" | "risky";
-    /** risky면 이 등급 이상 위험이어야(같거나 더). safe면 이 등급 이하 안전이어야. */
+    /** safe=안전해야 / risky=위험해야 / uncertain=정보부족이라 안전(A) 단정 금지. */
+    reality: "safe" | "risky" | "uncertain";
+    /** risky면 이 등급 이상 위험이어야(같거나 더). safe면 이 등급 이하 안전이어야. uncertain은 미사용. */
     gradeBoundary: RiskGrade;
     mustHaveFactorPattern?: RegExp;
     mustNotHaveFactorPattern?: RegExp;
@@ -82,6 +85,22 @@ const CASES: GoldenCase[] = [
     input: { registryText: REGISTRY_MULTI_TRANSFER, price: 850_000_000, deposit: 400_000_000 },
     expect: { reality: "risky", gradeBoundary: "D", mustHaveFactorPattern: /ownership_freq/ },
   },
+  {
+    id: "G-006",
+    title: "말소된 가압류 — 과거 가압류 해제 + 근저당 소액",
+    realityBasis:
+      "가압류가 해제(말소)됐고 근저당은 소액이다. 말소된 권리는 현행 위험이 아니다 → 안전(A/B). 말소된 가압류를 현행 위험으로 잡으면 과잉 경고.",
+    input: { registryText: REGISTRY_CANCELLED_SEIZURE, price: 850_000_000, deposit: 300_000_000 },
+    expect: { reality: "safe", gradeBoundary: "B", mustNotHaveFactorPattern: /seizure/ },
+  },
+  {
+    id: "G-007",
+    title: "시세 미확인 — 등기는 안전하나 시세·보증금 정보 없음",
+    realityBasis:
+      "등기 자체는 깨끗하나 시세·보증금이 없어 선순위 부담을 확정할 수 없다. 정보 부족 시 '안전(A)' 단정은 위험 → A가 아니어야 하고 불확실성(claims_unverified)을 반영해야 한다.",
+    input: { registryText: REGISTRY_SAFE }, // 시세·보증금 미입력
+    expect: { reality: "uncertain", gradeBoundary: "A", mustHaveFactorPattern: /unverified/ },
+  },
 ];
 
 describe("골든 분석 신뢰 사례집 — 중대 위험 누락 차단", () => {
@@ -97,12 +116,18 @@ describe("골든 분석 신뢰 사례집 — 중대 위험 누락 차단", () =>
           rank(r.grade),
           `중대 위험 누락: ${c.id}는 현실상 위험인데 엔진 등급=${r.grade}(${r.gradeLabel}). 근거: ${c.realityBasis}`,
         ).toBeGreaterThanOrEqual(rank(c.expect.gradeBoundary));
-      } else {
+      } else if (c.expect.reality === "safe") {
         // 현실 안전 → 엔진이 과잉 경고하면 안 됨.
         expect(
           rank(r.grade),
           `과잉 경고: ${c.id}는 현실상 안전인데 엔진 등급=${r.grade}(${r.gradeLabel}).`,
         ).toBeLessThanOrEqual(rank(c.expect.gradeBoundary));
+      } else {
+        // uncertain: 정보 부족 → 안전(A) 단정 금지. A보다 낮은(덜 안전) 등급이어야.
+        expect(
+          rank(r.grade),
+          `정보 부족인데 안전(A) 단정: ${c.id} 엔진 등급=${r.grade}. 불확실성을 반영해야 함.`,
+        ).toBeGreaterThan(rank("A"));
       }
 
       if (c.expect.mustHaveFactorPattern) {
