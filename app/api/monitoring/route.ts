@@ -95,10 +95,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "인증 필요" }, { status: 401 });
     }
 
-    // 등기감시는 유료 회원 전용 (PRO/BUSINESS 구독 또는 ADMIN)
+    // 등기감시는 유료 회원 전용 (PRO/PREMIUM 구독 또는 ADMIN)
     if (!(await isPaidMember(session.user.id, session.user.role))) {
       return NextResponse.json(
-        { error: "등기감시는 유료 회원(PRO·BUSINESS) 전용입니다. 구독 후 이용해주세요." },
+        { error: "등기감시는 유료 회원(PRO·PREMIUM) 전용입니다. 구독 후 이용해주세요." },
         { status: 403 },
       );
     }
@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ property: reactivated, reactivated: true });
     }
 
-    // 등기감시 등록 제한 (구독 플랜별 — 요금제: PRO 5건 / BUSINESS 20건 / ADMIN 무제한)
+    // 등기감시 등록 제한 (구독 플랜별 — 요금제: PRO 5건 / PREMIUM 20건 / ADMIN 무제한)
     const monitorCount = await prisma.monitoredProperty.count({
       where: { userId: session.user.id, status: "active" },
     });

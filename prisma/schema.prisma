@@ -188,7 +188,7 @@ model DailyUsage {
 model Subscription {
   id         String    @id @default(cuid())
   userId     String    @unique
-  plan       String    @default("FREE") // FREE | PRO | BUSINESS
+  plan       String    @default("FREE") // FREE | PRO | PREMIUM (BUSINESS=레거시 호환)
   price      Int       @default(0) // 월 요금 (원)
   status     String    @default("active") // active | canceled | expired
   startDate  DateTime  @default(now())

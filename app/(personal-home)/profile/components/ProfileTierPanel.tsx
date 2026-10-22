@@ -28,7 +28,9 @@ export default function ProfileTierPanel({
   handleCancelSubscription,
 }: Props) {
   const planLabel = subscription?.plan === "FREE" || !subscription?.plan ? "무료"
-    : subscription.plan === "PRO" ? "프로" : subscription.plan === "BUSINESS" ? "비즈니스" : subscription.plan;
+    : subscription.plan === "PRO" ? "프로"
+    : subscription.plan === "PREMIUM" || subscription.plan === "BUSINESS" ? "프리미엄" // PREMIUM 정본, BUSINESS 레거시 호환
+    : subscription.plan;
 
   return (
     <div>

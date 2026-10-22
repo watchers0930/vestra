@@ -13,7 +13,7 @@ interface Props {
   onClose: () => void;
 }
 
-const PLAN_LABELS: Record<string, string> = { FREE: "무료", PRO: "프로", BUSINESS: "비즈니스" };
+const PLAN_LABELS: Record<string, string> = { FREE: "무료", PRO: "프로", PREMIUM: "프리미엄", BUSINESS: "프리미엄" }; // PREMIUM 정본, BUSINESS 레거시 호환
 const SUB_STATUS_LABELS: Record<string, string> = { active: "활성", canceled: "취소됨", expired: "만료" };
 const USER_TYPE_LABELS: Record<string, string> = { TENANT: "임차/매수인", LANDLORD: "임대/매도인" };
 
