@@ -15,6 +15,12 @@ import { describe, it, expect } from "vitest";
 import { parseRegistry, SAMPLE_REGISTRY_TEXT } from "@/lib/registry-parser";
 import { calculateRiskScore } from "@/lib/risk-scoring";
 import type { RiskGrade } from "@/lib/risk/grade-policy";
+import {
+  REGISTRY_SAFE,
+  REGISTRY_UNDERWATER,
+  REGISTRY_SEIZURE_AUCTION,
+  REGISTRY_MULTI_TRANSFER,
+} from "./fixtures/golden-registries";
 
 // 안전 → 위험 순. rank가 클수록 위험.
 const GRADE_ORDER: RiskGrade[] = ["A", "B", "C", "D", "F"];
@@ -44,11 +50,38 @@ const CASES: GoldenCase[] = [
     input: { registryText: SAMPLE_REGISTRY_TEXT, price: 850_000_000, deposit: 550_000_000 },
     expect: { reality: "risky", gradeBoundary: "D", mustHaveFactorPattern: /claims_critical|seizure/ },
   },
-  // TODO(Phase 1 확장): 등기부 합성으로 아래 케이스 추가
-  //  - G-002 깨끗한 등기(압류·경매 없음, 근저당 50%↓) → safe, A/B
-  //  - G-003 깡통전세(선순위 85%+) → risky, D 이상
-  //  - G-004 압류+경매개시 → risky, F
-  //  - G-005 다중 근저당 + 소유권 빈번 이전(사기 시계열) → risky, D 이상
+  {
+    id: "G-002",
+    title: "깨끗한 등기 — 근저당 소액(시세 18%), 압류·경매 없음",
+    realityBasis:
+      "선순위 근저당이 시세 대비 소액이고 압류·경매가 없다. 보증금 회수 위험이 낮음 → 안전(A/B)이어야 한다. D/F면 과잉 경고.",
+    input: { registryText: REGISTRY_SAFE, price: 850_000_000, deposit: 300_000_000 },
+    expect: { reality: "safe", gradeBoundary: "B", mustNotHaveFactorPattern: /seizure|auction|total_claims_critical/ },
+  },
+  {
+    id: "G-003",
+    title: "깡통전세 — 선순위 근저당 7.2억(시세 8.5억의 85%)",
+    realityBasis:
+      "선순위 근저당이 시세의 85%로, 보증금(5.5억)보다 앞선다. 경매 시 세입자가 보증금을 못 받을 가능성이 높음 → 반드시 위험(D 이상).",
+    input: { registryText: REGISTRY_UNDERWATER, price: 850_000_000, deposit: 550_000_000 },
+    expect: { reality: "risky", gradeBoundary: "D", mustHaveFactorPattern: /total_claims_critical/ },
+  },
+  {
+    id: "G-004",
+    title: "압류 + 임의경매개시결정",
+    realityBasis:
+      "활성 압류와 경매개시결정이 존재한다. 경매가 진행 중이면 보증금 회수가 치명적으로 위험함 → 반드시 위험(D 이상), 압류·경매를 감지해야 한다.",
+    input: { registryText: REGISTRY_SEIZURE_AUCTION, price: 850_000_000, deposit: 400_000_000 },
+    expect: { reality: "risky", gradeBoundary: "D", mustHaveFactorPattern: /seizure|auction/ },
+  },
+  {
+    id: "G-005",
+    title: "다중 근저당 + 소유권 6개월 내 3회 이전(사기 의심 시계열)",
+    realityBasis:
+      "짧은 기간 소유권이 반복 이전되고 다중 근저당이 설정됐다. 명의신탁·깡통전세 사기의 전형적 시계열 → 위험(D 이상), 소유권 빈번 이전을 감지해야 한다.",
+    input: { registryText: REGISTRY_MULTI_TRANSFER, price: 850_000_000, deposit: 400_000_000 },
+    expect: { reality: "risky", gradeBoundary: "D", mustHaveFactorPattern: /ownership_freq/ },
+  },
 ];
 
 describe("골든 분석 신뢰 사례집 — 중대 위험 누락 차단", () => {
