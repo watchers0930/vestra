@@ -251,14 +251,19 @@ export function extractHolder(text: string): string {
   );
   if (keywordMatch) return keywordMatch[1];
 
+  // 등기목적 용어(예: "전세권설정")가 fallback에 holder로 잘못 잡히는 것 방지.
+  // "전세권설정"(5자)은 아래 standaloneMatch에 걸리지만 "근저당권설정"(6자)은 길이로 우연히 안 걸렸던 비대칭을 근본 차단.
+  const DEED_TERM_SUFFIX = /(?:설정|이전|보존|말소|변경|경정|회복|분할|합병|포기|연장)$/;
+  const notDeed = (name: string) => !DEED_TERM_SUFFIX.test(name);
+
   const idMatch = text.match(/([가-힣]{2,5})\s*(?:\d{6}[-–]\d{7}|\d{6}[-–]\*{7}|\d{6}|\d{2}년\s*\d{1,2}월)/);
-  if (idMatch) return idMatch[1];
+  if (idMatch && notDeed(idMatch[1])) return idMatch[1];
 
   const parenMatch = text.match(/([가-힣]{2,5})\s*[（(]/);
-  if (parenMatch) return parenMatch[1];
+  if (parenMatch && notDeed(parenMatch[1])) return parenMatch[1];
 
   const standaloneMatch = text.match(/(?:^|\s{2,})([가-힣]{2,5})(?:\s{2,}|$)/);
-  if (standaloneMatch) return standaloneMatch[1];
+  if (standaloneMatch && notDeed(standaloneMatch[1])) return standaloneMatch[1];
 
   return "";
 }

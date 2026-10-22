@@ -21,8 +21,8 @@ import {
   REGISTRY_SEIZURE_AUCTION,
   REGISTRY_MULTI_TRANSFER,
   REGISTRY_CANCELLED_SEIZURE,
+  REGISTRY_OWN_JEONSE,
 } from "./fixtures/golden-registries";
-// REGISTRY_OWN_JEONSE(G-008)는 파서의 전세권자 holder 추출 버그로 보류 — 수정 후 추가.
 
 // 안전 → 위험 순. rank가 클수록 위험.
 const GRADE_ORDER: RiskGrade[] = ["A", "B", "C", "D", "F"];
@@ -33,7 +33,7 @@ interface GoldenCase {
   title: string;
   /** 엔진과 독립된 현실 근거 — 왜 이 판정이 정답인가. */
   realityBasis: string;
-  input: { registryText: string; price?: number; deposit?: number };
+  input: { registryText: string; price?: number; deposit?: number; ownJeonse?: { order: number; holder: string } };
   expect: {
     /** safe=안전해야 / risky=위험해야 / uncertain=정보부족이라 안전(A) 단정 금지. */
     reality: "safe" | "risky" | "uncertain";
@@ -101,13 +101,26 @@ const CASES: GoldenCase[] = [
     input: { registryText: REGISTRY_SAFE }, // 시세·보증금 미입력
     expect: { reality: "uncertain", gradeBoundary: "A", mustHaveFactorPattern: /unverified/ },
   },
+  {
+    id: "G-008",
+    title: "본인 전세권 — 유일한 선순위가 세입자 본인 전세권(ownJeonse 지정)",
+    realityBasis:
+      "을구의 유일한 권리가 세입자 본인의 전세권(5억)이다. 본인 보증금을 타인 선순위 위험으로 계산하면 과잉 경고. ownJeonse 지정 시 본인 전세권을 제외하면 선순위 위험이 없어 안전(A/B)이어야 한다.",
+    input: {
+      registryText: REGISTRY_OWN_JEONSE,
+      price: 850_000_000,
+      deposit: 500_000_000,
+      ownJeonse: { order: 1, holder: "정민수" },
+    },
+    expect: { reality: "safe", gradeBoundary: "B", mustNotHaveFactorPattern: /total_claims_critical/ },
+  },
 ];
 
 describe("골든 분석 신뢰 사례집 — 중대 위험 누락 차단", () => {
   for (const c of CASES) {
     it(`${c.id}: ${c.title}`, () => {
       const parsed = parseRegistry(c.input.registryText);
-      const r = calculateRiskScore(parsed, c.input.price, c.input.deposit);
+      const r = calculateRiskScore(parsed, c.input.price, c.input.deposit, c.input.ownJeonse);
       const factorIds = r.factors.map((f) => f.id).join(" ");
 
       if (c.expect.reality === "risky") {
