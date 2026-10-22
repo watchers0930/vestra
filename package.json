@@ -1,6 +1,6 @@
 {
   "name": "vestra",
-  "version": "5.202.3",
+  "version": "5.202.4",
   "private": true,
   "overrides": {
     "source-map-js": ">=1.2.2"
