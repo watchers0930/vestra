@@ -64,6 +64,34 @@ export function VScoreMethodology() {
         </div>
       </section>
 
+      {/* 대표 위험 유형 검증 (골든 사례집) */}
+      <section>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">대표 위험 유형 검증</h2>
+        <p className="text-sm leading-relaxed text-gray-600 mb-3">
+          전세 위험의 대표 유형 15가지를 실제 등기부 사례로 구성해, <strong className="text-gray-900">매 배포마다 엔진이 올바르게 판정하는지 자동 검증</strong>합니다.
+          &lsquo;위험한 물건을 안전으로 판정하는 중대 누락&rsquo;이 발생하면 배포가 자동 차단됩니다. 각 사례의 정답은 엔진 규칙이 아니라
+          <strong className="text-gray-900"> &lsquo;실제로 세입자에게 위험한가&rsquo;</strong>라는 현실 기준으로 정합니다.
+        </p>
+        <p className="text-xs text-gray-500 mb-2">엔진이 감지하는 주요 위험 유형</p>
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {[
+            "선순위 채권 과다(깡통전세)", "압류·경매개시", "신탁등기", "소유권이전청구권 가등기",
+            "주택임차권등기(보증금 미반환 이력)", "처분금지가처분", "비주거용(근린생활시설)",
+            "다중 근저당", "소유권 빈번 이전", "본인 전세권 구분", "말소 권리 구분", "정보 부족 반영",
+          ].map((t) => (
+            <span key={t} className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs text-gray-700">{t}</span>
+          ))}
+        </div>
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+          <p className="text-xs font-semibold text-blue-800 mb-1.5">투명 공개 — 검증으로 바로잡은 판정 결함 3건</p>
+          <ul className="space-y-1 text-xs leading-relaxed text-blue-700">
+            <li>· 전세권자(개인) 식별 오류로 세입자 본인 전세권을 과도하게 위험 판정하던 문제 → 수정</li>
+            <li>· 신탁등기(수탁자 소유)를 놓쳐 위험을 과소평가하던 문제 → 수정</li>
+            <li>· 소유권이전청구권 가등기를 &lsquo;양호&rsquo;로 오판하던 위험 누락 → 수정</li>
+          </ul>
+        </div>
+      </section>
+
       {/* 한계(투명 공개) */}
       <section className="rounded-xl border border-amber-200 bg-amber-50 p-5">
         <h2 className="text-sm font-semibold text-amber-800 mb-2">투명 공개 — 한계와 주의</h2>
