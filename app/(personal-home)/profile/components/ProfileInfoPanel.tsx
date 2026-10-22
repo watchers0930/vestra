@@ -21,8 +21,8 @@ const ROLE_CLASS: Record<string, string> = {
 const VERIFY_CLASS: Record<string, string> = {
   none: s.vNone, pending: s.vPending, verified: s.vVerified, rejected: s.vRejected,
 };
-const PLAN_LABEL: Record<string, string> = { FREE: "무료 플랜", PRO: "프로 플랜", BUSINESS: "비즈니스 플랜" };
-const PLAN_CLASS: Record<string, string> = { FREE: s.planFree, PRO: s.planPro, BUSINESS: s.planBiz };
+const PLAN_LABEL: Record<string, string> = { FREE: "무료 플랜", PRO: "프로 플랜", PREMIUM: "프리미엄 플랜", BUSINESS: "프리미엄 플랜" }; // PREMIUM 정본, BUSINESS 레거시 호환
+const PLAN_CLASS: Record<string, string> = { FREE: s.planFree, PRO: s.planPro, PREMIUM: s.planBiz, BUSINESS: s.planBiz };
 
 export default function ProfileInfoPanel({ user, subscription }: Props) {
   const role = user.role || "PERSONAL";

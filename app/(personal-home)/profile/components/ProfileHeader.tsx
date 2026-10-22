@@ -6,8 +6,8 @@ import { isPaidPlan } from "@/lib/subscription-plan";
 import type { UsageData } from "../hooks/useProfileData";
 import s from "../profile-renewal.module.css";
 
-const PLAN_LABEL: Record<string, string> = { PRO: "프로 플랜", BUSINESS: "비즈니스 플랜" };
-const PLAN_CLASS: Record<string, string> = { PRO: s.planPro, BUSINESS: s.planBiz };
+const PLAN_LABEL: Record<string, string> = { PRO: "프로 플랜", PREMIUM: "프리미엄 플랜", BUSINESS: "프리미엄 플랜" }; // PREMIUM 정본, BUSINESS 레거시 호환
+const PLAN_CLASS: Record<string, string> = { PRO: s.planPro, PREMIUM: s.planBiz, BUSINESS: s.planBiz };
 
 /** ISO 날짜 문자열 → "YYYY.MM.DD" (유효하지 않으면 null) */
 function formatYmd(d?: string | null): string | null {

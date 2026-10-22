@@ -103,21 +103,21 @@ export default function PersonalHomeClient() {
             <div className={`${s.featureImg} ${s.fimg1}`} />
             <div className={s.featureBody}>
               <h3 className={s.featureTitle}>전세 위험도 분석</h3>
-              <p className={s.featureDesc}>계약 정보를 입력하면 전세를 설정 필요성과<br />시가 위험도를 AI가 자동 분석합니다.</p>
+              <p className={s.featureDesc}>계약 정보를 입력하면 보증금 안전성과<br />전세 위험도를 AI가 자동 분석합니다.</p>
             </div>
           </Link>
           <Link href="/renewal/rights" className={s.featureCard}>
             <div className={`${s.featureImg} ${s.fimg2}`} />
             <div className={s.featureBody}>
               <h3 className={s.featureTitle}>등기부 관리 분석</h3>
-              <p className={s.featureDesc}>강구 을구 권리관계를 사가 분석하여 위험도와<br />시가 위험도를 한에서 한다면 제공합니다.</p>
+              <p className={s.featureDesc}>갑구·을구 권리관계를 AI가 분석하여<br />위험도와 안전성을 한눈에 제공합니다.</p>
             </div>
           </Link>
           <Link href="/renewal/monitoring" className={s.featureCard}>
             <div className={`${s.featureImg} ${s.fimg3}`} />
             <div className={s.featureBody}>
               <h3 className={s.featureTitle}>등기감시</h3>
-              <p className={s.featureDesc}>등기부동의 변동을 실시간으로 감시하고<br />우경성 권흥 중점을 제공합니다.</p>
+              <p className={s.featureDesc}>등기부 변동을 자동으로 감시하고<br />위험 징후를 즉시 알려드립니다.</p>
             </div>
           </Link>
         </div>

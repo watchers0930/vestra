@@ -66,7 +66,7 @@ export default function MonitoringRenewalClient({ initialAddress = "", initialLi
         <div className={s.subHeroIn}>
           <span className={s.heroChip}>Registry Monitor</span>
           <h1>등기감시</h1>
-          <p className={s.subHeroSub}>등기부 변동을 실시간 감시하고, 블록체인으로 기록을 보호합니다</p>
+          <p className={s.subHeroSub}>등기부 변동을 하루 2회 자동 감시하고, 블록체인으로 기록을 보호합니다</p>
         </div>
       </section>
 
