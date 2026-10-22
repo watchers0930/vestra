@@ -25,6 +25,8 @@ import {
   REGISTRY_TRUST,
   REGISTRY_PROVISIONAL,
   REGISTRY_BORDERLINE,
+  REGISTRY_LEASE,
+  REGISTRY_DISPOSITION,
 } from "./fixtures/golden-registries";
 
 // 안전 → 위험 순. rank가 클수록 위험.
@@ -141,6 +143,22 @@ const CASES: GoldenCase[] = [
       "선순위 근저당(6.7억)과 보증금(5억)의 합(11.7억)이 시세(8.5억)를 크게 초과한다. 경매 시 보증금 회수가 불가능에 가까움 → 위험(D 이상).",
     input: { registryText: REGISTRY_BORDERLINE, price: 850_000_000, deposit: 500_000_000 },
     expect: { reality: "risky", gradeBoundary: "D", mustHaveFactorPattern: /total_claims/ },
+  },
+  {
+    id: "G-012",
+    title: "주택임차권등기 — 전 세입자 보증금 미반환 분쟁 이력",
+    realityBasis:
+      "임차권등기명령은 전 세입자가 보증금을 돌려받지 못해 법원이 등기한 것. 임대인의 보증금 반환 능력·의지에 문제가 있다는 강한 신호 → 위험(D 이상), 임차권등기를 감지해야 한다.",
+    input: { registryText: REGISTRY_LEASE, price: 850_000_000, deposit: 400_000_000 },
+    expect: { reality: "risky", gradeBoundary: "D", mustHaveFactorPattern: /lease_registration/ },
+  },
+  {
+    id: "G-013",
+    title: "처분금지가처분 — 소유권 분쟁 중",
+    realityBasis:
+      "처분금지가처분은 소유권 분쟁이 진행 중이라는 뜻. 소유권이 불안정해 계약 효력이 위태로움 → 최소 주의(C) 이상이어야 하고 가처분을 감지해야 한다.",
+    input: { registryText: REGISTRY_DISPOSITION, price: 850_000_000, deposit: 400_000_000 },
+    expect: { reality: "risky", gradeBoundary: "C", mustHaveFactorPattern: /disposition/ },
   },
 ];
 
