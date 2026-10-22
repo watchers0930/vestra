@@ -7,6 +7,7 @@ import type { UnifiedResult } from "@/components/rights/RightsResult";
 import { AiDisclaimer } from "@/components/common";
 import { SourceBadge } from "@/components/common/SourceBadge";
 import type { AnalysisStep } from "@/app/(app)/rights/types";
+import MonitoringUpsellCTA from "./MonitoringUpsellCTA";
 
 // 무거운 결과 렌더러 — done 상태에서만 로드
 const RightsResult = dynamic(
@@ -122,6 +123,8 @@ export default function RightsResultPanel({
         <AiDisclaimer compact className="mb-4" />
         <SourceBadge pageKey="rights" className="mb-4" />
         <RightsResult result={result} rawText={rawText} />
+        {/* R-1: 권리분석 결과 → 등기감시 구독 전환 CTA */}
+        <MonitoringUpsellCTA address={result.propertyInfo?.address} />
       </div>
     );
   }
