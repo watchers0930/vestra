@@ -13,6 +13,7 @@ import {
 } from "../constants";
 import { formatEok, formatKoreanWon } from "../lib/format";
 import { GANGNAM_TEST_LISTINGS } from "../../listings-list/test-fixtures";
+import { isProdHost } from "@/lib/site";
 import type { ListingItem } from "@/app/(app)/listings/hooks/useListings";
 
 // 안심매물(등록매물) fixture → 지도 아이템(Apt) 변환
@@ -87,10 +88,9 @@ export function useListingsMap() {
   const loadingItems = false;
 
   useEffect(() => {
-    // [예외처리] 실매물 데이터 확보 전까지는 운영에서도 샘플 매물을 노출한다(대장 지시, 2026-10-16).
-    // TODO(P1-1): 실매물 연동 시 isProdHost 게이팅 복원 → setItems(isProd ? [] : GANGNAM_TEST_LISTINGS.map(toApt))
+    // 샘플 매물은 운영에서 숨기고 비운영(개발·테스트)에서만 노출(2026-10-22, 대장 지시로 운영 노출 중단).
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setItems(GANGNAM_TEST_LISTINGS.map(toApt));
+    setItems(isProdHost(window.location.hostname) ? [] : GANGNAM_TEST_LISTINGS.map(toApt));
   }, []);
 
   // Detail panel

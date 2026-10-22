@@ -116,6 +116,10 @@ export const AnalysisCompareReport = forwardRef<HTMLDivElement, Props>(function 
           ))}
         </tbody>
       </table>
+      <p className="mt-2 text-[12px] leading-relaxed text-gray-400">
+        ※ 안전점수와 V-Score는 산정 기준이 다른 별도 지표로, 같은 물건이라도 서로 다른 값을 가질 수 있습니다.
+        각 점수의 범위·근거와 &lsquo;미확인&rsquo; 항목이 판단에 미치는 한계를 함께 참고하세요.
+      </p>
 
       {/* 변화 요약 */}
       {diff && (
