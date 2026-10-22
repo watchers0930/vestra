@@ -155,5 +155,6 @@ D-4(내 잔여버그) → D-1(깨진문구) → D-3(감시주기) → D-2(상단
 - ✅ **D-2** 플랜 배지 PREMIUM 누락 수정(ProfileHeader·ProfileInfoPanel) — 구독명 통일 때 놓친 2파일.
 - ✅ **D-3** 감시주기 "하루 2회 자동 감시" 통일(monitoring page/client·랜딩 Situation/MobileSituation 4곳).
 - ✅ **D-4** refund 연간할인 "2개월분"→"20%" 정합.
-- 🔶 **D-5 보류(제품 판단)**: 홈 `CertifiedListings`=DB 실데이터 isCertified만("없음"), 매물검색=목업+DB 혼합을 "안심 매물"로 라벨(랜덤 셔플). **목업 매물을 안심매물로 표시할지** 결정 선행.
-- 🔶 **D-6/D-7/D-8 보류(판단)**: 점수(안전점수 vs V-Score) 범위·'미확인' 설명 / PDF 저장 자격·장애면책↔환불 관계 / 샘플('베스트라 테스트') 구분 표시.
+- ✅ **D-5/D-8 처리(v5.202.2)**: 샘플매물 운영 노출 중단 — isProdHost 게이팅 복원(매물검색 PC/모바일·지도PC, map-mobile 기존). 운영=숨김+빈상태안내, 비운영(개발)=노출. 운영 Listing 0건이라 샘플은 코드 목업(DB삭제 대상 없음).
+- ✅ **D-6 처리(v5.202.2)**: 저장리포트(AnalysisCompareReport) 점수 테이블에 "안전점수≠V-Score 별도지표·미확인 한계 참고" 각주.
+- 🔶 **D-7 보류(정책 결정)**: `PdfDownloadButton` 무게이트(PDF 누구나 가능) vs 요금표 PRO전용 표시 불일치 → **PDF 무료/유료 대장 결정 필요**(매출 직결).
