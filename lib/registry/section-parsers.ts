@@ -335,8 +335,10 @@ export function buildSummary(gapgu: GapguEntry[], eulgu: EulguEntry[]): ParseSum
     hasProvisionalSeizure: activeGapgu.some((e) => e.purpose === "가압류"),
     hasProvisionalDisposition: activeGapgu.some((e) => e.purpose === "가처분"),
     hasAuctionOrder: activeGapgu.some((e) => /경매개시결정/.test(e.purpose)),
-    hasTrust: activeGapgu.some((e) => /신탁/.test(e.purpose)),
-    hasProvisionalRegistration: [...activeGapgu, ...activeEulgu].some((e) => e.purpose === "가등기"),
+    // 신탁등기는 등기목적이 "소유권이전"으로 기재되고 수탁자(신탁회사)가 소유자로 등기되므로 holder로도 감지한다.
+    hasTrust: activeGapgu.some((e) => /신탁/.test(e.purpose) || /신탁(?:주식)?회사/.test(e.holder ?? "")),
+    // 가등기 목적은 "소유권이전청구권가등기" 등으로 기재되므로 완전일치가 아닌 포함검사로 감지한다.
+    hasProvisionalRegistration: [...activeGapgu, ...activeEulgu].some((e) => /가등기/.test(e.purpose)),
     hasLeaseRegistration: activeEulgu.some((e) => /임차권등기|임차권설정/.test(e.purpose)),
     hasWarningRegistration: activeGapgu.some((e) => e.purpose === "예고등기"),
     hasRedemptionRegistration: activeGapgu.some((e) => /환매/.test(e.purpose)),

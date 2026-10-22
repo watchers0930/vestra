@@ -22,6 +22,9 @@ import {
   REGISTRY_MULTI_TRANSFER,
   REGISTRY_CANCELLED_SEIZURE,
   REGISTRY_OWN_JEONSE,
+  REGISTRY_TRUST,
+  REGISTRY_PROVISIONAL,
+  REGISTRY_BORDERLINE,
 } from "./fixtures/golden-registries";
 
 // 안전 → 위험 순. rank가 클수록 위험.
@@ -113,6 +116,31 @@ const CASES: GoldenCase[] = [
       ownJeonse: { order: 1, holder: "정민수" },
     },
     expect: { reality: "safe", gradeBoundary: "B", mustNotHaveFactorPattern: /total_claims_critical/ },
+  },
+  // ── Phase 2: 교묘한 사기 유형(엔진이 놓치기 쉬운 것) ──
+  {
+    id: "G-009",
+    title: "신탁등기 — 수탁자(신탁회사) 소유, 소유자 처분권 제한",
+    realityBasis:
+      "신탁등기 물건은 수탁자 동의 없이 처분·임대가 제한된다. 소유자와 계약해도 효력이 불안정 → 위험(D 이상), 신탁을 감지해야 한다. (등기목적은 '소유권이전'이라 목적만 보면 놓침)",
+    input: { registryText: REGISTRY_TRUST, price: 850_000_000, deposit: 400_000_000 },
+    expect: { reality: "risky", gradeBoundary: "D", mustHaveFactorPattern: /trust/ },
+  },
+  {
+    id: "G-010",
+    title: "소유권이전청구권 가등기 — 본등기 시 대항력 상실 위험",
+    realityBasis:
+      "가등기가 본등기로 전환되면 소유권이 가등기권자에게 넘어가 임차인이 대항력을 잃을 수 있다. '안전(A/B)'으로 보면 위험 누락 → 최소 주의(C) 이상이어야 하고 가등기를 감지해야 한다.",
+    input: { registryText: REGISTRY_PROVISIONAL, price: 850_000_000, deposit: 400_000_000 },
+    expect: { reality: "risky", gradeBoundary: "C", mustHaveFactorPattern: /provisional_reg/ },
+  },
+  {
+    id: "G-011",
+    title: "선순위 근저당 6.7억 + 보증금 5억 — 합산 시세 초과",
+    realityBasis:
+      "선순위 근저당(6.7억)과 보증금(5억)의 합(11.7억)이 시세(8.5억)를 크게 초과한다. 경매 시 보증금 회수가 불가능에 가까움 → 위험(D 이상).",
+    input: { registryText: REGISTRY_BORDERLINE, price: 850_000_000, deposit: 500_000_000 },
+    expect: { reality: "risky", gradeBoundary: "D", mustHaveFactorPattern: /total_claims/ },
   },
 ];
 
