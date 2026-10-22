@@ -77,6 +77,7 @@ export default function ListingsListMobileClient() {
   // 테스트 샘플 매물: 운영 도메인에서는 노출하지 않음.
   // 샘플 매물은 운영에서 숨기고 비운영(개발·테스트)에서만 노출한다(2026-10-22, 대장 지시로 운영 노출 중단).
   const [showFixtures, setShowFixtures] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setShowFixtures(!isProdHost(window.location.hostname)), []);
 
   const sigunguList = REGIONS[sido] || [];
