@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Siren, Lightbulb, Pin, ShieldCheck, Search, RadioTower } from "lucide-react";
 import type { AnalysisResult } from "@/app/(app)/contract/types";
 import { formatAmount, severityMeta, clauseRiskMeta, termPriorityMeta, type Styles } from "./resultHelpers";
@@ -313,18 +314,18 @@ export default function ContractResultBody({
         </div>
         <div style={{ marginTop: "20px", fontSize: "13.5px", fontWeight: 700, color: "#1a1d2e", marginBottom: "12px" }}>연관 분석 서비스</div>
         <div className={s.relatedCta}>
-          <div className={s.rctaCard}>
+          <Link href="/renewal/rights" className={s.rctaCard} style={{ display: "block", textDecoration: "none", color: "inherit" }}>
             <div className={s.rctaIco}><Search size={22} /></div>
             <div className={s.rctaT}>권리관계 분석</div>
             <div className={s.rctaS}>등기부등본 기반 근저당·압류·가처분 등 권리 현황을 상세히 분석합니다.</div>
             <div className={s.rctaArrow}>분석하기 →</div>
-          </div>
-          <div className={s.rctaCard}>
+          </Link>
+          <Link href="/renewal/monitoring" className={s.rctaCard} style={{ display: "block", textDecoration: "none", color: "inherit" }}>
             <div className={s.rctaIco}><RadioTower size={22} /></div>
             <div className={s.rctaT}>등기감시 시작</div>
             <div className={s.rctaS}>계약 체결 후 등기 변동을 실시간으로 감시하고 이상 징후를 즉시 알립니다.</div>
             <div className={s.rctaArrow}>감시 시작 →</div>
-          </div>
+          </Link>
         </div>
       </>
     ),
