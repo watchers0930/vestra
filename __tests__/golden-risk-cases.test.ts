@@ -28,6 +28,7 @@ import {
   REGISTRY_LEASE,
   REGISTRY_DISPOSITION,
   REGISTRY_NON_RESIDENTIAL,
+  REGISTRY_JEONSE_SUBORDINATE,
 } from "./fixtures/golden-registries";
 
 // 안전 → 위험 순. rank가 클수록 위험.
@@ -168,6 +169,19 @@ const CASES: GoldenCase[] = [
       "등기부 용도가 근린생활시설(비주거용)이면 전입신고·확정일자가 불가해 주택임대차보호법 보호를 받지 못한다. 보증금 보호 수단이 없음 → 최소 주의(C) 이상이어야 하고 비주거용을 감지해야 한다.",
     input: { registryText: REGISTRY_NON_RESIDENTIAL, price: 850_000_000, deposit: 400_000_000 },
     expect: { reality: "risky", gradeBoundary: "C", mustHaveFactorPattern: /non_residential/ },
+  },
+  {
+    id: "G-015",
+    title: "후순위 전세권 — 선순위 근저당(먼저) + 세입자 전세권(나중)",
+    realityBasis:
+      "세입자 전세권이 선순위 근저당보다 후순위라 경매 시 근저당이 먼저 배당받는다. 선순위 근저당(5억)+보증금(5억)이 시세(8.5억)를 초과해 보증금 회수가 불가능 → 위험(D 이상). 본인 전세권을 제외해도 선순위 근저당만으로 위험해야 한다.",
+    input: {
+      registryText: REGISTRY_JEONSE_SUBORDINATE,
+      price: 850_000_000,
+      deposit: 500_000_000,
+      ownJeonse: { order: 2, holder: "김세입" },
+    },
+    expect: { reality: "risky", gradeBoundary: "D", mustHaveFactorPattern: /total_claims/ },
   },
 ];
 
