@@ -157,4 +157,4 @@ D-4(내 잔여버그) → D-1(깨진문구) → D-3(감시주기) → D-2(상단
 - ✅ **D-4** refund 연간할인 "2개월분"→"20%" 정합.
 - ✅ **D-5/D-8 처리(v5.202.2)**: 샘플매물 운영 노출 중단 — isProdHost 게이팅 복원(매물검색 PC/모바일·지도PC, map-mobile 기존). 운영=숨김+빈상태안내, 비운영(개발)=노출. 운영 Listing 0건이라 샘플은 코드 목업(DB삭제 대상 없음).
 - ✅ **D-6 처리(v5.202.2)**: 저장리포트(AnalysisCompareReport) 점수 테이블에 "안전점수≠V-Score 별도지표·미확인 한계 참고" 각주.
-- 🔶 **D-7 보류(정책 결정)**: `PdfDownloadButton` 무게이트(PDF 누구나 가능) vs 요금표 PRO전용 표시 불일치 → **PDF 무료/유료 대장 결정 필요**(매출 직결).
+- ✅ **D-7 처리(v5.202.3)**: 대장 결정 "PDF 무료". 요금표 정합 — PRICING_COMPARISON "PDF 리포트" free=true + FREE features에 "PDF 리포트 다운로드" 추가. PdfDownloadButton은 이미 무게이트라 코드 일치(실제 동작 반영).

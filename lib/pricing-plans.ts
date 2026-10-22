@@ -44,7 +44,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     annualMonthlyEquivLabel: null,
     period: "",
     description: "부동산 분석을 처음 시작하는 분께",
-    features: ["일 3회 AI 분석", "기본 시세 조회", "전세 안전성 간이 체크", "커뮤니티 접근"],
+    features: ["일 3회 AI 분석", "기본 시세 조회", "전세 안전성 간이 체크", "PDF 리포트 다운로드", "커뮤니티 접근"],
     highlight: false,
   },
   {
@@ -104,7 +104,7 @@ export const PRICING_COMPARISON: {
   { feature: "AI 분석 횟수", free: "일 3회", pro: "무제한", premium: "무제한" },
   { feature: "시세 조회", free: true, pro: true, premium: true },
   { feature: "실시간 시세 알림", free: false, pro: true, premium: true },
-  { feature: "PDF 리포트", free: false, pro: true, premium: true },
+  { feature: "PDF 리포트", free: true, pro: true, premium: true },
   { feature: "전문가 상담", free: false, pro: "월 1회", premium: "월 1회" },
   { feature: "권리분석 상세", free: false, pro: true, premium: true },
   { feature: "세금 시뮬레이션", free: false, pro: true, premium: true },
