@@ -27,6 +27,7 @@ import {
   REGISTRY_BORDERLINE,
   REGISTRY_LEASE,
   REGISTRY_DISPOSITION,
+  REGISTRY_NON_RESIDENTIAL,
 } from "./fixtures/golden-registries";
 
 // 안전 → 위험 순. rank가 클수록 위험.
@@ -159,6 +160,14 @@ const CASES: GoldenCase[] = [
       "처분금지가처분은 소유권 분쟁이 진행 중이라는 뜻. 소유권이 불안정해 계약 효력이 위태로움 → 최소 주의(C) 이상이어야 하고 가처분을 감지해야 한다.",
     input: { registryText: REGISTRY_DISPOSITION, price: 850_000_000, deposit: 400_000_000 },
     expect: { reality: "risky", gradeBoundary: "C", mustHaveFactorPattern: /disposition/ },
+  },
+  {
+    id: "G-014",
+    title: "비주거용(제1종근린생활시설)을 전세 — 주임법 보호 불가",
+    realityBasis:
+      "등기부 용도가 근린생활시설(비주거용)이면 전입신고·확정일자가 불가해 주택임대차보호법 보호를 받지 못한다. 보증금 보호 수단이 없음 → 최소 주의(C) 이상이어야 하고 비주거용을 감지해야 한다.",
+    input: { registryText: REGISTRY_NON_RESIDENTIAL, price: 850_000_000, deposit: 400_000_000 },
+    expect: { reality: "risky", gradeBoundary: "C", mustHaveFactorPattern: /non_residential/ },
   },
 ];
 
