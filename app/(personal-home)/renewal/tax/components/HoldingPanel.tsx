@@ -127,6 +127,13 @@ export default function HoldingPanel({ initialAssessed, initialAddress }: { init
           <span className={s.rlK}>종합부동산세</span>
           <span className={s.rlV}>{formatManwon(r.comprehensiveTax)}</span>
         </div>
+        {r.details.futureComprehensive && r.details.futureComprehensive.length > 0 && (
+          <div style={{ fontSize: 11.5, color: "#8a6d3b", padding: "0 0 6px", lineHeight: 1.65 }}>
+            {r.details.futureComprehensive.map((f) => (
+              <div key={f.year}>※ {f.year}년 반영 예정 (공정시장가액비율 {Math.round(f.ratio * 100)}%): {formatManwon(f.comprehensiveTax)}</div>
+            ))}
+          </div>
+        )}
         <div className={s.rline}>
           <span className={s.rlK}>공제금액 ({houseCount === 1 ? "1세대 1주택" : "다주택"})</span>
           <span className={s.rlV}>{formatEokMan(r.details.deduction)}</span>

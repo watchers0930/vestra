@@ -168,6 +168,30 @@ export function calculateAcquisitionTax(input: AcquisitionTaxInput, config: TaxC
 
 // ─── 보유세 (재산세 + 종합부동산세) ───
 
+/** 종합부동산세 본세 계산 (공정시장가액비율 ratio 적용). 미래 비율 예고 계산에 재사용. */
+function comprehensiveTaxByRatio(assessedValue: number, houseCount: number, ratio: number): number {
+  const deduction = houseCount === 1 ? 1200000000 : 900000000; // 1세대1주택 12억, 그 외 9억
+  const taxableValue = Math.max(0, Math.round(assessedValue * ratio) - deduction);
+  if (taxableValue <= 0) return 0;
+  let tax = 0;
+  if (houseCount <= 2) {
+    if (taxableValue <= 300000000) tax = taxableValue * 0.005;
+    else if (taxableValue <= 600000000) tax = 1500000 + (taxableValue - 300000000) * 0.007;
+    else if (taxableValue <= 1200000000) tax = 3600000 + (taxableValue - 600000000) * 0.01;
+    else if (taxableValue <= 2500000000) tax = 9600000 + (taxableValue - 1200000000) * 0.013;
+    else if (taxableValue <= 5000000000) tax = 26500000 + (taxableValue - 2500000000) * 0.015;
+    else tax = 64000000 + (taxableValue - 5000000000) * 0.02;
+  } else {
+    if (taxableValue <= 300000000) tax = taxableValue * 0.012;
+    else if (taxableValue <= 600000000) tax = 3600000 + (taxableValue - 300000000) * 0.016;
+    else tax = 8400000 + (taxableValue - 600000000) * 0.022;
+  }
+  return Math.round(tax);
+}
+
+/** 종부세 공정시장가액비율 인상 예정(법 확정): 2027년 70%, 2028년 80%. 현재보다 높은 것만 안내. */
+const FAIR_MARKET_RATIO_SCHEDULE = [{ year: 2027, ratio: 0.70 }, { year: 2028, ratio: 0.80 }];
+
 export function calculateHoldingTax(input: HoldingTaxInput, config: TaxConfig = DEFAULT_CONFIG) {
   const { assessedValue, houseCount } = input;
 
@@ -184,29 +208,19 @@ export function calculateHoldingTax(input: HoldingTaxInput, config: TaxConfig = 
   }
   propertyTax = Math.round(propertyTax);
 
-  // 종합부동산세: 공정시장가액비율 적용 후 공제
-  const taxableBase = Math.round(assessedValue * config.fairMarketValueRatio);
+  // 종합부동산세: 공정시장가액비율 적용 후 공제·세율
   const deduction = houseCount === 1 ? 1200000000 : 900000000; // 1세대1주택 12억, 그 외 9억
-  const taxableValue = Math.max(0, taxableBase - deduction);
+  const taxableValue = Math.max(0, Math.round(assessedValue * config.fairMarketValueRatio) - deduction);
+  const comprehensiveTax = comprehensiveTaxByRatio(assessedValue, houseCount, config.fairMarketValueRatio);
 
-  let comprehensiveTax = 0;
-  if (taxableValue > 0) {
-    if (houseCount <= 2) {
-      // 일반세율
-      if (taxableValue <= 300000000) comprehensiveTax = taxableValue * 0.005;
-      else if (taxableValue <= 600000000) comprehensiveTax = 1500000 + (taxableValue - 300000000) * 0.007;
-      else if (taxableValue <= 1200000000) comprehensiveTax = 3600000 + (taxableValue - 600000000) * 0.01;
-      else if (taxableValue <= 2500000000) comprehensiveTax = 9600000 + (taxableValue - 1200000000) * 0.013;
-      else if (taxableValue <= 5000000000) comprehensiveTax = 26500000 + (taxableValue - 2500000000) * 0.015;
-      else comprehensiveTax = 64000000 + (taxableValue - 5000000000) * 0.02;
-    } else {
-      // 3주택 이상 중과세율
-      if (taxableValue <= 300000000) comprehensiveTax = taxableValue * 0.012;
-      else if (taxableValue <= 600000000) comprehensiveTax = 3600000 + (taxableValue - 300000000) * 0.016;
-      else comprehensiveTax = 8400000 + (taxableValue - 600000000) * 0.022;
-    }
-  }
-  comprehensiveTax = Math.round(comprehensiveTax);
+  // 미래 공정시장가액비율 인상 예정 안내(현재 계산엔 미반영, 현재보다 높은 비율만)
+  const futureComprehensive = FAIR_MARKET_RATIO_SCHEDULE
+    .filter((f) => f.ratio > config.fairMarketValueRatio)
+    .map((f) => ({
+      year: f.year,
+      ratio: f.ratio,
+      comprehensiveTax: comprehensiveTaxByRatio(assessedValue, houseCount, f.ratio),
+    }));
 
   return {
     propertyTax,
@@ -217,6 +231,7 @@ export function calculateHoldingTax(input: HoldingTaxInput, config: TaxConfig = 
       deduction,
       taxableValue,
       fairMarketValueRatio: config.fairMarketValueRatio,
+      futureComprehensive, // [{ year, ratio, comprehensiveTax }] — 예: 2027년 70% 적용 시 종부세
     },
   };
 }
