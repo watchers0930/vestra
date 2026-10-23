@@ -3,7 +3,8 @@
   "version": "5.203.1",
   "private": true,
   "overrides": {
-    "source-map-js": ">=1.2.2"
+    "source-map-js": ">=1.2.2",
+    "dompurify": "3.4.17"
   },
   "scripts": {
     "dev": "next dev",
@@ -44,7 +45,7 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^0.575.0",
     "mammoth": "^1.12.0",
-    "next": "^16.3.8",
+    "next": "^16.4.2",
     "next-auth": "^5.0.0-beta.30",
     "openai": "^6.23.0",
     "pdfjs-dist": "^4.10.38",
