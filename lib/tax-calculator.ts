@@ -31,13 +31,19 @@ export const TAX_CONFIG_2024_2025: TaxConfig = {
   oneHouseExemptionThreshold: 1_200_000_000,
 };
 
-/** 2026 (유예 연장 시나리오 - 기본값) */
+/**
+ * 2026 실제 적용 세제 (2026-10 기준 조사 반영 · 세무 확정 시 재검토 권장).
+ * - 취득세 다주택 중과: 적용 중(조정대상지역 2주택 8% / 3주택 이상 12%, 법인 12%).
+ * - 양도세 다주택 중과: 2026.5.9 유예 종료 → 5.10부터 부활(조정 2주택 +20%p / 3주택↑ +30%p).
+ * - 생애최초 취득세 감면: 유지(12억 이하 200만원 한도, 2026 오피스텔 포함·청년 300만원 확대).
+ * - 종부세 공정시장가액비율: 2026년 60%(2027년 70%·2028년 80% 단계 인상 예정).
+ */
 export const TAX_CONFIG_2026: TaxConfig = {
   taxYear: 2026,
-  multiHomeHeavyTaxEnabled: false,   // 유예 연장 가정
-  firstHomeBenefitEnabled: true,     // 감면 연장 가정
-  fairMarketValueRatio: 0.60,       // 현행 유지
-  multiHomeTransferSurchargeEnabled: false,
+  multiHomeHeavyTaxEnabled: true,    // 취득세 다주택 중과 적용 중
+  firstHomeBenefitEnabled: true,     // 생애최초 감면 유지
+  fairMarketValueRatio: 0.60,       // 2026년 60%
+  multiHomeTransferSurchargeEnabled: true,  // 양도세 다주택 중과 2026.5.10 부활
   oneHouseExemptionThreshold: 1_200_000_000,
 };
 
@@ -54,7 +60,7 @@ export const TAX_CONFIG_2026_RESTORED: TaxConfig = {
 /** 연도별 기본 TaxConfig 반환 */
 export function getTaxConfig(year: number = 2026): TaxConfig {
   if (year <= 2025) return TAX_CONFIG_2024_2025;
-  return TAX_CONFIG_2026; // 기본은 보수적(유예 연장) 시나리오
+  return TAX_CONFIG_2026; // 2026 실제 적용(취득세·양도세 다주택 중과 반영)
 }
 
 const DEFAULT_CONFIG = TAX_CONFIG_2026;

@@ -32,27 +32,26 @@ describe("calculateAcquisitionTax (취득세)", () => {
     expect(result.tax).toBe(5000000);
   });
 
-  it("2주택 조정지역 유예 시 일반세율 (기본 config)", () => {
+  it("2주택 조정지역 기본config(2026 중과) 8%", () => {
     const result = calculateAcquisitionTax({
       price: 800000000,
       houseCount: 2,
       isAdjusted: true,
       isFirstHome: false,
     });
-    // 기본 config는 유예(2026) → 일반세율 적용
-    expect(result.rate).toBeLessThan(0.08);
-    expect(result.rate).toBeGreaterThan(0);
+    // 기본 config(2026)는 다주택 중과 적용 → 조정지역 2주택 8%
+    expect(result.rate).toBe(0.08);
   });
 
-  it("3주택 이상 조정지역 유예 시 8% (기본 config)", () => {
+  it("3주택 이상 조정지역 기본config(2026 중과) 12%", () => {
     const result = calculateAcquisitionTax({
       price: 800000000,
       houseCount: 3,
       isAdjusted: true,
       isFirstHome: false,
     });
-    // 기본 config는 유예 → 3주택 조정 8%
-    expect(result.rate).toBe(0.08);
+    // 기본 config(2026)는 다주택 중과 적용 → 3주택 조정 12%
+    expect(result.rate).toBe(0.12);
   });
 
   it("세액이 0 이상이다", () => {
@@ -162,10 +161,10 @@ describe("TaxConfig (연도별 설정)", () => {
     expect(config.firstHomeBenefitEnabled).toBe(true);
   });
 
-  it("getTaxConfig: 2026은 유예연장(기본) 설정을 반환", () => {
+  it("getTaxConfig: 2026은 중과적용(기본) 설정을 반환", () => {
     const config = getTaxConfig(2026);
     expect(config).toEqual(TAX_CONFIG_2026);
-    expect(config.multiHomeHeavyTaxEnabled).toBe(false);
+    expect(config.multiHomeHeavyTaxEnabled).toBe(true);
   });
 
   it("2026 복원 시나리오는 중과가 활성화된다", () => {
@@ -177,10 +176,10 @@ describe("TaxConfig (연도별 설정)", () => {
 });
 
 describe("2026 취득세 시나리오", () => {
-  it("유예 연장: 2주택 조정지역도 일반세율 적용", () => {
+  it("유예 기간(2024-2025): 2주택 조정지역도 일반세율 적용", () => {
     const result = calculateAcquisitionTax(
       { price: 800000000, houseCount: 2, isAdjusted: true, isFirstHome: false },
-      TAX_CONFIG_2026,
+      TAX_CONFIG_2024_2025,
     );
     // 유예 기간이므로 8%가 아닌 일반세율
     expect(result.rate).toBeLessThan(0.08);
@@ -232,7 +231,7 @@ describe("2026 보유세 시나리오", () => {
 });
 
 describe("2026 양도세 시나리오", () => {
-  it("유예 연장: 다주택 중과 미적용", () => {
+  it("유예 기간(2024-2025): 다주택 중과 미적용", () => {
     const result = calculateTransferTax(
       {
         acquisitionPrice: 500000000,
@@ -242,9 +241,9 @@ describe("2026 양도세 시나리오", () => {
         houseCount: 2,
         isAdjusted: true,
       },
-      TAX_CONFIG_2026,
+      TAX_CONFIG_2024_2025,
     );
-    // 중과 비활성 → additionalRate 0
+    // 유예 기간: 중과 비활성 → additionalRate 0
     expect(result.additionalRate).toBe(0);
   });
 
@@ -287,7 +286,7 @@ describe("2026 양도세 시나리오", () => {
       houseCount: 2,
       isAdjusted: true,
     };
-    const resultDeferred = calculateTransferTax(input, TAX_CONFIG_2026);
+    const resultDeferred = calculateTransferTax(input, TAX_CONFIG_2024_2025);
     const resultRestored = calculateTransferTax(input, TAX_CONFIG_2026_RESTORED);
     expect(resultRestored.tax).toBeGreaterThan(resultDeferred.tax);
   });
