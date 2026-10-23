@@ -213,14 +213,16 @@ export function calculateHoldingTax(input: HoldingTaxInput, config: TaxConfig = 
   const taxableValue = Math.max(0, Math.round(assessedValue * config.fairMarketValueRatio) - deduction);
   const comprehensiveTax = comprehensiveTaxByRatio(assessedValue, houseCount, config.fairMarketValueRatio);
 
-  // 미래 공정시장가액비율 인상 예정 안내(현재 계산엔 미반영, 현재보다 높은 비율만)
+  // 미래 공정시장가액비율 인상 예정 안내(현재 계산엔 미반영).
+  // 현재보다 높은 비율이면서, 그때 실제로 종부세가 발생하는 경우만 안내(0원 예고는 노이즈라 숨김).
   const futureComprehensive = FAIR_MARKET_RATIO_SCHEDULE
     .filter((f) => f.ratio > config.fairMarketValueRatio)
     .map((f) => ({
       year: f.year,
       ratio: f.ratio,
       comprehensiveTax: comprehensiveTaxByRatio(assessedValue, houseCount, f.ratio),
-    }));
+    }))
+    .filter((f) => f.comprehensiveTax > 0);
 
   return {
     propertyTax,
