@@ -129,8 +129,9 @@ export default function HoldingPanel({ initialAssessed, initialAddress }: { init
         </div>
         {r.details.futureComprehensive && r.details.futureComprehensive.length > 0 && (
           <div style={{ fontSize: 11.5, color: "#8a6d3b", padding: "0 0 6px", lineHeight: 1.65 }}>
+            <div style={{ fontWeight: 600, marginBottom: 2 }}>※ 2026 세제개편안 기준 (국회 통과 시 적용, 미확정)</div>
             {r.details.futureComprehensive.map((f) => (
-              <div key={f.year}>※ {f.year}년 반영 예정 (공정시장가액비율 {Math.round(f.ratio * 100)}%): {formatManwon(f.comprehensiveTax)}</div>
+              <div key={f.year} style={{ paddingLeft: 10 }}>· {f.year}년 공정시장가액비율 {Math.round(f.ratio * 100)}% 적용 시: {formatManwon(f.comprehensiveTax)}</div>
             ))}
           </div>
         )}
