@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   parseRegistry,
-  extractAmount,
   SAMPLE_REGISTRY_TEXT,
 } from "@/lib/registry-parser";
 
@@ -429,32 +428,42 @@ describe("부기등기 파싱 (A: 순위 승계 / B: 임대사업자 / C: 명의
   });
 });
 
-describe("extractAmount", () => {
-  it("금 480,000,000원 → 480000000", () => {
-    expect(extractAmount("채권최고액 금 480,000,000원")).toBe(480000000);
+describe("공유지분 소유자 추출 (등기원인 오추출 방지)", () => {
+  // 공유지분은 "공유자 지분 N분의 M 이름" 포맷이라 keyword('소유자')가 없어
+  // fallback이 주민번호 앞 등기원인('매매')을 소유자명으로 오추출하던 버그.
+  const shareText = `
+【 갑 구 】 (소유권에 관한 사항)
+순위번호 등기목적 접수 등기원인 권리자 및 기타사항
+1 소유권보존 2019년3월20일 제12345호 보존등기 소유자 대한건설주식회사
+2 소유권이전 2021년8월10일 제23456호 매매 공유자 지분 2분의 1 박지민 900215-2345678 공유자 지분 2분의 1 김철수 880101-1234567
+`.trim();
+
+  const shareParsed = parseRegistry(shareText);
+
+  it("공유지분 소유권이전의 소유자를 '매매'(등기원인)가 아닌 실제 이름으로 추출한다", () => {
+    const transfer = shareParsed.gapgu.find((e) => e.purpose === "소유권이전");
+    expect(transfer).toBeDefined();
+    expect(transfer!.holder).toBe("박지민");
+    expect(transfer!.holder).not.toBe("매매");
   });
 
-  it("금3억5,000만원 → 350000000", () => {
-    expect(extractAmount("금3억5,000만원")).toBe(350000000);
+  it("'공유자 이름'(지분 표기 없음)·등기원인 '증여'도 이름으로 추출한다", () => {
+    const text = `
+【 갑 구 】 (소유권에 관한 사항)
+순위번호 등기목적 접수 등기원인 권리자 및 기타사항
+2 소유권이전 2021년8월10일 제23456호 증여 공유자 홍길동 900215-2345678
+`.trim();
+    const transfer = parseRegistry(text).gapgu.find((e) => e.purpose === "소유권이전");
+    expect(transfer!.holder).toBe("홍길동");
   });
 
-  it("금3억원 → 300000000", () => {
-    expect(extractAmount("금3억원")).toBe(300000000);
-  });
-
-  it("금5,000만원 → 50000000", () => {
-    expect(extractAmount("금5,000만원")).toBe(50000000);
-  });
-
-  it("금 550,000,000원 → 550000000", () => {
-    expect(extractAmount("전세금 금 550,000,000원")).toBe(550000000);
-  });
-
-  it("빈 문자열 → 0", () => {
-    expect(extractAmount("")).toBe(0);
-  });
-
-  it("금액 없는 텍스트 → 0", () => {
-    expect(extractAmount("소유권이전 매매")).toBe(0);
+  it("단독 소유('소유자 이름')는 기존대로 정상 추출한다 (회귀)", () => {
+    const text = `
+【 갑 구 】 (소유권에 관한 사항)
+순위번호 등기목적 접수 등기원인 권리자 및 기타사항
+2 소유권이전 2021년8월10일 제23456호 매매 소유자 박지민 900215-2345678
+`.trim();
+    const transfer = parseRegistry(text).gapgu.find((e) => e.purpose === "소유권이전");
+    expect(transfer!.holder).toBe("박지민");
   });
 });

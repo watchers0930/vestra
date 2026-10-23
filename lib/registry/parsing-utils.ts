@@ -26,6 +26,13 @@ export const GAPGU_RISK_MAP: Record<string, RiskType> = {
   신탁등기: "warning",
   가등기: "warning",
   소유권이전청구권가등기: "warning",
+  // 담보가등기: 채무불이행 시 본등기로 소유권이 넘어간다. "소유권이전"(safe)보다 먼저 매칭되도록
+  // 긴 정확 키로 등록(classifyRightType은 길이 내림차순 매칭). 미등록 시 "소유권이전"으로 오분류돼 가등기 신호를 놓친다.
+  소유권이전담보가등기: "warning",
+  담보가등기: "warning",
+  // 환매권 등기목적은 실무상 "환매특약"으로 기재된다("환매등기"는 비표준). 민법 제590조.
+  환매특약: "warning",
+  환매권: "warning",
   환매등기: "warning",
   예고등기: "warning",
   가압류말소: "info",
@@ -214,7 +221,7 @@ export function normalizeRegistryNewlines(text: string): string {
   let r = text;
   r = r.replace(/(【\s*[표갑을])/g, "\n$1");
   r = r.replace(/\s+(순위번호\s)/g, "\n$1");
-  r = r.replace(/\s+(\d+\s+(?:소유권보존|소유권이전|가압류|압류|가처분|경매개시결정|임의경매|강제경매|신탁|가등기|예고등기|환매등기|근저당권설정|저당권설정|전세권설정|임차권등기|임차권설정|근저당권이전|근저당권변경|전세권이전))/g, "\n$1");
+  r = r.replace(/\s+(\d+\s+(?:소유권보존|소유권이전|가압류|압류|가처분|경매개시결정|임의경매|강제경매|신탁|가등기|예고등기|환매특약|환매등기|환매권|근저당권설정|저당권설정|전세권설정|임차권등기|임차권설정|근저당권이전|근저당권변경|전세권이전))/g, "\n$1");
   r = r.replace(/\s+(\d+\s*번[가-힣\s\d,·()（）]{0,20}말소)/g, "\n$1");
   r = r.replace(/\s+(\d+\s+(?:근저당권말소|저당권말소|전세권말소|가압류말소|압류말소|가처분말소|가등기말소|\d+\s*번[가-힣\s\d,·()（）]{0,20}말소))/g, "\n$1");
   r = r.replace(/\s+(\d+\s*번[가-힣\s\d,·()（）]*기말소)/g, "\n$1");
@@ -246,15 +253,22 @@ export function extractHolder(text: string): string {
     }
   }
 
+  // 공유지분 소유자: "공유자 지분 2분의 1 홍길동" 포맷. keyword 목록에 "공유자"가 없어
+  // fallback이 등기원인("매매")을 소유자명으로 오추출하던 것을 근본 차단. 지분 표기는 선택적으로 건너뛴다.
+  const coOwnerMatch = text.match(/공유자\s*(?:지분\s*\d+\s*분의\s*\d+\s*)?([가-힣]{2,5})/);
+  if (coOwnerMatch) return coOwnerMatch[1];
+
   const keywordMatch = text.match(
     /(?:권리자|소유자|채무자|채권자|근저당권자|저당권자|임차인|임대인|전세권자|지상권자)\s*[:：]?\s*([가-힣]{2,5})/
   );
   if (keywordMatch) return keywordMatch[1];
 
-  // 등기목적 용어(예: "전세권설정")가 fallback에 holder로 잘못 잡히는 것 방지.
+  // 등기목적 용어(예: "전세권설정")·등기원인 명사(예: "매매")가 fallback에 holder로 잘못 잡히는 것 방지.
   // "전세권설정"(5자)은 아래 standaloneMatch에 걸리지만 "근저당권설정"(6자)은 길이로 우연히 안 걸렸던 비대칭을 근본 차단.
   const DEED_TERM_SUFFIX = /(?:설정|이전|보존|말소|변경|경정|회복|분할|합병|포기|연장)$/;
-  const notDeed = (name: string) => !DEED_TERM_SUFFIX.test(name);
+  // 등기원인은 주민번호 앞에 오는 경우가 많아 idMatch가 이름으로 오추출한다(특히 keyword 없는 공유지분).
+  const DEED_CAUSE = /^(?:매매|증여|상속|교환|신탁|협의분할|재산분할|대물변제|대물반환|양도|공매|경매|수용|화해|판결|해제|합의|기부)$/;
+  const notDeed = (name: string) => !DEED_TERM_SUFFIX.test(name) && !DEED_CAUSE.test(name);
 
   const idMatch = text.match(/([가-힣]{2,5})\s*(?:\d{6}[-–]\d{7}|\d{6}[-–]\*{7}|\d{6}|\d{2}년\s*\d{1,2}월)/);
   if (idMatch && notDeed(idMatch[1])) return idMatch[1];

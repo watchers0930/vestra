@@ -29,6 +29,8 @@ import {
   REGISTRY_DISPOSITION,
   REGISTRY_NON_RESIDENTIAL,
   REGISTRY_JEONSE_SUBORDINATE,
+  REGISTRY_REDEMPTION,
+  REGISTRY_SECURITY_PROVISIONAL,
 } from "./fixtures/golden-registries";
 
 // 안전 → 위험 순. rank가 클수록 위험.
@@ -182,6 +184,22 @@ const CASES: GoldenCase[] = [
       ownJeonse: { order: 2, holder: "김세입" },
     },
     expect: { reality: "risky", gradeBoundary: "D", mustHaveFactorPattern: /total_claims/ },
+  },
+  {
+    id: "G-016",
+    title: "환매특약등기 — 매도인 환매권 행사 시 소유권 원복 위험",
+    realityBasis:
+      "환매특약(민법 제590조)은 매도인이 환매기간 내 환매권을 행사하면 소유권이 원복돼 임차인 대항력이 불안정해진다. 환매특약부 매매는 양도담보·깡통전세 은폐에 악용된다. 환매를 아예 감지하지 못하고 안전(A)으로 판정하면 위험 누락 → 최소 B 이상이어야 하고 환매(redemption)를 감지해야 한다. (등기목적 '환매특약'을 '기타'로 분류해 놓치던 파서 버그 회귀 방지.)",
+    input: { registryText: REGISTRY_REDEMPTION, price: 850_000_000, deposit: 400_000_000 },
+    expect: { reality: "risky", gradeBoundary: "B", mustHaveFactorPattern: /redemption/ },
+  },
+  {
+    id: "G-017",
+    title: "담보가등기(소유권이전담보가등기) — 채무불이행 시 소유권 상실",
+    realityBasis:
+      "담보가등기는 채무불이행 시 본등기로 소유권이 가등기권자에게 넘어가 임차인이 대항력을 잃는다(청구권가등기와 동질 위험). 등기목적 '소유권이전담보가등기'를 '소유권이전'으로 오분류해 가등기를 아예 놓치고 안전(A)으로 판정하면 위험 누락 → 가등기(provisional_reg)를 감지해야 하고 A 단정은 금지. (등급 가중은 V-Score 정책 영역이라 factor 감지까지 검증.)",
+    input: { registryText: REGISTRY_SECURITY_PROVISIONAL, price: 850_000_000, deposit: 400_000_000 },
+    expect: { reality: "risky", gradeBoundary: "B", mustHaveFactorPattern: /provisional_reg/ },
   },
 ];
 
