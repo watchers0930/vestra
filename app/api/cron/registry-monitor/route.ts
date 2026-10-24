@@ -45,6 +45,7 @@ import { memberRetryTargetIds } from "@/lib/registry-monitor/retry-targets";
 import { autoTransitionExpiredGaps } from "@/lib/registry-monitor/transition";
 import { runGuestPrechecks, GUEST_BATCH_SIZE } from "@/lib/guest-monitoring/precheck-adapter";
 import { filterMemberMonitoringTargets } from "@/lib/member-subscription/monitoring-targets";
+import { expireSingleProperties } from "@/lib/member-single-monitoring/expiry";
 import { memberMonitoringFilter } from "@/lib/member-subscription/legacy-guards";
 const BATCH_SIZE = 50;
 
@@ -101,6 +102,9 @@ export async function GET(req: NextRequest) {
 
     // 전입일 지난 계약감시 → 일반 모드로 자동 전환
     await autoTransitionExpiredGaps();
+
+    // 만료된 무료회원 단건(source=single, paidUntil<=now) → expired 전환 (감시 대상에서 제외)
+    if (!simulate) await expireSingleProperties(now).catch(() => {});
 
     // 감시 실행 로그 보관정책: 90일 초과분 정리 (정규 회차에서만 — 재시도마다 반복 불필요)
     if (!isRetrySlot) {

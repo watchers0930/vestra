@@ -24,12 +24,33 @@ function track(event: string, params?: Record<string, unknown>) {
  * 클릭 시 서버 응답으로 분기: 200=등록완료 / 409=이미감시 / 403=구독 업셀 / 401=로그인·단건 안내.
  * 상태를 미리 판별하지 않고 서버가 권한을 판정한다(추측 없음).
  */
+type SingleState = "idle" | "loading" | "ok" | "limit" | "unavailable" | "error";
+
 export default function MonitoringUpsellCTA({ address }: Props) {
   const [state, setState] = useState<State>("idle");
   const [modal, setModal] = useState<Modal>(null);
   const [errorMsg, setErrorMsg] = useState("");
+  const [single, setSingle] = useState<SingleState>("idle");
 
   if (!address) return null;
+
+  // 무료회원 단건 감시 주문 생성 (1건·1개월·1만원). 실결제창(다날) 연동은 후속 — 현재는 주문 생성까지.
+  async function handleSingle() {
+    if (single === "loading") return;
+    setSingle("loading");
+    track("monitoring_single_click");
+    try {
+      const res = await fetch("/api/monitoring/single/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, idempotencyKey: crypto.randomUUID() }),
+      });
+      if (res.ok) { setSingle("ok"); track("monitoring_single_order_created"); return; }
+      if (res.status === 409) { setSingle("limit"); return; }
+      if (res.status === 503) { setSingle("unavailable"); return; }
+      setSingle("error");
+    } catch { setSingle("error"); }
+  }
 
   async function handleRegister() {
     if (state === "loading" || state === "done") return;
@@ -108,13 +129,29 @@ export default function MonitoringUpsellCTA({ address }: Props) {
             <ShieldCheck size={34} style={{ color: "var(--brand-primary)", margin: "0 auto 12px" }} />
             {modal === "subscribe" ? (
               <>
-                <p style={{ fontSize: 17, fontWeight: 800, color: "#1d1d1f", marginBottom: 8 }}>등기감시는 구독 회원 전용입니다</p>
-                <p style={{ fontSize: 13, color: "#6e6e73", lineHeight: 1.65, marginBottom: 22 }}>
-                  PRO(5건)·PREMIUM(20건) 구독 회원은 이 집을 포함한 여러 집을<br />하루 2회 자동 감시하고 변동 알림을 받습니다.
+                <p style={{ fontSize: 17, fontWeight: 800, color: "#1d1d1f", marginBottom: 8 }}>이 집, 계속 감시할까요?</p>
+                <p style={{ fontSize: 13, color: "#6e6e73", lineHeight: 1.65, marginBottom: 20 }}>
+                  이 집만 가볍게 감시하려면 <b>단건</b>(1건·1개월·1만원), 여러 집을 지속 감시하려면<br />
+                  <b>구독</b>(PRO 5건·PREMIUM 20건)을 선택하세요. 모두 하루 2회 자동 감시합니다.
                 </p>
-                <Link href="/renewal/pricing" onClick={() => track("monitoring_upsell_to_pricing")} style={{ display: "inline-block", background: "var(--brand-primary)", color: "#fff", padding: "11px 24px", borderRadius: 12, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
-                  구독 안내 보기
-                </Link>
+                {single === "ok" ? (
+                  <p style={{ fontSize: 13, color: "#34c759", fontWeight: 600, marginBottom: 18 }}>단건 신청이 접수되었습니다. 결제 안내를 준비 중입니다.</p>
+                ) : single === "limit" ? (
+                  <p style={{ fontSize: 13, color: "#ff9500", fontWeight: 600, marginBottom: 18 }}>이미 단건 감시 중인 물건이 있습니다(동시 1건).</p>
+                ) : single === "unavailable" ? (
+                  <p style={{ fontSize: 13, color: "#6e6e73", marginBottom: 18 }}>단건 결제는 현재 준비 중입니다. 구독을 이용하시거나 잠시 후 다시 시도해주세요.</p>
+                ) : single === "error" ? (
+                  <p style={{ fontSize: 13, color: "#ff3b30", marginBottom: 18 }}>요청에 실패했습니다. 다시 시도해주세요.</p>
+                ) : null}
+                <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+                  <button onClick={handleSingle} disabled={single === "loading"} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fff", color: "#1d1d1f", border: "1px solid rgba(0,0,0,0.12)", padding: "11px 20px", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: single === "loading" ? "wait" : "pointer" }}>
+                    {single === "loading" ? <Loader2 size={14} className="animate-spin" /> : null}
+                    이 집만 단건 (1만원)
+                  </button>
+                  <Link href="/renewal/pricing" onClick={() => track("monitoring_upsell_to_pricing")} style={{ display: "inline-block", background: "var(--brand-primary)", color: "#fff", padding: "11px 20px", borderRadius: 12, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>
+                    구독 안내 보기
+                  </Link>
+                </div>
               </>
             ) : (
               <>

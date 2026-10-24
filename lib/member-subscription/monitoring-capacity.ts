@@ -8,7 +8,7 @@ export async function withMonitoringCapacity<T>(userId: string, write: (tx: Memb
     const e = await resolveEffectiveEntitlement(userId, new Date(), tx);
     const limit = e.user.role === "ADMIN" ? 100 : e.monitoringLimit;
     if (e.user.role !== "ADMIN" && !e.canUsePaidFeatures) fail("forbidden");
-    const count = await tx.monitoredProperty.count({ where: { userId, status: "active" } });
+    const count = await tx.monitoredProperty.count({ where: { userId, status: "active", source: "subscription" } });
     if (count >= limit) fail("rate_limited");
     return write(tx);
   });

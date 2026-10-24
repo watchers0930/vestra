@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
           { status: 409 }
         );
       }
-      const activeCount = await prisma.monitoredProperty.count({ where: { userId: session.user.id, status: "active" } });
+      const activeCount = await prisma.monitoredProperty.count({ where: { userId: session.user.id, status: "active", source: "subscription" } });
       const activeLimit = await getMonitoringLimit(session.user.id, session.user.role);
       if (activeCount >= activeLimit) return NextResponse.json({ error: "모니터링 등록 한도에 도달했습니다." }, { status: 429 });
       // 비활성 상태면 재활성화 (계약감시 모드 포함)
@@ -194,7 +194,7 @@ export async function POST(req: NextRequest) {
 
     // 등기감시 등록 제한 (구독 플랜별 — 요금제: PRO 5건 / PREMIUM 20건 / ADMIN 무제한)
     const monitorCount = await prisma.monitoredProperty.count({
-      where: { userId: session.user.id, status: "active" },
+      where: { userId: session.user.id, status: "active", source: "subscription" },
     });
     const maxMonitors = await getMonitoringLimit(session.user.id, session.user.role);
     if (monitorCount >= maxMonitors) {

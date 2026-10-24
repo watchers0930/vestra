@@ -11,6 +11,7 @@ export default defineConfig({
       // 결제·구독 핵심 테스트 — CI에서 회귀를 감지하도록 포함(2026-10-22, 사각지대 해소)
       "lib/guest-monitoring/tests/**/*.test.ts",
       "lib/member-subscription/tests/**/*.test.ts",
+      "lib/member-single-monitoring/tests/**/*.test.ts",
     ],
     coverage: {
       provider: "v8",

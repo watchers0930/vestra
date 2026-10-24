@@ -29,9 +29,9 @@ export async function activateMemberOrder(userId: string, orderId: string) {
     // Preserve every property. If the new plan cannot cover them, the user
     // chooses which ones to reactivate through the existing registration API.
     if (!user.membershipPolicy?.grandfatheredAt) {
-      const count = await tx.monitoredProperty.count({ where: { userId, status: "active" } });
+      const count = await tx.monitoredProperty.count({ where: { userId, status: "active", source: "subscription" } });
       if (count > MEMBER_MONITORING_LIMIT[order.plan as MemberPlan]) {
-        await tx.monitoredProperty.updateMany({ where: { userId, status: "active" }, data: { status: "paused" } });
+        await tx.monitoredProperty.updateMany({ where: { userId, status: "active", source: "subscription" }, data: { status: "paused" } });
       }
     }
     await tx.payment.create({ data: { subscriptionId: subscription.id, subscriptionOrderId: order.id,

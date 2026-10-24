@@ -119,3 +119,13 @@ export const GUEST_SINGLE_MONITORING = {
   propertyCount: 1,
   months: 1,
 } as const;
+
+/** 무료회원(로그인+구독없음) 단건 상품: 비회원 단건과 동일 금액, productId만 분리. 구독 한도와 별개. */
+export const MEMBER_SINGLE_MONITORING = {
+  productId: "member_monitoring_single",
+  priceVersion: "2026-10-24",
+  amount: GUEST_SINGLE_MONITORING.amount,
+  currency: GUEST_SINGLE_MONITORING.currency,
+  propertyCount: 1,
+  months: 1,
+} as const;

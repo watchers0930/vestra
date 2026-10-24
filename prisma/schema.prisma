@@ -85,6 +85,7 @@ model User {
 
   // 모니터링 & 검증
   monitoredProperties  MonitoredProperty[]
+  singleMonitoringOrders MemberSingleMonitoringOrder[]
   verificationRequests VerificationRequest[]
 
   subscriptionOrders SubscriptionOrder[]
@@ -328,6 +329,8 @@ model MonitoredProperty {
   lastCheckedAt            DateTime?
   lastHash                 String? // 등기부 내용 해시 (변동 감지용)
   status                   String                @default("active") // active | paused | expired
+  source                   String                @default("subscription") // subscription | single (무료회원 단건)
+  paidUntil                DateTime? // source=single 전용 만료일 (구독 물건은 null)
   monitorMode              String                @default("standard") // standard | contract_gap (계약~전입 강화 감시)
   registrySignalStatus     String                @default("idle") // idle | case_detected | pending_confirm | confirmed_changed | confirmed_no_change | dismissed
   registrySignalDetectedAt DateTime?
@@ -345,6 +348,7 @@ model MonitoredProperty {
   snapshots                RegistrySnapshot[]
   checkLogs                MonitoringCheckLog[]
   agentClientProperties    AgentClientProperty[]
+  singleOrders             MemberSingleMonitoringOrder[]
   user                     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   listing                  Listing?              @relation("ListingMonitors", fields: [listingId], references: [id], onDelete: SetNull)
   createdAt                DateTime              @default(now())
@@ -354,6 +358,7 @@ model MonitoredProperty {
   @@index([status])
   @@index([monitorMode])
   @@index([listingId])
+  @@index([source, status, paidUntil])
 }
 
 model RegistrySnapshot {
@@ -1224,6 +1229,37 @@ model GuestMonitoringOrder {
 
   @@index([guestMonitoringId, status])
   @@index([status, expiresAt])                     // 대기 주문 정리/복구
+}
+
+model MemberSingleMonitoringOrder {
+  id                    String   @id @default(cuid())
+  orderId               String   @unique          // msm_ + uuid(hyphen 제거, <=40자)
+  userId                String
+  monitoredPropertyId   String?                    // 활성화 성공 시 연결
+  address               String                     // 결제 시점 주소 스냅샷
+  amount                Int                        // 서버 스냅샷(KRW 정수)
+  currency              String   @default("KRW")
+  productVersion        String                     // SSOT 가격 버전 스냅샷
+  status                String   @default("pending") // pending|paid|needs_review|failed|canceled|refunded
+  providerMode          String                     // mock (| portone_v1 후속)
+  providerTransactionId String?  @unique           // 승인 후 거래 ID
+  providerReceipt       String?  @db.Text           // mock 서명 재조회 증빙 (PII 없음)
+  idempotencyKey        String                     // 요청 멱등키 (userId 범위에서 unique)
+  appliedPeriodStart    DateTime?
+  appliedPeriodEnd      DateTime?
+  appliedAt             DateTime?                  // 적용 완료 시각(멱등 재적용 방지)
+  paidAt                DateTime?
+  expiresAt             DateTime                    // 결제 대기 주문 TTL
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monitoredProperty MonitoredProperty? @relation(fields: [monitoredPropertyId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, status])
+  @@index([status, expiresAt])                     // 대기 주문 정리/복구
+  @@index([status, appliedAt])                     // 결제-미적용 복구
 }
 
 model GuestMonitoringCheckLog {

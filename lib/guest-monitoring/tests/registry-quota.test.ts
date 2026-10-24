@@ -8,6 +8,7 @@ vi.mock("@/lib/cron-auth", () => ({ verifyCronSecret: () => true }));
 vi.mock("@/lib/guest-monitoring/precheck-adapter", () => ({ runGuestPrechecks: f.guests, GUEST_BATCH_SIZE: 15 }));
 vi.mock("@/lib/registry-monitor/check-log", () => ({ recordCheck: vi.fn(), recordCronHeartbeat: vi.fn(), CRON_HEARTBEAT_ACTION: "test" }));
 vi.mock("@/lib/registry-monitor/transition", () => ({ autoTransitionExpiredGaps: vi.fn() }));
+vi.mock("@/lib/member-single-monitoring/expiry", () => ({ expireSingleProperties: vi.fn(async () => ({ expired: 0 })) }));
 import { GET } from "@/app/api/cron/registry-monitor/route";
 beforeEach(() => {
   vi.clearAllMocks();

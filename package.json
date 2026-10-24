@@ -1,10 +1,12 @@
 {
   "name": "vestra",
-  "version": "5.203.3",
+  "version": "5.204.0",
   "private": true,
   "overrides": {
     "source-map-js": ">=1.2.2",
-    "dompurify": "3.4.17"
+    "dompurify": "3.4.17",
+    "zod": "4.6.6",
+    "undici": "6.29.1"
   },
   "scripts": {
     "dev": "next dev",
