@@ -44,7 +44,7 @@ export async function createOrder(session: OrderPrincipal, input: GuestOrderRequ
     } else if (!["active", "expired"].includes(property.status) || !property.startedAt || !property.paidUntil) notFound();
     await tx.guestMonitoringOrder.updateMany({ where: { guestMonitoringId: id, status: "pending", expiresAt: { lte: now } }, data: { status: "failed" } });
     const order = await tx.guestMonitoringOrder.create({ data: {
-      orderId: `ord_${randomUUID()}`, guestMonitoringId: id, purpose: input.purpose,
+      orderId: `ord_${randomUUID().replace(/-/g, "")}`, guestMonitoringId: id, purpose: input.purpose,
       amount: product.amount, currency: product.currency, productVersion: product.priceVersion,
       providerMode: provider.mode, idempotencyKey: input.idempotencyKey,
       expiresAt: new Date(now.getTime() + ORDER_TTL),
